@@ -23,6 +23,8 @@ const useCustomForm = <T extends Record<string, unknown>>(
   return { form, field } as const;
 };
 
+export type FormMeta<T extends Record<string, unknown>> = ReturnType<typeof useCustomForm<T>>;
+
 /**
  * Conformの機能を統合したFormコンポーネント
  * schemaに渡されたバリデーションスキーマを元にフォームの入力欄meta情報をchildrenに渡す
@@ -32,7 +34,7 @@ export const Form = <T extends Record<string, unknown>>({
   defaultValue,
   children,
   ...props
-}:{
+}: {
   schema: GenericSchema<T>;
   defaultValue?: DefaultValue<T>;
   children: (props: ReturnType<typeof useCustomForm<T>>) => ReactNode;

@@ -1,11 +1,30 @@
 "use client";
+import { FieldMetadata, FormMetadata } from "@conform-to/react";
 import { PlusIcon, StoreIcon } from "@yamada-ui/lucide";
 import { Box, Button, IconButton, Input, NumberInput } from "@yamada-ui/react";
-import { Column, Table } from "@yamada-ui/table";
+import { Column, RowData, Table } from "@yamada-ui/table";
 import { FC } from "react";
-import { Item } from "../../../schema";
+import { Item, Schema } from "../../../schema";
+import { DetailButton } from "./detail-button";
 
-export const CalcTable: FC = () => {
+declare module "@tanstack/table-core" {
+  interface TableMeta<TData extends RowData> {
+    add: () => void;
+    remove: (index: number) => void;
+    save: () => void;
+  }
+}
+
+export const CalcTable: FC<{ form: FormMetadata<Schema>; field: FieldMetadata<Item[]> }> = ({
+  form,
+  field,
+}) => {
+  const operations = {
+    add: () => form.insert({ name: field.name }),
+    remove: (index: number) => form.remove({ index, name: field.name }),
+    save: () => {},
+  } as const;
+
   const data: Item[] = [
     {
       name: "test",
@@ -17,7 +36,7 @@ export const CalcTable: FC = () => {
       sameStore: false,
     },
   ];
-  const columns: Column<Item>[] = [
+  const columns: Column<Item, typeof operations>[] = [
     {
       id: "active",
       columns: [
@@ -32,7 +51,7 @@ export const CalcTable: FC = () => {
           ),
         },
       ],
-      footer: () => <Button>追加</Button>,
+      footer: ({ table }) => <Button onClick={() => table.options.meta?.add}>追加</Button>,
     },
     {
       id: "input-group",
@@ -54,8 +73,16 @@ export const CalcTable: FC = () => {
     },
     { header: "合計倍率", cell: () => <Input readOnly /> },
     { header: "同一店舗", cell: ({ row }) => <Box>{row.original.sameStore ? "○" : "×"}</Box> },
-    { header: "詳細", cell: () => <Button>詳細</Button> },
+    { header: "詳細", cell: () => <DetailButton /> },
     { header: "削除", cell: () => <Button colorScheme="danger">削除</Button> },
   ];
-  return <Table {...{ data, columns }}  enableRowSelection={false} headerProps={{bg:"theme"}} />;
+  return (
+    <Table
+      {...{ data, columns }}
+      meta={operations}
+      enableRowSelection={false}
+      headerProps={{ bg: "brand", textColor: "white" }}
+      bg="white"
+    />
+  );
 };
