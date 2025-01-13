@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "en",
+  "ignorePaths": ["**.gen.ts", "pnpm-lock.yaml"],
+  "allowCompoundWords": true,
+  "words": [
+    "adsbygoogle",
+    "Adsense",
+    "adverticement",
+    "asuraku",
+    "biomejs",
+    "bmth",
+    "bunx",
+    "countup",
+    "gtag",
+    "happydom",
+    "hikari",
+    "lockb",
+    "Noto",
+    "nums",
+    "pangea",
+    "rakuten",
+    "tailwindcss",
+    "valibot",
+    "vercel"
+  ]
+}

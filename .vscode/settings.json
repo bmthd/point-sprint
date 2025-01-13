@@ -1,0 +1,33 @@
+{
+  "typescript.preferences.importModuleSpecifier": "shortest",
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit",
+    "source.addMissingImports": "explicit"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "editor.formatOnSave": true,
+  "npm.packageManager": "bun",
+  "workbench.editor.customLabels.patterns": {
+    "**/index.*": "${dirname} .../${dirname(1)}",
+    "**/{page,layout,default,error,forbidden,instrumentation,loading,mdx-components,middleware,not-found,route,template,unauthorized,hooks,components,utils,types,functions,helpers}.{js,ts,jsx,tsx}": "${dirname}/${filename}.${extname} .../${dirname(1)}"
+  },
+  "files.insertFinalNewline": true,
+  "typescript.tsdk": "node_modules\\typescript\\lib"
+}
