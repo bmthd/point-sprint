@@ -1,8 +1,15 @@
 "use client";
-import { FormProvider, getFormProps, useForm, type DefaultValue } from "@conform-to/react";
+import {
+  FormProvider,
+  getFormProps,
+  SubmissionResult,
+  useForm,
+  type DefaultValue,
+} from "@conform-to/react";
 import { getValibotConstraint, parseWithValibot } from "conform-to-valibot";
+import NextForm from "next/form";
 import { ReactNode, type ComponentProps } from "react";
-import { type GenericSchema } from "valibot";
+import { object, type GenericSchema } from "valibot";
 
 /**
  * デフォルトの挙動を設定
@@ -12,13 +19,16 @@ import { type GenericSchema } from "valibot";
 const useCustomForm = <T extends Record<string, unknown>>(
   schema: GenericSchema<T>,
   defaultValue?: DefaultValue<T>,
+  lastResult?: SubmissionResult<string[]>,
 ) => {
   const [form, field] = useForm<T, T, string[]>({
     defaultValue,
+    lastResult,
     shouldValidate: "onBlur",
     shouldRevalidate: "onInput",
     constraint: getValibotConstraint(schema),
     onValidate: ({ formData }) => parseWithValibot(formData, { schema }),
+    onSubmit: async () => {},
   });
   return { form, field } as const;
 };
@@ -28,26 +38,30 @@ const useCustomForm = <T extends Record<string, unknown>>(
  * schemaに渡されたバリデーションスキーマを元にフォームの入力欄meta情報をchildrenに渡す
  */
 export const Form = <T extends Record<string, unknown>>({
-  schema,
+  schema = object({}) as unknown as GenericSchema<T>,
   defaultValue,
+  lastResult,
   children,
   ...props
-}:{
-  schema: GenericSchema<T>;
+}: {
+  schema?: GenericSchema<T>;
   defaultValue?: DefaultValue<T>;
-  children: (props: ReturnType<typeof useCustomForm<T>>) => ReactNode;
+  lastResult?: SubmissionResult<string[]>;
+  children?: ((props: ReturnType<typeof useCustomForm<T>>) => ReactNode) | ReactNode;
 } & Omit<
-  ComponentProps<"form">,
+  Partial<ComponentProps<typeof NextForm>>,
   keyof ReturnType<typeof getFormProps> | "children" | "defaultValue"
 >) => {
-  const { form, field } = useCustomForm(schema, defaultValue);
+  const { form, field } = useCustomForm(schema, defaultValue, lastResult);
   return (
     <FormProvider context={form.context}>
-      <form {...props} {...getFormProps(form)}>
-        {children({ form, field })}
-      </form>
+      {/* @ts-expect-error actionをオプショナルにしたいため */}
+      <NextForm {...props} {...getFormProps(form)}>
+        {typeof children === "function" ? children({ form, field }) : children}
+      </NextForm>
     </FormProvider>
   );
 };
 
 export * from "./field";
+export type { FormState } from "./types";

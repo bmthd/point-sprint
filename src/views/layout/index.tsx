@@ -8,7 +8,7 @@ export const Layout: FC<{ children: ReactNode }> = ({ children }) => {
     <Providers>
       <Container p={0} bg="blackAlpha.100" h="full">
         <Header />
-        <HStack alignItems="flex-start" justifyItems="">
+        <HStack alignItems="flex-start" justifyItems="" px={4}>
           {children}
           <Sidebar w="lg" />
         </HStack>
