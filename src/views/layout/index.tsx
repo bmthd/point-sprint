@@ -2,6 +2,10 @@ import { Container, HStack } from "@yamada-ui/react";
 import { FC, ReactNode } from "react";
 import { Header, Providers } from "./components";
 import { Sidebar } from "./components/sidebar";
+import * as v from "valibot"
+import "@valibot/i18n/ja";
+
+v.setGlobalConfig({ lang: "ja" });
 
 export const Layout: FC<{ children: ReactNode }> = ({ children }) => {
   return (

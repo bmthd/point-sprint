@@ -16,10 +16,10 @@ export const TextField: FC<FieldProps<string> & ComponentProps<typeof Input>> = 
   label,
   ...props
 }) => {
-  const [fieldMeta] = useField(name!);
+  const [fieldMeta] = useField(name);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
-      <Input {...props} {...(fieldMeta ?? getInputProps(fieldMeta, { type: "text" }))} />
+      <Input {...props} {... getInputProps(fieldMeta, { type: "text" })} />
     </CustomFormControl>
   );
 };
@@ -29,10 +29,10 @@ export const NumberField: FC<FieldProps<number> & ComponentProps<typeof Input>> 
   label,
   ...props
 }) => {
-  const [fieldMeta] = useField(name!);
+  const [fieldMeta] = useField(name);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
-      <NumberInput {...props} {...(fieldMeta ?? getInputProps(fieldMeta, { type: "number" }))} />
+      <NumberInput {...props} {...getInputProps(fieldMeta, { type: "number" })} />
     </CustomFormControl>
   );
 };
@@ -42,10 +42,10 @@ export const TextareaField: FC<FieldProps<string> & ComponentProps<typeof Input>
   label,
   ...props
 }) => {
-  const [fieldMeta] = useField(name!);
+  const [fieldMeta] = useField(name);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
-      <Textarea {...props} {...(fieldMeta ?? getInputProps(fieldMeta, { type: "textarea" }))} />
+      <Textarea {...props} {...getInputProps(fieldMeta, { type: "textarea" })} />
     </CustomFormControl>
   );
 };
@@ -58,6 +58,6 @@ export const CheckboxField: FC<FieldProps<string> & ComponentProps<typeof Checkb
   name,
   ...props
 }) => {
-  const [fieldMeta] = useField(name!);
+  const [fieldMeta] = useField(name);
   return <Checkbox {...props} {...getInputProps(fieldMeta, { type: "checkbox" })} />;
 };

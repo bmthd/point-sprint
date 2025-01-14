@@ -7,10 +7,18 @@ import { schema } from "../../schema";
 import { inquiryAction } from "./actions";
 
 export const InquiryForm: FC = () => {
-  const [state, dispatch, isPending] = useActionState(inquiryAction, { status: "idle" });
+  const [state, dispatch, isPending] = useActionState(inquiryAction, {
+    status: "idle",
+    submissionResult: { initialValue: { name: "", email: "", message: "" } },
+  });
 
   return (
-    <Form schema={schema} action={dispatch} lastResult={state.submissionResult}>
+    <Form
+      schema={schema}
+      action={dispatch}
+      lastResult={state.submissionResult}
+      defaultValue={{ name: "", email: "", message: "" }}
+    >
       {({ form, field }) => (
         <VStack>
           <TextField name={field.name.name} label="お名前" />
