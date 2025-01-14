@@ -28,7 +28,6 @@ const useCustomForm = <T extends Record<string, unknown>>(
     shouldRevalidate: "onInput",
     constraint: getValibotConstraint(schema),
     onValidate: ({ formData }) => parseWithValibot(formData, { schema }),
-    onSubmit: async () => {},
   });
   return { form, field } as const;
 };

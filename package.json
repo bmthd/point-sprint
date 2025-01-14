@@ -25,6 +25,7 @@
   "dependencies": {
     "@conform-to/react": "^1.2.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
+    "@valibot/i18n": "^1.0.0-beta.2",
     "@yamada-ui/fontawesome": "^1.0.52",
     "@yamada-ui/lucide": "^1.10.2",
     "@yamada-ui/react": "^1.7.3",

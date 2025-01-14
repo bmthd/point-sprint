@@ -1,6 +1,8 @@
 import "server-only";
+import "@valibot/i18n/ja";
 import * as v from "valibot";
 
+v.setGlobalConfig({ lang: "ja" });
 v.setSchemaMessage("スキーマの検証に失敗しました。");
 
 const envSchema = v.object({

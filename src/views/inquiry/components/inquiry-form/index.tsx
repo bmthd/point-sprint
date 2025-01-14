@@ -4,10 +4,10 @@ import { NoticeEffect } from "@/ui/notice";
 import { Button, VStack } from "@yamada-ui/react";
 import { FC, useActionState } from "react";
 import { schema } from "../../schema";
-import { action } from "./actions";
+import { inquiryAction } from "./actions";
 
 export const InquiryForm: FC = () => {
-  const [state, dispatch, isPending] = useActionState(action, { status: "idle" });
+  const [state, dispatch, isPending] = useActionState(inquiryAction, { status: "idle" });
 
   return (
     <Form schema={schema} action={dispatch} lastResult={state.submissionResult}>

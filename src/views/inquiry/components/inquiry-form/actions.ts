@@ -18,12 +18,16 @@ const sendInquiryMail = async ({ email, name, message }: schema) => {
  * お問い合わせフォームのデータを処理
  * @param formData お問い合わせフォームのデータ
  */
-export const action = async (prevState: FormState, formData: FormData): Promise<FormState> => {
+export const inquiryAction = async (prevState: FormState, formData: FormData): Promise<FormState> => {
   const submission = parseWithValibot(formData, { schema });
   if (submission.status !== "success") {
     return { status: "error", submissionResult: submission.reply() };
   }
 
-  await sendInquiryMail(submission.value);
+  try {
+    await sendInquiryMail(submission.value);
+  } catch {
+    return { status: "error", message: "サーバー側でメールの送信に失敗しました。しばらく待ってからお試しください。"}
+  }
   return { status: "success", message: "お問い合わせを受け付けました" };
 };
