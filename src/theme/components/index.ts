@@ -4,5 +4,5 @@ import { Card } from "./card";
 
 export default {
   Link,
-  Card
-} satisfies ThemeComponents
+  Card,
+} satisfies ThemeComponents;

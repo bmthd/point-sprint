@@ -1,4 +1,4 @@
-import { FieldMetadata } from "@conform-to/react"
+import { FieldMetadata } from "@conform-to/react";
 
 export const isArrayOfString = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === "string");

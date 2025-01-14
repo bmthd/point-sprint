@@ -19,7 +19,7 @@ export const TextField: FC<FieldProps<string> & ComponentProps<typeof Input>> = 
   const [fieldMeta] = useField(name);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
-      <Input {...props} {... getInputProps(fieldMeta, { type: "text" })} />
+      <Input {...props} {...getInputProps(fieldMeta, { type: "text" })} />
     </CustomFormControl>
   );
 };

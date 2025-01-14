@@ -57,5 +57,11 @@ export const CalcTable: FC = () => {
     { header: "詳細", cell: () => <Button>詳細</Button> },
     { header: "削除", cell: () => <Button colorScheme="danger">削除</Button> },
   ];
-  return <Table {...{ data, columns }}  enableRowSelection={false} headerProps={{bg:"brand", textColor:"white"}} />;
+  return (
+    <Table
+      {...{ data, columns }}
+      enableRowSelection={false}
+      headerProps={{ bg: "brand", textColor: "white" }}
+    />
+  );
 };

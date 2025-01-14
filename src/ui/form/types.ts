@@ -10,7 +10,7 @@ export type FormState = Readonly<
       status: "error";
       submissionResult?: SubmissionResult;
     }
-    | {
+  | {
       status: "error";
       message: string;
       submissionResult?: SubmissionResult;
