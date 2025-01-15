@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FC } from "react";
 
 export const Header: FC = () => (
-  <Container bg="brand" p="md">
+  <Container as="header" bg="brand" p="md">
     <Link href="/">
       <H textColor="white" fontSize="3xl">
         ポイントスプリント！
