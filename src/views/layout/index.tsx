@@ -10,7 +10,7 @@ v.setGlobalConfig({ lang: "ja" });
 export const Layout: FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <Providers>
-      <Container p={0} bg="blackAlpha.100" h="100vh" overflow="hidden">
+      <Container p={0} bg="blackAlpha.100" minH="100vh" overflow="hidden">
         <Header />
         <HStack as="main" alignItems="flex-start" px={4} h="full">
           {children}
