@@ -2,14 +2,19 @@
 import { Form } from "@/ui/form";
 import { VStack } from "@yamada-ui/react";
 import { FC } from "react";
-import { schema } from "../../schema";
+import { SPUEvent, spuEventSchema } from "../../schema";
 import { CalcTable } from "./calc-table";
 import { MaxPointForm } from "./max-point-form";
 import { SPUToggleGroup } from "./spu-toggle-group";
 
 export const FormSection: FC = () => {
+  const defaultValue: SPUEvent = {
+    items: Array.from({ length: 10 }),
+    maxPoint: 7000,
+    spuButtons: {},
+  };
   return (
-    <Form schema={schema}>
+    <Form schema={spuEventSchema} options={{ defaultValue }}>
       {({ form, field }) => (
         <VStack>
           <SPUToggleGroup />

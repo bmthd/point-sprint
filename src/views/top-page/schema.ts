@@ -16,12 +16,12 @@ const spuSchema = v.object({
   checked: v.boolean(),
 });
 
-export const schema = v.object({
+export const spuEventSchema = v.object({
   items: v.array(itemSchema),
   spuButtons: v.record(v.string(), spuSchema),
   maxPoint: v.number(),
 });
 
-export type Schema = v.InferOutput<typeof schema>;
+export type SPUEvent = v.InferOutput<typeof spuEventSchema>;
 
 export type Item = v.InferOutput<typeof itemSchema>;
