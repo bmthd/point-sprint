@@ -46,6 +46,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@yamada-ui/cli": "^1.2.3",
+    "babel-plugin-react-compiler": "^19.0.0-beta-e552027-20250112",
     "eslint": "^9",
     "eslint-config-next": "15.1.4",
     "typescript": "^5.7.3"
