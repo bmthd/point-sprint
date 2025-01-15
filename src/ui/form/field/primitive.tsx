@@ -12,7 +12,7 @@ import { getFieldErrorProps } from "./utils";
  * @param props - input要素のprops
  */
 export const TextField: FC<FieldProps<string> & ComponentProps<typeof Input>> = ({
-  name,
+  name = "",
   label,
   ...props
 }) => {
