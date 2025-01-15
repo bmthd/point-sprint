@@ -1,22 +1,50 @@
 "use client";
 import { NumberField, TextField } from "@/ui/form";
+import { Operation } from "@/ui/table";
 import { FieldMetadata, FormMetadata } from "@conform-to/react";
-import { PlusIcon, StoreIcon } from "@yamada-ui/lucide";
-import { Box, Button, IconButton, Input } from "@yamada-ui/react";
-import { Column, RowData, Table } from "@yamada-ui/table";
+import { GripVerticalIcon, PlusIcon, StoreIcon } from "@yamada-ui/lucide";
+import { Button, IconButton, Input } from "@yamada-ui/react";
+import { CellContext, Column, Table } from "@yamada-ui/table";
 import { FC, useMemo } from "react";
 import { Item, SPUEvent } from "../../../schema";
 import { DetailButton } from "./detail-button";
 
-type Operation = {
-  add?: () => void;
-  remove?: (index: number) => void;
-  save?: () => void;
-};
+const DeleteButton: FC<CellContext<FieldMetadata<Item>, Operation>> = ({ table, row }) => (
+  <Button onClick={() => table.options.meta?.remove?.(row.index)} colorScheme="danger">
+    削除
+  </Button>
+);
 
-declare module "@tanstack/table-core" {
-  interface TableMeta<TData extends RowData> extends Operation {}
-}
+const ShopCountButton: FC<CellContext<FieldMetadata<Item>, Operation>> = ({ row }) => (
+  <Button colorScheme={row.original.getFieldset().active ? "red" : "whiteAlpha"}>
+    <StoreIcon />
+    {row.original.getFieldset().active ? "○" : "×"}
+  </Button>
+);
+
+const DragHandle: FC = () => <IconButton icon={<GripVerticalIcon />} colorScheme="gray" p={0} />;
+
+type HeaderContext<T, U> = CellContext<T, U>;
+
+const AddRowButton: FC<HeaderContext<FieldMetadata<Item>, Operation>> = ({ table }) => (
+  <Button onClick={table.options.meta?.add}>追加</Button>
+);
+
+const NameField: FC<CellContext<FieldMetadata<Item>, Operation>> = ({ row }) => (
+  <TextField name={row.original.getFieldset().name.name} />
+);
+
+const PriceField: FC<CellContext<FieldMetadata<Item>, Operation>> = ({ row }) => (
+  <NumberField name={row.original.getFieldset().price.name} />
+);
+
+const TaxRateField: FC<CellContext<FieldMetadata<Item>, Operation>> = ({ row }) => (
+  <NumberField name={row.original.getFieldset().taxRate.name} />
+);
+
+const AdditionalRateField: FC<CellContext<FieldMetadata<Item>, Operation>> = ({ row }) => (
+  <NumberField name={row.original.getFieldset().additionalRate.name} />
+);
 
 export const CalcTable: FC<{ form: FormMetadata<SPUEvent>; field: FieldMetadata<Item[]> }> = ({
   form,
@@ -30,45 +58,40 @@ export const CalcTable: FC<{ form: FormMetadata<SPUEvent>; field: FieldMetadata<
 
   const data = field.getFieldList();
 
-  const columns = useMemo<Column<ReturnType<typeof field.getFieldList>[number], Operation>[]>(
+  const columns = useMemo<Column<FieldMetadata<Item>, Operation>[]>(
     () => [
       {
         id: "active",
         columns: [
-          { header: "並び替え", cell: ({ row }) => <Box>{row.index}</Box> },
+          { header: "並び替え", cell: DragHandle },
           {
             header: "購入カウント",
-            cell: ({ row }) => (
-              <Button colorScheme={row.original.getFieldset().active ? "red" : "whiteAlpha"}>
-                <StoreIcon />
-                {row.original.getFieldset().active ? "○" : "×"}
-              </Button>
-            ),
+            cell: ShopCountButton,
           },
         ],
-        footer: ({ table }) => <Button onClick={table.options.meta?.add}>追加</Button>,
+        footer: AddRowButton,
       },
       {
         id: "input-group",
         columns: [
           {
             header: "商品名",
-            cell: ({ row }) => <TextField name={row.original.getFieldset().name.name} />,
+            cell: NameField,
           },
           {
             header: "価格",
-            cell: ({ row }) => <NumberField name={row.original.getFieldset().price.name} />,
+            cell: PriceField,
           },
           {
             header: "税率",
-            cell: ({ row }) => <NumberField name={row.original.getFieldset().taxRate.name} />,
+            cell: TaxRateField,
           },
         ],
         footer: () => <Input readOnly>合計</Input>,
       },
       {
         header: "追加還元",
-        cell: ({ row }) => <NumberField name={row.original.getFieldset().additionalRate.name} />,
+        cell: AdditionalRateField,
         footer: () => <IconButton icon={<PlusIcon />} />,
       },
       {
@@ -76,18 +99,10 @@ export const CalcTable: FC<{ form: FormMetadata<SPUEvent>; field: FieldMetadata<
         // cell: ({ row }) => <Box>{Object.keys(row.original.getFieldset().campaigns).join(",")}</Box>,
       },
       { header: "合計倍率", cell: () => <Input readOnly /> },
-      {
-        header: "同一店舗",
-        cell: ({ row }) => <Box>{row.original.getFieldset().sameStore.value ? "○" : "×"}</Box>,
-      },
-      { header: "詳細", cell: () => <DetailButton /> },
+      { header: "詳細", cell: DetailButton },
       {
         header: "削除",
-        cell: ({ table, row }) => (
-          <Button onClick={() => table.options.meta?.remove?.(row.index)} colorScheme="danger">
-            削除
-          </Button>
-        ),
+        cell: DeleteButton,
       },
     ],
     [],
