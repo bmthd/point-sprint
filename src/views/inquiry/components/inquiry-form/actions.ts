@@ -8,18 +8,22 @@ import { inquiryForm$ } from "../../schema";
 
 const adminAddress = env.GMAIL_ADDRESS;
 
-const sendInquiryMail = async ({ email, name, message }: inquiryForm$) => {
-  const subject = "ポイントスプリント お問い合わせフォームからのメッセージ";
-  const text = `メールアドレス: ${email}\n\nお名前:${name}\nメッセージ: ${message}`;
-  await sendMailFromAdmin({ from: email, to: adminAddress, subject, text });
-};
+const sendInquiryMail = async ({ email, name, message }: inquiryForm$) =>
+  sendMailFromAdmin({
+    from: email,
+    to: adminAddress,
+    subject: "ポイントスプリント お問い合わせフォームからのメッセージ",
+    text: `メールアドレス: ${email}
+    お名前:${name}
+    メッセージ: ${message}`,
+  });
 
 /**
  * お問い合わせフォームのデータを処理
  * @param formData お問い合わせフォームのデータ
  */
 export const inquiryAction = async (
-  prevState: FormState,
+  _prevState: FormState,
   formData: FormData,
 ): Promise<FormState> => {
   const submission = parseWithValibot(formData, { schema: inquiryForm$ });
@@ -29,7 +33,8 @@ export const inquiryAction = async (
 
   try {
     await sendInquiryMail(submission.value);
-  } catch {
+  } catch (error) {
+    console.error("Failed to send mail", { error });
     return {
       status: "error",
       message: "サーバー側でメールの送信に失敗しました。しばらく待ってからお試しください。",

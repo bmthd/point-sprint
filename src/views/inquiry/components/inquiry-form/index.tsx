@@ -11,13 +11,13 @@ export const InquiryForm: FC = () => {
   });
 
   return (
-    <Form schema={inquiryForm$} action={dispatch} lastResult={state.submissionResult}>
+    <Form schema={inquiryForm$} action={dispatch} options={{ lastResult: state.submissionResult }}>
       {({ field }) => (
         <VStack>
-          <TextField name={field.name.name} label="お名前" />
-          <TextField name={field.email.name} label="メールアドレス" />
+          <TextField name={field.name.name} label="お名前" autoComplete="name" />
+          <TextField name={field.email.name} label="メールアドレス" autoComplete="email" />
           <TextareaField name={field.message.name} label="お問い合わせ内容" />
-          <Button type="submit" loading={isPending} >
+          <Button type="submit" loading={isPending}>
             送信
           </Button>
         </VStack>
