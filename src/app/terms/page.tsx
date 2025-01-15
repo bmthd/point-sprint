@@ -5,4 +5,4 @@ export const metadata = {
   description: "ポイントスプリントの利用規約です。",
 };
 
-export default TermsPage
+export default TermsPage;

@@ -20,7 +20,7 @@ const items: SegmentedControlItem[] = [
 
 export const MaxPointForm: FC = () => {
   return (
-    <Container as={Card} >
+    <Container as={Card}>
       <CardHeader>
         <HStack>
           <Tooltip label="獲得上限が異なる場合に設定できます">

@@ -34,7 +34,7 @@ export const ShareButtonContainer = () => {
     },
     {
       href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pathname)}`,
-      icon: <FontAwesomeIcon icon={faFacebook}  />,
+      icon: <FontAwesomeIcon icon={faFacebook} />,
       label: "Facebook",
       style: { backgroundColor: "#1877f2" },
     },
