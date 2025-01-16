@@ -1,7 +1,15 @@
 "use client";
 
 import { getInputProps, useField } from "@conform-to/react";
-import { Checkbox, Input, NumberInput, Textarea, Switch, Label, VisuallyHidden } from "@yamada-ui/react";
+import {
+  Checkbox,
+  Input,
+  Label,
+  NumberInput,
+  Switch,
+  Textarea,
+  VisuallyHidden,
+} from "@yamada-ui/react";
 import { type ComponentProps, type FC } from "react";
 import { CustomFormControl } from "./form-control";
 import { FieldProps } from "./types";
@@ -29,7 +37,7 @@ export const NumberField: FC<FieldProps<number> & ComponentProps<typeof Input>> 
   label,
   ...props
 }) => {
-  const [fieldMeta] = useField(name);
+  const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
       <NumberInput {...props} {...getInputProps(fieldMeta, { type: "number" })} />
@@ -37,12 +45,12 @@ export const NumberField: FC<FieldProps<number> & ComponentProps<typeof Input>> 
   );
 };
 
-export const TextareaField: FC<FieldProps<string> & ComponentProps<typeof Input>> = ({
+export const TextareaField: FC<FieldProps<string> & ComponentProps<typeof Textarea>> = ({
   name,
   label,
   ...props
 }) => {
-  const [fieldMeta] = useField(name);
+  const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
       <Textarea {...props} {...getInputProps(fieldMeta, { type: "textarea" })} />
@@ -59,7 +67,7 @@ export const CheckboxField: FC<FieldProps<boolean> & ComponentProps<typeof Check
   label,
   ...props
 }) => {
-  const [fieldMeta] = useField(name);
+  const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
       <Checkbox {...props} {...getInputProps(fieldMeta, { type: "checkbox" })} />
@@ -69,16 +77,16 @@ export const CheckboxField: FC<FieldProps<boolean> & ComponentProps<typeof Check
 
 export const CustomSwitchField: FC<FieldProps<boolean> & ComponentProps<typeof Switch>> = ({
   name,
-  label,
   children,
   ...props
 }) => {
-  const [fieldMeta] = useField(name);
+  const [fieldMeta] = useField(name!);
   return (
     <Label>
       <VisuallyHidden>
-      <Switch {...props} {...getInputProps(fieldMeta, { type: "switch" })} /></VisuallyHidden>
+        <Switch {...props} {...getInputProps(fieldMeta, { type: "checkbox" })} />
+      </VisuallyHidden>
       {children}
     </Label>
   );
-}
+};

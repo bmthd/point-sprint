@@ -10,7 +10,6 @@ describe("useConfirmState", () => {
   test("確認関数が呼び出されたあと開閉状態がtrueになること", () => {
     const { result } = renderHook(() => useConfirmState());
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     act(() => {
       void result.current.confirm();
     });
@@ -26,7 +25,6 @@ describe("useConfirmState", () => {
     async (expected, handler) => {
       const { result } = renderHook(() => useConfirmState());
 
-      // eslint-disable-next-line no-restricted-syntax
       let confirmPromise: Promise<boolean> = Promise.resolve(!expected); // 型エラー回避のため一旦仮の値として期待しない値を設定
       act(() => {
         confirmPromise = result.current.confirm();

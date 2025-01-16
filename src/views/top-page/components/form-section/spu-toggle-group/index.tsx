@@ -8,7 +8,6 @@ export const SPUToggleGroup: FC = () => {
     <Card as={Container}>
       <CardHeader>
         <HStack>
-          {/* @ts-expect-error */}
           <Tooltip label="楽天市場に表示される倍率を入力してください">
             <CircleHelpIcon />
           </Tooltip>

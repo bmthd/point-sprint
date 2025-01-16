@@ -1,6 +1,6 @@
 "use client";
 import { ConfirmDialog } from "@/ui/dialog";
-import { CheckboxField, NumberField, SelectField, TextField,CustomSwitchField } from "@/ui/form";
+import { NumberField, SelectField, TextField, CustomSwitchField } from "@/ui/form";
 import { Operation } from "@/ui/table";
 import { FieldMetadata, FormMetadata } from "@conform-to/react";
 import {
@@ -10,7 +10,7 @@ import {
   StoreIcon,
   TrashIcon,
 } from "@yamada-ui/lucide";
-import { Button, IconButton, Input, Label, Text } from "@yamada-ui/react";
+import { Button, IconButton, Input, Text } from "@yamada-ui/react";
 import { CellContext, Column, HeaderContext, Table, TableMeta } from "@yamada-ui/table";
 import { ComponentRef, FC, useCallback, useMemo, useRef } from "react";
 import { taxRateMap } from "../../../const";
@@ -163,11 +163,11 @@ const useOperations = ({
   FieldMetadata<Item>
 > => {
   const add = useCallback(
-    (item?: Partial<Item>) => form.insert({ name: field.name, defaultValue: item }),
+    (item?: Partial<Item>): void => form.insert({ name: field.name, defaultValue: item }),
     [form, field],
   );
   const remove = useCallback(
-    (index: number) => form.remove({ index, name: field.name }),
+    (index: number): void => form.remove({ index, name: field.name }),
     [form, field],
   );
   const save = useCallback(() => {}, []);

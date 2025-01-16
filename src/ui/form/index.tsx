@@ -5,6 +5,13 @@ import NextForm from "next/form";
 import { ReactNode, type ComponentProps } from "react";
 import { object, type GenericSchema } from "valibot";
 
+type UseFormReturn<T extends Record<string, unknown>> = ReturnType<typeof useForm<T, T, string[]>>;
+
+export type FormMeta<T extends Record<string, unknown>> = {
+  form: UseFormReturn<T>[0];
+  field: UseFormReturn<T>[1];
+};
+
 /**
  * デフォルトの挙動を設定
  * @param schema バリデーションスキーマ
@@ -13,7 +20,7 @@ import { object, type GenericSchema } from "valibot";
 const useCustomForm = <T extends Record<string, unknown>>(
   schema: GenericSchema<T>,
   options: Parameters<typeof useForm<T, T, string[]>>[0] = {},
-) => {
+): FormMeta<T> => {
   const {
     shouldValidate = "onBlur",
     shouldRevalidate = "onInput",
@@ -28,10 +35,8 @@ const useCustomForm = <T extends Record<string, unknown>>(
     onValidate,
     ...rest,
   });
-  return { form, field } as const;
+  return { form, field };
 };
-
-export type FormMeta<T extends Record<string, unknown>> = ReturnType<typeof useCustomForm<T>>;
 
 /**
  * Conformの機能を統合したFormコンポーネント
@@ -45,7 +50,7 @@ export const Form = <T extends Record<string, unknown>>({
 }: {
   schema?: GenericSchema<T>;
   options?: Parameters<typeof useForm<T, T, string[]>>[0];
-  children?: ((props: ReturnType<typeof useCustomForm<T>>) => ReactNode) | ReactNode;
+  children?: ((props: FormMeta<T>) => ReactNode) | ReactNode;
 } & Omit<
   Partial<ComponentProps<typeof NextForm>>,
   keyof ReturnType<typeof getFormProps> | "children" | "defaultValue"
