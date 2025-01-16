@@ -1,7 +1,7 @@
 "use client";
 
 import { getInputProps, useField } from "@conform-to/react";
-import { Checkbox, Input, NumberInput, Textarea } from "@yamada-ui/react";
+import { Checkbox, Input, NumberInput, Textarea, Switch, Label, VisuallyHidden } from "@yamada-ui/react";
 import { type ComponentProps, type FC } from "react";
 import { CustomFormControl } from "./form-control";
 import { FieldProps } from "./types";
@@ -66,3 +66,19 @@ export const CheckboxField: FC<FieldProps<boolean> & ComponentProps<typeof Check
     </CustomFormControl>
   );
 };
+
+export const CustomSwitchField: FC<FieldProps<boolean> & ComponentProps<typeof Switch>> = ({
+  name,
+  label,
+  children,
+  ...props
+}) => {
+  const [fieldMeta] = useField(name);
+  return (
+    <Label>
+      <VisuallyHidden>
+      <Switch {...props} {...getInputProps(fieldMeta, { type: "switch" })} /></VisuallyHidden>
+      {children}
+    </Label>
+  );
+}

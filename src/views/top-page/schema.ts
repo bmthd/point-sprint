@@ -25,4 +25,15 @@ export const spuEventSchema = v.object({
 
 export type SPUEvent = v.InferOutput<typeof spuEventSchema>;
 
-export type Item = v.InferOutput<typeof itemSchema>;
+export type Item = v.InferInput<typeof itemSchema>;
+
+export const initializeItem = (): Item => ({
+  id: btoa(crypto.randomUUID()),
+  active: true,
+  name: "",
+  price: 0,
+  taxRate: 0,
+  additionalRate: 0,
+  campaigns: {},
+  sameStore: false,
+});

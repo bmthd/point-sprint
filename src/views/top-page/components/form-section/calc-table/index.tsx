@@ -1,6 +1,6 @@
 "use client";
 import { ConfirmDialog } from "@/ui/dialog";
-import { CheckboxField, NumberField, TextField, SelectField } from "@/ui/form";
+import { CheckboxField, NumberField, SelectField, TextField,CustomSwitchField } from "@/ui/form";
 import { Operation } from "@/ui/table";
 import { FieldMetadata, FormMetadata } from "@conform-to/react";
 import {
@@ -10,12 +10,12 @@ import {
   StoreIcon,
   TrashIcon,
 } from "@yamada-ui/lucide";
-import { Button, IconButton, Input, Text, VisuallyHidden } from "@yamada-ui/react";
+import { Button, IconButton, Input, Label, Text } from "@yamada-ui/react";
 import { CellContext, Column, HeaderContext, Table, TableMeta } from "@yamada-ui/table";
 import { ComponentRef, FC, useCallback, useMemo, useRef } from "react";
-import { Item, SPUEvent } from "../../../schema";
-import { DetailButton } from "./detail-button";
 import { taxRateMap } from "../../../const";
+import { initializeItem, Item, SPUEvent } from "../../../schema";
+import { DetailButton } from "./detail-button";
 
 /* Row Components */
 
@@ -43,24 +43,20 @@ const ShopCountButton: CellComponent<Item> = ({ row }) => {
 
   const label = `${magnification}倍 ${result}`;
 
-  const handleClick = useCallback(() => {
-    field.active.toggle();
-  }, [field.active]);
-
   return (
-    <Button
-      colorScheme={field.active ? "red" : "whiteAlpha"}
-      aria-label={buttonDescription}
-      title={buttonDescription}
-      w="full"
-      px={2}
-    >
-      <StoreIcon />
-      {label}
-      <VisuallyHidden>
-        <CheckboxField name={field.active.name} />
-      </VisuallyHidden>
-    </Button>
+    <CustomSwitchField name={field.active.name}>
+      <Button
+        as="div"
+        colorScheme={field.active.value ? "red" : "gray"}
+        aria-label={buttonDescription}
+        title={buttonDescription}
+        w="full"
+        px={2}
+      >
+        <StoreIcon />
+        {label}
+      </Button>
+    </CustomSwitchField>
   );
 };
 
@@ -115,8 +111,7 @@ const DeleteButton: CellComponent<Item> = ({ table, row }) => {
 type HeaderComponent<T> = FC<HeaderContext<FieldMetadata<T>, Operation<T>>>;
 
 const AddRowButton: HeaderComponent<Item> = ({ table }) => {
-  const id = window.btoa(crypto.randomUUID());
-  const handleClick = useCallback(() => table.options.meta?.add?.({ id }), [table]);
+  const handleClick = useCallback(() => table.options.meta?.add?.(initializeItem()), [table]);
   return (
     <Button onClick={handleClick} startIcon={<ListPlusIcon fontSize="2xl" />} w="full">
       行追加
