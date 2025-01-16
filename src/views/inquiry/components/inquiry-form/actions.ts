@@ -37,7 +37,7 @@ export const inquiryAction = async (
     console.error("Failed to send mail", { error });
     return {
       status: "error",
-      message: "サーバー側でメールの送信に失敗しました。しばらく待ってからお試しください。",
+      message: "予期しないエラーが発生しました。しばらく待ってからお試しください。",
     };
   }
   return { status: "success", message: "お問い合わせを受け付けました" };
