@@ -16,6 +16,10 @@ export interface Operation<T> {
    */
   remove?: (index: number) => void;
   /**
+   * テーブルの行をリセットする
+   */
+  reset?: () => void;
+  /**
    * テーブルの行を永続化する
    */
   save?: () => void;

@@ -1,13 +1,21 @@
 "use client";
-import { NumberField, TextField } from "@/ui/form";
+import { ConfirmDialog } from "@/ui/dialog";
+import { CheckboxField, NumberField, TextField, SelectField } from "@/ui/form";
 import { Operation } from "@/ui/table";
 import { FieldMetadata, FormMetadata } from "@conform-to/react";
-import { GripVerticalIcon, StoreIcon, XIcon } from "@yamada-ui/lucide";
-import { Button, IconButton, Input } from "@yamada-ui/react";
+import {
+  GripVerticalIcon,
+  ListPlusIcon,
+  RotateCcwIcon,
+  StoreIcon,
+  TrashIcon,
+} from "@yamada-ui/lucide";
+import { Button, IconButton, Input, Text, VisuallyHidden } from "@yamada-ui/react";
 import { CellContext, Column, HeaderContext, Table, TableMeta } from "@yamada-ui/table";
-import { FC, useCallback, useMemo } from "react";
+import { ComponentRef, FC, useCallback, useMemo, useRef } from "react";
 import { Item, SPUEvent } from "../../../schema";
 import { DetailButton } from "./detail-button";
+import { taxRateMap } from "../../../const";
 
 /* Row Components */
 
@@ -15,12 +23,46 @@ type CellComponent<T> = FC<CellContext<FieldMetadata<T>, Operation<T>>>;
 
 const DragHandle: FC = () => <IconButton icon={<GripVerticalIcon />} colorScheme="gray" p={0} />;
 
-const ShopCountButton: CellComponent<Item> = ({ row }) => (
-  <Button colorScheme={row.original.getFieldset().active ? "red" : "whiteAlpha"}>
-    <StoreIcon />
-    {row.original.getFieldset().active ? "○" : "×"}
-  </Button>
-);
+const ShopCountButton: CellComponent<Item> = ({ row }) => {
+  const { original, index } = row;
+  const field = original.getFieldset();
+  const maxPoint = 7000; // TODO
+  const tax = 1.1; // TODO
+
+  const buttonDescription = field.active
+    ? `${index + 1}行目を計算から除外`
+    : `${index + 1}行目を計算に反映`;
+
+  const magnification = index < 10 ? index + 1 : 10;
+
+  const result = useMemo(() => {
+    const maxPointPerIndex = index < 9 ? maxPoint / index / 100 : maxPoint / 9 / 100;
+    const result = Math.floor(Math.round(maxPointPerIndex * tax * 100) * 100);
+    return result === Number.POSITIVE_INFINITY ? "上限なし" : `${result}円`;
+  }, [index, maxPoint, tax]);
+
+  const label = `${magnification}倍 ${result}`;
+
+  const handleClick = useCallback(() => {
+    field.active.toggle();
+  }, [field.active]);
+
+  return (
+    <Button
+      colorScheme={field.active ? "red" : "whiteAlpha"}
+      aria-label={buttonDescription}
+      title={buttonDescription}
+      w="full"
+      px={2}
+    >
+      <StoreIcon />
+      {label}
+      <VisuallyHidden>
+        <CheckboxField name={field.active.name} />
+      </VisuallyHidden>
+    </Button>
+  );
+};
 
 const NameField: CellComponent<Item> = ({ row }) => {
   const field = row.original.getFieldset();
@@ -34,7 +76,7 @@ const PriceField: CellComponent<Item> = ({ row }) => {
 
 const TaxRateField: CellComponent<Item> = ({ row }) => {
   const field = row.original.getFieldset();
-  return <NumberField name={field.taxRate.name} />;
+  return <SelectField name={field.taxRate.name} options={taxRateMap} />;
 };
 
 const AdditionalRateField: CellComponent<Item> = ({ row }) => {
@@ -66,7 +108,7 @@ const TotalRateDisplay: CellComponent<Item> = ({ table }) => {
 
 const DeleteButton: CellComponent<Item> = ({ table, row }) => {
   const handleClick = useCallback(() => table.options.meta?.remove?.(row.index), [table, row]);
-  return <IconButton onClick={handleClick} icon={<XIcon />} colorScheme="danger" />;
+  return <IconButton onClick={handleClick} icon={<TrashIcon />} colorScheme="danger" />;
 };
 
 /* Footer Components */
@@ -75,7 +117,11 @@ type HeaderComponent<T> = FC<HeaderContext<FieldMetadata<T>, Operation<T>>>;
 const AddRowButton: HeaderComponent<Item> = ({ table }) => {
   const id = window.btoa(crypto.randomUUID());
   const handleClick = useCallback(() => table.options.meta?.add?.({ id }), [table]);
-  return <Button onClick={handleClick}>追加</Button>;
+  return (
+    <Button onClick={handleClick} startIcon={<ListPlusIcon fontSize="2xl" />} w="full">
+      行追加
+    </Button>
+  );
 };
 
 const TotalPointDisplay: HeaderComponent<Item> = ({ table }) => {
@@ -92,6 +138,26 @@ const TotalPointDisplay: HeaderComponent<Item> = ({ table }) => {
 const AddAdditionalRateButton: HeaderComponent<Item> = ({ table }) => {
   const handleClick = useCallback(() => table.options.meta?.add?.(), [table]);
   return <Button onClick={handleClick}>追加</Button>;
+};
+
+const ResetButton: HeaderComponent<Item> = ({ table }) => {
+  const dialogRef = useRef<ComponentRef<typeof ConfirmDialog>>(null);
+  const handleClick = useCallback(async () => {
+    const isConfirm = await dialogRef.current?.confirm();
+    if (!isConfirm) return;
+    table.options.meta?.reset?.();
+  }, []);
+  return (
+    <>
+      <Button onClick={handleClick} startIcon={<RotateCcwIcon />} colorScheme="danger">
+        リセット
+      </Button>
+      <ConfirmDialog ref={dialogRef} cancelText="キャンセル">
+        <Text>テーブルのすべての入力値を初期化します。</Text>
+        <Text>よろしいですか？</Text>
+      </ConfirmDialog>
+    </>
+  );
 };
 
 /** Form操作用関数をまとめたオブジェクトへの安定した参照を提供する */
@@ -124,6 +190,7 @@ export const CalcTable: FC<{ form: FormMetadata<SPUEvent>; field: FieldMetadata<
     () => [
       {
         id: "active",
+
         columns: [
           { header: "並び替え", cell: DragHandle },
           { header: "購入カウント", cell: ShopCountButton },
@@ -150,8 +217,14 @@ export const CalcTable: FC<{ form: FormMetadata<SPUEvent>; field: FieldMetadata<
       // },
       { header: "合計ポイント", cell: TotalRowPointDisplay },
       { header: "合計倍率", cell: TotalRateDisplay },
-      { header: "詳細", cell: DetailButton },
-      { header: "削除", cell: DeleteButton },
+      {
+        id: "button-group",
+        columns: [
+          { header: "詳細", cell: DetailButton },
+          { header: "削除", cell: DeleteButton },
+        ],
+        footer: ResetButton,
+      },
     ],
     [],
   );

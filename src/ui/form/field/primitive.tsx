@@ -54,10 +54,15 @@ export const TextareaField: FC<FieldProps<string> & ComponentProps<typeof Input>
  * チェックボックス
  * @param props - input要素のprops
  */
-export const CheckboxField: FC<FieldProps<string> & ComponentProps<typeof Checkbox>> = ({
+export const CheckboxField: FC<FieldProps<boolean> & ComponentProps<typeof Checkbox>> = ({
   name,
+  label,
   ...props
 }) => {
   const [fieldMeta] = useField(name);
-  return <Checkbox {...props} {...getInputProps(fieldMeta, { type: "checkbox" })} />;
+  return (
+    <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
+      <Checkbox {...props} {...getInputProps(fieldMeta, { type: "checkbox" })} />
+    </CustomFormControl>
+  );
 };
