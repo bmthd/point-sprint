@@ -2,115 +2,166 @@
 import { NumberField, TextField } from "@/ui/form";
 import { Operation } from "@/ui/table";
 import { FieldMetadata, FormMetadata } from "@conform-to/react";
-import { GripVerticalIcon, PlusIcon, StoreIcon } from "@yamada-ui/lucide";
+import { GripVerticalIcon, StoreIcon, XIcon } from "@yamada-ui/lucide";
 import { Button, IconButton, Input } from "@yamada-ui/react";
-import { CellContext, Column, Table } from "@yamada-ui/table";
-import { FC, useMemo } from "react";
+import { CellContext, Column, HeaderContext, Table, TableMeta } from "@yamada-ui/table";
+import { FC, useCallback, useMemo } from "react";
 import { Item, SPUEvent } from "../../../schema";
 import { DetailButton } from "./detail-button";
 
-const DeleteButton: FC<CellContext<FieldMetadata<Item>, Operation>> = ({ table, row }) => (
-  <Button onClick={() => table.options.meta?.remove?.(row.index)} colorScheme="danger">
-    削除
-  </Button>
-);
+/* Row Components */
 
-const ShopCountButton: FC<CellContext<FieldMetadata<Item>, Operation>> = ({ row }) => (
+type CellComponent<T> = FC<CellContext<FieldMetadata<T>, Operation<T>>>;
+
+const DragHandle: FC = () => <IconButton icon={<GripVerticalIcon />} colorScheme="gray" p={0} />;
+
+const ShopCountButton: CellComponent<Item> = ({ row }) => (
   <Button colorScheme={row.original.getFieldset().active ? "red" : "whiteAlpha"}>
     <StoreIcon />
     {row.original.getFieldset().active ? "○" : "×"}
   </Button>
 );
 
-const DragHandle: FC = () => <IconButton icon={<GripVerticalIcon />} colorScheme="gray" p={0} />;
+const NameField: CellComponent<Item> = ({ row }) => {
+  const field = row.original.getFieldset();
+  return <TextField name={field.name.name} />;
+};
 
-type HeaderContext<T, U> = CellContext<T, U>;
+const PriceField: CellComponent<Item> = ({ row }) => {
+  const field = row.original.getFieldset();
+  return <NumberField name={field.price.name} />;
+};
 
-const AddRowButton: FC<HeaderContext<FieldMetadata<Item>, Operation>> = ({ table }) => (
-  <Button onClick={table.options.meta?.add}>追加</Button>
-);
+const TaxRateField: CellComponent<Item> = ({ row }) => {
+  const field = row.original.getFieldset();
+  return <NumberField name={field.taxRate.name} />;
+};
 
-const NameField: FC<CellContext<FieldMetadata<Item>, Operation>> = ({ row }) => (
-  <TextField name={row.original.getFieldset().name.name} />
-);
+const AdditionalRateField: CellComponent<Item> = ({ row }) => {
+  const field = row.original.getFieldset();
+  return <NumberField name={field.additionalRate.name} />;
+};
 
-const PriceField: FC<CellContext<FieldMetadata<Item>, Operation>> = ({ row }) => (
-  <NumberField name={row.original.getFieldset().price.name} />
-);
+const TotalRowPointDisplay: CellComponent<Item> = ({ table }) => {
+  const total = useMemo(() => {
+    const data = table.options.data;
+    return data.reduce((acc, row) => {
+      const field = row.getFieldset();
+      return acc + 0;
+    }, 0);
+  }, [table]);
+  return <Input value={total} readOnly />;
+};
 
-const TaxRateField: FC<CellContext<FieldMetadata<Item>, Operation>> = ({ row }) => (
-  <NumberField name={row.original.getFieldset().taxRate.name} />
-);
+const TotalRateDisplay: CellComponent<Item> = ({ table }) => {
+  const total = useMemo(() => {
+    const data = table.options.data;
+    return data.reduce((acc, row) => {
+      const field = row.getFieldset();
+      return acc + 0;
+    }, 0);
+  }, [table]);
+  return <Input value={total} readOnly />;
+};
 
-const AdditionalRateField: FC<CellContext<FieldMetadata<Item>, Operation>> = ({ row }) => (
-  <NumberField name={row.original.getFieldset().additionalRate.name} />
-);
+const DeleteButton: CellComponent<Item> = ({ table, row }) => {
+  const handleClick = useCallback(() => table.options.meta?.remove?.(row.index), [table, row]);
+  return <IconButton onClick={handleClick} icon={<XIcon />} colorScheme="danger" />;
+};
+
+/* Footer Components */
+type HeaderComponent<T> = FC<HeaderContext<FieldMetadata<T>, Operation<T>>>;
+
+const AddRowButton: HeaderComponent<Item> = ({ table }) => {
+  const id = window.btoa(crypto.randomUUID());
+  const handleClick = useCallback(() => table.options.meta?.add?.({ id }), [table]);
+  return <Button onClick={handleClick}>追加</Button>;
+};
+
+const TotalPointDisplay: HeaderComponent<Item> = ({ table }) => {
+  const total = useMemo(() => {
+    const data = table.options.data;
+    return data.reduce((acc, row) => {
+      const field = row.getFieldset();
+      return acc + 0;
+    }, 0);
+  }, [table]);
+  return <Input value={total} readOnly />;
+};
+
+const AddAdditionalRateButton: HeaderComponent<Item> = ({ table }) => {
+  const handleClick = useCallback(() => table.options.meta?.add?.(), [table]);
+  return <Button onClick={handleClick}>追加</Button>;
+};
+
+/** Form操作用関数をまとめたオブジェクトへの安定した参照を提供する */
+const useOperations = ({
+  form,
+  field,
+}: { form: FormMetadata<SPUEvent>; field: FieldMetadata<Item[]> }): TableMeta<
+  FieldMetadata<Item>
+> => {
+  const add = useCallback(
+    (item?: Partial<Item>) => form.insert({ name: field.name, defaultValue: item }),
+    [form, field],
+  );
+  const remove = useCallback(
+    (index: number) => form.remove({ index, name: field.name }),
+    [form, field],
+  );
+  const save = useCallback(() => {}, []);
+  const move = useCallback((from: number, to: number) => {}, []);
+  return useMemo(() => ({ add, remove, save, move }), [add, remove, save, move]);
+};
 
 export const CalcTable: FC<{ form: FormMetadata<SPUEvent>; field: FieldMetadata<Item[]> }> = ({
   form,
   field,
 }) => {
-  const operations = {
-    add: () => form.insert({ name: field.name }),
-    remove: (index: number) => form.remove({ index, name: field.name }),
-    save: () => {},
-  } satisfies Operation;
+  const data = useMemo(() => field.getFieldList(), [field]);
 
-  const data = field.getFieldList();
-
-  const columns = useMemo<Column<FieldMetadata<Item>, Operation>[]>(
+  const columns = useMemo<Column<FieldMetadata<Item>, Operation<Item>>[]>(
     () => [
       {
         id: "active",
         columns: [
           { header: "並び替え", cell: DragHandle },
-          {
-            header: "購入カウント",
-            cell: ShopCountButton,
-          },
+          { header: "購入カウント", cell: ShopCountButton },
         ],
         footer: AddRowButton,
       },
       {
         id: "input-group",
         columns: [
-          {
-            header: "商品名",
-            cell: NameField,
-          },
-          {
-            header: "価格",
-            cell: PriceField,
-          },
-          {
-            header: "税率",
-            cell: TaxRateField,
-          },
+          { header: "商品名", cell: NameField },
+          { header: "価格", cell: PriceField },
+          { header: "税率", cell: TaxRateField },
         ],
-        footer: () => <Input readOnly>合計</Input>,
+        footer: TotalPointDisplay,
       },
       {
         header: "追加還元",
         cell: AdditionalRateField,
-        footer: () => <IconButton icon={<PlusIcon />} />,
+        footer: AddAdditionalRateButton,
       },
-      {
-        header: "キャンペーン",
-        // cell: ({ row }) => <Box>{Object.keys(row.original.getFieldset().campaigns).join(",")}</Box>,
-      },
-      { header: "合計倍率", cell: () => <Input readOnly /> },
+      // {
+      //   header: "キャンペーン",
+      //   // cell: ({ row }) => <Box>{Object.keys(row.original.getFieldset().campaigns).join(",")}</Box>,
+      // },
+      { header: "合計ポイント", cell: TotalRowPointDisplay },
+      { header: "合計倍率", cell: TotalRateDisplay },
       { header: "詳細", cell: DetailButton },
-      {
-        header: "削除",
-        cell: DeleteButton,
-      },
+      { header: "削除", cell: DeleteButton },
     ],
     [],
   );
+
+  const meta = useOperations({ form, field });
+
   return (
     <Table
-      {...{ data, columns }}
-      meta={operations}
+      {...{ data, columns, meta }}
+      withFooter
       enableRowSelection={false}
       headerProps={{ bg: "brand", textColor: "white" }}
       bg="white"

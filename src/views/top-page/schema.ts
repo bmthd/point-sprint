@@ -1,6 +1,7 @@
 import * as v from "valibot";
 
 const itemSchema = v.object({
+  id: v.string(),
   active: v.boolean(),
   name: v.string(),
   price: v.fallback(v.pipe(v.number(), v.minValue(0)), 0),
