@@ -10,7 +10,7 @@ import {
   Textarea,
   VisuallyHidden,
 } from "@yamada-ui/react";
-import { type ComponentProps, type FC } from "react";
+import { type ComponentProps, type FC, JSX } from "react";
 import { CustomFormControl } from "./form-control";
 import { FieldProps } from "./types";
 import { getFieldErrorProps } from "./utils";
@@ -23,8 +23,8 @@ export const TextField: FC<FieldProps<string> & ComponentProps<typeof Input>> = 
   name = "",
   label,
   ...props
-}) => {
-  const [fieldMeta] = useField(name);
+}): JSX.Element => {
+  const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
       <Input {...props} {...getInputProps(fieldMeta, { type: "text" })} />
@@ -32,14 +32,15 @@ export const TextField: FC<FieldProps<string> & ComponentProps<typeof Input>> = 
   );
 };
 
-export const NumberField: FC<FieldProps<number> & ComponentProps<typeof Input>> = ({
+export const NumberField: FC<FieldProps<number> & ComponentProps<typeof NumberInput>> = ({
   name,
   label,
   ...props
-}) => {
+}): JSX.Element => {
   const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
+      {/* @ts-expect-error max type not match */}
       <NumberInput {...props} {...getInputProps(fieldMeta, { type: "number" })} />
     </CustomFormControl>
   );
@@ -49,11 +50,11 @@ export const TextareaField: FC<FieldProps<string> & ComponentProps<typeof Textar
   name,
   label,
   ...props
-}) => {
+}): JSX.Element => {
   const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
-      <Textarea {...props} {...getInputProps(fieldMeta, { type: "textarea" })} />
+      <Textarea {...props} {...getInputProps(fieldMeta, { type: "text" })} />
     </CustomFormControl>
   );
 };
@@ -66,7 +67,7 @@ export const CheckboxField: FC<FieldProps<boolean> & ComponentProps<typeof Check
   name,
   label,
   ...props
-}) => {
+}): JSX.Element => {
   const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
@@ -79,7 +80,7 @@ export const CustomSwitchField: FC<FieldProps<boolean> & ComponentProps<typeof S
   name,
   children,
   ...props
-}) => {
+}): JSX.Element => {
   const [fieldMeta] = useField(name!);
   return (
     <Label>

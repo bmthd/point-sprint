@@ -1,9 +1,8 @@
 "use client";
 import { FormProvider, getFormProps, useForm } from "@conform-to/react";
 import { getValibotConstraint, parseWithValibot } from "conform-to-valibot";
-import NextForm from "next/form";
-import { ReactNode, type ComponentProps } from "react";
-import { object, type GenericSchema } from "valibot";
+import { JSX, ReactNode, type ComponentProps } from "react";
+import { type GenericSchema } from "valibot";
 
 type UseFormReturn<T extends Record<string, unknown>> = ReturnType<typeof useForm<T, T, string[]>>;
 
@@ -38,30 +37,29 @@ const useCustomForm = <T extends Record<string, unknown>>(
   return { form, field };
 };
 
+type FormProps<T extends Record<string, unknown>> = {
+  schema?: GenericSchema<T>;
+  options?: Parameters<typeof useForm<T>>[0];
+  children?: ((props: FormMeta<T>) => ReactNode) | ReactNode;
+} & Omit<ComponentProps<'form'>, keyof ReturnType<typeof getFormProps> | "children" | "defaultValue">;
+
 /**
  * Conformの機能を統合したFormコンポーネント
  * schemaに渡されたバリデーションスキーマを元にフォームの入力欄meta情報をchildrenに渡す
  */
 export const Form = <T extends Record<string, unknown>>({
-  schema = object({}) as unknown as GenericSchema<T>,
+  schema,
   options,
   children,
   ...props
-}: {
-  schema?: GenericSchema<T>;
-  options?: Parameters<typeof useForm<T, T, string[]>>[0];
-  children?: ((props: FormMeta<T>) => ReactNode) | ReactNode;
-} & Omit<
-  Partial<ComponentProps<typeof NextForm>>,
-  keyof ReturnType<typeof getFormProps> | "children" | "defaultValue"
->) => {
-  const { form, field } = useCustomForm(schema, options);
+}: FormProps<T>): JSX.Element => {
+  const { form, field } = useCustomForm(schema ?? ({} as GenericSchema<T>), options);
+
   return (
     <FormProvider context={form.context}>
-      {/* @ts-expect-error actionをオプショナルにしたいため */}
-      <NextForm {...props} {...getFormProps(form)}>
+      <form {...props} {...getFormProps(form)}>
         {typeof children === "function" ? children({ form, field }) : children}
-      </NextForm>
+      </form>
     </FormProvider>
   );
 };

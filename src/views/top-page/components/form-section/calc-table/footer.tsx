@@ -1,8 +1,8 @@
-import { FC, useCallback, useMemo, useRef,ComponentRef } from 'react';
-import { Button, Input, Text } from '@yamada-ui/react';
-import { ListPlusIcon, RotateCcwIcon } from '@yamada-ui/lucide';
-import { Item, initializeItem } from '../../../schema';
-import { ConfirmDialog } from '@/ui/dialog';
+import { FC, useCallback, useMemo, useRef, ComponentRef } from "react";
+import { Button, Input, Text } from "@yamada-ui/react";
+import { ListPlusIcon, RotateCcwIcon } from "@yamada-ui/lucide";
+import { Item, initializeItem } from "../../../schema";
+import { ConfirmDialog } from "@/ui/dialog";
 
 /* Footer Components */
 type HeaderComponent<T> = FC<HeaderContext<FieldMetadata<T>, Operation<T>>>;

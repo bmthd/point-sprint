@@ -91,7 +91,9 @@ export const CalcTable: FC<{ form: FormMetadata<SPUEvent>; field: FieldMetadata<
   const meta = useOperations({ form, field });
 
   const rowProps = useCallback(
-    (row: Row<FieldMetadata<Item>>) => ({ disabled: !row.original.getFieldset().active.value }),
+    (row: Row<FieldMetadata<Item>>) => ({ 
+      // disabled: !row.original.getFieldset().active.value
+     }),
     [],
   );
 
@@ -102,6 +104,7 @@ export const CalcTable: FC<{ form: FormMetadata<SPUEvent>; field: FieldMetadata<
       enableRowSelection={false}
       headerProps={{ bg: "brand", textColor: "white" }}
       bg="white"
+      size="sm"
     />
   );
 };

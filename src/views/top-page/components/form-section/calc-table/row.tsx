@@ -1,22 +1,24 @@
 import { ConfirmDialog } from "@/ui/dialog";
-import { CustomSwitchField, NumberField, SelectField, TextField } from "@/ui/form";
+import { CustomSwitchField, NumberField, NumberSelectField, TextField } from "@/ui/form";
 import { Operation } from "@/ui/table";
+import { taxRateMap } from "@/views/top-page/const";
 import { FieldMetadata } from "@conform-to/react";
 import { EllipsisIcon, GripVerticalIcon, StoreIcon, TrashIcon } from "@yamada-ui/lucide";
 import { Button, IconButton, Input } from "@yamada-ui/react";
 import { CellContext } from "@yamada-ui/table";
 import { ComponentRef, FC, useCallback, useMemo, useRef } from "react";
 import { Item } from "../../../schema";
-import { taxRateMap } from "@/views/top-page/const";
 
 /* Row Components */
 
 type CellComponent<T> = FC<CellContext<FieldMetadata<T>, Operation<T>>>;
 
+/** ドラッグ用のつまみ */
 export const DragHandle: FC = () => (
-  <IconButton icon={<GripVerticalIcon />} colorScheme="gray" p={0} />
+  <IconButton icon={<GripVerticalIcon />} colorScheme="gray" p={0} h="full" h="" />
 );
 
+/** 購入店舗数毎のポイントの視覚化と行の計算ロジックへの反映を行うボタン */
 export const ShopCountButton: CellComponent<Item> = ({ row }) => {
   const { original, index } = row;
   const field = original.getFieldset();
@@ -54,26 +56,31 @@ export const ShopCountButton: CellComponent<Item> = ({ row }) => {
   );
 };
 
+/** 商品名入力欄 */
 export const NameField: CellComponent<Item> = ({ row }) => {
   const field = row.original.getFieldset();
   return <TextField name={field.name.name} />;
 };
 
+/** 価格入力欄 */
 export const PriceField: CellComponent<Item> = ({ row }) => {
   const field = row.original.getFieldset();
   return <NumberField name={field.price.name} />;
 };
 
+/** 消費税率選択欄 */
 export const TaxRateField: CellComponent<Item> = ({ row }) => {
   const field = row.original.getFieldset();
-  return <SelectField name={field.taxRate.name} options={taxRateMap} />;
+  return <NumberSelectField name={field.taxRate.name} items={taxRateMap} />;
 };
 
+/** 追加のポイント還元率入力欄 */
 export const AdditionalRateField: CellComponent<Item> = ({ row }) => {
   const field = row.original.getFieldset();
   return <NumberField name={field.additionalRate.name} />;
 };
 
+/** 行の合計還元ポイント表示 */
 export const TotalRowPointDisplay: CellComponent<Item> = ({ table }) => {
   const total = useMemo(() => {
     const data = table.options.data;
@@ -85,6 +92,7 @@ export const TotalRowPointDisplay: CellComponent<Item> = ({ table }) => {
   return <Input value={total} readOnly />;
 };
 
+/** 行の合計還元倍率表示 */
 export const TotalRateDisplay: CellComponent<Item> = ({ table }) => {
   const total = useMemo(() => {
     const data = table.options.data;
@@ -96,6 +104,7 @@ export const TotalRateDisplay: CellComponent<Item> = ({ table }) => {
   return <Input value={total} readOnly />;
 };
 
+/** 行の詳細表示ボタン */
 export const DetailButton: FC<CellContext<FieldMetadata<Item>, Operation<Item>>> = () => {
   const dialogRef = useRef<ComponentRef<typeof ConfirmDialog>>(null);
   const handleClick = useCallback(async () => {
@@ -111,6 +120,7 @@ export const DetailButton: FC<CellContext<FieldMetadata<Item>, Operation<Item>>>
   );
 };
 
+/** 行の削除ボタン */
 export const DeleteButton: CellComponent<Item> = ({ table, row }) => {
   const handleClick = useCallback(() => table.options.meta?.remove?.(row.index), [table, row]);
   return <IconButton onClick={handleClick} icon={<TrashIcon />} colorScheme="danger" />;

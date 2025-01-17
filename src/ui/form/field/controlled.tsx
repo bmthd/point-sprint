@@ -11,7 +11,28 @@ export const SelectField: FC<FieldProps<string> & ComponentProps<typeof Select>>
   ...props
 }) => {
   const [fieldMeta] = useField(name!);
-  const { value, change, blur, focus } = useInputControl<string>(name);
+  const { value, change, blur, focus } = useInputControl<string>(name!);
+  return (
+    <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
+      <Select
+        value={value}
+        onChange={change}
+        onBlur={blur}
+        onFocus={focus}
+        {...props}
+        {...getSelectProps(fieldMeta)}
+      />
+    </CustomFormControl>
+  );
+};
+
+export const NumberSelectField: FC<FieldProps<number> & ComponentProps<typeof Select>> = ({
+  name,
+  label,
+  ...props
+}) => {
+  const [fieldMeta] = useField(name!);
+  const { value, change, blur, focus } = useInputControl<number>(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
       <Select
