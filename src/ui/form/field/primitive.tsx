@@ -27,7 +27,7 @@ export const TextField: FC<FieldProps<string> & ComponentProps<typeof Input>> = 
   const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
-      <Input {...props} {...getInputProps(fieldMeta, { type: "text" })} />
+      <Input {...props} {...getInputProps(fieldMeta, { type: "text" })} key={fieldMeta.key} />
     </CustomFormControl>
   );
 };
@@ -41,7 +41,7 @@ export const NumberField: FC<FieldProps<number> & ComponentProps<typeof NumberIn
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
       {/* @ts-expect-error max type not match */}
-      <NumberInput {...props} {...getInputProps(fieldMeta, { type: "number" })} />
+      <NumberInput {...props} {...getInputProps(fieldMeta, { type: "number" })} key={fieldMeta.key}  />
     </CustomFormControl>
   );
 };
@@ -54,7 +54,7 @@ export const TextareaField: FC<FieldProps<string> & ComponentProps<typeof Textar
   const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
-      <Textarea {...props} {...getInputProps(fieldMeta, { type: "text" })} />
+      <Textarea {...props} {...getTextareaProps(fieldMeta)} key={fieldMeta.key} />
     </CustomFormControl>
   );
 };
@@ -71,7 +71,7 @@ export const CheckboxField: FC<FieldProps<boolean> & ComponentProps<typeof Check
   const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
-      <Checkbox {...props} {...getInputProps(fieldMeta, { type: "checkbox" })} />
+      <Checkbox {...props} {...getInputProps(fieldMeta, { type: "checkbox" })} key={fieldMeta.key} />
     </CustomFormControl>
   );
 };
@@ -85,7 +85,7 @@ export const CustomSwitchField: FC<FieldProps<boolean> & ComponentProps<typeof S
   return (
     <Label>
       <VisuallyHidden>
-        <Switch {...props} {...getInputProps(fieldMeta, { type: "checkbox" })} />
+        <Switch {...props} {...getInputProps(fieldMeta, { type: "checkbox" })} key={fieldMeta.key}  />
       </VisuallyHidden>
       {children}
     </Label>
