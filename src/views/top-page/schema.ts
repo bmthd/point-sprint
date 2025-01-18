@@ -1,39 +1,51 @@
 import * as v from "valibot";
+import { SPU_DEF } from "./const/spu";
 
 const itemSchema = v.object({
   id: v.string(),
-  active: v.boolean(),
-  name: v.string(),
-  price: v.fallback(v.pipe(v.number(), v.minValue(0)), 0),
-  taxRate: v.number(),
-  additionalRate: v.number(),
-  campaigns: v.record(v.string(), v.boolean()),
-  sameStore: v.boolean(),
-});
-
-const spuSchema = v.object({
-  name: v.string(),
-  rate: v.number(),
-  checked: v.boolean(),
+  active: v.fallback(v.boolean(), true),
+  name: v.optional(v.string()),
+  price: v.optional(v.pipe(v.number(), v.minValue(0)), 0),
+  taxRate: v.fallback(v.pipe(v.number(), v.minValue(0)), 1),
+  additionalRate: v.optional(v.pipe(v.number(), v.minValue(0)), 0),
+  // campaigns: v.record(v.string(), v.boolean()),
+  sameStore: v.fallback(v.boolean(), false),
 });
 
 export const spuEventSchema = v.object({
   items: v.array(itemSchema),
-  spuButtons: v.record(v.string(), spuSchema),
+  spu: v.record(v.string(), v.boolean()),
   maxPoint: v.number(),
 });
 
-export type SPUEvent = v.InferOutput<typeof spuEventSchema>;
+export type SPUEventInput = v.InferInput<typeof spuEventSchema>;
+export type SPUEventOutput = v.InferOutput<typeof spuEventSchema>;
 
 export type Item = v.InferInput<typeof itemSchema>;
 
 export const initializeItem = (): Item => ({
   id: btoa(crypto.randomUUID()),
   active: true,
-  name: "",
-  price: 0,
-  taxRate: 0,
-  additionalRate: 0,
-  campaigns: {},
+  taxRate: 1.1,
+  // campaigns: {},
   sameStore: false,
+});
+
+export const initializeItems = (length: number): Item[] =>
+  Array.from({ length }).map(() => initializeItem());
+
+const initializeSPU = (): Record<string, boolean> => {
+  return SPU_DEF.reduce(
+    (acc, spu) => {
+      acc[spu.id] = false;
+      return acc;
+    },
+    {} as Record<string, boolean>,
+  );
+};
+
+export const initializeSPUEventForm = (): SPUEventInput => ({
+  items: initializeItems(10),
+  maxPoint: 7000,
+  spu: initializeSPU(),
 });

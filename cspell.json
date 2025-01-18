@@ -2,7 +2,10 @@
   "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
   "version": "0.2",
   "language": "en",
-  "ignorePaths": ["**.gen.ts", "pnpm-lock.yaml"],
+  "ignorePaths": [
+    "**.gen.ts",
+    "pnpm-lock.yaml"
+  ],
   "allowCompoundWords": true,
   "words": [
     "adsbygoogle",
@@ -17,7 +20,9 @@
     "happydom",
     "hikari",
     "lockb",
+    "mobily",
     "Noto",
+    "numberish",
     "nums",
     "pangea",
     "rakuten",

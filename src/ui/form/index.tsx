@@ -6,7 +6,7 @@ import { type GenericSchema } from "valibot";
 
 type UseFormReturn<T extends Record<string, unknown>> = ReturnType<typeof useForm<T, T, string[]>>;
 
-export type FormMeta<T extends Record<string, unknown>> = {
+type FormMeta<T extends Record<string, unknown>> = {
   form: UseFormReturn<T>[0];
   field: UseFormReturn<T>[1];
 };

@@ -1,5 +1,7 @@
-import { TextField } from "@/ui/form";
+import { NumberField } from "@/ui/form";
 import { H } from "@/ui/structure/h";
+import { SPUEventInput } from "@/views/top-page/schema";
+import { FieldMetadata } from "@conform-to/react";
 import { CircleHelpIcon } from "@yamada-ui/lucide";
 import {
   Card,
@@ -18,7 +20,9 @@ const items: SegmentedControlItem[] = [
   { label: "お買い物マラソン", value: "5000" },
 ];
 
-export const MaxPointForm: FC = () => {
+export const MaxPointForm: FC<{ field: FieldMetadata<SPUEventInput["maxPoint"]> }> = ({
+  field,
+}) => {
   return (
     <Container as={Card}>
       <CardHeader>
@@ -31,7 +35,7 @@ export const MaxPointForm: FC = () => {
       </CardHeader>
       <CardBody>
         <SegmentedControl items={items}></SegmentedControl>
-        <TextField label="買い回り還元上限" placeholder="0" />
+        <NumberField name={field.name} label="買い回り還元上限" stepper={false} />
       </CardBody>
     </Container>
   );

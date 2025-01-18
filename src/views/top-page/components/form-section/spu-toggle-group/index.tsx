@@ -1,11 +1,15 @@
 import { CountDisplay } from "@/ui/count-display";
+import { CustomSwitchField } from "@/ui/form";
 import { H } from "@/ui/structure/h";
+import { SPUEventInput } from "@/views/top-page/schema";
+import { FieldMetadata } from "@conform-to/react";
 import { CircleHelpIcon } from "@yamada-ui/lucide";
 import {
   Card,
   CardBody,
   CardHeader,
   Container,
+  For,
   Grid,
   HStack,
   Link,
@@ -13,7 +17,8 @@ import {
 } from "@yamada-ui/react";
 import { FC } from "react";
 
-export const SPUToggleGroup: FC = () => {
+export const SPUToggleGroup: FC<{ field: FieldMetadata<SPUEventInput["spu"]> }> = ({ field }) => {
+  const fields = Object.entries(field.getFieldset());
   return (
     <Card as={Container}>
       <CardHeader>
@@ -35,7 +40,15 @@ export const SPUToggleGroup: FC = () => {
             楽天であなたのSPU還元率を確認
           </Link>
         </HStack>
-        <Grid templateColumns="repeat(2, 1fr)" gap={4}></Grid>
+        <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+          <For each={fields}>
+            {([key, field]) => (
+              <CustomSwitchField key={key} name={field.name}>
+                {/* {SPU_DEF[key].name} */}
+              </CustomSwitchField>
+            )}
+          </For>
+        </Grid>
       </CardBody>
     </Card>
   );

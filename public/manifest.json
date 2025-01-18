@@ -1,0 +1,15 @@
+{
+  "name": "ポイントスプリント",
+  "short_name": "ポイントスプリント",
+  "theme_color": "#bf0000",
+  "background_color": "#f3f4f6",
+  "display": "standalone",
+  "start_url": "./",
+  "icons": [
+    {
+      "src": "./img/favicon.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    }
+  ]
+}
