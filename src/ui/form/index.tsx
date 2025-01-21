@@ -41,7 +41,10 @@ type FormProps<T extends Record<string, unknown>> = {
   schema?: GenericSchema<T>;
   options?: Parameters<typeof useForm<T>>[0];
   children?: ((props: FormMeta<T>) => ReactNode) | ReactNode;
-} & Omit<ComponentProps<'form'>, keyof ReturnType<typeof getFormProps> | "children" | "defaultValue">;
+} & Omit<
+  ComponentProps<"form">,
+  keyof ReturnType<typeof getFormProps> | "children" | "defaultValue"
+>;
 
 /**
  * Conformの機能を統合したFormコンポーネント

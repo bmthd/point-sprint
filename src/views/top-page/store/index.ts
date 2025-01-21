@@ -1,3 +1,4 @@
+"use client";
 import * as LOCAL_STORAGE from "@/const/local-storage";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import * as v from "valibot";

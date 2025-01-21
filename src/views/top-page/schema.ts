@@ -1,3 +1,4 @@
+import { D, pipe } from "@mobily/ts-belt";
 import * as v from "valibot";
 import { SPU_DEF } from "./const/spu";
 
@@ -34,15 +35,11 @@ export const initializeItem = (): Item => ({
 export const initializeItems = (length: number): Item[] =>
   Array.from({ length }).map(() => initializeItem());
 
-const initializeSPU = (): Record<string, boolean> => {
-  return SPU_DEF.reduce(
-    (acc, spu) => {
-      acc[spu.id] = false;
-      return acc;
-    },
-    {} as Record<string, boolean>,
+const initializeSPU = (): Record<string, boolean> =>
+  pipe(
+    SPU_DEF,
+    D.map(() => false),
   );
-};
 
 export const initializeSPUEventForm = (): SPUEventInput => ({
   items: initializeItems(10),

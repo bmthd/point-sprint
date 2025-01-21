@@ -14,5 +14,5 @@ export const getFieldErrorProps = <Schema>(
     errorMessage,
     isInvalid: Boolean(errors),
     isRequired,
-  } as const satisfies FormControlProps
+  } as const satisfies FormControlProps;
 };

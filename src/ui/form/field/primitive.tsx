@@ -1,6 +1,6 @@
 "use client";
 
-import { getInputProps, useField } from "@conform-to/react";
+import { getInputProps, getTextareaProps, useField } from "@conform-to/react";
 import {
   Checkbox,
   Input,
@@ -41,7 +41,11 @@ export const NumberField: FC<FieldProps<number> & ComponentProps<typeof NumberIn
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
       {/* @ts-expect-error max type not match */}
-      <NumberInput {...props} {...getInputProps(fieldMeta, { type: "number" })} key={fieldMeta.key}  />
+      <NumberInput
+        {...props}
+        {...getInputProps(fieldMeta, { type: "number" })}
+        key={fieldMeta.key}
+      />
     </CustomFormControl>
   );
 };
@@ -54,7 +58,7 @@ export const TextareaField: FC<FieldProps<string> & ComponentProps<typeof Textar
   const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
-      <Textarea {...props} {...getTextareaProps(fieldMeta)} key={fieldMeta.key} />
+      <Textarea {...props} {...getTextareaProps(fieldMeta)} key={fieldMeta.key} resize="vertical" />
     </CustomFormControl>
   );
 };
@@ -71,7 +75,11 @@ export const CheckboxField: FC<FieldProps<boolean> & ComponentProps<typeof Check
   const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
-      <Checkbox {...props} {...getInputProps(fieldMeta, { type: "checkbox" })} key={fieldMeta.key} />
+      <Checkbox
+        {...props}
+        {...getInputProps(fieldMeta, { type: "checkbox" })}
+        key={fieldMeta.key}
+      />
     </CustomFormControl>
   );
 };
@@ -85,7 +93,11 @@ export const CustomSwitchField: FC<FieldProps<boolean> & ComponentProps<typeof S
   return (
     <Label>
       <VisuallyHidden>
-        <Switch {...props} {...getInputProps(fieldMeta, { type: "checkbox" })} key={fieldMeta.key}  />
+        <Switch
+          {...props}
+          {...getInputProps(fieldMeta, { type: "checkbox" })}
+          key={fieldMeta.key}
+        />
       </VisuallyHidden>
       {children}
     </Label>
