@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
+export default {
   compiler: { emotion: true },
   reactStrictMode: true,
   /* config options here */
@@ -9,6 +9,4 @@ const nextConfig: NextConfig = {
     typedEnv: true,
     // typedRoutes: true,
   },
-};
-
-export default nextConfig;
+} satisfies NextConfig;
