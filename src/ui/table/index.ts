@@ -20,10 +20,6 @@ export interface Operation<T> {
    */
   reset?: () => void;
   /**
-   * テーブルの行を永続化する
-   */
-  save?: () => void;
-  /**
    * テーブルの行を移動する
    * @param from 移動元のインデックス
    * @param to 移動先のインデックス

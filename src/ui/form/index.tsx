@@ -4,11 +4,14 @@ import { getValibotConstraint, parseWithValibot } from "conform-to-valibot";
 import { JSX, ReactNode, type ComponentProps } from "react";
 import { type GenericSchema } from "valibot";
 
-type UseFormReturn<T extends Record<string, unknown>> = ReturnType<typeof useForm<T, T, string[]>>;
+type UseFormReturn<
+  TInput extends Record<string, unknown>,
+  TOutput extends Record<string, unknown>,
+> = ReturnType<typeof useForm<TInput, TOutput, string[]>>;
 
-type FormMeta<T extends Record<string, unknown>> = {
-  form: UseFormReturn<T>[0];
-  field: UseFormReturn<T>[1];
+type FormMeta<TInput extends Record<string, unknown>, TOutput extends Record<string, unknown>> = {
+  form: UseFormReturn<TInput, TOutput>[0];
+  field: UseFormReturn<TInput, TOutput>[1];
 };
 
 /**
@@ -16,10 +19,13 @@ type FormMeta<T extends Record<string, unknown>> = {
  * @param schema バリデーションスキーマ
  * @param defaultValue デフォルト値
  */
-const useCustomForm = <T extends Record<string, unknown>>(
-  schema: GenericSchema<T>,
-  options: Parameters<typeof useForm<T, T, string[]>>[0] = {},
-): FormMeta<T> => {
+const useCustomForm = <
+  TInput extends Record<string, unknown>,
+  TOutput extends Record<string, unknown>,
+>(
+  schema: GenericSchema<TInput, TOutput>,
+  options: Parameters<typeof useForm<TInput, TOutput, string[]>>[0] = {},
+): FormMeta<TInput, TOutput> => {
   const {
     shouldValidate = "onBlur",
     shouldRevalidate = "onInput",
@@ -27,7 +33,7 @@ const useCustomForm = <T extends Record<string, unknown>>(
     onValidate = ({ formData }) => parseWithValibot(formData, { schema }),
     ...rest
   } = options;
-  const [form, field] = useForm<T, T, string[]>({
+  const [form, field] = useForm<TInput, TOutput, string[]>({
     shouldValidate,
     shouldRevalidate,
     constraint,
@@ -37,10 +43,10 @@ const useCustomForm = <T extends Record<string, unknown>>(
   return { form, field };
 };
 
-type FormProps<T extends Record<string, unknown>> = {
-  schema?: GenericSchema<T>;
-  options?: Parameters<typeof useForm<T>>[0];
-  children?: ((props: FormMeta<T>) => ReactNode) | ReactNode;
+type FormProps<TInput extends Record<string, unknown>, TOutput extends Record<string, unknown>> = {
+  schema?: GenericSchema<TInput>;
+  options?: Parameters<typeof useForm<TInput>>[0];
+  children?: ((props: FormMeta<TInput, TOutput>) => ReactNode) | ReactNode;
 } & Omit<
   ComponentProps<"form">,
   keyof ReturnType<typeof getFormProps> | "children" | "defaultValue"
@@ -50,13 +56,16 @@ type FormProps<T extends Record<string, unknown>> = {
  * Conformの機能を統合したFormコンポーネント
  * schemaに渡されたバリデーションスキーマを元にフォームの入力欄meta情報をchildrenに渡す
  */
-export const Form = <T extends Record<string, unknown>>({
+export const Form = <
+  TInput extends Record<string, unknown>,
+  TOutput extends Record<string, unknown>,
+>({
   schema,
   options,
   children,
   ...props
-}: FormProps<T>): JSX.Element => {
-  const { form, field } = useCustomForm(schema ?? ({} as GenericSchema<T>), options);
+}: FormProps<TInput, TOutput>): JSX.Element => {
+  const { form, field } = useCustomForm(schema ?? ({} as GenericSchema<TInput, TOutput>), options);
 
   return (
     <FormProvider context={form.context}>

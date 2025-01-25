@@ -23,8 +23,12 @@ export const env = createEnv({
       RAKUTEN_APPLICATION_ID: v.string(),
       RAKUTEN_AFFILIATE_ID: v.string(),
     },
+    shared: {
+      NODE_ENV: v.union([v.literal("development"), v.literal("production"), v.literal("test")]),
+    },
   },
   values: {
+    NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION,
     TRACKING_ID: process.env.TRACKING_ID,
     URL: process.env.URL,

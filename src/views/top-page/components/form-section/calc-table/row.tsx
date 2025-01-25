@@ -1,13 +1,20 @@
 import { ConfirmDialog } from "@/ui/dialog";
-import { CustomSwitchField, NumberField, NumberSelectField, TextField } from "@/ui/form";
+import { CustomSwitchField, HiddenField, NumberField, SelectField, TextField } from "@/ui/form";
 import { Operation } from "@/ui/table";
 import { taxRateMap } from "@/views/top-page/const";
+import { Item } from "@/views/top-page/schema/storage";
+import {
+  useMaxPoint,
+  useRowMagnification,
+  useRowTotalPoint,
+  useTaxRate,
+} from "@/views/top-page/store";
 import { FieldMetadata } from "@conform-to/react";
 import { EllipsisIcon, GripVerticalIcon, StoreIcon, TrashIcon } from "@yamada-ui/lucide";
-import { Button, IconButton, Input, VisuallyHidden } from "@yamada-ui/react";
+import { Button, IconButton, Input } from "@yamada-ui/react";
 import { CellContext } from "@yamada-ui/table";
-import { ComponentRef, FC, RefCallback, useCallback, useMemo, useRef } from "react";
-import { Item } from "../../../schema";
+import { ComponentRef, FC, useCallback, useMemo, useRef } from "react";
+import { useSaveFormData, useSaveFormDataRef } from "../save";
 
 /* Row Components */
 
@@ -18,9 +25,8 @@ export const DragHandle: CellComponent = ({ row }) => {
   const field = row.original.getFieldset();
   return (
     <>
-      <VisuallyHidden>
-        <TextField variant="unstyled" type="hidden" name={field.id.name} />
-      </VisuallyHidden>
+      <HiddenField name={field.id.name} />
+      <HiddenField name={field.sameStore.name} />
       <IconButton icon={<GripVerticalIcon />} colorScheme="gray" p={0} h="full" w="min-content" />
     </>
   );
@@ -30,8 +36,8 @@ export const DragHandle: CellComponent = ({ row }) => {
 export const ShopCountButton: CellComponent = ({ row }) => {
   const { original, index } = row;
   const field = original.getFieldset();
-  const maxPoint = 7000; // TODO
-  const tax = 1.1; // TODO
+  const maxPoint = useMaxPoint();
+  const tax = useTaxRate();
 
   const buttonDescription = field.active
     ? `${index + 1}行目を計算から除外`
@@ -67,54 +73,44 @@ export const ShopCountButton: CellComponent = ({ row }) => {
 /** 商品名入力欄 */
 export const NameField: CellComponent = ({ row }) => {
   const field = row.original.getFieldset();
-  return <TextField name={field.name.name} />;
+  const ref = useSaveFormDataRef();
+  return <TextField ref={ref} name={field.name.name} />;
 };
 
 /** 価格入力欄 */
-export const PriceField: CellComponent = ({ row, table }) => {
+export const PriceField: CellComponent = ({ row }) => {
   const field = row.original.getFieldset();
-  const ref = useCallback<RefCallback<HTMLInputElement>>((node) => {
-    const callback = () => table.options.meta?.save?.();
-    node?.addEventListener("input", callback);
-    return () => node?.removeEventListener("input", callback);
-  }, []);
-  return <NumberField name={field.price.name} stepper={false} ref={ref} />;
+  const ref = useSaveFormDataRef();
+  return <NumberField ref={ref} name={field.price.name} stepper={false} />;
 };
 
 /** 消費税率選択欄 */
 export const TaxRateField: CellComponent = ({ row }) => {
+  const ref = useRef<HTMLDivElement>(null);
   const field = row.original.getFieldset();
-  return <NumberSelectField name={field.taxRate.name} items={taxRateMap} />;
+  const save = useSaveFormData();
+  const handleChange = useCallback(() => {
+    save({ node: ref.current });
+  }, []);
+  return <SelectField name={field.taxRate.name} items={taxRateMap} onChange={handleChange} />;
 };
 
 /** 追加のポイント還元率入力欄 */
 export const AdditionalRateField: CellComponent = ({ row }) => {
   const field = row.original.getFieldset();
-  return <NumberField name={field.additionalRate.name} />;
+  const ref = useSaveFormDataRef();
+  return <NumberField ref={ref} name={field.additionalRate.name} />;
 };
 
 /** 行の合計還元ポイント表示 */
-export const TotalRowPointDisplay: CellComponent = ({ table }) => {
-  const total = useMemo(() => {
-    const data = table.options.data;
-    return data.reduce((acc, row) => {
-      const field = row.getFieldset();
-      return acc + 0;
-    }, 0);
-  }, [table]);
+export const TotalRowPointDisplay: CellComponent = ({ row }) => {
+  const total = useRowTotalPoint(row.index);
   return <Input value={total} readOnly />;
 };
 
 /** 行の合計還元倍率表示 */
-export const TotalRateDisplay: CellComponent = ({ table }) => {
-  // const total = useMemo(() => {
-  //   const data = table.options.data;
-  //   return data.reduce((acc, row) => {
-  //     const field = row.getFieldset();
-  //     return acc + 0;
-  //   }, 0);
-  // }, [table]);
-  const total = 0;
+export const TotalRateDisplay: CellComponent = ({ row }) => {
+  const total = useRowMagnification(row.index);
   return <Input value={total} readOnly />;
 };
 

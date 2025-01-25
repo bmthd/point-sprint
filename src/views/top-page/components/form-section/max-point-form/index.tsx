@@ -1,24 +1,10 @@
-import { NumberField } from "@/ui/form";
+import { HelpTooltip } from "@/ui/icon-button/help-tooltip";
 import { H } from "@/ui/structure/h";
-import { SPUEventInput } from "@/views/top-page/schema";
+import { SPUEventInput } from "@/views/top-page/schema/calc";
 import { FieldMetadata } from "@conform-to/react";
-import { CircleHelpIcon } from "@yamada-ui/lucide";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-  Container,
-  HStack,
-  SegmentedControl,
-  SegmentedControlItem,
-  Tooltip,
-} from "@yamada-ui/react";
+import { Card, CardBody, CardHeader, Container, HStack } from "@yamada-ui/react";
 import { FC } from "react";
-
-const items: SegmentedControlItem[] = [
-  { label: "スーパーセール", value: "7000" },
-  { label: "お買い物マラソン", value: "5000" },
-];
+import { SegmentSelectField } from "./segment-select-field";
 
 export const MaxPointForm: FC<{ field: FieldMetadata<SPUEventInput["maxPoint"]> }> = ({
   field,
@@ -27,15 +13,12 @@ export const MaxPointForm: FC<{ field: FieldMetadata<SPUEventInput["maxPoint"]> 
     <Container as={Card}>
       <CardHeader>
         <HStack>
-          <Tooltip label="獲得上限が異なる場合に設定できます">
-            <CircleHelpIcon />
-          </Tooltip>
+          <HelpTooltip label="獲得上限が異なる場合に設定できます" />
           <H>買い回り還元上限設定</H>
         </HStack>
       </CardHeader>
       <CardBody>
-        <SegmentedControl items={items}></SegmentedControl>
-        <NumberField name={field.name} label="買い回り還元上限" stepper={false} />
+        <SegmentSelectField field={field} />
       </CardBody>
     </Container>
   );

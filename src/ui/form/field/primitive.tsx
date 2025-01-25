@@ -3,27 +3,29 @@
 import { getInputProps, getTextareaProps, useField } from "@conform-to/react";
 import {
   Checkbox,
+  Component,
   Input,
+  InputProps,
   Label,
   NumberInput,
-  Switch,
+  NumberInputProps,
+  SwitchProps,
   Textarea,
+  TextareaProps,
   VisuallyHidden,
 } from "@yamada-ui/react";
-import { type ComponentProps, type FC, JSX } from "react";
+import { ComponentProps, type FC, ReactNode } from "react";
 import { CustomFormControl } from "./form-control";
 import { FieldProps } from "./types";
 import { getFieldErrorProps } from "./utils";
+
+interface TextFieldProps extends FieldProps<string>, Omit<InputProps, "name"> {}
 
 /**
  * テキストフィールド
  * @param props - input要素のprops
  */
-export const TextField: FC<FieldProps<string> & ComponentProps<typeof Input>> = ({
-  name = "",
-  label,
-  ...props
-}): JSX.Element => {
+export const TextField: FC<TextFieldProps> = ({ name = "", label, ...props }) => {
   const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
@@ -32,14 +34,15 @@ export const TextField: FC<FieldProps<string> & ComponentProps<typeof Input>> = 
   );
 };
 
-export const NumberField: FC<FieldProps<number> & ComponentProps<typeof NumberInput>> = ({
-  name,
-  label,
-  ...props
-}): JSX.Element => {
+interface NumberFieldProps
+  extends FieldProps<number>,
+    Omit<NumberInputProps, "name">,
+    Omit<ComponentProps<"input">, keyof NumberInputProps> {}
+
+export const NumberField: FC<NumberFieldProps> = ({ name, label, helperMessage, ...props }) => {
   const [fieldMeta] = useField(name!);
   return (
-    <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
+    <CustomFormControl {...{ label, helperMessage }} {...getFieldErrorProps(fieldMeta)}>
       {/* @ts-expect-error max type not match */}
       <NumberInput
         {...props}
@@ -50,11 +53,9 @@ export const NumberField: FC<FieldProps<number> & ComponentProps<typeof NumberIn
   );
 };
 
-export const TextareaField: FC<FieldProps<string> & ComponentProps<typeof Textarea>> = ({
-  name,
-  label,
-  ...props
-}): JSX.Element => {
+interface TextareaFieldProps extends FieldProps<string>, Component<"textarea", TextareaProps> {}
+
+export const TextareaField: FC<TextareaFieldProps> = ({ name, label, ...props }) => {
   const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
@@ -63,15 +64,13 @@ export const TextareaField: FC<FieldProps<string> & ComponentProps<typeof Textar
   );
 };
 
+interface CheckboxFieldProps extends FieldProps<boolean>, Component<"input", InputProps> {}
+
 /**
  * チェックボックス
  * @param props - input要素のprops
  */
-export const CheckboxField: FC<FieldProps<boolean> & ComponentProps<typeof Checkbox>> = ({
-  name,
-  label,
-  ...props
-}): JSX.Element => {
+export const CheckboxField: FC<CheckboxFieldProps> = ({ name, label, ...props }) => {
   const [fieldMeta] = useField(name!);
   return (
     <CustomFormControl label={label} {...getFieldErrorProps(fieldMeta)}>
@@ -84,22 +83,40 @@ export const CheckboxField: FC<FieldProps<boolean> & ComponentProps<typeof Check
   );
 };
 
-export const CustomSwitchField: FC<FieldProps<boolean> & ComponentProps<typeof Switch>> = ({
-  name,
-  children,
-  ...props
-}): JSX.Element => {
+interface SwitchFieldProps
+  extends FieldProps<boolean>,
+    Omit<Component<"input", SwitchProps>, "children" | "contextTypes" | "defaultProps"> {
+  children: ReactNode;
+}
+
+export const CustomSwitchField: FC<SwitchFieldProps> = ({ name, children, ...props }) => {
   const [fieldMeta] = useField(name!);
   return (
     <Label>
-      <VisuallyHidden>
-        <Switch
-          {...props}
-          {...getInputProps(fieldMeta, { type: "checkbox" })}
-          key={fieldMeta.key}
-        />
-      </VisuallyHidden>
+      <VisuallyHidden
+        as="input"
+        {...props}
+        {...getInputProps(fieldMeta, { type: "checkbox" })}
+        key={fieldMeta.key}
+      />
       {children}
     </Label>
+  );
+};
+
+interface HiddenFieldProps extends FieldProps<string | number | boolean> {}
+
+/**
+ * 隠しフィールド
+ */
+export const HiddenField: FC<HiddenFieldProps> = ({ name, ...props }) => {
+  const [fieldMeta] = useField(name!);
+  return (
+    <VisuallyHidden
+      as="input"
+      {...getInputProps(fieldMeta, { type: "hidden" })}
+      {...props}
+      key={fieldMeta.key}
+    />
   );
 };

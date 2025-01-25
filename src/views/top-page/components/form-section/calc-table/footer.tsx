@@ -15,7 +15,7 @@ import {
 } from "@yamada-ui/react";
 import { type HeaderContext } from "@yamada-ui/table";
 import { ComponentRef, FC, useCallback, useRef } from "react";
-import { Item, initializeItem } from "../../../schema";
+import { initializeItem, Item } from "../../../schema/storage";
 
 type HeaderComponent<T = Item> = FC<HeaderContext<FieldMetadata<T>, Operation<T>>>;
 
