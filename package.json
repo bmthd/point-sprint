@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:scan": "next dev --turbopack && bunx react-scan@latest localhost:3000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
