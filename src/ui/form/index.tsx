@@ -65,7 +65,7 @@ export const Form = <
   children,
   ...props
 }: FormProps<TInput, TOutput>): JSX.Element => {
-  const { form, field } = useCustomForm(schema ?? ({} as GenericSchema<TInput, TOutput>), options);
+  const { form, field } = useCustomForm(schema ?? ({} as any), options);
 
   return (
     <FormProvider context={form.context}>

@@ -36,7 +36,6 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   useImperativeHandle(ref, () => ({ confirm }), [confirm]);
 
   return (
-    // @ts-expect-error 式は、複雑すぎて表現できない共用体型を生成します。が出る
     <Dialog maxWidth="80%" as="dialog" onClose={handleCancel} {...{ isOpen }} {...props}>
       <Container>{children}</Container>
       <HStack justify="end" width="full">

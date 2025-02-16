@@ -104,12 +104,16 @@ const rowTotalPointAtom = (index: number) =>
     const item = items[index];
     if (!item) return 0;
 
-    const shopCount = logic.currentShopCount(items);
-    const spuMagnification = logic.spuRate(spu);
-    const { additionalRate } = item;
+    // const shopCount = logic.currentShopCount(items);
+    // const spuMagnification = logic.spuRate(spu);
+    // const { additionalRate } = item;
 
     return 0; // TODO
   });
 
 export const useRowTotalPoint = (index: number) =>
   useAtomValue(useMemo(() => rowTotalPointAtom(index), [index]));
+
+const totalPointAtom = atom<number>((get) => logic.totalPoint(get(calcResultAtom)));
+
+export const useTotalPoint = () => useAtomValue(totalPointAtom);

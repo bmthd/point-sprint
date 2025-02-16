@@ -18,3 +18,11 @@ export const spuRate = (spu: SPUEventOutput["spu"]): number =>
     D.values,
     A.reduce(1, (acc, rate) => acc + rate),
   );
+
+export const totalPoint = (event: SPUEventOutput): number => {
+  const { items, maxPoint } = event;
+  const currentShopCount_ = currentShopCount(items);
+  const rate = spuRate(event.spu);
+
+  return Math.round(maxPoint / rate / currentShopCount_);
+};

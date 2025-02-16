@@ -23,7 +23,7 @@ export const CustomFormControl: FC<
   requireIcon = false,
   ...props
 }) => (
-  <FormControl isReplace {...props}>
+  <FormControl replace {...props}>
     {!withoutLabel && (
       <Grid templateColumns="auto 1fr" alignItems="start" gap={1}>
         <Label {...labelProps}>{label}</Label>
@@ -35,7 +35,6 @@ export const CustomFormControl: FC<
       </Grid>
     )}
     {children}
-    {/* @ts-expect-error TODO:式は複雑すぎて表現できない共用型を生成しますが出る */}
     <SlideFade open={Boolean(errorMessage)}>
       <ErrorMessage role="alert" {...errorMessageProps}>
         {errorMessage}
