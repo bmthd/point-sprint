@@ -8,11 +8,11 @@ import { type FormControlProps } from "@yamada-ui/react";
 export const getFieldErrorProps = <Schema>(
   metadata: FieldMetadata<Schema, Record<string, unknown>, string[]>,
 ) => {
-  const { errors, required: isRequired } = metadata;
+  const { errors, required } = metadata;
   const errorMessage = errors?.[0];
   return {
     errorMessage,
-    isInvalid: Boolean(errors),
-    isRequired,
+    invalid: Boolean(errors),
+    required,
   } as const satisfies FormControlProps;
 };

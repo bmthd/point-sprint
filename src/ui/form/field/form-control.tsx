@@ -15,7 +15,7 @@ export const CustomFormControl: FC<
 > = ({
   children,
   label,
-  isRequired,
+  required,
   errorMessage,
   labelProps,
   errorMessageProps,
@@ -26,10 +26,10 @@ export const CustomFormControl: FC<
   <FormControl replace {...props}>
     {!withoutLabel && (
       <Grid templateColumns="auto 1fr" alignItems="start" gap={1}>
-        <Label {...labelProps}>{label}</Label>
+        {label && <Label {...labelProps}>{label}</Label>}
         {requireIcon && (
-          <Tag w="fit-content" size="sm" rounded="md" colorScheme={isRequired ? "red" : "blue"}>
-            {isRequired ? "必須" : "任意"}
+          <Tag w="fit-content" size="sm" rounded="md" colorScheme={required ? "red" : "blue"}>
+            {required ? "必須" : "任意"}
           </Tag>
         )}
       </Grid>
