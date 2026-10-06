@@ -29,7 +29,7 @@ const json = (body: unknown, status = 200) =>
 const fetchReturning = (response: Response | Error) =>
   vi.fn<typeof fetch>(async () => {
     if (response instanceof Error) throw response;
-    return response;
+    return response.clone();
   });
 
 test("reads the settings, and none while they are missing or still encrypted", () => {
@@ -55,11 +55,17 @@ test("reads the settings, and none while they are missing or still encrypted", (
   ).toBeUndefined();
 });
 
+/** The request a mocked fetch was called with: ky passes a `Request`. */
+const sentRequest = (fetcher: ReturnType<typeof fetchReturning>, call: number) => {
+  const [input, init] = fetcher.mock.calls[call] ?? [];
+  return input instanceof Request ? input : new Request(String(input), init);
+};
+
 test("sends the settings and the parameters, and the origin only when asked", async () => {
-  const fetcher = fetchReturning(json({ Items: [] }));
+  const fetcher = vi.fn<typeof fetch>(async () => json({ Items: [] }));
   await searchItems(config, { keyword: "洗剤", hits: 3 }, { fetch: fetcher });
-  const [url, init] = fetcher.mock.calls[0] ?? [];
-  const sent = new URL(String(url));
+  const first = sentRequest(fetcher, 0);
+  const sent = new URL(first.url);
   expect(sent.origin + sent.pathname).toBe(
     "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701",
   );
@@ -70,20 +76,31 @@ test("sends the settings and the parameters, and the origin only when asked", as
     keyword: "洗剤",
     hits: "3",
   });
-  expect(init).toEqual({});
+  expect(first.headers.get("Origin")).toBeNull();
 
   await searchItems(
     config,
     {},
     {
       fetch: fetcher,
-      endpoint: "/rakuten-api/ichibams/api/IchibaItem/Search/20260701",
+      endpoint: "http://localhost:5173/rakuten-api/ichibams/api/IchibaItem/Search/20260701",
       origin: "https://point-sprint.bmth.dev",
     },
   );
-  const [relayed, withOrigin] = fetcher.mock.calls[1] ?? [];
-  expect(String(relayed)).toMatch(/^\/rakuten-api\/ichibams\/api\/IchibaItem\/Search\/20260701\?/);
-  expect(withOrigin).toEqual({ headers: { Origin: "https://point-sprint.bmth.dev" } });
+  const relayed = sentRequest(fetcher, 1);
+  expect(new URL(relayed.url).pathname).toBe(
+    "/rakuten-api/ichibams/api/IchibaItem/Search/20260701",
+  );
+  expect(relayed.headers.get("Origin")).toBe("https://point-sprint.bmth.dev");
+});
+
+test("a 429 is not retried: the caller spaces the calls out", async () => {
+  const fetcher = vi.fn<typeof fetch>(async () => json({ error: "too_many_requests" }, 429));
+  expect(await lookupItem(config, "shop-a:item-1", { fetch: fetcher })).toEqual({
+    ok: false,
+    error: { reason: "rate-limited" },
+  });
+  expect(fetcher).toHaveBeenCalledTimes(1);
 });
 
 test("keeps only the fields the app uses", async () => {

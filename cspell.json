@@ -57,6 +57,8 @@
     "prerendered",
     "esbuild",
     "workerd",
-    "contentinfo"
+    "contentinfo",
+    "opengraph",
+    "urlset"
   ]
 }

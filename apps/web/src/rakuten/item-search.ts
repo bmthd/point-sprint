@@ -1,3 +1,4 @@
+import ky, { SchemaValidationError, isHTTPError } from "ky";
 import * as v from "valibot";
 import { ITEM_SEARCH_ENDPOINT, type RakutenConfig } from "./config";
 
@@ -67,41 +68,42 @@ const toItem = (item: v.InferOutput<typeof ItemSchema>): RakutenItem => ({
   affiliateUrl: item.affiliateUrl,
 });
 
+function failureOf(error: unknown): SearchFailure {
+  if (isHTTPError(error)) {
+    const { status } = error.response;
+    return status === 429 ? { reason: "rate-limited" } : { reason: "http", status };
+  }
+  // A body that is not JSON, or not the shape we read.
+  if (error instanceof SchemaValidationError || error instanceof SyntaxError) {
+    return { reason: "invalid-response" };
+  }
+  return { reason: "network" };
+}
+
 /** Searches items by the API's own parameters (`keyword`, `itemCode`, `genreId`, `hits`, …). */
 export async function searchItems(
   config: RakutenConfig,
   params: Record<string, string | number>,
-  options: SearchOptions = {},
+  { endpoint = ITEM_SEARCH_ENDPOINT, fetch, origin, signal }: SearchOptions = {},
 ): Promise<SearchResult> {
-  const { endpoint = ITEM_SEARCH_ENDPOINT, fetch: fetcher = fetch, origin, signal } = options;
-  const query = new URLSearchParams({
-    applicationId: config.applicationId,
-    accessKey: config.accessKey,
-    ...(config.affiliateId ? { affiliateId: config.affiliateId } : {}),
-    ...Object.fromEntries(Object.entries(params).map(([key, value]) => [key, String(value)])),
-  });
-
-  let response: Response;
   try {
-    response = await fetcher(`${endpoint}?${query}`, {
+    const body = await ky(endpoint, {
+      searchParams: {
+        applicationId: config.applicationId,
+        accessKey: config.accessKey,
+        ...(config.affiliateId ? { affiliateId: config.affiliateId } : {}),
+        ...params,
+      },
+      // The calls are spaced out by the caller (`throttledLookup`); a retry would break that.
+      retry: 0,
       ...(origin ? { headers: { Origin: origin } } : {}),
+      ...(fetch ? { fetch } : {}),
       ...(signal ? { signal } : {}),
-    });
-  } catch {
-    return { ok: false, error: { reason: "network" } };
+    }).json(ResponseSchema);
+    return { ok: true, items: body.Items.map(({ Item }) => toItem(Item)) };
+  } catch (error) {
+    return { ok: false, error: failureOf(error) };
   }
-  if (response.status === 429) return { ok: false, error: { reason: "rate-limited" } };
-  if (!response.ok) return { ok: false, error: { reason: "http", status: response.status } };
-
-  let body: unknown;
-  try {
-    body = await response.json();
-  } catch {
-    return { ok: false, error: { reason: "invalid-response" } };
-  }
-  const parsed = v.safeParse(ResponseSchema, body);
-  if (!parsed.success) return { ok: false, error: { reason: "invalid-response" } };
-  return { ok: true, items: parsed.output.Items.map(({ Item }) => toItem(Item)) };
 }
 
 export type LookupFailure = SearchFailure | { reason: "not-found" };

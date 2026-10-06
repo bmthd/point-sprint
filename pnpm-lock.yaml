@@ -217,6 +217,9 @@ importers:
       jotai-tanstack-query:
         specifier: 0.11.0
         version: 0.11.0(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.3.0))(jotai@3.0.1(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      ky:
+        specifier: 2.1.0
+        version: 2.1.0
       react:
         specifier: 19.3.0
         version: 19.3.0
@@ -2304,6 +2307,10 @@ packages:
   kleur@4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
+
+  ky@2.1.0:
+    resolution: {integrity: sha512-nIKwelw+7qVqKOlX4Eht6GXfEXlDHcdIjyLWV3s119kYt5s+70ayTnYS+0fRNmtgGRRAfqdeWQbh8YizqkS0ng==}
+    engines: {node: '>=22'}
 
   lightningcss-android-arm64@1.33.0:
     resolution: {integrity: sha512-gEpRTalKdosp4Bb8qWtc2iOgE5SeIHlpS1up9bFq2wAyYhl1UdTObYiHe98zEM9SQvSoqQZ1IQD0JNpg3Ml5pg==}
@@ -4966,6 +4973,8 @@ snapshots:
   json5@2.2.3: {}
 
   kleur@4.1.5: {}
+
+  ky@2.1.0: {}
 
   lightningcss-android-arm64@1.33.0:
     optional: true
