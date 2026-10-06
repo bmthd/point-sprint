@@ -18,12 +18,13 @@ import {
 const ITEM_URL = "https://item.rakuten.co.jp/coffee-beans/blend-500g/";
 
 const item = (fields: Partial<RakutenItem> = {}): RakutenItem => ({
-  itemCode: "coffee-beans:blend-500g",
+  itemCode: "coffee-beans:10000123",
   name: "ブレンドコーヒー豆 500g",
   taxIncludedPrice: 2160,
   shopCode: "coffee-beans",
   shopName: "コーヒー豆の店",
   pointRate: 5,
+  pageUrl: ITEM_URL,
   itemUrl: "https://hb.afl.rakuten.co.jp/hgc/x/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2F",
   affiliateUrl: "https://hb.afl.rakuten.co.jp/hgc/x/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2F",
   ...fields,
@@ -73,7 +74,9 @@ describe("the phone sheet", () => {
     await expect
       .element(sheet.getByLabelText("商品名メモ（任意）"))
       .toHaveValue("ブレンドコーヒー豆 500g");
-    expect(lookup.mock.calls).toEqual([["coffee-beans:blend-500g"]]);
+    expect(lookup.mock.calls).toEqual([
+      [{ shopCode: "coffee-beans", itemManageNumber: "blend-500g" }],
+    ]);
     await expect.element(sheet.getByLabelText("金額（税込）")).toHaveValue("2160");
     await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue("new");
     await expect
