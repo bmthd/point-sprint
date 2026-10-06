@@ -1,0 +1,14 @@
+{
+  "name": "ポイントスプリント 楽天市場お買い物マラソン攻略計算ツール",
+  "short_name": "ポイントスプリント",
+  "description": "楽天市場のお買い物マラソンに特化した計算ツール。厳密な還元率、獲得上限に対応。あなたのポイ活を応援します。",
+  "lang": "ja",
+  "theme_color": "#bf0000",
+  "background_color": "#f5f5f5",
+  "display": "standalone",
+  "start_url": "/",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

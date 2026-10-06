@@ -248,5 +248,5 @@ function Home({ plan }: { plan: Plan }) {
 
 /** The plan's home at `/plan?id=`. */
 export function PlanHome({ id }: { id: string | undefined }) {
-  return <PlanPage id={id} render={(plan) => <Home plan={plan} />} />;
+  return <PlanPage id={id} title={(plan) => plan.name} render={(plan) => <Home plan={plan} />} />;
 }

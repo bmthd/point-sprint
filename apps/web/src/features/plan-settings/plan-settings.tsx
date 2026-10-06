@@ -151,5 +151,11 @@ function SettingsScreen({ plan }: { plan: Plan }) {
 
 /** The plan's settings at `/plan/settings?id=`. Each change is saved as it is made. */
 export function PlanSettings({ id }: { id: string | undefined }) {
-  return <PlanPage id={id} render={(plan) => <SettingsScreen plan={plan} />} />;
+  return (
+    <PlanPage
+      id={id}
+      title={(plan) => `${plan.name}の設定`}
+      render={(plan) => <SettingsScreen plan={plan} />}
+    />
+  );
 }
