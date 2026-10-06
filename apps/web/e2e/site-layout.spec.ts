@@ -1,4 +1,4 @@
-import { type Page, expect, test } from "@playwright/test";
+import { type Page, expect, test } from "./fixtures";
 
 // The header and the footer are on every page, and their links go where they say.
 

@@ -3,6 +3,7 @@ import { Box, Button, Input, Text, Field as UIField } from "@workspaces/ui";
 import { type ReactNode, useId, useMemo, useRef, useState } from "react";
 import * as v from "valibot";
 import { type ShopChange, changeShop, replaceShop } from "../../state/mutations";
+import type { RakutenItem } from "../../rakuten/item-search";
 import { taxRateLabel } from "./order-shared";
 
 // Fields shared by the desktop list's edit grid, its add form and the order editor.
@@ -275,6 +276,25 @@ export function shopFromUrl(url: string, shops: Shop[]): ShopFromUrl | null {
     name: parsed.shopCode ?? channels[parsed.channel].label,
   };
 }
+
+/**
+ * The shop of an Ichiba item found by its URL: the registry shop of its shop code, or a new one
+ * under the name the shop goes by.
+ */
+export function shopFromItem(item: RakutenItem, shops: Shop[]): ShopFromUrl {
+  const match = shops.find(
+    (shop) => shop.channel === "rakuten-ichiba" && shop.shopCode === item.shopCode,
+  );
+  if (match) return { kind: "registered", shop: match };
+  return { kind: "new", channel: "rakuten-ichiba", shopCode: item.shopCode, name: item.shopName };
+}
+
+/** What a found item puts in the item's fields. A price without tax is left to be typed. */
+export const fieldsFromItem = (item: RakutenItem) => ({
+  name: item.name,
+  unitPrice: item.taxIncludedPrice === undefined ? undefined : String(item.taxIncludedPrice),
+  shopPointRate: item.pointRate >= 2 ? String(item.pointRate) : "",
+});
 
 /** What a form says about the order's shop. */
 export type ShopChoice = {

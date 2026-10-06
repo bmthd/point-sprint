@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build && node scripts/check-prerender.ts"
+    "dev": "dotenvx run -q -f ../../.env -- vite dev",
+    "build": "dotenvx run -q -f ../../.env -- vite build && node scripts/check-prerender.ts"
   },
   "dependencies": {
     "@formisch/react": "1.1.0",
