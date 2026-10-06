@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build && node scripts/check-prerender.ts"
+    "dev": "dotenvx run -q -f ../../.env -- vite dev",
+    "build": "dotenvx run -q -f ../../.env -- vite build && node scripts/check-prerender.ts"
   },
   "dependencies": {
     "@formisch/react": "1.1.0",
@@ -17,6 +17,7 @@
     "jotai": "3.0.1",
     "jotai-family": "1.1.0",
     "jotai-tanstack-query": "0.11.0",
+    "ky": "2.1.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "seitu": "1.3.1",

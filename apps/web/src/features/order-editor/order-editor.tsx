@@ -37,11 +37,15 @@ import { saveShopAtom } from "../../state/mutations";
 import { addOrderAtom, updateOrderAtom } from "../../state/order-ops";
 import { shopsAtom } from "../../state/queries";
 import { CloseIcon } from "../plan-home/icons";
+import { AutofillStatusText, useItemAutofill } from "../item-autofill/item-autofill";
 import {
   NEW_SHOP,
+  type ShopFromUrl,
   TAX_RATES,
   TaxRateOptions,
   ToggleChip,
+  fieldsFromItem,
+  shopFromItem,
   shopFromUrl,
   useSortedShops,
 } from "../plan-home/order-fields";
@@ -263,26 +267,47 @@ function Campaigns({ form, plan }: { form: Form; plan: Plan }) {
   );
 }
 
-function ShopFields({ form, urlId }: { form: Form; urlId: string }) {
+/** Selects the shop of a URL or a found item: a registry shop, or a new one with its code. */
+function applyShop(form: Form, found: ShopFromUrl) {
+  if (found.kind === "registered") {
+    setInput(form, { path: ["shop"], input: found.shop.id });
+    setInput(form, { path: ["is39"], input: found.shop.tags.includes("39shop") });
+    return;
+  }
+  setInput(form, { path: ["shop"], input: NEW_SHOP });
+  setInput(form, { path: ["channel"], input: found.channel });
+  setInput(form, { path: ["shopCode"], input: found.shopCode });
+  setInput(form, { path: ["newShopName"], input: found.name });
+  setInput(form, { path: ["is39"], input: false });
+}
+
+/** Puts a found item's name, price, shop and shop rate in the fields, where they can be edited. */
+function useEditorAutofill(form: Form) {
+  const shops = useAtomValue(shopsAtom);
+  return useItemAutofill((item) => {
+    applyShop(form, shopFromItem(item, shops));
+    const fields = fieldsFromItem(item);
+    setInput(form, { path: ["items", 0, "name"], input: fields.name });
+    if (fields.unitPrice !== undefined)
+      setInput(form, { path: AMOUNT_PATH, input: fields.unitPrice });
+    setInput(form, { path: ["items", 0, "shopPointRate"], input: fields.shopPointRate });
+  });
+}
+
+type Autofill = ReturnType<typeof useItemAutofill>;
+
+function ShopFields({ form, urlId, autofill }: { form: Form; urlId: string; autofill: Autofill }) {
   const shops = useAtomValue(shopsAtom);
   const sortedShops = useSortedShops(shops);
   const url = useField(form, { path: ["url"] });
   const shop = useField(form, { path: ["shop"] });
 
+  // The shop of the URL is chosen at once, and stays when the item cannot be looked up.
   const onUrl = (text: string) => {
     url.onChange(text);
     const found = shopFromUrl(text, shops);
-    if (!found) return;
-    if (found.kind === "registered") {
-      setInput(form, { path: ["shop"], input: found.shop.id });
-      setInput(form, { path: ["is39"], input: found.shop.tags.includes("39shop") });
-      return;
-    }
-    setInput(form, { path: ["shop"], input: NEW_SHOP });
-    setInput(form, { path: ["channel"], input: found.channel });
-    setInput(form, { path: ["shopCode"], input: found.shopCode });
-    setInput(form, { path: ["newShopName"], input: found.name });
-    setInput(form, { path: ["is39"], input: false });
+    if (found) applyShop(form, found);
+    autofill.onUrl(text);
   };
 
   const paste = async () => {
@@ -324,6 +349,7 @@ function ShopFields({ form, urlId }: { form: Form; urlId: string }) {
             貼り付け
           </Button>
         </Box>
+        <AutofillStatusText status={autofill.status} />
       </Field.Root>
       <Box display="grid" gridTemplateColumns="minmax(0, 1fr) 150px" alignItems="start" gap="2">
         <Field.Root label="ショップ" {...errorsOf(shop)}>
@@ -521,6 +547,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
     original ? inputOf(original, shops) : emptyInput(),
   );
   const form = useForm({ schema: OrderFormSchema, initialInput });
+  const autofill = useEditorAutofill(form);
   const parts = layout === "sheet" ? Drawer : Modal;
   const title = original ? "注文を編集" : "注文を追加";
 
@@ -538,6 +565,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
       if (original) await updateOrder({ planId: plan.id, order: draft.order });
       else await addOrder({ planId: plan.id, order: draft.order });
       if (keepOpen) {
+        autofill.reset();
         reset(form, { initialInput: emptyInput() });
         focus(form, { path: AMOUNT_PATH });
       } else {
@@ -560,7 +588,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
       <parts.Body alignItems="stretch">
         <Form of={form} id={formId} onSubmit={(output) => save(output, false)}>
           <Box display="flex" flexDirection="column" gap="3.5">
-            <ShopFields form={form} urlId={urlId} />
+            <ShopFields form={form} urlId={urlId} autofill={autofill} />
             <MainItemFields form={form} amountRef={amountRef} />
             <Campaigns form={form} plan={plan} />
             <Preview form={form} plan={plan} original={original} />

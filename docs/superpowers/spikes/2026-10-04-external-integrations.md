@@ -16,6 +16,7 @@
 - **開発中:** ブラウザは `localhost` を `Origin` として送るので、直接は呼べない。開発サーバーで API への呼び出しを中継し、中継側で `Origin` を付け替える必要がある（計画3で扱う）。
 - **アクセスキーの扱い:** `Origin` はサーバー側から自由に付けられるので、`accessKey` が漏れると第三者も使える。クライアントに置く前提のキーとして扱い、秘密情報としては扱わない。
 - **商品コードでの取得:** `itemCode=<ショップコード>:<商品管理番号>` で1件を取得できる。レスポンスの `Items[0].Item` には `itemName`、`itemPrice`、`itemCode`、`shopCode`、`shopName`、`pointRate`、`taxFlag`、`affiliateUrl`、画像の URL などが含まれる。
+  存在しないショップコードの `itemCode` には 400 `wrong_parameter`（`itemCode is not valid`）が返る（2026-10-07 に確認）。`affiliateId` を付けると `itemUrl` もアフィリエイトリンク（`hb.afl.rakuten.co.jp`）になる。
 - **レート制限:** 1秒に1回程度を超えると 429 `Rate limit is exceeded` になる。
 
 ## メール送信（Cloudflare `send_email`）

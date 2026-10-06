@@ -15,6 +15,7 @@ import { calculationAtom } from "../../state/derived";
 import { type ShopChange, saveShopAtom } from "../../state/mutations";
 import { addOrderAtom } from "../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../state/queries";
+import { AutofillStatusText, useItemAutofill } from "../item-autofill/item-autofill";
 import { tokyoToday } from "../plan-list/dates";
 import { PlusIcon } from "./icons";
 import {
@@ -22,11 +23,15 @@ import {
   DateSchema,
   Field,
   NEW_SHOP,
+  type ShopFromUrl,
+  ShopRateSchema,
   TAX_RATES,
   TaxRateOptions,
   type TaxRateValue,
   ToggleChip,
   fieldGrid,
+  fieldsFromItem,
+  shopFromItem,
   shopFromUrl,
   shopToSave,
   useSortedShops,
@@ -35,7 +40,7 @@ import { orderSaveFailedAtom, pointsText } from "./order-shared";
 
 const AddFormSchema = v.pipe(
   v.object({
-    url: v.string(),
+    url: v.pipe(v.string(), v.trim()),
     shop: v.pipe(v.string(), v.nonEmpty("ショップを選んでください")),
     newShopName: v.pipe(v.string(), v.trim()),
     channel: ChannelIdSchema,
@@ -44,6 +49,7 @@ const AddFormSchema = v.pipe(
     name: v.pipe(v.string(), v.trim()),
     amount: AmountSchema,
     taxRate: v.picklist(TAX_RATES),
+    shopPointRate: ShopRateSchema,
     is39: v.boolean(),
     repeat: v.boolean(),
   }),
@@ -56,6 +62,8 @@ const AddFormSchema = v.pipe(
     ["newShopName"],
   ),
 );
+
+const UrlSchema = v.pipe(v.string(), v.url());
 
 type Values = v.InferInput<typeof AddFormSchema>;
 type Errors = Partial<Record<keyof Values, [string, ...string[]]>>;
@@ -70,6 +78,7 @@ const emptyValues = (): Values => ({
   name: "",
   amount: "",
   taxRate: "0.1",
+  shopPointRate: "",
   is39: false,
   repeat: false,
 });
@@ -101,6 +110,8 @@ function draftOf(values: Values, shops: Shop[]): Draft {
         unitPrice: input.amount,
         quantity: 1,
         taxRate: Number(input.taxRate),
+        ...(input.shopPointRate === undefined ? {} : { shopPointRate: input.shopPointRate }),
+        ...(v.is(UrlSchema, input.url) ? { url: input.url } : {}),
       },
     ],
     onHold: false,
@@ -187,20 +198,33 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
     set({ shop: shopId, is39: shop?.tags.includes("39shop") ?? false });
   };
 
+  const shopValues = (found: ShopFromUrl): Partial<Values> =>
+    found.kind === "registered"
+      ? { shop: found.shop.id, is39: found.shop.tags.includes("39shop") }
+      : {
+          shop: NEW_SHOP,
+          channel: found.channel,
+          shopCode: found.shopCode,
+          newShopName: found.name,
+          is39: false,
+        };
+
+  // A found item fills in its name, price, shop and shop rate, which can then be edited.
+  const autofill = useItemAutofill((item) => {
+    const { name, unitPrice, shopPointRate } = fieldsFromItem(item);
+    set({
+      ...shopValues(shopFromItem(item, shops)),
+      name,
+      shopPointRate,
+      ...(unitPrice === undefined ? {} : { amount: unitPrice }),
+    });
+  });
+
+  // The shop of the URL is chosen at once, and stays when the item cannot be looked up.
   const onUrl = (url: string) => {
     const found = shopFromUrl(url, shops);
-    if (!found) return set({ url });
-    if (found.kind === "registered") {
-      return set({ url, shop: found.shop.id, is39: found.shop.tags.includes("39shop") });
-    }
-    set({
-      url,
-      shop: NEW_SHOP,
-      channel: found.channel,
-      shopCode: found.shopCode,
-      newShopName: found.name,
-      is39: false,
-    });
+    set({ url, ...(found ? shopValues(found) : {}) });
+    autofill.onUrl(url);
   };
 
   const submit = async () => {
@@ -215,6 +239,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
     try {
       if (shopChange) await saveShop.mutateAsync(shopChange);
       await addOrder({ planId: plan.id, order });
+      autofill.reset();
       setValues(emptyValues());
       setErrors({});
       firstField.current?.focus();
@@ -283,6 +308,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
             value={values.url}
             onChange={(event) => onUrl(event.currentTarget.value)}
           />
+          <AutofillStatusText status={autofill.status} />
         </Field>
         <Box {...fieldGrid}>
           <Field label="ショップ" error={error("shop")}>
@@ -344,6 +370,16 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
             >
               <TaxRateOptions />
             </NativeSelect.Root>
+          </Field>
+          <Field label="ショップ独自倍率" error={error("shopPointRate")}>
+            <Input
+              size="lg"
+              inputMode="decimal"
+              placeholder="1"
+              fontVariantNumeric="tabular-nums"
+              value={values.shopPointRate}
+              onChange={(event) => set({ shopPointRate: event.currentTarget.value })}
+            />
           </Field>
         </Box>
         <Box display="flex" flexWrap="wrap" alignItems="center" gap="2">
