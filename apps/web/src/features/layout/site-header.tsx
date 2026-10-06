@@ -1,4 +1,4 @@
-import { Box } from "@workspaces/ui";
+import { Box, IconButton, MoonIcon, SunIcon, useColorMode } from "@workspaces/ui";
 import { RouterLink } from "../plan-list/router-link";
 
 function ProfileIcon() {
@@ -17,6 +17,26 @@ function ProfileIcon() {
       <circle cx="12" cy="8" r="4" />
       <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
     </svg>
+  );
+}
+
+function ColorModeButton() {
+  const { colorMode, toggleColorMode } = useColorMode();
+  const nextColorMode = colorMode === "light" ? "dark" : "light";
+  const colorModeLabel = colorMode === "light" ? "ライト" : "ダーク";
+  const nextColorModeLabel = nextColorMode === "light" ? "ライト" : "ダーク";
+
+  return (
+    <IconButton
+      aria-label={`現在は${colorModeLabel}モードです。${nextColorModeLabel}モードに切り替える`}
+      onClick={toggleColorMode}
+      boxSize="11"
+      rounded="xl"
+      variant="ghost"
+      color="fg"
+      _hover={{ bg: "bg.muted" }}
+      icon={colorMode === "light" ? <SunIcon /> : <MoonIcon />}
+    />
   );
 }
 
@@ -54,6 +74,7 @@ export function SiteHeader() {
           ポイントスプリント
         </RouterLink>
         <Box display="flex" alignItems="center" gap="1">
+          <ColorModeButton />
           <RouterLink
             to="/profile"
             aria-label="プロフィール（SPU・ショップ台帳）"
