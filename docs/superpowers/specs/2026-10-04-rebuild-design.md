@@ -280,9 +280,18 @@ Seitu は1人の作者が開発する比較的新しいライブラリ（採用�
 
 呼び出しは `apps/web/src/rakuten/` にまとめ、ブラウザ（商品情報の取得）とビルド時（広告）の両方から使う。
 
-- `config.ts`: 環境変数 `RAKUTEN_APPLICATION_ID`、`RAKUTEN_ACCESS_KEY`、`RAKUTEN_AFFILIATE_ID` の検証。値は `.env` に dotenvx で暗号化して置き、`pnpm dev` と `pnpm build` が `dotenvx run` で読む。復号できない（`encrypted:` のまま）か足りないときは、商品情報の取得を無効にしてビルドを続ける。ビルドは検証した値をクライアントに埋め込む
+- `config.ts`: 環境変数 `PUBLIC_RAKUTEN_APPLICATION_ID`、`PUBLIC_RAKUTEN_ACCESS_KEY`、`PUBLIC_RAKUTEN_AFFILIATE_ID` の検証。値が足りないか `encrypted:` のままのときは、商品情報の取得を無効にしてビルドを続ける。ビルドは検証した値をクライアントに埋め込む
 - `item-search.ts`: 商品検索 API の呼び出し。失敗は通信エラー、429、その他の HTTP エラー、想定外のレスポンス、該当なしに分けて返す。サーバーから呼ぶときは `Origin: https://point-sprint.bmth.dev` を付ける
 - `item-lookup.ts`: 呼び出しの間隔を1.1秒以上あけ、見つかった商品を `itemCode` ごとに5分間キャッシュする
+
+### 環境変数
+
+環境変数はリポジトリのルートの `.env.development`（`pnpm dev`）と `.env.production`（`pnpm build`）に置き、どちらもコミットする。ファイル名の末尾の環境名は dotenvx の決まりに合わせたもので、`.env.production` は鍵 `DOTENV_PRIVATE_KEY_PRODUCTION` で復号する。
+
+- 公開してよい値は変数名を `PUBLIC_` で始め、平文で置く（`dotenvx set … --plain`）。楽天 API の3つの値（`PUBLIC_RAKUTEN_*`）と Turnstile のサイトキー（`PUBLIC_TURNSTILE_SITE_KEY`）がこれにあたる。
+- 秘密の値（`TURNSTILE_SECRET_KEY`、`CLOUDFLARE_API_TOKEN`）は `.env.production` に dotenvx で暗号化して置く。`.env.development` には秘密の値を置かず、Turnstile は Cloudflare のテスト用キーを平文で置く。
+- 秘密鍵は `.env.keys` に置き、コミットしない。デプロイでは GitHub の Secret `DOTENV_PRIVATE_KEY_PRODUCTION` から渡す。
+- `pnpm dev` と `pnpm build` は `dotenvx run` でファイルを読む。`vite.config.ts` は `PUBLIC_` で始まる値だけを Vite の `loadEnv` でルートのファイルから直接読み、クライアントに渡す。鍵がなくても（PR の CI やプレビューでも）公開の値はビルドに入る。
 
 ### 商品情報の取得
 

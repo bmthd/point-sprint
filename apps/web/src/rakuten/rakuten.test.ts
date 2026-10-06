@@ -35,17 +35,23 @@ const fetchReturning = (response: Response | Error) =>
 test("reads the settings, and none while they are missing or still encrypted", () => {
   expect(
     readRakutenConfig({
-      RAKUTEN_APPLICATION_ID: "app-id",
-      RAKUTEN_ACCESS_KEY: " access-key ",
-      RAKUTEN_AFFILIATE_ID: "aff-id",
+      PUBLIC_RAKUTEN_APPLICATION_ID: "app-id",
+      PUBLIC_RAKUTEN_ACCESS_KEY: " access-key ",
+      PUBLIC_RAKUTEN_AFFILIATE_ID: "aff-id",
     }),
   ).toEqual(config);
   expect(
-    readRakutenConfig({ RAKUTEN_APPLICATION_ID: "app-id", RAKUTEN_ACCESS_KEY: "access-key" }),
+    readRakutenConfig({
+      PUBLIC_RAKUTEN_APPLICATION_ID: "app-id",
+      PUBLIC_RAKUTEN_ACCESS_KEY: "access-key",
+    }),
   ).toEqual({ applicationId: "app-id", accessKey: "access-key" });
-  expect(readRakutenConfig({ RAKUTEN_APPLICATION_ID: "app-id" })).toBeUndefined();
+  expect(readRakutenConfig({ PUBLIC_RAKUTEN_APPLICATION_ID: "app-id" })).toBeUndefined();
   expect(
-    readRakutenConfig({ RAKUTEN_APPLICATION_ID: "encrypted:BCx…", RAKUTEN_ACCESS_KEY: "key" }),
+    readRakutenConfig({
+      PUBLIC_RAKUTEN_APPLICATION_ID: "encrypted:BCx…",
+      PUBLIC_RAKUTEN_ACCESS_KEY: "key",
+    }),
   ).toBeUndefined();
 });
 
