@@ -55,6 +55,7 @@
     "prerender",
     "prerendered",
     "esbuild",
-    "workerd"
+    "workerd",
+    "contentinfo"
   ]
 }
