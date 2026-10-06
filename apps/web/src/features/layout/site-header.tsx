@@ -1,4 +1,4 @@
-import { Box, IconButton, useColorMode } from "@workspaces/ui";
+import { Box, IconButton, MoonIcon, SunIcon, useColorMode } from "@workspaces/ui";
 import { RouterLink } from "../plan-list/router-link";
 
 function ProfileIcon() {
@@ -20,43 +20,6 @@ function ProfileIcon() {
   );
 }
 
-function ColorModeIcon({ colorMode }: { colorMode: "light" | "dark" }) {
-  if (colorMode === "light") {
-    return (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="12" r="4" />
-        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5 6.5 6.5 0 0 0 20.5 14.2Z" />
-    </svg>
-  );
-}
-
 function ColorModeButton() {
   const { colorMode, toggleColorMode } = useColorMode();
   const nextColorMode = colorMode === "light" ? "dark" : "light";
@@ -72,9 +35,8 @@ function ColorModeButton() {
       variant="ghost"
       color="fg"
       _hover={{ bg: "bg.muted" }}
-    >
-      <ColorModeIcon colorMode={colorMode} />
-    </IconButton>
+      icon={colorMode === "light" ? <SunIcon /> : <MoonIcon />}
+    />
   );
 }
 
