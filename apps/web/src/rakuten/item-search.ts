@@ -30,6 +30,8 @@ export type RakutenItem = {
   shopName: string;
   /** The shop's own point rate (1 for none, 10 for 「ポイント10倍」). */
   pointRate: number;
+  /** The item page (`https://item.rakuten.co.jp/<shop code>/<item manage number>/`). */
+  pageUrl: string;
   /** The item page; an affiliate link when the config has an affiliate id. */
   itemUrl: string;
   /** The affiliate link, or `""` without an affiliate id. */
@@ -57,6 +59,13 @@ export type SearchOptions = {
   signal?: AbortSignal;
 };
 
+/** The item page an `itemUrl` leads to: an affiliate link carries it in `pc`. */
+function pageUrlOf(itemUrl: string) {
+  const url = new URL(itemUrl);
+  const page = url.hostname === "hb.afl.rakuten.co.jp" ? url.searchParams.get("pc") : itemUrl;
+  return (page ?? itemUrl).replace(/[?#].*$/, "");
+}
+
 const toItem = (item: v.InferOutput<typeof ItemSchema>): RakutenItem => ({
   itemCode: item.itemCode,
   name: item.itemName,
@@ -64,6 +73,7 @@ const toItem = (item: v.InferOutput<typeof ItemSchema>): RakutenItem => ({
   shopCode: item.shopCode,
   shopName: item.shopName,
   pointRate: item.pointRate,
+  pageUrl: pageUrlOf(item.itemUrl),
   itemUrl: item.itemUrl,
   affiliateUrl: item.affiliateUrl,
 });
@@ -109,18 +119,35 @@ export async function searchItems(
 export type LookupFailure = SearchFailure | { reason: "not-found" };
 export type LookupResult = { ok: true; item: RakutenItem } | { ok: false; error: LookupFailure };
 
-/** The item of an item code (`<shop code>:<item manage number>`). */
+/** An Ichiba item page, as its URL names it. */
+export type ItemPage = { shopCode: string; itemManageNumber: string };
+
+const isPage = (url: string, { shopCode, itemManageNumber }: ItemPage) => {
+  if (!URL.canParse(url)) return false;
+  const [shop, manageNumber] = new URL(url).pathname.split("/").filter(Boolean);
+  return shop === shopCode && manageNumber === itemManageNumber;
+};
+
+/**
+ * The item on an item page. The API's `itemCode` is `<shop code>:<a number of Rakuten's own>`,
+ * not the item manage number in the URL, so the shop's items are searched by the manage number and
+ * the one on that page is taken. A manage number the search does not know finds nothing.
+ */
 export async function lookupItem(
   config: RakutenConfig,
-  itemCode: string,
+  page: ItemPage,
   options: SearchOptions = {},
 ): Promise<LookupResult> {
-  const result = await searchItems(config, { itemCode, hits: 1 }, options);
-  // An item code of a shop that does not exist is answered with 400 `itemCode is not valid`.
+  const result = await searchItems(
+    config,
+    { shopCode: page.shopCode, keyword: page.itemManageNumber, hits: 30 },
+    options,
+  );
+  // A shop that does not exist, or a manage number too short for a keyword, is answered with 400.
   if (!result.ok && result.error.reason === "http" && result.error.status === 400) {
     return { ok: false, error: { reason: "not-found" } };
   }
   if (!result.ok) return result;
-  const [item] = result.items;
+  const item = result.items.find((found) => isPage(found.pageUrl, page));
   return item ? { ok: true, item } : { ok: false, error: { reason: "not-found" } };
 }

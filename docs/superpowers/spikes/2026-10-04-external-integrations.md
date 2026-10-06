@@ -15,8 +15,10 @@
 - **サーバー側（ビルド時）:** Node の `fetch` に `Origin: https://point-sprint.bmth.dev` を付けると 200 で返る。ビルド時の広告取得はこの方法で行う。
 - **開発中:** ブラウザは `localhost` を `Origin` として送るので、直接は呼べない。開発サーバーで API への呼び出しを中継し、中継側で `Origin` を付け替える必要がある（計画3で扱う）。
 - **アクセスキーの扱い:** `Origin` はサーバー側から自由に付けられるので、`accessKey` が漏れると第三者も使える。クライアントに置く前提のキーとして扱い、秘密情報としては扱わない。
-- **商品コードでの取得:** `itemCode=<ショップコード>:<商品管理番号>` で1件を取得できる。レスポンスの `Items[0].Item` には `itemName`、`itemPrice`、`itemCode`、`shopCode`、`shopName`、`pointRate`、`taxFlag`、`affiliateUrl`、画像の URL などが含まれる。
-  存在しないショップコードの `itemCode` には 400 `wrong_parameter`（`itemCode is not valid`）が返る（2026-10-07 に確認）。`affiliateId` を付けると `itemUrl` もアフィリエイトリンク（`hb.afl.rakuten.co.jp`）になる。
+- **商品の URL からの取得:** 商品の URL（`item.rakuten.co.jp/<ショップコード>/<商品管理番号>/`）の商品管理番号は、API の `itemCode`（`<ショップコード>:<楽天の内部の番号>`、例: `mapcamera:12238315`）とは別の値である。そのため `itemCode=<ショップコード>:<商品管理番号>` では、ふつうは 400 `itemCode is not valid` になる。番号がたまたま一致する商品だけが取れるので、別の商品を取ってしまうおそれもある（2026-10-07 に確認。当初は `itemCode` で取れると書いていたが、誤りだった）。
+  - かわりに `shopCode=<ショップコード>&keyword=<商品管理番号>` で検索し、結果のうち商品ページの URL が一致するものを使う。14件で試したところ11件が見つかった。商品管理番号が検索の対象になっていない商品は見つからない。
+  - 存在しないショップコードや、短すぎるキーワード（1文字）には 400 が返る。
+  - レスポンスの `Items[].Item` には `itemName`、`itemPrice`、`itemCode`、`itemUrl`、`shopCode`、`shopName`、`pointRate`、`taxFlag`、`affiliateUrl`、画像の URL などが含まれる。`affiliateId` を付けると `itemUrl` もアフィリエイトリンク（`hb.afl.rakuten.co.jp`）になり、元の商品ページの URL は `pc` パラメータに入る。
 - **レート制限:** 1秒に1回程度を超えると 429 `Rate limit is exceeded` になる。
 
 ## メール送信（Cloudflare `send_email`）
