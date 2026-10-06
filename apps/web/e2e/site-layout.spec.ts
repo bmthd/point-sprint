@@ -16,6 +16,9 @@ const pages = (id: string) => [
   { name: "プロフィール", path: "/profile" },
   { name: "プラン", path: `/plan?id=${id}` },
   { name: "プランの設定", path: `/plan/settings?id=${id}` },
+  { name: "使い方・注意事項", path: "/help" },
+  { name: "お知らせ", path: "/notices" },
+  { name: "利用規約", path: "/terms" },
 ];
 
 const header = (page: Page) => page.getByRole("banner");
@@ -77,10 +80,25 @@ test("every page has the footer, and each footer link opens its page", async ({ 
         await page.goto(path);
         await ready(page);
         await footer(page).locator(`a[href="${href}"]`).click();
-        await expect(page).toHaveURL(new RegExp(`${href.replace(/[?]/g, "\\?")}$`));
+        // The preview server answers a page's path with its directory (`/help/`).
+        await expect(page).toHaveURL(new RegExp(`${href.replace(/[?]/g, "\\?")}/?$`));
         await expect(page.getByRole("main")).toBeVisible();
       }
     });
+  }
+});
+
+test("the footer links to each page that tells about the site", async ({ page }) => {
+  for (const { label, path, heading } of [
+    { label: "使い方・注意事項", path: "/help", heading: "使い方・注意事項" },
+    { label: "お知らせ", path: "/notices", heading: "お知らせ" },
+    { label: "利用規約", path: "/terms", heading: "利用規約" },
+  ]) {
+    await page.goto("/");
+    await ready(page);
+    await footer(page).getByRole("link", { name: label }).click();
+    await expect(page).toHaveURL(new RegExp(`${path}/?$`));
+    await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
   }
 });
 

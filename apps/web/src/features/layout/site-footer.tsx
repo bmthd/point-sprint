@@ -2,11 +2,12 @@ import type { LinkProps } from "@tanstack/react-router";
 import { Box, Text } from "@workspaces/ui";
 import { RouterLink } from "../plan-list/router-link";
 
-/**
- * The footer's links. Only pages that exist are listed: 使い方・注意事項, お知らせ and 利用規約
- * are added with their pages (#12), お問い合わせ with its page (#9).
- */
-export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [];
+/** The footer's links. Only pages that exist are listed: お問い合わせ is added with its page (#9). */
+export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [
+  { to: "/help", label: "使い方・注意事項" },
+  { to: "/notices", label: "お知らせ" },
+  { to: "/terms", label: "利用規約" },
+];
 
 /** The footer on every page: the links, and where the data is kept (it applies to every page). */
 export function SiteFooter() {

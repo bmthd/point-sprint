@@ -1,5 +1,13 @@
 /** Every route, rendered to HTML at build time. Listed so none depends on being reached by a link. */
-export const prerenderedPages = ["/", "/plan", "/plan/settings", "/profile"].map((path) => ({
+export const prerenderedPages = [
+  "/",
+  "/plan",
+  "/plan/settings",
+  "/profile",
+  "/help",
+  "/notices",
+  "/terms",
+].map((path) => ({
   path,
   file: path === "/" ? "index.html" : `${path.slice(1)}/index.html`,
 }));
