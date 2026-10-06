@@ -1,0 +1,50 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# environment
+# .env is committed with values encrypted by dotenvx; its private keys are not
+.env.keys
+.env.local
+.env.*.local
+.dev.vars
+.dev.vars.*
+
+# build output
+dist/
+.output/
+.tanstack/
+.nitro/
+.vinxi/
+.wrangler/
+.cloudflare/
+*.tsbuildinfo
+
+# legacy Next.js output
+.next/
+
+# test output
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+*.swp
+
+# agent worktrees
+.claude/worktrees/
+
+# vitest browser mode attachments
+.vitest/
+
+# playwright
+test-results/
+playwright-report/

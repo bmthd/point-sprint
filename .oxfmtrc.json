@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "ignorePatterns": [
+    "node_modules/**",
+    ".next/**",
+    "coverage/**",
+    "src/**",
+    ".superpowers/**",
+    ".claude/**",
+    "docs/**",
+    "**/routeTree.gen.ts",
+    "**/dist/**",
+    "pnpm-lock.yaml",
+    "ui.json",
+    "packages/ui/src/index.ts",
+    "packages/ui/src/**/registry.json",
+    "packages/ui/src/components/**",
+    "packages/ui/src/hooks/**",
+    "packages/ui/src/providers/**"
+  ]
+}
