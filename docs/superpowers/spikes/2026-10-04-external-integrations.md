@@ -1,6 +1,6 @@
 # 外部連携の検証結果（計画1 タスク1）
 
-検証日: 2026-10-04。検証用のコードはリポジトリに入れていない。キーやトークンの値はここに書かない（`.env` に dotenvx で暗号化して置いてある）。
+検証日: 2026-10-04。検証用のコードはリポジトリに入れていない。キーやトークンの値はここに書かない（公開してよい値は `.env.development` と `.env.production` に平文で、秘密の値は `.env.production` に dotenvx で暗号化して置いてある）。
 
 ## 結論
 
@@ -31,7 +31,7 @@
 ## Turnstile
 
 - テスト用のキー（常に成功するシークレット `1x0000000000000000000000000000000AA`）で `siteverify` が `success: true` を返すことを確かめた。常に失敗するシークレットでは `invalid-input-response` になる。
-- 本番用のウィジェット（名前 `point-sprint inquiry`、ドメイン `point-sprint.bmth.dev`、モード `managed`）を作り、サイトキーとシークレットを `.env` の `TURNSTILE_SITE_KEY`、`TURNSTILE_SECRET_KEY` に入れた。開発中は Cloudflare のテスト用キーを使う。
+- 本番用のウィジェット（名前 `point-sprint inquiry`、ドメイン `point-sprint.bmth.dev`、モード `managed`）を作り、サイトキーとシークレットを `.env.production` の `PUBLIC_TURNSTILE_SITE_KEY`、`TURNSTILE_SECRET_KEY` に入れた。開発中は Cloudflare のテスト用キーを使う（`.env.development`）。
 
 ## 計画への影響
 

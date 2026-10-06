@@ -25,11 +25,11 @@ jobs:
           runtime: node@26
           cache: true
       - run: pnpm install --frozen-lockfile
-      # dotenvx decrypts the Rakuten API settings in .env; without the key the build turns the
-      # item lookup off.
+      # dotenvx decrypts the secrets in .env.production. The public values are plain text and are
+      # built in without the key.
       - run: pnpm build
         env:
-          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
+          DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}
       - name: Deploy
         working-directory: apps/web
         run: pnpm exec cf deploy --prebuilt --message "${GITHUB_SHA::7}"

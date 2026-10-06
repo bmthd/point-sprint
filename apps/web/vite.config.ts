@@ -11,8 +11,10 @@ import {
 } from "./src/rakuten/config.ts";
 
 export default defineConfig(({ mode, isPreview }) => {
-  // From `.env` through dotenvx (`pnpm dev`, `pnpm build`). Without them, no item lookup.
-  const rakutenConfig = readRakutenConfig(loadEnv(mode, ".", "RAKUTEN_"));
+  // Only the `PUBLIC_` values reach the browser. They are plain text in `.env.development` and
+  // `.env.production` at the root, so they are read without the dotenvx key, also by builds that do
+  // not go through `pnpm build`. Without them, no item lookup.
+  const rakutenConfig = readRakutenConfig(loadEnv(mode, "../..", "PUBLIC_"));
   // `vite preview` serves what was built, with the settings the build had.
   if (!rakutenConfig && !isPreview) {
     console.warn("Rakuten API settings are missing or encrypted: item lookup is turned off.");
