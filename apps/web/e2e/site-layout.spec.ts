@@ -23,6 +23,7 @@ const footer = (page: Page) => page.getByRole("contentinfo");
 const topLink = (page: Page) => header(page).getByRole("link", { name: "ポイントスプリント" });
 const profileLink = (page: Page) =>
   header(page).getByRole("link", { name: "プロフィール（SPU・ショップ台帳）" });
+const colorModeButton = (page: Page, name: string) => header(page).getByRole("button", { name });
 
 /** Waits until the page has hydrated: before that a click reloads the whole document. */
 const ready = (page: Page) =>
@@ -58,6 +59,23 @@ test("the header marks the page being shown", async ({ page }) => {
       else await expect(profileLink(page)).not.toHaveAttribute("aria-current");
     });
   }
+});
+
+test("the header switches color modes and keeps the choice after reload", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/");
+  await ready(page);
+
+  await colorModeButton(page, "現在はライトモードです。ダークモードに切り替える").click();
+  await expect(
+    colorModeButton(page, "現在はダークモードです。ライトモードに切り替える"),
+  ).toBeVisible();
+
+  await page.reload();
+  await ready(page);
+  await expect(
+    colorModeButton(page, "現在はダークモードです。ライトモードに切り替える"),
+  ).toBeVisible();
 });
 
 test("every page has the footer, and each footer link opens its page", async ({ page }) => {

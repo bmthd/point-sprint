@@ -1,4 +1,4 @@
-import { Box } from "@workspaces/ui";
+import { Box, IconButton, useColorMode } from "@workspaces/ui";
 import { RouterLink } from "../plan-list/router-link";
 
 function ProfileIcon() {
@@ -17,6 +17,64 @@ function ProfileIcon() {
       <circle cx="12" cy="8" r="4" />
       <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
     </svg>
+  );
+}
+
+function ColorModeIcon({ colorMode }: { colorMode: "light" | "dark" }) {
+  if (colorMode === "light") {
+    return (
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5 6.5 6.5 0 0 0 20.5 14.2Z" />
+    </svg>
+  );
+}
+
+function ColorModeButton() {
+  const { colorMode, toggleColorMode } = useColorMode();
+  const nextColorMode = colorMode === "light" ? "dark" : "light";
+  const colorModeLabel = colorMode === "light" ? "ライト" : "ダーク";
+  const nextColorModeLabel = nextColorMode === "light" ? "ライト" : "ダーク";
+
+  return (
+    <IconButton
+      aria-label={`現在は${colorModeLabel}モードです。${nextColorModeLabel}モードに切り替える`}
+      onClick={toggleColorMode}
+      boxSize="11"
+      rounded="xl"
+      variant="ghost"
+      color="fg"
+      _hover={{ bg: "bg.muted" }}
+    >
+      <ColorModeIcon colorMode={colorMode} />
+    </IconButton>
   );
 }
 
@@ -54,6 +112,7 @@ export function SiteHeader() {
           ポイントスプリント
         </RouterLink>
         <Box display="flex" alignItems="center" gap="1">
+          <ColorModeButton />
           <RouterLink
             to="/profile"
             aria-label="プロフィール（SPU・ショップ台帳）"
