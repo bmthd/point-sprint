@@ -1,9 +1,11 @@
 /// <reference types="vite/client" />
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { ColorModeScript, UIProvider } from "@workspaces/ui";
+import { Box, ColorModeScript, UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import type { ReactNode } from "react";
 import { AppProviders } from "../app-providers";
+import { SiteFooter } from "../features/layout/site-footer";
+import { SiteHeader } from "../features/layout/site-header";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -27,7 +29,14 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <RootDocument>
-      <Outlet />
+      {/* The footer stays at the bottom of the screen on a short page. */}
+      <Box bg="bg" color="fg" minH="100dvh" display="flex" flexDirection="column">
+        <SiteHeader />
+        <Box flex="1">
+          <Outlet />
+        </Box>
+        <SiteFooter />
+      </Box>
     </RootDocument>
   );
 }

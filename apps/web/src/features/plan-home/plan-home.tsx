@@ -48,20 +48,11 @@ function PlanSwitcher({ plan }: { plan: Plan }) {
           size="lg"
           aria-label={`${plan.name}、プランを切り替える`}
           minW="0"
-          // Two lines of text: a button is one line tall.
-          h="auto"
-          py="1"
-          lineHeight="normal"
           textAlign="start"
         >
-          <Box display="flex" flexDirection="column" minW="0">
-            <Text as="span" fontSize="2xs" color="fg.muted">
-              ポイントスプリント
-            </Text>
-            <Text as="span" fontSize="md" fontWeight="bold" lineClamp={1}>
-              {plan.name}
-            </Text>
-          </Box>
+          <Text as="span" fontSize="md" fontWeight="bold" lineClamp={1}>
+            {plan.name}
+          </Text>
           <ChevronIcon size={16} />
         </Button>
       </Menu.Trigger>
@@ -110,10 +101,10 @@ function SettingsEntry({ plan, desktop }: { plan: Plan; desktop: boolean }) {
   );
 }
 
-function Header({ plan, desktop }: { plan: Plan; desktop: boolean }) {
+/** The plan's own bar under the site header: which plan this is, and its settings. */
+function PlanBar({ plan, desktop }: { plan: Plan; desktop: boolean }) {
   return (
     <Box
-      as="header"
       maxW="1280px"
       mx="auto"
       h="14"
@@ -191,7 +182,7 @@ function Home({ plan }: { plan: Plan }) {
 
   return (
     <>
-      <Header plan={plan} desktop={desktop} />
+      <PlanBar plan={plan} desktop={desktop} />
       {/* One column on a phone (summary first); on a wide screen the summary is the right column. */}
       <Box
         as="main"

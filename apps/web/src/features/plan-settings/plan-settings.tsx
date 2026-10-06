@@ -103,16 +103,8 @@ export function SettingsPanelButton({
 function SettingsScreen({ plan }: { plan: Plan }) {
   return (
     <>
-      <Box
-        as="header"
-        maxW="640px"
-        mx="auto"
-        h="14"
-        display="flex"
-        alignItems="center"
-        gap="1"
-        px="2"
-      >
+      {/* 戻る goes back to this plan, which the site header has no link to. */}
+      <Box maxW="640px" mx="auto" h="14" display="flex" alignItems="center" gap="1" px="2">
         <RouterLink
           to="/plan"
           search={{ id: plan.id }}
@@ -135,6 +127,7 @@ function SettingsScreen({ plan }: { plan: Plan }) {
         <SettingsContent plan={plan} />
       </Box>
       <Box
+        data-bottom-bar
         position="fixed"
         insetX="0"
         bottom="0"

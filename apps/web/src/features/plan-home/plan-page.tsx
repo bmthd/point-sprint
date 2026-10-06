@@ -1,6 +1,6 @@
 import { ClientOnly } from "@tanstack/react-router";
 import type { Plan } from "@workspaces/domain";
-import { Box, Button, Heading, Text, VStack } from "@workspaces/ui";
+import { Button, Heading, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { planAtom } from "../../state/derived";
@@ -74,10 +74,8 @@ export function PlanPage({
   render: (plan: Plan) => ReactNode;
 }) {
   return (
-    <Box bg="bg" color="fg" minH="100dvh">
-      <ClientOnly>
-        <PlanScreen id={id} render={render} />
-      </ClientOnly>
-    </Box>
+    <ClientOnly>
+      <PlanScreen id={id} render={render} />
+    </ClientOnly>
   );
 }

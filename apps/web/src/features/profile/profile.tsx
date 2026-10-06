@@ -5,9 +5,7 @@ import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { saveProfileAtom } from "../../state/mutations";
 import { profileAtom, profileQueryAtom, storageHealthQueryAtom } from "../../state/queries";
-import { BackIcon } from "../plan-home/icons";
 import { StorageHealthFailure, storageMessages } from "../plan-home/warnings";
-import { RouterLink } from "../plan-list/router-link";
 import { SpuTileGrid } from "../plan-settings/spu-tiles";
 import { ShopRegistry } from "./shop-registry";
 
@@ -85,39 +83,13 @@ function ProfileContent() {
 /** The profile at `/profile`: SPU defaults for new plans and the shop registry. */
 export function Profile() {
   return (
-    <Box bg="bg" color="fg" minH="100dvh">
-      <Box
-        as="header"
-        maxW="640px"
-        mx="auto"
-        h="14"
-        display="flex"
-        alignItems="center"
-        gap="1"
-        px="2"
-      >
-        <RouterLink
-          to="/"
-          aria-label="戻る"
-          boxSize="11"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          rounded="xl"
-          color="fg"
-          _hover={{ bg: "bg.muted" }}
-        >
-          <BackIcon />
-        </RouterLink>
-        <Heading as="h1" fontSize="lg">
-          プロフィール
-        </Heading>
-      </Box>
-      <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="16">
-        <ClientOnly>
-          <ProfileContent />
-        </ClientOnly>
-      </Box>
+    <Box as="main" maxW="640px" mx="auto" px="4" pt="4" pb="16">
+      <Heading as="h1" fontSize="lg" mb="4">
+        プロフィール
+      </Heading>
+      <ClientOnly>
+        <ProfileContent />
+      </ClientOnly>
     </Box>
   );
 }
