@@ -1,3 +1,7 @@
+// Formisch fields read their signals through getters on objects that keep their identity, so
+// React Compiler would memoize what they return and miss every change.
+"use no memo";
+
 import {
   Field as FormField,
   FieldArray,

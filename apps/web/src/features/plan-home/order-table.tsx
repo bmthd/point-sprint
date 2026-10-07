@@ -16,11 +16,11 @@ export function OrderTable({ plan, onEdit }: { plan: Plan; onEdit: (orderId: str
   const handleHintId = useId();
   const { askDelete, askReset, dialog } = useOrderConfirm(plan, heading);
   const [announcement, setAnnouncement] = useState("");
-  const dragged = useRef<{ orderId: string; index: number; shopName: string } | null>(null);
-  const focusAfterMove = useRef<string | null>(null);
+  const draggedRef = useRef<{ orderId: string; index: number; shopName: string } | null>(null);
+  const focusAfterMoveRef = useRef<string | null>(null);
   const announce = useCallback((message: string) => setAnnouncement(message), []);
   const context = useMemo(
-    () => ({ dragged, focusAfterMove, announce, handleHintId }),
+    () => ({ draggedRef, focusAfterMoveRef, announce, handleHintId }),
     [announce, handleHintId],
   );
 

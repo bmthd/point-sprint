@@ -27,7 +27,7 @@ export default defineConfig(({ mode, isPreview }) => {
         prerender: { enabled: true, crawlLinks: false },
         pages: prerenderedPages.map(({ path }) => ({ path, prerender: { enabled: true } })),
       }),
-      viteReact(),
+      viteReact({ compiler: true }),
     ],
     define: {
       "import.meta.env.RAKUTEN_CONFIG": JSON.stringify(rakutenConfig ?? null),
