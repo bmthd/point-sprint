@@ -1,6 +1,6 @@
 import type { Order } from "@workspaces/domain";
 import { useAtomValue, useSetAtom } from "jotai";
-import { Profiler, type ReactNode } from "react";
+import { Profiler, type ReactNode, useEffect } from "react";
 import { expect, test } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { userEvent } from "vitest/browser";
@@ -204,7 +204,9 @@ test("editing one order does not re-render other order cards", async () => {
     const plans = useAtomValue(plansQueryAtom);
     const loadedShops = useAtomValue(shopsQueryAtom);
     const update = useSetAtom(updateOrderAtom);
-    updateOrder = (next) => update({ planId: PLAN, order: next });
+    useEffect(() => {
+      updateOrder = (next) => update({ planId: PLAN, order: next });
+    }, [update]);
     return plans.isSuccess && loadedShops.isSuccess ? children : null;
   }
 
