@@ -1,6 +1,6 @@
 import { Markdown, type MarkdownComponents } from "@tanstack/markdown/react";
 import { useRouteContext } from "@tanstack/react-router";
-import { Badge, Box, Card, Heading, Link, NativeAccordion, Text } from "@workspaces/ui";
+import { Card, Heading, Link, List, NativeAccordion, Text, Timeline } from "@workspaces/ui";
 import type { ReactNode } from "react";
 import type { FileRoutesById } from "../../routeTree.gen";
 import { markdownExtensions } from "./-markdown-extensions";
@@ -20,20 +20,16 @@ const components = {
   p: ({ children }) => <Text my="2">{children}</Text>,
   a: ({ children, href }) => <Link href={href}>{children}</Link>,
   ul: ({ children }) => (
-    <Box as="ul" ps="6" my="2" listStyleType="disc">
+    <List.Root styleType="disc" my="2">
       {children}
-    </Box>
+    </List.Root>
   ),
   ol: ({ children }) => (
-    <Box as="ol" ps="6" my="2" listStyleType="decimal">
+    <List.Root styleType="decimal" my="2">
       {children}
-    </Box>
+    </List.Root>
   ),
-  li: ({ children }) => (
-    <Box as="li" my="1">
-      {children}
-    </Box>
-  ),
+  li: ({ children }) => <List.Item>{children}</List.Item>,
   "md-details": ({ summary, children }: { summary: string; children?: ReactNode }) => (
     <NativeAccordion.Root animate={false} borderBottomWidth="1px" borderColor="border">
       <NativeAccordion.Item>
@@ -44,18 +40,20 @@ const components = {
   ),
   "md-timeline": ({ children }: { children?: ReactNode }) => (
     <Card.Root my="4">
-      <Card.Body as="ol" gap="3" alignItems="stretch">
-        {children}
+      <Card.Body>
+        <Timeline.Root variant="number" colorScheme="mono" size="lg">
+          {children}
+        </Timeline.Root>
       </Card.Body>
     </Card.Root>
   ),
   "md-timeline-step": ({ step, children }: { step: string; children?: ReactNode }) => (
-    <Box as="li" display="grid" gridTemplateColumns="auto 1fr" gap="3" alignItems="start">
-      <Badge variant="solid" colorScheme="mono" fullRounded mt="0.5" aria-hidden>
-        {step}
-      </Badge>
-      <Box css={{ "& > p": { margin: 0 } }}>{children}</Box>
-    </Box>
+    <Timeline.Item>
+      <Timeline.Connector>
+        <Timeline.Indicator>{step}</Timeline.Indicator>
+      </Timeline.Connector>
+      <Timeline.Content css={{ "& > p": { margin: 0 } }}>{children}</Timeline.Content>
+    </Timeline.Item>
   ),
 } satisfies MarkdownComponents;
 
