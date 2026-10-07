@@ -10,14 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as markdownRouteRouteImport } from './routes/(markdown)/route'
 import { Route as InquiryRouteImport } from './routes/inquiry'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as markdownHelpRouteImport } from './routes/(markdown)/help'
+import { Route as markdownTermsRouteImport } from './routes/(markdown)/terms'
 import { Route as PlanSettingsRouteImport } from './routes/plan_.settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const markdownRouteRoute = markdownRouteRouteImport.update({
+  id: '/(markdown)',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InquiryRoute = InquiryRouteImport.update({
@@ -35,6 +42,16 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const markdownHelpRoute = markdownHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => markdownRouteRoute,
+} as any)
+const markdownTermsRoute = markdownTermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => markdownRouteRoute,
+} as any)
 const PlanSettingsRoute = PlanSettingsRouteImport.update({
   id: '/plan_/settings',
   path: '/plan/settings',
@@ -46,6 +63,8 @@ export interface FileRoutesByFullPath {
   '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
+  '/help': typeof markdownHelpRoute
+  '/terms': typeof markdownTermsRoute
   '/plan/settings': typeof PlanSettingsRoute
 }
 export interface FileRoutesByTo {
@@ -53,26 +72,55 @@ export interface FileRoutesByTo {
   '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
+  '/help': typeof markdownHelpRoute
+  '/terms': typeof markdownTermsRoute
   '/plan/settings': typeof PlanSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/(markdown)': typeof markdownRouteRouteWithChildren
   '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
+  '/(markdown)/help': typeof markdownHelpRoute
+  '/(markdown)/terms': typeof markdownTermsRoute
   '/plan_/settings': typeof PlanSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/inquiry' | '/plan' | '/profile' | '/plan/settings'
+  fullPaths:
+    | '/'
+    | '/inquiry'
+    | '/plan'
+    | '/profile'
+    | '/help'
+    | '/terms'
+    | '/plan/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/inquiry' | '/plan' | '/profile' | '/plan/settings'
-  id: '__root__' | '/' | '/inquiry' | '/plan' | '/profile' | '/plan_/settings'
+  to:
+    | '/'
+    | '/inquiry'
+    | '/plan'
+    | '/profile'
+    | '/help'
+    | '/terms'
+    | '/plan/settings'
+  id:
+    | '__root__'
+    | '/'
+    | '/(markdown)'
+    | '/inquiry'
+    | '/plan'
+    | '/profile'
+    | '/(markdown)/help'
+    | '/(markdown)/terms'
+    | '/plan_/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  markdownRouteRoute: typeof markdownRouteRouteWithChildren
   InquiryRoute: typeof InquiryRoute
   PlanRoute: typeof PlanRoute
   ProfileRoute: typeof ProfileRoute
@@ -86,6 +134,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(markdown)': {
+      id: '/(markdown)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof markdownRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inquiry': {
@@ -109,6 +164,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(markdown)/help': {
+      id: '/(markdown)/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof markdownHelpRouteImport
+      parentRoute: typeof markdownRouteRoute
+    }
+    '/(markdown)/terms': {
+      id: '/(markdown)/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof markdownTermsRouteImport
+      parentRoute: typeof markdownRouteRoute
+    }
     '/plan_/settings': {
       id: '/plan_/settings'
       path: '/plan/settings'
@@ -119,8 +188,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface markdownRouteRouteChildren {
+  markdownHelpRoute: typeof markdownHelpRoute
+  markdownTermsRoute: typeof markdownTermsRoute
+}
+
+const markdownRouteRouteChildren: markdownRouteRouteChildren = {
+  markdownHelpRoute: markdownHelpRoute,
+  markdownTermsRoute: markdownTermsRoute,
+}
+
+const markdownRouteRouteWithChildren = markdownRouteRoute._addFileChildren(
+  markdownRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  markdownRouteRoute: markdownRouteRouteWithChildren,
   InquiryRoute: InquiryRoute,
   PlanRoute: PlanRoute,
   ProfileRoute: ProfileRoute,

@@ -6,6 +6,8 @@ test("each page has its own title", async ({ page }) => {
   const pages = [
     { path: "/", title: "ポイントスプリント 楽天市場お買い物マラソン攻略計算ツール" },
     { path: "/profile", title: "プロフィール | ポイントスプリント" },
+    { path: "/help", title: "使い方・注意事項 | ポイントスプリント" },
+    { path: "/terms", title: "利用規約 | ポイントスプリント" },
   ];
   for (const { path, title } of pages) {
     await page.goto(path);
