@@ -127,11 +127,6 @@ export function InquiryForm({ send, siteKey, widget: Widget = TurnstileWidget }:
         >
           送信する
         </Button>
-        {siteKey !== undefined && token === undefined ? (
-          <Text fontSize="xs" color="fg.muted">
-            上の確認が終わると送信できます。
-          </Text>
-        ) : null}
       </VStack>
     </Form>
   );

@@ -65,7 +65,6 @@ describe("the inquiry form", () => {
     const screen = await renderForm(send);
     await fillIn(screen);
     await expect.element(fields(screen).submit).toBeDisabled();
-    await expect.element(screen.getByText("上の確認が終わると送信できます。")).toBeVisible();
 
     await fields(screen).check.click();
     await expect.element(fields(screen).submit).toBeEnabled();
