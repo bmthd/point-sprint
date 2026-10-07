@@ -1,7 +1,8 @@
-import { Field as FormField, Form, type FieldElementProps, useForm } from "@formisch/react";
+import { Field as FormField, useForm } from "@formisch/react";
 import { Alert, Button, Checkbox, Field, Input, Text, Textarea, VStack } from "@workspaces/ui";
 import { type ComponentType, useState } from "react";
 import * as v from "valibot";
+import { Form, bind, errorsOf } from "../../form/form";
 import type { InquiryResult } from "../../server/inquiry";
 import { InquiryInputSchema, type InquiryRequest } from "../../server/inquiry-input";
 import { TurnstileWidget, type TurnstileWidgetProps } from "./turnstile-widget";
@@ -13,23 +14,6 @@ export type SendInquiry = (request: InquiryRequest) => Promise<InquiryResult>;
  * error body that the server function's client gives back as it is.
  */
 const SentSchema = v.object({ ok: v.literal(true) });
-
-type FieldState = {
-  input: unknown;
-  errors: [string, ...string[]] | null;
-  props: FieldElementProps;
-};
-
-/** The props of a Formisch text field for an `Input` or a `Textarea`. */
-const bind = (field: FieldState) => ({
-  ...field.props,
-  value: typeof field.input === "string" ? field.input : "",
-});
-
-const errorsOf = (field: FieldState) => ({
-  invalid: field.errors !== null,
-  errorMessage: field.errors?.[0],
-});
 
 const emptyInput = { name: "", email: "", wantsReply: false, body: "" };
 

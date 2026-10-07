@@ -5,7 +5,13 @@ import { useId, useRef, useState } from "react";
 import * as v from "valibot";
 import { updateBenefitAtom } from "../../state/order-ops";
 import { ChevronIcon } from "../plan-home/icons";
-import { CommitField } from "../plan-home/order-fields";
+import { CommitField } from "../../form/commit-field";
+import {
+  END_BEFORE_START,
+  START_AFTER_END,
+  dateSchema,
+  pointsSchema,
+} from "../../form/field-schemas";
 import { rateText } from "../plan-home/order-shared";
 import { isAddedCampaign } from "./campaign-toggles";
 import { useDeleteCampaign } from "./delete-campaign";
@@ -17,23 +23,7 @@ type ShopAroundBenefit = Extract<Benefit, { kind: "shop-around" }>;
 export const shopAroundOf = (plan: Plan) =>
   plan.benefits.find((benefit): benefit is ShopAroundBenefit => benefit.kind === "shop-around");
 
-const normalize = (text: string) => text.normalize("NFKC").trim();
-
-const dateSchema = (label: string) =>
-  v.pipe(
-    v.string(),
-    v.transform(normalize),
-    v.nonEmpty(`${label}を入れてください`),
-    v.isoDate(`${label}は YYYY-MM-DD で入れてください`),
-  );
-
-const CapSchema = v.pipe(
-  v.string(),
-  v.transform((text) => normalize(text).replace(/[,P]/gi, "")),
-  v.regex(/^\d+$/, "獲得上限はポイントの整数で入れてください"),
-  v.transform(Number),
-  v.safeInteger("獲得上限はポイントの整数で入れてください"),
-);
+const CapSchema = pointsSchema("獲得上限");
 
 const grouped = (value: number) => value.toLocaleString("ja-JP");
 
@@ -173,22 +163,22 @@ function ShopAroundEditor({
         >
           <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
             <CommitField
-              key={`start:${period.start}`}
+              key={`start:${period.start}:${period.end}`}
               label="開始日"
               initial={period.start}
               schema={v.pipe(
                 dateSchema("開始日"),
-                v.check((start) => start <= period.end, "開始日は終了日より前にしてください"),
+                v.check((start) => start <= period.end, START_AFTER_END),
               )}
               onCommit={(start) => withPeriod({ start })}
             />
             <CommitField
-              key={`end:${period.end}`}
+              key={`end:${period.start}:${period.end}`}
               label="終了日"
               initial={period.end}
               schema={v.pipe(
                 dateSchema("終了日"),
-                v.check((end) => end >= period.start, "終了日は開始日より後にしてください"),
+                v.check((end) => end >= period.start, END_BEFORE_START),
               )}
               onCommit={(end) => withPeriod({ end })}
             />

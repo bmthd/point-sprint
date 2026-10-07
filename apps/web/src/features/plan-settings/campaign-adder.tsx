@@ -1,3 +1,7 @@
+// Formisch fields read their signals through getters on objects that keep their identity, so
+// React Compiler would memoize what they return and miss every change.
+"use no memo";
+
 import {
   type CampaignTemplate,
   type Plan,
@@ -5,6 +9,7 @@ import {
   hasCampaignOccurrence,
   instantiateCampaign,
 } from "@workspaces/domain";
+import { Field as FormField, type FormStore, useField, useForm } from "@formisch/react";
 import {
   Box,
   Button,
@@ -18,54 +23,21 @@ import {
   VStack,
 } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
-import { type ReactNode, useId, useState } from "react";
+import { useId, useState } from "react";
 import * as v from "valibot";
+import { dateSchema } from "../../form/field-schemas";
+import { Form, bind, errorsOf } from "../../form/form";
 import { addBenefitAtom } from "../../state/order-ops";
+import { type CampaignFormSchema, SPECS, campaignFormSchema } from "./campaign-form";
 import { imageUrl } from "./settings-shared";
-
-/** Which fields a template's form asks for, and the hint on its button. */
-type FormSpec = {
-  hint: string;
-  /** One date and a +1 / +2 choice (a team that won, or both). */
-  date?: boolean;
-  period?: boolean;
-  rate?: boolean;
-  cap?: "optional" | "required";
-  minOrderAmount?: boolean;
-  label?: boolean;
-};
-
-const SPECS: Record<string, FormSpec> = {
-  "sports-win": { hint: "勝った翌日と倍率", date: true },
-  "39shop": { hint: "開催期間", period: true },
-  repeat: { hint: "期間・条件金額・上限", period: true, minOrderAmount: true, cap: "required" },
-  "shop-around-manual": { hint: "プリセットのない回", period: true, cap: "required" },
-  "custom-rate": {
-    hint: "倍率・上限・期間を自分で",
-    label: true,
-    period: true,
-    rate: true,
-    cap: "optional",
-  },
-};
 
 /** The templates the user adds with dates or a period of their own, in the master's order. */
 export const addableTemplates = campaignTemplates.filter(
   (template) => template.occurrence !== "fixed" && SPECS[template.id] !== undefined,
 );
 
-const normalize = (text: string) => text.normalize("NFKC").trim();
-const DateText = v.pipe(v.string(), v.isoDate());
-const isDate = (text: string) => v.is(DateText, text);
-/** Whole points or yen: digits, with commas allowed. */
-const parseWhole = (text: string) => {
-  const digits = normalize(text).replace(/,/g, "");
-  return /^\d+$/.test(digits) ? Number(digits) : undefined;
-};
-const parseRate = (text: string) => {
-  const value = Number(normalize(text));
-  return normalize(text) !== "" && Number.isFinite(value) && value > 0 ? value : undefined;
-};
+const DateText = dateSchema("日付");
+const isDate = (text: unknown): text is string => v.is(DateText, text);
 const grouped = (value: number | undefined) =>
   value === undefined ? "" : value.toLocaleString("ja-JP");
 
@@ -122,24 +94,30 @@ export function TemplateList({ onPick }: { onPick: (template: CampaignTemplate) 
   );
 }
 
-/** A label above its field and the field's error under it; `Field` wires them to the field. */
-function Labeled({
+/** A text field of the form, its label above it and its error under it. */
+function TextField({
+  form,
+  name,
   label,
-  error,
-  children,
+  type,
+  inputMode,
 }: {
+  form: FormStore<CampaignFormSchema>;
+  name: "label" | "date" | "start" | "end" | "rate" | "minOrderAmount" | "cap";
   label: string;
-  error: string | undefined;
-  children: ReactNode;
+  type?: "date";
+  inputMode?: "numeric" | "decimal";
 }) {
   return (
-    <Field.Root label={label} invalid={error !== undefined} errorMessage={error} minW="0">
-      {children}
-    </Field.Root>
+    <FormField of={form} path={[name]}>
+      {(field) => (
+        <Field.Root label={label} {...errorsOf(field)} minW="0">
+          <Input type={type} inputMode={inputMode} {...bind(field)} />
+        </Field.Root>
+      )}
+    </FormField>
   );
 }
-
-type Errors = Partial<Record<"date" | "start" | "end" | "rate" | "cap" | "minOrderAmount", string>>;
 
 function CampaignForm({
   plan,
@@ -154,69 +132,48 @@ function CampaignForm({
   const addBenefit = useSetAtom(addBenefitAtom);
   const defaults = template.benefit;
   const defaultRate = defaults.kind === "rate-bonus" ? defaults.params.rate : 1;
-  const [date, setDate] = useState(plan.period.start);
   const [choice, setChoice] = useState(defaultRate === 2 ? 2 : 1);
-  const [start, setStart] = useState(plan.period.start);
-  const [end, setEnd] = useState(plan.period.end);
-  const [rate, setRate] = useState(String(defaultRate));
-  const [cap, setCap] = useState(grouped(defaults.params.cap));
-  const [minOrder, setMinOrder] = useState(grouped(defaults.conditions.minOrderAmount ?? 3980));
-  const [label, setLabel] = useState(defaults.label);
-  const [errors, setErrors] = useState<Errors>({});
+  const form = useForm({
+    schema: campaignFormSchema(spec),
+    initialInput: {
+      label: defaults.label,
+      date: plan.period.start,
+      start: plan.period.start,
+      end: plan.period.end,
+      rate: String(defaultRate),
+      minOrderAmount: grouped(defaults.conditions.minOrderAmount ?? 3980),
+      cap: grouped(defaults.params.cap),
+    },
+  });
   const [failed, setFailed] = useState(false);
-  const [saving, setSaving] = useState(false);
   const formId = useId();
   const duplicateId = useId();
 
+  const date = useField(form, { path: ["date"] }).input;
+  const start = useField(form, { path: ["start"] }).input;
+  const end = useField(form, { path: ["end"] }).input;
   const occurrence = spec.date
     ? { dates: isDate(date) ? [date] : [] }
     : { period: isDate(start) && isDate(end) ? { start, end } : undefined };
   const duplicate = hasCampaignOccurrence(plan, template, occurrence);
 
-  const validate = () => {
-    const next: Errors = {};
-    if (spec.date && !isDate(date)) next.date = "日付を入れてください";
-    if (spec.period) {
-      if (!isDate(start)) next.start = "開始日を入れてください";
-      if (!isDate(end)) next.end = "終了日を入れてください";
-      else if (isDate(start) && end < start) next.end = "終了日は開始日より後にしてください";
-    }
-    if (spec.rate && parseRate(rate) === undefined)
-      next.rate = "倍率は0より大きい数で入れてください";
-    if (spec.cap) {
-      const empty = normalize(cap) === "";
-      if (empty && spec.cap === "required") next.cap = "獲得上限を入れてください";
-      else if (!empty && parseWhole(cap) === undefined)
-        next.cap = "獲得上限はポイントの整数で入れてください";
-    }
-    if (spec.minOrderAmount && parseWhole(minOrder) === undefined) {
-      next.minOrderAmount = "条件金額は円の整数で入れてください";
-    }
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  };
-
-  const submit = async () => {
-    if (saving || duplicate || !validate()) return;
-    const capValue = spec.cap ? parseWhole(cap) : undefined;
+  const submit = async (output: v.InferOutput<CampaignFormSchema>) => {
+    if (duplicate) return;
     const benefit = instantiateCampaign(template, {
       id: crypto.randomUUID(),
-      ...(spec.date ? { dates: [date], rate: choice } : {}),
-      ...(spec.period ? { period: { start, end } } : {}),
-      ...(spec.rate ? { rate: parseRate(rate) } : {}),
-      ...(capValue === undefined ? {} : { cap: capValue }),
-      ...(spec.minOrderAmount ? { minOrderAmount: parseWhole(minOrder) } : {}),
-      ...(spec.label && normalize(label) !== "" ? { label: normalize(label) } : {}),
+      ...(spec.date ? { dates: [output.date], rate: choice } : {}),
+      ...(spec.period ? { period: { start: output.start, end: output.end } } : {}),
+      ...(spec.rate ? { rate: output.rate } : {}),
+      ...(spec.cap && output.cap !== undefined ? { cap: output.cap } : {}),
+      ...(spec.minOrderAmount ? { minOrderAmount: output.minOrderAmount } : {}),
+      ...(spec.label && output.label !== "" ? { label: output.label } : {}),
     });
-    setSaving(true);
     setFailed(false);
     try {
       await addBenefit({ planId: plan.id, benefit });
       onClose();
     } catch {
       setFailed(true);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -226,109 +183,68 @@ function CampaignForm({
         <Modal.Title as="h2">{template.name}を追加</Modal.Title>
       </Modal.Header>
       <Modal.Body alignItems="stretch">
-        <VStack
-          as="form"
-          id={formId}
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            void submit();
-          }}
-          gap="3"
-          alignItems="stretch"
-        >
-          {spec.label ? (
-            <Labeled label="名前" error={undefined}>
-              <Input value={label} onChange={(event) => setLabel(event.currentTarget.value)} />
-            </Labeled>
-          ) : null}
-          {spec.date ? (
-            <>
-              <Labeled label="日付" error={errors.date}>
-                <Input
-                  type="date"
-                  value={date}
-                  onChange={(event) => setDate(event.currentTarget.value)}
-                />
-              </Labeled>
-              <SegmentedControl.Root
-                aria-label="倍率"
-                value={String(choice)}
-                onChange={(value) => setChoice(Number(value))}
-                w="full"
-              >
-                {[1, 2].map((value) => (
-                  <SegmentedControl.Item key={value} value={String(value)}>
-                    +{value}倍
-                  </SegmentedControl.Item>
-                ))}
-              </SegmentedControl.Root>
-              <Text fontSize="xs" color="fg.muted">
-                片方のチームの勝利は +1倍、両方のチームが勝った日は +2倍です。
+        <Form of={form} id={formId} onSubmit={submit}>
+          <VStack gap="3" alignItems="stretch">
+            {spec.label ? <TextField form={form} name="label" label="名前" /> : null}
+            {spec.date ? (
+              <>
+                <TextField form={form} name="date" label="日付" type="date" />
+                <SegmentedControl.Root
+                  aria-label="倍率"
+                  value={String(choice)}
+                  onChange={(value) => setChoice(Number(value))}
+                  w="full"
+                >
+                  {[1, 2].map((value) => (
+                    <SegmentedControl.Item key={value} value={String(value)}>
+                      +{value}倍
+                    </SegmentedControl.Item>
+                  ))}
+                </SegmentedControl.Root>
+                <Text fontSize="xs" color="fg.muted">
+                  片方のチームの勝利は +1倍、両方のチームが勝った日は +2倍です。
+                </Text>
+              </>
+            ) : null}
+            {spec.period ? (
+              <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
+                <TextField form={form} name="start" label="開始日" type="date" />
+                <TextField form={form} name="end" label="終了日" type="date" />
+              </Box>
+            ) : null}
+            {spec.rate ? (
+              <TextField form={form} name="rate" label="倍率（+N倍）" inputMode="decimal" />
+            ) : null}
+            {spec.minOrderAmount ? (
+              <TextField
+                form={form}
+                name="minOrderAmount"
+                label="条件金額（円）"
+                inputMode="numeric"
+              />
+            ) : null}
+            {spec.cap ? (
+              <TextField
+                form={form}
+                name="cap"
+                label={spec.cap === "required" ? "獲得上限（P）" : "獲得上限（P・任意）"}
+                inputMode="numeric"
+              />
+            ) : null}
+            {duplicate ? (
+              <Text id={duplicateId} role="status" fontSize="sm" color="danger.fg">
+                {spec.date
+                  ? `この日の${template.name}はもう追加してあります`
+                  : `この期間の${template.name}はもう追加してあります`}
               </Text>
-            </>
-          ) : null}
-          {spec.period ? (
-            <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
-              <Labeled label="開始日" error={errors.start}>
-                <Input
-                  type="date"
-                  value={start}
-                  onChange={(event) => setStart(event.currentTarget.value)}
-                />
-              </Labeled>
-              <Labeled label="終了日" error={errors.end}>
-                <Input
-                  type="date"
-                  value={end}
-                  onChange={(event) => setEnd(event.currentTarget.value)}
-                />
-              </Labeled>
-            </Box>
-          ) : null}
-          {spec.rate ? (
-            <Labeled label="倍率（+N倍）" error={errors.rate}>
-              <Input
-                inputMode="decimal"
-                value={rate}
-                onChange={(event) => setRate(event.currentTarget.value)}
-              />
-            </Labeled>
-          ) : null}
-          {spec.minOrderAmount ? (
-            <Labeled label="条件金額（円）" error={errors.minOrderAmount}>
-              <Input
-                inputMode="numeric"
-                value={minOrder}
-                onChange={(event) => setMinOrder(event.currentTarget.value)}
-              />
-            </Labeled>
-          ) : null}
-          {spec.cap ? (
-            <Labeled
-              label={spec.cap === "required" ? "獲得上限（P）" : "獲得上限（P・任意）"}
-              error={errors.cap}
-            >
-              <Input
-                inputMode="numeric"
-                value={cap}
-                onChange={(event) => setCap(event.currentTarget.value)}
-              />
-            </Labeled>
-          ) : null}
-          {duplicate ? (
-            <Text id={duplicateId} role="status" fontSize="sm" color="danger.fg">
-              {spec.date
-                ? `この日の${template.name}はもう追加してあります`
-                : `この期間の${template.name}はもう追加してあります`}
-            </Text>
-          ) : null}
-          {failed ? (
-            <Text role="alert" fontSize="sm" color="danger.fg">
-              追加できませんでした。もう一度お試しください。
-            </Text>
-          ) : null}
-        </VStack>
+            ) : null}
+            {failed ? (
+              <Text role="alert" fontSize="sm" color="danger.fg">
+                追加できませんでした。もう一度お試しください。
+              </Text>
+            ) : null}
+          </VStack>
+        </Form>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="outline" onClick={onClose} flex="1">
@@ -339,6 +255,7 @@ function CampaignForm({
           form={formId}
           colorScheme="primary"
           disabled={duplicate}
+          loading={form.isSubmitting}
           aria-describedby={duplicate ? duplicateId : undefined}
           flex="1"
         >

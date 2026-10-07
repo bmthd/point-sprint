@@ -44,13 +44,16 @@ import { shopsAtom } from "../../state/queries";
 import { openOrderIdAtom } from "../../state/ui";
 import { monthDayWithWeekday } from "../plan-list/dates";
 import { ChevronIcon, GripIcon } from "./icons";
+import { CommitField } from "../../form/commit-field";
 import {
   AmountSchema,
-  CommitField,
-  DateSchema,
+  ItemNameSchema,
+  OrderDateSchema,
+  ShopRateSchema,
+} from "../../form/field-schemas";
+import {
   Field,
   ReadOnlyField,
-  ShopRateSchema,
   TaxRateOptions,
   type TaxRateValue,
   ToggleChip,
@@ -181,7 +184,7 @@ function OrderEditor({
             defaultValue={order.date}
             key={order.date}
             onChange={(event) => {
-              const parsed = v.safeParse(DateSchema, event.currentTarget.value);
+              const parsed = v.safeParse(OrderDateSchema, event.currentTarget.value);
               setDateError(parsed.success ? undefined : parsed.issues[0].message);
               if (parsed.success && parsed.output !== order.date) {
                 saveOrder({ ...order, date: parsed.output });
@@ -195,7 +198,7 @@ function OrderEditor({
               key={`name:${single.name}`}
               label="商品名メモ"
               initial={single.name}
-              schema={v.pipe(v.string(), v.trim())}
+              schema={ItemNameSchema}
               onCommit={(name) =>
                 saveOrder(withItems(order, (lineItem) => ({ ...lineItem, name })))
               }

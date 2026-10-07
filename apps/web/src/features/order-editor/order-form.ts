@@ -8,27 +8,29 @@ import {
 } from "@workspaces/domain";
 import * as v from "valibot";
 import type { ShopChange } from "../../state/mutations";
-import { tokyoToday } from "../plan-list/dates";
 import {
   AmountSchema,
-  DateSchema,
   DiscountSchema,
-  NEW_SHOP,
+  ItemNameSchema,
+  ItemUrlSchema,
+  OrderDateSchema,
   QuantitySchema,
+  ShopNameSchema,
   ShopRateSchema,
-  TAX_RATES,
-  shopToSave,
-  taxRateValue,
-} from "../plan-home/order-fields";
+} from "../../form/field-schemas";
+import { tokyoToday } from "../plan-list/dates";
+import { NEW_SHOP, TAX_RATES, shopToSave, taxRateValue } from "../plan-home/order-fields";
+
+// The fields are in the order the editor shows them, so a submit focuses the first error on screen.
 
 const ItemSchema = v.pipe(
   v.object({
     /** Empty for an item that is not saved yet. */
     id: v.string(),
-    name: v.pipe(v.string(), v.trim()),
     unitPrice: AmountSchema,
-    quantity: QuantitySchema,
+    name: ItemNameSchema,
     taxRate: v.picklist(TAX_RATES),
+    quantity: QuantitySchema,
     discount: DiscountSchema,
     shopPointRate: ShopRateSchema,
   }),
@@ -36,33 +38,37 @@ const ItemSchema = v.pipe(
     v.partialCheck(
       [["unitPrice"], ["quantity"], ["discount"]],
       (item) => item.discount <= item.unitPrice * item.quantity,
-      "クーポン値引額が金額より大きくなっています",
+      "クーポン値引額は、金額に数量を掛けた額以下で入れてください",
     ),
     ["discount"],
   ),
 );
 
-const UrlSchema = v.pipe(v.string(), v.url());
+/** What is wrong with the new shop's name, when a new shop is chosen. */
+const newShopNameError = (values: { shop: string; newShopName: string }) =>
+  values.shop === NEW_SHOP
+    ? v.safeParse(ShopNameSchema, values.newShopName).issues?.[0].message
+    : undefined;
 
 /** The whole order as the editor's fields hold it. Only a valid form is saved. */
 export const OrderFormSchema = v.pipe(
   v.object({
-    url: v.pipe(v.string(), v.trim()),
+    url: ItemUrlSchema,
     shop: v.pipe(v.string(), v.nonEmpty("ショップを選んでください")),
+    date: OrderDateSchema,
     newShopName: v.pipe(v.string(), v.trim()),
     channel: ChannelIdSchema,
     shopCode: v.string(),
-    date: DateSchema,
+    items: v.pipe(v.array(ItemSchema), v.minLength(1, "商品を1つ以上入れてください")),
     is39: v.boolean(),
     repeat: v.boolean(),
     onHold: v.boolean(),
-    items: v.pipe(v.array(ItemSchema), v.minLength(1)),
   }),
   v.forward(
     v.partialCheck(
       [["shop"], ["newShopName"]],
-      (values) => values.shop !== NEW_SHOP || values.newShopName !== "",
-      "新しいショップの名前を入れてください",
+      (values) => newShopNameError(values) === undefined,
+      (issue) => newShopNameError(issue.input) ?? "",
     ),
     ["newShopName"],
   ),
@@ -146,7 +152,7 @@ export function draftOf(
     lineItems: output.items.map(({ id, shopPointRate, ...item }, index) => {
       const { shopPointRate: _rate, url: keptUrl, ...kept } = items.get(id) ?? {};
       // The URL field belongs to the first item; the others keep the URL they had.
-      const url = index === 0 ? (v.is(UrlSchema, output.url) ? output.url : undefined) : keptUrl;
+      const url = index === 0 ? output.url : keptUrl;
       return {
         ...kept,
         ...item,

@@ -5,12 +5,7 @@
 import {
   Field as FormField,
   FieldArray,
-  type FieldElementProps,
-  Form,
-  type FormStore,
   focus,
-  getInput,
-  handleSubmit,
   insert,
   remove,
   reset,
@@ -37,6 +32,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } from "react";
+import { type FieldState, Form, bind, errorsOf } from "../../form/form";
 import { saveShopAtom } from "../../state/mutations";
 import { addOrderAtom, updateOrderAtom } from "../../state/order-ops";
 import { shopsAtom } from "../../state/queries";
@@ -45,12 +41,9 @@ import { CloseIcon } from "../plan-home/icons";
 import { AutofillStatusText, useItemAutofill } from "../item-autofill/item-autofill";
 import {
   NEW_SHOP,
-  type ShopFromUrl,
   TAX_RATES,
   TaxRateOptions,
   ToggleChip,
-  fieldsFromItem,
-  shopFromItem,
   shopFromUrl,
   useSortedShops,
 } from "../plan-home/order-fields";
@@ -68,38 +61,23 @@ import {
   rateOf,
   tagBonus,
 } from "./order-form";
+import {
+  AMOUNT_PATH,
+  type OrderForm,
+  applyShop,
+  useFormInput,
+  useOrderAutofill,
+} from "./order-form-store";
 import { OrderPreviewBox } from "./order-preview";
 
 /** The editor's target in the URL (`edit=`): a new order, or the id of the order to edit. */
 export const NEW_ORDER = "new";
 
-type Form = FormStore<typeof OrderFormSchema>;
-type FieldState = {
-  input: unknown;
-  errors: [string, ...string[]] | null;
-  props: FieldElementProps;
-};
-
-const AMOUNT_PATH = ["items", 0, "unitPrice"] as const;
 const taxLabels: Record<(typeof TAX_RATES)[number], string> = {
   "0.1": "10%",
   "0.08": "8%（食品）",
   "0": "非課税",
 };
-
-/** The props of a Formisch text field for an `Input` or a `NativeSelect`. */
-function bind(field: FieldState) {
-  return { ...field.props, value: typeof field.input === "string" ? field.input : "" };
-}
-
-/**
- * `Field`'s props for a Formisch field: the first error under it. The error is announced as the
- * input's description, and the input is marked invalid.
- */
-const errorsOf = (field: FieldState) => ({
-  invalid: field.errors !== null,
-  errorMessage: field.errors?.[0],
-});
 
 /** A label on the left and a short field on the right (the details rows), the error under both. */
 function InlineField({
@@ -136,7 +114,7 @@ function InlineField({
 }
 
 /** Quantity, coupon and the shop's own rate of one item. */
-function ItemDetailFields({ form, index }: { form: Form; index: number }) {
+function ItemDetailFields({ form, index }: { form: OrderForm; index: number }) {
   return (
     <>
       <FormField of={form} path={["items", index, "quantity"]}>
@@ -162,13 +140,13 @@ function ItemDetailFields({ form, index }: { form: Form; index: number }) {
 }
 
 /** An item after the first one, added with 「同じショップの商品を追加」. */
-function ExtraItem({ form, index }: { form: Form; index: number }) {
+function ExtraItem({ form, index }: { form: OrderForm; index: number }) {
   const label = `商品${index + 1}`;
   return (
     <Fieldset.Root legend={label} variant="outline" size="sm">
       <FormField of={form} path={["items", index, "name"]}>
         {(field) => (
-          <Field.Root label="商品名メモ" invalid={field.errors !== null}>
+          <Field.Root label="商品名メモ" {...errorsOf(field)}>
             <Input {...bind(field)} />
           </Field.Root>
         )}
@@ -215,13 +193,7 @@ function ExtraItem({ form, index }: { form: Form; index: number }) {
   );
 }
 
-/** The form's input, re-read whenever a field changes (`useField` subscribes this component). */
-function useFormInput(form: Form) {
-  useField(form, { path: ["shop"] });
-  return getInput(form);
-}
-
-function Preview({ form, plan, original }: { form: Form; plan: Plan; original?: Order }) {
+function Preview({ form, plan, original }: { form: OrderForm; plan: Plan; original?: Order }) {
   const shops = useAtomValue(shopsAtom);
   const current = useFormInput(form);
   const key = JSON.stringify(current);
@@ -234,7 +206,7 @@ function Preview({ form, plan, original }: { form: Form; plan: Plan; original?: 
   return <OrderPreviewBox planId={plan.id} draft={draft} original={original} />;
 }
 
-function Campaigns({ form, plan }: { form: Form; plan: Plan }) {
+function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
   const is39 = useField(form, { path: ["is39"] });
   const repeat = useField(form, { path: ["repeat"] });
   const date = useField(form, { path: ["date"] });
@@ -272,36 +244,17 @@ function Campaigns({ form, plan }: { form: Form; plan: Plan }) {
   );
 }
 
-/** Selects the shop of a URL or a found item: a registry shop, or a new one with its code. */
-function applyShop(form: Form, found: ShopFromUrl) {
-  if (found.kind === "registered") {
-    setInput(form, { path: ["shop"], input: found.shop.id });
-    setInput(form, { path: ["is39"], input: found.shop.tags.includes("39shop") });
-    return;
-  }
-  setInput(form, { path: ["shop"], input: NEW_SHOP });
-  setInput(form, { path: ["channel"], input: found.channel });
-  setInput(form, { path: ["shopCode"], input: found.shopCode });
-  setInput(form, { path: ["newShopName"], input: found.name });
-  setInput(form, { path: ["is39"], input: false });
-}
-
-/** Puts a found item's name, price, shop and shop rate in the fields, where they can be edited. */
-function useEditorAutofill(form: Form) {
-  const shops = useAtomValue(shopsAtom);
-  return useItemAutofill((item) => {
-    applyShop(form, shopFromItem(item, shops));
-    const fields = fieldsFromItem(item);
-    setInput(form, { path: ["items", 0, "name"], input: fields.name });
-    if (fields.unitPrice !== undefined)
-      setInput(form, { path: AMOUNT_PATH, input: fields.unitPrice });
-    setInput(form, { path: ["items", 0, "shopPointRate"], input: fields.shopPointRate });
-  });
-}
-
 type Autofill = ReturnType<typeof useItemAutofill>;
 
-function ShopFields({ form, urlId, autofill }: { form: Form; urlId: string; autofill: Autofill }) {
+function ShopFields({
+  form,
+  urlId,
+  autofill,
+}: {
+  form: OrderForm;
+  urlId: string;
+  autofill: Autofill;
+}) {
   const shops = useAtomValue(shopsAtom);
   const sortedShops = useSortedShops(shops);
   const url = useField(form, { path: ["url"] });
@@ -325,7 +278,8 @@ function ShopFields({ form, urlId, autofill }: { form: Form; urlId: string; auto
   };
 
   const urlText = typeof url.input === "string" ? url.input.trim() : "";
-  const urlUnknown = urlText !== "" && shopFromUrl(urlText, shops) === null;
+  // Not an error: the order can still be saved with a URL no shop is chosen from.
+  const urlUnknown = url.errors === null && urlText !== "" && shopFromUrl(urlText, shops) === null;
   const hintId = useId();
 
   return (
@@ -333,21 +287,22 @@ function ShopFields({ form, urlId, autofill }: { form: Form; urlId: string; auto
       <Field.Root
         id={urlId}
         label="商品のURL（貼るとショップを選びます）"
-        // Not an error of the form: the order can still be saved with this URL.
+        {...errorsOf(url)}
         helperMessage={urlUnknown ? "このURLからはショップを選べません" : undefined}
         helperMessageProps={{ id: hintId }}
       >
         <Box display="flex" gap="2">
           <Input
-            {...url.props}
+            {...bind(url)}
             flex="1"
             type="url"
             inputMode="url"
             placeholder="https://item.rakuten.co.jp/…"
-            value={typeof url.input === "string" ? url.input : ""}
             // Field links a helper message only when the field's invalid state changes, and this
             // one comes and goes while the field stays valid.
-            aria-describedby={urlUnknown ? hintId : undefined}
+            {...(url.errors === null
+              ? { "aria-describedby": urlUnknown ? hintId : undefined }
+              : {})}
             onChange={(event) => onUrl(event.currentTarget.value)}
           />
           <Button type="button" variant="outline" flex="none" onClick={() => void paste()}>
@@ -417,7 +372,7 @@ function MainItemFields({
   form,
   amountRef,
 }: {
-  form: Form;
+  form: OrderForm;
   amountRef: RefObject<HTMLInputElement | null>;
 }) {
   return (
@@ -444,7 +399,7 @@ function MainItemFields({
       </FormField>
       <FormField of={form} path={["items", 0, "name"]}>
         {(field) => (
-          <Field.Root label="商品名メモ（任意）" invalid={field.errors !== null}>
+          <Field.Root label="商品名メモ（任意）" {...errorsOf(field)}>
             <Input placeholder="例：洗濯洗剤 詰め替え" {...bind(field)} />
           </Field.Root>
         )}
@@ -477,7 +432,7 @@ function MainItemFields({
   );
 }
 
-function Details({ form, defaultOpen }: { form: Form; defaultOpen: boolean }) {
+function Details({ form, defaultOpen }: { form: OrderForm; defaultOpen: boolean }) {
   return (
     // The animated panel clips its content, which cuts the focus rings of the switch and the add
     // button at its edges.
@@ -510,6 +465,11 @@ function Details({ form, defaultOpen }: { form: Form; defaultOpen: boolean }) {
                   {items.items.map((key, index) =>
                     index === 0 ? null : <ExtraItem key={key} form={form} index={index} />,
                   )}
+                  {items.errors ? (
+                    <Text role="alert" fontSize="sm" color="danger.fg">
+                      {items.errors[0]}
+                    </Text>
+                  ) : null}
                 </Box>
               )}
             </FieldArray>
@@ -547,12 +507,13 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
   const run = useSingleFlight();
   const formId = useId();
   const urlId = useId();
+  const keepOpenId = useId();
   // The fields start from the order as it was when the editor opened.
   const [initialInput] = useState<OrderFormInput>(() =>
     original ? inputOf(original, shops) : emptyInput(),
   );
   const form = useForm({ schema: OrderFormSchema, initialInput });
-  const autofill = useEditorAutofill(form);
+  const autofill = useOrderAutofill(form);
   const parts = layout === "sheet" ? Drawer : Modal;
   const title = original ? "注文を編集" : "注文を追加";
 
@@ -589,7 +550,13 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
         <IconButton aria-label="閉じる" onClick={onClose} icon={<CloseIcon />} variant="ghost" />
       </parts.Header>
       <parts.Body alignItems="stretch">
-        <Form of={form} id={formId} onSubmit={(output) => save(output, false)}>
+        <Form
+          of={form}
+          id={formId}
+          onSubmit={(output, event) =>
+            save(output, (event.nativeEvent as SubmitEvent).submitter?.id === keepOpenId)
+          }
+        >
           <Box display="flex" flexDirection="column" gap="3.5">
             <ShopFields form={form} urlId={urlId} autofill={autofill} />
             <MainItemFields form={form} amountRef={amountRef} />
@@ -612,11 +579,12 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
         <Box display="flex" gap="2" alignSelf="stretch">
           {original ? null : (
             <Button
-              type="button"
+              id={keepOpenId}
+              type="submit"
+              form={formId}
               variant="outline"
               size="lg"
               flex="1"
-              onClick={() => void handleSubmit(form, (output) => save(output, true))()}
             >
               続けて追加
             </Button>
