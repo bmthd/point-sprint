@@ -18,12 +18,9 @@ test("every route is prerendered", () => {
 });
 
 test("lists the pages whose HTML file is missing", () => {
-  const built = new Set([
-    "index.html",
-    "plan/index.html",
-    "profile/index.html",
-    "inquiry/index.html",
-  ]);
+  const built = new Set(
+    prerenderedPages.map((page) => page.file).filter((file) => file !== "plan/settings/index.html"),
+  );
   expect(missingPrerenderedPages((file) => built.has(file))).toEqual(["plan/settings/index.html"]);
 });
 

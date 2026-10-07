@@ -3,10 +3,11 @@ import { Box, Text } from "@workspaces/ui";
 import { RouterLink } from "../plan-list/router-link";
 
 /**
- * The footer's links. Only pages that exist are listed: 使い方・注意事項, お知らせ and 利用規約
- * are added with their pages (#12).
+ * The footer's links. Only pages that exist are listed: お知らせ is added with the sidebar (#30).
  */
 export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [
+  { to: "/help", label: "使い方・注意事項" },
+  { to: "/terms", label: "利用規約" },
   { to: "/inquiry", label: "お問い合わせ" },
 ];
 
