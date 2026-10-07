@@ -1,6 +1,6 @@
 import type { Order } from "@workspaces/domain";
 import { useAtomValue, useSetAtom } from "jotai";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
@@ -493,7 +493,9 @@ test("editing one order does not re-render the other rows", async () => {
     const plans = useAtomValue(plansQueryAtom);
     const loadedShops = useAtomValue(shopsQueryAtom);
     const update = useSetAtom(updateOrderAtom);
-    updateOrder = (next) => update({ planId: PLAN, order: next });
+    useEffect(() => {
+      updateOrder = (next) => update({ planId: PLAN, order: next });
+    }, [update]);
     const loaded = plans.data?.find((p) => p.id === PLAN);
     return loadedShops.isSuccess && loaded ? <OrderTable plan={loaded} onEdit={noop} /> : null;
   }
