@@ -1,5 +1,5 @@
 import { Markdown, type MarkdownComponents } from "@tanstack/markdown/react";
-import { Box, Heading, Link, Text } from "@workspaces/ui";
+import { Box, Card, Heading, Link, Text } from "@workspaces/ui";
 
 /** The Markdown's tags, drawn with Yamada UI to match the other pages. */
 const components = {
@@ -39,9 +39,14 @@ const components = {
 export function MarkdownPage({ source }: { source: string }) {
   return (
     <Box as="main" maxW="640px" mx="auto" px="4" pt="4" pb="16">
-      <Markdown components={components} headingIds={(text) => text}>
-        {source}
-      </Markdown>
+      {/* On a panel like the other pages' cards: text straight on the page's gray is hard to read. */}
+      <Card.Root as="article">
+        <Card.Body display="block">
+          <Markdown components={components} headingIds={(text) => text}>
+            {source}
+          </Markdown>
+        </Card.Body>
+      </Card.Root>
     </Box>
   );
 }
