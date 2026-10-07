@@ -37,7 +37,9 @@ export function useItemAutofill(apply: (item: RakutenItem) => void) {
   const latest = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const applyRef = useRef(apply);
-  applyRef.current = apply;
+  useEffect(() => {
+    applyRef.current = apply;
+  });
 
   useEffect(
     () => () => {
