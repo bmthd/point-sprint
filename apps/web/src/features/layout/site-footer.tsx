@@ -4,9 +4,11 @@ import { RouterLink } from "../plan-list/router-link";
 
 /**
  * The footer's links. Only pages that exist are listed: 使い方・注意事項, お知らせ and 利用規約
- * are added with their pages (#12), お問い合わせ with its page (#9).
+ * are added with their pages (#12).
  */
-export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [];
+export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [
+  { to: "/inquiry", label: "お問い合わせ" },
+];
 
 /** The footer on every page: the links, and where the data is kept (it applies to every page). */
 export function SiteFooter() {

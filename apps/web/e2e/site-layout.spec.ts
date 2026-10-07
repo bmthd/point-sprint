@@ -16,6 +16,7 @@ const pages = (id: string) => [
   { name: "プロフィール", path: "/profile" },
   { name: "プラン", path: `/plan?id=${id}` },
   { name: "プランの設定", path: `/plan/settings?id=${id}` },
+  { name: "お問い合わせ", path: "/inquiry" },
 ];
 
 const header = (page: Page) => page.getByRole("banner");
@@ -77,7 +78,8 @@ test("every page has the footer, and each footer link opens its page", async ({ 
         await page.goto(path);
         await ready(page);
         await footer(page).locator(`a[href="${href}"]`).click();
-        await expect(page).toHaveURL(new RegExp(`${href.replace(/[?]/g, "\\?")}$`));
+        // The preview server answers a page's path with its directory (`/help/`).
+        await expect(page).toHaveURL(new RegExp(`${href.replace(/[?]/g, "\\?")}/?$`));
         await expect(page.getByRole("main")).toBeVisible();
       }
     });
