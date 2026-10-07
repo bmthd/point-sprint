@@ -1,7 +1,6 @@
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
-import babel from "@rolldown/plugin-babel";
-import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
+import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { prerenderedPages } from "./src/prerender-pages.ts";
 import {
@@ -28,8 +27,7 @@ export default defineConfig(({ mode, isPreview }) => {
         prerender: { enabled: true, crawlLinks: false },
         pages: prerenderedPages.map(({ path }) => ({ path, prerender: { enabled: true } })),
       }),
-      viteReact(),
-      babel({ presets: [reactCompilerPreset()] }),
+      viteReact({ compiler: true }),
     ],
     define: {
       "import.meta.env.RAKUTEN_CONFIG": JSON.stringify(rakutenConfig ?? null),
