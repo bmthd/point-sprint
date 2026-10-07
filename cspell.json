@@ -59,6 +59,9 @@
     "workerd",
     "contentinfo",
     "opengraph",
-    "urlset"
+    "urlset",
+    "siteverify",
+    "remoteip",
+    "bmth"
   ]
 }
