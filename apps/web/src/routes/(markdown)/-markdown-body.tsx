@@ -1,6 +1,7 @@
 import { Markdown, type MarkdownComponents } from "@tanstack/markdown/react";
 import { useRouteContext } from "@tanstack/react-router";
 import { Box, Heading, Link, Text } from "@workspaces/ui";
+import type { FileRoutesById } from "../../routeTree.gen";
 
 /** The Markdown's tags, drawn with Yamada UI to match the other pages. */
 const components = {
@@ -39,12 +40,29 @@ const components = {
  */
 export const headingIds = (text: string) => text;
 
+type MarkdownRouteId = Extract<keyof FileRoutesById, `/(markdown)/${string}`>;
+
+/** The routes under `(markdown)` whose context has no Markdown: `never` when there is none. */
+type RoutesWithoutMarkdown = {
+  [Id in MarkdownRouteId]: FileRoutesById[Id]["types"]["routeContext"] extends { markdown: string }
+    ? never
+    : Id;
+}[MarkdownRouteId];
+
+// A type error names the route that forgot `context: () => ({ markdown })`.
+const everyRouteHasMarkdown: [RoutesWithoutMarkdown] extends [never]
+  ? true
+  : RoutesWithoutMarkdown = true;
+void everyRouteHasMarkdown;
+
 /** The Markdown that the route put in its context, as the page's content. */
 export function MarkdownBody() {
   const markdown = useRouteContext({ strict: false, select: (context) => context.markdown });
+  // Unreachable while `everyRouteHasMarkdown` type-checks.
+  if (markdown === undefined) throw new Error("This route has no Markdown in its context.");
   return (
     <Markdown components={components} headingIds={headingIds}>
-      {markdown ?? ""}
+      {markdown}
     </Markdown>
   );
 }
