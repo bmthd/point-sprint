@@ -13,5 +13,5 @@ export function browserItemLookup(): ItemLookup | undefined {
   const endpoint = import.meta.env.DEV
     ? `${DEV_PROXY_PATH}${new URL(ITEM_SEARCH_ENDPOINT).pathname}`
     : ITEM_SEARCH_ENDPOINT;
-  return throttledLookup((itemCode) => lookupItem(config.output, itemCode, { endpoint }));
+  return throttledLookup((page) => lookupItem(config.output, page, { endpoint }));
 }

@@ -1,20 +1,19 @@
 import { expect, test } from "vitest";
-import { channels, parseUrl, toItemCode } from "./index";
+import { channels, parseUrl } from "./index";
 
 test("parses an Ichiba item URL", () => {
-  const parsed = parseUrl("https://item.rakuten.co.jp/shop-a/item-123/");
-  expect(parsed).toEqual({
+  expect(parseUrl("https://item.rakuten.co.jp/shop-a/item-123/")).toEqual({
     channel: "rakuten-ichiba",
     shopCode: "shop-a",
     itemManageNumber: "item-123",
   });
-  expect(parsed && toItemCode(parsed)).toBe("shop-a:item-123");
 });
 
 test("parses an Ichiba shop URL", () => {
-  const parsed = parseUrl("https://www.rakuten.co.jp/shop-a/");
-  expect(parsed).toEqual({ channel: "rakuten-ichiba", shopCode: "shop-a" });
-  expect(parsed && toItemCode(parsed)).toBeNull();
+  expect(parseUrl("https://www.rakuten.co.jp/shop-a/")).toEqual({
+    channel: "rakuten-ichiba",
+    shopCode: "shop-a",
+  });
 });
 
 test("parses GOLD shop URLs and rejects reserved Ichiba paths", () => {
