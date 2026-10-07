@@ -107,15 +107,18 @@ test("a bar fixed to the bottom of a phone screen does not hide the footer", asy
   for (const path of [`/plan?id=${id}`, `/plan/settings?id=${id}`]) {
     await page.goto(path);
     await ready(page);
+    await expect(page.locator("[data-bottom-bar]")).toBeVisible();
     const text = footer(page).getByText("このブラウザの中にだけ保存されます");
-    await text.scrollIntoViewIfNeeded();
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    // The point at the text's center is the text itself, not the bar drawn over it.
-    const covered = await text.evaluate((element) => {
-      const box = element.getBoundingClientRect();
-      const top = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
-      return !element.contains(top);
-    });
-    expect(covered, path).toBe(false);
+    // Retried: the page can still be laying out and put the scroll back to the top.
+    await expect(async () => {
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      // The point at the text's center is the text itself, not the bar drawn over it.
+      const covered = await text.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const top = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+        return !element.contains(top);
+      });
+      expect(covered, path).toBe(false);
+    }).toPass();
   }
 });
