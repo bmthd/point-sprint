@@ -1,7 +1,9 @@
 import { Markdown, type MarkdownComponents } from "@tanstack/markdown/react";
 import { useRouteContext } from "@tanstack/react-router";
-import { Box, Heading, Link, Text } from "@workspaces/ui";
+import { Badge, Box, Card, Heading, Link, NativeAccordion, Text } from "@workspaces/ui";
+import type { ReactNode } from "react";
 import type { FileRoutesById } from "../../routeTree.gen";
+import { markdownExtensions } from "./-markdown-extensions";
 
 /** The Markdown's tags, drawn with Yamada UI to match the other pages. */
 const components = {
@@ -30,6 +32,29 @@ const components = {
   li: ({ children }) => (
     <Box as="li" my="1">
       {children}
+    </Box>
+  ),
+  "md-details": ({ summary, children }: { summary: string; children?: ReactNode }) => (
+    <NativeAccordion.Root animate={false} borderBottomWidth="1px" borderColor="border">
+      <NativeAccordion.Item>
+        <NativeAccordion.Button fontWeight="bold">{summary}</NativeAccordion.Button>
+        <NativeAccordion.Panel>{children}</NativeAccordion.Panel>
+      </NativeAccordion.Item>
+    </NativeAccordion.Root>
+  ),
+  "md-timeline": ({ children }: { children?: ReactNode }) => (
+    <Card.Root my="4">
+      <Card.Body as="ol" gap="3" alignItems="stretch">
+        {children}
+      </Card.Body>
+    </Card.Root>
+  ),
+  "md-timeline-step": ({ step, children }: { step: string; children?: ReactNode }) => (
+    <Box as="li" display="grid" gridTemplateColumns="auto 1fr" gap="3" alignItems="start">
+      <Badge variant="solid" colorScheme="mono" fullRounded mt="0.5" aria-hidden>
+        {step}
+      </Badge>
+      <Box css={{ "& > p": { margin: 0 } }}>{children}</Box>
     </Box>
   ),
 } satisfies MarkdownComponents;
@@ -61,7 +86,7 @@ export function MarkdownBody() {
   // Unreachable while `everyRouteHasMarkdown` type-checks.
   if (markdown === undefined) throw new Error("This route has no Markdown in its context.");
   return (
-    <Markdown components={components} headingIds={headingIds}>
+    <Markdown components={components} extensions={markdownExtensions} headingIds={headingIds}>
       {markdown}
     </Markdown>
   );

@@ -4,7 +4,7 @@ import { pageHead } from "../../page-head";
 import { MarkdownBody } from "./-markdown-body";
 
 export const Route = createFileRoute("/(markdown)/terms")({
-  context: () => ({ markdown }),
+  context: () => ({ markdown, surface: "paper" as const }),
   head: () =>
     pageHead({
       path: "/terms",
