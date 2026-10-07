@@ -1,5 +1,6 @@
 import { Markdown, type MarkdownComponents } from "@tanstack/markdown/react";
-import { Box, Card, Heading, Link, Text } from "@workspaces/ui";
+import { useRouteContext } from "@tanstack/react-router";
+import { Box, Heading, Link, Text } from "@workspaces/ui";
 
 /** The Markdown's tags, drawn with Yamada UI to match the other pages. */
 const components = {
@@ -33,20 +34,17 @@ const components = {
 } satisfies MarkdownComponents;
 
 /**
- * A page written in Markdown: 利用規約, 使い方・注意事項. A heading's id is its text, so the
- * Markdown links to a section by its name (`[免責事項](#免責事項)`).
+ * A heading's id is its text, so the Markdown links to a section by its name
+ * (`[免責事項](#免責事項)`).
  */
-export function MarkdownPage({ source }: { source: string }) {
+export const headingIds = (text: string) => text;
+
+/** The Markdown that the route put in its context, as the page's content. */
+export function MarkdownBody() {
+  const markdown = useRouteContext({ strict: false, select: (context) => context.markdown });
   return (
-    <Box as="main" maxW="640px" mx="auto" px="4" pt="4" pb="16">
-      {/* On a panel like the other pages' cards: text straight on the page's gray is hard to read. */}
-      <Card.Root as="article">
-        <Card.Body display="block">
-          <Markdown components={components} headingIds={(text) => text}>
-            {source}
-          </Markdown>
-        </Card.Body>
-      </Card.Root>
-    </Box>
+    <Markdown components={components} headingIds={headingIds}>
+      {markdown ?? ""}
+    </Markdown>
   );
 }

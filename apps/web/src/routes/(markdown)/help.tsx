@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MarkdownPage } from "../features/site-info/markdown-page";
-import source from "../features/site-info/help.md?raw";
-import { pageHead } from "../page-head";
+import markdown from "../../markdown/help.md?raw";
+import { pageHead } from "../../page-head";
+import { MarkdownBody } from "./-markdown-body";
 
-export const Route = createFileRoute("/help")({
+export const Route = createFileRoute("/(markdown)/help")({
+  context: () => ({ markdown }),
   head: () =>
     pageHead({
       path: "/help",
@@ -11,5 +12,5 @@ export const Route = createFileRoute("/help")({
       description:
         "ポイントスプリントの使い方と注意事項です。プラン、注文、保留、SPU の初期値の考え方と、データの保存先を説明します。",
     }),
-  component: () => <MarkdownPage source={source} />,
+  component: MarkdownBody,
 });
