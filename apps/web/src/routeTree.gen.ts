@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HelpRouteImport } from './routes/help'
+import { Route as InquiryRouteImport } from './routes/inquiry'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -24,6 +25,11 @@ const IndexRoute = IndexRouteImport.update({
 const HelpRoute = HelpRouteImport.update({
   id: '/help',
   path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InquiryRoute = InquiryRouteImport.update({
+  id: '/inquiry',
+  path: '/inquiry',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanRoute = PlanRouteImport.update({
@@ -50,6 +56,7 @@ const PlanSettingsRoute = PlanSettingsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/help': typeof HelpRoute
+  '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
   '/terms': typeof TermsRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/help': typeof HelpRoute
+  '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
   '/terms': typeof TermsRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/help': typeof HelpRoute
+  '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
   '/terms': typeof TermsRoute
@@ -74,13 +83,28 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/help' | '/plan' | '/profile' | '/terms' | '/plan/settings'
+  fullPaths:
+    | '/'
+    | '/help'
+    | '/inquiry'
+    | '/plan'
+    | '/profile'
+    | '/terms'
+    | '/plan/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/help' | '/plan' | '/profile' | '/terms' | '/plan/settings'
+  to:
+    | '/'
+    | '/help'
+    | '/inquiry'
+    | '/plan'
+    | '/profile'
+    | '/terms'
+    | '/plan/settings'
   id:
     | '__root__'
     | '/'
     | '/help'
+    | '/inquiry'
     | '/plan'
     | '/profile'
     | '/terms'
@@ -90,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HelpRoute: typeof HelpRoute
+  InquiryRoute: typeof InquiryRoute
   PlanRoute: typeof PlanRoute
   ProfileRoute: typeof ProfileRoute
   TermsRoute: typeof TermsRoute
@@ -110,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/help'
       preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inquiry': {
+      id: '/inquiry'
+      path: '/inquiry'
+      fullPath: '/inquiry'
+      preLoaderRoute: typeof InquiryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plan': {
@@ -146,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HelpRoute: HelpRoute,
+  InquiryRoute: InquiryRoute,
   PlanRoute: PlanRoute,
   ProfileRoute: ProfileRoute,
   TermsRoute: TermsRoute,

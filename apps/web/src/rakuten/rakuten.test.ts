@@ -1,7 +1,9 @@
 import { expect, test, vi } from "vitest";
 import { readRakutenConfig } from "./config";
 import { type ItemLookup, throttledLookup } from "./item-lookup";
-import { type LookupResult, lookupItem, searchItems } from "./item-search";
+import { type ItemPage, type LookupResult, lookupItem, searchItems } from "./item-search";
+
+const page: ItemPage = { shopCode: "shop-a", itemManageNumber: "item-1" };
 
 const config = { applicationId: "app-id", accessKey: "access-key", affiliateId: "aff-id" };
 
@@ -9,7 +11,7 @@ const config = { applicationId: "app-id", accessKey: "access-key", affiliateId: 
 const apiItem = (fields: Record<string, unknown> = {}) => ({
   itemName: "洗濯洗剤 詰め替え",
   genreId: 210182,
-  itemCode: "shop-a:item-1",
+  itemCode: "shop-a:10000001",
   itemPrice: 2980,
   itemUrl:
     "https://hb.afl.rakuten.co.jp/hgc/x/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fshop-a%2Fitem-1%2F",
@@ -96,7 +98,7 @@ test("sends the settings and the parameters, and the origin only when asked", as
 
 test("a 429 is not retried: the caller spaces the calls out", async () => {
   const fetcher = vi.fn<typeof fetch>(async () => json({ error: "too_many_requests" }, 429));
-  expect(await lookupItem(config, "shop-a:item-1", { fetch: fetcher })).toEqual({
+  expect(await lookupItem(config, page, { fetch: fetcher })).toEqual({
     ok: false,
     error: { reason: "rate-limited" },
   });
@@ -104,26 +106,63 @@ test("a 429 is not retried: the caller spaces the calls out", async () => {
 });
 
 test("keeps only the fields the app uses", async () => {
-  const result = await lookupItem(config, "shop-a:item-1", {
+  const result = await lookupItem(config, page, {
     fetch: fetchReturning(json({ count: 1, Items: [{ Item: apiItem() }] })),
   });
   expect(result).toEqual({
     ok: true,
     item: {
-      itemCode: "shop-a:item-1",
+      itemCode: "shop-a:10000001",
       name: "洗濯洗剤 詰め替え",
       taxIncludedPrice: 2980,
       shopCode: "shop-a",
       shopName: "ショップA",
       pointRate: 5,
+      pageUrl: "https://item.rakuten.co.jp/shop-a/item-1/",
       itemUrl: apiItem().itemUrl,
       affiliateUrl: apiItem().affiliateUrl,
     },
   });
 });
 
+test("searches the shop by the manage number and takes the item on that page", async () => {
+  const fetcher = vi.fn<typeof fetch>(async () =>
+    json({
+      Items: [
+        // Its manage number has the one looked up in it, but it is another page.
+        {
+          Item: apiItem({
+            itemCode: "shop-a:10000002",
+            itemUrl: "https://item.rakuten.co.jp/shop-a/item-10/",
+          }),
+        },
+        { Item: apiItem({ itemUrl: "https://item.rakuten.co.jp/shop-a/item-1/?rafcid=x" }) },
+      ],
+    }),
+  );
+  const result = await lookupItem(config, page, { fetch: fetcher });
+  expect(result.ok && result.item.itemCode).toBe("shop-a:10000001");
+  expect(Object.fromEntries(new URL(sentRequest(fetcher, 0).url).searchParams)).toMatchObject({
+    shopCode: "shop-a",
+    keyword: "item-1",
+  });
+  // The API's own item code is not the manage number: no lookup by it.
+  expect(new URL(sentRequest(fetcher, 0).url).searchParams.has("itemCode")).toBe(false);
+});
+
+test("items only on other pages are not found", async () => {
+  const result = await lookupItem(config, page, {
+    fetch: fetchReturning(
+      json({
+        Items: [{ Item: apiItem({ itemUrl: "https://item.rakuten.co.jp/shop-b/item-1/" }) }],
+      }),
+    ),
+  });
+  expect(result).toEqual({ ok: false, error: { reason: "not-found" } });
+});
+
 test("a price without tax is not given as the price with tax", async () => {
-  const result = await lookupItem(config, "shop-a:item-1", {
+  const result = await lookupItem(config, page, {
     fetch: fetchReturning(json({ Items: [{ Item: apiItem({ taxFlag: 1 }) }] })),
   });
   expect(result.ok && result.item.taxIncludedPrice).toBeUndefined();
@@ -133,7 +172,7 @@ test.each<[string, Response | Error, LookupResult]>([
   ["no items", json({ count: 0, Items: [] }), { ok: false, error: { reason: "not-found" } }],
   [
     "a shop that does not exist",
-    json({ error: "wrong_parameter", error_description: "itemCode is not valid" }, 400),
+    json({ error: "wrong_parameter", error_description: "shopCode is not valid" }, 400),
     { ok: false, error: { reason: "not-found" } },
   ],
   [
@@ -162,21 +201,22 @@ test.each<[string, Response | Error, LookupResult]>([
     { ok: false, error: { reason: "invalid-response" } },
   ],
 ])("%s fails the lookup", async (_case, response, expected) => {
-  expect(await lookupItem(config, "shop-a:item-1", { fetch: fetchReturning(response) })).toEqual(
-    expected,
-  );
+  expect(await lookupItem(config, page, { fetch: fetchReturning(response) })).toEqual(expected);
 });
 
-const found = (itemCode: string): LookupResult => ({
+const pageOf = (itemManageNumber: string): ItemPage => ({ shopCode: "shop-a", itemManageNumber });
+
+const found = ({ itemManageNumber }: ItemPage): LookupResult => ({
   ok: true,
   item: {
-    itemCode,
-    name: itemCode,
+    itemCode: "shop-a:10000001",
+    name: itemManageNumber,
     taxIncludedPrice: 1000,
     shopCode: "shop-a",
     shopName: "ショップA",
     pointRate: 1,
-    itemUrl: "https://item.rakuten.co.jp/shop-a/x/",
+    pageUrl: `https://item.rakuten.co.jp/shop-a/${itemManageNumber}/`,
+    itemUrl: `https://item.rakuten.co.jp/shop-a/${itemManageNumber}/`,
     affiliateUrl: "",
   },
 });
@@ -198,28 +238,28 @@ function fakeClock() {
   };
 }
 
-test("calls are spaced out, and the same item code is called once", async () => {
+test("calls are spaced out, and the same item page is called once", async () => {
   const clock = fakeClock();
-  const lookup = vi.fn<ItemLookup>(async (itemCode) => found(itemCode));
+  const lookup = vi.fn<ItemLookup>(async (asked) => found(asked));
   const throttled = throttledLookup(lookup, { intervalMs: 1100, ...clock });
 
   const [a, b, again] = await Promise.all([
-    throttled("shop-a:1"),
-    throttled("shop-a:2"),
-    throttled("shop-a:1"),
+    throttled(pageOf("1")),
+    throttled(pageOf("2")),
+    throttled(pageOf("1")),
   ]);
-  expect(a).toEqual(found("shop-a:1"));
-  expect(b).toEqual(found("shop-a:2"));
+  expect(a).toEqual(found(pageOf("1")));
+  expect(b).toEqual(found(pageOf("2")));
   expect(again).toBe(a);
-  expect(lookup.mock.calls).toEqual([["shop-a:1"], ["shop-a:2"]]);
+  expect(lookup.mock.calls).toEqual([[pageOf("1")], [pageOf("2")]]);
   expect(clock.waits).toEqual([1100]);
 
   // Kept for a while, then asked again.
   clock.advance(60_000);
-  await throttled("shop-a:1");
+  await throttled(pageOf("1"));
   expect(lookup).toHaveBeenCalledTimes(2);
   clock.advance(5 * 60_000);
-  await throttled("shop-a:1");
+  await throttled(pageOf("1"));
   expect(lookup).toHaveBeenCalledTimes(3);
 });
 
@@ -228,10 +268,10 @@ test("a failed lookup is not kept", async () => {
   const lookup = vi
     .fn<ItemLookup>()
     .mockResolvedValueOnce({ ok: false, error: { reason: "rate-limited" } })
-    .mockResolvedValue(found("shop-a:1"));
+    .mockResolvedValue(found(pageOf("1")));
   const throttled = throttledLookup(lookup, clock);
 
-  expect(await throttled("shop-a:1")).toEqual({ ok: false, error: { reason: "rate-limited" } });
-  expect(await throttled("shop-a:1")).toEqual(found("shop-a:1"));
+  expect(await throttled(pageOf("1"))).toEqual({ ok: false, error: { reason: "rate-limited" } });
+  expect(await throttled(pageOf("1"))).toEqual(found(pageOf("1")));
   expect(lookup).toHaveBeenCalledTimes(2);
 });

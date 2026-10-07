@@ -1,11 +1,11 @@
-import type { LookupResult } from "./item-search";
+import type { ItemPage, LookupResult } from "./item-search";
 
-export type ItemLookup = (itemCode: string) => Promise<LookupResult>;
+export type ItemLookup = (page: ItemPage) => Promise<LookupResult>;
 
 type Options = {
   /** The least time between two calls: the API answers 429 above about one call a second. */
   intervalMs?: number;
-  /** How long a found item is reused for the same item code. */
+  /** How long a found item is reused for the same item page. */
   cacheMs?: number;
   now?: () => number;
   wait?: (ms: number) => Promise<void>;
@@ -15,7 +15,7 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 
 /**
  * `lookup` with calls spaced out by `intervalMs`, and found items kept for `cacheMs`. A lookup of
- * an item code already on its way shares that call. Failures are not kept, so they can be tried
+ * an item page already on its way shares that call. Failures are not kept, so they can be tried
  * again.
  */
 export function throttledLookup(
@@ -25,20 +25,21 @@ export function throttledLookup(
   const cache = new Map<string, { at: number; result: Promise<LookupResult> }>();
   let nextCallAt = 0;
 
-  const call = async (itemCode: string) => {
+  const call = async (page: ItemPage) => {
     const at = Math.max(now(), nextCallAt);
     nextCallAt = at + intervalMs;
     if (at > now()) await wait(at - now());
-    return lookup(itemCode);
+    return lookup(page);
   };
 
-  return (itemCode) => {
-    const kept = cache.get(itemCode);
+  return (page) => {
+    const key = `${page.shopCode}/${page.itemManageNumber}`;
+    const kept = cache.get(key);
     if (kept && now() - kept.at < cacheMs) return kept.result;
-    const result = call(itemCode);
-    cache.set(itemCode, { at: now(), result });
+    const result = call(page);
+    cache.set(key, { at: now(), result });
     void result.then((settled) => {
-      if (!settled.ok && cache.get(itemCode)?.result === result) cache.delete(itemCode);
+      if (!settled.ok && cache.get(key)?.result === result) cache.delete(key);
     });
     return result;
   };

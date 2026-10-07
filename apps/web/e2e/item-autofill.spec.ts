@@ -17,11 +17,11 @@ test("a pasted Ichiba URL fills in the order from the item search API", async ({
           {
             Item: {
               itemName: "ブレンドコーヒー豆 500g",
-              itemCode: "coffee-beans:blend-500g",
+              itemCode: "coffee-beans:10000123",
               itemPrice: 2160,
               taxFlag: 0,
-              itemUrl: "https://hb.afl.rakuten.co.jp/hgc/x/",
-              affiliateUrl: "https://hb.afl.rakuten.co.jp/hgc/x/",
+              itemUrl: `https://hb.afl.rakuten.co.jp/hgc/x/?pc=${encodeURIComponent(ITEM_URL)}`,
+              affiliateUrl: `https://hb.afl.rakuten.co.jp/hgc/x/?pc=${encodeURIComponent(ITEM_URL)}`,
               shopName: "コーヒー豆の店",
               shopCode: "coffee-beans",
               pointRate: 3,
@@ -52,7 +52,8 @@ test("a pasted Ichiba URL fills in the order from the item search API", async ({
   expect(Object.fromEntries(calls[0]?.searchParams ?? [])).toMatchObject({
     applicationId: "e2e-application-id",
     accessKey: "e2e-access-key",
-    itemCode: "coffee-beans:blend-500g",
+    shopCode: "coffee-beans",
+    keyword: "blend-500g",
   });
 
   await form.getByRole("button", { name: "追加する" }).click();

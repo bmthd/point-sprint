@@ -18,6 +18,7 @@ const pages = (id: string) => [
   { name: "プランの設定", path: `/plan/settings?id=${id}` },
   { name: "使い方・注意事項", path: "/help" },
   { name: "利用規約", path: "/terms" },
+  { name: "お問い合わせ", path: "/inquiry" },
 ];
 
 const header = (page: Page) => page.getByRole("banner");

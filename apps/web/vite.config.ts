@@ -14,7 +14,8 @@ export default defineConfig(({ mode, isPreview }) => {
   // Only the `PUBLIC_` values reach the browser. They are plain text in `.env.development` and
   // `.env.production` at the root, so they are read without the dotenvx key, also by builds that do
   // not go through `pnpm build`. Without them, no item lookup.
-  const rakutenConfig = readRakutenConfig(loadEnv(mode, "../..", "PUBLIC_"));
+  const publicEnv = loadEnv(mode, "../..", "PUBLIC_");
+  const rakutenConfig = readRakutenConfig(publicEnv);
   // `vite preview` serves what was built, with the settings the build had.
   if (!rakutenConfig && !isPreview) {
     console.warn("Rakuten API settings are missing or encrypted: item lookup is turned off.");
@@ -27,10 +28,14 @@ export default defineConfig(({ mode, isPreview }) => {
         prerender: { enabled: true, crawlLinks: false },
         pages: prerenderedPages.map(({ path }) => ({ path, prerender: { enabled: true } })),
       }),
-      viteReact(),
+      viteReact({ compiler: true }),
     ],
     define: {
       "import.meta.env.RAKUTEN_CONFIG": JSON.stringify(rakutenConfig ?? null),
+      // Without it, the inquiry form says it cannot take inquiries.
+      "import.meta.env.TURNSTILE_SITE_KEY": JSON.stringify(
+        publicEnv.PUBLIC_TURNSTILE_SITE_KEY?.trim() || null,
+      ),
     },
     server: {
       proxy: {

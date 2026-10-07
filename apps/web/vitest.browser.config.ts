@@ -3,7 +3,7 @@ import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [viteReact()],
+  plugins: [viteReact({ compiler: true })],
   test: {
     name: "web-browser",
     include: ["src/**/*.browser.test.tsx"],

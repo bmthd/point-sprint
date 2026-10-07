@@ -19,5 +19,7 @@ export default defineConfig({
     command: `pnpm exec vite preview --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: false,
+    // Empty, so the inquiry stops at its config and never reaches Turnstile or Email Routing.
+    env: { TURNSTILE_SECRET_KEY: "", INQUIRY_TO_ADDRESS: "" },
   },
 });

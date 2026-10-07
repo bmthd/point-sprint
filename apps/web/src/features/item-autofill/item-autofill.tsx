@@ -1,13 +1,14 @@
-import { channels, parseUrl, toItemCode } from "@workspaces/domain";
+import { channels, parseUrl } from "@workspaces/domain";
 import { Box, Text } from "@workspaces/ui";
 import { atom, useAtomValue } from "jotai";
 import { useEffect, useRef, useState } from "react";
 import { browserItemLookup } from "../../rakuten/browser";
 import type { ItemLookup } from "../../rakuten/item-lookup";
-import type { RakutenItem } from "../../rakuten/item-search";
+import type { ItemPage, RakutenItem } from "../../rakuten/item-search";
+import { useLatestRef } from "../../use-latest-ref";
 
 /**
- * The lookup of an item code, or `undefined` when the build has no Rakuten settings. Wrapped in an
+ * The lookup of an item page, or `undefined` when the build has no Rakuten settings. Wrapped in an
  * object: an atom made from a function would take it for a getter.
  */
 export const itemLookupAtom = atom<{ lookup: ItemLookup | undefined }>({
@@ -19,10 +20,12 @@ export type AutofillStatus = "idle" | "loading" | "failed";
 /** How long typing has to pause before a typed URL is looked up. A paste is one change. */
 const TYPING_PAUSE_MS = 300;
 
-/** The item code to look up for a URL: an item page of a channel that supports the lookup. */
-export function itemCodeOf(url: string): string | null {
+/** The item page to look up for a URL, on a channel that supports the lookup. */
+export function itemPageOf(url: string): ItemPage | null {
   const parsed = parseUrl(url.trim());
-  return parsed && channels[parsed.channel].supportsItemLookup ? toItemCode(parsed) : null;
+  if (!parsed || !channels[parsed.channel].supportsItemLookup) return null;
+  const { shopCode, itemManageNumber } = parsed;
+  return shopCode && itemManageNumber ? { shopCode, itemManageNumber } : null;
 }
 
 /**
@@ -34,8 +37,7 @@ export function useItemAutofill(apply: (item: RakutenItem) => void) {
   const [status, setStatus] = useState<AutofillStatus>("idle");
   const latest = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const applyRef = useRef(apply);
-  applyRef.current = apply;
+  const applyRef = useLatestRef(apply);
 
   useEffect(
     () => () => {
@@ -48,14 +50,14 @@ export function useItemAutofill(apply: (item: RakutenItem) => void) {
   const onUrl = (url: string) => {
     const request = ++latest.current;
     clearTimeout(timer.current);
-    const itemCode = itemCodeOf(url);
-    if (!lookup || !itemCode) {
+    const page = itemPageOf(url);
+    if (!lookup || !page) {
       setStatus("idle");
       return;
     }
     setStatus("loading");
     timer.current = setTimeout(() => {
-      void lookup(itemCode).then((result) => {
+      void lookup(page).then((result) => {
         if (request !== latest.current) return;
         if (result.ok) applyRef.current(result.item);
         setStatus(result.ok ? "idle" : "failed");
