@@ -279,6 +279,73 @@ test("prevents adding the same 39shop period twice", async () => {
   expect((await storedPlan()).benefits).toHaveLength(1);
 });
 
+test("a campaign's form says what to fix, and focuses the first field to fix", async () => {
+  const screen = await renderSettings(makePlan([], []));
+  await screen.getByRole("button", { name: "＋ 追加" }).click();
+  await screen.getByRole("button", { name: /^リピート購入/ }).click();
+  const dialog = screen.getByRole("dialog", { name: "リピート購入を追加" });
+  const end = dialog.getByLabelText("終了日");
+  const cap = dialog.getByLabelText("獲得上限（P）");
+  await end.fill("2026-10-01");
+  await dialog.getByLabelText("条件金額（円）").fill("３，９８０円");
+  await dialog.getByRole("button", { name: "追加する" }).click();
+
+  await expect
+    .element(end)
+    .toHaveAccessibleDescription("終了日は開始日と同じ日か、それより後の日にしてください");
+  await expect.element(cap).toHaveAccessibleDescription("獲得上限を入れてください");
+  await expect.element(end).toHaveFocus();
+  expect((await storedPlan()).benefits).toHaveLength(0);
+
+  await end.fill("2026-10-09");
+  await cap.fill("1,000P");
+  await dialog.getByRole("button", { name: "追加する" }).click();
+  await expect.element(dialog).not.toBeInTheDocument();
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
+  expect((await storedPlan()).benefits[0]).toMatchObject({
+    params: { cap: 1000 },
+    conditions: { minOrderAmount: 3980 },
+  });
+});
+
+test("a cap that is not a number is not saved, and says what to type", async () => {
+  const screen = await renderSettings(makePlan(structuredClone(marathon), [order(0)]));
+  await screen.getByRole("button", { name: /ショップ買いまわり/ }).click();
+  const cap = screen.getByLabelText("獲得上限");
+  await cap.fill("たくさん");
+  await cap.element().blur();
+
+  await expect.element(cap).toHaveAccessibleDescription("獲得上限は0以上の整数で入れてください");
+  expect((await storedPlan()).benefits[0]?.params.cap).toBe(7000);
+  // The error follows each input once it is shown.
+  await cap.fill("５，０００Ｐ");
+  await expect.element(cap).not.toHaveAttribute("aria-invalid");
+  await cap.element().blur();
+  await expect.poll(async () => (await storedPlan()).benefits[0]?.params.cap).toBe(5000);
+});
+
+test("a period's end before its start is not saved", async () => {
+  const screen = await renderSettings(makePlan(structuredClone(marathon), [order(0)]));
+  await screen.getByRole("button", { name: /ショップ買いまわり/ }).click();
+  const end = screen.getByLabelText("終了日");
+  await end.fill("2026-10-01");
+  await end.element().blur();
+  await expect
+    .element(end)
+    .toHaveAccessibleDescription("終了日は開始日と同じ日か、それより後の日にしてください");
+  const start = screen.getByLabelText("開始日");
+  await start.fill("2026-10-10");
+  await start.element().blur();
+  await expect
+    .element(start)
+    .toHaveAccessibleDescription("開始日は終了日と同じ日か、それより前の日にしてください");
+  expect((await storedPlan()).benefits[0]?.conditions.dateRule).toEqual({
+    type: "range",
+    start: "2026-10-04",
+    end: "2026-10-09",
+  });
+});
+
 test("overrides the shop-around cap", async () => {
   const screen = await renderSettings(makePlan(structuredClone(marathon), [order(0)]));
   const row = screen.getByRole("button", { name: /ショップ買いまわり/ });

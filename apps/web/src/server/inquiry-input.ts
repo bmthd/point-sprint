@@ -1,24 +1,20 @@
 import * as v from "valibot";
+import { requiredTextSchema, textSchema } from "../form/field-schemas";
 
 // What the inquiry form sends. The form checks it before sending, and the server checks it again.
 
 export const InquiryInputSchema = v.object({
-  name: v.pipe(v.string(), v.trim(), v.maxLength(100, "名前は100文字以内で入れてください")),
+  name: textSchema("お名前", 100),
   // Valibot's email check lets no line break through, so the address is safe in a header.
   email: v.pipe(
     v.string(),
     v.trim(),
     v.nonEmpty("返信先のメールアドレスを入れてください"),
-    v.maxLength(254, "メールアドレスが長すぎます"),
+    v.maxLength(254, "メールアドレスは254文字以内で入れてください"),
     v.email("メールアドレスの形で入れてください"),
   ),
   wantsReply: v.boolean(),
-  body: v.pipe(
-    v.string(),
-    v.trim(),
-    v.nonEmpty("お問い合わせの内容を入れてください"),
-    v.maxLength(5000, "内容は5000文字以内で入れてください"),
-  ),
+  body: requiredTextSchema("お問い合わせの内容", 5000),
 });
 
 export type InquiryInput = v.InferOutput<typeof InquiryInputSchema>;

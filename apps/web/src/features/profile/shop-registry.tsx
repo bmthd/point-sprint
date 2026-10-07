@@ -1,7 +1,8 @@
 import { type Shop, channels } from "@workspaces/domain";
-import { Box, Card, Input, Switch, Text } from "@workspaces/ui";
+import { Box, Card, Switch, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { useState } from "react";
+import { CommitField } from "../../form/commit-field";
+import { ShopNameSchema } from "../../form/field-schemas";
 import { changeShop, saveShopAtom } from "../../state/mutations";
 import { shopsAtom } from "../../state/queries";
 import { withTag } from "../plan-home/order-fields";
@@ -14,15 +15,8 @@ function ShopRow({
 }: {
   shop: Shop;
   /** Saves a change, applied to the shop as it is when it is saved. */
-  onSave: (change: (shop: Shop) => Shop) => void;
+  onSave: (change: (shop: Shop) => Shop) => Promise<unknown>;
 }) {
-  const [draft, setDraft] = useState<string>();
-  const name = draft ?? shop.name;
-  const commit = () => {
-    const next = name.trim();
-    setDraft(undefined);
-    if (next !== "" && next !== shop.name) onSave((current) => ({ ...current, name: next }));
-  };
   return (
     <Box
       as="li"
@@ -34,16 +28,13 @@ function ShopRow({
       borderColor="border"
       _first={{ borderTopWidth: "0" }}
     >
-      <Input
-        size="lg"
-        aria-label={`${shop.name}の名前`}
-        value={name}
-        onChange={(event) => setDraft(event.currentTarget.value)}
-        onBlur={commit}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") event.currentTarget.blur();
-          if (event.key === "Escape") setDraft(undefined);
-        }}
+      <CommitField
+        key={shop.name}
+        label={`${shop.name}の名前`}
+        hideLabel
+        initial={shop.name}
+        schema={ShopNameSchema}
+        onCommit={(name) => onSave((current) => ({ ...current, name }))}
       />
       <Box display="flex" alignItems="center" justifyContent="space-between" gap="3">
         <Text fontSize="xs" color="fg.muted" minW="0" overflowWrap="anywhere">
@@ -59,7 +50,7 @@ function ShopRow({
           checked={is39(shop)}
           onChange={(event) => {
             const on = event.currentTarget.checked;
-            onSave((current) => ({ ...current, tags: withTag(current.tags, "39shop", on) }));
+            void onSave((current) => ({ ...current, tags: withTag(current.tags, "39shop", on) }));
           }}
         >
           39ショップ
@@ -76,7 +67,9 @@ export function ShopRegistry({ onFailed }: { onFailed: (failed: boolean) => void
   const sorted = [...shops].sort((a, b) => a.name.localeCompare(b.name, "ja"));
   const save = (shopId: string, change: (shop: Shop) => Shop) => {
     onFailed(false);
-    saveShop(changeShop(shopId, change)).catch(() => onFailed(true));
+    const saving = saveShop(changeShop(shopId, change));
+    saving.catch(() => onFailed(true));
+    return saving;
   };
   return (
     <Card.Root as="section" aria-labelledby="shop-registry-title">

@@ -106,11 +106,12 @@ test("invalid price is not saved", async () => {
   await sheet.getByRole("button", { name: "追加する" }).click();
 
   await expect.element(amountOf(sheet)).toHaveAttribute("aria-invalid", "true");
-  await expect.element(sheet.getByText("金額は円の整数で入れてください")).toBeVisible();
-  // A screen reader reads the error with the field.
+  await expect.element(sheet.getByText("金額は0以上の整数で入れてください")).toBeVisible();
+  // A screen reader reads the error with the field, which takes the focus.
   await expect
     .element(amountOf(sheet))
-    .toHaveAccessibleDescription("金額は円の整数で入れてください");
+    .toHaveAccessibleDescription("金額は0以上の整数で入れてください");
+  await expect.element(amountOf(sheet)).toHaveFocus();
   await expect.element(sheet).toBeVisible();
 
   await sheet.getByLabelText("ショップ", { exact: true }).selectOptions("ショップを選ぶ");
@@ -121,6 +122,8 @@ test("invalid price is not saved", async () => {
     .element(sheet.getByLabelText("ショップ", { exact: true }))
     .toHaveAccessibleDescription("ショップを選んでください");
   await expect.element(sheet.getByText("金額を入れてください")).toBeVisible();
+  // The first field with an error on screen takes the focus.
+  await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveFocus();
   expect(await stored()).toHaveLength(4);
 });
 
@@ -248,6 +251,44 @@ test("a URL that names no shop is described and does not mark the field invalid"
   await expect.element(url).not.toHaveAttribute("aria-invalid");
 });
 
+test("a URL that is not a web address is an error, and nothing is saved", async () => {
+  const screen = await renderWith();
+  const sheet = await openAdd(screen);
+  await fillOrder(sheet, { shop: "ショップ4", amount: "1000" });
+  const url = sheet.getByLabelText(/^商品のURL/);
+  await url.fill("item.rakuten.co.jp/shop/item/");
+  await sheet.getByRole("button", { name: "追加する" }).click();
+
+  await expect.element(url).toHaveAttribute("aria-invalid", "true");
+  await expect
+    .element(url)
+    .toHaveAccessibleDescription("商品のURLは https:// で始まる形で入れてください");
+  await expect.element(url).toHaveFocus();
+  expect(await stored()).toHaveLength(4);
+
+  // The error follows each input once it is shown.
+  await url.fill("https://item.rakuten.co.jp/shop/item/");
+  await expect.element(url).not.toHaveAttribute("aria-invalid");
+});
+
+test("an error in the closed details opens them and takes the focus", async () => {
+  const screen = await renderWith();
+  const sheet = await openAdd(screen);
+  await fillOrder(sheet, { shop: "ショップ4", amount: "1000" });
+  const details = sheet.getByText(/^詳細設定/);
+  await details.click();
+  const quantity = sheet.getByLabelText("数量");
+  await quantity.fill("0");
+  await details.click();
+  expect(document.querySelector("details")?.open).toBe(false);
+  await sheet.getByRole("button", { name: "追加する" }).click();
+
+  await expect.element(quantity).toHaveAccessibleDescription("数量は1以上の整数で入れてください");
+  await expect.element(quantity).toHaveFocus();
+  expect(document.querySelector("details")?.open).toBe(true);
+  expect(await stored()).toHaveLength(4);
+});
+
 test("editing an order shows its stored URL and keeps it", async () => {
   const url = "https://item.rakuten.co.jp/shop-one/item-9/";
   const withUrl = order(1);
@@ -319,7 +360,8 @@ test("an invalid amount of another item is described on its field", async () => 
 
   const amount = second.getByLabelText("金額（税込）");
   await expect.element(amount).toHaveAttribute("aria-invalid", "true");
-  await expect.element(amount).toHaveAccessibleDescription("金額は円の整数で入れてください");
+  await expect.element(amount).toHaveAccessibleDescription("金額は0以上の整数で入れてください");
+  await expect.element(amount).toHaveFocus();
   expect(await stored()).toHaveLength(4);
 });
 
@@ -336,7 +378,7 @@ test("a coupon larger than the item is not saved", async () => {
     .toHaveAttribute("aria-invalid", "true");
   await expect
     .element(sheet.getByLabelText("クーポン値引額（税込）"))
-    .toHaveAccessibleDescription("クーポン値引額が金額より大きくなっています");
+    .toHaveAccessibleDescription("クーポン値引額は、金額に数量を掛けた額以下で入れてください");
   expect(await stored()).toHaveLength(4);
 });
 
