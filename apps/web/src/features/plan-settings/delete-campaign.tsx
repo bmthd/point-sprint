@@ -12,7 +12,7 @@ import { useSaveSettingsChange } from "./settings-shared";
  */
 export function useDeleteCampaign(plan: Plan, afterDelete: RefObject<HTMLElement | null>) {
   const removeBenefit = useSetAtom(removeBenefitAtom);
-  const save = useSaveSettingsChange();
+  const save = useSaveSettingsChange(plan.id);
   const { open, onOpen, onClose } = useDisclosure();
   const [target, setTarget] = useState<Benefit>();
   const finalFocus = useRef<HTMLElement | null>(null);

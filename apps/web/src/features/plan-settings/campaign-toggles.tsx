@@ -80,7 +80,7 @@ function CampaignToggle({ benefit, onToggle }: { benefit: RateBenefit; onToggle:
 /** The campaigns as toggles, 「＋ 追加」 and its templates. */
 export function CampaignToggles({ plan }: { plan: Plan }) {
   const toggle = useSetAtom(toggleBenefitAtom);
-  const save = useSaveSettingsChange();
+  const save = useSaveSettingsChange(plan.id);
   const [addOpen, setAddOpen] = useState(false);
   const [template, setTemplate] = useState<CampaignTemplate>();
   const addRef = useRef<HTMLButtonElement>(null);

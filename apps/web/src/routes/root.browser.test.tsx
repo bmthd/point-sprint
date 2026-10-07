@@ -1,22 +1,15 @@
-import { Box, Button, UIProvider, useColorMode } from "@workspaces/ui";
+import { Box, Button, UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
-import { type ReactNode, useEffect } from "react";
+import type { ReactNode } from "react";
 import { expect, test } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
+import { type TestColorModeValue, TestColorMode } from "../test-color-mode";
 
-type ColorMode = "light" | "dark";
-
-function ColorModeSwitch({ colorMode }: { colorMode: ColorMode }) {
-  const { changeColorMode } = useColorMode();
-  useEffect(() => changeColorMode(colorMode), [changeColorMode, colorMode]);
-  return null;
-}
-
-async function renderInTheme(ui: ReactNode, colorMode: ColorMode) {
+async function renderInTheme(ui: ReactNode, colorMode: TestColorModeValue) {
   await cleanup();
   return render(
     <UIProvider theme={theme} config={config}>
-      <ColorModeSwitch colorMode={colorMode} />
+      <TestColorMode value={colorMode} />
       {ui}
     </UIProvider>,
   );

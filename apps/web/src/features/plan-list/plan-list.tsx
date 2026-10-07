@@ -2,10 +2,11 @@ import { ClientOnly, useNavigate } from "@tanstack/react-router";
 import { type OfficialEvent, createPlan } from "@workspaces/domain";
 import { Heading, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import { replacePlan, savePlanAtom } from "../../state/mutations";
 import { profileAtom, profileQueryAtom } from "../../state/queries";
 import { useLatestRef } from "../../use-latest-ref";
+import { useSingleFlight } from "../../use-single-flight";
 import { monthOf, msUntilTokyoMidnight, tokyoToday } from "./dates";
 import { EventSection } from "./event-section";
 import { PlanSection } from "./plan-section";
@@ -45,38 +46,36 @@ export function PlanList({ now = () => new Date() }: { now?: () => Date }) {
   const { mutateAsync: savePlan } = useAtomValue(savePlanAtom);
   const [creating, setCreating] = useState(false);
   const [failed, setFailed] = useState(false);
-  const busy = useRef(false);
+  const run = useSingleFlight();
 
-  const create = async (event?: OfficialEvent) => {
-    if (busy.current) return;
-    busy.current = true;
-    setCreating(true);
-    setFailed(false);
-    const date = now();
-    const id = crypto.randomUUID();
-    const month = monthOf(event ? event.period.start : tokyoToday(date));
-    const name = event ? `${month}月 ${event.name}` : `${month}月の買い物`;
-    try {
-      await savePlan(
-        replacePlan(
-          createPlan({
-            id,
-            name,
-            event,
-            profile,
-            now: date.toISOString(),
-            newId: () => crypto.randomUUID(),
-          }),
-        ),
-      );
-      await navigate({ to: "/plan", search: { id } });
-    } catch {
-      setFailed(true);
-    } finally {
-      busy.current = false;
-      setCreating(false);
-    }
-  };
+  const create = (event?: OfficialEvent) =>
+    run(async () => {
+      setCreating(true);
+      setFailed(false);
+      const date = now();
+      const id = crypto.randomUUID();
+      const month = monthOf(event ? event.period.start : tokyoToday(date));
+      const name = event ? `${month}月 ${event.name}` : `${month}月の買い物`;
+      try {
+        await savePlan(
+          replacePlan(
+            createPlan({
+              id,
+              name,
+              event,
+              profile,
+              now: date.toISOString(),
+              newId: () => crypto.randomUUID(),
+            }),
+          ),
+        );
+        await navigate({ to: "/plan", search: { id } });
+      } catch {
+        setFailed(true);
+      } finally {
+        setCreating(false);
+      }
+    });
 
   return (
     <VStack as="main" maxW="3xl" mx="auto" alignItems="stretch" gap="6" px="4" pt="4" pb="8">

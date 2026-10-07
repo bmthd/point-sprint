@@ -1,6 +1,12 @@
 import type { DateRule } from "@workspaces/domain";
-import { atom, useSetAtom } from "jotai";
-import { useCallback } from "react";
+import {
+  createContext,
+  createElement,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 
 /** Rakuten's page where users check their own SPU. */
 export const SPU_PAGE_URL = "https://event.rakuten.co.jp/campaign/point-up/everyday/point/";
@@ -30,17 +36,41 @@ export function whenText(rule: DateRule | undefined): string {
   }
 }
 
-/** Set when saving a settings change failed; the settings show it until the next change. */
-export const settingsSaveFailedAtom = atom(false);
+type SettingsSaveFailure = {
+  failurePlanId: string | undefined;
+  setFailurePlanId: (planId: string | undefined) => void;
+};
 
-/** Saves a settings change and reports a failure through `settingsSaveFailedAtom`. */
-export function useSaveSettingsChange() {
-  const setFailed = useSetAtom(settingsSaveFailedAtom);
+const SettingsSaveFailureContext = createContext<SettingsSaveFailure | undefined>(undefined);
+
+/** Gives one settings view a failure state that disappears when the view unmounts. */
+export function SettingsSaveFailureProvider({ children }: { children: ReactNode }) {
+  const [failurePlanId, setFailurePlanId] = useState<string>();
+  return createElement(
+    SettingsSaveFailureContext,
+    { value: { failurePlanId, setFailurePlanId } },
+    children,
+  );
+}
+
+function useSettingsSaveFailure() {
+  const failure = useContext(SettingsSaveFailureContext);
+  if (!failure) throw new Error("useSaveSettingsChange must be under SettingsSaveFailureProvider");
+  return failure;
+}
+
+export function useSettingsSaveFailurePlanId() {
+  return useSettingsSaveFailure().failurePlanId;
+}
+
+/** Saves a plan's settings change and reports the most recent failure for that plan. */
+export function useSaveSettingsChange(planId: string) {
+  const { setFailurePlanId } = useSettingsSaveFailure();
   return useCallback(
     (operation: Promise<unknown>) => {
-      setFailed(false);
-      operation.catch(() => setFailed(true));
+      setFailurePlanId(undefined);
+      operation.catch(() => setFailurePlanId(planId));
     },
-    [setFailed],
+    [planId, setFailurePlanId],
   );
 }

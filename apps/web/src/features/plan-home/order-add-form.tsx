@@ -15,6 +15,7 @@ import { calculationAtom } from "../../state/derived";
 import { type ShopChange, saveShopAtom } from "../../state/mutations";
 import { addOrderAtom } from "../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../state/queries";
+import { useSingleFlight } from "../../use-single-flight";
 import { AutofillStatusText, useItemAutofill } from "../item-autofill/item-autofill";
 import { tokyoToday } from "../plan-list/dates";
 import { PlusIcon } from "./icons";
@@ -181,7 +182,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
   const saveShop = useAtomValue(saveShopAtom);
   const addOrder = useSetAtom(addOrderAtom);
   const setFailed = useSetAtom(orderSaveFailedAtom);
-  const saving = useRef(false);
+  const run = useSingleFlight();
   const [open, setOpen] = useState(plan.orders.length === 0);
   const [values, setValues] = useState(emptyValues);
   const [errors, setErrors] = useState<Errors>({});
@@ -232,23 +233,21 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
       setErrors(draft.errors);
       return;
     }
-    if (saving.current) return;
-    saving.current = true;
-    const { order, shopChange } = draft;
-    setFailed(false);
-    try {
-      if (shopChange) await saveShop.mutateAsync(shopChange);
-      await addOrder({ planId: plan.id, order });
-      autofill.reset();
-      setValues(emptyValues());
-      setErrors({});
-      firstField.current?.focus();
-    } catch {
-      // The typed order stays in the form so it can be added again.
-      setFailed(true);
-    } finally {
-      saving.current = false;
-    }
+    await run(async () => {
+      const { order, shopChange } = draft;
+      setFailed(false);
+      try {
+        if (shopChange) await saveShop.mutateAsync(shopChange);
+        await addOrder({ planId: plan.id, order });
+        autofill.reset();
+        setValues(emptyValues());
+        setErrors({});
+        firstField.current?.focus();
+      } catch {
+        // The typed order stays in the form so it can be added again.
+        setFailed(true);
+      }
+    });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {

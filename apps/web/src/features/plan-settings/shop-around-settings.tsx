@@ -96,7 +96,7 @@ function ShopAroundEditor({
   onDelete: () => void;
 }) {
   const updateBenefit = useSetAtom(updateBenefitAtom);
-  const save = useSaveSettingsChange();
+  const save = useSaveSettingsChange(plan.id);
   const panelId = useId();
   const added = isAddedCampaign(plan, benefit);
 

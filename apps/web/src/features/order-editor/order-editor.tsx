@@ -40,6 +40,7 @@ import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } fr
 import { saveShopAtom } from "../../state/mutations";
 import { addOrderAtom, updateOrderAtom } from "../../state/order-ops";
 import { shopsAtom } from "../../state/queries";
+import { useSingleFlight } from "../../use-single-flight";
 import { CloseIcon } from "../plan-home/icons";
 import { AutofillStatusText, useItemAutofill } from "../item-autofill/item-autofill";
 import {
@@ -543,7 +544,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
   const addOrder = useSetAtom(addOrderAtom);
   const updateOrder = useSetAtom(updateOrderAtom);
   const [failed, setFailed] = useState(false);
-  const saving = useRef(false);
+  const run = useSingleFlight();
   const formId = useId();
   const urlId = useId();
   // The fields start from the order as it was when the editor opened.
@@ -556,31 +557,29 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
   const title = original ? "注文を編集" : "注文を追加";
 
   const save = async (output: OrderFormOutput, keepOpen: boolean) => {
-    if (saving.current) return;
-    const draft = draftOf(output, shops, original);
-    if (!draft) {
-      setFailed(true);
-      return;
-    }
-    saving.current = true;
-    setFailed(false);
-    try {
-      if (draft.shopChange) await saveShop.mutateAsync(draft.shopChange);
-      if (original) await updateOrder({ planId: plan.id, order: draft.order });
-      else await addOrder({ planId: plan.id, order: draft.order });
-      if (keepOpen) {
-        autofill.reset();
-        reset(form, { initialInput: emptyInput() });
-        focus(form, { path: AMOUNT_PATH });
-      } else {
-        onClose();
+    await run(async () => {
+      const draft = draftOf(output, shops, original);
+      if (!draft) {
+        setFailed(true);
+        return;
       }
-    } catch {
-      // What was typed stays in the fields so it can be saved again.
-      setFailed(true);
-    } finally {
-      saving.current = false;
-    }
+      setFailed(false);
+      try {
+        if (draft.shopChange) await saveShop.mutateAsync(draft.shopChange);
+        if (original) await updateOrder({ planId: plan.id, order: draft.order });
+        else await addOrder({ planId: plan.id, order: draft.order });
+        if (keepOpen) {
+          autofill.reset();
+          reset(form, { initialInput: emptyInput() });
+          focus(form, { path: AMOUNT_PATH });
+        } else {
+          onClose();
+        }
+      } catch {
+        // What was typed stays in the fields so it can be saved again.
+        setFailed(true);
+      }
+    });
   };
 
   return (
