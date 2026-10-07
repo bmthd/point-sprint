@@ -24,16 +24,17 @@ jobs:
           runtime: node@26
           cache: true
       - run: pnpm install --frozen-lockfile
-      - name: Lint
-        run: pnpm lint
-      - name: Check formatting
-        run: pnpm fmt:check
-      - name: Check types
-        run: pnpm type:check
-      - name: Check spelling
-        run: pnpm spell:check
-      - name: Build
-        run: pnpm build
+      - parallel:
+          - name: Lint
+            run: pnpm lint
+          - name: Check formatting
+            run: pnpm fmt:check
+          - name: Check types
+            run: pnpm type:check
+          - name: Check spelling
+            run: pnpm spell:check
+          - name: Build
+            run: pnpm build
 
   test:
     name: Tests
@@ -46,10 +47,14 @@ jobs:
           runtime: node@26
           cache: true
       - run: pnpm install --frozen-lockfile
-      - name: Install Chromium
-        run: pnpm --filter web exec playwright install --with-deps chromium
-      - name: Run tests
-        run: pnpm test
+      # Only the web-browser project needs Chromium, so the other projects run while it installs.
+      - parallel:
+          - name: Install Chromium
+            run: pnpm --filter web exec playwright install --with-deps chromium
+          - name: Run tests
+            run: pnpm test --project '!web-browser'
+      - name: Run browser tests
+        run: pnpm test --project web-browser
 
   e2e:
     name: E2E
@@ -62,10 +67,13 @@ jobs:
           runtime: node@26
           cache: true
       - run: pnpm install --frozen-lockfile
-      - name: Install Chromium
-        run: pnpm --filter web exec playwright install --with-deps chromium
+      - parallel:
+          - name: Install Chromium
+            run: pnpm --filter web exec playwright install --with-deps chromium
+          - name: Build
+            run: pnpm build:e2e
       - name: Run E2E tests
-        run: pnpm test:e2e
+        run: pnpm --filter web exec playwright test
       - name: Upload Playwright failure artifacts
         if: ${{ failure() }}
         uses: actions/upload-artifact@v4
