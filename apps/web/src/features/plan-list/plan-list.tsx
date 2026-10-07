@@ -7,6 +7,7 @@ import { replacePlan, savePlanAtom } from "../../state/mutations";
 import { profileAtom, profileQueryAtom } from "../../state/queries";
 import { useLatestRef } from "../../use-latest-ref";
 import { useSingleFlight } from "../../use-single-flight";
+import { PageWithSidebar } from "../layout/sidebar";
 import { monthOf, msUntilTokyoMidnight, tokyoToday } from "./dates";
 import { EventSection } from "./event-section";
 import { PlanSection } from "./plan-section";
@@ -78,27 +79,29 @@ export function PlanList({ now = () => new Date() }: { now?: () => Date }) {
     });
 
   return (
-    <VStack as="main" maxW="3xl" mx="auto" alignItems="stretch" gap="6" px="4" pt="4" pb="8">
-      <EventSection
-        today={today}
-        disabled={!profileLoaded || creating}
-        onCreate={(event) => void create(event)}
-        onCreateWithoutEvent={() => void create()}
-      />
-      {failed ? (
-        <Text role="alert" fontSize="sm" color="danger.fg">
-          プランを作れませんでした。もう一度お試しください。
-        </Text>
-      ) : null}
-      <ClientOnly
-        fallback={
-          <Heading as="h2" fontSize="md">
-            プラン
-          </Heading>
-        }
-      >
-        <PlanSection />
-      </ClientOnly>
-    </VStack>
+    <PageWithSidebar maxW="768px">
+      <VStack alignItems="stretch" gap="6">
+        <EventSection
+          today={today}
+          disabled={!profileLoaded || creating}
+          onCreate={(event) => void create(event)}
+          onCreateWithoutEvent={() => void create()}
+        />
+        {failed ? (
+          <Text role="alert" fontSize="sm" color="danger.fg">
+            プランを作れませんでした。もう一度お試しください。
+          </Text>
+        ) : null}
+        <ClientOnly
+          fallback={
+            <Heading as="h2" fontSize="md">
+              プラン
+            </Heading>
+          }
+        >
+          <PlanSection />
+        </ClientOnly>
+      </VStack>
+    </PageWithSidebar>
   );
 }
