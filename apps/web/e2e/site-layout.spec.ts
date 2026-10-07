@@ -17,7 +17,6 @@ const pages = (id: string) => [
   { name: "プラン", path: `/plan?id=${id}` },
   { name: "プランの設定", path: `/plan/settings?id=${id}` },
   { name: "使い方・注意事項", path: "/help" },
-  { name: "お知らせ", path: "/notices" },
   { name: "利用規約", path: "/terms" },
 ];
 
@@ -91,7 +90,6 @@ test("every page has the footer, and each footer link opens its page", async ({ 
 test("the footer links to each page that tells about the site", async ({ page }) => {
   for (const { label, path, heading } of [
     { label: "使い方・注意事項", path: "/help", heading: "使い方・注意事項" },
-    { label: "お知らせ", path: "/notices", heading: "お知らせ" },
     { label: "利用規約", path: "/terms", heading: "利用規約" },
   ]) {
     await page.goto("/");

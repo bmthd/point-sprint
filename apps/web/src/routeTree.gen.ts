@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HelpRouteImport } from './routes/help'
-import { Route as NoticesRouteImport } from './routes/notices'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -25,11 +24,6 @@ const IndexRoute = IndexRouteImport.update({
 const HelpRoute = HelpRouteImport.update({
   id: '/help',
   path: '/help',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NoticesRoute = NoticesRouteImport.update({
-  id: '/notices',
-  path: '/notices',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanRoute = PlanRouteImport.update({
@@ -56,7 +50,6 @@ const PlanSettingsRoute = PlanSettingsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/help': typeof HelpRoute
-  '/notices': typeof NoticesRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
   '/terms': typeof TermsRoute
@@ -65,7 +58,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/help': typeof HelpRoute
-  '/notices': typeof NoticesRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
   '/terms': typeof TermsRoute
@@ -75,7 +67,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/help': typeof HelpRoute
-  '/notices': typeof NoticesRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
   '/terms': typeof TermsRoute
@@ -83,28 +74,13 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/help'
-    | '/notices'
-    | '/plan'
-    | '/profile'
-    | '/terms'
-    | '/plan/settings'
+  fullPaths: '/' | '/help' | '/plan' | '/profile' | '/terms' | '/plan/settings'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/help'
-    | '/notices'
-    | '/plan'
-    | '/profile'
-    | '/terms'
-    | '/plan/settings'
+  to: '/' | '/help' | '/plan' | '/profile' | '/terms' | '/plan/settings'
   id:
     | '__root__'
     | '/'
     | '/help'
-    | '/notices'
     | '/plan'
     | '/profile'
     | '/terms'
@@ -114,7 +90,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HelpRoute: typeof HelpRoute
-  NoticesRoute: typeof NoticesRoute
   PlanRoute: typeof PlanRoute
   ProfileRoute: typeof ProfileRoute
   TermsRoute: typeof TermsRoute
@@ -135,13 +110,6 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/help'
       preLoaderRoute: typeof HelpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notices': {
-      id: '/notices'
-      path: '/notices'
-      fullPath: '/notices'
-      preLoaderRoute: typeof NoticesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plan': {
@@ -178,7 +146,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HelpRoute: HelpRoute,
-  NoticesRoute: NoticesRoute,
   PlanRoute: PlanRoute,
   ProfileRoute: ProfileRoute,
   TermsRoute: TermsRoute,

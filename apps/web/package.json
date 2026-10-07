@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@formisch/react": "1.1.0",
+    "@tanstack/markdown": "1.0.0",
     "@tanstack/query-core": "5.104.1",
     "@tanstack/react-query": "5.104.1",
     "@tanstack/react-router": "1.170.41",
