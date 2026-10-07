@@ -2,9 +2,10 @@ import { ClientOnly, useNavigate } from "@tanstack/react-router";
 import { type OfficialEvent, createPlan } from "@workspaces/domain";
 import { Heading, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import { replacePlan, savePlanAtom } from "../../state/mutations";
 import { profileAtom, profileQueryAtom } from "../../state/queries";
+import { useLatestRef } from "../../use-latest-ref";
 import { monthOf, msUntilTokyoMidnight, tokyoToday } from "./dates";
 import { EventSection } from "./event-section";
 import { PlanSection } from "./plan-section";
@@ -12,22 +13,22 @@ import { PlanSection } from "./plan-section";
 /** Today in Japan on the client, `undefined` in the HTML rendered ahead of time. */
 export function useToday(now: () => Date): string | undefined {
   // `subscribe` reads `now` through a ref so a new function on each render does not subscribe again.
-  const nowRef = useRef(now);
-  useEffect(() => {
-    nowRef.current = now;
-  });
-  const subscribe = useCallback((onChange: () => void) => {
-    let timer: ReturnType<typeof setTimeout>;
-    // Wakes up at each midnight in Japan, so the date changes while the page stays open.
-    const schedule = () => {
-      timer = setTimeout(() => {
-        onChange();
-        schedule();
-      }, msUntilTokyoMidnight(nowRef.current()));
-    };
-    schedule();
-    return () => clearTimeout(timer);
-  }, []);
+  const nowRef = useLatestRef(now);
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      let timer: ReturnType<typeof setTimeout>;
+      // Wakes up at each midnight in Japan, so the date changes while the page stays open.
+      const schedule = () => {
+        timer = setTimeout(() => {
+          onChange();
+          schedule();
+        }, msUntilTokyoMidnight(nowRef.current()));
+      };
+      schedule();
+      return () => clearTimeout(timer);
+    },
+    [nowRef],
+  );
   return useSyncExternalStore(
     subscribe,
     () => tokyoToday(now()),

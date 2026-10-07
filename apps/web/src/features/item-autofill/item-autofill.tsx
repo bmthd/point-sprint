@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { browserItemLookup } from "../../rakuten/browser";
 import type { ItemLookup } from "../../rakuten/item-lookup";
 import type { ItemPage, RakutenItem } from "../../rakuten/item-search";
+import { useLatestRef } from "../../use-latest-ref";
 
 /**
  * The lookup of an item page, or `undefined` when the build has no Rakuten settings. Wrapped in an
@@ -36,10 +37,7 @@ export function useItemAutofill(apply: (item: RakutenItem) => void) {
   const [status, setStatus] = useState<AutofillStatus>("idle");
   const latest = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const applyRef = useRef(apply);
-  useEffect(() => {
-    applyRef.current = apply;
-  });
+  const applyRef = useLatestRef(apply);
 
   useEffect(
     () => () => {
