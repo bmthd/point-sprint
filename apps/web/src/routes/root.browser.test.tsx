@@ -1,22 +1,16 @@
-import { Box, Button, UIProvider, useColorMode } from "@workspaces/ui";
+import { Box, Button, UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
-import { type ReactNode, useEffect } from "react";
+import type { ReactNode } from "react";
+import { userEvent } from "vitest/browser";
 import { expect, test } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
+import { type TestColorModeValue, TestColorMode } from "../test-color-mode";
 
-type ColorMode = "light" | "dark";
-
-function ColorModeSwitch({ colorMode }: { colorMode: ColorMode }) {
-  const { changeColorMode } = useColorMode();
-  useEffect(() => changeColorMode(colorMode), [changeColorMode, colorMode]);
-  return null;
-}
-
-async function renderInTheme(ui: ReactNode, colorMode: ColorMode) {
+async function renderInTheme(ui: ReactNode, colorMode: TestColorModeValue) {
   await cleanup();
   return render(
     <UIProvider theme={theme} config={config}>
-      <ColorModeSwitch colorMode={colorMode} />
+      <TestColorMode value={colorMode} />
       {ui}
     </UIProvider>,
   );
@@ -42,6 +36,9 @@ test.each([
       colorMode,
     );
 
+    // Other browser tests can leave the shared pointer over this position.
+    // Read the base color, not the hover color.
+    await userEvent.unhover(document.querySelector("[data-testid=button]")!);
     await expect.poll(backgroundOf("button")).toBe(expected);
   },
 );

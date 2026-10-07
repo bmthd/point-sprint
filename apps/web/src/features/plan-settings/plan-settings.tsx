@@ -1,13 +1,12 @@
 import type { Plan } from "@workspaces/domain";
 import { Box, Button, Drawer, Heading, IconButton, Text, VStack } from "@workspaces/ui";
-import { useAtomValue, useSetAtom } from "jotai";
-import { useEffect } from "react";
+import { useAtomValue } from "jotai";
 import { planResultAtom } from "../../state/derived";
 import { BackIcon, CloseIcon, PencilIcon } from "../plan-home/icons";
 import { PlanPage } from "../plan-home/plan-page";
 import { RouterButton, RouterLink } from "../plan-list/router-link";
 import { CampaignToggles } from "./campaign-toggles";
-import { settingsSaveFailedAtom } from "./settings-shared";
+import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared";
 import { ShopAroundSettings, shopAroundOf } from "./shop-around-settings";
 import { SpuTiles, spuRate } from "./spu-tiles";
 
@@ -16,13 +15,16 @@ const primaryButton = { colorScheme: "primary", size: "lg", w: "full" } as const
 
 /** The settings themselves, on the settings page and in the desktop's side panel. */
 export function SettingsContent({ plan }: { plan: Plan }) {
+  return (
+    <SettingsSaveFailureProvider key={plan.id}>
+      <SettingsBody plan={plan} />
+    </SettingsSaveFailureProvider>
+  );
+}
+
+function SettingsBody({ plan }: { plan: Plan }) {
   const result = useAtomValue(planResultAtom(plan.id));
-  const failed = useAtomValue(settingsSaveFailedAtom);
-  const setFailed = useSetAtom(settingsSaveFailedAtom);
-  useEffect(() => {
-    // A failure from an earlier visit, or from another plan, is not about this view.
-    setFailed(false);
-  }, [plan.id, setFailed]);
+  const failed = useSettingsSaveFailurePlanId() === plan.id;
   if (!result) return null;
   return (
     <VStack gap="5" alignItems="stretch">
