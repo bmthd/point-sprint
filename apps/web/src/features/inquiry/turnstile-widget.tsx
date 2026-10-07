@@ -1,5 +1,6 @@
 import { Box, Text } from "@workspaces/ui";
 import { useEffect, useRef, useState } from "react";
+import { useLatestRef } from "../../use-latest-ref";
 
 // Cloudflare Turnstile's widget, rendered by its script once the page is in the browser.
 
@@ -57,8 +58,7 @@ export type TurnstileWidgetProps = {
 export function TurnstileWidget({ siteKey, onToken, resetKey }: TurnstileWidgetProps) {
   const container = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | undefined>(undefined);
-  const onTokenRef = useRef(onToken);
-  onTokenRef.current = onToken;
+  const onTokenRef = useLatestRef(onToken);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export function TurnstileWidget({ siteKey, onToken, resetKey }: TurnstileWidgetP
       if (widgetId.current !== undefined) window.turnstile?.remove(widgetId.current);
       widgetId.current = undefined;
     };
-  }, [siteKey]);
+  }, [siteKey, onTokenRef]);
 
   useEffect(() => {
     if (resetKey > 0 && widgetId.current !== undefined) window.turnstile?.reset(widgetId.current);
