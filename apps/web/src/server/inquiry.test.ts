@@ -8,7 +8,12 @@ import { SITEVERIFY_ENDPOINT, type TurnstileResult, verifyTurnstile } from "./tu
 const OPERATOR = "operator@example.com";
 const SENT_AT = new Date("2026-10-07T12:05:00Z");
 
-const inquiry = { name: "山田 太郎", email: "user@example.com", body: "計算が合いません。\n2行目" };
+const inquiry = {
+  name: "山田 太郎",
+  email: "user@example.com",
+  wantsReply: true,
+  body: "計算が合いません。\n2行目",
+};
 const request = { ...inquiry, turnstileToken: "token-from-widget" };
 
 /** Decodes MIME encoded-words back to text. */
@@ -70,7 +75,7 @@ describe("the mail", () => {
     expect(headers["Content-Type"]).toBe("text/plain; charset=UTF-8");
     expect(headers["Content-Transfer-Encoding"]).toBe("base64");
     for (const line of body.split("\r\n")) expect(line.length).toBeLessThanOrEqual(76);
-    expect(text).toContain("名前: 山田 太郎\r\n返信先: user@example.com\r\n");
+    expect(text).toContain("名前: 山田 太郎\r\n返信先: user@example.com\r\n返信: 希望する\r\n");
     expect(text).toContain("送信日時: 2026-10-07 21:05（日本時間）");
     expect(text).toContain("内容:\r\n計算が合いません。\r\n2行目\r\n");
     expect(raw).not.toMatch(/[^\r]\n/);
@@ -84,6 +89,16 @@ describe("the mail", () => {
       messageId: "id@bmth.dev",
     });
     expect(parseMail(raw).text).toContain("名前: （なし）");
+  });
+
+  test("says when no reply is wanted", () => {
+    const raw = buildInquiryMail({
+      inquiry: { ...inquiry, wantsReply: false },
+      to: OPERATOR,
+      sentAt: SENT_AT,
+      messageId: "id@bmth.dev",
+    });
+    expect(parseMail(raw).text).toContain("返信: 希望しない");
   });
 });
 

@@ -12,6 +12,7 @@ export const InquiryInputSchema = v.object({
     v.maxLength(254, "メールアドレスが長すぎます"),
     v.email("メールアドレスの形で入れてください"),
   ),
+  wantsReply: v.boolean(),
   body: v.pipe(
     v.string(),
     v.trim(),

@@ -312,7 +312,7 @@ Seitu は1人の作者が開発する比較的新しいライブラリ（採用�
 
 ### 問い合わせ
 
-1. `/inquiry` の Formisch のフォーム（名前は任意、返信先のメールアドレスと本文は必須）で入力を Valibot で検証し、Turnstile のウィジェットからトークンを受け取ってから、サーバー関数（`apps/web/src/server/submit-inquiry.ts`）を呼ぶ。トークンを受け取るまでは送信できない。
+1. `/inquiry` の Formisch のフォーム（名前は任意、返信先のメールアドレスと本文は必須。返信を希望するかのチェックボックスもある）で入力を Valibot で検証し、Turnstile のウィジェットからトークンを受け取ってから、サーバー関数（`apps/web/src/server/submit-inquiry.ts`）を呼ぶ。トークンを受け取るまでは送信できない。
 2. サーバー関数は、入力を同じスキーマで検証し直し、Turnstile のトークンを `siteverify` で検証してから、`send_email` バインディング（`INQUIRY_EMAIL`）で `inquiry@bmth.dev` から運営者に送る。利用者のアドレスは `Reply-To` に入れる。メール（生の MIME、件名は B エンコード、本文は base64）は純粋関数で組み立てる。
 3. 失敗は、入力（`input`）、設定の不足（`config`）、Turnstile（`turnstile`）、送信（`send`）のどの段階かを返し、ログには段階とエラーコードだけを残す。本文やメールアドレスはログに残さない。
 4. 利用者には段階によらず「送信できませんでした」と出し、入力を残したまま、Turnstile の確認をやり直して再送できるようにする。

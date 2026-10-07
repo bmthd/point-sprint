@@ -1,5 +1,5 @@
 import { Field as FormField, Form, type FieldElementProps, useForm } from "@formisch/react";
-import { Alert, Button, Field, Input, Text, Textarea, VStack } from "@workspaces/ui";
+import { Alert, Button, Checkbox, Field, Input, Text, Textarea, VStack } from "@workspaces/ui";
 import { type ComponentType, useState } from "react";
 import * as v from "valibot";
 import type { InquiryResult } from "../../server/inquiry";
@@ -31,7 +31,7 @@ const errorsOf = (field: FieldState) => ({
   errorMessage: field.errors?.[0],
 });
 
-const emptyInput = { name: "", email: "", body: "" };
+const emptyInput = { name: "", email: "", wantsReply: false, body: "" };
 
 type Props = {
   send: SendInquiry;
@@ -93,6 +93,13 @@ export function InquiryForm({ send, siteKey, widget: Widget = TurnstileWidget }:
             <Field.Root label="返信先のメールアドレス" required {...errorsOf(field)}>
               <Input type="email" inputMode="email" autoComplete="email" {...bind(field)} />
             </Field.Root>
+          )}
+        </FormField>
+        <FormField of={form} path={["wantsReply"]}>
+          {(field) => (
+            <Checkbox {...field.props} checked={field.input === true} colorScheme="primary">
+              返信を希望する
+            </Checkbox>
           )}
         </FormField>
         <FormField of={form} path={["body"]}>

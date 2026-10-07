@@ -47,6 +47,7 @@ const fields = (screen: Screen) => ({
   email: screen.getByRole("textbox", { name: /^返信先のメールアドレス/ }),
   body: screen.getByRole("textbox", { name: /^お問い合わせの内容/ }),
   submit: screen.getByRole("button", { name: "送信する" }),
+  wantsReply: screen.getByRole("checkbox", { name: "返信を希望する" }),
   check: screen.getByRole("button", { name: "確認を済ませる" }),
 });
 
@@ -54,6 +55,8 @@ async function fillIn(screen: Screen) {
   const { name, email, body } = fields(screen);
   await name.fill("山田 太郎");
   await email.fill("user@example.com");
+  // The checkbox's own input is hidden: its label is what is clicked.
+  await screen.getByText("返信を希望する").click();
   await body.fill("計算が合いません。");
 }
 
@@ -101,6 +104,7 @@ describe("the inquiry form", () => {
     expect(send).toHaveBeenCalledExactlyOnceWith({
       name: "山田 太郎",
       email: "user@example.com",
+      wantsReply: true,
       body: "計算が合いません。",
       turnstileToken: "token-0",
     });
@@ -124,6 +128,7 @@ describe("the inquiry form", () => {
     await expect.element(screen.getByRole("alert")).toHaveTextContent(FAILED);
     await expect.element(fields(screen).email).toHaveValue("user@example.com");
     await expect.element(fields(screen).body).toHaveValue("計算が合いません。");
+    await expect.element(fields(screen).wantsReply).toBeChecked();
     // The used token is dropped, and the check starts again.
     await expect.element(fields(screen).submit).toBeDisabled();
 

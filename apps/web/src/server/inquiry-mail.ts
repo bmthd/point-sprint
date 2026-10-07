@@ -66,6 +66,7 @@ export function buildInquiryMail({ inquiry, to, sentAt, messageId }: InquiryMail
     "",
     `名前: ${inquiry.name === "" ? "（なし）" : inquiry.name}`,
     `返信先: ${inquiry.email}`,
+    `返信: ${inquiry.wantsReply ? "希望する" : "希望しない"}`,
     `送信日時: ${tokyoTime(sentAt)}（日本時間）`,
     "",
     "内容:",
