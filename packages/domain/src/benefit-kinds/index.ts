@@ -24,6 +24,7 @@ function benefitEntry<K extends string, P extends { cap?: number }>(def: Benefit
     capScope: v.optional(v.picklist(["plan", "campaign", "month", "day"]), "plan"),
     sharedKey: v.optional(v.pipe(v.string(), v.minLength(1))),
     exclusiveGroup: v.optional(v.pipe(v.string(), v.minLength(1))),
+    requires: v.optional(IdSchema),
     params: def.paramsSchema,
   });
 }

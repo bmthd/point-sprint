@@ -159,6 +159,9 @@ function DetailBody({
       benefit.exclusiveGroup !== undefined &&
       other.exclusiveGroup === benefit.exclusiveGroup,
   );
+  const linked = benefits.filter(
+    (other) => other.id === benefit.requires || other.requires === benefit.id,
+  );
   const targets = benefit.conditions.channels?.map((id) => channels[id].label).join("・");
   return (
     <Box display="flex" flexDirection="column" gap="2" fontSize="sm">
@@ -174,6 +177,11 @@ function DetailBody({
       {others.length > 0 ? (
         <Text color="fg.muted">
           {others.map(tileName).join("・")}とは、どちらか一方だけ ON にできます。
+        </Text>
+      ) : null}
+      {linked.length > 0 ? (
+        <Text color="fg.muted">
+          {linked.map(tileName).join("・")}と一緒に ON / OFF が切り替わります。
         </Text>
       ) : null}
       <Text color="fg.muted">達成の条件は楽天のページで確かめて、達成したものを ON にします。</Text>

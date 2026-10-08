@@ -89,7 +89,7 @@ test("SPU defaults are saved to the profile", async () => {
     )
     .toBe(true);
 
-  // The exclusive group rule applies as in a plan.
+  // The exclusive group and the card's normal points follow the same rules as in a plan.
   const card = screen.getByRole("checkbox", { name: "楽天カード特典分（SPU） +1倍" });
   const premium = screen.getByRole("checkbox", { name: "楽天プレミアムカード（特典分） +1倍" });
   await tapCard(card);
@@ -100,7 +100,13 @@ test("SPU defaults are saved to the profile", async () => {
     .poll(async () => (await storedProfile(repository)).spuBenefits.map((b) => b.enabled))
     .toEqual(
       standardSpu.map((b) =>
-        ["楽天モバイル", "楽天プレミアムカード（特典分）"].includes(b.label) ? true : b.enabled,
+        [
+          "楽天モバイル",
+          "楽天プレミアムカード（特典分）",
+          "楽天カード通常分（カード本体の還元）",
+        ].includes(b.label)
+          ? true
+          : b.enabled,
       ),
     );
 });

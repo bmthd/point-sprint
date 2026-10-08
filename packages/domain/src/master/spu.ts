@@ -31,6 +31,7 @@ function spu(
     capScope?: CapScope;
     category?: "base" | "spu";
     exclusiveGroup?: string;
+    requires?: string;
   },
   enabled = false,
 ): Benefit {
@@ -49,9 +50,15 @@ function spu(
     capScope,
     conditions: { channels: [...SPU_CHANNELS] },
     ...(params.exclusiveGroup === undefined ? {} : { exclusiveGroup: params.exclusiveGroup }),
+    ...(params.requires === undefined ? {} : { requires: params.requires }),
     params: cap === undefined ? { rate, roundingUnit } : { rate, cap, roundingUnit },
   };
 }
+
+/** 楽天カード通常分（カード本体の還元）。カードの特典分は、これを前提にする（requires）。 */
+export const CARD_NORMAL_ID = "9527dde1-c708-44fa-b2cf-5b7b35e0f3d1";
+export const CARD_BONUS_ID = "864f3f89-dacc-4313-a528-dac222c383cc";
+export const PREMIUM_CARD_BONUS_ID = "b3acca83-be7b-4c8a-9637-7706296679d4";
 
 export const standardSpu: Benefit[] = [
   // 「お買い物通常ポイント：1倍（楽天市場から進呈）」。上限の記載なし。
@@ -65,40 +72,33 @@ export const standardSpu: Benefit[] = [
   // 「1-1．楽天カード利用通常ポイント：+1倍」「▼月間獲得上限ポイント数 なし」。
   // カード本体の還元（楽天カードから付与）で、付与対象は消費税・送料・ラッピング料を含む金額。
   // 計算エンジンは税込額を使うが、送料・ラッピング料は表せない。
-  spu(
-    "9527dde1-c708-44fa-b2cf-5b7b35e0f3d1",
-    "楽天カード通常分（カード本体の還元）",
-    "/img/spu/service_card.webp",
-    {
-      rate: 1,
-      amountBasis: "tax-included",
-      roundingUnit: "order",
-      capScope: "plan",
-      category: "base",
-    },
-  ),
+  spu(CARD_NORMAL_ID, "楽天カード通常分（カード本体の還元）", "/img/spu/service_card.webp", {
+    rate: 1,
+    amountBasis: "tax-included",
+    roundingUnit: "order",
+    capScope: "plan",
+    category: "base",
+  }),
   // 「1-2．楽天カード利用特典ポイント：+1倍」。SPU の特典として楽天市場から付与される。
   // 上限は「その他の対象カード：1,000ポイント」。
-  // 楽天プレミアムカード等は 5,000ポイント（ユーザーが cap を編集する）。
-  spu(
-    "864f3f89-dacc-4313-a528-dac222c383cc",
-    "楽天カード特典分（SPU）",
-    "/img/spu/service_card.webp",
-    {
-      rate: 1,
-      amountBasis: "tax-excluded",
-      cap: 1000,
-      roundingUnit: "order",
-      capScope: "month",
-      exclusiveGroup: "rakuten-card",
-    },
-  ),
+  // 楽天プレミアムカード等は 5,000ポイントで、下の別の項目にする。
+  // 特典分は楽天カードで払ったときに付くので、通常分を前提にする。ON にすると通常分も ON になり、
+  // 通常分を OFF にすると特典分も OFF になる（旧サイトと同じ連動）。
+  spu(CARD_BONUS_ID, "楽天カード特典分（SPU）", "/img/spu/service_card.webp", {
+    rate: 1,
+    amountBasis: "tax-excluded",
+    cap: 1000,
+    roundingUnit: "order",
+    capScope: "month",
+    exclusiveGroup: "rakuten-card",
+    requires: CARD_NORMAL_ID,
+  }),
   // 楽天プレミアムカード・楽天ブラックカード・楽天ビジネスカードの特典分。上限は月5,000ポイント
   // （上の特典分の「その他の対象カード」とは別の上限）。出典は上と同じ SPU のページ。
   // 上限が違うので sharedKey は付けず、各項目が自分の id で上限を数える。
-  // 楽天カード特典分と同じ exclusiveGroup で、どちらか一方だけ有効にできる。
+  // 楽天カード特典分と同じ exclusiveGroup で、どちらか一方だけ有効にできる。通常分を前提にするのも同じ。
   spu(
-    "b3acca83-be7b-4c8a-9637-7706296679d4",
+    PREMIUM_CARD_BONUS_ID,
     "楽天プレミアムカード（特典分）",
     "/img/spu/service_card_premium.webp",
     {
@@ -108,6 +108,7 @@ export const standardSpu: Benefit[] = [
       roundingUnit: "order",
       capScope: "month",
       exclusiveGroup: "rakuten-card",
+      requires: CARD_NORMAL_ID,
     },
     false,
   ),

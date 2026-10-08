@@ -111,7 +111,7 @@ Benefit    { id, kind: BenefitKindId, category: "base" | "spu" | "campaign",
              label, enabled, params, conditions,
              amountBasis: "tax-excluded" | "tax-included",
              capScope: "plan" | "campaign" | "month" | "day",
-             sharedKey?, exclusiveGroup? }
+             sharedKey?, exclusiveGroup?, requires? }
 Conditions { channels?, shopIds?, shopTags?, orderTags?, dateRule?, minOrderAmount? }
 DateRule   { type: "daysOfMonth", days } | { type: "range", start, end }
            | { type: "dates", dates }
@@ -128,6 +128,7 @@ OrderTag   "repeat"
 - `Account` は計算用の楽天アカウントで、利用者が見分けるための名前だけを持つ。認証情報は扱わない。`Plan.accountId` はそのプランで購入するアカウントで、省いたときは既定のアカウント（固定の ID `DEFAULT_ACCOUNT_ID`、名前「メイン」）とする。アカウントを導入する前に保存したプランも既定のアカウントのものになるので、マイグレーションは要らない。
 - `Profile.accounts` は既定のアカウントを含むすべてのアカウントで、省いたときは既定のアカウント1件とする。既定のアカウントは名前を変えられるが、削除できない。`Profile.multiAccount` が `true` のときだけ、プランごとのアカウントを計算に使い、画面にアカウントの選択欄を出す。それまでは、すべてのプランを既定のアカウントのものとして計算する。削除したアカウントを指すプランも、既定のアカウントのものとして計算する。
 - `Benefit.exclusiveGroup` が同じ特典は、同時に1つしか有効にできない（楽天カードと楽天プレミアムカードの特典分など）。1つを有効にすると、同じグループのほかの特典は無効になる。この切り替えは `toggleBenefit(plan, benefitId)` が行う。
+- `Benefit.requires` は、その特典が前提にする特典の ID である。楽天カード特典分と楽天プレミアムカードの特典分は、楽天カードで払ったときに付くので、楽天カード通常分を前提にする。前提の特典は、前提にする特典のどれかが有効なときだけ有効にする。前提にする特典を有効にすると前提の特典も有効になり、最後の1つを無効にすると前提の特典も無効になる。前提の特典を有効にしたときに前提にする特典がどれも無効なら、並びの最初の1つ（楽天カード特典分）を有効にする。前提の特典を無効にすると、前提にする特典もすべて無効になる。この切り替えも `toggleBenefit` が行い、旧サイトの連動と同じ結果になる。
 - `Shop.tags` はショップの属性で、最初のリリースでは `"39shop"`（送料無料ラインを 3,980円以下に設定しているショップ）だけを持つ。`Conditions.shopTags` を指定した特典は、そのすべての属性を持つショップの注文だけを対象にする。
 - `Order.onHold`（保留）が `true` の注文は、計算から外す。買い回りのショップ数にも、合計にも、上限にも入れない。画面では、含めた場合のポイントを取り消し線で参考に出す（3節の `heldEstimates`）。
 - `Order.tags` は注文の属性で、最初のリリースでは `"repeat"`（以前に買った商品を同じショップでもう一度買う、リピート購入）だけを持つ。`Conditions.orderTags` を指定した特典は、その属性をすべて持つ注文だけを対象にする。

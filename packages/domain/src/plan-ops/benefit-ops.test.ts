@@ -11,6 +11,7 @@ const idOf = (label: string): string => {
 const REGULAR = idOf("楽天カード特典分（SPU）");
 const PREMIUM = idOf("楽天プレミアムカード（特典分）");
 const MOBILE = idOf("楽天モバイル");
+const NORMAL = idOf("楽天カード通常分（カード本体の還元）");
 
 const makePlan = (): Plan => ({
   id: "f0000000-0000-4000-8000-000000000001",
@@ -52,6 +53,51 @@ describe("toggleBenefit", () => {
 
   test("unknown benefit id throws", () => {
     expect(() => toggleBenefit(makePlan(), "missing")).toThrow(/missing/);
+  });
+});
+
+describe("card bonuses require the card's normal points", () => {
+  const plan = (on: string[]): Plan => ({
+    ...makePlan(),
+    benefits: structuredClone(standardSpu).map((b) => ({ ...b, enabled: on.includes(b.id) })),
+  });
+  const on = (p: Plan) => [REGULAR, PREMIUM, NORMAL].filter((id) => enabledOf(p, id));
+
+  test("enabling the premium card enables the normal points", () => {
+    expect(on(toggleBenefit(plan([]), PREMIUM))).toEqual([PREMIUM, NORMAL]);
+  });
+
+  test("disabling the premium card disables the normal points", () => {
+    expect(on(toggleBenefit(plan([PREMIUM, NORMAL]), PREMIUM))).toEqual([]);
+  });
+
+  test("enabling the regular card enables the normal points", () => {
+    expect(on(toggleBenefit(plan([]), REGULAR))).toEqual([REGULAR, NORMAL]);
+  });
+
+  test("disabling the regular card disables the normal points", () => {
+    expect(on(toggleBenefit(plan([REGULAR, NORMAL]), REGULAR))).toEqual([]);
+  });
+
+  test("switching cards keeps the normal points on", () => {
+    expect(on(toggleBenefit(plan([REGULAR, NORMAL]), PREMIUM))).toEqual([PREMIUM, NORMAL]);
+  });
+
+  test("enabling the normal points enables the regular card", () => {
+    expect(on(toggleBenefit(plan([]), NORMAL))).toEqual([REGULAR, NORMAL]);
+  });
+
+  test("enabling the normal points keeps a card that is on", () => {
+    expect(on(toggleBenefit(plan([PREMIUM]), NORMAL))).toEqual([PREMIUM, NORMAL]);
+  });
+
+  test("disabling the normal points disables both cards", () => {
+    expect(on(toggleBenefit(plan([PREMIUM, NORMAL]), NORMAL))).toEqual([]);
+    expect(on(toggleBenefit(plan([REGULAR, NORMAL]), NORMAL))).toEqual([]);
+  });
+
+  test("other benefits are not touched", () => {
+    expect(enabledOf(toggleBenefit(plan([MOBILE]), PREMIUM), MOBILE)).toBe(true);
   });
 });
 
