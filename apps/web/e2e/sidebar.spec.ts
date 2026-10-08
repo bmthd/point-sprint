@@ -6,7 +6,7 @@ import { type Page, expect, test } from "./fixtures";
 
 const latest = newestFirst(notices)[0]!;
 
-const withSidebar = ["/", "/help", "/terms", "/inquiry"];
+const withSidebar = ["/", "/help", "/terms", "/privacy", "/inquiry"];
 const withoutSidebar = ["/profile", "/plan", "/plan/settings"];
 
 const sidebar = (page: Page) => page.getByRole("complementary", { name: "サイドバー" });
