@@ -4,7 +4,7 @@ import { useAtomValue } from "jotai";
 import { planResultAtom } from "../../state/derived";
 import { BackIcon, CloseIcon, PencilIcon } from "../plan-home/icons";
 import { PlanPage } from "../plan-home/plan-page";
-import { RouterButton, RouterLink } from "../plan-list/router-link";
+import { RouterButton, RouterLink } from "../../router-link";
 import { AccountPicker } from "./account-picker";
 import { CampaignToggles } from "./campaign-toggles";
 import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared";
