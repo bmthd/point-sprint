@@ -1,11 +1,11 @@
 import { Markdown } from "@tanstack/markdown/react";
 import { Box, Heading } from "@workspaces/ui";
 import guideItems from "virtual:guide-items";
-import type { Article } from "../../guides/article";
-import { guideExtensions } from "../../guides/markdown";
-import { headingIds, markdownComponents } from "../../routes/(markdown)/-markdown-body";
-import { ArticleDates } from "./article-dates";
-import { GuideItemList } from "./guide-item-list";
+import { ArticleDates } from "../../../features/guides/article-dates";
+import { GuideItemList } from "../../../features/guides/guide-item-list";
+import type { Article } from "../../../guides/article";
+import { guideExtensions } from "../../../guides/markdown";
+import { headingIds, markdownComponents } from "../-markdown-body";
 
 const components = {
   ...markdownComponents,

@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as markdownRouteRouteImport } from './routes/(markdown)/route'
-import { Route as GuidesRouteRouteImport } from './routes/guides/route'
 import { Route as InquiryRouteImport } from './routes/inquiry'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -19,10 +18,10 @@ import { Route as ShareRouteImport } from './routes/share'
 import { Route as markdownHelpRouteImport } from './routes/(markdown)/help'
 import { Route as markdownPrivacyRouteImport } from './routes/(markdown)/privacy'
 import { Route as markdownTermsRouteImport } from './routes/(markdown)/terms'
-import { Route as GuidesIndexRouteImport } from './routes/guides/index'
-import { Route as GuidesSlugRouteImport } from './routes/guides/$slug'
 import { Route as PlanSettingsRouteImport } from './routes/plan_.settings'
 import { Route as ShareImageDotpngRouteImport } from './routes/share_.image[.]png'
+import { Route as markdownGuidesIndexRouteImport } from './routes/(markdown)/guides/index'
+import { Route as markdownGuidesSlugRouteImport } from './routes/(markdown)/guides/$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -31,11 +30,6 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const markdownRouteRoute = markdownRouteRouteImport.update({
   id: '/(markdown)',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GuidesRouteRoute = GuidesRouteRouteImport.update({
-  id: '/guides',
-  path: '/guides',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InquiryRoute = InquiryRouteImport.update({
@@ -73,16 +67,6 @@ const markdownTermsRoute = markdownTermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => markdownRouteRoute,
 } as any)
-const GuidesIndexRoute = GuidesIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => GuidesRouteRoute,
-} as any)
-const GuidesSlugRoute = GuidesSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => GuidesRouteRoute,
-} as any)
 const PlanSettingsRoute = PlanSettingsRouteImport.update({
   id: '/plan_/settings',
   path: '/plan/settings',
@@ -93,10 +77,19 @@ const ShareImageDotpngRoute = ShareImageDotpngRouteImport.update({
   path: '/share/image.png',
   getParentRoute: () => rootRouteImport,
 } as any)
+const markdownGuidesIndexRoute = markdownGuidesIndexRouteImport.update({
+  id: '/guides/',
+  path: '/guides/',
+  getParentRoute: () => markdownRouteRoute,
+} as any)
+const markdownGuidesSlugRoute = markdownGuidesSlugRouteImport.update({
+  id: '/guides/$slug',
+  path: '/guides/$slug',
+  getParentRoute: () => markdownRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/guides': typeof GuidesRouteRouteWithChildren
   '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
@@ -104,10 +97,10 @@ export interface FileRoutesByFullPath {
   '/help': typeof markdownHelpRoute
   '/privacy': typeof markdownPrivacyRoute
   '/terms': typeof markdownTermsRoute
-  '/guides/$slug': typeof GuidesSlugRoute
   '/plan/settings': typeof PlanSettingsRoute
   '/share/image.png': typeof ShareImageDotpngRoute
-  '/guides/': typeof GuidesIndexRoute
+  '/guides/$slug': typeof markdownGuidesSlugRoute
+  '/guides/': typeof markdownGuidesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,16 +111,15 @@ export interface FileRoutesByTo {
   '/help': typeof markdownHelpRoute
   '/privacy': typeof markdownPrivacyRoute
   '/terms': typeof markdownTermsRoute
-  '/guides/$slug': typeof GuidesSlugRoute
   '/plan/settings': typeof PlanSettingsRoute
   '/share/image.png': typeof ShareImageDotpngRoute
-  '/guides': typeof GuidesIndexRoute
+  '/guides/$slug': typeof markdownGuidesSlugRoute
+  '/guides': typeof markdownGuidesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/(markdown)': typeof markdownRouteRouteWithChildren
-  '/guides': typeof GuidesRouteRouteWithChildren
   '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
@@ -135,16 +127,15 @@ export interface FileRoutesById {
   '/(markdown)/help': typeof markdownHelpRoute
   '/(markdown)/privacy': typeof markdownPrivacyRoute
   '/(markdown)/terms': typeof markdownTermsRoute
-  '/guides/$slug': typeof GuidesSlugRoute
   '/plan_/settings': typeof PlanSettingsRoute
   '/share_/image.png': typeof ShareImageDotpngRoute
-  '/guides/': typeof GuidesIndexRoute
+  '/(markdown)/guides/$slug': typeof markdownGuidesSlugRoute
+  '/(markdown)/guides/': typeof markdownGuidesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/guides'
     | '/inquiry'
     | '/plan'
     | '/profile'
@@ -152,9 +143,9 @@ export interface FileRouteTypes {
     | '/help'
     | '/privacy'
     | '/terms'
-    | '/guides/$slug'
     | '/plan/settings'
     | '/share/image.png'
+    | '/guides/$slug'
     | '/guides/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -166,15 +157,14 @@ export interface FileRouteTypes {
     | '/help'
     | '/privacy'
     | '/terms'
-    | '/guides/$slug'
     | '/plan/settings'
     | '/share/image.png'
+    | '/guides/$slug'
     | '/guides'
   id:
     | '__root__'
     | '/'
     | '/(markdown)'
-    | '/guides'
     | '/inquiry'
     | '/plan'
     | '/profile'
@@ -182,16 +172,15 @@ export interface FileRouteTypes {
     | '/(markdown)/help'
     | '/(markdown)/privacy'
     | '/(markdown)/terms'
-    | '/guides/$slug'
     | '/plan_/settings'
     | '/share_/image.png'
-    | '/guides/'
+    | '/(markdown)/guides/$slug'
+    | '/(markdown)/guides/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   markdownRouteRoute: typeof markdownRouteRouteWithChildren
-  GuidesRouteRoute: typeof GuidesRouteRouteWithChildren
   InquiryRoute: typeof InquiryRoute
   PlanRoute: typeof PlanRoute
   ProfileRoute: typeof ProfileRoute
@@ -214,13 +203,6 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof markdownRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guides': {
-      id: '/guides'
-      path: '/guides'
-      fullPath: '/guides'
-      preLoaderRoute: typeof GuidesRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inquiry': {
@@ -272,20 +254,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof markdownTermsRouteImport
       parentRoute: typeof markdownRouteRoute
     }
-    '/guides/': {
-      id: '/guides/'
-      path: '/'
-      fullPath: '/guides/'
-      preLoaderRoute: typeof GuidesIndexRouteImport
-      parentRoute: typeof GuidesRouteRoute
-    }
-    '/guides/$slug': {
-      id: '/guides/$slug'
-      path: '/$slug'
-      fullPath: '/guides/$slug'
-      preLoaderRoute: typeof GuidesSlugRouteImport
-      parentRoute: typeof GuidesRouteRoute
-    }
     '/plan_/settings': {
       id: '/plan_/settings'
       path: '/plan/settings'
@@ -300,6 +268,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShareImageDotpngRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(markdown)/guides/': {
+      id: '/(markdown)/guides/'
+      path: '/guides'
+      fullPath: '/guides/'
+      preLoaderRoute: typeof markdownGuidesIndexRouteImport
+      parentRoute: typeof markdownRouteRoute
+    }
+    '/(markdown)/guides/$slug': {
+      id: '/(markdown)/guides/$slug'
+      path: '/guides/$slug'
+      fullPath: '/guides/$slug'
+      preLoaderRoute: typeof markdownGuidesSlugRouteImport
+      parentRoute: typeof markdownRouteRoute
+    }
   }
 }
 
@@ -307,36 +289,25 @@ interface markdownRouteRouteChildren {
   markdownHelpRoute: typeof markdownHelpRoute
   markdownPrivacyRoute: typeof markdownPrivacyRoute
   markdownTermsRoute: typeof markdownTermsRoute
+  markdownGuidesSlugRoute: typeof markdownGuidesSlugRoute
+  markdownGuidesIndexRoute: typeof markdownGuidesIndexRoute
 }
 
 const markdownRouteRouteChildren: markdownRouteRouteChildren = {
   markdownHelpRoute: markdownHelpRoute,
   markdownPrivacyRoute: markdownPrivacyRoute,
   markdownTermsRoute: markdownTermsRoute,
+  markdownGuidesSlugRoute: markdownGuidesSlugRoute,
+  markdownGuidesIndexRoute: markdownGuidesIndexRoute,
 }
 
 const markdownRouteRouteWithChildren = markdownRouteRoute._addFileChildren(
   markdownRouteRouteChildren,
 )
 
-interface GuidesRouteRouteChildren {
-  GuidesSlugRoute: typeof GuidesSlugRoute
-  GuidesIndexRoute: typeof GuidesIndexRoute
-}
-
-const GuidesRouteRouteChildren: GuidesRouteRouteChildren = {
-  GuidesSlugRoute: GuidesSlugRoute,
-  GuidesIndexRoute: GuidesIndexRoute,
-}
-
-const GuidesRouteRouteWithChildren = GuidesRouteRoute._addFileChildren(
-  GuidesRouteRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   markdownRouteRoute: markdownRouteRouteWithChildren,
-  GuidesRouteRoute: GuidesRouteRouteWithChildren,
   InquiryRoute: InquiryRoute,
   PlanRoute: PlanRoute,
   ProfileRoute: ProfileRoute,
@@ -347,3 +318,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

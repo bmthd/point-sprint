@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { GuideList } from "../../features/guides/guide-list";
-import { loadArticles } from "../../guides/articles";
-import { pageHead } from "../../page-head";
+import { GuideList } from "../../../features/guides/guide-list";
+import { loadArticles } from "../../../guides/articles";
+import { pageHead } from "../../../page-head";
 
-export const Route = createFileRoute("/guides/")({
+export const Route = createFileRoute("/(markdown)/guides/")({
   loader: () => loadArticles(),
   head: () =>
     pageHead({

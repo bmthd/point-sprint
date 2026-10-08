@@ -63,7 +63,14 @@ export const markdownComponents = {
  */
 export const headingIds = (text: string) => text;
 
-type MarkdownRouteId = Extract<keyof FileRoutesById, `/(markdown)/${string}`>;
+/**
+ * The routes under `(markdown)` that show their Markdown with `MarkdownBody`. The shopping guides
+ * load theirs from `src/guides/articles/` and draw it with `GuideArticle`.
+ */
+type MarkdownRouteId = Exclude<
+  Extract<keyof FileRoutesById, `/(markdown)/${string}`>,
+  `/(markdown)/guides/${string}`
+>;
 
 /** The routes under `(markdown)` whose context has no Markdown: `never` when there is none. */
 type RoutesWithoutMarkdown = {

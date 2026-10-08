@@ -1,9 +1,9 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { GuideArticle } from "../../features/guides/guide-article";
-import { loadArticle } from "../../guides/articles";
-import { pageHead } from "../../page-head";
+import { GuideArticle } from "./-guide-article";
+import { loadArticle } from "../../../guides/articles";
+import { pageHead } from "../../../page-head";
 
-export const Route = createFileRoute("/guides/$slug")({
+export const Route = createFileRoute("/(markdown)/guides/$slug")({
   loader: async ({ params }) => {
     const article = await loadArticle(params.slug);
     if (!article) throw notFound();
