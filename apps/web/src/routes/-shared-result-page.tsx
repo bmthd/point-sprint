@@ -1,6 +1,11 @@
 import { Box, Heading, Image, Text, VStack } from "@workspaces/ui";
-import { RouterButton } from "../../ui/router-link";
-import { type ResultFigures, imageSize, resultImagePath, resultSummary } from "./result-card";
+import { RouterButton } from "../ui/router-link";
+import {
+  type ResultFigures,
+  imageSize,
+  resultImagePath,
+  resultSummary,
+} from "./-share/result-card";
 
 /**
  * The page a result is shared as, at `/share`. It shows the figures the link carries and leads to
