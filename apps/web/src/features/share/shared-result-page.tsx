@@ -1,5 +1,5 @@
 import { Box, Heading, Image, Text, VStack } from "@workspaces/ui";
-import { RouterButton } from "../plan-list/router-link";
+import { RouterButton } from "../../router-link";
 import { type ResultFigures, imageSize, resultImagePath, resultSummary } from "./result-card";
 
 /**
