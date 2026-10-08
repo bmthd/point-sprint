@@ -237,3 +237,40 @@ async function putRawProfile(name: string, row: unknown): Promise<void> {
   });
   raw.close();
 }
+
+test("accounts stay hidden until they are turned on in the advanced settings", async () => {
+  const repository = createMemoryRepository({ shops });
+  const screen = await renderProfile(repository);
+  const toggle = screen.getByRole("switch", { name: "複数の楽天アカウントを使い分ける" });
+  await expect.element(toggle).not.toBeChecked();
+  expect(screen.getByRole("list", { name: "楽天アカウント" }).query()).toBeNull();
+  expect(screen.getByRole("button", { name: "＋ アカウントを追加" }).query()).toBeNull();
+
+  await screen.getByText("複数の楽天アカウントを使い分ける").click();
+  await expect.element(toggle).toBeChecked();
+  const list = screen.getByRole("list", { name: "楽天アカウント" });
+  await expect.element(list.getByRole("textbox", { name: "メインの名前" })).toHaveValue("メイン");
+  // The default account cannot be deleted.
+  expect(screen.getByRole("button", { name: "メインを削除" }).query()).toBeNull();
+  await expect.poll(async () => (await storedProfile(repository)).multiAccount).toBe(true);
+
+  await screen.getByRole("button", { name: "＋ アカウントを追加" }).click();
+  const added = list.getByRole("textbox", { name: "アカウント2の名前" });
+  await expect.element(added).toBeVisible();
+  await added.fill("家族");
+  await userEvent.keyboard("{Enter}");
+  await expect
+    .poll(async () => (await storedProfile(repository)).accounts?.map((a) => a.name))
+    .toEqual(["メイン", "家族"]);
+
+  await screen.getByRole("button", { name: "家族を削除" }).click();
+  await screen.getByRole("button", { name: "削除する" }).click();
+  await expect
+    .poll(async () => (await storedProfile(repository)).accounts?.map((a) => a.name))
+    .toEqual(["メイン"]);
+
+  // Turning it off hides the accounts again.
+  await screen.getByText("複数の楽天アカウントを使い分ける").click();
+  await expect.element(toggle).not.toBeChecked();
+  expect(screen.getByRole("list", { name: "楽天アカウント" }).query()).toBeNull();
+});

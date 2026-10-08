@@ -7,6 +7,7 @@ import { saveProfileAtom } from "../../state/mutations";
 import { profileAtom, profileQueryAtom, storageHealthQueryAtom } from "../../state/queries";
 import { StorageHealthFailure, storageMessages } from "../plan-home/warnings";
 import { SpuTileGrid } from "../plan-settings/spu-tiles";
+import { AccountSettings } from "./account-settings";
 import { ShopRegistry } from "./shop-registry";
 
 const noneCapped: ReadonlySet<string> = new Set();
@@ -76,11 +77,12 @@ function ProfileContent() {
       ) : null}
       <SpuDefaults onFailed={setFailed} />
       <ShopRegistry onFailed={setFailed} />
+      <AccountSettings onFailed={setFailed} />
     </VStack>
   );
 }
 
-/** The profile at `/profile`: SPU defaults for new plans and the shop registry. */
+/** The profile at `/profile`: SPU defaults for new plans, the shop registry and advanced settings. */
 export function Profile() {
   return (
     <Box as="main" maxW="640px" mx="auto" px="4" pt="4" pb="16">

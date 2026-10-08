@@ -6,7 +6,7 @@ import { matchesConditions } from "../conditions/matches";
 import type { Benefit } from "../model/benefit";
 import type { ChannelId, OrderTag, ShopTag } from "../model/common";
 import type { LineItem } from "../model/order";
-import type { Plan } from "../model/plan";
+import { type Plan, planAccountId } from "../model/plan";
 import type { Shop } from "../model/shop";
 import { capGroupKey, resolveGroupCap } from "./cap-groups";
 import { shopAroundOutlook, type ShopAroundOutlook } from "./outlook";
@@ -129,6 +129,7 @@ function planPhase(plan: Plan, shops: Shop[], shopsById: Map<string, Shop>): Pla
   const warnings: CalculationWarning[] = [];
   const orders = orderContexts(plan, shopsById, warnings);
   const shopCount = countShops(plan.orders, shops, plan.period);
+  const groupOwner = { id: plan.id, accountId: planAccountId(plan) };
   const entries = plan.benefits
     .filter((benefit) => benefit.enabled)
     .map((benefit): BenefitEntry => {
@@ -136,7 +137,7 @@ function planPhase(plan: Plan, shops: Shop[], shopsById: Map<string, Shop>): Pla
       const raw = rawPointsOf(benefit, eligible, shopCount);
       const items = eligible.map(({ lineItemId, orderDate }) => {
         const points = raw.get(lineItemId) ?? 0;
-        const groupKey = capGroupKey(plan.id, benefit, orderDate);
+        const groupKey = capGroupKey(groupOwner, benefit, orderDate);
         return { planId: plan.id, lineItemId, groupKey, raw: points, points };
       });
       const receivingBase = eligible.reduce((sum, item) => sum + item.amount, 0);
@@ -207,8 +208,9 @@ function remainingGroupCap(
   groups: Map<string, CapGroup>,
 ): number | undefined {
   const own = entry.benefit.params.cap;
+  const owner = { id: phase.plan.id, accountId: planAccountId(phase.plan) };
   const key =
-    entry.items[0]?.groupKey ?? capGroupKey(phase.plan.id, entry.benefit, phase.plan.period.start);
+    entry.items[0]?.groupKey ?? capGroupKey(owner, entry.benefit, phase.plan.period.start);
   const group = groups.get(key);
   if (!group) return own;
   const mine = new Set(entry.items);
