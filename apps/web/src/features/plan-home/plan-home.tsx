@@ -19,6 +19,7 @@ import { NEW_ORDER, OrderEditor } from "../order-editor/order-editor";
 import { SettingsPanelButton } from "../plan-settings/plan-settings";
 import { RouterLink } from "../plan-list/router-link";
 import { ShareButton } from "../share/share-button";
+import { planFigures } from "../share/result-card";
 import { resultShareTarget } from "../share/share-target";
 import { BottomBar } from "./bottom-bar";
 import { ChevronIcon, SlidersIcon } from "./icons";
@@ -184,7 +185,9 @@ function Home({ plan }: { plan: Plan }) {
   const shareResult = (
     <ShareButton
       label="結果をシェア"
-      target={resultShareTarget(result.total, effectiveRate(result.total, countedAmount(plan)))}
+      target={resultShareTarget(
+        planFigures(result.total, effectiveRate(result.total, countedAmount(plan))),
+      )}
     />
   );
 

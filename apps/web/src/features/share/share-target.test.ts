@@ -11,15 +11,18 @@ describe("share targets", () => {
     });
   });
 
-  test("a result puts the points and the rate in the text, and links to the site", () => {
-    expect(resultShareTarget(2600, "6.5")).toEqual({
+  test("a result puts the points and the rate in the text and in the link", () => {
+    expect(resultShareTarget({ points: 2600, rate: 6.5 })).toEqual({
       text: "獲得予定 2,600P・実質還元率 6.5%（ポイントスプリントで計算）",
-      url: "https://point-sprint.bmth.dev/",
+      url: "https://point-sprint.bmth.dev/share?points=2600&rate=6.5",
     });
   });
 
   test("a result with nothing bought leaves the rate out", () => {
-    expect(resultShareTarget(0, "—").text).toBe("獲得予定 0P（ポイントスプリントで計算）");
+    expect(resultShareTarget({ points: 0 })).toEqual({
+      text: "獲得予定 0P（ポイントスプリントで計算）",
+      url: "https://point-sprint.bmth.dev/share?points=0",
+    });
   });
 });
 

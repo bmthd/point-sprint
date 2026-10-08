@@ -1,4 +1,5 @@
 import { defaultTitle, siteName, siteUrl } from "../../page-head";
+import { type ResultFigures, resultPageUrl, resultSummary } from "./result-card";
 
 /** What a share posts: a line of text and the link under it. */
 export type ShareTarget = { text: string; url: string };
@@ -7,13 +8,11 @@ export type ShareTarget = { text: string; url: string };
 export const siteShareTarget: ShareTarget = { text: defaultTitle, url: `${siteUrl}/` };
 
 /**
- * A plan's figures. The plan lives on this device only, so the link is the site and the figures
- * go in the text. `rate` is "—" when nothing is bought yet, and is then left out.
+ * A plan's figures. The plan lives on this device only, so the figures go in the text and in the
+ * link, whose page shows them as its OGP image.
  */
-export function resultShareTarget(total: number, rate: string): ShareTarget {
-  const points = `獲得予定 ${total.toLocaleString("ja-JP")}P`;
-  const figures = rate === "—" ? points : `${points}・実質還元率 ${rate}%`;
-  return { text: `${figures}（${siteName}で計算）`, url: `${siteUrl}/` };
+export function resultShareTarget(figures: ResultFigures): ShareTarget {
+  return { text: `${resultSummary(figures)}（${siteName}で計算）`, url: resultPageUrl(figures) };
 }
 
 /** The pages that post `target` on each service, opened as plain links. */

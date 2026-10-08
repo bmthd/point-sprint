@@ -38,13 +38,45 @@ test("on a phone the result's share button comes after the orders", async ({ pag
   expect(button?.y ?? 0).toBeGreaterThan((orders?.y ?? 0) + (orders?.height ?? 0));
 });
 
-test("the result is shared with its points, linking to the site", async ({ page }) => {
+test("the result is shared with its points, linking to its page", async ({ page }) => {
   await createPlan(page);
   await shareResult(page).click();
   const href = await page.getByRole("link", { name: "X でシェア" }).getAttribute("href");
   const query = new URL(href ?? "").searchParams;
   expect(query.get("text")).toMatch(/^獲得予定 [\d,]+P.*（ポイントスプリントで計算）$/);
-  expect(query.get("url")).toBe("https://point-sprint.bmth.dev/");
+  expect(query.get("url")).toMatch(/^https:\/\/point-sprint\.bmth\.dev\/share\?points=\d+/);
+});
+
+/** The `content` of the page's `<meta property>`. */
+const ogp = (page: Page, property: string) =>
+  page.locator(`meta[property="${property}"]`).getAttribute("content");
+
+test("a shared result's page shows its figures and points social media at their image", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/share?points=2600&rate=6.5");
+  await expect(page).toHaveTitle("獲得予定 2,600P・実質還元率 6.5% | ポイントスプリント");
+  await expect(page.getByRole("img", { name: "獲得予定 2,600P・実質還元率 6.5%" })).toBeVisible();
+  expect(await ogp(page, "og:title")).toBe("獲得予定 2,600P・実質還元率 6.5% | ポイントスプリント");
+  const image = new URL((await ogp(page, "og:image")) ?? "");
+  expect(image.href).toBe("https://point-sprint.bmth.dev/share/image.png?points=2600&rate=6.5");
+
+  // The Worker draws the image.
+  const response = await request.get(`${image.pathname}${image.search}`);
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toBe("image/png");
+  expect((await response.body()).subarray(1, 4).toString()).toBe("PNG");
+
+  await page.getByRole("link", { name: "自分の還元率を計算する" }).click();
+  await expect(page).toHaveURL("/");
+});
+
+test("a shared result's link without figures keeps the site's image", async ({ page, request }) => {
+  await page.goto("/share");
+  await expect(page.getByText("計算結果が見つかりませんでした。")).toBeVisible();
+  expect(await ogp(page, "og:image")).toBe("https://point-sprint.bmth.dev/opengraph-image.png");
+  expect((await request.get("/share/image.png")).status()).toBe(404);
 });
 
 test("the footer shares the site on every page", async ({ page }) => {
