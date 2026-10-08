@@ -1,11 +1,18 @@
 import type { Benefit } from "../model/benefit";
 
-/** Key of the group whose raw points share one cap (see spec §3 "上限の共有範囲"). */
-export function capGroupKey(planId: string, benefit: Benefit, orderDate: string): string {
-  const shared = benefit.sharedKey ?? benefit.id;
+/**
+ * Key of the group whose raw points share one cap (see spec §3 "上限の共有範囲"). Caps shared
+ * across plans are shared only between plans of the same account.
+ */
+export function capGroupKey(
+  plan: { id: string; accountId: string },
+  benefit: Benefit,
+  orderDate: string,
+): string {
+  const shared = `${plan.accountId}:${benefit.sharedKey ?? benefit.id}`;
   switch (benefit.capScope) {
     case "plan":
-      return `plan:${planId}:${benefit.id}`;
+      return `plan:${plan.id}:${benefit.id}`;
     case "campaign":
       return `campaign:${shared}`;
     case "month":

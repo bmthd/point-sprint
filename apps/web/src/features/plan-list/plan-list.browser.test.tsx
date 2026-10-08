@@ -7,7 +7,7 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import type { Plan, Shop } from "@workspaces/domain";
+import { type Plan, type Shop, defaultAccount } from "@workspaces/domain";
 import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
@@ -271,4 +271,42 @@ test("today moves on at midnight in Japan", async () => {
   } finally {
     vi.useRealTimers();
   }
+});
+
+test("shows each plan's account only once accounts are told apart", async () => {
+  const SUB = "acc00000-0000-4000-8000-000000000002";
+  const plans = [
+    plan(PLAN_A, "メインのプラン", "2026-10-01T00:00:00.000Z", 1),
+    { ...plan(PLAN_B, "家族のプラン", "2026-10-05T00:00:00.000Z", 1), accountId: SUB },
+  ];
+  const profile = {
+    spuBenefits: [],
+    accounts: [defaultAccount(), { id: SUB, name: "家族" }],
+    updatedAt: "2026-10-05T00:00:00.000Z",
+  };
+  const rowTexts = () =>
+    Array.from(document.querySelectorAll("section:last-of-type li")).map((row) => row.textContent);
+
+  const off = createMemoryRepository({ shops: [shop], plans, profile });
+  const { screen } = await renderPlanList(off);
+  await expect.element(screen.getByRole("link", { name: /家族のプラン/ })).toBeVisible();
+  await expect
+    .poll(rowTexts)
+    .toEqual([
+      "家族のプラン10/1〜10/31・1店舗・1件100P",
+      "メインのプラン10/1〜10/31・1店舗・1件100P",
+    ]);
+
+  const on = createMemoryRepository({
+    shops: [shop],
+    plans,
+    profile: { ...profile, multiAccount: true },
+  });
+  await renderPlanList(on);
+  await expect
+    .poll(rowTexts)
+    .toEqual([
+      "家族のプラン家族・10/1〜10/31・1店舗・1件100P",
+      "メインのプランメイン・10/1〜10/31・1店舗・1件100P",
+    ]);
 });

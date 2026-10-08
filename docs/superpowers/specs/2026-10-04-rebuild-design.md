@@ -98,9 +98,10 @@ oxlint、oxfmt、TypeScript、cspell、Vitest、Playwright を使う。CI は Gi
 `packages/domain/model` に Valibot のスキーマとして定義し、TypeScript の型はスキーマから導出する。
 
 ```ts
-Profile    { spuBenefits: Benefit[] }
+Profile    { spuBenefits: Benefit[], multiAccount?, accounts?: Account[] }
+Account    { id, name }
 Shop       { id, channel: ChannelId, shopCode?, name, tags: ShopTag[] }
-Plan       { id, name, officialEventId?, period: { start, end },
+Plan       { id, name, officialEventId?, accountId?, period: { start, end },
              benefits: Benefit[],
              orders: Order[] }
 Order      { id, shopId, date, onHold, tags: OrderTag[], lineItems: LineItem[] }
@@ -124,6 +125,8 @@ OrderTag   "repeat"
 - ショップ独自の倍率は特典ではなく `LineItem.shopPointRate` に持つ。値は商品検索 API の `pointRate` から入り、内訳には「ショップ倍率」の行として出す。
 - `Benefit.amountBasis` は、ポイントの対象額を税抜の対象額にするか税込の対象額にするかを決める（既定は `"tax-excluded"`）。楽天カード通常分（カード本体の還元）だけが `"tax-included"` である。
 - `Benefit.capScope` と `sharedKey` は上限の共有範囲を決める（3節「上限の共有範囲」）。
+- `Account` は計算用の楽天アカウントで、利用者が見分けるための名前だけを持つ。認証情報は扱わない。`Plan.accountId` はそのプランで購入するアカウントで、省いたときは既定のアカウント（固定の ID `DEFAULT_ACCOUNT_ID`、名前「メイン」）とする。アカウントを導入する前に保存したプランも既定のアカウントのものになるので、マイグレーションは要らない。
+- `Profile.accounts` は既定のアカウントを含むすべてのアカウントで、省いたときは既定のアカウント1件とする。既定のアカウントは名前を変えられるが、削除できない。`Profile.multiAccount` が `true` のときだけ、プランごとのアカウントを計算に使い、画面にアカウントの選択欄を出す。それまでは、すべてのプランを既定のアカウントのものとして計算する。削除したアカウントを指すプランも、既定のアカウントのものとして計算する。
 - `Benefit.exclusiveGroup` が同じ特典は、同時に1つしか有効にできない（楽天カードと楽天プレミアムカードの特典分など）。1つを有効にすると、同じグループのほかの特典は無効になる。この切り替えは `toggleBenefit(plan, benefitId)` が行う。
 - `Shop.tags` はショップの属性で、最初のリリースでは `"39shop"`（送料無料ラインを 3,980円以下に設定しているショップ）だけを持つ。`Conditions.shopTags` を指定した特典は、そのすべての属性を持つショップの注文だけを対象にする。
 - `Order.onHold`（保留）が `true` の注文は、計算から外す。買い回りのショップ数にも、合計にも、上限にも入れない。画面では、含めた場合のポイントを取り消し線で参考に出す（3節の `heldEstimates`）。
@@ -195,9 +198,11 @@ CalculationResult = {   // 下の項目に加えて heldEstimates: { orderId, po
 | `capScope` | 上限をかける単位（グループのキー） | 例 |
 |---|---|---|
 | `plan` | プランごと、特典ごと（プラン ID と特典 ID） | ユーザーが自分で作った特典 |
-| `campaign` | プランをまたいで1つ（`sharedKey`） | お買い物マラソン、39ショップの1回の開催 |
-| `month` | プランをまたいで暦月ごと（`sharedKey` と注文日の年月） | SPU、5と0のつく日 |
-| `day` | プランをまたいで日ごと（`sharedKey` と注文日） | 勝ったら倍 |
+| `campaign` | 同じアカウントのプランをまたいで1つ（アカウントと `sharedKey`） | お買い物マラソン、39ショップの1回の開催 |
+| `month` | 同じアカウントのプランをまたいで暦月ごと（アカウントと `sharedKey` と注文日の年月） | SPU、5と0のつく日 |
+| `day` | 同じアカウントのプランをまたいで日ごと（アカウントと `sharedKey` と注文日） | 勝ったら倍 |
+
+上限は楽天アカウントごとにかかるので、プランをまたいで共有する上限（`campaign`、`month`、`day`）は、同じアカウントのプランの間だけで共有する。異なるアカウントのプランは、同じキャンペーン、同じ月、同じ日でも上限を共有しない。
 
 `sharedKey` を省いたときは特典の ID をキーにする。プランを作るときに特典を複製しても ID は変わらないので、同じマスタから作った特典は自動的に同じグループになる。同じグループの特典の上限がプランごとに異なるとき（ユーザーが片方だけ編集したとき）は、最も小さい上限を使い、警告を出す。
 

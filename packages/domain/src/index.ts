@@ -1,3 +1,4 @@
+export * from "./model/account";
 export * from "./model/benefit";
 export * from "./model/campaign-template";
 export * from "./model/common";

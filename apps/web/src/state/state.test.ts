@@ -1,4 +1,6 @@
 import {
+  type Benefit,
+  defaultAccount,
   type Order,
   type Plan,
   type Profile,
@@ -331,4 +333,56 @@ test("a failed profile change is left out while an overlapping one is kept", asy
   expect(enabled(stored, b)).toBe(!enabled(profile, b));
   await vi.waitFor(() => expect(enabled(store.get(profileAtom), a)).toBe(enabled(profile, a)));
   expect(enabled(store.get(profileAtom), b)).toBe(!enabled(profile, b));
+});
+
+test("caps are shared per account once accounts are told apart", async () => {
+  const SUB = "acc00000-0000-4000-8000-000000000002";
+  const OTHER = "f0000000-0000-4000-8000-000000000002";
+  const bonus: Benefit = {
+    id: "5b000000-0000-4000-8000-000000000001",
+    kind: "rate-bonus",
+    category: "campaign",
+    label: "bonus",
+    enabled: true,
+    amountBasis: "tax-excluded",
+    capScope: "month",
+    conditions: {},
+    params: { rate: 1, roundingUnit: "item", cap: 15 },
+  };
+  // 10 raw points of the bonus in each plan, 20 in all against a shared cap of 15.
+  const first: Plan = { ...plan, benefits: [bonus] };
+  const second: Plan = {
+    ...plan,
+    id: OTHER,
+    accountId: SUB,
+    benefits: [bonus],
+    orders: [order(ORDER_B, 1000)],
+  };
+  const store = setup(createMemoryRepository({ plans: [first, second], shops: [shop] }));
+  unsubscribes.push(store.sub(profileAtom, () => {}));
+  await vi.waitFor(() => expect(store.get(plansAtom)).toHaveLength(2));
+  const bonusTotals = () =>
+    [PLAN, OTHER].map(
+      (id) =>
+        store
+          .get(calculationAtom)
+          .get(id)
+          ?.benefitTotals.find((total) => total.benefitId === bonus.id)?.cappedPoints,
+    );
+  const sum = () => bonusTotals().reduce((a = 0, b = 0) => a + b, 0);
+
+  // Until accounts are told apart, the second plan's account is not used.
+  await vi.waitFor(() => expect(sum()).toBe(15));
+
+  const accounts = [defaultAccount(), { id: SUB, name: "サブ" }];
+  await store.get(saveProfileAtom).mutateAsync({
+    change: (current) => ({ ...current, multiAccount: true, accounts }),
+  });
+  await vi.waitFor(() => expect(bonusTotals()).toEqual([10, 10]));
+
+  // A deleted account's plans are calculated as the default account's.
+  await store.get(saveProfileAtom).mutateAsync({
+    change: (current) => ({ ...current, accounts: [defaultAccount()] }),
+  });
+  await vi.waitFor(() => expect(sum()).toBe(15));
 });

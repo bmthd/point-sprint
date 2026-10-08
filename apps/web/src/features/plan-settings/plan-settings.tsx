@@ -5,6 +5,7 @@ import { planResultAtom } from "../../state/derived";
 import { BackIcon, CloseIcon, PencilIcon } from "../plan-home/icons";
 import { PlanPage } from "../plan-home/plan-page";
 import { RouterButton, RouterLink } from "../plan-list/router-link";
+import { AccountPicker } from "./account-picker";
 import { CampaignToggles } from "./campaign-toggles";
 import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared";
 import { ShopAroundSettings, shopAroundOf } from "./shop-around-settings";
@@ -33,6 +34,7 @@ function SettingsBody({ plan }: { plan: Plan }) {
           変更を保存できませんでした。もう一度お試しください。
         </Text>
       ) : null}
+      <AccountPicker plan={plan} />
       <SpuTiles plan={plan} result={result} />
       <CampaignToggles plan={plan} />
       <ShopAroundSettings plan={plan} />

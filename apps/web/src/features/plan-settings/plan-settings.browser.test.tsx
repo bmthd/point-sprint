@@ -6,7 +6,14 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { type Benefit, type Plan, campaignTemplates, standardSpu } from "@workspaces/domain";
+import {
+  type Benefit,
+  type Plan,
+  type Profile,
+  campaignTemplates,
+  defaultAccount,
+  standardSpu,
+} from "@workspaces/domain";
 import { beforeEach, expect, test } from "vitest";
 import { type Locator, page, userEvent } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
@@ -62,8 +69,8 @@ const storedPlan = async () => {
 const storedBenefit = async (label: string) =>
   (await storedPlan()).benefits.find((benefit) => benefit.label === label);
 
-async function renderSettings(plan: Plan) {
-  currentRepository = createMemoryRepository({ shops, plans: [plan] });
+async function renderSettings(plan: Plan, profile?: Profile) {
+  currentRepository = createMemoryRepository({ shops, plans: [plan], profile });
   await cleanup();
   const root = createRootRoute({ component: Outlet });
   const home = createRoute({
@@ -475,4 +482,27 @@ test("on a desktop the header button opens the settings in a side panel", async 
     .toBeInTheDocument();
   await panel.getByRole("button", { name: "保存して計算に反映" }).click();
   await expect.element(panel).not.toBeInTheDocument();
+});
+
+test("the account is picked only once accounts are told apart", async () => {
+  const SUB = "acc00000-0000-4000-8000-000000000002";
+  const profile: Profile = {
+    spuBenefits: [],
+    accounts: [defaultAccount(), { id: SUB, name: "家族" }],
+    updatedAt: "2026-10-05T00:00:00.000Z",
+  };
+  const off = await renderSettings(spuPlan(), profile);
+  await expect.element(spuSection(off)).toBeVisible();
+  expect(off.getByRole("combobox", { name: "購入するアカウント" }).query()).toBeNull();
+  expect(off.getByRole("region", { name: "アカウント" }).query()).toBeNull();
+
+  const screen = await renderSettings(spuPlan(), { ...profile, multiAccount: true });
+  const picker = screen.getByRole("combobox", { name: "購入するアカウント" });
+  await expect.element(picker).toHaveValue(defaultAccount().id);
+  await picker.selectOptions("家族");
+  await expect.element(picker).toHaveValue(SUB);
+  await expect.poll(async () => (await storedPlan()).accountId).toBe(SUB);
+
+  await picker.selectOptions("メイン");
+  await expect.poll(async () => (await storedPlan()).accountId).toBeUndefined();
 });

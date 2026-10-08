@@ -3,7 +3,8 @@ import type { Plan } from "@workspaces/domain";
 import { Box, Card, Heading, IconButton, Modal, Text, VStack, useDisclosure } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useRef, useState } from "react";
-import { planResultAtom } from "../../state/derived";
+import { accountIdOf } from "../../state/accounts";
+import { accountSettingsAtom, planResultAtom } from "../../state/derived";
 import { deletePlanAtom } from "../../state/mutations";
 import { plansAtom, plansQueryAtom } from "../../state/queries";
 import { formatPeriod } from "./dates";
@@ -28,6 +29,11 @@ function TrashIcon() {
 
 function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => void }) {
   const result = useAtomValue(planResultAtom(plan.id));
+  const settings = useAtomValue(accountSettingsAtom);
+  const accountId = accountIdOf(plan, settings);
+  const account = settings.enabled
+    ? settings.accounts.find((candidate) => candidate.id === accountId)
+    : undefined;
   return (
     <Card.Root as="li">
       <Card.Body flexDirection="row" alignItems="center">
@@ -37,6 +43,7 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
               {plan.name}
             </Text>
             <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
+              {account ? `${account.name}・` : null}
               {formatPeriod(plan.period)}・{result?.shopCount ?? 0}店舗・{plan.orders.length}件
             </Text>
           </Box>
