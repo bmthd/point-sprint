@@ -81,6 +81,15 @@ export function PlanList({ now = () => new Date() }: { now?: () => Date }) {
   return (
     <PageWithSidebar maxW="768px">
       <VStack alignItems="stretch" gap="6">
+        <ClientOnly
+          fallback={
+            <Heading as="h2" fontSize="md">
+              プラン
+            </Heading>
+          }
+        >
+          <PlanSection />
+        </ClientOnly>
         <EventSection
           today={today}
           disabled={!profileLoaded || creating}
@@ -92,15 +101,6 @@ export function PlanList({ now = () => new Date() }: { now?: () => Date }) {
             プランを作れませんでした。もう一度お試しください。
           </Text>
         ) : null}
-        <ClientOnly
-          fallback={
-            <Heading as="h2" fontSize="md">
-              プラン
-            </Heading>
-          }
-        >
-          <PlanSection />
-        </ClientOnly>
       </VStack>
     </PageWithSidebar>
   );

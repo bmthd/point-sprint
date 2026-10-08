@@ -63,6 +63,13 @@ const plan = (id: string, name: string, updatedAt: string, orderCount: number): 
 const PLAN_A = "f0000000-0000-4000-8000-00000000000a";
 const PLAN_B = "f0000000-0000-4000-8000-00000000000b";
 
+function planRowTexts() {
+  const section = Array.from(document.querySelectorAll("section")).find(
+    (candidate) => candidate.querySelector("h2")?.textContent === "プラン",
+  );
+  return Array.from(section?.querySelectorAll("li") ?? []).map((row) => row.textContent);
+}
+
 /** The same providers as `AppProviders`, with a repository the test holds on to. */
 function TestProviders({ repository, children }: { repository: Repository; children: ReactNode }) {
   const client = new QueryClient();
@@ -163,18 +170,30 @@ test("lists plans with their totals", async () => {
 
   await expect.element(screen.getByRole("link", { name: /10月 お買い物マラソン/ })).toBeVisible();
   // Most recently updated first. The shops load after the plans, so wait for the totals.
-  const rowTexts = () =>
-    Array.from(document.querySelectorAll("main section:last-of-type li")).map(
-      (row) => row.textContent,
-    );
   await expect
-    .poll(rowTexts)
+    .poll(planRowTexts)
     .toEqual([
-      "10月 お買い物マラソン10/1〜10/31・1店舗・2件200P",
-      "10月の普段の買い物10/1〜10/31・1店舗・1件100P",
+      "10月 お買い物マラソン10/1〜10/31・1店舗・2件200P開く →",
+      "10月の普段の買い物10/1〜10/31・1店舗・1件100P開く →",
     ]);
 
   await screen.getByRole("link", { name: /10月の普段の買い物/ }).click();
+  await expect.poll(() => router.state.location.pathname).toBe("/plan");
+  expect(router.state.location.search).toEqual({ id: PLAN_A });
+});
+
+test("opens a listed plan with the keyboard", async () => {
+  const repository = createMemoryRepository({
+    shops: [shop],
+    plans: [plan(PLAN_A, "開くプラン", "2026-10-01T00:00:00.000Z", 1)],
+  });
+  const { screen, router } = await renderPlanList(repository);
+
+  const openPlan = screen.getByRole("link", { name: /開くプラン.*開く/ });
+  await expect.element(openPlan).toBeVisible();
+  (openPlan.element() as HTMLElement).focus();
+  await userEvent.keyboard("{Enter}");
+
   await expect.poll(() => router.state.location.pathname).toBe("/plan");
   expect(router.state.location.search).toEqual({ id: PLAN_A });
 });
@@ -286,19 +305,14 @@ test("shows each plan's account only once accounts are told apart", async () => 
     accounts: [defaultAccount(), { id: SUB, name: "家族" }],
     updatedAt: "2026-10-05T00:00:00.000Z",
   };
-  const rowTexts = () =>
-    Array.from(document.querySelectorAll("main section:last-of-type li")).map(
-      (row) => row.textContent,
-    );
-
   const off = createMemoryRepository({ shops: [shop], plans, profile });
   const { screen } = await renderPlanList(off);
   await expect.element(screen.getByRole("link", { name: /家族のプラン/ })).toBeVisible();
   await expect
-    .poll(rowTexts)
+    .poll(planRowTexts)
     .toEqual([
-      "家族のプラン10/1〜10/31・1店舗・1件100P",
-      "メインのプラン10/1〜10/31・1店舗・1件100P",
+      "家族のプラン10/1〜10/31・1店舗・1件100P開く →",
+      "メインのプラン10/1〜10/31・1店舗・1件100P開く →",
     ]);
 
   const on = createMemoryRepository({
@@ -308,9 +322,9 @@ test("shows each plan's account only once accounts are told apart", async () => 
   });
   await renderPlanList(on);
   await expect
-    .poll(rowTexts)
+    .poll(planRowTexts)
     .toEqual([
-      "家族のプラン家族・10/1〜10/31・1店舗・1件100P",
-      "メインのプランメイン・10/1〜10/31・1店舗・1件100P",
+      "家族のプラン家族・10/1〜10/31・1店舗・1件100P開く →",
+      "メインのプランメイン・10/1〜10/31・1店舗・1件100P開く →",
     ]);
 });

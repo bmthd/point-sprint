@@ -37,7 +37,16 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
   return (
     <Card.Root as="li">
       <Card.Body flexDirection="row" alignItems="center">
-        <RouterLink to="/plan" search={{ id: plan.id }} colorScheme="mono" flex="1" minW="0">
+        <RouterLink
+          to="/plan"
+          search={{ id: plan.id }}
+          colorScheme="mono"
+          display="flex"
+          alignItems="center"
+          gap="2"
+          flex="1"
+          minW="0"
+        >
           <Box flex="1" minW="0" display="flex" flexDirection="column" gap="0.5">
             <Text fontSize="md" fontWeight="bold" lineClamp={1}>
               {plan.name}
@@ -49,6 +58,9 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
           </Box>
           <Text fontSize="lg" fontWeight="bold" fontVariantNumeric="tabular-nums">
             {(result?.total ?? 0).toLocaleString("ja-JP")}P
+          </Text>
+          <Text fontSize="sm" fontWeight="bold" whiteSpace="nowrap">
+            開く →
           </Text>
         </RouterLink>
         <IconButton
@@ -84,7 +96,7 @@ export function PlanSection() {
       </Heading>
       {isSuccess && sorted.length === 0 ? (
         <Text fontSize="sm" color="fg.muted">
-          まだプランがありません。上のボタンから作れます。
+          まだプランがありません。下のボタンから作れます。
         </Text>
       ) : (
         <VStack as="ul" listStyle="none" m="0" p="0" gap="2.5" alignItems="stretch">
