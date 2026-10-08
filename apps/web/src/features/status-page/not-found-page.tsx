@@ -16,7 +16,7 @@ export function NotFoundPage() {
       description="お探しのページは移動したか、削除された可能性があります。URL をお確かめください。"
     >
       <RouterButton to="/" colorScheme="primary" size="lg">
-        トップ（プランの一覧）へ戻る
+        トップへ戻る
       </RouterButton>
     </StatusPage>
   );
