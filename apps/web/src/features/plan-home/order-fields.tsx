@@ -14,10 +14,14 @@ export type TaxRateValue = (typeof TAX_RATES)[number];
 export const taxRateValue = (rate: number): TaxRateValue =>
   rate === 0.08 ? "0.08" : rate === 0 ? "0" : "0.1";
 
-/** The grid that wraps the fields by the width available. */
+/**
+ * The grid that wraps the fields by the width available. Its fields keep their own height: a
+ * field stretched to the height of an error beside it spreads its label and input apart.
+ */
 export const fieldGrid = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+  alignItems: "start",
   gap: "2.5",
 } as const;
 

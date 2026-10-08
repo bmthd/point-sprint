@@ -63,30 +63,30 @@ test("the header marks the page being shown", async ({ page }) => {
   }
 });
 
-test("every page has the footer, and each footer link opens its page", async ({ page }) => {
-  const id = await createPlan(page);
-  for (const { name, path } of pages(id)) {
-    await test.step(name, async () => {
+// One test per page: together they follow dozens of links, more than one test's time allows.
+for (const { name } of pages("")) {
+  test(`${name} has the footer, and each footer link opens its page`, async ({ page }) => {
+    const id = await createPlan(page);
+    const path = pages(id).find((p) => p.name === name)?.path ?? "";
+    await page.goto(path);
+    await ready(page);
+    await expect(footer(page)).toContainText("このブラウザの中にだけ保存されます");
+    // No link to an anchor that is not on the page, or to a page that does not exist yet.
+    await expect(footer(page).locator('a[href^="#"]')).toHaveCount(0);
+
+    const targets = await footer(page)
+      .getByRole("link")
+      .evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
+    for (const href of targets) {
       await page.goto(path);
       await ready(page);
-      await expect(footer(page)).toContainText("このブラウザの中にだけ保存されます");
-      // No link to an anchor that is not on the page, or to a page that does not exist yet.
-      await expect(footer(page).locator('a[href^="#"]')).toHaveCount(0);
-
-      const targets = await footer(page)
-        .getByRole("link")
-        .evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
-      for (const href of targets) {
-        await page.goto(path);
-        await ready(page);
-        await footer(page).locator(`a[href="${href}"]`).click();
-        // The preview server answers a page's path with its directory (`/help/`).
-        await expect(page).toHaveURL(new RegExp(`${href.replace(/[?]/g, "\\?")}/?$`));
-        await expect(page.getByRole("main")).toBeVisible();
-      }
-    });
-  }
-});
+      await footer(page).locator(`a[href="${href}"]`).click();
+      // The preview server answers a page's path with its directory (`/help/`).
+      await expect(page).toHaveURL(new RegExp(`${href.replace(/[?]/g, "\\?")}/?$`));
+      await expect(page.getByRole("main")).toBeVisible();
+    }
+  });
+}
 
 test("the footer links to each page that tells about the site", async ({ page }) => {
   for (const { label, path, heading } of [
@@ -107,15 +107,18 @@ test("a bar fixed to the bottom of a phone screen does not hide the footer", asy
   for (const path of [`/plan?id=${id}`, `/plan/settings?id=${id}`]) {
     await page.goto(path);
     await ready(page);
+    await expect(page.locator("[data-bottom-bar]")).toBeVisible();
     const text = footer(page).getByText("このブラウザの中にだけ保存されます");
-    await text.scrollIntoViewIfNeeded();
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    // The point at the text's center is the text itself, not the bar drawn over it.
-    const covered = await text.evaluate((element) => {
-      const box = element.getBoundingClientRect();
-      const top = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
-      return !element.contains(top);
-    });
-    expect(covered, path).toBe(false);
+    // Retried: the page can still be laying out and put the scroll back to the top.
+    await expect(async () => {
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      // The point at the text's center is the text itself, not the bar drawn over it.
+      const covered = await text.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const top = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+        return !element.contains(top);
+      });
+      expect(covered, path).toBe(false);
+    }).toPass();
   }
 });
