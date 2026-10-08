@@ -33,6 +33,8 @@ jobs:
             run: pnpm type:check
           - name: Check spelling
             run: pnpm spell:check
+          - name: Audit production dependencies
+            run: pnpm audit --prod
           - name: Build
             run: pnpm build
 
