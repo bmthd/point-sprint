@@ -8,6 +8,7 @@ test("each page has its own title", async ({ page }) => {
     { path: "/profile", title: "プロフィール | ポイントスプリント" },
     { path: "/help", title: "使い方・注意事項 | ポイントスプリント" },
     { path: "/terms", title: "利用規約 | ポイントスプリント" },
+    { path: "/privacy", title: "プライバシーポリシー | ポイントスプリント" },
   ];
   for (const { path, title } of pages) {
     await page.goto(path);
