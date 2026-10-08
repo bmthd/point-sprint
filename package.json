@@ -11,7 +11,7 @@
     "type:check": "pnpm -r exec tsc --noEmit",
     "spell:check": "cspell .",
     "test": "vitest run",
-    "build:e2e": "PUBLIC_RAKUTEN_APPLICATION_ID=e2e-application-id PUBLIC_RAKUTEN_ACCESS_KEY=e2e-access-key PUBLIC_RAKUTEN_AFFILIATE_ID=e2e-affiliate-id pnpm build",
+    "build:e2e": "GUIDE_ITEMS_ENDPOINT=http://127.0.0.1:9/ PUBLIC_RAKUTEN_APPLICATION_ID=e2e-application-id PUBLIC_RAKUTEN_ACCESS_KEY=e2e-access-key PUBLIC_RAKUTEN_AFFILIATE_ID=e2e-affiliate-id pnpm build",
     "test:e2e": "pnpm build:e2e && pnpm --filter web exec playwright test",
     "check:all": "pnpm lint && pnpm fmt:check && pnpm type:check && pnpm spell:check && pnpm test"
   },

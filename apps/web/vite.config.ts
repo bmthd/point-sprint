@@ -15,12 +15,14 @@ import {
 export default defineConfig(({ command, mode, isPreview }) => {
   // Only the `PUBLIC_` values reach the browser. They are plain text in `.env.development` and
   // `.env.production` at the root, so they are read without the dotenvx key, also by builds that do
-  // not go through `pnpm build`. Without them, no item lookup.
+  // not go through `pnpm build`. Without them, no item lookup, and the guides show no items.
   const publicEnv = loadEnv(mode, "../..", "PUBLIC_");
   const rakutenConfig = readRakutenConfig(publicEnv);
   // `vite preview` serves what was built, with the settings the build had.
   if (!rakutenConfig && !isPreview) {
-    console.warn("Rakuten API settings are missing or encrypted: item lookup is turned off.");
+    console.warn(
+      "Rakuten API settings are missing or encrypted: item lookup and the guides' items are off.",
+    );
   }
   // Only the production build loads Google Analytics and AdSense, and it fails without their IDs.
   // The dev server and the unit tests get none.
@@ -39,6 +41,10 @@ export default defineConfig(({ command, mode, isPreview }) => {
     ],
     define: {
       "import.meta.env.RAKUTEN_CONFIG": JSON.stringify(rakutenConfig ?? null),
+      // The E2E build sends the guides' item searches nowhere, so that no test calls the API.
+      "import.meta.env.GUIDE_ITEMS_ENDPOINT": JSON.stringify(
+        process.env.GUIDE_ITEMS_ENDPOINT || null,
+      ),
       // Without it, the inquiry form says it cannot take inquiries.
       "import.meta.env.TURNSTILE_SITE_KEY": JSON.stringify(
         publicEnv.PUBLIC_TURNSTILE_SITE_KEY?.trim() || null,

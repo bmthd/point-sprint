@@ -20,6 +20,8 @@ import { Route as planPlanSettingsRouteImport } from './routes/(plan)/plan_.sett
 import { Route as sitemarkdownHelpRouteImport } from './routes/(site)/(markdown)/help'
 import { Route as sitemarkdownPrivacyRouteImport } from './routes/(site)/(markdown)/privacy'
 import { Route as sitemarkdownTermsRouteImport } from './routes/(site)/(markdown)/terms'
+import { Route as sitemarkdownGuidesIndexRouteImport } from './routes/(site)/(markdown)/guides/index'
+import { Route as sitemarkdownGuidesSlugRouteImport } from './routes/(site)/(markdown)/guides/$slug'
 
 const ShareRoute = ShareRouteImport.update({
   id: '/share',
@@ -75,6 +77,16 @@ const sitemarkdownTermsRoute = sitemarkdownTermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => sitemarkdownRouteRoute,
 } as any)
+const sitemarkdownGuidesIndexRoute = sitemarkdownGuidesIndexRouteImport.update({
+  id: '/guides/',
+  path: '/guides/',
+  getParentRoute: () => sitemarkdownRouteRoute,
+} as any)
+const sitemarkdownGuidesSlugRoute = sitemarkdownGuidesSlugRouteImport.update({
+  id: '/guides/$slug',
+  path: '/guides/$slug',
+  getParentRoute: () => sitemarkdownRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/share': typeof ShareRoute
@@ -87,6 +99,8 @@ export interface FileRoutesByFullPath {
   '/help': typeof sitemarkdownHelpRoute
   '/privacy': typeof sitemarkdownPrivacyRoute
   '/terms': typeof sitemarkdownTermsRoute
+  '/guides/$slug': typeof sitemarkdownGuidesSlugRoute
+  '/guides/': typeof sitemarkdownGuidesIndexRoute
 }
 export interface FileRoutesByTo {
   '/share': typeof ShareRoute
@@ -99,6 +113,8 @@ export interface FileRoutesByTo {
   '/help': typeof sitemarkdownHelpRoute
   '/privacy': typeof sitemarkdownPrivacyRoute
   '/terms': typeof sitemarkdownTermsRoute
+  '/guides/$slug': typeof sitemarkdownGuidesSlugRoute
+  '/guides': typeof sitemarkdownGuidesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -113,6 +129,8 @@ export interface FileRoutesById {
   '/(site)/(markdown)/help': typeof sitemarkdownHelpRoute
   '/(site)/(markdown)/privacy': typeof sitemarkdownPrivacyRoute
   '/(site)/(markdown)/terms': typeof sitemarkdownTermsRoute
+  '/(site)/(markdown)/guides/$slug': typeof sitemarkdownGuidesSlugRoute
+  '/(site)/(markdown)/guides/': typeof sitemarkdownGuidesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -127,6 +145,8 @@ export interface FileRouteTypes {
     | '/help'
     | '/privacy'
     | '/terms'
+    | '/guides/$slug'
+    | '/guides/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/share'
@@ -139,6 +159,8 @@ export interface FileRouteTypes {
     | '/help'
     | '/privacy'
     | '/terms'
+    | '/guides/$slug'
+    | '/guides'
   id:
     | '__root__'
     | '/share'
@@ -152,6 +174,8 @@ export interface FileRouteTypes {
     | '/(site)/(markdown)/help'
     | '/(site)/(markdown)/privacy'
     | '/(site)/(markdown)/terms'
+    | '/(site)/(markdown)/guides/$slug'
+    | '/(site)/(markdown)/guides/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -244,6 +268,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof sitemarkdownTermsRouteImport
       parentRoute: typeof sitemarkdownRouteRoute
     }
+    '/(site)/(markdown)/guides/': {
+      id: '/(site)/(markdown)/guides/'
+      path: '/guides'
+      fullPath: '/guides/'
+      preLoaderRoute: typeof sitemarkdownGuidesIndexRouteImport
+      parentRoute: typeof sitemarkdownRouteRoute
+    }
+    '/(site)/(markdown)/guides/$slug': {
+      id: '/(site)/(markdown)/guides/$slug'
+      path: '/guides/$slug'
+      fullPath: '/guides/$slug'
+      preLoaderRoute: typeof sitemarkdownGuidesSlugRouteImport
+      parentRoute: typeof sitemarkdownRouteRoute
+    }
   }
 }
 
@@ -251,12 +289,16 @@ interface sitemarkdownRouteRouteChildren {
   sitemarkdownHelpRoute: typeof sitemarkdownHelpRoute
   sitemarkdownPrivacyRoute: typeof sitemarkdownPrivacyRoute
   sitemarkdownTermsRoute: typeof sitemarkdownTermsRoute
+  sitemarkdownGuidesSlugRoute: typeof sitemarkdownGuidesSlugRoute
+  sitemarkdownGuidesIndexRoute: typeof sitemarkdownGuidesIndexRoute
 }
 
 const sitemarkdownRouteRouteChildren: sitemarkdownRouteRouteChildren = {
   sitemarkdownHelpRoute: sitemarkdownHelpRoute,
   sitemarkdownPrivacyRoute: sitemarkdownPrivacyRoute,
   sitemarkdownTermsRoute: sitemarkdownTermsRoute,
+  sitemarkdownGuidesSlugRoute: sitemarkdownGuidesSlugRoute,
+  sitemarkdownGuidesIndexRoute: sitemarkdownGuidesIndexRoute,
 }
 
 const sitemarkdownRouteRouteWithChildren =

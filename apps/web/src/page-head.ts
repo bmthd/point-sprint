@@ -18,6 +18,11 @@ type PageHeadOptions = {
   description?: string;
   /** Keeps search engines away from a page that shows only what this device has saved. */
   noindex?: boolean;
+  /**
+   * The days an article was published and last changed (`YYYY-MM-DD`): its OGP type becomes
+   * `article`, and the sitemap takes the second as the page's last change.
+   */
+  article?: { published: string; updated: string };
 };
 
 /**
@@ -30,6 +35,7 @@ export const pageHead = ({
   title,
   description = defaultDescription,
   noindex = false,
+  article,
 }: PageHeadOptions) => {
   const fullTitle = title === undefined ? defaultTitle : pageTitle(title);
   const url = `${siteUrl}${path}`;
@@ -41,6 +47,13 @@ export const pageHead = ({
       { property: "og:description", content: description },
       { property: "og:url", content: url },
       ...(noindex ? [{ name: "robots", content: "noindex" }] : []),
+      ...(article
+        ? [
+            { property: "og:type", content: "article" },
+            { property: "article:published_time", content: article.published },
+            { property: "article:modified_time", content: article.updated },
+          ]
+        : []),
     ],
     links: [{ rel: "canonical", href: url }],
   };
