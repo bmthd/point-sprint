@@ -225,7 +225,9 @@ test("adds a sports-win day from the template", async () => {
     "https://assets.bmth.dev/point-sprint/img/campaign/sports.webp",
   );
 
-  // Tapping the date opens the calendar, and a day picked there fills it in.
+  // Tapping the date opens the calendar, not the on-screen keyboard, and a day picked there fills
+  // it in.
+  await expect.element(date).toHaveAttribute("inputmode", "none");
   await date.click();
   const calendar = screen.getByRole("grid");
   await calendar.getByText("6", { exact: true }).click();

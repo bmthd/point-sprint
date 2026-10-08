@@ -162,7 +162,9 @@ function FieldDatePicker(props: DatePickerProps) {
       fontVariantNumeric="tabular-nums"
       // The input keeps its own width otherwise, too wide for half of the dialog.
       minW="0"
-      inputProps={{ ...ariaProps, minW: "0" }}
+      // A tap brings up the calendar alone, not the on-screen keyboard as well. A real keyboard can
+      // still type a day.
+      inputProps={{ ...ariaProps, minW: "0", inputMode: "none" }}
       {...props}
     />
   );
