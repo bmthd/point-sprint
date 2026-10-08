@@ -1,5 +1,5 @@
 import type { MarkdownExtension } from "@tanstack/markdown";
-import { markdownExtensions } from "../routes/(markdown)/-markdown-extensions";
+import { markdownExtensions } from "../routes/(site)/(markdown)/-markdown-extensions";
 import { itemQueryKey, parseItemsLine } from "./item-query";
 
 /** `:::items{keyword="…" hits=6}` on a line of its own: a list of Rakuten items found by the build. */

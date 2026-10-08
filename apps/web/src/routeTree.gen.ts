@@ -9,67 +9,47 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as markdownRouteRouteImport } from './routes/(markdown)/route'
-import { Route as InquiryRouteImport } from './routes/inquiry'
-import { Route as PlanRouteImport } from './routes/plan'
-import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ShareRouteImport } from './routes/share'
-import { Route as markdownHelpRouteImport } from './routes/(markdown)/help'
-import { Route as markdownPrivacyRouteImport } from './routes/(markdown)/privacy'
-import { Route as markdownTermsRouteImport } from './routes/(markdown)/terms'
-import { Route as PlanSettingsRouteImport } from './routes/plan_.settings'
+import { Route as planPlanRouteImport } from './routes/(plan)/plan'
+import { Route as planProfileRouteImport } from './routes/(plan)/profile'
+import { Route as siteIndexRouteImport } from './routes/(site)/index'
+import { Route as sitemarkdownRouteRouteImport } from './routes/(site)/(markdown)/route'
+import { Route as siteInquiryRouteImport } from './routes/(site)/inquiry'
 import { Route as ShareImageDotpngRouteImport } from './routes/share_.image[.]png'
-import { Route as markdownGuidesIndexRouteImport } from './routes/(markdown)/guides/index'
-import { Route as markdownGuidesSlugRouteImport } from './routes/(markdown)/guides/$slug'
+import { Route as planPlanSettingsRouteImport } from './routes/(plan)/plan_.settings'
+import { Route as sitemarkdownHelpRouteImport } from './routes/(site)/(markdown)/help'
+import { Route as sitemarkdownPrivacyRouteImport } from './routes/(site)/(markdown)/privacy'
+import { Route as sitemarkdownTermsRouteImport } from './routes/(site)/(markdown)/terms'
+import { Route as sitemarkdownGuidesIndexRouteImport } from './routes/(site)/(markdown)/guides/index'
+import { Route as sitemarkdownGuidesSlugRouteImport } from './routes/(site)/(markdown)/guides/$slug'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const markdownRouteRoute = markdownRouteRouteImport.update({
-  id: '/(markdown)',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InquiryRoute = InquiryRouteImport.update({
-  id: '/inquiry',
-  path: '/inquiry',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlanRoute = PlanRouteImport.update({
-  id: '/plan',
-  path: '/plan',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ShareRoute = ShareRouteImport.update({
   id: '/share',
   path: '/share',
   getParentRoute: () => rootRouteImport,
 } as any)
-const markdownHelpRoute = markdownHelpRouteImport.update({
-  id: '/help',
-  path: '/help',
-  getParentRoute: () => markdownRouteRoute,
+const planPlanRoute = planPlanRouteImport.update({
+  id: '/(plan)/plan',
+  path: '/plan',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const markdownPrivacyRoute = markdownPrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => markdownRouteRoute,
+const planProfileRoute = planProfileRouteImport.update({
+  id: '/(plan)/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const markdownTermsRoute = markdownTermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => markdownRouteRoute,
+const siteIndexRoute = siteIndexRouteImport.update({
+  id: '/(site)/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const PlanSettingsRoute = PlanSettingsRouteImport.update({
-  id: '/plan_/settings',
-  path: '/plan/settings',
+const sitemarkdownRouteRoute = sitemarkdownRouteRouteImport.update({
+  id: '/(site)/(markdown)',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const siteInquiryRoute = siteInquiryRouteImport.update({
+  id: '/(site)/inquiry',
+  path: '/inquiry',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ShareImageDotpngRoute = ShareImageDotpngRouteImport.update({
@@ -77,155 +57,140 @@ const ShareImageDotpngRoute = ShareImageDotpngRouteImport.update({
   path: '/share/image.png',
   getParentRoute: () => rootRouteImport,
 } as any)
-const markdownGuidesIndexRoute = markdownGuidesIndexRouteImport.update({
+const planPlanSettingsRoute = planPlanSettingsRouteImport.update({
+  id: '/(plan)/plan_/settings',
+  path: '/plan/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const sitemarkdownHelpRoute = sitemarkdownHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => sitemarkdownRouteRoute,
+} as any)
+const sitemarkdownPrivacyRoute = sitemarkdownPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => sitemarkdownRouteRoute,
+} as any)
+const sitemarkdownTermsRoute = sitemarkdownTermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => sitemarkdownRouteRoute,
+} as any)
+const sitemarkdownGuidesIndexRoute = sitemarkdownGuidesIndexRouteImport.update({
   id: '/guides/',
   path: '/guides/',
-  getParentRoute: () => markdownRouteRoute,
+  getParentRoute: () => sitemarkdownRouteRoute,
 } as any)
-const markdownGuidesSlugRoute = markdownGuidesSlugRouteImport.update({
+const sitemarkdownGuidesSlugRoute = sitemarkdownGuidesSlugRouteImport.update({
   id: '/guides/$slug',
   path: '/guides/$slug',
-  getParentRoute: () => markdownRouteRoute,
+  getParentRoute: () => sitemarkdownRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/inquiry': typeof InquiryRoute
-  '/plan': typeof PlanRoute
-  '/profile': typeof ProfileRoute
   '/share': typeof ShareRoute
-  '/help': typeof markdownHelpRoute
-  '/privacy': typeof markdownPrivacyRoute
-  '/terms': typeof markdownTermsRoute
-  '/plan/settings': typeof PlanSettingsRoute
+  '/plan': typeof planPlanRoute
+  '/profile': typeof planProfileRoute
+  '/inquiry': typeof siteInquiryRoute
   '/share/image.png': typeof ShareImageDotpngRoute
-  '/guides/$slug': typeof markdownGuidesSlugRoute
-  '/guides/': typeof markdownGuidesIndexRoute
+  '/': typeof siteIndexRoute
+  '/plan/settings': typeof planPlanSettingsRoute
+  '/help': typeof sitemarkdownHelpRoute
+  '/privacy': typeof sitemarkdownPrivacyRoute
+  '/terms': typeof sitemarkdownTermsRoute
+  '/guides/$slug': typeof sitemarkdownGuidesSlugRoute
+  '/guides/': typeof sitemarkdownGuidesIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/inquiry': typeof InquiryRoute
-  '/plan': typeof PlanRoute
-  '/profile': typeof ProfileRoute
   '/share': typeof ShareRoute
-  '/help': typeof markdownHelpRoute
-  '/privacy': typeof markdownPrivacyRoute
-  '/terms': typeof markdownTermsRoute
-  '/plan/settings': typeof PlanSettingsRoute
+  '/plan': typeof planPlanRoute
+  '/profile': typeof planProfileRoute
+  '/inquiry': typeof siteInquiryRoute
   '/share/image.png': typeof ShareImageDotpngRoute
-  '/guides/$slug': typeof markdownGuidesSlugRoute
-  '/guides': typeof markdownGuidesIndexRoute
+  '/': typeof siteIndexRoute
+  '/plan/settings': typeof planPlanSettingsRoute
+  '/help': typeof sitemarkdownHelpRoute
+  '/privacy': typeof sitemarkdownPrivacyRoute
+  '/terms': typeof sitemarkdownTermsRoute
+  '/guides/$slug': typeof sitemarkdownGuidesSlugRoute
+  '/guides': typeof sitemarkdownGuidesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/(markdown)': typeof markdownRouteRouteWithChildren
-  '/inquiry': typeof InquiryRoute
-  '/plan': typeof PlanRoute
-  '/profile': typeof ProfileRoute
   '/share': typeof ShareRoute
-  '/(markdown)/help': typeof markdownHelpRoute
-  '/(markdown)/privacy': typeof markdownPrivacyRoute
-  '/(markdown)/terms': typeof markdownTermsRoute
-  '/plan_/settings': typeof PlanSettingsRoute
+  '/(site)/(markdown)': typeof sitemarkdownRouteRouteWithChildren
+  '/(plan)/plan': typeof planPlanRoute
+  '/(plan)/profile': typeof planProfileRoute
+  '/(site)/inquiry': typeof siteInquiryRoute
   '/share_/image.png': typeof ShareImageDotpngRoute
-  '/(markdown)/guides/$slug': typeof markdownGuidesSlugRoute
-  '/(markdown)/guides/': typeof markdownGuidesIndexRoute
+  '/(site)/': typeof siteIndexRoute
+  '/(plan)/plan_/settings': typeof planPlanSettingsRoute
+  '/(site)/(markdown)/help': typeof sitemarkdownHelpRoute
+  '/(site)/(markdown)/privacy': typeof sitemarkdownPrivacyRoute
+  '/(site)/(markdown)/terms': typeof sitemarkdownTermsRoute
+  '/(site)/(markdown)/guides/$slug': typeof sitemarkdownGuidesSlugRoute
+  '/(site)/(markdown)/guides/': typeof sitemarkdownGuidesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
-    | '/inquiry'
+    | '/share'
     | '/plan'
     | '/profile'
-    | '/share'
+    | '/inquiry'
+    | '/share/image.png'
+    | '/'
+    | '/plan/settings'
     | '/help'
     | '/privacy'
     | '/terms'
-    | '/plan/settings'
-    | '/share/image.png'
     | '/guides/$slug'
     | '/guides/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
-    | '/inquiry'
+    | '/share'
     | '/plan'
     | '/profile'
-    | '/share'
+    | '/inquiry'
+    | '/share/image.png'
+    | '/'
+    | '/plan/settings'
     | '/help'
     | '/privacy'
     | '/terms'
-    | '/plan/settings'
-    | '/share/image.png'
     | '/guides/$slug'
     | '/guides'
   id:
     | '__root__'
-    | '/'
-    | '/(markdown)'
-    | '/inquiry'
-    | '/plan'
-    | '/profile'
     | '/share'
-    | '/(markdown)/help'
-    | '/(markdown)/privacy'
-    | '/(markdown)/terms'
-    | '/plan_/settings'
+    | '/(site)/(markdown)'
+    | '/(plan)/plan'
+    | '/(plan)/profile'
+    | '/(site)/inquiry'
     | '/share_/image.png'
-    | '/(markdown)/guides/$slug'
-    | '/(markdown)/guides/'
+    | '/(site)/'
+    | '/(plan)/plan_/settings'
+    | '/(site)/(markdown)/help'
+    | '/(site)/(markdown)/privacy'
+    | '/(site)/(markdown)/terms'
+    | '/(site)/(markdown)/guides/$slug'
+    | '/(site)/(markdown)/guides/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  markdownRouteRoute: typeof markdownRouteRouteWithChildren
-  InquiryRoute: typeof InquiryRoute
-  PlanRoute: typeof PlanRoute
-  ProfileRoute: typeof ProfileRoute
   ShareRoute: typeof ShareRoute
-  PlanSettingsRoute: typeof PlanSettingsRoute
+  sitemarkdownRouteRoute: typeof sitemarkdownRouteRouteWithChildren
+  planPlanRoute: typeof planPlanRoute
+  planProfileRoute: typeof planProfileRoute
+  siteInquiryRoute: typeof siteInquiryRoute
   ShareImageDotpngRoute: typeof ShareImageDotpngRoute
+  siteIndexRoute: typeof siteIndexRoute
+  planPlanSettingsRoute: typeof planPlanSettingsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(markdown)': {
-      id: '/(markdown)'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof markdownRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inquiry': {
-      id: '/inquiry'
-      path: '/inquiry'
-      fullPath: '/inquiry'
-      preLoaderRoute: typeof InquiryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/plan': {
-      id: '/plan'
-      path: '/plan'
-      fullPath: '/plan'
-      preLoaderRoute: typeof PlanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/share': {
       id: '/share'
       path: '/share'
@@ -233,32 +198,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShareRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(markdown)/help': {
-      id: '/(markdown)/help'
-      path: '/help'
-      fullPath: '/help'
-      preLoaderRoute: typeof markdownHelpRouteImport
-      parentRoute: typeof markdownRouteRoute
+    '/(plan)/plan': {
+      id: '/(plan)/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof planPlanRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/(markdown)/privacy': {
-      id: '/(markdown)/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof markdownPrivacyRouteImport
-      parentRoute: typeof markdownRouteRoute
+    '/(plan)/profile': {
+      id: '/(plan)/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof planProfileRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/(markdown)/terms': {
-      id: '/(markdown)/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof markdownTermsRouteImport
-      parentRoute: typeof markdownRouteRoute
+    '/(site)/': {
+      id: '/(site)/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof siteIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/plan_/settings': {
-      id: '/plan_/settings'
-      path: '/plan/settings'
-      fullPath: '/plan/settings'
-      preLoaderRoute: typeof PlanSettingsRouteImport
+    '/(site)/(markdown)': {
+      id: '/(site)/(markdown)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof sitemarkdownRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(site)/inquiry': {
+      id: '/(site)/inquiry'
+      path: '/inquiry'
+      fullPath: '/inquiry'
+      preLoaderRoute: typeof siteInquiryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/share_/image.png': {
@@ -268,52 +240,79 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShareImageDotpngRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(markdown)/guides/': {
-      id: '/(markdown)/guides/'
+    '/(plan)/plan_/settings': {
+      id: '/(plan)/plan_/settings'
+      path: '/plan/settings'
+      fullPath: '/plan/settings'
+      preLoaderRoute: typeof planPlanSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(site)/(markdown)/help': {
+      id: '/(site)/(markdown)/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof sitemarkdownHelpRouteImport
+      parentRoute: typeof sitemarkdownRouteRoute
+    }
+    '/(site)/(markdown)/privacy': {
+      id: '/(site)/(markdown)/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof sitemarkdownPrivacyRouteImport
+      parentRoute: typeof sitemarkdownRouteRoute
+    }
+    '/(site)/(markdown)/terms': {
+      id: '/(site)/(markdown)/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof sitemarkdownTermsRouteImport
+      parentRoute: typeof sitemarkdownRouteRoute
+    }
+    '/(site)/(markdown)/guides/': {
+      id: '/(site)/(markdown)/guides/'
       path: '/guides'
       fullPath: '/guides/'
-      preLoaderRoute: typeof markdownGuidesIndexRouteImport
-      parentRoute: typeof markdownRouteRoute
+      preLoaderRoute: typeof sitemarkdownGuidesIndexRouteImport
+      parentRoute: typeof sitemarkdownRouteRoute
     }
-    '/(markdown)/guides/$slug': {
-      id: '/(markdown)/guides/$slug'
+    '/(site)/(markdown)/guides/$slug': {
+      id: '/(site)/(markdown)/guides/$slug'
       path: '/guides/$slug'
       fullPath: '/guides/$slug'
-      preLoaderRoute: typeof markdownGuidesSlugRouteImport
-      parentRoute: typeof markdownRouteRoute
+      preLoaderRoute: typeof sitemarkdownGuidesSlugRouteImport
+      parentRoute: typeof sitemarkdownRouteRoute
     }
   }
 }
 
-interface markdownRouteRouteChildren {
-  markdownHelpRoute: typeof markdownHelpRoute
-  markdownPrivacyRoute: typeof markdownPrivacyRoute
-  markdownTermsRoute: typeof markdownTermsRoute
-  markdownGuidesSlugRoute: typeof markdownGuidesSlugRoute
-  markdownGuidesIndexRoute: typeof markdownGuidesIndexRoute
+interface sitemarkdownRouteRouteChildren {
+  sitemarkdownHelpRoute: typeof sitemarkdownHelpRoute
+  sitemarkdownPrivacyRoute: typeof sitemarkdownPrivacyRoute
+  sitemarkdownTermsRoute: typeof sitemarkdownTermsRoute
+  sitemarkdownGuidesSlugRoute: typeof sitemarkdownGuidesSlugRoute
+  sitemarkdownGuidesIndexRoute: typeof sitemarkdownGuidesIndexRoute
 }
 
-const markdownRouteRouteChildren: markdownRouteRouteChildren = {
-  markdownHelpRoute: markdownHelpRoute,
-  markdownPrivacyRoute: markdownPrivacyRoute,
-  markdownTermsRoute: markdownTermsRoute,
-  markdownGuidesSlugRoute: markdownGuidesSlugRoute,
-  markdownGuidesIndexRoute: markdownGuidesIndexRoute,
+const sitemarkdownRouteRouteChildren: sitemarkdownRouteRouteChildren = {
+  sitemarkdownHelpRoute: sitemarkdownHelpRoute,
+  sitemarkdownPrivacyRoute: sitemarkdownPrivacyRoute,
+  sitemarkdownTermsRoute: sitemarkdownTermsRoute,
+  sitemarkdownGuidesSlugRoute: sitemarkdownGuidesSlugRoute,
+  sitemarkdownGuidesIndexRoute: sitemarkdownGuidesIndexRoute,
 }
 
-const markdownRouteRouteWithChildren = markdownRouteRoute._addFileChildren(
-  markdownRouteRouteChildren,
-)
+const sitemarkdownRouteRouteWithChildren =
+  sitemarkdownRouteRoute._addFileChildren(sitemarkdownRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  markdownRouteRoute: markdownRouteRouteWithChildren,
-  InquiryRoute: InquiryRoute,
-  PlanRoute: PlanRoute,
-  ProfileRoute: ProfileRoute,
   ShareRoute: ShareRoute,
-  PlanSettingsRoute: PlanSettingsRoute,
+  sitemarkdownRouteRoute: sitemarkdownRouteRouteWithChildren,
+  planPlanRoute: planPlanRoute,
+  planProfileRoute: planProfileRoute,
+  siteInquiryRoute: siteInquiryRoute,
   ShareImageDotpngRoute: ShareImageDotpngRoute,
+  siteIndexRoute: siteIndexRoute,
+  planPlanSettingsRoute: planPlanSettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
