@@ -1,6 +1,6 @@
 import ky, { SchemaValidationError, isHTTPError } from "ky";
 import * as v from "valibot";
-import { ITEM_SEARCH_ENDPOINT, type RakutenConfig } from "./config.ts";
+import { ITEM_SEARCH_ENDPOINT, type RakutenConfig } from "./config";
 
 // Calls to the Ichiba item search API. Only the fields the app uses are read from a response.
 

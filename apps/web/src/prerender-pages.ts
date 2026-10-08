@@ -1,4 +1,4 @@
-import { guideFiles } from "./guides/files.ts";
+import { guideSlugs } from "./guides/files.ts";
 
 /**
  * Every route, rendered to HTML at build time. Listed so none depends on being reached by a link.
@@ -14,7 +14,7 @@ export const prerenderedPages = [
   "/privacy",
   "/inquiry",
   "/guides",
-  ...guideFiles().map(({ slug }) => `/guides/${slug}`),
+  ...guideSlugs().map((slug) => `/guides/${slug}`),
 ].map((path) => ({
   path,
   file: path === "/" ? "index.html" : `${path.slice(1)}/index.html`,
@@ -92,3 +92,7 @@ export const sitemapXml = (entries: SitemapEntry[]) =>
     `</urlset>`,
     "",
   ].join("\n");
+
+/** How many lists of Rakuten items a prerendered guide has. */
+export const guideItemListCount = (html: string): number =>
+  [...html.matchAll(/<aside\b[^>]*\bdata-guide-items\b/g)].length;

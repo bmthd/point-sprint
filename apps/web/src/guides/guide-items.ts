@@ -1,7 +1,8 @@
-import type { RakutenItem, SearchResult } from "../rakuten/item-search.ts";
-import { type ItemQuery, itemQueriesIn, itemQueryKey } from "./item-query.ts";
+import type { RakutenItem, SearchResult } from "../rakuten/item-search";
+import { type ItemQuery, itemQueryKey } from "./item-query";
 
-// The items of the guides' `:::items{…}` lists, fetched once by the build and put in the pages.
+// The items of the guides' `:::items{…}` lists, searched by the server function while the build
+// prerenders the guides.
 
 /** An item as a list shows it. */
 export type GuideItem = {
@@ -15,15 +16,11 @@ export type GuideItem = {
   url: string;
 };
 
-export type GuideItems = {
-  /** When the build fetched the items: the prices shown are the ones at that time. */
-  fetchedAt: string;
-  /** The items of each query, by `itemQueryKey`. A query whose call failed has none. */
-  lists: Record<string, GuideItem[]>;
-};
-
 /** A call to the item search API, with the build's settings. */
 export type ItemSearch = (params: Record<string, string | number>) => Promise<SearchResult>;
+
+/** The items of a query, or `undefined` when they could not be searched. */
+export type GuideItemSearch = (query: ItemQuery) => Promise<GuideItem[] | undefined>;
 
 /** The API's 128px image, asked at a size that stays sharp in a list on a high density screen. */
 const largerImage = (url: string) => url.replace(/([?&]_ex=)128x128\b/, "$1256x256");
@@ -47,37 +44,42 @@ type Options = {
   /** The least time between two calls: the API answers 429 above about one call a second. */
   intervalMs?: number;
   wait?: (ms: number) => Promise<void>;
-  now?: () => Date;
   warn?: (message: string) => void;
 };
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
- * The items of every list in `markdowns`. The same query is called once, and the calls are made
- * one after another, `intervalMs` apart. A failed call, or no `search` (a build without the
- * Rakuten settings), leaves its lists empty: the build goes on, and the pages show their text.
+ * `search` for the guides' lists. The build prerenders the guides side by side, so the calls of
+ * every guide are queued one after another, `intervalMs` apart, and a query is called once. A
+ * failed call is not retried: its list is left out, and the build goes on.
  */
-export async function collectGuideItems(
-  markdowns: string[],
-  search: ItemSearch | undefined,
-  { intervalMs = 1100, wait = sleep, now = () => new Date(), warn = console.warn }: Options = {},
-): Promise<GuideItems> {
-  const queries = new Map<string, ItemQuery>();
-  for (const query of markdowns.flatMap(itemQueriesIn)) queries.set(itemQueryKey(query), query);
-  const fetchedAt = now().toISOString();
-  if (!search) return { fetchedAt, lists: {} };
+export function guideItemSearch(
+  search: ItemSearch,
+  { intervalMs = 1100, wait = sleep, warn = console.warn }: Options = {},
+): GuideItemSearch {
+  const found = new Map<string, Promise<GuideItem[] | undefined>>();
+  let queue: Promise<unknown> = Promise.resolve();
+  let called = false;
 
-  const lists: Record<string, GuideItem[]> = {};
-  let first = true;
-  for (const [key, query] of queries) {
-    if (!first) await wait(intervalMs);
-    first = false;
-    // Only items with an image: a list without pictures does not help choose.
+  const call = async (query: ItemQuery) => {
+    if (called) await wait(intervalMs);
+    called = true;
     const params = Object.entries(query).filter(([, value]) => value !== undefined);
+    // Only items with an image: a list without pictures does not help choose.
     const result = await search({ ...Object.fromEntries(params), imageFlag: 1 });
-    if (result.ok) lists[key] = shownItems(result.items);
-    else warn(`The items for ${key} were not fetched (${JSON.stringify(result.error)}).`);
-  }
-  return { fetchedAt, lists };
+    if (result.ok) return shownItems(result.items);
+    warn(`The items for ${itemQueryKey(query)} were not found (${JSON.stringify(result.error)}).`);
+    return undefined;
+  };
+
+  return (query) => {
+    const key = itemQueryKey(query);
+    const kept = found.get(key);
+    if (kept) return kept;
+    const items = queue.then(() => call(query));
+    queue = items;
+    found.set(key, items);
+    return items;
+  };
 }

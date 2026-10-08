@@ -1,9 +1,6 @@
-import { createLink } from "@tanstack/react-router";
 import { Card, Heading, LinkBox, Text, VStack } from "@workspaces/ui";
 import type { Article } from "../../guides/article";
 import { ArticleDates } from "./article-dates";
-
-const ArticleLink = createLink(LinkBox.Overlay);
 
 /** Every shopping guide, newest first. */
 export function GuideList({ articles }: { articles: Article[] }) {
@@ -19,9 +16,11 @@ export function GuideList({ articles }: { articles: Article[] }) {
             <Card.Root>
               <Card.Body gap="1">
                 <Heading as="h2" fontSize="md">
-                  <ArticleLink to="/guides/$slug" params={{ slug: article.slug }}>
+                  {/* A link that loads the page, not one the router follows: the guide's items are
+                      in its prerendered HTML only (`getGuide`). */}
+                  <LinkBox.Overlay href={`/guides/${article.slug}`}>
                     {article.title}
-                  </ArticleLink>
+                  </LinkBox.Overlay>
                 </Heading>
                 <Text fontSize="sm">{article.description}</Text>
                 <ArticleDates article={article} />

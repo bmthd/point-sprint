@@ -4,7 +4,6 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { ogFonts } from "./og-fonts-plugin.ts";
 import { parseGoogleTagsEnv } from "./src/google-tags/env.ts";
-import { fixtureFetch, guideItems } from "./src/guides/vite-plugin.ts";
 import { prerenderedPages } from "./src/prerender-pages.ts";
 import {
   ALLOWED_ORIGIN,
@@ -12,7 +11,6 @@ import {
   ITEM_SEARCH_ENDPOINT,
   readRakutenConfig,
 } from "./src/rakuten/config.ts";
-import { searchItems } from "./src/rakuten/item-search.ts";
 
 export default defineConfig(({ command, mode, isPreview }) => {
   // Only the `PUBLIC_` values reach the browser. They are plain text in `.env.development` and
@@ -29,8 +27,6 @@ export default defineConfig(({ command, mode, isPreview }) => {
   // Only the production build loads Google Analytics and AdSense, and it fails without their IDs.
   // The dev server and the unit tests get none.
   const googleTagIds = command === "build" ? parseGoogleTagsEnv(publicEnv) : undefined;
-  // The E2E build answers the guides' item searches from a file, so that no test calls the API.
-  const fixture = process.env.RAKUTEN_ITEM_SEARCH_FIXTURE;
   return {
     plugins: [
       cloudflare({ viteEnvironment: { name: "ssr" } }),
@@ -41,19 +37,14 @@ export default defineConfig(({ command, mode, isPreview }) => {
         pages: prerenderedPages.map(({ path }) => ({ path, prerender: { enabled: true } })),
       }),
       viteReact({ compiler: true }),
-      guideItems({
-        search:
-          rakutenConfig &&
-          ((params) =>
-            searchItems(rakutenConfig, params, {
-              origin: ALLOWED_ORIGIN,
-              ...(fixture ? { fetch: fixtureFetch(fixture) } : {}),
-            })),
-      }),
       ogFonts(),
     ],
     define: {
       "import.meta.env.RAKUTEN_CONFIG": JSON.stringify(rakutenConfig ?? null),
+      // The E2E build sends the guides' item searches nowhere, so that no test calls the API.
+      "import.meta.env.GUIDE_ITEMS_ENDPOINT": JSON.stringify(
+        process.env.GUIDE_ITEMS_ENDPOINT || null,
+      ),
       // Without it, the inquiry form says it cannot take inquiries.
       "import.meta.env.TURNSTILE_SITE_KEY": JSON.stringify(
         publicEnv.PUBLIC_TURNSTILE_SITE_KEY?.trim() || null,

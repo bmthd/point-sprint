@@ -47,7 +47,8 @@ type GuideItemListProps = {
 export function GuideItemList({ items, fetchedAt }: GuideItemListProps) {
   if (!items?.length) return null;
   return (
-    <Card.Root as="aside" aria-label="楽天市場の商品（広告）" my="6">
+    // `data-guide-items` lets the build count the lists in the prerendered HTML.
+    <Card.Root as="aside" aria-label="楽天市場の商品（広告）" data-guide-items my="6">
       <Card.Header>
         <HStack gap="2">
           <Badge colorScheme="mono" variant="outline">

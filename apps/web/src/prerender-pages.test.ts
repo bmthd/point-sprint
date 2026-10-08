@@ -1,7 +1,8 @@
 import { expect, test } from "vitest";
-import { guideFiles } from "./guides/files";
+import { guideSlugs } from "./guides/files";
 import { getRouter } from "./router";
 import {
+  guideItemListCount,
   missingHeadTags,
   missingPrerenderedPages,
   pagesRenderedOnRequest,
@@ -11,7 +12,7 @@ import {
 } from "./prerender-pages";
 
 test("every route is prerendered or rendered on request, and a guide's route for each guide", () => {
-  const slugs = guideFiles().map((file) => file.slug);
+  const slugs = guideSlugs();
   expect(slugs).toContain("1000yen-items");
   const routePaths = Object.keys(getRouter().routesByPath)
     .map((path) => (path.length > 1 ? path.replace(/\/$/, "") : path))
@@ -88,4 +89,10 @@ test("writes a sitemap of the entries", () => {
   <url><loc>https://point-sprint.bmth.dev/guides/a&amp;b</loc><lastmod>2026-10-10</lastmod></url>
 </urlset>
 `);
+});
+
+test("counts the lists of items in a guide", () => {
+  const list = '<aside aria-label="楽天市場の商品（広告）" data-guide-items="true" class="x">';
+  expect(guideItemListCount(`<main>${list}</aside><p>本文</p>${list}</aside></main>`)).toBe(2);
+  expect(guideItemListCount("<main><p>本文</p></main>")).toBe(0);
 });

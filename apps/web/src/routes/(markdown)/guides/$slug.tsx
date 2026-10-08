@@ -1,24 +1,20 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { GuideArticle } from "./-guide-article";
-import { loadArticle } from "../../../guides/articles";
+import { createFileRoute } from "@tanstack/react-router";
+import { getGuide } from "../../../guides/get-guide";
 import { pageHead } from "../../../page-head";
+import { GuideArticle } from "./-guide-article";
 
 export const Route = createFileRoute("/(markdown)/guides/$slug")({
-  loader: async ({ params }) => {
-    const article = await loadArticle(params.slug);
-    if (!article) throw notFound();
-    return article;
-  },
-  head: ({ loaderData: article }) =>
-    article
+  loader: ({ params }) => getGuide({ data: params.slug }),
+  head: ({ loaderData }) =>
+    loaderData
       ? pageHead({
-          path: `/guides/${article.slug}`,
-          title: article.title,
-          description: article.description,
-          article,
+          path: `/guides/${loaderData.article.slug}`,
+          title: loaderData.article.title,
+          description: loaderData.article.description,
+          article: loaderData.article,
         })
       : {},
   component: function GuidePage() {
-    return <GuideArticle article={Route.useLoaderData()} />;
+    return <GuideArticle guide={Route.useLoaderData()} />;
   },
 });

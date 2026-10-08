@@ -1,10 +1,8 @@
 import { defineConfig } from "vitest/config";
 import { ogFonts } from "./og-fonts-plugin.ts";
-import { guideItems } from "./src/guides/vite-plugin.ts";
 
 export default defineConfig({
-  // The guides' lists have no items in tests: no test calls the Rakuten API.
-  plugins: [ogFonts(), guideItems({ search: undefined })],
+  plugins: [ogFonts()],
   test: {
     name: "web",
     include: ["src/**/*.test.ts"],
