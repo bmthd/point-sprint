@@ -17,7 +17,7 @@ import { planResultAtom } from "../../state/derived";
 import { plansAtom } from "../../state/queries";
 import { NEW_ORDER, OrderEditor } from "../order-editor/order-editor";
 import { SettingsPanelButton } from "../plan-settings/plan-settings";
-import { RouterLink } from "../plan-list/router-link";
+import { RouterLink } from "../../router-link";
 import { ShareButton } from "../share/share-button";
 import { planFigures } from "../share/result-card";
 import { resultShareTarget } from "../share/share-target";

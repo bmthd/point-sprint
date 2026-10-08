@@ -1,5 +1,5 @@
 import { SearchXIcon } from "@workspaces/ui";
-import { RouterButton } from "../plan-list/router-link";
+import { RouterButton } from "../../router-link";
 import { StatusPage } from "./status-page";
 
 export const notFoundTitle = "ページが見つかりません";
