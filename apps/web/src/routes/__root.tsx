@@ -4,10 +4,10 @@ import { Box, ColorModeScript, UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import type { ReactNode } from "react";
 import { AppProviders } from "../app-providers";
-import { SiteFooter } from "../features/layout/site-footer";
-import { SiteHeader } from "../features/layout/site-header";
-import { ErrorPage } from "../features/status-page/error-page";
-import { NotFoundPage, notFoundTitle } from "../features/status-page/not-found-page";
+import { SiteFooter } from "./-root/site-footer";
+import { SiteHeader } from "./-root/site-header";
+import { ErrorPage } from "./-root/error-page";
+import { NotFoundPage, notFoundTitle } from "./-root/not-found-page";
 import { GoogleTagScripts } from "../google-tags/google-tag-scripts";
 import { defaultDescription, defaultTitle, pageTitle, siteName, siteUrl } from "../page-head";
 
