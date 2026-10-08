@@ -16,7 +16,7 @@
     "check:all": "pnpm lint && pnpm fmt:check && pnpm type:check && pnpm spell:check && pnpm test"
   },
   "devDependencies": {
-    "@dotenvx/dotenvx": "2.32.4",
+    "@dotenvx/dotenvx": "2.33.0",
     "cspell": "10.3.6",
     "oxfmt": "0.71.0",
     "oxlint": "1.86.0",
