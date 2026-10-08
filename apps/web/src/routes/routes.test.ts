@@ -3,8 +3,8 @@ import * as v from "valibot";
 import { expect, test } from "vitest";
 import { getRouter } from "../router";
 import { planSearchSchema } from "../planSearch";
-import { Route as planRoute } from "./plan";
-import { Route as settingsRoute } from "./plan_.settings";
+import { Route as planRoute } from "./(plan)/plan";
+import { Route as settingsRoute } from "./(plan)/plan_.settings";
 
 test("plan route validates search id", () => {
   expect(planRoute.options.validateSearch).toBe(planSearchSchema);
@@ -15,7 +15,7 @@ test("plan route validates search id", () => {
 
 test("plan settings is a sibling of the plan route, not its child", () => {
   const router = getRouter();
-  const settings = router.routesById["/plan_/settings"];
+  const settings = router.routesById["/(plan)/plan_/settings"];
   expect(settings.fullPath).toBe("/plan/settings");
   expect(settings.parentRoute.id).toBe("__root__");
   expect(router.routesByPath["/plan/settings"]).toBe(settingsRoute);

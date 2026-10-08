@@ -1,4 +1,4 @@
-import { newestFirst, notices } from "../src/features/notices/notices";
+import { newestFirst, notices } from "../src/routes/(site)/-notices/notices";
 import { type Page, expect, test } from "./fixtures";
 
 // The sidebar with the notices: on the pages that read, beside the content on a wide screen and
