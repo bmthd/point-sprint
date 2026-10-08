@@ -11,6 +11,7 @@ import { beforeEach, expect, test } from "vitest";
 import { type Locator, page, userEvent } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import { createMemoryRepository } from "../../storage/memory-repository";
+import { misalignedFields } from "../../test-layout";
 import {
   PLAN,
   Providers,
@@ -295,6 +296,8 @@ test("a campaign's form says what to fix, and focuses the first field to fix", a
     .toHaveAccessibleDescription("終了日は開始日と同じ日か、それより後の日にしてください");
   await expect.element(cap).toHaveAccessibleDescription("獲得上限を入れてください");
   await expect.element(end).toHaveFocus();
+  // The start date stays level with the end date and its error.
+  expect(misalignedFields(dialog.element())).toEqual([]);
   expect((await storedPlan()).benefits).toHaveLength(0);
 
   await end.fill("2026-10-09");
@@ -333,6 +336,10 @@ test("a period's end before its start is not saved", async () => {
   await expect
     .element(end)
     .toHaveAccessibleDescription("終了日は開始日と同じ日か、それより後の日にしてください");
+  // The start date stays level with the end date and its error.
+  expect(
+    misalignedFields(screen.getByRole("region", { name: "買いまわりと上限" }).element()),
+  ).toEqual([]);
   const start = screen.getByLabelText("開始日");
   await start.fill("2026-10-10");
   await start.element().blur();

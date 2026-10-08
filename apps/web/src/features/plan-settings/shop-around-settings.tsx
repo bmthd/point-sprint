@@ -161,7 +161,12 @@ function ShopAroundEditor({
           flexDirection="column"
           gap="2.5"
         >
-          <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
+          <Box
+            display="grid"
+            gridTemplateColumns="repeat(2, minmax(0, 1fr))"
+            alignItems="start"
+            gap="2"
+          >
             <CommitField
               key={`start:${period.start}:${period.end}`}
               label="開始日"

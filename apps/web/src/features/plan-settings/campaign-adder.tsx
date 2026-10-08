@@ -207,7 +207,12 @@ function CampaignForm({
               </>
             ) : null}
             {spec.period ? (
-              <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
+              <Box
+                display="grid"
+                gridTemplateColumns="repeat(2, minmax(0, 1fr))"
+                alignItems="start"
+                gap="2"
+              >
                 <TextField form={form} name="start" label="開始日" type="date" />
                 <TextField form={form} name="end" label="終了日" type="date" />
               </Box>
