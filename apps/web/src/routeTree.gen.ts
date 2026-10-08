@@ -16,6 +16,7 @@ import { Route as PlanRouteImport } from './routes/plan'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ShareRouteImport } from './routes/share'
 import { Route as markdownHelpRouteImport } from './routes/(markdown)/help'
+import { Route as markdownPrivacyRouteImport } from './routes/(markdown)/privacy'
 import { Route as markdownTermsRouteImport } from './routes/(markdown)/terms'
 import { Route as PlanSettingsRouteImport } from './routes/plan_.settings'
 import { Route as ShareImageDotpngRouteImport } from './routes/share_.image[.]png'
@@ -54,6 +55,11 @@ const markdownHelpRoute = markdownHelpRouteImport.update({
   path: '/help',
   getParentRoute: () => markdownRouteRoute,
 } as any)
+const markdownPrivacyRoute = markdownPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => markdownRouteRoute,
+} as any)
 const markdownTermsRoute = markdownTermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/share': typeof ShareRoute
   '/help': typeof markdownHelpRoute
+  '/privacy': typeof markdownPrivacyRoute
   '/terms': typeof markdownTermsRoute
   '/plan/settings': typeof PlanSettingsRoute
   '/share/image.png': typeof ShareImageDotpngRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/share': typeof ShareRoute
   '/help': typeof markdownHelpRoute
+  '/privacy': typeof markdownPrivacyRoute
   '/terms': typeof markdownTermsRoute
   '/plan/settings': typeof PlanSettingsRoute
   '/share/image.png': typeof ShareImageDotpngRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/share': typeof ShareRoute
   '/(markdown)/help': typeof markdownHelpRoute
+  '/(markdown)/privacy': typeof markdownPrivacyRoute
   '/(markdown)/terms': typeof markdownTermsRoute
   '/plan_/settings': typeof PlanSettingsRoute
   '/share_/image.png': typeof ShareImageDotpngRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/share'
     | '/help'
+    | '/privacy'
     | '/terms'
     | '/plan/settings'
     | '/share/image.png'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/share'
     | '/help'
+    | '/privacy'
     | '/terms'
     | '/plan/settings'
     | '/share/image.png'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/share'
     | '/(markdown)/help'
+    | '/(markdown)/privacy'
     | '/(markdown)/terms'
     | '/plan_/settings'
     | '/share_/image.png'
@@ -204,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof markdownHelpRouteImport
       parentRoute: typeof markdownRouteRoute
     }
+    '/(markdown)/privacy': {
+      id: '/(markdown)/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof markdownPrivacyRouteImport
+      parentRoute: typeof markdownRouteRoute
+    }
     '/(markdown)/terms': {
       id: '/(markdown)/terms'
       path: '/terms'
@@ -230,11 +249,13 @@ declare module '@tanstack/react-router' {
 
 interface markdownRouteRouteChildren {
   markdownHelpRoute: typeof markdownHelpRoute
+  markdownPrivacyRoute: typeof markdownPrivacyRoute
   markdownTermsRoute: typeof markdownTermsRoute
 }
 
 const markdownRouteRouteChildren: markdownRouteRouteChildren = {
   markdownHelpRoute: markdownHelpRoute,
+  markdownPrivacyRoute: markdownPrivacyRoute,
   markdownTermsRoute: markdownTermsRoute,
 }
 
@@ -257,10 +278,11 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

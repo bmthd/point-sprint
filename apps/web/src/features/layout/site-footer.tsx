@@ -12,6 +12,7 @@ export const footerLinks: readonly { to: LinkProps["to"]; hash?: string; label: 
   { to: "/", hash: "notices", label: "お知らせ" },
   { to: "/help", label: "使い方・注意事項" },
   { to: "/terms", label: "利用規約" },
+  { to: "/privacy", label: "プライバシーポリシー" },
   { to: "/inquiry", label: "お問い合わせ" },
 ];
 

@@ -4,7 +4,7 @@ import { PageWithSidebar } from "../../features/layout/sidebar";
 
 /**
  * The frame of the pages written in Markdown. A route that puts `surface: "paper"` in its context
- * (利用規約) is shown on white, like a sheet of paper; the others stay on the page's gray.
+ * (利用規約、プライバシーポリシー) is shown on white, like a sheet of paper; the others stay on the page's gray.
  */
 export const Route = createFileRoute("/(markdown)")({
   component: MarkdownLayout,

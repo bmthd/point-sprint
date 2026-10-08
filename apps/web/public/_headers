@@ -1,0 +1,7 @@
+# Workers static assets apply these to the prerendered pages and other files, which are served
+# without the Worker. Keep in step with src/security-headers.ts (checked by its test).
+/*
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
