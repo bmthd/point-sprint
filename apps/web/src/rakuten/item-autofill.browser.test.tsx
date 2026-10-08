@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
-import type { ItemLookup } from "../../rakuten/item-lookup";
-import type { LookupFailure, LookupResult, RakutenItem } from "../../rakuten/item-search";
-import { createMemoryRepository } from "../../storage/memory-repository";
+import type { ItemLookup } from "./item-lookup";
+import type { LookupFailure, LookupResult, RakutenItem } from "./item-search";
+import { createMemoryRepository } from "../storage/memory-repository";
 import {
   PLAN,
   marathonPlan,
@@ -11,7 +11,7 @@ import {
   renderPlanHome,
   shopId,
   shops,
-} from "../plan-home/test-fixtures";
+} from "../test/plan-fixtures";
 
 // The Rakuten API is never called here: every test gives the editor a lookup of its own.
 

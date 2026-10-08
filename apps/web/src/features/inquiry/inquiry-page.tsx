@@ -1,11 +1,12 @@
 import { Heading, Text } from "@workspaces/ui";
-import { PageWithSidebar } from "../layout/sidebar";
+import { PageWithSidebar } from "../../layout/sidebar";
+import { NoticeSection } from "../notices/notice-section";
 import { InquiryForm, type SendInquiry } from "./inquiry-form";
 
 /** The inquiry page at `/inquiry`. */
 export function InquiryPage({ send }: { send: SendInquiry }) {
   return (
-    <PageWithSidebar maxW="640px">
+    <PageWithSidebar maxW="640px" sidebar={<NoticeSection />}>
       <Heading as="h1" fontSize="lg" mb="2">
         お問い合わせ
       </Heading>

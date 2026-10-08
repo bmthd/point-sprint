@@ -12,7 +12,8 @@ import { useMemo } from "react";
 import { calculationAtom } from "../../state/derived";
 import { addOrder, updateOrder } from "../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../state/queries";
-import { orderPointRows, pointsText, rateText, yen } from "../plan-home/order-shared";
+import { pointsText, rateText } from "../../plan/format";
+import { orderPointRows, yen } from "../plan-home/order-shared";
 import type { OrderDraft } from "./order-form";
 
 export type OrderPreview = {

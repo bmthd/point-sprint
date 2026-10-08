@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { imageSize } from "./result-card";
+import { imageSize } from "../../share/result-card";
 import { renderResultImage } from "./result-image";
 
 test("the result's OGP image is a PNG of the OGP size", async () => {

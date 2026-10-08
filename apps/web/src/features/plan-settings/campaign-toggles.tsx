@@ -9,11 +9,12 @@ import { Box, Button, Card, CheckboxCard, Heading, IconButton, Image, Text } fro
 import { useSetAtom } from "jotai";
 import { useRef, useState } from "react";
 import { toggleBenefitAtom } from "../../state/order-ops";
-import { CloseIcon } from "../plan-home/icons";
-import { rateText } from "../plan-home/order-shared";
+import { CloseIcon } from "../../icons";
+import { rateText } from "../../plan/format";
+import { imageUrl } from "../../rakuten/assets";
 import { CampaignAddDialog, TemplateList } from "./campaign-adder";
 import { useDeleteCampaign } from "./delete-campaign";
-import { imageUrl, useSaveSettingsChange, whenText } from "./settings-shared";
+import { useSaveSettingsChange, whenText } from "./settings-shared";
 
 type RateBenefit = Extract<Benefit, { kind: "rate-bonus" }>;
 

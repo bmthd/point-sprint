@@ -7,8 +7,9 @@ import { replacePlan, savePlanAtom } from "../../state/mutations";
 import { profileAtom, profileQueryAtom } from "../../state/queries";
 import { useLatestRef } from "../../use-latest-ref";
 import { useSingleFlight } from "../../use-single-flight";
-import { PageWithSidebar } from "../layout/sidebar";
-import { monthOf, msUntilTokyoMidnight, tokyoToday } from "./dates";
+import { PageWithSidebar } from "../../layout/sidebar";
+import { monthOf, msUntilTokyoMidnight, tokyoToday } from "../../dates";
+import { NoticeSection } from "../notices/notice-section";
 import { EventSection } from "./event-section";
 import { PlanSection } from "./plan-section";
 
@@ -79,7 +80,7 @@ export function PlanList({ now = () => new Date() }: { now?: () => Date }) {
     });
 
   return (
-    <PageWithSidebar maxW="768px">
+    <PageWithSidebar maxW="768px" sidebar={<NoticeSection />}>
       <VStack alignItems="stretch" gap="6">
         <EventSection
           today={today}

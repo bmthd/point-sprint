@@ -18,8 +18,8 @@ import {
   ShopNameSchema,
   ShopRateSchema,
 } from "../../form/field-schemas";
-import { tokyoToday } from "../plan-list/dates";
-import { NEW_SHOP, TAX_RATES, shopToSave, taxRateValue } from "../plan-home/order-fields";
+import { tokyoToday } from "../../dates";
+import { NEW_SHOP, TAX_RATES, shopToSave, taxRateValue } from "../../form/order-fields";
 
 // The fields are in the order the editor shows them, so a submit focuses the first error on screen.
 

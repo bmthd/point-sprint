@@ -1,6 +1,7 @@
 import { Outlet, createFileRoute, useChildMatches } from "@tanstack/react-router";
 import { Box } from "@workspaces/ui";
-import { PageWithSidebar } from "../../features/layout/sidebar";
+import { PageWithSidebar } from "../../layout/sidebar";
+import { NoticeSection } from "../../features/notices/notice-section";
 
 /**
  * The frame of the pages written in Markdown. A route that puts `surface: "paper"` in its context
@@ -17,7 +18,7 @@ function MarkdownLayout() {
   });
   return (
     <Box bg={paper ? "bg.panel" : undefined} h="full">
-      <PageWithSidebar maxW="640px">
+      <PageWithSidebar maxW="640px" sidebar={<NoticeSection />}>
         <Outlet />
       </PageWithSidebar>
     </Box>

@@ -1,9 +1,9 @@
 import { type ChannelId, type Shop, type ShopTag, channels, parseUrl } from "@workspaces/domain";
 import { Box, Button, Text, Field as UIField } from "@workspaces/ui";
 import { type ReactNode, useId, useMemo } from "react";
-import { type ShopChange, changeShop, replaceShop } from "../../state/mutations";
-import type { RakutenItem } from "../../rakuten/item-search";
-import { taxRateLabel } from "./order-shared";
+import { type ShopChange, changeShop, replaceShop } from "../state/mutations";
+import type { RakutenItem } from "../rakuten/item-search";
+import { taxRateLabel } from "../plan/format";
 
 // Fields shared by the desktop list's edit grid, its add form and the order editor.
 

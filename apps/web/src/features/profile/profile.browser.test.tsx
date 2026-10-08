@@ -13,7 +13,7 @@ import { cleanup, render } from "vitest-browser-react";
 import { createIndexedDbRepository } from "../../storage/indexed-db-repository";
 import { createMemoryRepository } from "../../storage/memory-repository";
 import type { Repository } from "../../storage/repository";
-import { Providers, shops } from "../plan-home/test-fixtures";
+import { Providers, shops } from "../../test/plan-fixtures";
 import { Profile } from "./profile";
 
 beforeEach(async () => {

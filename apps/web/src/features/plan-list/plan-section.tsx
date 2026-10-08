@@ -7,7 +7,7 @@ import { accountIdOf } from "../../state/accounts";
 import { accountSettingsAtom, planResultAtom } from "../../state/derived";
 import { deletePlanAtom } from "../../state/mutations";
 import { plansAtom, plansQueryAtom } from "../../state/queries";
-import { formatPeriod } from "./dates";
+import { formatPeriod } from "../../dates";
 
 function TrashIcon() {
   return (

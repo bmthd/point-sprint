@@ -1,7 +1,7 @@
 import { type CalculationResult, type Plan, taxIncludedTarget } from "@workspaces/domain";
 import { Box, Button, Card, Progress, Text } from "@workspaces/ui";
 import { useId, useState } from "react";
-import { ChevronIcon } from "./icons";
+import { ChevronIcon } from "../../icons";
 import { PointBreakdown } from "./point-breakdown";
 import { ShopLadder, currentRow, manYen } from "./shop-ladder";
 

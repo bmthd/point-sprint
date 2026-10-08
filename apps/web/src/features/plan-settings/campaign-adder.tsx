@@ -34,7 +34,7 @@ import { dateSchema } from "../../form/field-schemas";
 import { Form, bind, errorsOf } from "../../form/form";
 import { addBenefitAtom } from "../../state/order-ops";
 import { type CampaignFormSchema, SPECS, campaignFormSchema } from "./campaign-form";
-import { imageUrl } from "./settings-shared";
+import { imageUrl } from "../../rakuten/assets";
 
 /** The templates the user adds with dates or a period of their own, in the master's order. */
 export const addableTemplates = campaignTemplates.filter(

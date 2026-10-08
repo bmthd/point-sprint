@@ -1,6 +1,6 @@
 import { Box, Button, type StackProps, Text, VStack, useClipboard } from "@workspaces/ui";
 import { useId, useState } from "react";
-import { ShareIcon } from "../plan-home/icons";
+import { ShareIcon } from "../icons";
 import { type ShareTarget, shareLinks, shareMessage } from "./share-target";
 
 /** Whether the device's own share sheet can post `target`. */

@@ -13,7 +13,7 @@ import { saveShopAtom } from "../../state/mutations";
 import { addOrderAtom } from "../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../state/queries";
 import { useSingleFlight } from "../../use-single-flight";
-import { AutofillStatusText } from "../item-autofill/item-autofill";
+import { AutofillStatusText } from "../../rakuten/item-autofill";
 import {
   OrderFormSchema,
   type OrderFormOutput,
@@ -28,7 +28,8 @@ import {
   useFormInput,
   useOrderAutofill,
 } from "../order-editor/order-form-store";
-import { PlusIcon } from "./icons";
+import { PlusIcon } from "../../icons";
+import { pointsText } from "../../plan/format";
 import {
   NEW_SHOP,
   TaxRateOptions,
@@ -36,8 +37,8 @@ import {
   fieldGrid,
   shopFromUrl,
   useSortedShops,
-} from "./order-fields";
-import { orderSaveFailedAtom, pointsText } from "./order-shared";
+} from "../../form/order-fields";
+import { orderSaveFailedAtom } from "./order-shared";
 
 const sumOfTotals = (results: Map<string, { total: number }>) =>
   [...results.values()].reduce((sum, result) => sum + result.total, 0);

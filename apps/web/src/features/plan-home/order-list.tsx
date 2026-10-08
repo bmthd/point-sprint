@@ -3,7 +3,7 @@ import { Box, Button, List, Text } from "@workspaces/ui";
 import { useAtom } from "jotai";
 import { useRef } from "react";
 import { reorderModeAtom } from "../../state/ui";
-import { PlusIcon } from "./icons";
+import { PlusIcon } from "../../icons";
 import { OrderCard } from "./order-card";
 import { HeaderButton, OrdersHeading, SaveFailedAlert, useOrderConfirm } from "./order-shared";
 

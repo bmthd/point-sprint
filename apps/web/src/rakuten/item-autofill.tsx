@@ -2,10 +2,10 @@ import { channels, parseUrl } from "@workspaces/domain";
 import { Box, Text } from "@workspaces/ui";
 import { atom, useAtomValue } from "jotai";
 import { useEffect, useRef, useState } from "react";
-import { browserItemLookup } from "../../rakuten/browser";
-import type { ItemLookup } from "../../rakuten/item-lookup";
-import type { ItemPage, RakutenItem } from "../../rakuten/item-search";
-import { useLatestRef } from "../../use-latest-ref";
+import { browserItemLookup } from "./browser";
+import type { ItemLookup } from "./item-lookup";
+import type { ItemPage, RakutenItem } from "./item-search";
+import { useLatestRef } from "../use-latest-ref";
 
 /**
  * The lookup of an item page, or `undefined` when the build has no Rakuten settings. Wrapped in an

@@ -9,7 +9,7 @@ import {
   pointGroupOf,
   tierRate,
 } from "@workspaces/domain";
-import { Badge, Button, Heading, Modal, Tag, Text, useDisclosure } from "@workspaces/ui";
+import { Badge, Button, Heading, Modal, Text, useDisclosure } from "@workspaces/ui";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
@@ -24,6 +24,7 @@ import {
 import { clearOrdersAtom, removeOrderAtom } from "../../state/order-ops";
 import { shopsAtom } from "../../state/queries";
 import { openOrderIdAtom } from "../../state/ui";
+import { taxRateLabel } from "../../plan/format";
 
 // What the phone's order cards and the desktop's order list have in common.
 
@@ -173,13 +174,6 @@ export function useSaveOrderChange() {
 }
 
 export const yen = (value: number) => `¥${value.toLocaleString("ja-JP")}`;
-export const pointsText = (value: number) => `${value.toLocaleString("ja-JP")}P`;
-export const rateText = (rate: number, plus = true) =>
-  `${plus ? "+" : ""}${Number(rate.toFixed(2)).toLocaleString("ja-JP")}倍`;
-
-export const taxRateLabel = (rate: number) =>
-  rate === 0 ? "非課税" : `${Math.round(rate * 100)}%`;
-
 export const taxLabel = (items: LineItem[]) =>
   [...new Set(items.map((item) => item.taxRate))].map(taxRateLabel).join("・");
 
@@ -192,15 +186,6 @@ export const orderTitle = (order: Order) => {
 export function useShopName(shopId: string) {
   const shops = useAtomValue(shopsAtom);
   return shops.find((shop) => shop.id === shopId)?.name ?? "不明なショップ";
-}
-
-/** A campaign that gave the order points, as a small display-only chip. */
-export function CampaignChip({ children }: { children: ReactNode }) {
-  return (
-    <Tag as="span" size="sm" variant="outline" fullRounded>
-      {children}
-    </Tag>
-  );
 }
 
 /** An order's position among the counted orders, or 「保留」 for a held order. */

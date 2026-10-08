@@ -1,6 +1,6 @@
 import { type OfficialEvent, officialEvents } from "@workspaces/domain";
 import { Badge, Box, Button, Card, Heading, Text, VStack } from "@workspaces/ui";
-import { monthDayWithWeekday } from "./dates";
+import { monthDayWithWeekday } from "../../dates";
 
 /** The most a shop-around benefit adds, and the cap on what it pays. */
 function shopAroundSummary(event: OfficialEvent): string {

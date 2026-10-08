@@ -5,7 +5,7 @@ import { CommitField } from "../../form/commit-field";
 import { ShopNameSchema } from "../../form/field-schemas";
 import { changeShop, saveShopAtom } from "../../state/mutations";
 import { shopsAtom } from "../../state/queries";
-import { withTag } from "../plan-home/order-fields";
+import { withTag } from "../../form/order-fields";
 
 const is39 = (shop: Shop) => shop.tags.includes("39shop");
 

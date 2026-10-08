@@ -14,11 +14,11 @@ import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
 import { useHydrateAtoms } from "jotai/utils";
 import type { ReactNode } from "react";
 import { cleanup, render } from "vitest-browser-react";
-import type { ItemLookup } from "../../rakuten/item-lookup";
-import { repositoryAtom } from "../../state/repository";
-import { itemLookupAtom } from "../item-autofill/item-autofill";
-import type { Repository } from "../../storage/repository";
-import { PlanHome } from "./plan-home";
+import type { ItemLookup } from "../rakuten/item-lookup";
+import { repositoryAtom } from "../state/repository";
+import { itemLookupAtom } from "../rakuten/item-autofill";
+import type { Repository } from "../storage/repository";
+import { PlanHome } from "../features/plan-home/plan-home";
 
 // Plans, shops and a rendered plan home shared by the plan home's browser tests.
 

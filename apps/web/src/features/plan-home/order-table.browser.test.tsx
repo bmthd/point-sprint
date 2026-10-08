@@ -8,7 +8,7 @@ import { updateOrderAtom } from "../../state/order-ops";
 import { plansQueryAtom, shopsQueryAtom } from "../../state/queries";
 import { createMemoryRepository } from "../../storage/memory-repository";
 import { misalignedFields } from "../../test-layout";
-import { tokyoToday } from "../plan-list/dates";
+import { tokyoToday } from "../../dates";
 import { OrderTable } from "./order-table";
 import {
   PLAN,
@@ -25,7 +25,7 @@ import {
   shops,
   spuBenefit,
   summaryText,
-} from "./test-fixtures";
+} from "../../test/plan-fixtures";
 
 const rowRenders = vi.hoisted(() => new Map<string, number>());
 

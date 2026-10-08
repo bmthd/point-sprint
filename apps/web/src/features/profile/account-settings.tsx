@@ -7,7 +7,7 @@ import { AccountNameSchema } from "../../form/field-schemas";
 import { accountSettingsAtom } from "../../state/derived";
 import { saveProfileAtom } from "../../state/mutations";
 import { profileQueryAtom } from "../../state/queries";
-import { CloseIcon } from "../plan-home/icons";
+import { CloseIcon } from "../../icons";
 
 /** The profile with its accounts changed; the default account is kept even when not stored yet. */
 const withAccounts = (profile: Profile, change: (accounts: Account[]) => Account[]): Profile => ({

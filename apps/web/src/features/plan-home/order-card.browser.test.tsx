@@ -23,7 +23,7 @@ import {
   shops,
   spuBenefit,
   summaryText,
-} from "./test-fixtures";
+} from "../../test/plan-fixtures";
 
 const list = () => document.querySelector<HTMLElement>('ul[aria-label="注文"]');
 const cards = () => Array.from(list()?.children ?? []) as HTMLElement[];

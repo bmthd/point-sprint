@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import subsetFont from "subset-font";
 import type { Plugin } from "vite";
-import { cardGlyphs } from "./src/features/share/card-glyphs.ts";
+import { cardGlyphs } from "./src/share/card-glyphs.ts";
 
 const id = "virtual:og-fonts";
 const resolvedId = `\0${id}`;

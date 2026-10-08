@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
-import { NEW_SHOP } from "../plan-home/order-fields";
+import { NEW_SHOP } from "../../form/order-fields";
 import { type ItemInput, OrderFormSchema, emptyInput, emptyItem } from "./order-form";
 
 const SHOP_ID = "a0000000-0000-4000-8000-000000000001";

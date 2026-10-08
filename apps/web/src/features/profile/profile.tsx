@@ -5,8 +5,8 @@ import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { saveProfileAtom } from "../../state/mutations";
 import { profileAtom, profileQueryAtom, storageHealthQueryAtom } from "../../state/queries";
-import { StorageHealthFailure, storageMessages } from "../plan-home/warnings";
-import { SpuTileGrid } from "../plan-settings/spu-tiles";
+import { StorageHealthFailure, storageMessages } from "../../storage/health-message";
+import { SpuTileGrid } from "../../spu/tiles";
 import { AccountSettings } from "./account-settings";
 import { ShopRegistry } from "./shop-registry";
 

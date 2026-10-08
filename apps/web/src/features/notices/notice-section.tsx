@@ -7,7 +7,7 @@ import {
   Text,
   VStack,
 } from "@workspaces/ui";
-import { SidebarSection } from "../layout/sidebar-section";
+import { SidebarSection } from "../../layout/sidebar-section";
 import { type Notice, newestFirst, notices as allNotices, paragraphs } from "./notices";
 
 /** How many of the latest notices are open; the older ones are folded under one heading. */

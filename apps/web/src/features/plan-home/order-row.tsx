@@ -42,8 +42,10 @@ import {
 } from "../../state/order-ops";
 import { shopsAtom } from "../../state/queries";
 import { openOrderIdAtom } from "../../state/ui";
-import { monthDayWithWeekday } from "../plan-list/dates";
-import { ChevronIcon, GripIcon } from "./icons";
+import { monthDayWithWeekday } from "../../dates";
+import { ChevronIcon, GripIcon } from "../../icons";
+import { CampaignChip } from "../../plan/campaign-chip";
+import { pointsText, rateText, taxRateLabel } from "../../plan/format";
 import { CommitField } from "../../form/commit-field";
 import {
   AmountSchema,
@@ -61,18 +63,14 @@ import {
   withTag,
   taxRateValue,
   useSortedShops,
-} from "./order-fields";
+} from "../../form/order-fields";
 import {
-  CampaignChip,
   OrderBadge,
   groupTotalsOf,
   isOpenAtom,
   orderCardPointsAtom,
   orderTitle,
-  pointsText,
-  rateText,
   taxLabel,
-  taxRateLabel,
   useSaveOrderChange,
   useShopName,
   yen,

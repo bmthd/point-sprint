@@ -27,7 +27,7 @@ import {
   order,
   renderPlanHome,
   shops,
-} from "../plan-home/test-fixtures";
+} from "../../test/plan-fixtures";
 import { PlanSettings } from "./plan-settings";
 
 beforeEach(async () => {

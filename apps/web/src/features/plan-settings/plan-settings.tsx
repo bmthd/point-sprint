@@ -2,14 +2,15 @@ import type { Plan } from "@workspaces/domain";
 import { Box, Button, Drawer, Heading, IconButton, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { planResultAtom } from "../../state/derived";
-import { BackIcon, CloseIcon, PencilIcon } from "../plan-home/icons";
+import { BackIcon, CloseIcon, PencilIcon } from "../../icons";
 import { PlanPage } from "../plan-home/plan-page";
 import { RouterButton, RouterLink } from "../../router-link";
 import { AccountPicker } from "./account-picker";
 import { CampaignToggles } from "./campaign-toggles";
 import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared";
 import { ShopAroundSettings, shopAroundOf } from "./shop-around-settings";
-import { SpuTiles, spuRate } from "./spu-tiles";
+import { spuRate } from "../../spu/tiles";
+import { SpuTiles } from "./spu-tiles";
 
 /** 「保存して計算に反映」, in the drawer's footer and in the page's bottom bar. */
 const primaryButton = { colorScheme: "primary", size: "lg", w: "full" } as const;

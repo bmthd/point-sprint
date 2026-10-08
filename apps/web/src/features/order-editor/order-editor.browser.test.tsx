@@ -2,7 +2,7 @@ import type { Benefit, Plan, Shop } from "@workspaces/domain";
 import { beforeEach, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { createMemoryRepository } from "../../storage/memory-repository";
-import { tokyoToday } from "../plan-list/dates";
+import { tokyoToday } from "../../dates";
 import {
   PLAN,
   baseBenefit,
@@ -15,7 +15,7 @@ import {
   shopId,
   shops,
   spuBenefit,
-} from "../plan-home/test-fixtures";
+} from "../../test/plan-fixtures";
 
 beforeEach(async () => {
   await page.viewport(390, 844);

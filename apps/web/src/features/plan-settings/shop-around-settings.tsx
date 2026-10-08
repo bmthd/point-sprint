@@ -4,7 +4,8 @@ import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
 import * as v from "valibot";
 import { updateBenefitAtom } from "../../state/order-ops";
-import { ChevronIcon } from "../plan-home/icons";
+import { ChevronIcon } from "../../icons";
+import { rateText } from "../../plan/format";
 import { CommitField } from "../../form/commit-field";
 import {
   END_BEFORE_START,
@@ -12,7 +13,6 @@ import {
   dateSchema,
   pointsSchema,
 } from "../../form/field-schemas";
-import { rateText } from "../plan-home/order-shared";
 import { isAddedCampaign } from "./campaign-toggles";
 import { useDeleteCampaign } from "./delete-campaign";
 import { useSaveSettingsChange, whenText } from "./settings-shared";

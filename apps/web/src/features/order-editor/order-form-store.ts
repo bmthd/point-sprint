@@ -5,13 +5,8 @@
 import { type FormStore, getInput, setInput, useField } from "@formisch/react";
 import { useAtomValue } from "jotai";
 import { shopsAtom } from "../../state/queries";
-import { useItemAutofill } from "../item-autofill/item-autofill";
-import {
-  NEW_SHOP,
-  type ShopFromUrl,
-  fieldsFromItem,
-  shopFromItem,
-} from "../plan-home/order-fields";
+import { useItemAutofill } from "../../rakuten/item-autofill";
+import { NEW_SHOP, type ShopFromUrl, fieldsFromItem, shopFromItem } from "../../form/order-fields";
 import type { OrderFormSchema } from "./order-form";
 
 // What the order editor and the desktop list's add form do with the same order form.

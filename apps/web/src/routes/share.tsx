@@ -5,7 +5,7 @@ import {
   resultImagePath,
   resultSearchSchema,
   resultSummary,
-} from "../features/share/result-card";
+} from "../share/result-card";
 import { SharedResultPage } from "../features/share/shared-result-page";
 import { pageHead, siteUrl } from "../page-head";
 

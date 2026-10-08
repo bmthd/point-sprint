@@ -18,7 +18,7 @@ import {
   orderId,
   shops,
   spuBenefit,
-} from "./test-fixtures";
+} from "../../test/plan-fixtures";
 
 const cardRenders = vi.hoisted(() => new Map<string, number>());
 

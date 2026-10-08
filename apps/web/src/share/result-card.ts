@@ -1,6 +1,6 @@
 import type { Node } from "takumi-js";
 import * as v from "valibot";
-import { siteName, siteUrl } from "../../page-head";
+import { siteName, siteUrl } from "../page-head";
 
 /** A plan's figures, as a shared result carries them. `rate` is left out when nothing is bought. */
 export type ResultFigures = { points: number; rate?: number };
