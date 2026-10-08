@@ -1,6 +1,6 @@
 import * as v from "valibot";
 
-// The Rakuten API settings, shared by the browser (item lookup) and the build (ads).
+// The Rakuten API settings, shared by the browser (item lookup) and the build (the guides' item lists).
 
 /** The only site the app's settings let call the API: Rakuten checks the `Origin` header. */
 export const ALLOWED_ORIGIN = "https://point-sprint.bmth.dev";

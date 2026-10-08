@@ -6,7 +6,7 @@ import type { FileRoutesById } from "../../../routeTree.gen";
 import { markdownExtensions } from "./-markdown-extensions";
 
 /** The Markdown's tags, drawn with Yamada UI to match the other pages. */
-const components = {
+export const markdownComponents = {
   h1: ({ children, id }) => (
     <Heading as="h1" id={id} fontSize="lg" mb="4">
       {children}
@@ -63,7 +63,14 @@ const components = {
  */
 export const headingIds = (text: string) => text;
 
-type MarkdownRouteId = Extract<keyof FileRoutesById, `/(markdown)/${string}`>;
+/**
+ * The routes under `(markdown)` that show their Markdown with `MarkdownBody`. The shopping guides
+ * load theirs from `src/guides/articles/` and draw it with `GuideArticle`.
+ */
+type MarkdownRouteId = Exclude<
+  Extract<keyof FileRoutesById, `/(markdown)/${string}`>,
+  `/(markdown)/guides/${string}`
+>;
 
 /** The routes under `(markdown)` whose context has no Markdown: `never` when there is none. */
 type RoutesWithoutMarkdown = {
@@ -84,7 +91,11 @@ export function MarkdownBody() {
   // Unreachable while `everyRouteHasMarkdown` type-checks.
   if (markdown === undefined) throw new Error("This route has no Markdown in its context.");
   return (
-    <Markdown components={components} extensions={markdownExtensions} headingIds={headingIds}>
+    <Markdown
+      components={markdownComponents}
+      extensions={markdownExtensions}
+      headingIds={headingIds}
+    >
       {markdown}
     </Markdown>
   );

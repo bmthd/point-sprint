@@ -22,6 +22,10 @@ const apiItem = (fields: Record<string, unknown> = {}) => ({
   shopName: "ショップA",
   shopCode: "shop-a",
   reviewCount: 3,
+  mediumImageUrls: [
+    { imageUrl: "https://thumbnail.image.rakuten.co.jp/@0_mall/shop-a/item-1.jpg?_ex=128x128" },
+    { imageUrl: "https://thumbnail.image.rakuten.co.jp/@0_mall/shop-a/item-1b.jpg?_ex=128x128" },
+  ],
   ...fields,
 });
 
@@ -121,6 +125,7 @@ test("keeps only the fields the app uses", async () => {
       pageUrl: "https://item.rakuten.co.jp/shop-a/item-1/",
       itemUrl: apiItem().itemUrl,
       affiliateUrl: apiItem().affiliateUrl,
+      imageUrl: "https://thumbnail.image.rakuten.co.jp/@0_mall/shop-a/item-1.jpg?_ex=128x128",
     },
   });
 });
@@ -159,6 +164,13 @@ test("items only on other pages are not found", async () => {
     ),
   });
   expect(result).toEqual({ ok: false, error: { reason: "not-found" } });
+});
+
+test("an item without images has no image", async () => {
+  const result = await lookupItem(config, page, {
+    fetch: fetchReturning(json({ Items: [{ Item: apiItem({ mediumImageUrls: [] }) }] })),
+  });
+  expect(result.ok && result.item.imageUrl).toBeUndefined();
 });
 
 test("a price without tax is not given as the price with tax", async () => {
@@ -218,6 +230,7 @@ const found = ({ itemManageNumber }: ItemPage): LookupResult => ({
     pageUrl: `https://item.rakuten.co.jp/shop-a/${itemManageNumber}/`,
     itemUrl: `https://item.rakuten.co.jp/shop-a/${itemManageNumber}/`,
     affiliateUrl: "",
+    imageUrl: undefined,
   },
 });
 
