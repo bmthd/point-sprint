@@ -151,6 +151,53 @@ describe("siteverify", () => {
       error: { reason: "network" },
     });
   });
+
+  describe("checks where a good token was given", () => {
+    const expected = { hostname: "point-sprint.bmth.dev", action: "inquiry" };
+    const answeredWith = (answer: object, secret = "secret") =>
+      verifyTurnstile("token", secret, {
+        ...expected,
+        fetch: async () => json({ success: true, "error-codes": [], ...answer }),
+      });
+    const rejected = (code: string) => ({
+      ok: false,
+      error: { reason: "rejected", errorCodes: [code] },
+    });
+
+    test("takes a token from this host's inquiry widget", async () => {
+      expect(await answeredWith(expected)).toEqual({ ok: true });
+    });
+
+    test.each([
+      ["another host", { ...expected, hostname: "evil.example" }],
+      ["no host", { action: "inquiry" }],
+    ])("turns down a token from %s", async (_, answer) => {
+      expect(await answeredWith(answer)).toEqual(rejected("hostname-mismatch"));
+    });
+
+    test.each([
+      ["another action", { ...expected, action: "login" }],
+      ["no action", { hostname: expected.hostname }],
+    ])("turns down a token with %s", async (_, answer) => {
+      expect(await answeredWith(answer)).toEqual(rejected("action-mismatch"));
+    });
+
+    test("checks neither with Cloudflare's test secret, which answers `example.com`", async () => {
+      const testSecret = "1x0000000000000000000000000000000AA";
+      expect(await answeredWith({ hostname: "example.com", action: "" }, testSecret)).toEqual({
+        ok: true,
+      });
+    });
+
+    test("still reports the rejection of the test secret that always fails", async () => {
+      expect(
+        await verifyTurnstile("token", "2x0000000000000000000000000000000AA", {
+          ...expected,
+          fetch: async () => json({ success: false, "error-codes": ["invalid-input-response"] }),
+        }),
+      ).toEqual(rejected("invalid-input-response"));
+    });
+  });
 });
 
 describe("an inquiry", () => {
@@ -254,6 +301,22 @@ describe("an inquiry", () => {
       "inquiry failed at turnstile: rejected (timeout-or-duplicate)",
     );
     expectNothingOfTheUserLogged(log);
+  });
+
+  test("stops at Turnstile when the token was given on another host", async () => {
+    const {
+      deps: d,
+      send,
+      log,
+    } = deps({
+      verifyToken: async () => ({
+        ok: false,
+        error: { reason: "rejected", errorCodes: ["hostname-mismatch"] },
+      }),
+    });
+    expect(await handleInquiry(request, d)).toEqual({ ok: false, stage: "turnstile" });
+    expect(send).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith("inquiry failed at turnstile: rejected (hostname-mismatch)");
   });
 
   test("stops at Turnstile when siteverify cannot be reached", async () => {
