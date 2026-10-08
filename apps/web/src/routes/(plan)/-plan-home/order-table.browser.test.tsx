@@ -7,7 +7,7 @@ import { page, userEvent } from "vitest/browser";
 import { updateOrderAtom } from "../../../state/order-ops";
 import { plansQueryAtom, shopsQueryAtom } from "../../../state/queries";
 import { createMemoryRepository } from "../../../storage/memory-repository";
-import { misalignedFields } from "../../../test-layout";
+import { DATE_PICKER_FIELD, misalignedFields } from "../../../test-layout";
 import { tokyoToday } from "../../../ui/dates";
 import { OrderTable } from "./order-table";
 import {
@@ -147,7 +147,11 @@ test("fits 1024px without horizontal scroll", async () => {
       .element()
       .closest("label"),
     screen.getByRole("button", { name: `${long}の注文の詳細と編集` }).element(),
-    ...Array.from(list()?.querySelectorAll("input:not([type=checkbox]), select, button") ?? []),
+    // A date picker's box, not its input, is what is tapped.
+    ...Array.from(
+      list()?.querySelectorAll("input:not([type=checkbox]), select, button") ?? [],
+      (control) => control.closest(DATE_PICKER_FIELD) ?? control,
+    ),
   ];
   for (const control of controls) {
     const { width, height } = (control as HTMLElement).getBoundingClientRect();
@@ -438,7 +442,7 @@ test("expanded row shows group totals and edits the order", async () => {
   await expect.poll(() => rowOf("ショップ0")?.textContent).toContain("バスタオル");
   await userEvent.selectOptions(screen.getByRole("combobox", { name: "税率" }), "8%");
   // The closed add form's date field is the second one.
-  await screen.getByLabelText("注文日").first().fill("2026-10-07");
+  await screen.getByLabelText("注文日").first().fill("2026/10/07");
   await screen.getByRole("textbox", { name: "ショップ独自倍率" }).fill("3");
   await userEvent.keyboard("{Enter}");
   await screen.getByRole("button", { name: "リピート購入" }).click();

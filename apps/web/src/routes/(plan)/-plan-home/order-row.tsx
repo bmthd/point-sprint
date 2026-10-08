@@ -11,7 +11,6 @@ import {
   Button,
   Checkbox,
   IconButton,
-  Input,
   List,
   NativeSelect,
   Text,
@@ -62,6 +61,7 @@ import {
   taxRateValue,
   useSortedShops,
 } from "../-order-fields";
+import { FieldDatePicker, isoDate, parseIsoDate } from "../-date-picker-field";
 import {
   CampaignChip,
   OrderBadge,
@@ -177,14 +177,12 @@ function OrderEditor({
           </NativeSelect.Root>
         </Field>
         <Field label="注文日" error={dateError}>
-          <Input
+          <FieldDatePicker
             size="lg"
-            type="date"
-            fontVariantNumeric="tabular-nums"
-            defaultValue={order.date}
+            defaultValue={parseIsoDate(order.date)}
             key={order.date}
-            onChange={(event) => {
-              const parsed = v.safeParse(OrderDateSchema, event.currentTarget.value);
+            onChange={(date) => {
+              const parsed = v.safeParse(OrderDateSchema, date ? isoDate(date) : "");
               setDateError(parsed.success ? undefined : parsed.issues[0].message);
               if (parsed.success && parsed.output !== order.date) {
                 saveOrder({ ...order, date: parsed.output });
