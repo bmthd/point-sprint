@@ -213,13 +213,35 @@ test("adds a sports-win day from the template", async () => {
 
   await screen.getByRole("button", { name: /^勝ったら倍/ }).click();
   const dialog = screen.getByRole("dialog", { name: "勝ったら倍を追加" });
-  await dialog.getByLabelText("日付").fill("2026-10-06");
+  const date = dialog.getByLabelText("日付");
+  // Opening the dialog neither focuses the date nor opens its calendar.
+  await expect.element(date).toBeVisible();
+  await expect.element(date).not.toHaveFocus();
+  await expect.element(screen.getByRole("grid")).not.toBeInTheDocument();
+  // The dialog shows the campaign's image, which follows the chosen rate.
+  const thumbnail = () => dialog.element().querySelector("header img");
+  expect(thumbnail()).toHaveAttribute(
+    "src",
+    "https://assets.bmth.dev/point-sprint/img/campaign/sports.webp",
+  );
+
+  // Tapping the date opens the calendar, not the on-screen keyboard, and a day picked there fills
+  // it in.
+  await expect.element(date).toHaveAttribute("inputmode", "none");
+  await date.click();
+  const calendar = screen.getByRole("grid");
+  await calendar.getByText("6", { exact: true }).click();
+  await expect.element(date).toHaveValue("2026/10/06");
+  await expect.element(calendar).not.toBeInTheDocument();
   const rate = dialog.getByRole("radiogroup", { name: "倍率" });
-  const double = rate.getByRole("radio", { name: "+2倍" });
-  await expect.element(rate.getByRole("radio", { name: "+1倍" })).toBeChecked();
-  // The radio is visually hidden under its segment, so the segment's text is tapped.
-  await rate.getByText("+2倍").click();
+  const double = rate.getByRole("radio", { name: /^\+2倍/ });
+  await expect.element(rate.getByRole("radio", { name: /^\+1倍/ })).toBeChecked();
+  // The radio is visually hidden under its card, so the card's text is tapped.
+  await rate.getByText("両方のチームが勝った日").click();
   await expect.element(double).toBeChecked();
+  await expect
+    .poll(thumbnail)
+    .toHaveAttribute("src", "https://assets.bmth.dev/point-sprint/img/campaign/sports-w.webp");
   await dialog.getByRole("button", { name: "追加する" }).click();
 
   await expect.element(dialog).not.toBeInTheDocument();
@@ -258,8 +280,8 @@ test("prevents adding the same 39shop period twice", async () => {
   };
 
   const first = await add39();
-  await expect.element(first.getByLabelText("開始日")).toHaveValue("2026-10-04");
-  await expect.element(first.getByLabelText("終了日")).toHaveValue("2026-10-09");
+  await expect.element(first.getByLabelText("開始日")).toHaveValue("2026/10/04");
+  await expect.element(first.getByLabelText("終了日")).toHaveValue("2026/10/09");
   await first.getByRole("button", { name: "追加する" }).click();
   await expect.element(first).not.toBeInTheDocument();
   await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
