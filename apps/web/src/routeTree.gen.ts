@@ -9,31 +9,31 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PlanRouteImport } from './routes/plan'
-import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ShareRouteImport } from './routes/share'
+import { Route as planPlanRouteImport } from './routes/(plan)/plan'
+import { Route as planProfileRouteImport } from './routes/(plan)/profile'
 import { Route as siteIndexRouteImport } from './routes/(site)/index'
 import { Route as sitemarkdownRouteRouteImport } from './routes/(site)/(markdown)/route'
 import { Route as siteInquiryRouteImport } from './routes/(site)/inquiry'
-import { Route as PlanSettingsRouteImport } from './routes/plan_.settings'
 import { Route as ShareImageDotpngRouteImport } from './routes/share_.image[.]png'
+import { Route as planPlanSettingsRouteImport } from './routes/(plan)/plan_.settings'
 import { Route as sitemarkdownHelpRouteImport } from './routes/(site)/(markdown)/help'
 import { Route as sitemarkdownPrivacyRouteImport } from './routes/(site)/(markdown)/privacy'
 import { Route as sitemarkdownTermsRouteImport } from './routes/(site)/(markdown)/terms'
 
-const PlanRoute = PlanRouteImport.update({
-  id: '/plan',
-  path: '/plan',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ShareRoute = ShareRouteImport.update({
   id: '/share',
   path: '/share',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const planPlanRoute = planPlanRouteImport.update({
+  id: '/(plan)/plan',
+  path: '/plan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const planProfileRoute = planProfileRouteImport.update({
+  id: '/(plan)/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const siteIndexRoute = siteIndexRouteImport.update({
@@ -50,14 +50,14 @@ const siteInquiryRoute = siteInquiryRouteImport.update({
   path: '/inquiry',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlanSettingsRoute = PlanSettingsRouteImport.update({
-  id: '/plan_/settings',
-  path: '/plan/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ShareImageDotpngRoute = ShareImageDotpngRouteImport.update({
   id: '/share_/image.png',
   path: '/share/image.png',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const planPlanSettingsRoute = planPlanSettingsRouteImport.update({
+  id: '/(plan)/plan_/settings',
+  path: '/plan/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const sitemarkdownHelpRoute = sitemarkdownHelpRouteImport.update({
@@ -77,39 +77,39 @@ const sitemarkdownTermsRoute = sitemarkdownTermsRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/plan': typeof PlanRoute
-  '/profile': typeof ProfileRoute
   '/share': typeof ShareRoute
+  '/plan': typeof planPlanRoute
+  '/profile': typeof planProfileRoute
   '/inquiry': typeof siteInquiryRoute
-  '/plan/settings': typeof PlanSettingsRoute
   '/share/image.png': typeof ShareImageDotpngRoute
   '/': typeof siteIndexRoute
+  '/plan/settings': typeof planPlanSettingsRoute
   '/help': typeof sitemarkdownHelpRoute
   '/privacy': typeof sitemarkdownPrivacyRoute
   '/terms': typeof sitemarkdownTermsRoute
 }
 export interface FileRoutesByTo {
-  '/plan': typeof PlanRoute
-  '/profile': typeof ProfileRoute
   '/share': typeof ShareRoute
+  '/plan': typeof planPlanRoute
+  '/profile': typeof planProfileRoute
   '/inquiry': typeof siteInquiryRoute
-  '/plan/settings': typeof PlanSettingsRoute
   '/share/image.png': typeof ShareImageDotpngRoute
   '/': typeof siteIndexRoute
+  '/plan/settings': typeof planPlanSettingsRoute
   '/help': typeof sitemarkdownHelpRoute
   '/privacy': typeof sitemarkdownPrivacyRoute
   '/terms': typeof sitemarkdownTermsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/plan': typeof PlanRoute
-  '/profile': typeof ProfileRoute
   '/share': typeof ShareRoute
   '/(site)/(markdown)': typeof sitemarkdownRouteRouteWithChildren
+  '/(plan)/plan': typeof planPlanRoute
+  '/(plan)/profile': typeof planProfileRoute
   '/(site)/inquiry': typeof siteInquiryRoute
-  '/plan_/settings': typeof PlanSettingsRoute
   '/share_/image.png': typeof ShareImageDotpngRoute
   '/(site)/': typeof siteIndexRoute
+  '/(plan)/plan_/settings': typeof planPlanSettingsRoute
   '/(site)/(markdown)/help': typeof sitemarkdownHelpRoute
   '/(site)/(markdown)/privacy': typeof sitemarkdownPrivacyRoute
   '/(site)/(markdown)/terms': typeof sitemarkdownTermsRoute
@@ -117,75 +117,75 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/share'
     | '/plan'
     | '/profile'
-    | '/share'
     | '/inquiry'
-    | '/plan/settings'
     | '/share/image.png'
     | '/'
+    | '/plan/settings'
     | '/help'
     | '/privacy'
     | '/terms'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/share'
     | '/plan'
     | '/profile'
-    | '/share'
     | '/inquiry'
-    | '/plan/settings'
     | '/share/image.png'
     | '/'
+    | '/plan/settings'
     | '/help'
     | '/privacy'
     | '/terms'
   id:
     | '__root__'
-    | '/plan'
-    | '/profile'
     | '/share'
     | '/(site)/(markdown)'
+    | '/(plan)/plan'
+    | '/(plan)/profile'
     | '/(site)/inquiry'
-    | '/plan_/settings'
     | '/share_/image.png'
     | '/(site)/'
+    | '/(plan)/plan_/settings'
     | '/(site)/(markdown)/help'
     | '/(site)/(markdown)/privacy'
     | '/(site)/(markdown)/terms'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  PlanRoute: typeof PlanRoute
-  ProfileRoute: typeof ProfileRoute
   ShareRoute: typeof ShareRoute
   sitemarkdownRouteRoute: typeof sitemarkdownRouteRouteWithChildren
+  planPlanRoute: typeof planPlanRoute
+  planProfileRoute: typeof planProfileRoute
   siteInquiryRoute: typeof siteInquiryRoute
-  PlanSettingsRoute: typeof PlanSettingsRoute
   ShareImageDotpngRoute: typeof ShareImageDotpngRoute
   siteIndexRoute: typeof siteIndexRoute
+  planPlanSettingsRoute: typeof planPlanSettingsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/plan': {
-      id: '/plan'
-      path: '/plan'
-      fullPath: '/plan'
-      preLoaderRoute: typeof PlanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/share': {
       id: '/share'
       path: '/share'
       fullPath: '/share'
       preLoaderRoute: typeof ShareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(plan)/plan': {
+      id: '/(plan)/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof planPlanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(plan)/profile': {
+      id: '/(plan)/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof planProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(site)/': {
@@ -209,18 +209,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof siteInquiryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/plan_/settings': {
-      id: '/plan_/settings'
-      path: '/plan/settings'
-      fullPath: '/plan/settings'
-      preLoaderRoute: typeof PlanSettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/share_/image.png': {
       id: '/share_/image.png'
       path: '/share/image.png'
       fullPath: '/share/image.png'
       preLoaderRoute: typeof ShareImageDotpngRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(plan)/plan_/settings': {
+      id: '/(plan)/plan_/settings'
+      path: '/plan/settings'
+      fullPath: '/plan/settings'
+      preLoaderRoute: typeof planPlanSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(site)/(markdown)/help': {
@@ -263,14 +263,14 @@ const sitemarkdownRouteRouteWithChildren =
   sitemarkdownRouteRoute._addFileChildren(sitemarkdownRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  PlanRoute: PlanRoute,
-  ProfileRoute: ProfileRoute,
   ShareRoute: ShareRoute,
   sitemarkdownRouteRoute: sitemarkdownRouteRouteWithChildren,
+  planPlanRoute: planPlanRoute,
+  planProfileRoute: planProfileRoute,
   siteInquiryRoute: siteInquiryRoute,
-  PlanSettingsRoute: PlanSettingsRoute,
   ShareImageDotpngRoute: ShareImageDotpngRoute,
   siteIndexRoute: siteIndexRoute,
+  planPlanSettingsRoute: planPlanSettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
