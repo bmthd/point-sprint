@@ -18,6 +18,9 @@ import { plansAtom } from "../../state/queries";
 import { NEW_ORDER, OrderEditor } from "../order-editor/order-editor";
 import { SettingsPanelButton } from "../plan-settings/plan-settings";
 import { RouterLink } from "../plan-list/router-link";
+import { ShareButton } from "../share/share-button";
+import { planFigures } from "../share/result-card";
+import { resultShareTarget } from "../share/share-target";
 import { BottomBar } from "./bottom-bar";
 import { ChevronIcon, SlidersIcon } from "./icons";
 import { OrderList } from "./order-list";
@@ -25,7 +28,7 @@ import { OrderTable } from "./order-table";
 import { PlanPage } from "./plan-page";
 import { PointBreakdown } from "./point-breakdown";
 import { ShopLadder } from "./shop-ladder";
-import { SummaryCard } from "./summary-card";
+import { SummaryCard, countedAmount, effectiveRate } from "./summary-card";
 import { Warnings } from "./warnings";
 
 /** Same as the `lg` breakpoint: from here the summary is a column to the right of the orders. */
@@ -48,20 +51,11 @@ function PlanSwitcher({ plan }: { plan: Plan }) {
           size="lg"
           aria-label={`${plan.name}、プランを切り替える`}
           minW="0"
-          // Two lines of text: a button is one line tall.
-          h="auto"
-          py="1"
-          lineHeight="normal"
           textAlign="start"
         >
-          <Box display="flex" flexDirection="column" minW="0">
-            <Text as="span" fontSize="2xs" color="fg.muted">
-              ポイントスプリント
-            </Text>
-            <Text as="span" fontSize="md" fontWeight="bold" lineClamp={1}>
-              {plan.name}
-            </Text>
-          </Box>
+          <Text as="span" fontSize="md" fontWeight="bold" lineClamp={1}>
+            {plan.name}
+          </Text>
           <ChevronIcon size={16} />
         </Button>
       </Menu.Trigger>
@@ -110,10 +104,10 @@ function SettingsEntry({ plan, desktop }: { plan: Plan; desktop: boolean }) {
   );
 }
 
-function Header({ plan, desktop }: { plan: Plan; desktop: boolean }) {
+/** The plan's own bar under the site header: which plan this is, and its settings. */
+function PlanBar({ plan, desktop }: { plan: Plan; desktop: boolean }) {
   return (
     <Box
-      as="header"
       maxW="1280px"
       mx="auto"
       h="14"
@@ -188,10 +182,18 @@ function Home({ plan }: { plan: Plan }) {
   const addOrder = useCallback(() => editOrder(NEW_ORDER), [editOrder]);
   if (!result) return null;
   const outlook = result.shopAroundOutlook;
+  const shareResult = (
+    <ShareButton
+      label="結果をシェア"
+      target={resultShareTarget(
+        planFigures(result.total, effectiveRate(result.total, countedAmount(plan))),
+      )}
+    />
+  );
 
   return (
     <>
-      <Header plan={plan} desktop={desktop} />
+      <PlanBar plan={plan} desktop={desktop} />
       {/* One column on a phone (summary first); on a wide screen the summary is the right column. */}
       <Box
         as="main"
@@ -228,6 +230,7 @@ function Home({ plan }: { plan: Plan }) {
               <ShopLadder outlook={outlook} />
             </Panel>
           ) : null}
+          {wide ? shareResult : null}
         </VStack>
         <Box
           as="section"
@@ -243,6 +246,12 @@ function Home({ plan }: { plan: Plan }) {
             <OrderList plan={plan} onEdit={editOrder} onAdd={wide ? addOrder : undefined} />
           )}
         </Box>
+        {/* On a phone the share button comes after the orders; on a wide screen it ends the right column. */}
+        {wide ? null : (
+          <Box gridColumn="1" gridRow="3">
+            {shareResult}
+          </Box>
+        )}
       </Box>
       {wide ? null : <BottomBar plan={plan} result={result} onAdd={addOrder} />}
       <OrderEditor
@@ -257,5 +266,5 @@ function Home({ plan }: { plan: Plan }) {
 
 /** The plan's home at `/plan?id=`. */
 export function PlanHome({ id }: { id: string | undefined }) {
-  return <PlanPage id={id} render={(plan) => <Home plan={plan} />} />;
+  return <PlanPage id={id} title={(plan) => plan.name} render={(plan) => <Home plan={plan} />} />;
 }

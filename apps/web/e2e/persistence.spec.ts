@@ -1,4 +1,4 @@
-import { type Locator, type Page, expect, test } from "@playwright/test";
+import { type Locator, type Page, expect, test } from "./fixtures";
 
 // Each change is saved to IndexedDB and is still there after a reload.
 

@@ -19,12 +19,14 @@
     "packages/ui/src/theme/tokens/z-indices.ts"
   ],
   "words": [
+    "bmthd",
     "rakuten",
     "rakuma",
     "fril",
     "valibot",
     "picklist",
     "ichiba",
+    "ichibams",
     "pointday",
     "oxlint",
     "oxfmt",
@@ -32,6 +34,7 @@
     "indexeddb",
     "tsbuildinfo",
     "unheld",
+    "unhover",
     "tanstack",
     "yamada",
     "formisch",
@@ -54,6 +57,14 @@
     "prerender",
     "prerendered",
     "esbuild",
-    "workerd"
+    "workerd",
+    "contentinfo",
+    "opengraph",
+    "urlset",
+    "siteverify",
+    "remoteip",
+    "bmth",
+    "takumi",
+    "IHDR"
   ]
 }

@@ -10,13 +10,28 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as markdownRouteRouteImport } from './routes/(markdown)/route'
+import { Route as InquiryRouteImport } from './routes/inquiry'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ShareRouteImport } from './routes/share'
+import { Route as markdownHelpRouteImport } from './routes/(markdown)/help'
+import { Route as markdownTermsRouteImport } from './routes/(markdown)/terms'
 import { Route as PlanSettingsRouteImport } from './routes/plan_.settings'
+import { Route as ShareImageDotpngRouteImport } from './routes/share_.image[.]png'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const markdownRouteRoute = markdownRouteRouteImport.update({
+  id: '/(markdown)',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InquiryRoute = InquiryRouteImport.update({
+  id: '/inquiry',
+  path: '/inquiry',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanRoute = PlanRouteImport.update({
@@ -29,44 +44,113 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShareRoute = ShareRouteImport.update({
+  id: '/share',
+  path: '/share',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const markdownHelpRoute = markdownHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => markdownRouteRoute,
+} as any)
+const markdownTermsRoute = markdownTermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => markdownRouteRoute,
+} as any)
 const PlanSettingsRoute = PlanSettingsRouteImport.update({
   id: '/plan_/settings',
   path: '/plan/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShareImageDotpngRoute = ShareImageDotpngRouteImport.update({
+  id: '/share_/image.png',
+  path: '/share/image.png',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
+  '/share': typeof ShareRoute
+  '/help': typeof markdownHelpRoute
+  '/terms': typeof markdownTermsRoute
   '/plan/settings': typeof PlanSettingsRoute
+  '/share/image.png': typeof ShareImageDotpngRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
+  '/share': typeof ShareRoute
+  '/help': typeof markdownHelpRoute
+  '/terms': typeof markdownTermsRoute
   '/plan/settings': typeof PlanSettingsRoute
+  '/share/image.png': typeof ShareImageDotpngRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/(markdown)': typeof markdownRouteRouteWithChildren
+  '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
+  '/share': typeof ShareRoute
+  '/(markdown)/help': typeof markdownHelpRoute
+  '/(markdown)/terms': typeof markdownTermsRoute
   '/plan_/settings': typeof PlanSettingsRoute
+  '/share_/image.png': typeof ShareImageDotpngRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/plan' | '/profile' | '/plan/settings'
+  fullPaths:
+    | '/'
+    | '/inquiry'
+    | '/plan'
+    | '/profile'
+    | '/share'
+    | '/help'
+    | '/terms'
+    | '/plan/settings'
+    | '/share/image.png'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/plan' | '/profile' | '/plan/settings'
-  id: '__root__' | '/' | '/plan' | '/profile' | '/plan_/settings'
+  to:
+    | '/'
+    | '/inquiry'
+    | '/plan'
+    | '/profile'
+    | '/share'
+    | '/help'
+    | '/terms'
+    | '/plan/settings'
+    | '/share/image.png'
+  id:
+    | '__root__'
+    | '/'
+    | '/(markdown)'
+    | '/inquiry'
+    | '/plan'
+    | '/profile'
+    | '/share'
+    | '/(markdown)/help'
+    | '/(markdown)/terms'
+    | '/plan_/settings'
+    | '/share_/image.png'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  markdownRouteRoute: typeof markdownRouteRouteWithChildren
+  InquiryRoute: typeof InquiryRoute
   PlanRoute: typeof PlanRoute
   ProfileRoute: typeof ProfileRoute
+  ShareRoute: typeof ShareRoute
   PlanSettingsRoute: typeof PlanSettingsRoute
+  ShareImageDotpngRoute: typeof ShareImageDotpngRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -76,6 +160,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(markdown)': {
+      id: '/(markdown)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof markdownRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inquiry': {
+      id: '/inquiry'
+      path: '/inquiry'
+      fullPath: '/inquiry'
+      preLoaderRoute: typeof InquiryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plan': {
@@ -92,6 +190,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/share': {
+      id: '/share'
+      path: '/share'
+      fullPath: '/share'
+      preLoaderRoute: typeof ShareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(markdown)/help': {
+      id: '/(markdown)/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof markdownHelpRouteImport
+      parentRoute: typeof markdownRouteRoute
+    }
+    '/(markdown)/terms': {
+      id: '/(markdown)/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof markdownTermsRouteImport
+      parentRoute: typeof markdownRouteRoute
+    }
     '/plan_/settings': {
       id: '/plan_/settings'
       path: '/plan/settings'
@@ -99,14 +218,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlanSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/share_/image.png': {
+      id: '/share_/image.png'
+      path: '/share/image.png'
+      fullPath: '/share/image.png'
+      preLoaderRoute: typeof ShareImageDotpngRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface markdownRouteRouteChildren {
+  markdownHelpRoute: typeof markdownHelpRoute
+  markdownTermsRoute: typeof markdownTermsRoute
+}
+
+const markdownRouteRouteChildren: markdownRouteRouteChildren = {
+  markdownHelpRoute: markdownHelpRoute,
+  markdownTermsRoute: markdownTermsRoute,
+}
+
+const markdownRouteRouteWithChildren = markdownRouteRoute._addFileChildren(
+  markdownRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  markdownRouteRoute: markdownRouteRouteWithChildren,
+  InquiryRoute: InquiryRoute,
   PlanRoute: PlanRoute,
   ProfileRoute: ProfileRoute,
+  ShareRoute: ShareRoute,
   PlanSettingsRoute: PlanSettingsRoute,
+  ShareImageDotpngRoute: ShareImageDotpngRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("create plan, add order, see points, hold it, reload keeps data", async ({ page }) => {
   // The October marathon runs 10/4 to 10/9; the order date defaults to today.

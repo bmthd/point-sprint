@@ -1,8 +1,8 @@
 import { type ChannelId, type Shop, type ShopTag, channels, parseUrl } from "@workspaces/domain";
-import { Box, Button, Input, Text, Field as UIField } from "@workspaces/ui";
-import { type ReactNode, useId, useMemo, useRef, useState } from "react";
-import * as v from "valibot";
+import { Box, Button, Text, Field as UIField } from "@workspaces/ui";
+import { type ReactNode, useId, useMemo } from "react";
 import { type ShopChange, changeShop, replaceShop } from "../../state/mutations";
+import type { RakutenItem } from "../../rakuten/item-search";
 import { taxRateLabel } from "./order-shared";
 
 // Fields shared by the desktop list's edit grid, its add form and the order editor.
@@ -14,10 +14,14 @@ export type TaxRateValue = (typeof TAX_RATES)[number];
 export const taxRateValue = (rate: number): TaxRateValue =>
   rate === 0.08 ? "0.08" : rate === 0 ? "0" : "0.1";
 
-/** The grid that wraps the fields by the width available. */
+/**
+ * The grid that wraps the fields by the width available. Its fields keep their own height: a
+ * field stretched to the height of an error beside it spreads its label and input apart.
+ */
 export const fieldGrid = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+  alignItems: "start",
   gap: "2.5",
 } as const;
 
@@ -75,122 +79,6 @@ export function ReadOnlyField({ label, value }: { label: string; value: string }
         {value}
       </Text>
     </Box>
-  );
-}
-
-const normalize = (text: string) => text.normalize("NFKC").trim();
-
-/** A tax-included amount in yen. Accepts full-width digits, commas and ¥. */
-export const AmountSchema = v.pipe(
-  v.string(),
-  v.transform((text) => normalize(text).replace(/[,¥\s]/g, "")),
-  v.nonEmpty("金額を入れてください"),
-  v.regex(/^\d+$/, "金額は円の整数で入れてください"),
-  v.transform(Number),
-  v.safeInteger("金額は円の整数で入れてください"),
-);
-
-export const DateSchema = v.pipe(
-  v.string(),
-  v.nonEmpty("注文日を入れてください"),
-  v.isoDate("注文日は YYYY-MM-DD で入れてください"),
-);
-
-/** A coupon in yen; empty for none. */
-export const DiscountSchema = v.union(
-  [
-    v.pipe(
-      v.string(),
-      v.transform(normalize),
-      v.literal(""),
-      v.transform(() => 0),
-    ),
-    AmountSchema,
-  ],
-  "クーポン値引額は円の整数で入れてください",
-);
-
-export const QuantitySchema = v.pipe(
-  v.string(),
-  v.transform(normalize),
-  v.regex(/^\d+$/, "数量は1以上の整数で入れてください"),
-  v.transform(Number),
-  v.safeInteger("数量は1以上の整数で入れてください"),
-  v.minValue(1, "数量は1以上の整数で入れてください"),
-);
-
-/** Empty for no rate of its own, or a number of 1 or more. */
-export const ShopRateSchema = v.union(
-  [
-    v.pipe(
-      v.string(),
-      v.transform(normalize),
-      v.literal(""),
-      v.transform(() => undefined),
-    ),
-    v.pipe(v.string(), v.transform(normalize), v.transform(Number), v.number(), v.minValue(1)),
-  ],
-  "1以上の数で入れてください",
-);
-
-/**
- * A text field that saves its value on Enter or when it loses the focus, and only when `schema`
- * accepts it. Give it a `key` of the saved value so it follows changes made elsewhere.
- */
-export function CommitField<T>({
-  label,
-  initial,
-  schema,
-  onCommit,
-  inputMode,
-  align = "start",
-  placeholder,
-}: {
-  label: string;
-  initial: string;
-  schema: v.GenericSchema<string, T>;
-  /** Saves the value; a rejected promise means it was not saved. */
-  onCommit: (value: T) => Promise<unknown>;
-  inputMode?: "numeric" | "decimal" | "text";
-  align?: "start" | "end";
-  placeholder?: string;
-}) {
-  const [text, setText] = useState(initial);
-  // What was last saved (or is being saved), so a blur right after Enter does not save the same
-  // value again. A failed save forgets it, so the same text can be tried again.
-  const committed = useRef(initial);
-  const [error, setError] = useState<string>();
-
-  const commit = () => {
-    const parsed = v.safeParse(schema, text);
-    if (!parsed.success) {
-      setError(parsed.issues[0].message);
-      return;
-    }
-    setError(undefined);
-    if (text === committed.current) return;
-    const previous = committed.current;
-    committed.current = text;
-    onCommit(parsed.output).catch(() => {
-      if (committed.current === text) committed.current = previous;
-    });
-  };
-
-  return (
-    <Field label={label} error={error}>
-      <Input
-        size="lg"
-        inputMode={inputMode}
-        placeholder={placeholder}
-        fontVariantNumeric={align === "end" ? "tabular-nums" : undefined}
-        value={text}
-        onChange={(event) => setText(event.currentTarget.value)}
-        onBlur={commit}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.nativeEvent.isComposing) commit();
-        }}
-      />
-    </Field>
   );
 }
 
@@ -275,6 +163,25 @@ export function shopFromUrl(url: string, shops: Shop[]): ShopFromUrl | null {
     name: parsed.shopCode ?? channels[parsed.channel].label,
   };
 }
+
+/**
+ * The shop of an Ichiba item found by its URL: the registry shop of its shop code, or a new one
+ * under the name the shop goes by.
+ */
+export function shopFromItem(item: RakutenItem, shops: Shop[]): ShopFromUrl {
+  const match = shops.find(
+    (shop) => shop.channel === "rakuten-ichiba" && shop.shopCode === item.shopCode,
+  );
+  if (match) return { kind: "registered", shop: match };
+  return { kind: "new", channel: "rakuten-ichiba", shopCode: item.shopCode, name: item.shopName };
+}
+
+/** What a found item puts in the item's fields. A price without tax is left to be typed. */
+export const fieldsFromItem = (item: RakutenItem) => ({
+  name: item.name,
+  unitPrice: item.taxIncludedPrice === undefined ? undefined : String(item.taxIncludedPrice),
+  shopPointRate: item.pointRate >= 2 ? String(item.pointRate) : "",
+});
 
 /** What a form says about the order's shop. */
 export type ShopChoice = {

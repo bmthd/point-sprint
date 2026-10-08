@@ -11,6 +11,7 @@ import { beforeEach, expect, test } from "vitest";
 import { type Locator, page, userEvent } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import { createMemoryRepository } from "../../storage/memory-repository";
+import { misalignedFields } from "../../test-layout";
 import {
   PLAN,
   Providers,
@@ -212,13 +213,35 @@ test("adds a sports-win day from the template", async () => {
 
   await screen.getByRole("button", { name: /^勝ったら倍/ }).click();
   const dialog = screen.getByRole("dialog", { name: "勝ったら倍を追加" });
-  await dialog.getByLabelText("日付").fill("2026-10-06");
+  const date = dialog.getByLabelText("日付");
+  // Opening the dialog neither focuses the date nor opens its calendar.
+  await expect.element(date).toBeVisible();
+  await expect.element(date).not.toHaveFocus();
+  await expect.element(screen.getByRole("grid")).not.toBeInTheDocument();
+  // The dialog shows the campaign's image, which follows the chosen rate.
+  const thumbnail = () => dialog.element().querySelector("header img");
+  expect(thumbnail()).toHaveAttribute(
+    "src",
+    "https://assets.bmth.dev/point-sprint/img/campaign/sports.webp",
+  );
+
+  // Tapping the date opens the calendar, not the on-screen keyboard, and a day picked there fills
+  // it in.
+  await expect.element(date).toHaveAttribute("inputmode", "none");
+  await date.click();
+  const calendar = screen.getByRole("grid");
+  await calendar.getByText("6", { exact: true }).click();
+  await expect.element(date).toHaveValue("2026/10/06");
+  await expect.element(calendar).not.toBeInTheDocument();
   const rate = dialog.getByRole("radiogroup", { name: "倍率" });
-  const double = rate.getByRole("radio", { name: "+2倍" });
-  await expect.element(rate.getByRole("radio", { name: "+1倍" })).toBeChecked();
-  // The radio is visually hidden under its segment, so the segment's text is tapped.
-  await rate.getByText("+2倍").click();
+  const double = rate.getByRole("radio", { name: /^\+2倍/ });
+  await expect.element(rate.getByRole("radio", { name: /^\+1倍/ })).toBeChecked();
+  // The radio is visually hidden under its card, so the card's text is tapped.
+  await rate.getByText("両方のチームが勝った日").click();
   await expect.element(double).toBeChecked();
+  await expect
+    .poll(thumbnail)
+    .toHaveAttribute("src", "https://assets.bmth.dev/point-sprint/img/campaign/sports-w.webp");
   await dialog.getByRole("button", { name: "追加する" }).click();
 
   await expect.element(dialog).not.toBeInTheDocument();
@@ -257,8 +280,8 @@ test("prevents adding the same 39shop period twice", async () => {
   };
 
   const first = await add39();
-  await expect.element(first.getByLabelText("開始日")).toHaveValue("2026-10-04");
-  await expect.element(first.getByLabelText("終了日")).toHaveValue("2026-10-09");
+  await expect.element(first.getByLabelText("開始日")).toHaveValue("2026/10/04");
+  await expect.element(first.getByLabelText("終了日")).toHaveValue("2026/10/09");
   await first.getByRole("button", { name: "追加する" }).click();
   await expect.element(first).not.toBeInTheDocument();
   await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
@@ -277,6 +300,79 @@ test("prevents adding the same 39shop period twice", async () => {
   await expect.element(second.getByRole("button", { name: "追加する" })).toBeEnabled();
   await second.getByRole("button", { name: "キャンセル" }).click();
   expect((await storedPlan()).benefits).toHaveLength(1);
+});
+
+test("a campaign's form says what to fix, and focuses the first field to fix", async () => {
+  const screen = await renderSettings(makePlan([], []));
+  await screen.getByRole("button", { name: "＋ 追加" }).click();
+  await screen.getByRole("button", { name: /^リピート購入/ }).click();
+  const dialog = screen.getByRole("dialog", { name: "リピート購入を追加" });
+  const end = dialog.getByLabelText("終了日");
+  const cap = dialog.getByLabelText("獲得上限（P）");
+  await end.fill("2026-10-01");
+  await dialog.getByLabelText("条件金額（円）").fill("３，９８０円");
+  await dialog.getByRole("button", { name: "追加する" }).click();
+
+  await expect
+    .element(end)
+    .toHaveAccessibleDescription("終了日は開始日と同じ日か、それより後の日にしてください");
+  await expect.element(cap).toHaveAccessibleDescription("獲得上限を入れてください");
+  await expect.element(end).toHaveFocus();
+  // The start date stays level with the end date and its error.
+  expect(misalignedFields(dialog.element())).toEqual([]);
+  expect((await storedPlan()).benefits).toHaveLength(0);
+
+  await end.fill("2026-10-09");
+  await cap.fill("1,000P");
+  await dialog.getByRole("button", { name: "追加する" }).click();
+  await expect.element(dialog).not.toBeInTheDocument();
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
+  expect((await storedPlan()).benefits[0]).toMatchObject({
+    params: { cap: 1000 },
+    conditions: { minOrderAmount: 3980 },
+  });
+});
+
+test("a cap that is not a number is not saved, and says what to type", async () => {
+  const screen = await renderSettings(makePlan(structuredClone(marathon), [order(0)]));
+  await screen.getByRole("button", { name: /ショップ買いまわり/ }).click();
+  const cap = screen.getByLabelText("獲得上限");
+  await cap.fill("たくさん");
+  await cap.element().blur();
+
+  await expect.element(cap).toHaveAccessibleDescription("獲得上限は0以上の整数で入れてください");
+  expect((await storedPlan()).benefits[0]?.params.cap).toBe(7000);
+  // The error follows each input once it is shown.
+  await cap.fill("５，０００Ｐ");
+  await expect.element(cap).not.toHaveAttribute("aria-invalid");
+  await cap.element().blur();
+  await expect.poll(async () => (await storedPlan()).benefits[0]?.params.cap).toBe(5000);
+});
+
+test("a period's end before its start is not saved", async () => {
+  const screen = await renderSettings(makePlan(structuredClone(marathon), [order(0)]));
+  await screen.getByRole("button", { name: /ショップ買いまわり/ }).click();
+  const end = screen.getByLabelText("終了日");
+  await end.fill("2026-10-01");
+  await end.element().blur();
+  await expect
+    .element(end)
+    .toHaveAccessibleDescription("終了日は開始日と同じ日か、それより後の日にしてください");
+  // The start date stays level with the end date and its error.
+  expect(
+    misalignedFields(screen.getByRole("region", { name: "買いまわりと上限" }).element()),
+  ).toEqual([]);
+  const start = screen.getByLabelText("開始日");
+  await start.fill("2026-10-10");
+  await start.element().blur();
+  await expect
+    .element(start)
+    .toHaveAccessibleDescription("開始日は終了日と同じ日か、それより前の日にしてください");
+  expect((await storedPlan()).benefits[0]?.conditions.dateRule).toEqual({
+    type: "range",
+    start: "2026-10-04",
+    end: "2026-10-09",
+  });
 });
 
 test("overrides the shop-around cap", async () => {

@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-router";
 import { standardSpu } from "@workspaces/domain";
 import { beforeEach, expect, test } from "vitest";
-import { type Locator, page } from "vitest/browser";
+import { type Locator, page, userEvent } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import { createIndexedDbRepository } from "../../storage/indexed-db-repository";
 import { createMemoryRepository } from "../../storage/memory-repository";
@@ -140,12 +140,16 @@ test("renames a shop inline", async () => {
     .poll(async () => (await repository.shops.list()).map((s) => s.name))
     .toContain("新しい名前");
 
-  // An empty name is not saved; the old one comes back.
+  // An empty name is not saved: it says what to type, and Escape puts the old one back.
   const other = screen.getByRole("textbox", { name: "ショップ3の名前" });
   await other.fill("");
   await other.element().blur();
-  await expect.element(other).toHaveValue("ショップ3");
+  await expect.element(other).toHaveAccessibleDescription("ショップの名前を入れてください");
   expect((await repository.shops.list()).map((s) => s.name)).toContain("ショップ3");
+  await other.click();
+  await userEvent.keyboard("{Escape}");
+  await expect.element(other).toHaveValue("ショップ3");
+  await expect.element(other).not.toHaveAttribute("aria-invalid", "true");
 });
 
 test("shows a notice when data was quarantined", async () => {

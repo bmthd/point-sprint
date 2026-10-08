@@ -14,7 +14,9 @@ import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
 import { useHydrateAtoms } from "jotai/utils";
 import type { ReactNode } from "react";
 import { cleanup, render } from "vitest-browser-react";
+import type { ItemLookup } from "../../rakuten/item-lookup";
 import { repositoryAtom } from "../../state/repository";
+import { itemLookupAtom } from "../item-autofill/item-autofill";
 import type { Repository } from "../../storage/repository";
 import { PlanHome } from "./plan-home";
 
@@ -100,16 +102,30 @@ export const makePlan = (benefits: Benefit[], orders: Order[]): Plan => ({
 export const marathonPlan = (orders = [order(0), order(1), order(2), order(3)]) =>
   makePlan([baseBenefit, spuBenefit, ...marathon], orders);
 
-function Hydrate({ repository, children }: { repository: Repository; children: ReactNode }) {
-  useHydrateAtoms([[repositoryAtom, repository]]);
-  return children;
-}
-
-export function Providers({
+function Hydrate({
   repository,
+  itemLookup,
   children,
 }: {
   repository: Repository;
+  itemLookup: ItemLookup | undefined;
+  children: ReactNode;
+}) {
+  useHydrateAtoms([
+    [repositoryAtom, repository],
+    [itemLookupAtom, { lookup: itemLookup }],
+  ]);
+  return children;
+}
+
+/** The app's providers; the item lookup is `itemLookup`, and off without one. */
+export function Providers({
+  repository,
+  itemLookup,
+  children,
+}: {
+  repository: Repository;
+  itemLookup?: ItemLookup;
   children: ReactNode;
 }) {
   return (
@@ -117,13 +133,19 @@ export function Providers({
       <QueryClientAtomProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >
-        <Hydrate repository={repository}>{children}</Hydrate>
+        <Hydrate repository={repository} itemLookup={itemLookup}>
+          {children}
+        </Hydrate>
       </QueryClientAtomProvider>
     </UIProvider>
   );
 }
 
-export async function renderPlanHome(repository: Repository, path = `/plan?id=${PLAN}`) {
+export async function renderPlanHome(
+  repository: Repository,
+  path = `/plan?id=${PLAN}`,
+  itemLookup?: ItemLookup,
+) {
   await cleanup();
   const root = createRootRoute({ component: Outlet });
   const planRoute = createRoute({
@@ -136,7 +158,7 @@ export async function renderPlanHome(repository: Repository, path = `/plan?id=${
     history: createMemoryHistory({ initialEntries: [path] }),
   });
   const screen = await render(
-    <Providers repository={repository}>
+    <Providers repository={repository} itemLookup={itemLookup}>
       <RouterProvider router={router} />
     </Providers>,
   );

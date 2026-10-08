@@ -44,13 +44,16 @@ import { shopsAtom } from "../../state/queries";
 import { openOrderIdAtom } from "../../state/ui";
 import { monthDayWithWeekday } from "../plan-list/dates";
 import { ChevronIcon, GripIcon } from "./icons";
+import { CommitField } from "../../form/commit-field";
 import {
   AmountSchema,
-  CommitField,
-  DateSchema,
+  ItemNameSchema,
+  OrderDateSchema,
+  ShopRateSchema,
+} from "../../form/field-schemas";
+import {
   Field,
   ReadOnlyField,
-  ShopRateSchema,
   TaxRateOptions,
   type TaxRateValue,
   ToggleChip,
@@ -79,9 +82,9 @@ import { PointBreakdown } from "./point-breakdown";
 /** What the list shares with its rows without re-rendering them: refs and stable callbacks. */
 export type OrderListContext = {
   /** The order being dragged by its handle, if any. */
-  dragged: RefObject<{ orderId: string; index: number; shopName: string } | null>;
+  draggedRef: RefObject<{ orderId: string; index: number; shopName: string } | null>;
   /** The order whose handle gets the focus back once it has moved. */
-  focusAfterMove: RefObject<string | null>;
+  focusAfterMoveRef: RefObject<string | null>;
   /** Says where an order moved, through the list's live region. */
   announce: (message: string) => void;
   /** The id of the text that explains the arrow keys on a handle. */
@@ -181,7 +184,7 @@ function OrderEditor({
             defaultValue={order.date}
             key={order.date}
             onChange={(event) => {
-              const parsed = v.safeParse(DateSchema, event.currentTarget.value);
+              const parsed = v.safeParse(OrderDateSchema, event.currentTarget.value);
               setDateError(parsed.success ? undefined : parsed.issues[0].message);
               if (parsed.success && parsed.output !== order.date) {
                 saveOrder({ ...order, date: parsed.output });
@@ -195,7 +198,7 @@ function OrderEditor({
               key={`name:${single.name}`}
               label="商品名メモ"
               initial={single.name}
-              schema={v.pipe(v.string(), v.trim())}
+              schema={ItemNameSchema}
               onCommit={(name) =>
                 saveOrder(withItems(order, (lineItem) => ({ ...lineItem, name })))
               }
@@ -338,7 +341,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   const moveOrder = useSetAtom(moveOrderAtom);
   const save = useSaveOrderChange();
   const shopName = useShopName(order?.shopId ?? "");
-  const list = useListContext();
+  const { draggedRef, focusAfterMoveRef, announce, handleHintId } = useListContext();
   const detailId = useId();
   const handleRef = useRef<HTMLButtonElement>(null);
   const [dropSide, setDropSide] = useState<"before" | "after" | null>(null);
@@ -354,10 +357,10 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
 
   // Moving an order can take its row out of the document for a moment, which drops the focus.
   useEffect(() => {
-    if (list.focusAfterMove.current !== orderId) return;
-    list.focusAfterMove.current = null;
+    if (focusAfterMoveRef.current !== orderId) return;
+    focusAfterMoveRef.current = null;
     handleRef.current?.focus();
-  }, [index, orderId, list]);
+  }, [index, orderId, focusAfterMoveRef]);
 
   if (!order) return null;
   const held = order.onHold;
@@ -368,13 +371,13 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
     event.preventDefault();
     const toIndex = index + step;
     if (toIndex < 0 || toIndex >= count) return;
-    list.focusAfterMove.current = orderId;
+    focusAfterMoveRef.current = orderId;
     save(moveOrder({ planId, orderId, toIndex }));
-    list.announce(`${shopName}の注文を${toIndex + 1}番目に移動しました`);
+    announce(`${shopName}の注文を${toIndex + 1}番目に移動しました`);
   };
 
   const onDragOver = (event: DragEvent) => {
-    const dragged = list.dragged.current;
+    const dragged = draggedRef.current;
     if (!dragged || dragged.orderId === orderId) return;
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
@@ -382,13 +385,13 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   };
 
   const onDrop = (event: DragEvent) => {
-    const dragged = list.dragged.current;
+    const dragged = draggedRef.current;
     setDropSide(null);
     if (!dragged || dragged.orderId === orderId) return;
     event.preventDefault();
-    list.dragged.current = null;
+    draggedRef.current = null;
     save(moveOrder({ planId, orderId: dragged.orderId, toIndex: index }));
-    list.announce(`${dragged.shopName}の注文を${index + 1}番目に移動しました`);
+    announce(`${dragged.shopName}の注文を${index + 1}番目に移動しました`);
   };
 
   const base = order.lineItems.reduce((sum, item) => sum + taxExcludedTarget(item), 0);
@@ -408,12 +411,12 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
       }
       draggable={grabbed}
       onDragStart={(event: DragEvent) => {
-        list.dragged.current = { orderId, index, shopName };
+        draggedRef.current = { orderId, index, shopName };
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", shopName);
       }}
       onDragEnd={() => {
-        list.dragged.current = null;
+        draggedRef.current = null;
         setGrabbed(false);
       }}
       onDragOver={onDragOver}
@@ -438,13 +441,13 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
           colorScheme="gray"
           cursor="grab"
           aria-label={`${shopName}の注文を並べ替え`}
-          aria-describedby={list.handleHintId}
+          aria-describedby={handleHintId}
           onKeyDown={onHandleKeyDown}
           // The row is dragged, but only when the drag starts on its handle.
           onPointerDown={() => setGrabbed(true)}
           // Browsers cancel the pointer when a drag starts; only a cancel outside a drag disarms.
           onPointerCancel={() => {
-            if (!list.dragged.current) setGrabbed(false);
+            if (!draggedRef.current) setGrabbed(false);
           }}
         >
           <GripIcon />

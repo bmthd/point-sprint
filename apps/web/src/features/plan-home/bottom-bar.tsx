@@ -20,6 +20,7 @@ export function BottomBar({
     <Box
       aria-label="合計"
       role="region"
+      data-bottom-bar
       position="fixed"
       insetX="0"
       bottom="0"

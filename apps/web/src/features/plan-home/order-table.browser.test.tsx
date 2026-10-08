@@ -1,12 +1,13 @@
 import type { Order } from "@workspaces/domain";
 import { useAtomValue, useSetAtom } from "jotai";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { updateOrderAtom } from "../../state/order-ops";
 import { plansQueryAtom, shopsQueryAtom } from "../../state/queries";
 import { createMemoryRepository } from "../../storage/memory-repository";
+import { misalignedFields } from "../../test-layout";
 import { tokyoToday } from "../plan-list/dates";
 import { OrderTable } from "./order-table";
 import {
@@ -209,11 +210,29 @@ test("an invalid add form shows errors and saves nothing", async () => {
   await userEvent.keyboard("{Enter}");
 
   await expect.element(screen.getByText("ショップを選んでください")).toBeVisible();
-  await expect.element(screen.getByText("金額は円の整数で入れてください")).toBeVisible();
+  await expect.element(screen.getByText("金額は0以上の整数で入れてください")).toBeVisible();
   await expect.element(amount).toHaveAttribute("aria-invalid", "true");
+  // The first field with an error takes the focus.
+  await expect.element(screen.getByRole("combobox", { name: "ショップ" })).toHaveFocus();
   await expect.element(amount).toHaveValue("abc");
   expect(rows().length).toBe(1);
   expect((await stored())?.length).toBe(1);
+});
+
+test("an error under one field leaves the other fields of its row in place", async () => {
+  const screen = await renderWith(marathonPlan([order(0)]));
+  await expect.poll(() => rows().length).toBe(1);
+  await openAddForm(screen);
+  // Its error takes two lines, the tallest under the add form's fields.
+  await screen.getByRole("textbox", { name: "ショップ独自倍率" }).fill("0.5");
+  await userEvent.keyboard("{Enter}");
+  await expect
+    .element(screen.getByText("ショップ独自倍率は1以上の数で入れてください"))
+    .toBeVisible();
+
+  const form = list()?.querySelector("form");
+  if (!form) throw new Error("no add form");
+  expect(misalignedFields(form)).toEqual([]);
 });
 
 test("a failed save keeps the add form's input", async () => {
@@ -493,7 +512,9 @@ test("editing one order does not re-render the other rows", async () => {
     const plans = useAtomValue(plansQueryAtom);
     const loadedShops = useAtomValue(shopsQueryAtom);
     const update = useSetAtom(updateOrderAtom);
-    updateOrder = (next) => update({ planId: PLAN, order: next });
+    useEffect(() => {
+      updateOrder = (next) => update({ planId: PLAN, order: next });
+    }, [update]);
     const loaded = plans.data?.find((p) => p.id === PLAN);
     return loadedShops.isSuccess && loaded ? <OrderTable plan={loaded} onEdit={noop} /> : null;
   }

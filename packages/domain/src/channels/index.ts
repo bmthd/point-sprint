@@ -25,9 +25,3 @@ export function parseUrl(input: string): ParsedUrl | null {
   }
   return null;
 }
-
-export function toItemCode(parsed: ParsedUrl): string | null {
-  return parsed.shopCode && parsed.itemManageNumber
-    ? `${parsed.shopCode}:${parsed.itemManageNumber}`
-    : null;
-}

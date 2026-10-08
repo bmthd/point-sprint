@@ -8,16 +8,17 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { type Benefit, type Order, type Plan, type Shop, officialEvents } from "@workspaces/domain";
-import { UIProvider, useColorMode } from "@workspaces/ui";
+import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
 import { useHydrateAtoms } from "jotai/utils";
-import { type ReactNode, useEffect } from "react";
+import type { ReactNode } from "react";
 import { expect, test } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { repositoryAtom } from "../../state/repository";
 import { createMemoryRepository } from "../../storage/memory-repository";
 import type { Repository } from "../../storage/repository";
+import { TestColorMode } from "../../test-color-mode";
 import { PlanHome } from "./plan-home";
 
 const PLAN = "f0000000-0000-4000-8000-00000000000a";
@@ -115,12 +116,6 @@ function Hydrate({ repository, children }: { repository: Repository; children: R
   return children;
 }
 
-function ColorModeSwitch({ colorMode }: { colorMode: "light" | "dark" }) {
-  const { changeColorMode } = useColorMode();
-  useEffect(() => changeColorMode(colorMode), [changeColorMode, colorMode]);
-  return null;
-}
-
 async function renderPlanHome(
   repository: Repository,
   options: { id?: string; colorMode?: "light" | "dark" } = {},
@@ -149,7 +144,7 @@ async function renderPlanHome(
   });
   const screen = await render(
     <UIProvider theme={theme} config={config}>
-      <ColorModeSwitch colorMode={options.colorMode ?? "light"} />
+      <TestColorMode value={options.colorMode ?? "light"} />
       <QueryClientAtomProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >

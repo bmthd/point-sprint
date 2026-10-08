@@ -1,8 +1,9 @@
 import { ClientOnly } from "@tanstack/react-router";
 import type { Plan } from "@workspaces/domain";
-import { Box, Button, Heading, Text, VStack } from "@workspaces/ui";
+import { Button, Heading, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
+import { useClientTitle } from "../../page-head";
 import { planAtom } from "../../state/derived";
 import { plansQueryAtom, shopsQueryAtom } from "../../state/queries";
 import { RouterLink } from "../plan-list/router-link";
@@ -38,10 +39,11 @@ function LoadError({ onRetry }: { onRetry: () => void }) {
  * Figures need both the plans and the shops: without the shops every order would count as an
  * unknown shop. Until both have loaded nothing is shown.
  */
-function PlanScreen({ id, render }: { id: string | undefined; render: (plan: Plan) => ReactNode }) {
+function PlanScreen({ id, title, render }: PlanPageProps) {
   const plan = useAtomValue(planAtom(id ?? ""));
   const plans = useAtomValue(plansQueryAtom);
   const shops = useAtomValue(shopsQueryAtom);
+  useClientTitle(plan && title(plan));
   if (plans.isError || shops.isError) {
     return (
       <LoadError
@@ -62,22 +64,21 @@ function PlanScreen({ id, render }: { id: string | undefined; render: (plan: Pla
   return plan ? render(plan) : <NotFound />;
 }
 
+type PlanPageProps = {
+  id: string | undefined;
+  /** The page's name with the plan in it, put in the tab once the plan has loaded. */
+  title: (plan: Plan) => string;
+  render: (plan: Plan) => ReactNode;
+};
+
 /**
  * A page of the plan `id`: `render` gets the plan once it and the shops have loaded. The plan
  * lives on this device, so it renders on the client only.
  */
-export function PlanPage({
-  id,
-  render,
-}: {
-  id: string | undefined;
-  render: (plan: Plan) => ReactNode;
-}) {
+export function PlanPage(props: PlanPageProps) {
   return (
-    <Box bg="bg" color="fg" minH="100dvh">
-      <ClientOnly>
-        <PlanScreen id={id} render={render} />
-      </ClientOnly>
-    </Box>
+    <ClientOnly>
+      <PlanScreen {...props} />
+    </ClientOnly>
   );
 }

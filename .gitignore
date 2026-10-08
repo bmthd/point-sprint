@@ -3,7 +3,8 @@ node_modules/
 .pnpm-store/
 
 # environment
-# .env is committed with values encrypted by dotenvx; its private keys are not
+# .env.development and .env.production are committed: PUBLIC_* values in plain text, secrets
+# encrypted by dotenvx (.env.production only). The private keys are not
 .env.keys
 .env.local
 .env.*.local

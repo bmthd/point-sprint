@@ -1,13 +1,12 @@
 import type { Plan } from "@workspaces/domain";
 import { Box, Button, Drawer, Heading, IconButton, Text, VStack } from "@workspaces/ui";
-import { useAtomValue, useSetAtom } from "jotai";
-import { useEffect } from "react";
+import { useAtomValue } from "jotai";
 import { planResultAtom } from "../../state/derived";
 import { BackIcon, CloseIcon, PencilIcon } from "../plan-home/icons";
 import { PlanPage } from "../plan-home/plan-page";
 import { RouterButton, RouterLink } from "../plan-list/router-link";
 import { CampaignToggles } from "./campaign-toggles";
-import { settingsSaveFailedAtom } from "./settings-shared";
+import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared";
 import { ShopAroundSettings, shopAroundOf } from "./shop-around-settings";
 import { SpuTiles, spuRate } from "./spu-tiles";
 
@@ -16,13 +15,16 @@ const primaryButton = { colorScheme: "primary", size: "lg", w: "full" } as const
 
 /** The settings themselves, on the settings page and in the desktop's side panel. */
 export function SettingsContent({ plan }: { plan: Plan }) {
+  return (
+    <SettingsSaveFailureProvider key={plan.id}>
+      <SettingsBody plan={plan} />
+    </SettingsSaveFailureProvider>
+  );
+}
+
+function SettingsBody({ plan }: { plan: Plan }) {
   const result = useAtomValue(planResultAtom(plan.id));
-  const failed = useAtomValue(settingsSaveFailedAtom);
-  const setFailed = useSetAtom(settingsSaveFailedAtom);
-  useEffect(() => {
-    // A failure from an earlier visit, or from another plan, is not about this view.
-    setFailed(false);
-  }, [plan.id, setFailed]);
+  const failed = useSettingsSaveFailurePlanId() === plan.id;
   if (!result) return null;
   return (
     <VStack gap="5" alignItems="stretch">
@@ -103,16 +105,8 @@ export function SettingsPanelButton({
 function SettingsScreen({ plan }: { plan: Plan }) {
   return (
     <>
-      <Box
-        as="header"
-        maxW="640px"
-        mx="auto"
-        h="14"
-        display="flex"
-        alignItems="center"
-        gap="1"
-        px="2"
-      >
+      {/* 戻る goes back to this plan, which the site header has no link to. */}
+      <Box maxW="640px" mx="auto" h="14" display="flex" alignItems="center" gap="1" px="2">
         <RouterLink
           to="/plan"
           search={{ id: plan.id }}
@@ -135,6 +129,7 @@ function SettingsScreen({ plan }: { plan: Plan }) {
         <SettingsContent plan={plan} />
       </Box>
       <Box
+        data-bottom-bar
         position="fixed"
         insetX="0"
         bottom="0"
@@ -158,5 +153,11 @@ function SettingsScreen({ plan }: { plan: Plan }) {
 
 /** The plan's settings at `/plan/settings?id=`. Each change is saved as it is made. */
 export function PlanSettings({ id }: { id: string | undefined }) {
-  return <PlanPage id={id} render={(plan) => <SettingsScreen plan={plan} />} />;
+  return (
+    <PlanPage
+      id={id}
+      title={(plan) => `${plan.name}の設定`}
+      render={(plan) => <SettingsScreen plan={plan} />}
+    />
+  );
 }

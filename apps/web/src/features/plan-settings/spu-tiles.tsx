@@ -248,7 +248,7 @@ export function SpuTileGrid({
 /** The SPU section: the total, the tiles and their legend. */
 export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResult }) {
   const toggle = useSetAtom(toggleBenefitAtom);
-  const save = useSaveSettingsChange();
+  const save = useSaveSettingsChange(plan.id);
   const capped = new Set(
     result.benefitTotals.filter((total) => total.capReached).map((total) => total.benefitId),
   );

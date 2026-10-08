@@ -278,15 +278,33 @@ Seitu は1人の作者が開発する比較的新しいライブラリ（採用�
 
 新しい API（`openapi.rakuten.co.jp`）を使う。`applicationId`、`accessKey`、`affiliateId` は環境変数で渡して Valibot で検証する。レスポンスも Valibot で検証し、必要なフィールドだけを取り出す。
 
+呼び出しは `apps/web/src/rakuten/` にまとめ、ブラウザ（商品情報の取得）とビルド時（広告）の両方から使う。
+
+- `config.ts`: 環境変数 `PUBLIC_RAKUTEN_APPLICATION_ID`、`PUBLIC_RAKUTEN_ACCESS_KEY`、`PUBLIC_RAKUTEN_AFFILIATE_ID` の検証。値が足りないか `encrypted:` のままのときは、商品情報の取得を無効にしてビルドを続ける。ビルドは検証した値をクライアントに埋め込む
+- `item-search.ts`: 商品検索 API の呼び出し。失敗は通信エラー、429、その他の HTTP エラー、想定外のレスポンス、該当なしに分けて返す。サーバーから呼ぶときは `Origin: https://point-sprint.bmth.dev` を付ける
+- `item-lookup.ts`: 呼び出しの間隔を1.1秒以上あけ、見つかった商品を商品ページ（ショップコードと商品管理番号）ごとに5分間キャッシュする
+
+### 環境変数
+
+環境変数はリポジトリのルートの `.env.development`（`pnpm dev`）と `.env.production`（`pnpm build`）に置き、どちらもコミットする。ファイル名の末尾の環境名は dotenvx の決まりに合わせたもので、`.env.production` は鍵 `DOTENV_PRIVATE_KEY_PRODUCTION` で復号する。
+
+- 公開してよい値は変数名を `PUBLIC_` で始め、平文で置く（`dotenvx set … --plain`）。楽天 API の3つの値（`PUBLIC_RAKUTEN_*`）と Turnstile のサイトキー（`PUBLIC_TURNSTILE_SITE_KEY`）がこれにあたる。
+- 秘密の値（`TURNSTILE_SECRET_KEY`、`INQUIRY_TO_ADDRESS`、`CLOUDFLARE_API_TOKEN`）は `.env.production` に dotenvx で暗号化して置く。`.env.development` には秘密の値を置かず、Turnstile は Cloudflare のテスト用キーを、`INQUIRY_TO_ADDRESS` は仮のアドレスを平文で置く。
+- Worker が使う秘密の値（`TURNSTILE_SECRET_KEY`、`INQUIRY_TO_ADDRESS`）は `cloudflare.config.ts` で `bindings.secret()` として宣言する。ローカル（`pnpm dev`、`vite preview`）では Cloudflare の Vite プラグインが環境変数から値を取る。値はビルドの出力には入らないので、本番の Worker への登録は計画4で行う。
+- 秘密鍵は `.env.keys` に置き、コミットしない。デプロイでは GitHub の Secret `DOTENV_PRIVATE_KEY_PRODUCTION` から渡す。
+- `pnpm dev` と `pnpm build` は `dotenvx run` でファイルを読む。`vite.config.ts` は `PUBLIC_` で始まる値だけを Vite の `loadEnv` でルートのファイルから直接読み、クライアントに渡す。鍵がなくても（PR の CI やプレビューでも）公開の値はビルドに入る。
+
 ### 商品情報の取得
 
 ブラウザから次の順で行う。
 
 1. 購入先のパーサーが、URL からショップコードと商品管理番号を取り出す。
 2. ショップ台帳とショップコードで照合し、台帳になければショップを登録する。
-3. `itemCode` で商品検索 API を呼び、商品名、価格、ショップ名、`pointRate`、アフィリエイトリンクを注文の入力欄に入れる。入れた値はユーザーが編集できる。
+3. 購入先が商品情報の取得に対応し（楽天市場だけ）、URL から商品管理番号が取り出せたときだけ、商品検索 API を呼ぶ。API の `itemCode` は商品管理番号とは別の値なので、ショップコードと商品管理番号（キーワード）で検索し、商品ページの URL が一致する商品を使う。商品管理番号が検索の対象になっていない商品は見つからず、自動入力できない。商品名、税込の単価、ショップ（台帳になければショップ名とショップコードで登録）、ショップ独自倍率（`pointRate` が2以上のとき）を注文の入力欄に入れる。入れた値はユーザーが編集できる。税別の価格（`taxFlag` が1）は単価に入れない。
 
-通信エラー、商品が見つからない、レート制限のいずれかで手順3が失敗したときは、手順1と2の結果を残し、自動入力できなかったことを表示する。楽天 API は `Origin` ヘッダーがアプリ設定の「許可された Web サイト」（`https://point-sprint.bmth.dev`）と一致するときだけ応答する。`Origin` はサーバー側から自由に付けられるので、`accessKey` は公開されてもよい値として扱う。開発中は `localhost` が許可されないため、開発サーバーで呼び出しを中継して `Origin` を付け替える（検証結果は `docs/superpowers/spikes/2026-10-04-external-integrations.md`）。
+注文に保存する商品 URL は、アフィリエイトリンクではなく、ユーザーが貼った商品 URL にする。アフィリエイトリンク（`hb.afl.rakuten.co.jp`）は購入先のパーサーで読めないため、保存すると、編集のときに URL からショップを判定できなくなるからである。今の画面には保存した URL へのリンクを出す場所がないので、アフィリエイトリンクを持つ利点もない。商品へのリンクを出すときは、そのときにアフィリエイトリンクを組み立てる。
+
+通信エラー、商品が見つからない、レート制限のいずれかで手順3が失敗したときは、手順1と2の結果を残し、自動入力できなかったことを表示する。楽天 API は `Origin` ヘッダーがアプリ設定の「許可された Web サイト」（`https://point-sprint.bmth.dev`）と一致するときだけ応答する。`Origin` はサーバー側から自由に付けられるので、`accessKey` は公開されてもよい値として扱う。開発中は `localhost` が許可されないため、開発サーバー（Vite の `server.proxy`）で `/rakuten-api` への呼び出しを API に中継し、`Origin` を付け替える。本番では中継せず、ブラウザから API を直接呼ぶ（検証結果は `docs/superpowers/spikes/2026-10-04-external-integrations.md`）。
 
 ### 広告
 
@@ -294,9 +312,14 @@ Seitu は1人の作者が開発する比較的新しいライブラリ（採用�
 
 ### 問い合わせ
 
-1. Formisch のフォームで Turnstile のトークンを取得し、サーバー関数を呼ぶ。
-2. サーバー関数は Turnstile のトークンを検証し、入力を Valibot で検証してから、`send_email` バインディングで管理者のアドレスに送る。
-3. 失敗したときは、フォームの入力を残したまま、再送できる形でエラーを表示する。
+1. `/inquiry` の Formisch のフォーム（名前は任意、返信先のメールアドレスと本文は必須。返信を希望するかのチェックボックスもある）で入力を Valibot で検証し、Turnstile のウィジェットからトークンを受け取ってから、サーバー関数（`apps/web/src/server/submit-inquiry.ts`）を呼ぶ。トークンを受け取るまでは送信できない。
+2. サーバー関数は、入力を同じスキーマで検証し直し、Turnstile のトークンを `siteverify` で検証してから、`send_email` バインディング（`INQUIRY_EMAIL`）で `inquiry@bmth.dev` から運営者に送る。利用者のアドレスは `Reply-To` に入れる。メール（生の MIME、件名は B エンコード、本文は base64）は純粋関数で組み立てる。
+3. 失敗は、入力（`input`）、設定の不足（`config`）、Turnstile（`turnstile`）、送信（`send`）のどの段階かを返し、ログには段階とエラーコードだけを残す。本文やメールアドレスはログに残さない。
+4. 利用者には段階によらず「送信できませんでした」と出し、入力を残したまま、Turnstile の確認をやり直して再送できるようにする。
+
+宛先の運営者のアドレスは、Email Routing で確認済みの宛先を Worker の秘密の値 `INQUIRY_TO_ADDRESS` で渡し、コードや公開のファイルには書かない。`send_email` は Email Routing の確認済みの宛先にしか送れないので、バインディングでは宛先を制限せず、送信元だけを `inquiry@bmth.dev` に制限する。
+
+Worker の実行環境に依存する部分（`cloudflare:workers` の `env`、`cloudflare:email`）は `worker-inquiry.ts` に分け、サーバー関数のハンドラーの中で読み込む。テストでは段階ごとの処理（`inquiry.ts`）に `siteverify` と `send_email` の代わりを渡し、外部には送らない。`pnpm dev` では `.env.development` の Turnstile のテスト用キーで `siteverify` まで通り、`send_email` はローカルで模擬される（`.eml` ファイルに書き出される）。E2E では Turnstile のスクリプトを差し替え、プレビューの Worker には秘密の値を渡さないので、サーバー関数は `config` の段階で止まる。
 
 ### 実装計画の最初に行う検証
 
