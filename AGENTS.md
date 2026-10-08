@@ -11,3 +11,14 @@
 迷ったらルートの隣に置き、2 つ目の画面が使うときに `src/` の直下へ移す。
 
 `features/` は #73 で再配置するまでの古い形である。新しいファイルは上の規則で置き、`features/` には足さない。
+
+## UI の部品
+
+画面の部品は Yamada UI v2 の部品で組む。`@workspaces/ui` は Yamada UI のほぼすべての部品を export しているので、たいていの部品はすでにある（Accordion、Collapse、Select、DatePicker、Table、List、Timeline、SegmentedControl など）。
+
+- 部品を作る前に、`packages/ui/src/index.ts` の export から使えるものを探す。使い方は ctx7 の `/yamada-ui/yamada-ui` で調べる
+- 表、リスト、開閉には、その役割の部品（Table、List、Accordion）を使う。`Box` に `as` を付けて要素を組み立てるのは、役割に合う部品がないときだけにする
+- 見た目は部品の `variant`、`size`、`colorScheme` で選び、色はテーマのトークンで指定する（`docs/design-system.md`）
+- Yamada UI にない部品を作ったときは、探した部品の名前と、使わなかった理由を PR に書く
+
+ボタン、入力欄、`details` などの HTML 要素を JSX に直接書くと、oxlint の `react/forbid-elements` が止める（テストファイルは対象外）。
