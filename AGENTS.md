@@ -14,9 +14,9 @@
 
 ## UI の部品
 
-画面の部品は Yamada UI v2 の部品で組む。`@workspaces/ui` は Yamada UI のほぼすべての部品を export しているので、たいていの部品はすでにある（Accordion、Collapse、Select、DatePicker、Table、List、Timeline、SegmentedControl など）。
+画面の部品は Yamada UI v2 の部品で組む。`@workspaces/ui` は Yamada UI のすべての部品を export している。
 
 - 部品を作る前に、`packages/ui/src/index.ts` の export から使えるものを探す。使い方は ctx7 の `/yamada-ui/yamada-ui` で調べる
-- 表、リスト、開閉には、その役割の部品（Table、List、Accordion）を使う。`Box` に `as` を付けて要素を組み立てるのは、役割に合う部品がないときだけにする
+- `Box` に `as` を付けて要素を組み立てるのは、役割に合う部品がないときだけにする
 - 見た目は部品の `variant`、`size`、`colorScheme` で選び、色はテーマのトークンで指定する（`docs/design-system.md`）
 - Yamada UI にない部品を作ったときは、探した部品の名前と、使わなかった理由を PR に書く
