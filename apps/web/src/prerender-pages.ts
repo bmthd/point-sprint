@@ -13,6 +13,7 @@ export const prerenderedPages = [
   "/terms",
   "/privacy",
   "/inquiry",
+  "/notices",
   "/guides",
   ...guideSlugs().map((slug) => `/guides/${slug}`),
 ].map((path) => ({

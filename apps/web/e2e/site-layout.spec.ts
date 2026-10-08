@@ -20,6 +20,7 @@ const pages = (id: string) => [
   { name: "利用規約", path: "/terms" },
   { name: "プライバシーポリシー", path: "/privacy" },
   { name: "お問い合わせ", path: "/inquiry" },
+  { name: "お知らせ", path: "/notices" },
 ];
 
 const header = (page: Page) => page.getByRole("banner");
@@ -91,6 +92,7 @@ for (const { name } of pages("")) {
 
 test("the footer links to each page that tells about the site", async ({ page }) => {
   for (const { label, path, heading } of [
+    { label: "お知らせ", path: "/notices", heading: "お知らせ" },
     { label: "使い方・注意事項", path: "/help", heading: "使い方・注意事項" },
     { label: "利用規約", path: "/terms", heading: "利用規約" },
     { label: "プライバシーポリシー", path: "/privacy", heading: "プライバシーポリシー" },

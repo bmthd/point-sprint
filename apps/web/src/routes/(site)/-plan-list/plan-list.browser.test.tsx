@@ -164,7 +164,9 @@ test("lists plans with their totals", async () => {
   await expect.element(screen.getByRole("link", { name: /10月 お買い物マラソン/ })).toBeVisible();
   // Most recently updated first. The shops load after the plans, so wait for the totals.
   const rowTexts = () =>
-    Array.from(document.querySelectorAll("section:last-of-type li")).map((row) => row.textContent);
+    Array.from(document.querySelectorAll("main section:last-of-type li")).map(
+      (row) => row.textContent,
+    );
   await expect
     .poll(rowTexts)
     .toEqual([
@@ -285,7 +287,9 @@ test("shows each plan's account only once accounts are told apart", async () => 
     updatedAt: "2026-10-05T00:00:00.000Z",
   };
   const rowTexts = () =>
-    Array.from(document.querySelectorAll("section:last-of-type li")).map((row) => row.textContent);
+    Array.from(document.querySelectorAll("main section:last-of-type li")).map(
+      (row) => row.textContent,
+    );
 
   const off = createMemoryRepository({ shops: [shop], plans, profile });
   const { screen } = await renderPlanList(off);
