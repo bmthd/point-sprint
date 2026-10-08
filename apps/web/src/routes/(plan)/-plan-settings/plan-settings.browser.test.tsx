@@ -121,11 +121,15 @@ test("tile toggles SPU and updates the total", async () => {
   expect(spuText(screen)).toContain("SPU +4倍");
   await expect.poll(async () => (await storedBenefit("楽天モバイル"))?.enabled).toBe(true);
 
-  // The card's own normal points count as 通常, not as SPU.
+  // The card's own normal points count as 通常, not as SPU. Turning them on also turns on the
+  // card's SPU bonus, which requires them.
   await tapCard(screen.getByRole("checkbox", { name: "楽天カード（通常） +1倍" }));
-  await expect.poll(() => spuText(screen)).toContain("SPU を入れて全商品6倍");
+  await expect.poll(() => spuText(screen)).toContain("SPU を入れて全商品7倍");
   expect(spuText(screen)).toContain("通常 2倍");
-  expect(spuText(screen)).toContain("SPU +4倍");
+  expect(spuText(screen)).toContain("SPU +5倍");
+  await expect
+    .element(screen.getByRole("checkbox", { name: "楽天カード特典分（SPU） +1倍" }))
+    .toBeChecked();
 
   await tapCard(mobile);
   await expect.element(mobile).not.toBeChecked();
@@ -180,6 +184,27 @@ test("enabling premium card turns off the regular card", async () => {
   await tapCard(card);
   await expect.element(card).toBeChecked();
   await expect.element(premium).not.toBeChecked();
+});
+
+test("the premium card turns the card's normal points on and off with it", async () => {
+  const screen = await renderSettings(spuPlan());
+  const normal = screen.getByRole("checkbox", { name: "楽天カード（通常） +1倍" });
+  const premium = screen.getByRole("checkbox", { name: "楽天プレミアムカード（特典分） +1倍" });
+  await expect.element(normal).not.toBeChecked();
+
+  await tapCard(premium);
+  await expect.element(premium).toBeChecked();
+  await expect.element(normal).toBeChecked();
+  await expect
+    .poll(async () => (await storedBenefit("楽天カード通常分（カード本体の還元）"))?.enabled)
+    .toBe(true);
+
+  await tapCard(premium);
+  await expect.element(premium).not.toBeChecked();
+  await expect.element(normal).not.toBeChecked();
+  await expect
+    .poll(async () => (await storedBenefit("楽天カード通常分（カード本体の還元）"))?.enabled)
+    .toBe(false);
 });
 
 test("cap badge appears when the cap is reached", async () => {
