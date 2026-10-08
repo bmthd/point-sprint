@@ -1,6 +1,8 @@
 import type { LinkProps } from "@tanstack/react-router";
 import { Box, Text } from "@workspaces/ui";
 import { RouterLink } from "../plan-list/router-link";
+import { ShareButton } from "../share/share-button";
+import { siteShareTarget } from "../share/share-target";
 
 /**
  * The footer's links. お知らせ is in the sidebar, and every page links to the one on the top page,
@@ -10,10 +12,14 @@ export const footerLinks: readonly { to: LinkProps["to"]; hash?: string; label: 
   { to: "/", hash: "notices", label: "お知らせ" },
   { to: "/help", label: "使い方・注意事項" },
   { to: "/terms", label: "利用規約" },
+  { to: "/privacy", label: "プライバシーポリシー" },
   { to: "/inquiry", label: "お問い合わせ" },
 ];
 
-/** The footer on every page: the links, and where the data is kept (it applies to every page). */
+/**
+ * The footer on every page: the links, sharing the site, and where the data is kept (it applies to
+ * every page).
+ */
 export function SiteFooter() {
   return (
     <Box
@@ -53,6 +59,13 @@ export function SiteFooter() {
             ))}
           </Box>
         ) : null}
+        <ShareButton
+          label="このサイトをシェア"
+          target={siteShareTarget}
+          alignSelf="center"
+          w="full"
+          maxW="sm"
+        />
         <Text fontSize="xs" color="fg.muted" textAlign="center">
           入力した内容はこのブラウザの中にだけ保存されます。ブラウザのデータを消すと、プランも消えます。
         </Text>

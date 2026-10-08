@@ -2,6 +2,8 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
+import { ogFonts } from "./og-fonts-plugin.ts";
+import { parseGoogleTagsEnv } from "./src/google-tags/env.ts";
 import { fixtureFetch, guideItems } from "./src/guides/vite-plugin.ts";
 import { prerenderedPages } from "./src/prerender-pages.ts";
 import {
@@ -12,7 +14,7 @@ import {
 } from "./src/rakuten/config.ts";
 import { searchItems } from "./src/rakuten/item-search.ts";
 
-export default defineConfig(({ mode, isPreview }) => {
+export default defineConfig(({ command, mode, isPreview }) => {
   // Only the `PUBLIC_` values reach the browser. They are plain text in `.env.development` and
   // `.env.production` at the root, so they are read without the dotenvx key, also by builds that do
   // not go through `pnpm build`. Without them, no item lookup, and the guides show no items.
@@ -24,6 +26,9 @@ export default defineConfig(({ mode, isPreview }) => {
       "Rakuten API settings are missing or encrypted: item lookup and the guides' items are off.",
     );
   }
+  // Only the production build loads Google Analytics and AdSense, and it fails without their IDs.
+  // The dev server and the unit tests get none.
+  const googleTagIds = command === "build" ? parseGoogleTagsEnv(publicEnv) : undefined;
   // The E2E build answers the guides' item searches from a file, so that no test calls the API.
   const fixture = process.env.RAKUTEN_ITEM_SEARCH_FIXTURE;
   return {
@@ -31,7 +36,8 @@ export default defineConfig(({ mode, isPreview }) => {
       cloudflare({ viteEnvironment: { name: "ssr" } }),
       tanstackStart({
         router: { routeFileIgnorePattern: "\\.test\\." },
-        prerender: { enabled: true, crawlLinks: false },
+        // Only the listed pages: `/share` is rendered on each request, for the figures in its query.
+        prerender: { enabled: true, crawlLinks: false, autoStaticPathsDiscovery: false },
         pages: prerenderedPages.map(({ path }) => ({ path, prerender: { enabled: true } })),
       }),
       viteReact({ compiler: true }),
@@ -44,6 +50,7 @@ export default defineConfig(({ mode, isPreview }) => {
               ...(fixture ? { fetch: fixtureFetch(fixture) } : {}),
             })),
       }),
+      ogFonts(),
     ],
     define: {
       "import.meta.env.RAKUTEN_CONFIG": JSON.stringify(rakutenConfig ?? null),
@@ -51,6 +58,8 @@ export default defineConfig(({ mode, isPreview }) => {
       "import.meta.env.TURNSTILE_SITE_KEY": JSON.stringify(
         publicEnv.PUBLIC_TURNSTILE_SITE_KEY?.trim() || null,
       ),
+      "import.meta.env.GA_MEASUREMENT_ID": JSON.stringify(googleTagIds?.measurementId),
+      "import.meta.env.ADSENSE_CLIENT_ID": JSON.stringify(googleTagIds?.adsenseClientId),
     },
     server: {
       proxy: {

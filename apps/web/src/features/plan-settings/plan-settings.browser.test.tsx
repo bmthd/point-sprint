@@ -6,11 +6,19 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { type Benefit, type Plan, campaignTemplates, standardSpu } from "@workspaces/domain";
+import {
+  type Benefit,
+  type Plan,
+  type Profile,
+  campaignTemplates,
+  defaultAccount,
+  standardSpu,
+} from "@workspaces/domain";
 import { beforeEach, expect, test } from "vitest";
 import { type Locator, page, userEvent } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import { createMemoryRepository } from "../../storage/memory-repository";
+import { misalignedFields } from "../../test-layout";
 import {
   PLAN,
   Providers,
@@ -61,8 +69,8 @@ const storedPlan = async () => {
 const storedBenefit = async (label: string) =>
   (await storedPlan()).benefits.find((benefit) => benefit.label === label);
 
-async function renderSettings(plan: Plan) {
-  currentRepository = createMemoryRepository({ shops, plans: [plan] });
+async function renderSettings(plan: Plan, profile?: Profile) {
+  currentRepository = createMemoryRepository({ shops, plans: [plan], profile });
   await cleanup();
   const root = createRootRoute({ component: Outlet });
   const home = createRoute({
@@ -212,13 +220,35 @@ test("adds a sports-win day from the template", async () => {
 
   await screen.getByRole("button", { name: /^勝ったら倍/ }).click();
   const dialog = screen.getByRole("dialog", { name: "勝ったら倍を追加" });
-  await dialog.getByLabelText("日付").fill("2026-10-06");
+  const date = dialog.getByLabelText("日付");
+  // Opening the dialog neither focuses the date nor opens its calendar.
+  await expect.element(date).toBeVisible();
+  await expect.element(date).not.toHaveFocus();
+  await expect.element(screen.getByRole("grid")).not.toBeInTheDocument();
+  // The dialog shows the campaign's image, which follows the chosen rate.
+  const thumbnail = () => dialog.element().querySelector("header img");
+  expect(thumbnail()).toHaveAttribute(
+    "src",
+    "https://assets.bmth.dev/point-sprint/img/campaign/sports.webp",
+  );
+
+  // Tapping the date opens the calendar, not the on-screen keyboard, and a day picked there fills
+  // it in.
+  await expect.element(date).toHaveAttribute("inputmode", "none");
+  await date.click();
+  const calendar = screen.getByRole("grid");
+  await calendar.getByText("6", { exact: true }).click();
+  await expect.element(date).toHaveValue("2026/10/06");
+  await expect.element(calendar).not.toBeInTheDocument();
   const rate = dialog.getByRole("radiogroup", { name: "倍率" });
-  const double = rate.getByRole("radio", { name: "+2倍" });
-  await expect.element(rate.getByRole("radio", { name: "+1倍" })).toBeChecked();
-  // The radio is visually hidden under its segment, so the segment's text is tapped.
-  await rate.getByText("+2倍").click();
+  const double = rate.getByRole("radio", { name: /^\+2倍/ });
+  await expect.element(rate.getByRole("radio", { name: /^\+1倍/ })).toBeChecked();
+  // The radio is visually hidden under its card, so the card's text is tapped.
+  await rate.getByText("両方のチームが勝った日").click();
   await expect.element(double).toBeChecked();
+  await expect
+    .poll(thumbnail)
+    .toHaveAttribute("src", "https://assets.bmth.dev/point-sprint/img/campaign/sports-w.webp");
   await dialog.getByRole("button", { name: "追加する" }).click();
 
   await expect.element(dialog).not.toBeInTheDocument();
@@ -257,8 +287,8 @@ test("prevents adding the same 39shop period twice", async () => {
   };
 
   const first = await add39();
-  await expect.element(first.getByLabelText("開始日")).toHaveValue("2026-10-04");
-  await expect.element(first.getByLabelText("終了日")).toHaveValue("2026-10-09");
+  await expect.element(first.getByLabelText("開始日")).toHaveValue("2026/10/04");
+  await expect.element(first.getByLabelText("終了日")).toHaveValue("2026/10/09");
   await first.getByRole("button", { name: "追加する" }).click();
   await expect.element(first).not.toBeInTheDocument();
   await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
@@ -295,6 +325,8 @@ test("a campaign's form says what to fix, and focuses the first field to fix", a
     .toHaveAccessibleDescription("終了日は開始日と同じ日か、それより後の日にしてください");
   await expect.element(cap).toHaveAccessibleDescription("獲得上限を入れてください");
   await expect.element(end).toHaveFocus();
+  // The start date stays level with the end date and its error.
+  expect(misalignedFields(dialog.element())).toEqual([]);
   expect((await storedPlan()).benefits).toHaveLength(0);
 
   await end.fill("2026-10-09");
@@ -333,6 +365,10 @@ test("a period's end before its start is not saved", async () => {
   await expect
     .element(end)
     .toHaveAccessibleDescription("終了日は開始日と同じ日か、それより後の日にしてください");
+  // The start date stays level with the end date and its error.
+  expect(
+    misalignedFields(screen.getByRole("region", { name: "買いまわりと上限" }).element()),
+  ).toEqual([]);
   const start = screen.getByLabelText("開始日");
   await start.fill("2026-10-10");
   await start.element().blur();
@@ -446,4 +482,27 @@ test("on a desktop the header button opens the settings in a side panel", async 
     .toBeInTheDocument();
   await panel.getByRole("button", { name: "保存して計算に反映" }).click();
   await expect.element(panel).not.toBeInTheDocument();
+});
+
+test("the account is picked only once accounts are told apart", async () => {
+  const SUB = "acc00000-0000-4000-8000-000000000002";
+  const profile: Profile = {
+    spuBenefits: [],
+    accounts: [defaultAccount(), { id: SUB, name: "家族" }],
+    updatedAt: "2026-10-05T00:00:00.000Z",
+  };
+  const off = await renderSettings(spuPlan(), profile);
+  await expect.element(spuSection(off)).toBeVisible();
+  expect(off.getByRole("combobox", { name: "購入するアカウント" }).query()).toBeNull();
+  expect(off.getByRole("region", { name: "アカウント" }).query()).toBeNull();
+
+  const screen = await renderSettings(spuPlan(), { ...profile, multiAccount: true });
+  const picker = screen.getByRole("combobox", { name: "購入するアカウント" });
+  await expect.element(picker).toHaveValue(defaultAccount().id);
+  await picker.selectOptions("家族");
+  await expect.element(picker).toHaveValue(SUB);
+  await expect.poll(async () => (await storedPlan()).accountId).toBe(SUB);
+
+  await picker.selectOptions("メイン");
+  await expect.poll(async () => (await storedPlan()).accountId).toBeUndefined();
 });

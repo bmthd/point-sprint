@@ -9,18 +9,23 @@ import {
   hasCampaignOccurrence,
   instantiateCampaign,
 } from "@workspaces/domain";
-import { Field as FormField, type FormStore, useField, useForm } from "@formisch/react";
+import { Field as FormField, type FormStore, setInput, useField, useForm } from "@formisch/react";
 import {
   Box,
   Button,
+  DatePicker,
+  type DatePickerProps,
   Field,
+  HStack,
   Image,
   Input,
   List,
   Modal,
-  SegmentedControl,
+  RadioCard,
+  RadioCardGroup,
   Text,
   VStack,
+  useFieldProps,
 } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useState } from "react";
@@ -40,6 +45,30 @@ const DateText = dateSchema("日付");
 const isDate = (text: unknown): text is string => v.is(DateText, text);
 const grouped = (value: number | undefined) =>
   value === undefined ? "" : value.toLocaleString("ja-JP");
+
+/** `2026-10-06` → that day at midnight here, or `undefined` for anything else. */
+const parseIsoDate = (text: unknown) => {
+  if (!isDate(text)) return undefined;
+  const [year, month, day] = text.split("-").map(Number);
+  return new Date(year ?? 0, (month ?? 1) - 1, day);
+};
+
+/** A day → `2026-10-06`, the text the form's date fields hold. */
+const isoDate = (date: Date) =>
+  [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+
+/** How a date field shows its day: `2026/10/06`. */
+const DATE_FORMAT = { input: { year: "numeric", month: "2-digit", day: "2-digit" } } as const;
+
+/** The images of 勝ったら倍's two choices: one team won, or both did. */
+const SPORTS_CHOICES = [
+  { rate: 1, imagePath: "/img/campaign/sports.webp", when: "片方のチームが勝った日" },
+  { rate: 2, imagePath: "/img/campaign/sports-w.webp", when: "両方のチームが勝った日" },
+] as const;
 
 /** The list of templates under 「＋ 追加」, two to a row. */
 export function TemplateList({ onPick }: { onPick: (template: CampaignTemplate) => void }) {
@@ -99,20 +128,73 @@ function TextField({
   form,
   name,
   label,
-  type,
   inputMode,
 }: {
   form: FormStore<CampaignFormSchema>;
-  name: "label" | "date" | "start" | "end" | "rate" | "minOrderAmount" | "cap";
+  name: "label" | "rate" | "minOrderAmount" | "cap";
   label: string;
-  type?: "date";
   inputMode?: "numeric" | "decimal";
 }) {
   return (
     <FormField of={form} path={[name]}>
       {(field) => (
         <Field.Root label={label} {...errorsOf(field)} minW="0">
-          <Input type={type} inputMode={inputMode} {...bind(field)} />
+          <Input inputMode={inputMode} {...bind(field)} />
+        </Field.Root>
+      )}
+    </FormField>
+  );
+}
+
+/**
+ * A `DatePicker` in a `Field`. The picker puts the field's `aria-invalid` and error description on
+ * its box, not on the input that has the label, so they are given to the input as well.
+ */
+function FieldDatePicker(props: DatePickerProps) {
+  const { ariaProps } = useFieldProps();
+  return (
+    <DatePicker
+      locale="ja"
+      format={DATE_FORMAT}
+      placeholder="YYYY/MM/DD"
+      openOnFocus={false}
+      openOnChange={false}
+      fontVariantNumeric="tabular-nums"
+      // The input keeps its own width otherwise, too wide for half of the dialog.
+      minW="0"
+      // A tap brings up the calendar alone, not the on-screen keyboard as well. A real keyboard can
+      // still type a day.
+      inputProps={{ ...ariaProps, minW: "0", inputMode: "none" }}
+      {...props}
+    />
+  );
+}
+
+/**
+ * A date field of the form: a day typed in, or picked from the calendar that opens when the field
+ * is tapped. Focusing or typing does not open the calendar, so moving the focus to an error does
+ * not cover the form with it.
+ */
+function DateField({
+  form,
+  name,
+  label,
+}: {
+  form: FormStore<CampaignFormSchema>;
+  name: "date" | "start" | "end";
+  label: string;
+}) {
+  return (
+    <FormField of={form} path={[name]}>
+      {(field) => (
+        <Field.Root label={label} {...errorsOf(field)} minW="0">
+          <FieldDatePicker
+            ref={field.props.ref}
+            name={field.props.name}
+            value={parseIsoDate(field.input)}
+            onChange={(date) => setInput(form, { path: [name], input: date ? isoDate(date) : "" })}
+            onBlur={field.props.onBlur}
+          />
         </Field.Root>
       )}
     </FormField>
@@ -156,6 +238,9 @@ function CampaignForm({
     ? { dates: isDate(date) ? [date] : [] }
     : { period: isDate(start) && isDate(end) ? { start, end } : undefined };
   const duplicate = hasCampaignOccurrence(plan, template, occurrence);
+  const imagePath = spec.date
+    ? SPORTS_CHOICES.find((option) => option.rate === choice)?.imagePath
+    : template.benefit.imagePath;
 
   const submit = async (output: v.InferOutput<CampaignFormSchema>) => {
     if (duplicate) return;
@@ -180,7 +265,18 @@ function CampaignForm({
   return (
     <>
       <Modal.Header>
-        <Modal.Title as="h2">{template.name}を追加</Modal.Title>
+        <HStack gap="3">
+          {imagePath ? (
+            <Image
+              src={imageUrl(imagePath)}
+              alt=""
+              boxSize="12"
+              objectFit="contain"
+              flexShrink="0"
+            />
+          ) : null}
+          <Modal.Title as="h2">{template.name}を追加</Modal.Title>
+        </HStack>
       </Modal.Header>
       <Modal.Body alignItems="stretch">
         <Form of={form} id={formId} onSubmit={submit}>
@@ -188,28 +284,51 @@ function CampaignForm({
             {spec.label ? <TextField form={form} name="label" label="名前" /> : null}
             {spec.date ? (
               <>
-                <TextField form={form} name="date" label="日付" type="date" />
-                <SegmentedControl.Root
+                <DateField form={form} name="date" label="日付" />
+                <RadioCardGroup.Root
                   aria-label="倍率"
                   value={String(choice)}
                   onChange={(value) => setChoice(Number(value))}
-                  w="full"
+                  colorScheme="primary"
+                  size="sm"
+                  withIndicator={false}
+                  display="grid"
+                  gridTemplateColumns="repeat(2, minmax(0, 1fr))"
+                  gap="2"
                 >
-                  {[1, 2].map((value) => (
-                    <SegmentedControl.Item key={value} value={String(value)}>
-                      +{value}倍
-                    </SegmentedControl.Item>
+                  {SPORTS_CHOICES.map((option) => (
+                    <RadioCard.Root
+                      key={option.rate}
+                      value={String(option.rate)}
+                      flexDirection="column"
+                      alignItems="center"
+                      textAlign="center"
+                      gap="1"
+                    >
+                      <Image
+                        src={imageUrl(option.imagePath)}
+                        alt=""
+                        boxSize="16"
+                        objectFit="contain"
+                      />
+                      <RadioCard.Label fontVariantNumeric="tabular-nums">
+                        +{option.rate}倍
+                      </RadioCard.Label>
+                      <RadioCard.Description>{option.when}</RadioCard.Description>
+                    </RadioCard.Root>
                   ))}
-                </SegmentedControl.Root>
-                <Text fontSize="xs" color="fg.muted">
-                  片方のチームの勝利は +1倍、両方のチームが勝った日は +2倍です。
-                </Text>
+                </RadioCardGroup.Root>
               </>
             ) : null}
             {spec.period ? (
-              <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
-                <TextField form={form} name="start" label="開始日" type="date" />
-                <TextField form={form} name="end" label="終了日" type="date" />
+              <Box
+                display="grid"
+                gridTemplateColumns="repeat(2, minmax(0, 1fr))"
+                alignItems="start"
+                gap="2"
+              >
+                <DateField form={form} name="start" label="開始日" />
+                <DateField form={form} name="end" label="終了日" />
               </Box>
             ) : null}
             {spec.rate ? (
@@ -282,6 +401,8 @@ export function CampaignAddDialog({
       onClose={onClose}
       size="md"
       withCloseButton={false}
+      // Focusing the first field would open its calendar before the user knows what the dialog is.
+      autoFocus={false}
       restoreFocus
     >
       <Modal.Content>

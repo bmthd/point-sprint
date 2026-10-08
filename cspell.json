@@ -19,6 +19,7 @@
     "packages/ui/src/theme/tokens/z-indices.ts"
   ],
   "words": [
+    "nosniff",
     "bmthd",
     "rakuten",
     "rakuma",
@@ -64,6 +65,13 @@
     "siteverify",
     "remoteip",
     "bmth",
-    "noopener"
+    "noopener",
+    "takumi",
+    "IHDR",
+    "adsense",
+    "adsbygoogle",
+    "googletagmanager",
+    "googlesyndication",
+    "pagead"
   ]
 }

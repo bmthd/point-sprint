@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { AppProviders } from "../app-providers";
 import { SiteFooter } from "../features/layout/site-footer";
 import { SiteHeader } from "../features/layout/site-header";
+import { GoogleTagScripts } from "../google-tags/google-tag-scripts";
 import { defaultDescription, defaultTitle, siteName, siteUrl } from "../page-head";
 
 export const Route = createRootRoute({
@@ -67,6 +68,7 @@ function RootDocument({ children }: { children: ReactNode }) {
     <html lang="ja" suppressHydrationWarning>
       <head>
         <HeadContent />
+        <GoogleTagScripts />
         {/* Both stay: the route head keeps only the last meta of a name. */}
         <meta name="theme-color" media="(prefers-color-scheme: light)" content={themeColor.light} />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content={themeColor.dark} />

@@ -4,12 +4,13 @@ import { getRouter } from "./router";
 import {
   missingHeadTags,
   missingPrerenderedPages,
+  pagesRenderedOnRequest,
   prerenderedPages,
   sitemapEntry,
   sitemapXml,
 } from "./prerender-pages";
 
-test("every route is prerendered, and a guide's route for each guide", () => {
+test("every route is prerendered or rendered on request, and a guide's route for each guide", () => {
   const slugs = guideFiles().map((file) => file.slug);
   expect(slugs).toContain("1000yen-items");
   const routePaths = Object.keys(getRouter().routesByPath)
@@ -17,9 +18,9 @@ test("every route is prerendered, and a guide's route for each guide", () => {
     .flatMap((path) =>
       path === "/guides/$slug" ? slugs.map((slug) => `/guides/${slug}`) : [path],
     );
-  expect(prerenderedPages.map((page) => page.path).toSorted()).toEqual(
-    [...new Set(routePaths)].toSorted(),
-  );
+  expect(
+    [...prerenderedPages.map((page) => page.path), ...pagesRenderedOnRequest].toSorted(),
+  ).toEqual([...new Set(routePaths)].toSorted());
 });
 
 test("lists the pages whose HTML file is missing", () => {

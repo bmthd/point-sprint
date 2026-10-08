@@ -90,14 +90,16 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 補助のボタン（編集、コピー、貼り付け、続けて追加、キャンセル） | `Button variant="outline"`。プランの画面と注文の編集の「続けて追加」は `size="lg"`、注文の編集の「貼り付け」は既定の size |
 | 控えめなボタン（リセット、並べ替え、行の取っ手と開閉の矢印、開閉の見出し） | `Button` / `IconButton` の `variant="ghost" colorScheme="gray" size="lg"` |
 | 入力欄、選択欄 | `Field.Root`（`label`、`invalid`、`errorMessage`）の中に `Input` / `NativeSelect.Root`。プラン画面とプロフィールは `size="lg"`、注文の編集は既定の size。注文の編集の金額は `InputGroup.Root size="xl"` に `¥` の `InputGroup.Addon` |
-| プラン設定の入力欄 | `Field` の中に既定の `Input` |
+| プラン設定の入力欄 | `Field` の中に既定の `Input`。キャンペーンの追加の日付は `DatePicker`（`locale="ja"`、`YYYY/MM/DD` の表示）。カレンダーは欄をタップしたときだけ開き、フォーカスや入力では開かない。タップで画面のキーボードは出さない（`inputMode="none"`）が、物理キーボードでは打ち込める。ダイアログを開いたときに欄へ自動でフォーカスしない |
+| キャンペーンの追加ダイアログ | 見出しの左に、追加するキャンペーンの画像（`boxSize="12"`）を置く |
 | 入力欄のまとまり | `Fieldset.Root`（`legend`）。注文の編集の2つ目以降の商品は `variant="outline" size="sm"` |
 | 買い回りにカウントするか | 表は `Checkbox colorScheme="primary" size="lg"`、カードは `Switch colorScheme="primary"` |
 | 保留（注文の編集） | `Switch colorScheme="primary"` |
 | 開いて見る設定（注文の編集の詳細設定） | `NativeAccordion`（variant は既定の plain） |
 | 文中の追加ボタン（同じショップの商品を追加） | `Button variant="ghost" colorScheme="primary"` |
 | 削除ボタン | `Button variant="outline" colorScheme="danger"`。プラン画面の注文の削除は `size="lg"` で、実行前に確認を挟む。注文の編集の「商品Nを削除」は既定の size。プラン一覧では `IconButton variant="ghost" colorScheme="danger" size="lg"`、プラン設定の並びでは `IconButton variant="ghost"` を使う |
-| セグメントコントロール | プラン設定は既定の `SegmentedControl`。注文の編集の税率は `ButtonGroup.Root attached` の `Button`（選択中は `variant="solid" colorScheme="primary"`、ほかは `variant="outline"`、`aria-pressed`） |
+| 画像で選ぶ選択肢（勝ったら倍の +1倍／+2倍） | `RadioCardGroup.Root colorScheme="primary" size="sm" withIndicator={false}` を2列に並べ、各 `RadioCard.Root` に画像、倍率（`RadioCard.Label`）、どんな日か（`RadioCard.Description`）を縦に置く |
+| セグメントコントロール | 注文の編集の税率は `ButtonGroup.Root attached` の `Button`（選択中は `variant="solid" colorScheme="primary"`、ほかは `variant="outline"`、`aria-pressed`） |
 | 選べるチップ | `Button colorScheme="mono" size="lg" aria-pressed`。未選択は `variant="outline"`、選択中は `variant="solid"` とチェックの印 |
 | SPU のタイル | `CheckboxCard colorScheme="primary" size="sm" withIndicator={false}`（既定の surface）。名前は `Button variant="ghost" size="xs"` で、上限と条件のダイアログを開く |
 | キャンペーンの ON / OFF | `CheckboxCard colorScheme="primary" size="sm"`（既定の surface とチェックの印） |

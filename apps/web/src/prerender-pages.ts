@@ -11,6 +11,7 @@ export const prerenderedPages = [
   "/profile",
   "/help",
   "/terms",
+  "/privacy",
   "/inquiry",
   "/guides",
   ...guideFiles().map(({ slug }) => `/guides/${slug}`),
@@ -18,6 +19,12 @@ export const prerenderedPages = [
   path,
   file: path === "/" ? "index.html" : `${path.slice(1)}/index.html`,
 }));
+
+/**
+ * Routes the Worker renders on each request instead: what they show comes from the query string. A
+ * shared result's page carries its figures in its OGP tags, and its image is drawn from them.
+ */
+export const pagesRenderedOnRequest = ["/share", "/share/image.png"];
 
 /** HTML files, relative to the client output directory, that the build did not write. */
 export const missingPrerenderedPages = (exists: (file: string) => boolean): string[] =>

@@ -15,11 +15,14 @@ import { Route as GuidesRouteRouteImport } from './routes/guides/route'
 import { Route as InquiryRouteImport } from './routes/inquiry'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ShareRouteImport } from './routes/share'
 import { Route as markdownHelpRouteImport } from './routes/(markdown)/help'
+import { Route as markdownPrivacyRouteImport } from './routes/(markdown)/privacy'
 import { Route as markdownTermsRouteImport } from './routes/(markdown)/terms'
 import { Route as GuidesIndexRouteImport } from './routes/guides/index'
 import { Route as GuidesSlugRouteImport } from './routes/guides/$slug'
 import { Route as PlanSettingsRouteImport } from './routes/plan_.settings'
+import { Route as ShareImageDotpngRouteImport } from './routes/share_.image[.]png'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -50,9 +53,19 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShareRoute = ShareRouteImport.update({
+  id: '/share',
+  path: '/share',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const markdownHelpRoute = markdownHelpRouteImport.update({
   id: '/help',
   path: '/help',
+  getParentRoute: () => markdownRouteRoute,
+} as any)
+const markdownPrivacyRoute = markdownPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => markdownRouteRoute,
 } as any)
 const markdownTermsRoute = markdownTermsRouteImport.update({
@@ -75,6 +88,11 @@ const PlanSettingsRoute = PlanSettingsRouteImport.update({
   path: '/plan/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShareImageDotpngRoute = ShareImageDotpngRouteImport.update({
+  id: '/share_/image.png',
+  path: '/share/image.png',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,10 +100,13 @@ export interface FileRoutesByFullPath {
   '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
+  '/share': typeof ShareRoute
   '/help': typeof markdownHelpRoute
+  '/privacy': typeof markdownPrivacyRoute
   '/terms': typeof markdownTermsRoute
   '/guides/$slug': typeof GuidesSlugRoute
   '/plan/settings': typeof PlanSettingsRoute
+  '/share/image.png': typeof ShareImageDotpngRoute
   '/guides/': typeof GuidesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -93,10 +114,13 @@ export interface FileRoutesByTo {
   '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
+  '/share': typeof ShareRoute
   '/help': typeof markdownHelpRoute
+  '/privacy': typeof markdownPrivacyRoute
   '/terms': typeof markdownTermsRoute
   '/guides/$slug': typeof GuidesSlugRoute
   '/plan/settings': typeof PlanSettingsRoute
+  '/share/image.png': typeof ShareImageDotpngRoute
   '/guides': typeof GuidesIndexRoute
 }
 export interface FileRoutesById {
@@ -107,10 +131,13 @@ export interface FileRoutesById {
   '/inquiry': typeof InquiryRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
+  '/share': typeof ShareRoute
   '/(markdown)/help': typeof markdownHelpRoute
+  '/(markdown)/privacy': typeof markdownPrivacyRoute
   '/(markdown)/terms': typeof markdownTermsRoute
   '/guides/$slug': typeof GuidesSlugRoute
   '/plan_/settings': typeof PlanSettingsRoute
+  '/share_/image.png': typeof ShareImageDotpngRoute
   '/guides/': typeof GuidesIndexRoute
 }
 export interface FileRouteTypes {
@@ -121,10 +148,13 @@ export interface FileRouteTypes {
     | '/inquiry'
     | '/plan'
     | '/profile'
+    | '/share'
     | '/help'
+    | '/privacy'
     | '/terms'
     | '/guides/$slug'
     | '/plan/settings'
+    | '/share/image.png'
     | '/guides/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,10 +162,13 @@ export interface FileRouteTypes {
     | '/inquiry'
     | '/plan'
     | '/profile'
+    | '/share'
     | '/help'
+    | '/privacy'
     | '/terms'
     | '/guides/$slug'
     | '/plan/settings'
+    | '/share/image.png'
     | '/guides'
   id:
     | '__root__'
@@ -145,10 +178,13 @@ export interface FileRouteTypes {
     | '/inquiry'
     | '/plan'
     | '/profile'
+    | '/share'
     | '/(markdown)/help'
+    | '/(markdown)/privacy'
     | '/(markdown)/terms'
     | '/guides/$slug'
     | '/plan_/settings'
+    | '/share_/image.png'
     | '/guides/'
   fileRoutesById: FileRoutesById
 }
@@ -159,7 +195,9 @@ export interface RootRouteChildren {
   InquiryRoute: typeof InquiryRoute
   PlanRoute: typeof PlanRoute
   ProfileRoute: typeof ProfileRoute
+  ShareRoute: typeof ShareRoute
   PlanSettingsRoute: typeof PlanSettingsRoute
+  ShareImageDotpngRoute: typeof ShareImageDotpngRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -206,11 +244,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/share': {
+      id: '/share'
+      path: '/share'
+      fullPath: '/share'
+      preLoaderRoute: typeof ShareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(markdown)/help': {
       id: '/(markdown)/help'
       path: '/help'
       fullPath: '/help'
       preLoaderRoute: typeof markdownHelpRouteImport
+      parentRoute: typeof markdownRouteRoute
+    }
+    '/(markdown)/privacy': {
+      id: '/(markdown)/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof markdownPrivacyRouteImport
       parentRoute: typeof markdownRouteRoute
     }
     '/(markdown)/terms': {
@@ -241,16 +293,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlanSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/share_/image.png': {
+      id: '/share_/image.png'
+      path: '/share/image.png'
+      fullPath: '/share/image.png'
+      preLoaderRoute: typeof ShareImageDotpngRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface markdownRouteRouteChildren {
   markdownHelpRoute: typeof markdownHelpRoute
+  markdownPrivacyRoute: typeof markdownPrivacyRoute
   markdownTermsRoute: typeof markdownTermsRoute
 }
 
 const markdownRouteRouteChildren: markdownRouteRouteChildren = {
   markdownHelpRoute: markdownHelpRoute,
+  markdownPrivacyRoute: markdownPrivacyRoute,
   markdownTermsRoute: markdownTermsRoute,
 }
 
@@ -279,17 +340,10 @@ const rootRouteChildren: RootRouteChildren = {
   InquiryRoute: InquiryRoute,
   PlanRoute: PlanRoute,
   ProfileRoute: ProfileRoute,
+  ShareRoute: ShareRoute,
   PlanSettingsRoute: PlanSettingsRoute,
+  ShareImageDotpngRoute: ShareImageDotpngRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

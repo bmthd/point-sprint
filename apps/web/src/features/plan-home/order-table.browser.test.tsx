@@ -7,6 +7,7 @@ import { page, userEvent } from "vitest/browser";
 import { updateOrderAtom } from "../../state/order-ops";
 import { plansQueryAtom, shopsQueryAtom } from "../../state/queries";
 import { createMemoryRepository } from "../../storage/memory-repository";
+import { misalignedFields } from "../../test-layout";
 import { tokyoToday } from "../plan-list/dates";
 import { OrderTable } from "./order-table";
 import {
@@ -216,6 +217,22 @@ test("an invalid add form shows errors and saves nothing", async () => {
   await expect.element(amount).toHaveValue("abc");
   expect(rows().length).toBe(1);
   expect((await stored())?.length).toBe(1);
+});
+
+test("an error under one field leaves the other fields of its row in place", async () => {
+  const screen = await renderWith(marathonPlan([order(0)]));
+  await expect.poll(() => rows().length).toBe(1);
+  await openAddForm(screen);
+  // Its error takes two lines, the tallest under the add form's fields.
+  await screen.getByRole("textbox", { name: "ショップ独自倍率" }).fill("0.5");
+  await userEvent.keyboard("{Enter}");
+  await expect
+    .element(screen.getByText("ショップ独自倍率は1以上の数で入れてください"))
+    .toBeVisible();
+
+  const form = list()?.querySelector("form");
+  if (!form) throw new Error("no add form");
+  expect(misalignedFields(form)).toEqual([]);
 });
 
 test("a failed save keeps the add form's input", async () => {

@@ -40,7 +40,10 @@ export const errorsOf = (field: FieldState) => ({
  */
 export async function focusFirstError(container: HTMLElement) {
   await new Promise((resolve) => requestAnimationFrame(resolve));
-  const field = container.querySelector<HTMLElement>("[aria-invalid='true']");
+  // Only the controls: a `DatePicker` also marks the box around its input invalid.
+  const field = container.querySelector<HTMLElement>(
+    ":is(input, select, textarea)[aria-invalid='true']",
+  );
   if (!field) return;
   const details = field.closest("details");
   if (details) details.open = true;

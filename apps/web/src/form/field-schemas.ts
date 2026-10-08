@@ -125,3 +125,5 @@ export const ItemNameSchema = textSchema("商品名メモ", 200);
 export const ItemUrlSchema = optionalUrlSchema("商品のURL");
 
 export const ShopNameSchema = requiredTextSchema("ショップの名前", 100);
+
+export const AccountNameSchema = requiredTextSchema("アカウントの名前", 30);
