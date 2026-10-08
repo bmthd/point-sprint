@@ -1,4 +1,4 @@
-import { RouterLink } from "./router-link";
+import { RouterLink } from "../../router-link";
 import type { Plan } from "@workspaces/domain";
 import { Box, Card, Heading, IconButton, Modal, Text, VStack, useDisclosure } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
