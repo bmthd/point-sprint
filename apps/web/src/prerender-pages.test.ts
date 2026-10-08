@@ -3,18 +3,19 @@ import { getRouter } from "./router";
 import {
   missingHeadTags,
   missingPrerenderedPages,
+  pagesRenderedOnRequest,
   prerenderedPages,
   sitemapUrl,
   sitemapUrls,
 } from "./prerender-pages";
 
-test("every route is prerendered", () => {
+test("every route is prerendered, or rendered on request", () => {
   const routePaths = Object.keys(getRouter().routesByPath).map((path) =>
     path.length > 1 ? path.replace(/\/$/, "") : path,
   );
-  expect(prerenderedPages.map((page) => page.path).toSorted()).toEqual(
-    [...new Set(routePaths)].toSorted(),
-  );
+  expect(
+    [...prerenderedPages.map((page) => page.path), ...pagesRenderedOnRequest].toSorted(),
+  ).toEqual([...new Set(routePaths)].toSorted());
 });
 
 test("lists the pages whose HTML file is missing", () => {
