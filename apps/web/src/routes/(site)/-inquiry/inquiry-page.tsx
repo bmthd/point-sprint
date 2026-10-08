@@ -1,5 +1,5 @@
 import { Heading, Text } from "@workspaces/ui";
-import { PageWithSidebar } from "../layout/sidebar";
+import { PageWithSidebar } from "../-sidebar/sidebar";
 import { InquiryForm, type SendInquiry } from "./inquiry-form";
 
 /** The inquiry page at `/inquiry`. */

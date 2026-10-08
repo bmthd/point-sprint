@@ -1,6 +1,6 @@
 import { Box, Grid, VStack } from "@workspaces/ui";
 import type { ReactNode } from "react";
-import { NoticeSection } from "../notices/notice-section";
+import { NoticeSection } from "../-notices/notice-section";
 
 /** The right column's width on a wide screen. */
 const SIDEBAR_WIDTH = "320px";

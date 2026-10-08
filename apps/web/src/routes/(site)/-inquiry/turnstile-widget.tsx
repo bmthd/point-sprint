@@ -1,6 +1,6 @@
 import { Box, Text } from "@workspaces/ui";
 import { useEffect, useRef, useState } from "react";
-import { useLatestRef } from "../../use-latest-ref";
+import { useLatestRef } from "../../../use-latest-ref";
 
 // Cloudflare Turnstile's widget, rendered by its script once the page is in the browser.
 

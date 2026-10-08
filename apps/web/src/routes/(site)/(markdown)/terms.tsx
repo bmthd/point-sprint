@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import markdown from "../../markdown/terms.md?raw";
-import { pageHead } from "../../page-head";
+import markdown from "../../../markdown/terms.md?raw";
+import { pageHead } from "../../../page-head";
 import { MarkdownBody } from "./-markdown-body";
 
-export const Route = createFileRoute("/(markdown)/terms")({
+export const Route = createFileRoute("/(site)/(markdown)/terms")({
   context: () => ({ markdown, surface: "paper" as const }),
   head: () =>
     pageHead({

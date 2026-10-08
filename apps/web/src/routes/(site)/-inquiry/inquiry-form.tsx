@@ -2,9 +2,9 @@ import { Field as FormField, useForm } from "@formisch/react";
 import { Alert, Button, Checkbox, Field, Input, Text, Textarea, VStack } from "@workspaces/ui";
 import { type ComponentType, useState } from "react";
 import * as v from "valibot";
-import { Form, bind, errorsOf } from "../../form/form";
-import type { InquiryResult } from "../../server/inquiry";
-import { InquiryInputSchema, type InquiryRequest } from "../../server/inquiry-input";
+import { Form, bind, errorsOf } from "../../../form/form";
+import type { InquiryResult } from "../../../server/inquiry";
+import { InquiryInputSchema, type InquiryRequest } from "../../../server/inquiry-input";
 import { TurnstileWidget, type TurnstileWidgetProps } from "./turnstile-widget";
 
 export type SendInquiry = (request: InquiryRequest) => Promise<InquiryResult>;

@@ -2,7 +2,7 @@ import { Markdown, type MarkdownComponents } from "@tanstack/markdown/react";
 import { useRouteContext } from "@tanstack/react-router";
 import { Card, Heading, Link, List, NativeAccordion, Text, Timeline } from "@workspaces/ui";
 import type { ReactNode } from "react";
-import type { FileRoutesById } from "../../routeTree.gen";
+import type { FileRoutesById } from "../../../routeTree.gen";
 import { markdownExtensions } from "./-markdown-extensions";
 
 /** The Markdown's tags, drawn with Yamada UI to match the other pages. */

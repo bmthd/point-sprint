@@ -1,8 +1,8 @@
 import { renderHtml } from "@tanstack/markdown/html";
 import { expect, test } from "vitest";
-import help from "../../markdown/help.md?raw";
-import privacy from "../../markdown/privacy.md?raw";
-import terms from "../../markdown/terms.md?raw";
+import help from "../../../markdown/help.md?raw";
+import privacy from "../../../markdown/privacy.md?raw";
+import terms from "../../../markdown/terms.md?raw";
 import { headingIds } from "./-markdown-body";
 import { markdownExtensions } from "./-markdown-extensions";
 

@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { InquiryPage } from "../features/inquiry/inquiry-page";
-import { pageHead } from "../page-head";
-import { submitInquiry } from "../server/submit-inquiry";
+import { InquiryPage } from "./-inquiry/inquiry-page";
+import { pageHead } from "../../page-head";
+import { submitInquiry } from "../../server/submit-inquiry";
 
-export const Route = createFileRoute("/inquiry")({
+export const Route = createFileRoute("/(site)/inquiry")({
   head: () =>
     pageHead({
       path: "/inquiry",

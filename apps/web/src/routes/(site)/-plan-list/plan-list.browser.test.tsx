@@ -16,10 +16,10 @@ import type { ReactNode } from "react";
 import { userEvent } from "vitest/browser";
 import { expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
-import { repositoryAtom } from "../../state/repository";
-import { createMemoryRepository } from "../../storage/memory-repository";
-import type { Repository } from "../../storage/repository";
-import { TestColorMode } from "../../test-color-mode";
+import { repositoryAtom } from "../../../state/repository";
+import { createMemoryRepository } from "../../../storage/memory-repository";
+import type { Repository } from "../../../storage/repository";
+import { TestColorMode } from "../../../test-color-mode";
 import { PlanList, useToday } from "./plan-list";
 
 // 2026-10-05 12:00 in Japan: the October marathon (10/4〜10/9) is running.
