@@ -32,10 +32,7 @@ test("a plan's pages show the plan's name in the title", async ({ page }) => {
   await page.goto(page.url().replace("/plan?", "/plan/settings?"));
   await expect(page).toHaveTitle(`${name}の設定 | ポイントスプリント`);
 
-  await page
-    .getByRole("banner")
-    .getByRole("link", { name: "プロフィール（SPU・ショップ台帳）" })
-    .click();
+  await page.getByRole("banner").getByRole("link", { name: "プロフィール", exact: true }).click();
   await expect(page).toHaveTitle("プロフィール | ポイントスプリント");
 });
 
