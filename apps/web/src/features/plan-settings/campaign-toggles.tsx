@@ -9,7 +9,7 @@ import { Box, Button, Card, CheckboxCard, Heading, IconButton, Image, Text } fro
 import { useSetAtom } from "jotai";
 import { useRef, useState } from "react";
 import { toggleBenefitAtom } from "../../state/order-ops";
-import { CloseIcon } from "../plan-home/icons";
+import { CloseIcon } from "../../ui/icons";
 import { rateText } from "../plan-home/order-shared";
 import { CampaignAddDialog, TemplateList } from "./campaign-adder";
 import { useDeleteCampaign } from "./delete-campaign";

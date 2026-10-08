@@ -9,7 +9,7 @@ import {
   VisuallyHidden,
 } from "@workspaces/ui";
 import { useId, useState } from "react";
-import { ChevronIcon } from "./icons";
+import { ChevronIcon } from "../../ui/icons";
 
 /** The row of the current shop count; below the first tier that is the first row. */
 export function currentRow(outlook: ShopAroundOutlook): ShopAroundOutlookRow | undefined {

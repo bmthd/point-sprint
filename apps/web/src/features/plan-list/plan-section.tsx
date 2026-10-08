@@ -1,4 +1,4 @@
-import { RouterLink } from "../../router-link";
+import { RouterLink } from "../../ui/router-link";
 import type { Plan } from "@workspaces/domain";
 import { Box, Card, Heading, IconButton, Modal, Text, VStack, useDisclosure } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
@@ -7,7 +7,7 @@ import { accountIdOf } from "../../state/accounts";
 import { accountSettingsAtom, planResultAtom } from "../../state/derived";
 import { deletePlanAtom } from "../../state/mutations";
 import { plansAtom, plansQueryAtom } from "../../state/queries";
-import { formatPeriod } from "./dates";
+import { formatPeriod } from "../../ui/dates";
 
 function TrashIcon() {
   return (

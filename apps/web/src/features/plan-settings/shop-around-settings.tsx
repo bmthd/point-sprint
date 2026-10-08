@@ -4,7 +4,7 @@ import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
 import * as v from "valibot";
 import { updateBenefitAtom } from "../../state/order-ops";
-import { ChevronIcon } from "../plan-home/icons";
+import { ChevronIcon } from "../../ui/icons";
 import { CommitField } from "../../form/commit-field";
 import {
   END_BEFORE_START,

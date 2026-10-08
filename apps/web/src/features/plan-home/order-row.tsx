@@ -42,8 +42,8 @@ import {
 } from "../../state/order-ops";
 import { shopsAtom } from "../../state/queries";
 import { openOrderIdAtom } from "../../state/ui";
-import { monthDayWithWeekday } from "../plan-list/dates";
-import { ChevronIcon, GripIcon } from "./icons";
+import { monthDayWithWeekday } from "../../ui/dates";
+import { ChevronIcon, GripIcon } from "../../ui/icons";
 import { CommitField } from "../../form/commit-field";
 import {
   AmountSchema,

@@ -28,7 +28,7 @@ import {
   useFormInput,
   useOrderAutofill,
 } from "../order-editor/order-form-store";
-import { PlusIcon } from "./icons";
+import { PlusIcon } from "../../ui/icons";
 import {
   NEW_SHOP,
   TaxRateOptions,

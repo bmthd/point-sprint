@@ -2,7 +2,7 @@ import type { Benefit, Plan, Shop } from "@workspaces/domain";
 import { beforeEach, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { createMemoryRepository } from "../../storage/memory-repository";
-import { tokyoToday } from "../plan-list/dates";
+import { tokyoToday } from "../../ui/dates";
 import {
   PLAN,
   baseBenefit,

@@ -37,7 +37,7 @@ import { saveShopAtom } from "../../state/mutations";
 import { addOrderAtom, updateOrderAtom } from "../../state/order-ops";
 import { shopsAtom } from "../../state/queries";
 import { useSingleFlight } from "../../use-single-flight";
-import { CloseIcon } from "../plan-home/icons";
+import { CloseIcon } from "../../ui/icons";
 import { AutofillStatusText, useItemAutofill } from "../item-autofill/item-autofill";
 import {
   NEW_SHOP,

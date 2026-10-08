@@ -1,6 +1,6 @@
 import type { CalculationResult, Plan } from "@workspaces/domain";
 import { Box, Button, Text } from "@workspaces/ui";
-import { PlusIcon } from "./icons";
+import { PlusIcon } from "../../ui/icons";
 import { countedAmount, effectiveRate } from "./summary-card";
 
 const num = (value: number) => value.toLocaleString("ja-JP");

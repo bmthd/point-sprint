@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { useClientTitle } from "../../page-head";
 import { planAtom } from "../../state/derived";
 import { plansQueryAtom, shopsQueryAtom } from "../../state/queries";
-import { RouterLink } from "../../router-link";
+import { RouterLink } from "../../ui/router-link";
 
 function NotFound() {
   return (

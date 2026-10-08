@@ -1,5 +1,5 @@
 import { Box, IconButton, MoonIcon, SunIcon, useColorMode } from "@workspaces/ui";
-import { RouterLink } from "../../router-link";
+import { RouterLink } from "../../ui/router-link";
 
 function ProfileIcon() {
   return (

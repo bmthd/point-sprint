@@ -8,7 +8,7 @@ import { updateOrderAtom } from "../../state/order-ops";
 import { plansQueryAtom, shopsQueryAtom } from "../../state/queries";
 import { createMemoryRepository } from "../../storage/memory-repository";
 import { misalignedFields } from "../../test-layout";
-import { tokyoToday } from "../plan-list/dates";
+import { tokyoToday } from "../../ui/dates";
 import { OrderTable } from "./order-table";
 import {
   PLAN,

@@ -15,7 +15,7 @@ import {
 import { useSetAtom } from "jotai";
 import { useId, useState } from "react";
 import { toggleBenefitAtom } from "../../state/order-ops";
-import { ExternalIcon } from "../plan-home/icons";
+import { ExternalIcon } from "../../ui/icons";
 import { pointsText, rateText } from "../plan-home/order-shared";
 import { imageUrl, SPU_PAGE_URL, useSaveSettingsChange } from "./settings-shared";
 

@@ -8,7 +8,7 @@ import { profileAtom, profileQueryAtom } from "../../state/queries";
 import { useLatestRef } from "../../use-latest-ref";
 import { useSingleFlight } from "../../use-single-flight";
 import { PageWithSidebar } from "../layout/sidebar";
-import { monthOf, msUntilTokyoMidnight, tokyoToday } from "./dates";
+import { monthOf, msUntilTokyoMidnight, tokyoToday } from "../../ui/dates";
 import { EventSection } from "./event-section";
 import { PlanSection } from "./plan-section";
 

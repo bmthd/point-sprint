@@ -1,6 +1,6 @@
 import type { LinkProps } from "@tanstack/react-router";
 import { Box, Text } from "@workspaces/ui";
-import { RouterLink } from "../../router-link";
+import { RouterLink } from "../../ui/router-link";
 import { ShareButton } from "../share/share-button";
 import { siteShareTarget } from "../share/share-target";
 

@@ -5,8 +5,8 @@ import { memo, useId, useMemo, useRef } from "react";
 import { orderAtom } from "../../state/derived";
 import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "../../state/order-ops";
 import { openOrderIdAtom, reorderModeAtom } from "../../state/ui";
-import { monthDayWithWeekday } from "../plan-list/dates";
-import { ArrowIcon, ChevronIcon } from "./icons";
+import { monthDayWithWeekday } from "../../ui/dates";
+import { ArrowIcon, ChevronIcon } from "../../ui/icons";
 import {
   CampaignChip,
   OrderBadge,
