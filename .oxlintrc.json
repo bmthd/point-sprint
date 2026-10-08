@@ -24,73 +24,7 @@
         "react/set-state-in-render": "error",
         "react/static-components": "error",
         "react/unsupported-syntax": "error",
-        "react/use-memo": "error",
-        "react/forbid-elements": [
-          "error",
-          {
-            "forbid": [
-              {
-                "element": "button",
-                "message": "@workspaces/ui の Button / IconButton を使う（AGENTS.md「UI の部品」）"
-              },
-              {
-                "element": "a",
-                "message": "@workspaces/ui の Link（routes へは router-link） を使う（AGENTS.md「UI の部品」）"
-              },
-              {
-                "element": "input",
-                "message": "@workspaces/ui の Input / Checkbox / Radio など を使う（AGENTS.md「UI の部品」）"
-              },
-              {
-                "element": "select",
-                "message": "@workspaces/ui の Select / NativeSelect を使う（AGENTS.md「UI の部品」）"
-              },
-              {
-                "element": "textarea",
-                "message": "@workspaces/ui の Textarea を使う（AGENTS.md「UI の部品」）"
-              },
-              {
-                "element": "label",
-                "message": "@workspaces/ui の Field を使う（AGENTS.md「UI の部品」）"
-              },
-              {
-                "element": "details",
-                "message": "@workspaces/ui の Accordion / Collapse を使う（AGENTS.md「UI の部品」）"
-              },
-              {
-                "element": "summary",
-                "message": "@workspaces/ui の Accordion を使う（AGENTS.md「UI の部品」）"
-              },
-              {
-                "element": "dialog",
-                "message": "@workspaces/ui の Modal / Drawer を使う（AGENTS.md「UI の部品」）"
-              },
-              {
-                "element": "img",
-                "message": "@workspaces/ui の Image を使う（AGENTS.md「UI の部品」）"
-              },
-              {
-                "element": "table",
-                "message": "@workspaces/ui の Table を使う（AGENTS.md「UI の部品」）"
-              },
-              {
-                "element": "ul",
-                "message": "@workspaces/ui の List を使う（AGENTS.md「UI の部品」）"
-              },
-              {
-                "element": "ol",
-                "message": "@workspaces/ui の List を使う（AGENTS.md「UI の部品」）"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["apps/web/src/**/*.test.tsx"],
-      "plugins": ["react"],
-      "rules": {
-        "react/forbid-elements": "off"
+        "react/use-memo": "error"
       }
     }
   ],

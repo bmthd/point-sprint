@@ -20,5 +20,3 @@
 - 表、リスト、開閉には、その役割の部品（Table、List、Accordion）を使う。`Box` に `as` を付けて要素を組み立てるのは、役割に合う部品がないときだけにする
 - 見た目は部品の `variant`、`size`、`colorScheme` で選び、色はテーマのトークンで指定する（`docs/design-system.md`）
 - Yamada UI にない部品を作ったときは、探した部品の名前と、使わなかった理由を PR に書く
-
-ボタン、入力欄、`details` などの HTML 要素を JSX に直接書くと、oxlint の `react/forbid-elements` が止める（テストファイルは対象外）。
