@@ -17,7 +17,7 @@ export function ErrorPage() {
           再読み込み
         </Button>
         <RouterButton to="/" variant="outline" size="lg">
-          トップへ戻る
+          トップに戻る
         </RouterButton>
       </HStack>
     </StatusPage>

@@ -14,7 +14,7 @@ for (const path of ["/no-such-page", "/help/no-such-page"]) {
     await expect(page.getByRole("banner")).toHaveCount(1);
     await expect(page.getByRole("contentinfo")).toHaveCount(1);
 
-    await page.getByRole("main").getByRole("link", { name: "トップへ戻る" }).click();
+    await page.getByRole("main").getByRole("link", { name: "トップに戻る" }).click();
     await expect(page).toHaveURL("/");
   });
 }

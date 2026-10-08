@@ -39,7 +39,7 @@ test("shows the error page without the error, and reloads the page", async () =>
     .element(screen.getByText("入力したデータはこのブラウザに残っています", { exact: false }))
     .toBeVisible();
   await expect
-    .element(screen.getByRole("link", { name: "トップへ戻る" }))
+    .element(screen.getByRole("link", { name: "トップに戻る" }))
     .toHaveAttribute("href", "/");
   expect(document.body.textContent).not.toContain("秘密の詳細");
 
