@@ -19,3 +19,12 @@
 - `Box` に `as` を付けて要素を組み立てるのは、役割に合う部品がないときだけにする
 - 見た目は部品の `variant`、`size`、`colorScheme` で選び、色はテーマのトークンで指定する（`docs/design-system.md`）
 - Yamada UI にない部品を作ったときは、探した部品の名前と、使わなかった理由を PR に書く
+
+## PR の本文
+
+本文は `.github/pull_request_template.md` の節で書く。
+
+画面に関わる変更では、レビュー観点に確かめるページを `[ページ名](/path)` の形で添える。Preview のジョブが、この節のパスを Preview の URL（`https://pr-<PR番号>-point-sprint.jougennotuki67.workers.dev`）に書き換える。
+
+- Preview のジョブが終わったら、各リンクが 200 を返すことを確かめる
+- Preview と本番で違うページは、リンクにその違いを添える。`cf previews deploy` はビルドをやり直すので、`pnpm build` の後に生成するファイル（`/sitemap.xml` など）は Preview では 404 になる
