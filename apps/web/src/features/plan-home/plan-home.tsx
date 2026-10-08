@@ -18,6 +18,9 @@ import { plansAtom } from "../../state/queries";
 import { NEW_ORDER, OrderEditor } from "../order-editor/order-editor";
 import { SettingsPanelButton } from "../plan-settings/plan-settings";
 import { RouterLink } from "../plan-list/router-link";
+import { ShareButton } from "../share/share-button";
+import { planFigures } from "../share/result-card";
+import { resultShareTarget } from "../share/share-target";
 import { BottomBar } from "./bottom-bar";
 import { ChevronIcon, SlidersIcon } from "./icons";
 import { OrderList } from "./order-list";
@@ -25,7 +28,7 @@ import { OrderTable } from "./order-table";
 import { PlanPage } from "./plan-page";
 import { PointBreakdown } from "./point-breakdown";
 import { ShopLadder } from "./shop-ladder";
-import { SummaryCard } from "./summary-card";
+import { SummaryCard, countedAmount, effectiveRate } from "./summary-card";
 import { Warnings } from "./warnings";
 
 /** Same as the `lg` breakpoint: from here the summary is a column to the right of the orders. */
@@ -179,6 +182,14 @@ function Home({ plan }: { plan: Plan }) {
   const addOrder = useCallback(() => editOrder(NEW_ORDER), [editOrder]);
   if (!result) return null;
   const outlook = result.shopAroundOutlook;
+  const shareResult = (
+    <ShareButton
+      label="結果をシェア"
+      target={resultShareTarget(
+        planFigures(result.total, effectiveRate(result.total, countedAmount(plan))),
+      )}
+    />
+  );
 
   return (
     <>
@@ -219,6 +230,7 @@ function Home({ plan }: { plan: Plan }) {
               <ShopLadder outlook={outlook} />
             </Panel>
           ) : null}
+          {wide ? shareResult : null}
         </VStack>
         <Box
           as="section"
@@ -234,6 +246,12 @@ function Home({ plan }: { plan: Plan }) {
             <OrderList plan={plan} onEdit={editOrder} onAdd={wide ? addOrder : undefined} />
           )}
         </Box>
+        {/* On a phone the share button comes after the orders; on a wide screen it ends the right column. */}
+        {wide ? null : (
+          <Box gridColumn="1" gridRow="3">
+            {shareResult}
+          </Box>
+        )}
       </Box>
       {wide ? null : <BottomBar plan={plan} result={result} onAdd={addOrder} />}
       <OrderEditor
