@@ -80,7 +80,7 @@ test("a shared result's link without figures keeps the site's image", async ({ p
 });
 
 test("the footer shares the site on every page", async ({ page }) => {
-  for (const path of ["/", "/help", "/terms"]) {
+  for (const path of ["/", "/help", "/terms", "/privacy"]) {
     await page.goto(path);
     const footer = page.getByRole("contentinfo");
     const button = footer.getByRole("button", { name: "このサイトをシェア" });

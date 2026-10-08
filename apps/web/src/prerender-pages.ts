@@ -6,6 +6,7 @@ export const prerenderedPages = [
   "/profile",
   "/help",
   "/terms",
+  "/privacy",
   "/inquiry",
 ].map((path) => ({
   path,
