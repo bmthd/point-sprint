@@ -49,6 +49,16 @@ export const resultPageUrl = (figures: ResultFigures) => `${siteUrl}/share?${que
 /** Path of the result's OGP image, drawn on request by the Worker. */
 export const resultImagePath = (figures: ResultFigures) => `/share/image.png?${query(figures)}`;
 
+/**
+ * The figures a request for a result's image asks for, and the one path that image is served
+ * at: the query parsed as the page parses it, then written back as `resultImagePath` writes it.
+ * `undefined` when the query has no figures.
+ */
+export function resultImageRequest(url: URL): { figures: ResultFigures; path: string } | undefined {
+  const figures = resultFigures(v.parse(resultSearchSchema, Object.fromEntries(url.searchParams)));
+  return figures && { figures, path: resultImagePath(figures) };
+}
+
 export const formatPoints = (points: number) => `${points.toLocaleString("ja-JP")}P`;
 export const formatRate = (rate: number) => `${rate.toFixed(1)}%`;
 
