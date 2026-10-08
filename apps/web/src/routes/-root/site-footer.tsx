@@ -1,8 +1,8 @@
 import type { LinkProps } from "@tanstack/react-router";
 import { Box, Text } from "@workspaces/ui";
 import { RouterLink } from "../../ui/router-link";
-import { ShareButton } from "../share/share-button";
-import { siteShareTarget } from "../share/share-target";
+import { ShareButton } from "../../features/share/share-button";
+import { siteShareTarget } from "../../features/share/share-target";
 
 /**
  * The footer's links. お知らせ is in the sidebar, and every page links to the one on the top page,
