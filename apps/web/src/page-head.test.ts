@@ -27,3 +27,17 @@ test("a noindex page tells search engines so", () => {
     content: "noindex",
   });
 });
+
+test("an article's OGP type is article, with the days it was published and changed", () => {
+  const { meta } = pageHead({
+    path: "/guides/1000yen-items",
+    title: "記事",
+    article: { published: "2026-10-08", updated: "2026-10-10" },
+  });
+  expect(meta).toContainEqual({ property: "og:type", content: "article" });
+  expect(meta).toContainEqual({ property: "article:published_time", content: "2026-10-08" });
+  expect(meta).toContainEqual({ property: "article:modified_time", content: "2026-10-10" });
+  expect(pageHead({ path: "/help", title: "使い方" }).meta).not.toContainEqual(
+    expect.objectContaining({ property: "og:type" }),
+  );
+});

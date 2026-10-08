@@ -1,6 +1,6 @@
 import ky, { SchemaValidationError, isHTTPError } from "ky";
 import * as v from "valibot";
-import { ITEM_SEARCH_ENDPOINT, type RakutenConfig } from "./config";
+import { ITEM_SEARCH_ENDPOINT, type RakutenConfig } from "./config.ts";
 
 // Calls to the Ichiba item search API. Only the fields the app uses are read from a response.
 
@@ -15,6 +15,8 @@ const ItemSchema = v.object({
   shopCode: v.string(),
   shopName: v.string(),
   pointRate: v.pipe(v.number(), v.minValue(1)),
+  /** 128px images, the first being the item's main one. Empty for an item without images. */
+  mediumImageUrls: v.optional(v.array(v.object({ imageUrl: v.pipe(v.string(), v.url()) })), []),
 });
 
 const ResponseSchema = v.object({
@@ -36,6 +38,8 @@ export type RakutenItem = {
   itemUrl: string;
   /** The affiliate link, or `""` without an affiliate id. */
   affiliateUrl: string;
+  /** The item's main image (128px), or `undefined` for an item without images. */
+  imageUrl: string | undefined;
 };
 
 /** Why a call gave no items. Each is told apart so the caller can decide what to retry. */
@@ -76,6 +80,7 @@ const toItem = (item: v.InferOutput<typeof ItemSchema>): RakutenItem => ({
   pageUrl: pageUrlOf(item.itemUrl),
   itemUrl: item.itemUrl,
   affiliateUrl: item.affiliateUrl,
+  imageUrl: item.mediumImageUrls[0]?.imageUrl,
 });
 
 function failureOf(error: unknown): SearchFailure {

@@ -6,6 +6,9 @@ export type { Locator, Page } from "@playwright/test";
 /** Every call to the Rakuten API. */
 export const RAKUTEN_API = "https://openapi.rakuten.co.jp/**";
 
+/** The images of Rakuten items, in the guides' lists. */
+const RAKUTEN_IMAGES = "https://thumbnail.image.rakuten.co.jp/**";
+
 /** Turnstile's script and its other files. */
 const TURNSTILE = "https://challenges.cloudflare.com/**";
 
@@ -24,12 +27,13 @@ const fakeTurnstile = `window.turnstile = {
 };`;
 
 /**
- * Playwright's `test`, with the Rakuten API cut off and Turnstile stood in for: no test calls the
- * real services. A test answers them with `page.route`, which is tried before these.
+ * Playwright's `test`, with the Rakuten API and its images cut off and Turnstile stood in for: no
+ * test calls the real services. A test answers them with `page.route`, which is tried before these.
  */
 export const test = base.extend({
   page: async ({ page }, use) => {
     await page.route(RAKUTEN_API, (route) => route.abort());
+    await page.route(RAKUTEN_IMAGES, (route) => route.abort());
     await page.route(TURNSTILE, (route) =>
       new URL(route.request().url()).pathname.endsWith("/api.js")
         ? route.fulfill({ contentType: "text/javascript", body: fakeTurnstile })

@@ -1,17 +1,22 @@
 import { expect, test } from "vitest";
+import { guideFiles } from "./guides/files";
 import { getRouter } from "./router";
 import {
   missingHeadTags,
   missingPrerenderedPages,
   prerenderedPages,
-  sitemapUrl,
-  sitemapUrls,
+  sitemapEntry,
+  sitemapXml,
 } from "./prerender-pages";
 
-test("every route is prerendered", () => {
-  const routePaths = Object.keys(getRouter().routesByPath).map((path) =>
-    path.length > 1 ? path.replace(/\/$/, "") : path,
-  );
+test("every route is prerendered, and a guide's route for each guide", () => {
+  const slugs = guideFiles().map((file) => file.slug);
+  expect(slugs).toContain("1000yen-items");
+  const routePaths = Object.keys(getRouter().routesByPath)
+    .map((path) => (path.length > 1 ? path.replace(/\/$/, "") : path))
+    .flatMap((path) =>
+      path === "/guides/$slug" ? slugs.map((slug) => `/guides/${slug}`) : [path],
+    );
   expect(prerenderedPages.map((page) => page.path).toSorted()).toEqual(
     [...new Set(routePaths)].toSorted(),
   );
@@ -54,16 +59,32 @@ test("names the head tags a page lacks", () => {
 });
 
 test("a page belongs in the sitemap at its canonical URL unless it is noindex", () => {
-  expect(sitemapUrl(fullHead)).toBe("https://point-sprint.bmth.dev/profile");
+  expect(sitemapEntry(fullHead)).toEqual({ url: "https://point-sprint.bmth.dev/profile" });
   const noindex = fullHead.replace("</head>", '<meta name="robots" content="noindex"/></head>');
-  expect(sitemapUrl(noindex)).toBeUndefined();
+  expect(sitemapEntry(noindex)).toBeUndefined();
 });
 
-test("reads the URLs of a sitemap", () => {
-  const xml = `<urlset><url><loc>https://point-sprint.bmth.dev/</loc></url>
-  <url><loc>https://point-sprint.bmth.dev/profile</loc></url></urlset>`;
-  expect(sitemapUrls(xml)).toEqual([
-    "https://point-sprint.bmth.dev/",
-    "https://point-sprint.bmth.dev/profile",
-  ]);
+test("an article is in the sitemap with the day it was last changed", () => {
+  const article = fullHead.replace(
+    "</head>",
+    '<meta property="article:modified_time" content="2026-10-10"/></head>',
+  );
+  expect(sitemapEntry(article)).toEqual({
+    url: "https://point-sprint.bmth.dev/profile",
+    lastModified: "2026-10-10",
+  });
+});
+
+test("writes a sitemap of the entries", () => {
+  expect(
+    sitemapXml([
+      { url: "https://point-sprint.bmth.dev/" },
+      { url: "https://point-sprint.bmth.dev/guides/a&b", lastModified: "2026-10-10" },
+    ]),
+  ).toBe(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://point-sprint.bmth.dev/</loc></url>
+  <url><loc>https://point-sprint.bmth.dev/guides/a&amp;b</loc><lastmod>2026-10-10</lastmod></url>
+</urlset>
+`);
 });

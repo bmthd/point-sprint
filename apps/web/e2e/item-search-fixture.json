@@ -1,0 +1,74 @@
+[
+  {
+    "match": {
+      "genreId": "100227"
+    },
+    "body": {
+      "Items": [
+        {
+          "Item": {
+            "itemCode": "e2e-food:10000001",
+            "itemName": "E2E はとむぎ粉 330g",
+            "itemPrice": 1000,
+            "taxFlag": 0,
+            "itemUrl": "https://hb.afl.rakuten.co.jp/hgc/e2e/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fe2e-food%2Fhatomugi%2F",
+            "affiliateUrl": "https://hb.afl.rakuten.co.jp/hgc/e2e/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fe2e-food%2Fhatomugi%2F",
+            "shopCode": "e2e-food",
+            "shopName": "E2E 食品の店",
+            "pointRate": 1,
+            "mediumImageUrls": [
+              {
+                "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/e2e-food/hatomugi.jpg?_ex=128x128"
+              }
+            ]
+          }
+        },
+        {
+          "Item": {
+            "itemCode": "e2e-food:10000002",
+            "itemName": "E2E 雑穀米 360g",
+            "itemPrice": 1000,
+            "taxFlag": 0,
+            "itemUrl": "https://hb.afl.rakuten.co.jp/hgc/e2e/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fe2e-food%2Fzakkoku%2F",
+            "affiliateUrl": "https://hb.afl.rakuten.co.jp/hgc/e2e/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fe2e-food%2Fzakkoku%2F",
+            "shopCode": "e2e-food",
+            "shopName": "E2E 食品の店",
+            "pointRate": 1,
+            "mediumImageUrls": [
+              {
+                "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/e2e-food/zakkoku.jpg?_ex=128x128"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "match": {
+      "genreId": "215783"
+    },
+    "body": {
+      "Items": [
+        {
+          "Item": {
+            "itemCode": "e2e-goods:10000003",
+            "itemName": "E2E フェイスタオル 5枚セット",
+            "itemPrice": 1000,
+            "taxFlag": 0,
+            "itemUrl": "https://hb.afl.rakuten.co.jp/hgc/e2e/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fe2e-goods%2Ftowel%2F",
+            "affiliateUrl": "https://hb.afl.rakuten.co.jp/hgc/e2e/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fe2e-goods%2Ftowel%2F",
+            "shopCode": "e2e-goods",
+            "shopName": "E2E 日用品の店",
+            "pointRate": 1,
+            "mediumImageUrls": [
+              {
+                "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/e2e-goods/towel.jpg?_ex=128x128"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+]

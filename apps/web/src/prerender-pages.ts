@@ -1,4 +1,9 @@
-/** Every route, rendered to HTML at build time. Listed so none depends on being reached by a link. */
+import { guideFiles } from "./guides/files.ts";
+
+/**
+ * Every route, rendered to HTML at build time. Listed so none depends on being reached by a link.
+ * A guide is a page for each file in `src/guides/articles/`.
+ */
 export const prerenderedPages = [
   "/",
   "/plan",
@@ -7,6 +12,8 @@ export const prerenderedPages = [
   "/help",
   "/terms",
   "/inquiry",
+  "/guides",
+  ...guideFiles().map(({ slug }) => `/guides/${slug}`),
 ].map((path) => ({
   path,
   file: path === "/" ? "index.html" : `${path.slice(1)}/index.html`,
@@ -48,17 +55,33 @@ export const missingHeadTags = (html: string): string[] => {
   ];
 };
 
+type SitemapEntry = { url: string; lastModified?: string };
+
 /**
- * The URL a page should be found at in `public/sitemap.xml`: its canonical URL, or `undefined`
- * when the page asks search engines not to index it.
+ * A page's entry in the sitemap: its canonical URL, and for an article the day it was last
+ * changed. `undefined` when the page asks search engines not to index it.
  */
-export const sitemapUrl = (html: string): string | undefined => {
-  const noindex = headTags(html, "meta").some(
-    (m) => m.name === "robots" && m.content?.includes("noindex"),
-  );
-  return noindex ? undefined : headTags(html, "link").find((l) => l.rel === "canonical")?.href;
+export const sitemapEntry = (html: string): SitemapEntry | undefined => {
+  const meta = headTags(html, "meta");
+  if (meta.some((m) => m.name === "robots" && m.content?.includes("noindex"))) return undefined;
+  const url = headTags(html, "link").find((l) => l.rel === "canonical")?.href;
+  if (url === undefined) return undefined;
+  const lastModified = meta.find((m) => m.property === "article:modified_time")?.content;
+  return lastModified ? { url, lastModified } : { url };
 };
 
-/** The URLs a sitemap lists. */
-export const sitemapUrls = (xml: string): string[] =>
-  [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, url = ""]) => url);
+const escapeXml = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** The `sitemap.xml` that lists `entries`. */
+export const sitemapXml = (entries: SitemapEntry[]) =>
+  [
+    `<?xml version="1.0" encoding="UTF-8"?>`,
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
+    ...entries.map(({ url, lastModified }) => {
+      const lastmod = lastModified ? `<lastmod>${lastModified}</lastmod>` : "";
+      return `  <url><loc>${escapeXml(url)}</loc>${lastmod}</url>`;
+    }),
+    `</urlset>`,
+    "",
+  ].join("\n");

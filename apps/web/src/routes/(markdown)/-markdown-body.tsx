@@ -6,7 +6,7 @@ import type { FileRoutesById } from "../../routeTree.gen";
 import { markdownExtensions } from "./-markdown-extensions";
 
 /** The Markdown's tags, drawn with Yamada UI to match the other pages. */
-const components = {
+export const markdownComponents = {
   h1: ({ children, id }) => (
     <Heading as="h1" id={id} fontSize="lg" mb="4">
       {children}
@@ -84,7 +84,11 @@ export function MarkdownBody() {
   // Unreachable while `everyRouteHasMarkdown` type-checks.
   if (markdown === undefined) throw new Error("This route has no Markdown in its context.");
   return (
-    <Markdown components={components} extensions={markdownExtensions} headingIds={headingIds}>
+    <Markdown
+      components={markdownComponents}
+      extensions={markdownExtensions}
+      headingIds={headingIds}
+    >
       {markdown}
     </Markdown>
   );

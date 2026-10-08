@@ -27,6 +27,7 @@ const item = (fields: Partial<RakutenItem> = {}): RakutenItem => ({
   pageUrl: ITEM_URL,
   itemUrl: "https://hb.afl.rakuten.co.jp/hgc/x/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2F",
   affiliateUrl: "https://hb.afl.rakuten.co.jp/hgc/x/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2F",
+  imageUrl: undefined,
   ...fields,
 });
 
