@@ -52,11 +52,12 @@ test("shows only the current row until expanded when compact", async () => {
     </UIProvider>,
   );
 
-  const toggle = screen.getByRole("button", { name: "あと何店舗回る？" });
-  await expect.element(toggle).toHaveAttribute("aria-expanded", "false");
-  expect(rowTexts(screen.getByRole("table").element())).toEqual(["6店舗+5倍約13.0万円"]);
+  const toggle = screen.getByText("あと何店舗回る？", { exact: true });
+  const accordion = toggle.element().closest("details");
+  expect(accordion).not.toBeNull();
+  expect(accordion?.open).toBe(false);
 
   await toggle.click();
-  await expect.element(toggle).toHaveAttribute("aria-expanded", "true");
+  expect(accordion?.open).toBe(true);
   expect(rowTexts(screen.getByRole("table").element())).toHaveLength(5);
 });

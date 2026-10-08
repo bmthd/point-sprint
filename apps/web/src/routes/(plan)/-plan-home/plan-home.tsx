@@ -6,7 +6,6 @@ import {
   Card,
   Heading,
   Menu,
-  Text,
   VStack,
   useDisclosure,
   useMediaQuery,
@@ -43,35 +42,36 @@ function PlanSwitcher({ plan }: { plan: Plan }) {
     .filter((other) => other.id !== plan.id)
     .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
   return (
-    <Menu.Root>
-      <Menu.Trigger>
-        <Button
-          variant="ghost"
-          colorScheme="gray"
-          size="lg"
-          aria-label={`${plan.name}、プランを切り替える`}
-          minW="0"
-          textAlign="start"
-        >
-          <Text as="span" fontSize="md" fontWeight="bold" lineClamp={1}>
-            {plan.name}
-          </Text>
-          <ChevronIcon size={16} />
-        </Button>
-      </Menu.Trigger>
-      <Menu.Content>
-        {others.map((other) => (
-          <Menu.Item
-            key={other.id}
-            onClick={() => void navigate({ to: "/plan", search: { id: other.id } })}
+    <Box display="flex" alignItems="center" gap="1" minW="0">
+      <Heading as="h1" fontSize="md" lineClamp={1}>
+        {plan.name}
+      </Heading>
+      <Menu.Root>
+        <Menu.Trigger>
+          <Button
+            variant="ghost"
+            colorScheme="gray"
+            size="sm"
+            aria-label="プランを切り替える"
+            flex="none"
           >
-            {other.name}
-          </Menu.Item>
-        ))}
-        {others.length > 0 ? <Menu.Separator /> : null}
-        <Menu.Item onClick={() => void navigate({ to: "/" })}>プランの一覧</Menu.Item>
-      </Menu.Content>
-    </Menu.Root>
+            <ChevronIcon size={16} />
+          </Button>
+        </Menu.Trigger>
+        <Menu.Content>
+          {others.map((other) => (
+            <Menu.Item
+              key={other.id}
+              onClick={() => void navigate({ to: "/plan", search: { id: other.id } })}
+            >
+              {other.name}
+            </Menu.Item>
+          ))}
+          {others.length > 0 ? <Menu.Separator /> : null}
+          <Menu.Item onClick={() => void navigate({ to: "/" })}>プランの一覧</Menu.Item>
+        </Menu.Content>
+      </Menu.Root>
+    </Box>
   );
 }
 

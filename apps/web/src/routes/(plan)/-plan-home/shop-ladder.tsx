@@ -2,14 +2,12 @@ import type { ShopAroundOutlook, ShopAroundOutlookRow } from "@workspaces/domain
 import {
   Box,
   type BoxProps,
-  Button,
   Heading,
+  NativeAccordion,
   Progress,
   Text,
   VisuallyHidden,
 } from "@workspaces/ui";
-import { useId, useState } from "react";
-import { ChevronIcon } from "../../../ui/icons";
 
 /** The row of the current shop count; below the first tier that is the first row. */
 export function currentRow(outlook: ShopAroundOutlook): ShopAroundOutlookRow | undefined {
@@ -35,81 +33,78 @@ export function ShopLadder({
   outlook: ShopAroundOutlook;
   compact?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const tableId = useId();
   const current = currentRow(outlook);
-  const rows = compact && !open ? outlook.rows.filter((row) => row === current) : outlook.rows;
   const longest = Math.max(1, ...outlook.rows.map((row) => row.remainingTaxExcluded ?? 0));
+  const table = (
+    <Box
+      as="table"
+      w="full"
+      fontSize="sm"
+      fontVariantNumeric="tabular-nums"
+      style={{ borderCollapse: "separate", borderSpacing: "0 2px" }}
+    >
+      <Box as="thead" fontSize="xs" color="fg.muted">
+        <tr>
+          <Th>店舗数</Th>
+          <Th>倍率</Th>
+          <Th w="full">
+            <VisuallyHidden>残額のグラフ</VisuallyHidden>
+          </Th>
+          <Th textAlign="end">上限までの残額</Th>
+        </tr>
+      </Box>
+      <tbody>
+        {outlook.rows.map((row) => {
+          const isCurrent = row === current;
+          const remaining = row.remainingTaxExcluded;
+          return (
+            <Box
+              as="tr"
+              key={row.shops}
+              aria-current={isCurrent ? "true" : undefined}
+              bg={isCurrent ? "primary.subtle" : undefined}
+              outline={isCurrent ? "1px solid" : undefined}
+              outlineColor="primary.outline"
+              fontWeight={isCurrent ? "bold" : undefined}
+            >
+              <Td whiteSpace="nowrap">{row.shops}店舗</Td>
+              <Td whiteSpace="nowrap">+{row.rate}倍</Td>
+              <Td>
+                <Progress
+                  value={((remaining ?? 0) / longest) * 100}
+                  colorScheme={isCurrent ? "primary" : "gray"}
+                  aria-hidden
+                />
+              </Td>
+              <Td textAlign="end" whiteSpace="nowrap">
+                {remaining === null ? "—" : `約${manYen(remaining)}`}
+              </Td>
+            </Box>
+          );
+        })}
+      </tbody>
+    </Box>
+  );
 
   return (
     <Box display="flex" flexDirection="column" gap="2">
       {compact ? (
-        <Button
-          variant="ghost"
-          colorScheme="gray"
-          size="lg"
-          justifyContent="space-between"
-          aria-expanded={open}
-          aria-controls={tableId}
-          onClick={() => setOpen(!open)}
-        >
-          あと何店舗回る？
-          <ChevronIcon open={open} />
-        </Button>
+        <NativeAccordion.Root variant="panel" animate={false}>
+          <NativeAccordion.Item>
+            <NativeAccordion.Button fontSize="sm" fontWeight="bold">
+              あと何店舗回る？
+            </NativeAccordion.Button>
+            <NativeAccordion.Panel>{table}</NativeAccordion.Panel>
+          </NativeAccordion.Item>
+        </NativeAccordion.Root>
       ) : (
-        <Heading as="h3" fontSize="sm">
-          あと何店舗回る？
-        </Heading>
+        <>
+          <Heading as="h3" fontSize="sm">
+            あと何店舗回る？
+          </Heading>
+          {table}
+        </>
       )}
-      <Box
-        as="table"
-        id={tableId}
-        w="full"
-        fontSize="sm"
-        fontVariantNumeric="tabular-nums"
-        style={{ borderCollapse: "separate", borderSpacing: "0 2px" }}
-      >
-        <Box as="thead" fontSize="xs" color="fg.muted">
-          <tr>
-            <Th>店舗数</Th>
-            <Th>倍率</Th>
-            <Th w="full">
-              <VisuallyHidden>残額のグラフ</VisuallyHidden>
-            </Th>
-            <Th textAlign="end">上限までの残額</Th>
-          </tr>
-        </Box>
-        <tbody>
-          {rows.map((row) => {
-            const isCurrent = row === current;
-            const remaining = row.remainingTaxExcluded;
-            return (
-              <Box
-                as="tr"
-                key={row.shops}
-                aria-current={isCurrent ? "true" : undefined}
-                bg={isCurrent ? "primary.subtle" : undefined}
-                outline={isCurrent ? "1px solid" : undefined}
-                outlineColor="primary.outline"
-                fontWeight={isCurrent ? "bold" : undefined}
-              >
-                <Td whiteSpace="nowrap">{row.shops}店舗</Td>
-                <Td whiteSpace="nowrap">+{row.rate}倍</Td>
-                <Td>
-                  <Progress
-                    value={((remaining ?? 0) / longest) * 100}
-                    colorScheme={isCurrent ? "primary" : "gray"}
-                    aria-hidden
-                  />
-                </Td>
-                <Td textAlign="end" whiteSpace="nowrap">
-                  {remaining === null ? "—" : `約${manYen(remaining)}`}
-                </Td>
-              </Box>
-            );
-          })}
-        </tbody>
-      </Box>
       <Text fontSize="xs" color="fg.muted">
         残額は税抜・概算。いまの買い物を含めた金額から差し引いています。
       </Text>

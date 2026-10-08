@@ -203,11 +203,13 @@ test("breakdown opens and sums to total", async () => {
   const repository = createMemoryRepository({ shops, plans: [marathonPlan()] });
   const { screen } = await renderPlanHome(repository);
 
-  const toggle = screen.getByRole("button", { name: "ポイントの内訳を見る" });
-  await expect.element(toggle).toHaveAttribute("aria-expanded", "false");
+  const toggle = screen.getByText("ポイントの内訳を見る", { exact: true });
+  const accordion = toggle.element().closest("details");
+  expect(accordion).not.toBeNull();
+  expect(accordion?.open).toBe(false);
   await expect.poll(summaryText).toContain("2,600P");
   await toggle.click();
-  await expect.element(toggle).toHaveAttribute("aria-expanded", "true");
+  expect(accordion?.open).toBe(true);
 
   const legend = screen.getByRole("list", { name: "ポイントの内訳" });
   await expect.element(legend).toBeVisible();
@@ -250,16 +252,14 @@ test("shows warnings for orders outside the period and unknown shops", async () 
     .toBeVisible();
 });
 
-test("switches to another plan from the header", async () => {
+test("shows the plan name as text and switches plans from a separate menu button", async () => {
   const other = makePlan({ id: OTHER_PLAN, name: "10月の普段の買い物", benefits: [], orders: [] });
   const repository = createMemoryRepository({ shops, plans: [marathonPlan(), other] });
   const { screen, router } = await renderPlanHome(repository);
 
-  // The accessible name starts with the plan name the button shows.
-  const switcher = screen.getByRole("button", {
-    name: "10月 お買い物マラソン、プランを切り替える",
-    exact: true,
-  });
+  const title = screen.getByText("10月 お買い物マラソン", { exact: true });
+  expect(title.element().closest("button")).toBeNull();
+  const switcher = screen.getByRole("button", { name: "プランを切り替える", exact: true });
   await expect.element(switcher).toBeVisible();
   await switcher.click();
   await screen.getByRole("menuitem", { name: "10月の普段の買い物" }).click();

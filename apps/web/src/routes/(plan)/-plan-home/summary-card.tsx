@@ -1,7 +1,5 @@
 import { type CalculationResult, type Plan, taxIncludedTarget } from "@workspaces/domain";
-import { Box, Button, Card, Progress, Text } from "@workspaces/ui";
-import { useId, useState } from "react";
-import { ChevronIcon } from "../../../ui/icons";
+import { Box, Card, NativeAccordion, Progress, Text } from "@workspaces/ui";
 import { PointBreakdown } from "./point-breakdown";
 import { ShopLadder, currentRow, manYen } from "./shop-ladder";
 
@@ -74,8 +72,6 @@ export function SummaryCard({
   result: CalculationResult;
   compact: boolean;
 }) {
-  const [breakdownOpen, setBreakdownOpen] = useState(false);
-  const breakdownId = useId();
   const outlook = result.shopAroundOutlook;
   const amount = countedAmount(plan);
   const remaining = outlook ? currentRow(outlook)?.remainingTaxIncludedApprox : null;
@@ -173,27 +169,18 @@ export function SummaryCard({
         ) : null}
 
         {compact ? (
-          <>
-            <Button
-              variant="subtle"
-              colorScheme="mono"
-              size="lg"
-              justifyContent="space-between"
-              aria-expanded={breakdownOpen}
-              aria-controls={breakdownId}
-              onClick={() => setBreakdownOpen(!breakdownOpen)}
-            >
-              ポイントの内訳を見る
-              <ChevronIcon open={breakdownOpen} />
-            </Button>
-            <Box id={breakdownId} hidden={!breakdownOpen}>
-              {breakdownOpen ? (
+          <NativeAccordion.Root variant="panel" animate={false}>
+            <NativeAccordion.Item>
+              <NativeAccordion.Button fontSize="sm" fontWeight="bold">
+                ポイントの内訳を見る
+              </NativeAccordion.Button>
+              <NativeAccordion.Panel>
                 <Box bg="bg.panel" color="fg" rounded="xl" p="3">
                   <PointBreakdown totals={result.groupTotals} />
                 </Box>
-              ) : null}
-            </Box>
-          </>
+              </NativeAccordion.Panel>
+            </NativeAccordion.Item>
+          </NativeAccordion.Root>
         ) : (
           <Box
             display="flex"
