@@ -6,10 +6,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# A newer push supersedes a deploy still in progress.
+# Deploys queue instead of cancelling, so a running `cf deploy` is never
+# interrupted mid-way; the latest queued push still wins.
 concurrency:
   group: deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
