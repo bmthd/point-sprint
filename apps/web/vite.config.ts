@@ -3,6 +3,7 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { ogFonts } from "./og-fonts-plugin.ts";
+import { parseGoogleTagsEnv } from "./src/google-tags/env.ts";
 import { prerenderedPages } from "./src/prerender-pages.ts";
 import {
   ALLOWED_ORIGIN,
@@ -11,7 +12,7 @@ import {
   readRakutenConfig,
 } from "./src/rakuten/config.ts";
 
-export default defineConfig(({ mode, isPreview }) => {
+export default defineConfig(({ command, mode, isPreview }) => {
   // Only the `PUBLIC_` values reach the browser. They are plain text in `.env.development` and
   // `.env.production` at the root, so they are read without the dotenvx key, also by builds that do
   // not go through `pnpm build`. Without them, no item lookup.
@@ -21,6 +22,9 @@ export default defineConfig(({ mode, isPreview }) => {
   if (!rakutenConfig && !isPreview) {
     console.warn("Rakuten API settings are missing or encrypted: item lookup is turned off.");
   }
+  // Only the production build loads Google Analytics and AdSense, and it fails without their IDs.
+  // The dev server and the unit tests get none.
+  const googleTagIds = command === "build" ? parseGoogleTagsEnv(publicEnv) : undefined;
   return {
     plugins: [
       cloudflare({ viteEnvironment: { name: "ssr" } }),
@@ -39,6 +43,8 @@ export default defineConfig(({ mode, isPreview }) => {
       "import.meta.env.TURNSTILE_SITE_KEY": JSON.stringify(
         publicEnv.PUBLIC_TURNSTILE_SITE_KEY?.trim() || null,
       ),
+      "import.meta.env.GA_MEASUREMENT_ID": JSON.stringify(googleTagIds?.measurementId),
+      "import.meta.env.ADSENSE_CLIENT_ID": JSON.stringify(googleTagIds?.adsenseClientId),
     },
     server: {
       proxy: {
