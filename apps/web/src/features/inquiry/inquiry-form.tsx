@@ -4,7 +4,11 @@ import { type ComponentType, useState } from "react";
 import * as v from "valibot";
 import { Form, bind, errorsOf } from "../../form/form";
 import type { InquiryResult } from "../../server/inquiry";
-import { InquiryInputSchema, type InquiryRequest } from "../../server/inquiry-input";
+import {
+  INQUIRY_TURNSTILE_ACTION,
+  InquiryInputSchema,
+  type InquiryRequest,
+} from "../../server/inquiry-input";
 import { TurnstileWidget, type TurnstileWidgetProps } from "./turnstile-widget";
 
 export type SendInquiry = (request: InquiryRequest) => Promise<InquiryResult>;
@@ -98,7 +102,12 @@ export function InquiryForm({ send, siteKey, widget: Widget = TurnstileWidget }:
             いまはお問い合わせを受け付けられません。時間をおいてお試しください。
           </Text>
         ) : (
-          <Widget siteKey={siteKey} onToken={setToken} resetKey={resetKey} />
+          <Widget
+            siteKey={siteKey}
+            action={INQUIRY_TURNSTILE_ACTION}
+            onToken={setToken}
+            resetKey={resetKey}
+          />
         )}
         {status === "failed" ? (
           <Alert.Root status="error" role="alert">

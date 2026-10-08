@@ -8,6 +8,7 @@ const SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render
 
 type RenderOptions = {
   sitekey: string;
+  action?: string;
   language?: string;
   callback: (token: string) => void;
   "expired-callback": () => void;
@@ -49,13 +50,15 @@ function loadTurnstile(): Promise<Turnstile> {
 
 export type TurnstileWidgetProps = {
   siteKey: string;
+  /** Names the form, which siteverify answers with so the server can check it. */
+  action: string;
   /** A token once the check passes, and `undefined` when it expires or fails. */
   onToken: (token: string | undefined) => void;
   /** Starts the check again when it changes: a token is good for one submission only. */
   resetKey: number;
 };
 
-export function TurnstileWidget({ siteKey, onToken, resetKey }: TurnstileWidgetProps) {
+export function TurnstileWidget({ siteKey, action, onToken, resetKey }: TurnstileWidgetProps) {
   const container = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | undefined>(undefined);
   const onTokenRef = useLatestRef(onToken);
@@ -68,6 +71,7 @@ export function TurnstileWidget({ siteKey, onToken, resetKey }: TurnstileWidgetP
         if (cancelled || !container.current) return;
         widgetId.current = turnstile.render(container.current, {
           sitekey: siteKey,
+          action,
           language: "ja",
           callback: (token) => onTokenRef.current(token),
           "expired-callback": () => onTokenRef.current(undefined),
@@ -83,7 +87,7 @@ export function TurnstileWidget({ siteKey, onToken, resetKey }: TurnstileWidgetP
       if (widgetId.current !== undefined) window.turnstile?.remove(widgetId.current);
       widgetId.current = undefined;
     };
-  }, [siteKey, onTokenRef]);
+  }, [siteKey, action, onTokenRef]);
 
   useEffect(() => {
     if (resetKey > 0 && widgetId.current !== undefined) window.turnstile?.reset(widgetId.current);

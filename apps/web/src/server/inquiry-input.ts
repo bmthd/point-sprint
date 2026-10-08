@@ -3,6 +3,9 @@ import { requiredTextSchema, textSchema } from "../form/field-schemas";
 
 // What the inquiry form sends. The form checks it before sending, and the server checks it again.
 
+/** The `action` the inquiry's Turnstile widget is rendered with, which the server checks. */
+export const INQUIRY_TURNSTILE_ACTION = "inquiry";
+
 export const InquiryInputSchema = v.object({
   name: textSchema("お名前", 100),
   // Valibot's email check lets no line break through, so the address is safe in a header.
