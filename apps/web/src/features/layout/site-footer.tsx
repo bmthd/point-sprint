@@ -5,9 +5,11 @@ import { ShareButton } from "../share/share-button";
 import { siteShareTarget } from "../share/share-target";
 
 /**
- * The footer's links. Only pages that exist are listed: お知らせ is added with the sidebar (#30).
+ * The footer's links. お知らせ is in the sidebar, and every page links to the one on the top page,
+ * which always has it.
  */
-export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [
+export const footerLinks: readonly { to: LinkProps["to"]; hash?: string; label: string }[] = [
+  { to: "/", hash: "notices", label: "お知らせ" },
   { to: "/help", label: "使い方・注意事項" },
   { to: "/terms", label: "利用規約" },
   { to: "/inquiry", label: "お問い合わせ" },
@@ -41,8 +43,11 @@ export function SiteFooter() {
           >
             {footerLinks.map((link) => (
               <RouterLink
-                key={link.to}
+                key={link.label}
                 to={link.to}
+                hash={link.hash}
+                // `/` would otherwise match every page: お知らせ is current only at `/#notices`.
+                activeOptions={{ exact: true, includeHash: true }}
                 color="link"
                 minH="11"
                 display="flex"

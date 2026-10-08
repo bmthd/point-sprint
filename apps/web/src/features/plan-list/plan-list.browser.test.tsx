@@ -246,9 +246,8 @@ test.each(["light", "dark"] as const)("renders the screen in %s mode", async (co
   const { screen } = await renderPlanList(repository, { colorMode });
 
   await expect.element(screen.getByRole("link", { name: /プラン/ })).toBeVisible();
-  const page = document.querySelector("main")?.parentElement?.parentElement;
   const expected = colorMode === "light" ? "rgb(245, 245, 245)" : "rgb(18, 18, 18)";
-  await expect.poll(() => (page ? getComputedStyle(page).backgroundColor : "")).toBe(expected);
+  await expect.poll(() => getComputedStyle(document.body).backgroundColor).toBe(expected);
 });
 
 test("today moves on at midnight in Japan", async () => {
