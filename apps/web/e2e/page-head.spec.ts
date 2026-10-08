@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 // The prerendered HTML holds each page's title; a plan's pages put the plan's name in once loaded.
 
