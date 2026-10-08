@@ -4,7 +4,7 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { ogFonts } from "./og-fonts-plugin.ts";
 import { parseGoogleTagsEnv } from "./src/google-tags/env.ts";
-import { prerenderedPages } from "./src/prerender-pages.ts";
+import { prerenderedPages, robotsTxt } from "./src/prerender-pages.ts";
 import {
   ALLOWED_ORIGIN,
   DEV_PROXY_PATH,
@@ -38,6 +38,13 @@ export default defineConfig(({ command, mode, isPreview }) => {
       }),
       viteReact({ compiler: true }),
       ogFonts(),
+      {
+        name: "robots-txt",
+        applyToEnvironment: (environment) => environment.name === "client",
+        generateBundle() {
+          this.emitFile({ type: "asset", fileName: "robots.txt", source: robotsTxt });
+        },
+      },
     ],
     define: {
       "import.meta.env.RAKUTEN_CONFIG": JSON.stringify(rakutenConfig ?? null),

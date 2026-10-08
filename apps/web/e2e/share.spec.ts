@@ -1,4 +1,5 @@
 import { type Page, expect, test } from "./fixtures";
+import { siteUrl } from "../src/site-url";
 
 // Where the share buttons are, and what they share. The tests take the Web Share API away, so the
 // buttons open the links that every browser has.
@@ -60,7 +61,7 @@ test("a shared result's page shows its figures and points social media at their 
   await expect(page.getByRole("img", { name: "獲得予定 2,600P・実質還元率 6.5%" })).toBeVisible();
   expect(await ogp(page, "og:title")).toBe("獲得予定 2,600P・実質還元率 6.5% | ポイントスプリント");
   const image = new URL((await ogp(page, "og:image")) ?? "");
-  expect(image.href).toBe("https://point-sprint.bmth.dev/share/image.png?points=2600&rate=6.5");
+  expect(image.href).toBe(`${siteUrl}/share/image.png?points=2600&rate=6.5`);
 
   // The Worker draws the image.
   const response = await request.get(`${image.pathname}${image.search}`);
@@ -75,7 +76,7 @@ test("a shared result's page shows its figures and points social media at their 
 test("a shared result's link without figures keeps the site's image", async ({ page, request }) => {
   await page.goto("/share");
   await expect(page.getByText("計算結果が見つかりませんでした。")).toBeVisible();
-  expect(await ogp(page, "og:image")).toBe("https://point-sprint.bmth.dev/opengraph-image.png");
+  expect(await ogp(page, "og:image")).toBe(`${siteUrl}/opengraph-image.png`);
   expect((await request.get("/share/image.png")).status()).toBe(404);
 });
 
@@ -90,6 +91,6 @@ test("the footer shares the site on every page", async ({ page }) => {
       await expect(button).toHaveAttribute("aria-expanded", "true", { timeout: 1000 });
     }).toPass();
     const href = await footer.getByRole("link", { name: "Facebook でシェア" }).getAttribute("href");
-    expect(new URL(href ?? "").searchParams.get("u")).toBe("https://point-sprint.bmth.dev/");
+    expect(new URL(href ?? "").searchParams.get("u")).toBe(`${siteUrl}/`);
   }
 });

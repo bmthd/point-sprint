@@ -1,3 +1,4 @@
+import { siteUrl } from "../src/site-url";
 import { expect, test } from "./fixtures";
 
 // The prerendered HTML holds each page's title; a plan's pages put the plan's name in once loaded.
@@ -54,4 +55,9 @@ test("the files the head links to are served", async ({ request }) => {
     const response = await request.get(path);
     expect(response.status(), path).toBe(200);
   }
+});
+
+test("robots.txt points to the sitemap on the site's domain", async ({ request }) => {
+  const robots = await (await request.get("/robots.txt")).text();
+  expect(robots).toContain(`Sitemap: ${siteUrl}/sitemap.xml`);
 });
