@@ -59,7 +59,12 @@ export function SiteFooter() {
             ))}
           </Box>
         ) : null}
-        <ShareButton label="このサイトをシェア" target={siteShareTarget} alignSelf="center" />
+        <ShareButton
+          iconOnly
+          label="このサイトをシェア"
+          target={siteShareTarget}
+          alignSelf="center"
+        />
         <Text fontSize="xs" color="fg.muted" textAlign="center">
           入力した内容はこのブラウザの中にだけ保存されます。ブラウザのデータを消すと、プランも消えます。
         </Text>

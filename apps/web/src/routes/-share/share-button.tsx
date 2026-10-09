@@ -1,4 +1,12 @@
-import { Box, Button, type StackProps, Text, VStack, useClipboard } from "@workspaces/ui";
+import {
+  Box,
+  Button,
+  IconButton,
+  type StackProps,
+  Text,
+  VStack,
+  useClipboard,
+} from "@workspaces/ui";
 import { useId, useState } from "react";
 import { ShareIcon } from "../../ui/icons";
 import { type ShareTarget, shareLinks, shareMessage } from "./share-target";
@@ -13,10 +21,11 @@ const canShareNatively = (target: ShareTarget) =>
  * button. Which one is decided on the click, so the prerendered HTML is the same on every device.
  */
 export function ShareButton({
+  iconOnly = false,
   label,
   target,
   ...rest
-}: { label: string; target: ShareTarget } & StackProps) {
+}: { iconOnly?: boolean; label: string; target: ShareTarget } & StackProps) {
   const [open, setOpen] = useState(false);
   const { copied, onCopy } = useClipboard();
   const panelId = useId();
@@ -36,17 +45,30 @@ export function ShareButton({
 
   return (
     <VStack gap="2" alignItems="stretch" {...rest}>
-      <Button
-        variant="ghost"
-        colorScheme="gray"
-        size="lg"
-        startIcon={<ShareIcon />}
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() => void share()}
-      >
-        {label}
-      </Button>
+      {iconOnly ? (
+        <IconButton
+          aria-label={label}
+          icon={<ShareIcon />}
+          variant="ghost"
+          colorScheme="gray"
+          size="lg"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => void share()}
+        />
+      ) : (
+        <Button
+          variant="ghost"
+          colorScheme="gray"
+          size="lg"
+          startIcon={<ShareIcon />}
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => void share()}
+        >
+          {label}
+        </Button>
+      )}
       <Box id={panelId} hidden={!open}>
         {open ? (
           <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
