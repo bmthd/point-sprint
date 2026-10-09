@@ -1,6 +1,16 @@
 import { RouterLink } from "../../../ui/router-link";
 import type { Plan } from "@workspaces/domain";
-import { Box, Card, Heading, IconButton, Modal, Text, VStack, useDisclosure } from "@workspaces/ui";
+import {
+  Box,
+  Button,
+  Card,
+  Heading,
+  IconButton,
+  Modal,
+  Text,
+  VStack,
+  useDisclosure,
+} from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useRef, useState } from "react";
 import { accountIdOf } from "../../../state/accounts";
@@ -8,6 +18,8 @@ import { accountSettingsAtom, planResultAtom } from "../../../state/derived";
 import { deletePlanAtom } from "../../../state/mutations";
 import { plansAtom, plansQueryAtom } from "../../../state/queries";
 import { formatPeriod } from "../../../ui/dates";
+
+const INITIAL_PLAN_COUNT = 3;
 
 function TrashIcon() {
   return (
@@ -83,11 +95,13 @@ export function PlanSection() {
   const { isSuccess } = useAtomValue(plansQueryAtom);
   const { mutate: deletePlan } = useAtomValue(deletePlanAtom);
   const { open, onOpen, onClose } = useDisclosure();
+  const [showAll, setShowAll] = useState(false);
   const [target, setTarget] = useState<Plan>();
   const finalFocus = useRef<HTMLElement | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
 
   const sorted = [...plans].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+  const visiblePlans = showAll ? sorted : sorted.slice(0, INITIAL_PLAN_COUNT);
 
   return (
     <VStack as="section" gap="2.5" alignItems="stretch">
@@ -100,7 +114,7 @@ export function PlanSection() {
         </Text>
       ) : (
         <VStack as="ul" listStyle="none" m="0" p="0" gap="2.5" alignItems="stretch">
-          {sorted.map((plan) => (
+          {visiblePlans.map((plan) => (
             <PlanRow
               key={plan.id}
               plan={plan}
@@ -113,6 +127,17 @@ export function PlanSection() {
           ))}
         </VStack>
       )}
+      {!showAll && sorted.length > INITIAL_PLAN_COUNT ? (
+        <Button
+          variant="outline"
+          colorScheme="mono"
+          size="lg"
+          alignSelf="flex-start"
+          onClick={() => setShowAll(true)}
+        >
+          すべてのプランを表示（{sorted.length}件）
+        </Button>
+      ) : null}
       <Modal.Root
         open={open}
         title="プランを削除しますか？"

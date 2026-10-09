@@ -182,6 +182,29 @@ test("lists plans with their totals", async () => {
   expect(router.state.location.search).toEqual({ id: PLAN_A });
 });
 
+test("keeps creating available and limits the initial list when there are 100 plans", async () => {
+  const plans = Array.from({ length: 100 }, (_, index) =>
+    plan(
+      `f0000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+      `プラン ${index + 1}`,
+      `2026-10-${String((index % 28) + 1).padStart(2, "0")}T00:00:00.000Z`,
+      1,
+    ),
+  );
+  const repository = createMemoryRepository({ shops: [shop], plans });
+  const { screen } = await renderPlanList(repository);
+
+  const create = screen.getByRole("button", { name: "このイベントでプランを作る" });
+  const heading = screen.getByRole("heading", { name: "プラン" });
+  expect(
+    create.element().compareDocumentPosition(heading.element()) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).not.toBe(0);
+  await expect.poll(planRowTexts).toHaveLength(3);
+
+  await screen.getByRole("button", { name: "すべてのプランを表示（100件）" }).click();
+  await expect.poll(planRowTexts).toHaveLength(100);
+});
+
 test("opens a listed plan with the keyboard", async () => {
   const repository = createMemoryRepository({
     shops: [shop],

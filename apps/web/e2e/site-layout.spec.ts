@@ -88,9 +88,11 @@ for (const { name } of pages("")) {
     for (const href of targets) {
       await page.goto(path);
       await ready(page);
-      await footer(page).locator(`a[href="${href}"]`).click();
-      // The preview server answers a page's path with its directory (`/help/`).
-      await expect(page).toHaveURL(new RegExp(`${href.replace(/[?]/g, "\\?")}/?$`));
+      await expect(async () => {
+        await footer(page).locator(`a[href="${href}"]`).click();
+        // The preview server answers a page's path with its directory (`/help/`).
+        await expect(page).toHaveURL(new RegExp(`${href.replace(/[?]/g, "\\?")}/?$`));
+      }).toPass();
       await expect(page.getByRole("main")).toBeVisible();
     }
   });
