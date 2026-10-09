@@ -285,7 +285,7 @@ test("an error in the closed details opens them and takes the focus", async () =
 
   await expect.element(quantity).toHaveAccessibleDescription("数量は1以上の整数で入れてください");
   await expect.element(quantity).toHaveFocus();
-  expect(document.querySelector("details")?.open).toBe(true);
+  expect(quantity.element().closest("details")?.open).toBe(true);
   expect(await stored()).toHaveLength(4);
 });
 
