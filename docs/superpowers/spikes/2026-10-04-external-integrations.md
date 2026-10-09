@@ -31,7 +31,7 @@
 ## Turnstile
 
 - テスト用のキー（常に成功するシークレット `1x0000000000000000000000000000000AA`）で `siteverify` が `success: true` を返すことを確かめた。常に失敗するシークレットでは `invalid-input-response` になる。
-- 本番用のウィジェット（名前 `point-sprint inquiry`、ドメイン `point-sprint.bmth.dev`、モード `managed`）を作り、サイトキーとシークレットを `.env.production` の `PUBLIC_TURNSTILE_SITE_KEY`、`TURNSTILE_SECRET_KEY` に入れた。開発中は Cloudflare のテスト用キーを使う（`.env.development`）。
+- 本番用のウィジェット（名前 `point-sprint inquiry`、ドメイン `point-sprint.bmth.dev`、モード `managed`）を作り、サイトキーとシークレットを `.env.production` の `PUBLIC_TURNSTILE_SITE_KEY`、`TURNSTILE_SECRET_KEY` に入れた。開発中は Cloudflare のテスト用キーを使う（`.env.development`）。新しいサイトの Worker（`point-sprint.jougennotuki67.workers.dev`）とプレビュー（`pr-<番号>-point-sprint.jougennotuki67.workers.dev`）でも動くよう、あとからドメインに `jougennotuki67.workers.dev` を足した。Turnstile のドメインには `*` を書けないが、足したドメインのサブドメインはすべて許可される。
 
 ## 計画への影響
 
