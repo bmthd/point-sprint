@@ -97,7 +97,7 @@ export function TemplateList({ onPick }: { onPick: (template: CampaignTemplate) 
             whiteSpace="normal"
             lineHeight="moderate"
           >
-            <Box as="span" display="flex" alignItems="center" gap="2">
+            <HStack as="span" gap="2">
               {template.benefit.imagePath ? (
                 <Image
                   src={imageUrl(template.benefit.imagePath)}
@@ -107,15 +107,13 @@ export function TemplateList({ onPick }: { onPick: (template: CampaignTemplate) 
                   flexShrink="0"
                 />
               ) : null}
-              <Box as="span">
-                <Text as="span" display="block">
-                  {template.name}
-                </Text>
-                <Text as="span" display="block" fontSize="xs" color="fg.muted">
+              <VStack as="span" gap="0">
+                <Text as="span">{template.name}</Text>
+                <Text as="span" fontSize="xs" color="fg.muted">
                   {SPECS[template.id]?.hint}
                 </Text>
-              </Box>
-            </Box>
+              </VStack>
+            </HStack>
           </Button>
         </List.Item>
       ))}

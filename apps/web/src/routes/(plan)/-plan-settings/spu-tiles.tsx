@@ -6,10 +6,12 @@ import {
   Button,
   Card,
   CheckboxCard,
+  Flex,
   Image,
   Link,
   Modal,
   Text,
+  Wrap,
   useDisclosure,
 } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
@@ -299,16 +301,8 @@ export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResu
           onToggle={(benefitId) => save(toggle({ planId: plan.id, benefitId }))}
         />
 
-        <Box
-          display="flex"
-          flexWrap="wrap"
-          alignItems="center"
-          columnGap="3"
-          rowGap="1.5"
-          fontSize="xs"
-          color="fg.muted"
-        >
-          <Box as="span" display="inline-flex" alignItems="center" gap="1">
+        <Wrap alignItems="center" columnGap="3" rowGap="1.5" fontSize="xs" color="fg.muted">
+          <Flex as="span" alignItems="center" gap="1">
             <Box
               as="span"
               boxSize="3"
@@ -318,19 +312,19 @@ export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResu
               borderColor="primary.muted"
             />
             ON
-          </Box>
-          <Box as="span" display="inline-flex" alignItems="center" gap="1">
+          </Flex>
+          <Flex as="span" alignItems="center" gap="1">
             <Box as="span" boxSize="3" rounded="sm" borderWidth="1px" borderColor="border" />
             OFF
-          </Box>
-          <Box as="span" display="inline-flex" alignItems="center" gap="1">
+          </Flex>
+          <Flex as="span" alignItems="center" gap="1">
             <CapBadge as="span" />
             このプランで上限に達した
-          </Box>
-          <Box as="span" ms="auto">
+          </Flex>
+          <Text as="span" ms="auto">
             名前を押すと上限・条件
-          </Box>
-        </Box>
+          </Text>
+        </Wrap>
         <SpuLink />
       </Card.Body>
     </Card.Root>

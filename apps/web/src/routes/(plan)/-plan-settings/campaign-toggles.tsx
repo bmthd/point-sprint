@@ -5,7 +5,18 @@ import {
   campaignTemplates,
   officialEvents,
 } from "@workspaces/domain";
-import { Box, Button, Card, CheckboxCard, Heading, IconButton, Image, Text } from "@workspaces/ui";
+import {
+  Box,
+  Button,
+  Card,
+  CheckboxCard,
+  HStack,
+  Heading,
+  IconButton,
+  Image,
+  Text,
+  VStack,
+} from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useRef, useState } from "react";
 import { toggleBenefitAtom } from "../../../state/order-ops";
@@ -51,7 +62,7 @@ function CampaignToggle({ benefit, onToggle }: { benefit: RateBenefit; onToggle:
       w="auto"
       inputProps={{ "aria-label": `${benefit.label} ${rateText(benefit.params.rate)} ${when}` }}
     >
-      <Box as="span" display="flex" alignItems="center" gap="2">
+      <HStack as="span" gap="2">
         {benefit.imagePath ? (
           <Image
             src={imageUrl(benefit.imagePath)}
@@ -61,7 +72,7 @@ function CampaignToggle({ benefit, onToggle }: { benefit: RateBenefit; onToggle:
             flexShrink="0"
           />
         ) : null}
-        <Box as="span" display="flex" flexDirection="column">
+        <VStack as="span" gap="0">
           <CheckboxCard.Label>
             {benefit.label}{" "}
             <Text as="span" fontVariantNumeric="tabular-nums">
@@ -71,8 +82,8 @@ function CampaignToggle({ benefit, onToggle }: { benefit: RateBenefit; onToggle:
           <CheckboxCard.Description fontVariantNumeric="tabular-nums">
             {when}
           </CheckboxCard.Description>
-        </Box>
-      </Box>
+        </VStack>
+      </HStack>
     </CheckboxCard.Root>
   );
 }

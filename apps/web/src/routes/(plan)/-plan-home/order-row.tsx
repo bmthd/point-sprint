@@ -10,12 +10,14 @@ import {
   Box,
   Button,
   Checkbox,
+  HStack,
   IconButton,
   Input,
   List,
   NativeSelect,
   Text,
   VisuallyHidden,
+  Wrap,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
@@ -464,23 +466,23 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
         />
         <OrderBadge badge={props.badge} />
         <Box minW="0" display="flex" flexDirection="column" gap="0.5">
-          <Box as="span" display="flex" gap="2" fontSize="xs" color="fg.muted">
+          <HStack gap="2" fontSize="xs" color="fg.muted">
             <Text as="span" lineClamp={1} wordBreak="break-all">
               {shopName}
             </Text>
             <Text as="span" flex="none" fontVariantNumeric="tabular-nums">
               {monthDayWithWeekday(order.date)}
             </Text>
-          </Box>
+          </HStack>
           <Text as="span" fontSize="sm" fontWeight="medium" lineClamp={1} wordBreak="break-all">
             {orderTitle(order)}
           </Text>
           {points.campaigns.length > 0 ? (
-            <Box as="span" display="flex" flexWrap="wrap" gap="1">
+            <Wrap gap="1">
               {points.campaigns.map((label) => (
                 <CampaignChip key={label}>{label}</CampaignChip>
               ))}
-            </Box>
+            </Wrap>
           ) : null}
         </Box>
         <Box

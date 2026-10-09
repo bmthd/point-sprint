@@ -1,5 +1,5 @@
 import { type OfficialEvent, officialEvents } from "@workspaces/domain";
-import { Badge, Box, Button, Card, Heading, Text, VStack } from "@workspaces/ui";
+import { Badge, Box, Button, Card, Heading, List, Text, VStack } from "@workspaces/ui";
 import { monthDayWithWeekday } from "../../../ui/dates";
 
 /** The most a shop-around benefit adds, and the cap on what it pays. */
@@ -22,30 +22,37 @@ type EventCardProps = {
 
 function EventCard({ event, status, disabled, onCreate }: EventCardProps) {
   return (
-    <Card.Root as="li">
-      <Card.Body>
-        <Box display="flex" alignItems="center" gap="2">
-          {status ? (
-            <Badge
-              colorScheme={status === "active" ? "primary" : "mono"}
-              variant={status === "active" ? "solid" : "outline"}
-            >
-              {status === "active" ? "開催中" : "開催予定"}
-            </Badge>
-          ) : null}
-          <Text fontSize="md" fontWeight="bold">
-            {event.name}
+    <List.Item>
+      <Card.Root>
+        <Card.Body>
+          <Box display="flex" alignItems="center" gap="2">
+            {status ? (
+              <Badge
+                colorScheme={status === "active" ? "primary" : "mono"}
+                variant={status === "active" ? "solid" : "outline"}
+              >
+                {status === "active" ? "開催中" : "開催予定"}
+              </Badge>
+            ) : null}
+            <Text fontSize="md" fontWeight="bold">
+              {event.name}
+            </Text>
+          </Box>
+          <Text fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
+            {monthDayWithWeekday(event.period.start)} 〜 {monthDayWithWeekday(event.period.end)}
+            {shopAroundSummary(event)}
           </Text>
-        </Box>
-        <Text fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
-          {monthDayWithWeekday(event.period.start)} 〜 {monthDayWithWeekday(event.period.end)}
-          {shopAroundSummary(event)}
-        </Text>
-        <Button colorScheme="primary" size="lg" disabled={disabled} onClick={() => onCreate(event)}>
-          このイベントでプランを作る
-        </Button>
-      </Card.Body>
-    </Card.Root>
+          <Button
+            colorScheme="primary"
+            size="lg"
+            disabled={disabled}
+            onClick={() => onCreate(event)}
+          >
+            このイベントでプランを作る
+          </Button>
+        </Card.Body>
+      </Card.Root>
+    </List.Item>
   );
 }
 
@@ -72,7 +79,7 @@ export function EventSection({
       <Heading as="h2" fontSize="md">
         開催中・開催予定のイベント
       </Heading>
-      <VStack as="ul" listStyle="none" m="0" p="0" gap="2.5" alignItems="stretch">
+      <List.Root gap="2.5">
         {events.map((event) => (
           <EventCard
             key={event.id}
@@ -82,7 +89,7 @@ export function EventSection({
             onCreate={onCreate}
           />
         ))}
-      </VStack>
+      </List.Root>
       <Button
         variant="ghost"
         colorScheme="link"

@@ -1,5 +1,16 @@
 import { type Account, DEFAULT_ACCOUNT_ID, type Profile, accountsOf } from "@workspaces/domain";
-import { Box, Button, Card, IconButton, Modal, Switch, Text, useDisclosure } from "@workspaces/ui";
+import {
+  Box,
+  Button,
+  Card,
+  Heading,
+  IconButton,
+  List,
+  Modal,
+  Switch,
+  Text,
+  useDisclosure,
+} from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useRef, useState } from "react";
 import { CommitField } from "../../../form/commit-field";
@@ -25,8 +36,7 @@ function AccountRow({
   onDelete?: () => void;
 }) {
   return (
-    <Box
-      as="li"
+    <List.Item
       display="flex"
       alignItems="center"
       gap="1"
@@ -50,7 +60,7 @@ function AccountRow({
           <CloseIcon />
         </IconButton>
       ) : null}
-    </Box>
+    </List.Item>
   );
 }
 
@@ -85,9 +95,9 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
   return (
     <Card.Root as="section" aria-labelledby="advanced-settings-title">
       <Card.Body alignItems="stretch">
-        <Text as="h2" id="advanced-settings-title" fontSize="md" fontWeight="bold">
+        <Heading as="h2" id="advanced-settings-title" fontSize="md">
           詳細設定
-        </Text>
+        </Heading>
         <Switch
           colorScheme="primary"
           reverse
@@ -106,7 +116,7 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
         </Text>
         {enabled ? (
           <>
-            <Box as="ul" aria-label="楽天アカウント" listStyleType="none" m="0" p="0">
+            <List.Root aria-label="楽天アカウント" gap="0">
               {accounts.map((account) => (
                 <AccountRow
                   key={account.id}
@@ -129,7 +139,7 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
                   }
                 />
               ))}
-            </Box>
+            </List.Root>
             <Button
               ref={addRef}
               variant="outline"

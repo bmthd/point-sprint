@@ -37,9 +37,9 @@ function SpuDefaults({ onFailed }: { onFailed: (failed: boolean) => void }) {
   return (
     <Card.Root as="section" aria-labelledby="spu-defaults-title">
       <Card.Body alignItems="stretch">
-        <Text as="h2" id="spu-defaults-title" fontSize="md" fontWeight="bold">
+        <Heading as="h2" id="spu-defaults-title" fontSize="md">
           SPU の初期値
-        </Text>
+        </Heading>
         <Text fontSize="xs" color="fg.muted">
           ここでの変更は、これから作るプランの初期値になります。作成済みのプランは変わりません。
         </Text>
