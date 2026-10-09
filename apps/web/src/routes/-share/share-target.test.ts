@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { resultShareTarget, shareLinks, shareMessage, siteShareTarget } from "./share-target";
+import { siteUrl } from "../../site-url";
 
 const query = (href: string) => Object.fromEntries(new URL(href).searchParams);
 
@@ -7,27 +8,27 @@ describe("share targets", () => {
   test("the site is shared under its default title", () => {
     expect(siteShareTarget).toEqual({
       text: "ポイントスプリント 楽天市場お買い物マラソン攻略計算ツール",
-      url: "https://point-sprint.bmth.dev/",
+      url: `${siteUrl}/`,
     });
   });
 
   test("a result puts the points and the rate in the text and in the link", () => {
     expect(resultShareTarget({ points: 2600, rate: 6.5 })).toEqual({
       text: "獲得予定 2,600P・実質還元率 6.5%（ポイントスプリントで計算）",
-      url: "https://point-sprint.bmth.dev/share?points=2600&rate=6.5",
+      url: `${siteUrl}/share?points=2600&rate=6.5`,
     });
   });
 
   test("a result with nothing bought leaves the rate out", () => {
     expect(resultShareTarget({ points: 0 })).toEqual({
       text: "獲得予定 0P（ポイントスプリントで計算）",
-      url: "https://point-sprint.bmth.dev/share?points=0",
+      url: `${siteUrl}/share?points=0`,
     });
   });
 });
 
 describe("shareLinks", () => {
-  const target = { text: "獲得予定 2,600P & 6.5%", url: "https://point-sprint.bmth.dev/" };
+  const target = { text: "獲得予定 2,600P & 6.5%", url: `${siteUrl}/` };
   const [x, facebook, line] = shareLinks(target);
 
   test("X posts the text and the link", () => {
@@ -51,7 +52,7 @@ describe("shareLinks", () => {
 });
 
 test("the copied message is the text and the link on the next line", () => {
-  expect(shareMessage({ text: "獲得予定 2,600P", url: "https://point-sprint.bmth.dev/" })).toBe(
-    "獲得予定 2,600P\nhttps://point-sprint.bmth.dev/",
+  expect(shareMessage({ text: "獲得予定 2,600P", url: `${siteUrl}/` })).toBe(
+    `獲得予定 2,600P\n${siteUrl}/`,
   );
 });

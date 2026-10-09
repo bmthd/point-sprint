@@ -1,4 +1,4 @@
-import { Box, IconButton, MoonIcon, SunIcon, useColorMode } from "@workspaces/ui";
+import { Box, IconButton, MoonIcon, SunIcon, Text, useColorMode } from "@workspaces/ui";
 import { RouterLink } from "../../ui/router-link";
 
 function ProfileIcon() {
@@ -43,7 +43,8 @@ function ColorModeButton() {
 /**
  * The header on every page: the site name (to the top) and the profile. The router marks the link
  * to the page being shown with `aria-current="page"`. The color mode switch (#3) goes next to the
- * profile link.
+ * profile link. The profile link spells out its name: it moves to a page, unlike the icon buttons
+ * that act in place.
  */
 export function SiteHeader() {
   return (
@@ -77,17 +78,18 @@ export function SiteHeader() {
           <ColorModeButton />
           <RouterLink
             to="/profile"
-            aria-label="プロフィール（SPU・ショップ台帳）"
-            boxSize="11"
+            minH="11"
             display="flex"
             alignItems="center"
-            justifyContent="center"
-            rounded="xl"
+            gap="1"
+            px="2"
             color="fg"
-            _hover={{ bg: "bg.muted" }}
-            _current={{ bg: "bg.muted" }}
+            _current={{ fontWeight: "bold" }}
           >
             <ProfileIcon />
+            <Text as="span" fontSize="sm">
+              プロフィール
+            </Text>
           </RouterLink>
         </Box>
       </Box>

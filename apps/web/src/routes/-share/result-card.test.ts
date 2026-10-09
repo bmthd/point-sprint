@@ -10,6 +10,7 @@ import {
   resultSearchSchema,
   resultSummary,
 } from "./result-card";
+import { siteUrl } from "../../site-url";
 
 const parse = (search: Record<string, unknown>) =>
   resultFigures(v.parse(resultSearchSchema, search));
@@ -42,9 +43,7 @@ describe("the figures of a shared result", () => {
 
 describe("a shared result's links", () => {
   test("carry the figures, the rate with one decimal", () => {
-    expect(resultPageUrl({ points: 2600, rate: 6 })).toBe(
-      "https://point-sprint.bmth.dev/share?points=2600&rate=6.0",
-    );
+    expect(resultPageUrl({ points: 2600, rate: 6 })).toBe(`${siteUrl}/share?points=2600&rate=6.0`);
     expect(resultImagePath({ points: 2600 })).toBe("/share/image.png?points=2600");
   });
 
