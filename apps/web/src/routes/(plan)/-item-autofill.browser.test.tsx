@@ -89,7 +89,7 @@ describe("the phone sheet", () => {
     await sheet.getByText(/^詳細設定/).click();
     await expect.element(sheet.getByLabelText("ショップ独自倍率")).toHaveValue("5");
     await sheet.getByLabelText("金額（税込）").fill("2000");
-    await sheet.getByLabelText("注文日").fill("2026-10-05");
+    await sheet.getByLabelText("注文日").fill("2026/10/05");
     await sheet.getByRole("button", { name: "追加する", exact: true }).click();
 
     await expect.poll(async () => (await stored()).length).toBe(5);
@@ -142,7 +142,7 @@ describe("the phone sheet", () => {
 
     // The order can still be typed and added.
     await sheet.getByLabelText("金額（税込）").fill("1500");
-    await sheet.getByLabelText("注文日").fill("2026-10-05");
+    await sheet.getByLabelText("注文日").fill("2026/10/05");
     await sheet.getByRole("button", { name: "追加する", exact: true }).click();
     await expect.poll(async () => (await stored()).length).toBe(5);
     expect((await stored()).at(-1)?.lineItems[0]).toMatchObject({ unitPrice: 1500, url: ITEM_URL });

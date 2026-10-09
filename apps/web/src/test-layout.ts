@@ -1,3 +1,6 @@
+/** The box of a `DatePicker`, around its input. */
+export const DATE_PICKER_FIELD = "[role='combobox']:has(> input)";
+
 /**
  * The text fields and selects of `root` that sit side by side but start at different heights, as
  * 「label (top) / label (top)」. A field stretched to the height of an error beside it moves its
@@ -9,7 +12,8 @@ export function misalignedFields(root: Element): string[] {
     .map((element) => ({
       name: element.getAttribute("aria-label") ?? element.id,
       label: (element as HTMLInputElement).labels?.[0]?.textContent ?? "",
-      rect: element.getBoundingClientRect(),
+      // A date picker's input sits in the middle of its box, which lines up with the other fields.
+      rect: (element.closest(DATE_PICKER_FIELD) ?? element).getBoundingClientRect(),
     }));
   const misaligned: string[] = [];
   for (const [index, a] of fields.entries()) {
