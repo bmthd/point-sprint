@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://point-sprint.bmth.dev/sitemap.xml

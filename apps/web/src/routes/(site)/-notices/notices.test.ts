@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { type Notice, newestFirst, notices, paragraphs } from "./notices";
 
-const notice = (date: string, title: string): Notice => ({ date, title, body: "" });
+const notice = (date: string, title: string): Notice => ({ id: title, date, title, body: "" });
 
 test("newestFirst puts the latest notice first and keeps the listed order within a day", () => {
   const sorted = newestFirst([
@@ -23,10 +23,15 @@ test("paragraphs splits the body on blank lines", () => {
 
 test.each(notices)(
   "the notice $title has a real date, a title and a body",
-  ({ date, title, body }) => {
+  ({ id, date, title, body }) => {
+    expect(id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
     expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10)).toBe(date);
     expect(title.trim()).not.toBe("");
     expect(paragraphs(body).length).toBeGreaterThan(0);
   },
 );
+
+test("every notice has its own id", () => {
+  expect(new Set(notices.map((n) => n.id)).size).toBe(notices.length);
+});

@@ -1,4 +1,5 @@
 import { guideSlugs } from "./guides/files.ts";
+import { siteUrl } from "./site-url.ts";
 
 /**
  * Every route, rendered to HTML at build time. Listed so none depends on being reached by a link.
@@ -13,6 +14,7 @@ export const prerenderedPages = [
   "/terms",
   "/privacy",
   "/inquiry",
+  "/notices",
   "/guides",
   ...guideSlugs().map((slug) => `/guides/${slug}`),
 ].map((path) => ({
@@ -92,6 +94,18 @@ export const sitemapXml = (entries: SitemapEntry[]) =>
     `</urlset>`,
     "",
   ].join("\n");
+
+/**
+ * The `robots.txt`, pointing to the sitemap. Written by the client build, unlike the sitemap, so
+ * that a Preview, which runs only the build, serves it too.
+ */
+export const robotsTxt = [
+  "User-agent: *",
+  "Allow: /",
+  "",
+  `Sitemap: ${siteUrl}/sitemap.xml`,
+  "",
+].join("\n");
 
 /** How many lists of Rakuten items a prerendered guide has. */
 export const guideItemListCount = (html: string): number =>

@@ -20,19 +20,22 @@ const pages = (id: string) => [
   { name: "利用規約", path: "/terms" },
   { name: "プライバシーポリシー", path: "/privacy" },
   { name: "お問い合わせ", path: "/inquiry" },
+  { name: "お知らせ", path: "/notices" },
 ];
 
 const header = (page: Page) => page.getByRole("banner");
 const footer = (page: Page) => page.getByRole("contentinfo");
 const topLink = (page: Page) => header(page).getByRole("link", { name: "ポイントスプリント" });
 const profileLink = (page: Page) =>
-  header(page).getByRole("link", { name: "プロフィール（SPU・ショップ台帳）" });
+  header(page).getByRole("link", { name: "プロフィール", exact: true });
 
 /** Waits until the page has hydrated: before that a click reloads the whole document. */
 const ready = (page: Page) =>
   expect(page.getByRole("main").getByText("読み込み中…")).toHaveCount(0);
 
-test("every page links to the top and the profile from the header", async ({ page }) => {
+test("every page links to the top and the profile from the header, and 戻る comes back", async ({
+  page,
+}) => {
   const id = await createPlan(page);
   for (const { name, path } of pages(id)) {
     await test.step(name, async () => {
@@ -46,6 +49,10 @@ test("every page links to the top and the profile from the header", async ({ pag
       await profileLink(page).click();
       await expect(page).toHaveURL(/\/profile\/?$/);
       await expect(page.getByRole("heading", { level: 1, name: "プロフィール" })).toBeVisible();
+      if (path === "/profile") return;
+      await page.getByRole("link", { name: "戻る" }).click();
+      // The preview server answers a page's path with its directory (`/help/`).
+      await expect(page).toHaveURL(new RegExp(`${path.replace(/[?]/g, "\\?")}/?$`));
     });
   }
 });
@@ -91,6 +98,7 @@ for (const { name } of pages("")) {
 
 test("the footer links to each page that tells about the site", async ({ page }) => {
   for (const { label, path, heading } of [
+    { label: "お知らせ", path: "/notices", heading: "お知らせ" },
     { label: "使い方・注意事項", path: "/help", heading: "使い方・注意事項" },
     { label: "利用規約", path: "/terms", heading: "利用規約" },
     { label: "プライバシーポリシー", path: "/privacy", heading: "プライバシーポリシー" },

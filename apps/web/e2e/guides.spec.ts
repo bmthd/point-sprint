@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures";
+import { siteUrl } from "../src/site-url";
 
 // The E2E build sends the guides' item searches nowhere (`GUIDE_ITEMS_ENDPOINT`), so that no test
 // calls the Rakuten API: every search fails, and the guides read on without their lists. That the
@@ -36,10 +37,10 @@ test("a guide is prerendered as an article", async ({ request }) => {
 
 test("the sitemap lists the guide list and every guide", async ({ request }) => {
   const sitemap = await (await request.get("/sitemap.xml")).text();
-  expect(sitemap).toContain("<loc>https://point-sprint.bmth.dev/guides</loc>");
+  expect(sitemap).toContain(`<loc>${siteUrl}/guides</loc>`);
   expect(sitemap).toContain(
-    "<loc>https://point-sprint.bmth.dev/guides/1000yen-items</loc><lastmod>2026-10-08</lastmod>",
+    `<loc>${siteUrl}/guides/1000yen-items</loc><lastmod>2026-10-08</lastmod>`,
   );
-  expect(sitemap).toContain("<loc>https://point-sprint.bmth.dev/help</loc>");
+  expect(sitemap).toContain(`<loc>${siteUrl}/help</loc>`);
   expect(sitemap).not.toContain("/plan");
 });

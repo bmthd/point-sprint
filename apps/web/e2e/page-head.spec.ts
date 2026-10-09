@@ -1,3 +1,4 @@
+import { siteUrl } from "../src/site-url";
 import { expect, test } from "./fixtures";
 
 // The prerendered HTML holds each page's title; a plan's pages put the plan's name in once loaded.
@@ -32,10 +33,7 @@ test("a plan's pages show the plan's name in the title", async ({ page }) => {
   await page.goto(page.url().replace("/plan?", "/plan/settings?"));
   await expect(page).toHaveTitle(`${name}の設定 | ポイントスプリント`);
 
-  await page
-    .getByRole("banner")
-    .getByRole("link", { name: "プロフィール（SPU・ショップ台帳）" })
-    .click();
+  await page.getByRole("banner").getByRole("link", { name: "プロフィール", exact: true }).click();
   await expect(page).toHaveTitle("プロフィール | ポイントスプリント");
 });
 
@@ -54,4 +52,9 @@ test("the files the head links to are served", async ({ request }) => {
     const response = await request.get(path);
     expect(response.status(), path).toBe(200);
   }
+});
+
+test("robots.txt points to the sitemap on the site's domain", async ({ request }) => {
+  const robots = await (await request.get("/robots.txt")).text();
+  expect(robots).toContain(`Sitemap: ${siteUrl}/sitemap.xml`);
 });
