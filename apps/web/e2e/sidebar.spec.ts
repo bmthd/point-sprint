@@ -1,35 +1,50 @@
 import { newestFirst, notices } from "../src/routes/(site)/-notices/notices";
 import { type Page, expect, test } from "./fixtures";
 
-// The sidebar with the notices: on the pages that read, beside the content on a wide screen and
-// under it on a phone.
+// The notices are in full on /notices. The sidebar, on the pages that read, lists their headlines
+// beside the content on a wide screen and under it on a phone; the pages for working on a plan
+// have neither.
 
 const latest = newestFirst(notices)[0]!;
 
-const withSidebar = ["/", "/help", "/terms", "/privacy", "/inquiry"];
+const withHeadlines = ["/", "/help", "/terms", "/privacy", "/inquiry", "/guides"];
 const withoutSidebar = ["/profile", "/plan", "/plan/settings"];
 
 const sidebar = (page: Page) => page.getByRole("complementary", { name: "サイドバー" });
-const noticeSection = (page: Page) => sidebar(page).getByRole("region", { name: "お知らせ" });
+const headlines = (page: Page) => sidebar(page).getByRole("region", { name: "お知らせ" });
 
-test("the HTML rendered at build time has the notices on the pages with the sidebar", async ({
+test("the HTML rendered at build time has the headlines on the pages that read", async ({
   request,
 }) => {
-  for (const path of withSidebar) {
+  for (const path of withHeadlines) {
     const html = await (await request.get(path)).text();
-    expect(html, path).toContain('id="notices"');
-    expect(html, path).toContain(latest.title);
+    expect(html, path).toContain(`href="/notices#${latest.id}"`);
   }
-  for (const path of withoutSidebar) {
+  for (const path of [...withoutSidebar, "/notices"]) {
     const html = await (await request.get(path)).text();
-    expect(html, path).not.toContain('id="notices"');
+    expect(html, path).not.toContain(`href="/notices#${latest.id}"`);
   }
 });
 
+test("/notices has every notice in full, and its HTML rendered at build time too", async ({
+  page,
+  request,
+}) => {
+  const html = await (await request.get("/notices")).text();
+  for (const notice of notices) {
+    expect(html).toContain(`id="${notice.id}"`);
+    expect(html).toContain(notice.title);
+  }
+  await page.goto("/notices");
+  const article = page.getByRole("main").getByRole("article").first();
+  await expect(article.getByRole("heading", { level: 2, name: latest.title })).toBeVisible();
+  await expect(article.locator("time")).toHaveAttribute("datetime", latest.date);
+});
+
 test("on a wide screen the sidebar is a column to the right of the content", async ({ page }) => {
-  for (const path of withSidebar) {
+  for (const path of withHeadlines) {
     await page.goto(path);
-    await expect(noticeSection(page).getByRole("heading", { name: latest.title })).toBeVisible();
+    await expect(headlines(page).getByRole("link", { name: latest.title })).toBeVisible();
     const main = (await page.getByRole("main").boundingBox())!;
     const aside = (await sidebar(page).boundingBox())!;
     expect(aside.x, path).toBeGreaterThanOrEqual(main.x + main.width);
@@ -40,7 +55,7 @@ test("on a wide screen the sidebar is a column to the right of the content", asy
 
 test("on a phone the sidebar follows the content, above the footer", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const path of withSidebar) {
+  for (const path of withHeadlines) {
     await page.goto(path);
     const main = (await page.getByRole("main").boundingBox())!;
     const aside = (await sidebar(page).boundingBox())!;
@@ -55,11 +70,12 @@ test("on a phone the sidebar follows the content, above the footer", async ({ pa
   }
 });
 
-test("the footer's お知らせ goes to the notices on the top page", async ({ page }) => {
+test("a headline in the sidebar goes to the notice on /notices", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/help");
   await expect(page.getByRole("main").getByText("読み込み中…")).toHaveCount(0);
-  await page.getByRole("contentinfo").getByRole("link", { name: "お知らせ" }).click();
-  await expect(page).toHaveURL(/\/#notices$/);
-  await expect(noticeSection(page)).toBeInViewport();
+  await headlines(page).getByRole("link", { name: latest.title }).click();
+  await expect(page).toHaveURL(new RegExp(`/notices/?#${latest.id}$`));
+  await expect(page.locator(`#${latest.id}`)).toBeInViewport();
+  await expect(sidebar(page).getByRole("region", { name: "お知らせ" })).toHaveCount(0);
 });

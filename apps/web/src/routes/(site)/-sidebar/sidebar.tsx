@@ -1,6 +1,6 @@
 import { Box, Grid, VStack } from "@workspaces/ui";
 import type { ReactNode } from "react";
-import { NoticeSection } from "../-notices/notice-section";
+import { NoticeHeadlines } from "../-notices/notice-headlines";
 
 /** The right column's width on a wide screen. */
 const SIDEBAR_WIDTH = "320px";
@@ -9,8 +9,17 @@ const SIDEBAR_WIDTH = "320px";
  * A page with the sidebar: on a wide screen the sidebar is a column to the right of `main`; at the
  * `lg` breakpoint and below (a phone or a tablet) it follows `main`, above the footer. `maxW` is
  * the width of the page's own content, which stays the same with or without the sidebar.
+ * `/notices`, which has the notices in full, leaves their headlines out with `noticeHeadlines`.
  */
-export function PageWithSidebar({ maxW, children }: { maxW: string; children: ReactNode }) {
+export function PageWithSidebar({
+  maxW,
+  noticeHeadlines = true,
+  children,
+}: {
+  maxW: string;
+  noticeHeadlines?: boolean;
+  children: ReactNode;
+}) {
   return (
     <Grid
       gridTemplateColumns={{
@@ -28,7 +37,7 @@ export function PageWithSidebar({ maxW, children }: { maxW: string; children: Re
       <Box as="main" minW="0">
         {children}
       </Box>
-      <SiteSidebar />
+      <SiteSidebar noticeHeadlines={noticeHeadlines} />
     </Grid>
   );
 }
@@ -38,10 +47,10 @@ export function PageWithSidebar({ maxW, children }: { maxW: string; children: Re
  * a box of the same width): a new one is a line here. The share buttons (#11) go last, so they
  * close the right column on a wide screen and come right after the content on a phone.
  */
-export function SiteSidebar() {
+export function SiteSidebar({ noticeHeadlines = true }: { noticeHeadlines?: boolean }) {
   return (
     <VStack as="aside" aria-label="サイドバー" gap="md" alignItems="stretch" minW="0">
-      <NoticeSection />
+      {noticeHeadlines ? <NoticeHeadlines /> : null}
     </VStack>
   );
 }
