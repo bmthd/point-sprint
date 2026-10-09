@@ -38,6 +38,7 @@ import {
   useSortedShops,
 } from "../-order-fields";
 import { orderSaveFailedAtom, pointsText } from "../-order-shared";
+import { FormDatePicker } from "../-date-picker-field";
 
 const sumOfTotals = (results: Map<string, { total: number }>) =>
   [...results.values()].reduce((sum, result) => sum + result.total, 0);
@@ -175,7 +176,7 @@ function ItemFields({ form }: { form: OrderForm }) {
       <FormField of={form} path={["date"]}>
         {(field) => (
           <Field.Root label="注文日" {...errorsOf(field)} minW="0">
-            <Input size="lg" type="date" fontVariantNumeric="tabular-nums" {...bind(field)} />
+            <FormDatePicker size="lg" field={field} />
           </Field.Root>
         )}
       </FormField>

@@ -53,7 +53,7 @@ async function fillOrder(
 ) {
   if (values.shop)
     await sheet.getByLabelText("ショップ", { exact: true }).selectOptions(values.shop);
-  await sheet.getByLabelText("注文日").fill("2026-10-05");
+  await sheet.getByLabelText("注文日").fill("2026/10/05");
   await amountOf(sheet).fill(values.amount);
   if (values.name) await sheet.getByLabelText("商品名メモ（任意）").fill(values.name);
 }
@@ -62,7 +62,10 @@ test("adds an order and closes", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
   await expect.element(amountOf(sheet)).toHaveFocus();
-  expect(sheet.getByLabelText("注文日").element()).toHaveProperty("value", tokyoToday(new Date()));
+  expect(sheet.getByLabelText("注文日").element()).toHaveProperty(
+    "value",
+    tokyoToday(new Date()).replaceAll("-", "/"),
+  );
 
   await fillOrder(sheet, { shop: "ショップ4", amount: "3,300", name: "洗濯洗剤" });
   await sheet.getByRole("button", { name: "追加する" }).click();
@@ -229,7 +232,7 @@ test("pasting an Ichiba URL selects the matching shop", async () => {
   await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue("new");
   await expect.element(sheet.getByLabelText("新しいショップの名前")).toHaveValue("coffee-beans");
   await expect.element(sheet.getByLabelText("購入先")).toHaveValue("rakuten-ichiba");
-  await sheet.getByLabelText("注文日").fill("2026-10-05");
+  await sheet.getByLabelText("注文日").fill("2026/10/05");
   await amountOf(sheet).fill("1000");
   await sheet.getByRole("button", { name: "追加する" }).click();
 
