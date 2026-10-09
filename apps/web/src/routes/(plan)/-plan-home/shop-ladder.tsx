@@ -89,7 +89,7 @@ export function ShopLadder({
   return (
     <Box display="flex" flexDirection="column" gap="2">
       {compact ? (
-        <NativeAccordion.Root variant="panel" animate={false}>
+        <NativeAccordion.Root animate={false}>
           <NativeAccordion.Item>
             <NativeAccordion.Button fontSize="sm" fontWeight="bold">
               あと何店舗回る？

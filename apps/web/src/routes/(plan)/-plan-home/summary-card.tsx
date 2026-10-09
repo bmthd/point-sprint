@@ -169,7 +169,7 @@ export function SummaryCard({
         ) : null}
 
         {compact ? (
-          <NativeAccordion.Root variant="panel" animate={false}>
+          <NativeAccordion.Root animate={false}>
             <NativeAccordion.Item>
               <NativeAccordion.Button fontSize="sm" fontWeight="bold">
                 ポイントの内訳を見る
