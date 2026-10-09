@@ -13,14 +13,10 @@
   "dependencies": {
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
-    "@tanstack/react-table": "8.21.3",
     "@yamada-ui/react": "2.2.8",
-    "dayjs": "1.11.23",
-    "file-selector": "2.1.2",
     "motion": "14.0.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "react-dropzone": "15.0.0"
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@types/react": "19.3.0",
