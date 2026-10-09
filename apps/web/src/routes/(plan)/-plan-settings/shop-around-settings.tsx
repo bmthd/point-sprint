@@ -130,6 +130,7 @@ function ShopAroundEditor({
         onClick={onToggle}
         w="full"
         h="auto"
+        roundedBottom={open ? "0" : undefined}
         py="3"
         gap="3"
         textAlign="start"
