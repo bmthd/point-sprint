@@ -48,6 +48,7 @@ import {
   useSortedShops,
 } from "../-order-fields";
 import { CampaignChip } from "../-order-shared";
+import { FormDatePicker } from "../-date-picker-field";
 import {
   type OrderFormInput,
   OrderFormSchema,
@@ -335,7 +336,7 @@ function ShopFields({
         <FormField of={form} path={["date"]}>
           {(field) => (
             <Field.Root label="注文日" {...errorsOf(field)}>
-              <Input type="date" fontVariantNumeric="tabular-nums" {...bind(field)} />
+              <FormDatePicker field={field} />
             </Field.Root>
           )}
         </FormField>

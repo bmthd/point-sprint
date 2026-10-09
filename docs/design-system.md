@@ -89,8 +89,9 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 主要ボタン（追加する、保存） | `Button colorScheme="primary"`（solid）。ボトムバーの「注文を追加」は `size="xl"`、そのほかは `size="lg"`。画面を移るボタンは `RouterButton` |
 | 補助のボタン（編集、コピー、貼り付け、続けて追加、キャンセル） | `Button variant="outline"`。プランの画面と注文の編集の「続けて追加」は `size="lg"`、注文の編集の「貼り付け」は既定の size |
 | 控えめなボタン（リセット、並べ替え、行の取っ手と開閉の矢印、開閉の見出し） | `Button` / `IconButton` の `variant="ghost" colorScheme="gray" size="lg"` |
-| 入力欄、選択欄 | `Field.Root`（`label`、`invalid`、`errorMessage`）の中に `Input` / `NativeSelect.Root`。プラン画面とプロフィールは `size="lg"`、注文の編集は既定の size。注文の編集の金額は `InputGroup.Root size="xl"` に `¥` の `InputGroup.Addon` |
-| プラン設定の入力欄 | `Field` の中に既定の `Input`。キャンペーンの追加の日付は `DatePicker`（`locale="ja"`、`YYYY/MM/DD` の表示）。カレンダーは欄をタップしたときだけ開き、フォーカスや入力では開かない。タップで画面のキーボードは出さない（`inputMode="none"`）が、物理キーボードでは打ち込める。ダイアログを開いたときに欄へ自動でフォーカスしない |
+| 入力欄、選択欄 | `Field.Root`（`label`、`invalid`、`errorMessage`）の中に `Input` / `NativeSelect.Root`。プラン画面とプロフィールは `size="lg"`、注文の編集は既定の size。注文の編集の金額は `InputGroup.Root size="xl"` に `¥` の `InputGroup.Addon`。面は `bg.panel`、枠は `border.emphasized`（エラーのときは `border.error`）。Yamada UI の `outline` は面を塗らないので、ルートの `FormControlDefaults` で `Input`、`Textarea`、`NativeSelect`、`DatePicker` にまとめて渡す。これは Yamada UI の CLI が部品のスタイルの一部だけを上書きできるようになるまでの仮の置き方で、そうなったら CLI で `outline` を上書きして `FormControlDefaults` を消す。選択欄はスマホで OS のピッカーを使うため `NativeSelect` にする |
+| プラン設定の入力欄 | `Field` の中に既定の `Input` |
+| 日付の入力欄 | 注文日（注文の編集、プラン画面の追加フォームと行）とキャンペーンの追加の日付は `DatePicker`（`locale="ja"`、`YYYY/MM/DD` の表示）。カレンダーは欄をタップしたときだけ開き、フォーカスや入力では開かない。タップで画面のキーボードは出さない（`inputMode="none"`）が、物理キーボードでは打ち込める。ダイアログを開いたときに欄へ自動でフォーカスしない |
 | キャンペーンの追加ダイアログ | 見出しの左に、追加するキャンペーンの画像（`boxSize="12"`）を置く |
 | 入力欄のまとまり | `Fieldset.Root`（`legend`）。注文の編集の2つ目以降の商品は `variant="outline" size="sm"` |
 | 買い回りにカウントするか | 表は `Checkbox colorScheme="primary" size="lg"`、カードは `Switch colorScheme="primary"` |
