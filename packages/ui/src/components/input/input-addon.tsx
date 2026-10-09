@@ -1,0 +1,34 @@
+"use client"
+
+import type { HTMLStyledProps, ThemeProps } from "@yamada-ui/react"
+import type { InputProps } from "./input"
+import type { InputAddonStyle } from "./input-addon.style"
+import { createComponent } from "@yamada-ui/react"
+import { inputAddonStyle } from "./input-addon.style"
+import { useInputBorder } from "./use-input-border"
+
+export interface InputAddonProps
+  extends
+    HTMLStyledProps,
+    ThemeProps<InputAddonStyle>,
+    Pick<InputProps, "errorBorderColor" | "focusBorderColor"> {}
+
+const {
+  PropsContext: InputAddonPropsContext,
+  usePropsContext: useInputAddonPropsContext,
+  withContext,
+} = createComponent<InputAddonProps, InputAddonStyle>(
+  "input-addon",
+  inputAddonStyle,
+)
+
+export { InputAddonPropsContext, useInputAddonPropsContext }
+
+export const InputAddon = withContext("div")(
+  undefined,
+  ({ errorBorderColor, focusBorderColor, ...rest }) => {
+    const varProps = useInputBorder({ errorBorderColor, focusBorderColor })
+
+    return { ...varProps, ...rest }
+  },
+)

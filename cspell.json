@@ -16,6 +16,7 @@
     "*.tsbuildinfo",
     "ui.json",
     "packages/ui/src/**/registry.json",
+    "packages/ui/src/components/**",
     "packages/ui/src/theme/tokens/z-indices.ts"
   ],
   "words": [

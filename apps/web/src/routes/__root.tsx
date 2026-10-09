@@ -8,7 +8,6 @@ import { SiteFooter } from "./-root/site-footer";
 import { SiteHeader } from "./-root/site-header";
 import { ErrorPage } from "./-root/error-page";
 import { NotFoundPage, notFoundTitle } from "./-root/not-found-page";
-import { FormControlDefaults } from "../ui/form-control-defaults";
 import { GoogleTagScripts } from "../google-tags/google-tag-scripts";
 import { defaultDescription, defaultTitle, pageTitle, siteName, siteUrl } from "../page-head";
 
@@ -94,9 +93,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body suppressHydrationWarning>
         <ColorModeScript defaultValue={config.defaultColorMode} />
         <UIProvider theme={theme} config={config} storage={colorModeStorage}>
-          <FormControlDefaults>
-            <AppProviders>{children}</AppProviders>
-          </FormControlDefaults>
+          <AppProviders>{children}</AppProviders>
         </UIProvider>
         <Scripts />
       </body>
