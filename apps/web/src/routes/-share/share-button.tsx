@@ -1,6 +1,20 @@
-import { Box, Button, type StackProps, Text, VStack, useClipboard } from "@workspaces/ui";
+import {
+  Box,
+  Button,
+  Center,
+  HStack,
+  IconButton,
+  Image,
+  LinkIcon,
+  type StackProps,
+  Text,
+  VStack,
+  useClipboard,
+} from "@workspaces/ui";
 import { useId, useState } from "react";
 import { ShareIcon } from "../../ui/icons";
+import facebookLogo from "./facebook-logo.png";
+import lineLogo from "./line-logo.png";
 import { type ShareTarget, shareLinks, shareMessage } from "./share-target";
 
 /** Whether the device's own share sheet can post `target`. */
@@ -52,39 +66,66 @@ export function ShareButton({
   );
 }
 
+/** The X logo from X's brand toolkit, in the color of the text on the circle under it. */
+function XLogo() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 1200 1227" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"
+      />
+    </svg>
+  );
+}
+
+/** Each service's own icon, as its brand resources give it, 40px across. */
+const serviceIcons = {
+  X: (
+    <Center boxSize="10" rounded="full" bg="fg" color="bg">
+      <XLogo />
+    </Center>
+  ),
+  Facebook: <Image src={facebookLogo} alt="" boxSize="10" />,
+  LINE: <Image src={lineLogo} alt="" boxSize="10" rounded="lg" />,
+};
+
 /**
- * The links to X, Facebook and LINE and a copy button, laid out two by two, with what the copy did
- * under them.
+ * The links to X, Facebook and LINE and a copy button: a row of icons, named for a screen reader,
+ * with what the copy did under them.
  */
 export function ShareLinks({ target }: { target: ShareTarget }) {
   const { copied, onCopy } = useClipboard();
 
   return (
     <VStack gap="2" alignItems="stretch">
-      <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
+      <HStack gap="3" justifyContent="center">
         {shareLinks(target).map((link) => (
-          <Button
+          <IconButton
             key={link.service}
             as="a"
             href={link.href}
             target="_blank"
             rel="noopener noreferrer"
-            variant="outline"
-            size="lg"
+            variant="ghost"
+            boxSize="12"
+            rounded="full"
             aria-label={link.label}
-          >
-            {link.service}
-          </Button>
+            icon={serviceIcons[link.service]}
+          />
         ))}
-        <Button
-          variant="outline"
-          size="lg"
+        <IconButton
+          variant="ghost"
+          boxSize="12"
+          rounded="full"
           aria-label="文面とリンクをコピー"
           onClick={() => onCopy(shareMessage(target))}
-        >
-          コピー
-        </Button>
-      </Box>
+          icon={
+            <Center boxSize="10" rounded="full" bg="bg.muted" color="fg">
+              <LinkIcon fontSize="xl" />
+            </Center>
+          }
+        />
+      </HStack>
       <Text
         role="status"
         fontSize="sm"
