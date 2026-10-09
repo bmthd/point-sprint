@@ -30,6 +30,18 @@ test("official events parse", () => {
   }
 });
 
+test("each event has its own id, and its shop-around runs over its period", () => {
+  const ids = officialEvents.map((event) => event.id);
+  expect(new Set(ids).size).toBe(ids.length);
+  for (const event of officialEvents) {
+    const shopAround = event.benefits.filter((b) => b.kind === "shop-around");
+    for (const benefit of shopAround) {
+      expect(benefit.sharedKey).toBe(event.id);
+      expect(benefit.conditions.dateRule).toEqual({ type: "range", ...event.period });
+    }
+  }
+});
+
 test("benefit ids are unique across SPU and every event", () => {
   const ids = [...standardSpu, ...officialEvents.flatMap((e) => e.benefits)].map((b) => b.id);
   expect(new Set(ids).size).toBe(ids.length);

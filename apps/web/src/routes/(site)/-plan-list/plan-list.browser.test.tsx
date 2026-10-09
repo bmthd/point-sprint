@@ -122,11 +122,14 @@ test("creates a plan from an official event and navigates to it", async () => {
   const repository = createMemoryRepository();
   const { screen, router } = await renderPlanList(repository);
 
-  await expect.element(screen.getByText("開催中")).toBeVisible();
+  const current = screen.getByRole("listitem").filter({ hasText: "お買い物マラソン&ジャンル祭" });
+  const next = screen.getByRole("listitem").filter({ hasText: "お買い物マラソン第二弾" });
+  await expect.element(current.getByText("開催中")).toBeVisible();
   await expect
-    .element(screen.getByText("・買いまわり最大 +9倍・上限 7,000P", { exact: false }))
+    .element(current.getByText("・買いまわり最大 +9倍・上限 7,000P", { exact: false }))
     .toBeVisible();
-  await screen.getByRole("button", { name: "このイベントでプランを作る" }).click();
+  await expect.element(next.getByText("開催予定")).toBeVisible();
+  await current.getByRole("button", { name: "このイベントでプランを作る" }).click();
 
   await expect.poll(() => router.state.location.pathname).toBe("/plan");
   const [created, ...rest] = await repository.plans.list();
