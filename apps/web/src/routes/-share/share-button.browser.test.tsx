@@ -4,8 +4,9 @@ import { afterEach, expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { userEvent } from "vitest/browser";
 import { ShareButton } from "./share-button";
+import { siteUrl } from "../../site-url";
 
-const target = { text: "獲得予定 2,600P", url: "https://point-sprint.bmth.dev/" };
+const target = { text: "獲得予定 2,600P", url: `${siteUrl}/` };
 
 /** Gives the page a Web Share API, or (with `undefined`) takes it away. */
 function stubShare(share: ((data: ShareData) => Promise<void>) | undefined) {
@@ -102,7 +103,7 @@ test("the copy button copies the text and the link, and says so on the screen", 
   await screen.getByRole("button", { name: "文面とリンクをコピー" }).click();
   document.removeEventListener("copy", onCopy, true);
 
-  expect(copies).toEqual(["獲得予定 2,600P\nhttps://point-sprint.bmth.dev/"]);
+  expect(copies).toEqual([`獲得予定 2,600P\n${siteUrl}/`]);
   await expect
     .element(screen.getByRole("status"))
     .toHaveTextContent("文面とリンクをコピーしました");
