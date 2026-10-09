@@ -33,6 +33,7 @@ const tapCard = (tile: Locator) => {
 async function renderProfile(
   repository: Repository = createMemoryRepository({ shops }),
   from: Repository = repository,
+  initialEntries = ["/profile"],
 ) {
   await cleanup();
   const root = createRootRoute({ component: Outlet });
@@ -41,14 +42,19 @@ async function renderProfile(
     path: "/",
     component: () => <p>一覧</p>,
   });
+  const plan = createRoute({
+    getParentRoute: () => root,
+    path: "/plan",
+    component: () => <p>プラン</p>,
+  });
   const profile = createRoute({
     getParentRoute: () => root,
     path: "/profile",
     component: () => <Profile />,
   });
   const router = createRouter({
-    routeTree: root.addChildren([index, profile]),
-    history: createMemoryHistory({ initialEntries: ["/profile"] }),
+    routeTree: root.addChildren([index, plan, profile]),
+    history: createMemoryHistory({ initialEntries }),
   });
   const screen = await render(
     <Providers repository={from}>
@@ -64,6 +70,18 @@ const storedProfile = async (repository: Repository) => {
   if (!profile) throw new Error("no profile");
   return profile;
 };
+
+test("戻る goes back to the page the profile was opened from", async () => {
+  const screen = await renderProfile(undefined, undefined, ["/plan", "/profile"]);
+  await screen.getByRole("link", { name: "戻る" }).click();
+  await expect.element(screen.getByText("プラン")).toBeVisible();
+});
+
+test("戻る goes to the top when the profile was opened directly", async () => {
+  const screen = await renderProfile();
+  await screen.getByRole("link", { name: "戻る" }).click();
+  await expect.element(screen.getByText("一覧")).toBeVisible();
+});
 
 test("SPU defaults are saved to the profile", async () => {
   const repository = createMemoryRepository({ shops });
