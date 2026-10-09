@@ -7,9 +7,11 @@ import {
   missingPrerenderedPages,
   pagesRenderedOnRequest,
   prerenderedPages,
+  robotsTxt,
   sitemapEntry,
   sitemapXml,
 } from "./prerender-pages";
+import { siteUrl } from "./site-url";
 
 test("every route is prerendered or rendered on request, and a guide's route for each guide", () => {
   const slugs = guideSlugs();
@@ -38,13 +40,13 @@ const fullHead = `<head>
 <meta property="og:site_name" content="ポイントスプリント"/>
 <meta property="og:title" content="プロフィール | ポイントスプリント"/>
 <meta property="og:description" content="説明"/>
-<meta property="og:url" content="https://point-sprint.bmth.dev/profile"/>
-<meta property="og:image" content="https://point-sprint.bmth.dev/opengraph-image.png"/>
+<meta property="og:url" content="${siteUrl}/profile"/>
+<meta property="og:image" content="${siteUrl}/opengraph-image.png"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <link rel="icon" href="/favicon.ico" sizes="any"/>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 <link rel="manifest" href="/manifest.json"/>
-<link rel="canonical" href="https://point-sprint.bmth.dev/profile"/>
+<link rel="canonical" href="${siteUrl}/profile"/>
 </head>`;
 
 test("a page with every head tag lacks none", () => {
@@ -61,7 +63,7 @@ test("names the head tags a page lacks", () => {
 });
 
 test("a page belongs in the sitemap at its canonical URL unless it is noindex", () => {
-  expect(sitemapEntry(fullHead)).toEqual({ url: "https://point-sprint.bmth.dev/profile" });
+  expect(sitemapEntry(fullHead)).toEqual({ url: `${siteUrl}/profile` });
   const noindex = fullHead.replace("</head>", '<meta name="robots" content="noindex"/></head>');
   expect(sitemapEntry(noindex)).toBeUndefined();
 });
@@ -72,7 +74,7 @@ test("an article is in the sitemap with the day it was last changed", () => {
     '<meta property="article:modified_time" content="2026-10-10"/></head>',
   );
   expect(sitemapEntry(article)).toEqual({
-    url: "https://point-sprint.bmth.dev/profile",
+    url: `${siteUrl}/profile`,
     lastModified: "2026-10-10",
   });
 });
@@ -80,13 +82,13 @@ test("an article is in the sitemap with the day it was last changed", () => {
 test("writes a sitemap of the entries", () => {
   expect(
     sitemapXml([
-      { url: "https://point-sprint.bmth.dev/" },
-      { url: "https://point-sprint.bmth.dev/guides/a&b", lastModified: "2026-10-10" },
+      { url: `${siteUrl}/` },
+      { url: `${siteUrl}/guides/a&b`, lastModified: "2026-10-10" },
     ]),
   ).toBe(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://point-sprint.bmth.dev/</loc></url>
-  <url><loc>https://point-sprint.bmth.dev/guides/a&amp;b</loc><lastmod>2026-10-10</lastmod></url>
+  <url><loc>${siteUrl}/</loc></url>
+  <url><loc>${siteUrl}/guides/a&amp;b</loc><lastmod>2026-10-10</lastmod></url>
 </urlset>
 `);
 });
@@ -95,4 +97,12 @@ test("counts the lists of items in a guide", () => {
   const list = '<aside aria-label="楽天市場の商品（広告）" data-guide-items="true" class="x">';
   expect(guideItemListCount(`<main>${list}</aside><p>本文</p>${list}</aside></main>`)).toBe(2);
   expect(guideItemListCount("<main><p>本文</p></main>")).toBe(0);
+});
+
+test("robots.txt lets every page be crawled and points to the sitemap", () => {
+  expect(robotsTxt).toBe(`User-agent: *
+Allow: /
+
+Sitemap: ${siteUrl}/sitemap.xml
+`);
 });

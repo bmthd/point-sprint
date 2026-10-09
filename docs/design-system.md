@@ -111,7 +111,8 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | プレビュー（この注文で何ポイント） | 強調の数値 `primary.fg` |
 | 「あと何店舗回る？」の現在の行 | 地 `primary.subtle`、枠 `primary.outline`。残額の棒は `Progress`（現在の行は `colorScheme="primary"`、ほかは `"gray"`） |
 | 警告 | `Alert.Root status="warning"`（既定の見た目） |
-| サイドバー（右カラム） | トップ、Markdown のページ、お問い合わせに置く（`PageWithSidebar`）。PC は本文の右に幅 320px、`lg` 以下は本文の下。各区画は `SidebarSection`（`Card.Root` の既定の panel と `h2` の見出し）。お知らせの日付は `fg.muted` の `xs` |
+| サイドバー（右カラム） | 読むページ（トップ、Markdown のページ、お問い合わせ、お知らせ）に置く（`PageWithSidebar`）。プランとプロフィールのような作業するページには置かない。PC は本文の右に幅 320px、`lg` 以下は本文の下。各区画は `SidebarSection`（`Card.Root` の既定の panel と `h2` の見出し） |
+| お知らせ | 本文は `/notices` に新しい順にすべて並べる（幅 640px）。サイドバーには最新3件の日付と題名だけを置き、題名は `/notices#<id>` へのリンクにする。`/notices` 自身のサイドバーには出さない。日付は `fg.muted` の `xs` |
 | リンク | `Link`（既定の `colorScheme="link"`、`variant="plain"`）。アプリ内の移動は `RouterLink`（`Link` を TanStack Router の `createLink` で包んだもの）。行がまるごとリンクのときは `colorScheme="mono"` |
 | オン・オフの切り替え（39ショップ） | `Switch colorScheme="primary"`（既定の `variant="thick"`）。ラベルを前に置くときは `reverse` |
 | フォーカスリング | Yamada UI の既定（2px） |
