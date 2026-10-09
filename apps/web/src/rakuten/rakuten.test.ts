@@ -2,6 +2,7 @@ import { expect, test, vi } from "vitest";
 import { readRakutenConfig } from "./config";
 import { type ItemLookup, throttledLookup } from "./item-lookup";
 import { type ItemPage, type LookupResult, lookupItem, searchItems } from "./item-search";
+import { siteUrl } from "../site-url";
 
 const page: ItemPage = { shopCode: "shop-a", itemManageNumber: "item-1" };
 
@@ -90,14 +91,14 @@ test("sends the settings and the parameters, and the origin only when asked", as
     {
       fetch: fetcher,
       endpoint: "http://localhost:5173/rakuten-api/ichibams/api/IchibaItem/Search/20260701",
-      origin: "https://point-sprint.bmth.dev",
+      origin: siteUrl,
     },
   );
   const relayed = sentRequest(fetcher, 1);
   expect(new URL(relayed.url).pathname).toBe(
     "/rakuten-api/ichibams/api/IchibaItem/Search/20260701",
   );
-  expect(relayed.headers.get("Origin")).toBe("https://point-sprint.bmth.dev");
+  expect(relayed.headers.get("Origin")).toBe(siteUrl);
 });
 
 test("a 429 is not retried: the caller spaces the calls out", async () => {
