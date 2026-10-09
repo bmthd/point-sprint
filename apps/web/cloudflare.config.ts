@@ -14,7 +14,8 @@ export default defineConfig({
       // be loaded by the dev server's Worker, so it is written out.
       INQUIRY_EMAIL: bindings.sendEmail({ allowedSenderAddresses: ["inquiry@bmth.dev"] }),
       // Secrets, read from the environment by `pnpm dev` and `vite preview` (`.env.development`
-      // through dotenvx). A build does not carry them: the deployed Worker gets them in plan 4.
+      // through dotenvx). A build does not carry them: deploy.yml uploads them with each version,
+      // so a secret added here must be added to its list too.
       TURNSTILE_SECRET_KEY: bindings.secret(),
       INQUIRY_TO_ADDRESS: bindings.secret(),
     },

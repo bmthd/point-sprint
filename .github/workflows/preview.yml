@@ -27,6 +27,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # cf builds the preview itself, so this only runs the prerender check.
       - run: pnpm build
+      # The Worker's secrets are not given, so cf warns they are missing and the inquiry stops at
+      # `config`. This job runs the PR's code, so it gets no key to .env.production.
       - name: Deploy preview
         id: preview
         working-directory: apps/web
