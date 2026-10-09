@@ -36,4 +36,4 @@
 ## 計画への影響
 
 - 設計書6節の「Referer の制限」は「Origin の制限」と読み替える。開発中の楽天 API の呼び出しには中継が要る。
-- 配信（計画4）は `cf` CLI と `cloudflare.config.ts` を使う。TanStack Start を `cf` でビルド・デプロイできるかは、計画4で確かめる。
+- 配信は `cf` CLI と `cloudflare.config.ts` を使う。TanStack Start を `cf` でビルド・デプロイできることは、`.github/workflows/deploy.yml` で確かめた。
