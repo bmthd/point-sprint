@@ -1,4 +1,6 @@
 export type Notice = {
+  /** The anchor of the notice on `/notices`: lowercase letters, digits and hyphens. */
+  id: string;
   /** The day it was posted, as `YYYY-MM-DD` in Japan. */
   date: string;
   title: string;
@@ -7,11 +9,12 @@ export type Notice = {
 };
 
 /**
- * Every notice. Adding one here is all it takes: the sidebar puts them newest first, whatever the
- * order here.
+ * Every notice. Adding one here is all it takes: `/notices` and the sidebar put them newest first,
+ * whatever the order here.
  */
 export const notices: readonly Notice[] = [
   {
+    id: "rebuilt",
     date: "2026-10-08",
     title: "ポイントスプリントを作り直しました",
     body: `お買い物マラソンで買う予定の注文を並べると、獲得できるポイント、還元率、買いまわりの店舗数がその場で分かる計算ツールとして作り直しました。

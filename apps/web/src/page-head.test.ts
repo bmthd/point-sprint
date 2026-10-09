@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { defaultDescription, defaultTitle, pageHead } from "./page-head";
+import { siteUrl } from "./site-url";
 
 test("a page's title follows the site's format, and its OGP repeats it", () => {
   expect(pageHead({ path: "/profile", title: "プロフィール", description: "説明" })).toEqual({
@@ -8,9 +9,9 @@ test("a page's title follows the site's format, and its OGP repeats it", () => {
       { name: "description", content: "説明" },
       { property: "og:title", content: "プロフィール | ポイントスプリント" },
       { property: "og:description", content: "説明" },
-      { property: "og:url", content: "https://point-sprint.bmth.dev/profile" },
+      { property: "og:url", content: `${siteUrl}/profile` },
     ],
-    links: [{ rel: "canonical", href: "https://point-sprint.bmth.dev/profile" }],
+    links: [{ rel: "canonical", href: `${siteUrl}/profile` }],
   });
 });
 
@@ -18,7 +19,7 @@ test("the top page uses the site's own title and description", () => {
   const { meta } = pageHead({ path: "/" });
   expect(meta).toContainEqual({ title: defaultTitle });
   expect(meta).toContainEqual({ name: "description", content: defaultDescription });
-  expect(meta).toContainEqual({ property: "og:url", content: "https://point-sprint.bmth.dev/" });
+  expect(meta).toContainEqual({ property: "og:url", content: `${siteUrl}/` });
 });
 
 test("a noindex page tells search engines so", () => {

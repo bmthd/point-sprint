@@ -1,10 +1,12 @@
-import { ClientOnly } from "@tanstack/react-router";
+import { ClientOnly, useCanGoBack, useRouter } from "@tanstack/react-router";
 import { toggleBenefits } from "@workspaces/domain";
 import { Alert, Box, Card, Heading, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { saveProfileAtom } from "../../../state/mutations";
 import { profileAtom, profileQueryAtom, storageHealthQueryAtom } from "../../../state/queries";
+import { BackIcon } from "../../../ui/icons";
+import { RouterLink } from "../../../ui/router-link";
 import { StorageHealthFailure, storageMessages } from "../-warnings";
 import { SpuTileGrid } from "../-plan-settings/spu-tiles";
 import { AccountSettings } from "./account-settings";
@@ -82,16 +84,50 @@ function ProfileContent() {
   );
 }
 
-/** The profile at `/profile`: SPU defaults for new plans, the shop registry and advanced settings. */
+/** Back to the page the profile was opened from, or to the top when it was opened directly. */
+function BackLink() {
+  const router = useRouter();
+  const canGoBack = useCanGoBack();
+  return (
+    <RouterLink
+      to="/"
+      aria-label="戻る"
+      onClick={(event) => {
+        if (!canGoBack) return;
+        event.preventDefault();
+        router.history.back();
+      }}
+      boxSize="11"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      rounded="xl"
+      color="fg"
+      _hover={{ bg: "bg.muted" }}
+    >
+      <BackIcon />
+    </RouterLink>
+  );
+}
+
+/**
+ * The profile at `/profile`: SPU defaults for new plans, the shop registry and advanced settings.
+ * Its title bar is the plan settings page's: a page that goes back where it was opened from.
+ */
 export function Profile() {
   return (
-    <Box as="main" maxW="640px" mx="auto" px="4" pt="4" pb="16">
-      <Heading as="h1" fontSize="lg" mb="4">
-        プロフィール
-      </Heading>
-      <ClientOnly>
-        <ProfileContent />
-      </ClientOnly>
-    </Box>
+    <>
+      <Box maxW="640px" mx="auto" h="14" display="flex" alignItems="center" gap="1" px="2">
+        <BackLink />
+        <Heading as="h1" fontSize="lg">
+          プロフィール
+        </Heading>
+      </Box>
+      <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="16">
+        <ClientOnly>
+          <ProfileContent />
+        </ClientOnly>
+      </Box>
+    </>
   );
 }
