@@ -5,6 +5,7 @@ import { defineConfig, loadEnv } from "vite";
 import { ogFonts } from "./og-fonts-plugin.ts";
 import { parseGoogleTagsEnv } from "./src/google-tags/env.ts";
 import { prerenderedPages, robotsTxt } from "./src/prerender-pages.ts";
+import { tokyoToday } from "./src/ui/dates.ts";
 import {
   ALLOWED_ORIGIN,
   DEV_PROXY_PATH,
@@ -47,6 +48,8 @@ export default defineConfig(({ command, mode, isPreview }) => {
       },
     ],
     define: {
+      // The HTML rendered ahead of time lists the events of this day, as the page does once running.
+      "import.meta.env.BUILD_DATE": JSON.stringify(tokyoToday(new Date())),
       "import.meta.env.RAKUTEN_CONFIG": JSON.stringify(rakutenConfig ?? null),
       // The E2E build sends the guides' item searches nowhere, so that no test calls the API.
       "import.meta.env.GUIDE_ITEMS_ENDPOINT": JSON.stringify(

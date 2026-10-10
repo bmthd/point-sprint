@@ -50,7 +50,7 @@ function EventCard({ event, status, disabled, onCreate }: EventCardProps) {
 }
 
 type EventSectionProps = {
-  /** Today in Japan as `YYYY-MM-DD`, or `undefined` while rendering ahead of time. */
+  /** Today in Japan as `YYYY-MM-DD`, the day of the build in the HTML rendered ahead of time. */
   today: string | undefined;
   disabled: boolean;
   onCreate: (event: OfficialEvent) => void;
