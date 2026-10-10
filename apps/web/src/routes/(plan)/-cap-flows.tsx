@@ -3,13 +3,12 @@
 "use no memo";
 
 import { setInput } from "@formisch/react";
-import { type Plan, calculateAll, capFlows, capLines } from "@workspaces/domain";
+import { type Plan, capFlows } from "@workspaces/domain";
 import { Button, List, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useDeferredValue, useMemo } from "react";
 import { withEffectiveAccount } from "../../state/accounts";
 import { accountSettingsAtom } from "../../state/derived";
-import { addOrder } from "../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../state/queries";
 import { scopeText } from "./-cap-lines";
 import { draftOfInput } from "./-order-editor/order-form";
@@ -19,8 +18,8 @@ import { yen } from "./-order-shared";
 const num = (value: number) => value.toLocaleString("ja-JP");
 
 /**
- * Under a new order's fields: how many of its points each cap still takes and how many are over,
- * with a button that types the price filling the cap. Nothing while the order is not valid, is
+ * Under a new order's fields: how many of its points the order receives from each cap and how
+ * many are over, with a button that types the price filling the cap. Nothing while the order is not valid, is
  * held, or goes into no cap.
  */
 export function CapFlows({ plan, form }: { plan: Plan; form: OrderForm }) {
@@ -34,22 +33,16 @@ export function CapFlows({ plan, form }: { plan: Plan; form: OrderForm }) {
     () => draftOfInput(JSON.parse(deferred), shops, undefined),
     [deferred, shops],
   );
-  // The caps are read from a calculation with the order added: its shop can raise the
-  // shop-around rate, for the order and for the orders already in the plan.
   const flows = useMemo(() => {
     if (!draft || draft.order.onHold) return [];
-    const withShop = draft.shop
-      ? [...shops.filter((shop) => shop.id !== draft.shop?.id), draft.shop]
-      : shops;
-    const withOrder = plans.map((other) =>
-      withEffectiveAccount(other.id === plan.id ? addOrder(other, draft.order) : other, settings),
-    );
-    const after = calculateAll(withOrder, withShop).get(plan.id);
-    const planAfter = withOrder.find((other) => other.id === plan.id);
-    if (!after || !planAfter) return [];
-    const lines = capLines(planAfter, after, draft.order.date);
-    const shop = withShop.find((other) => other.id === draft.order.shopId);
-    return capFlows({ lines, order: draft.order, shop });
+    return capFlows({
+      plans: plans.map((other) => withEffectiveAccount(other, settings)),
+      shops: draft.shop
+        ? [...shops.filter((shop) => shop.id !== draft.shop?.id), draft.shop]
+        : shops,
+      planId: plan.id,
+      order: draft.order,
+    });
   }, [draft, plans, shops, settings, plan.id]);
   if (flows.length === 0) return null;
   return (

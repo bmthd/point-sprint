@@ -1,21 +1,26 @@
 import { describe, expect, test } from "vitest";
 import type { Benefit } from "../model/benefit";
 import type { LineItem, Order } from "../model/order";
+import type { Plan } from "../model/plan";
 import type { Shop } from "../model/shop";
 import { capFlows } from "./cap-flows";
-import type { CapLine } from "./cap-lines";
 
-const SHOP = "a0000000-0000-4000-8000-000000000001";
+const SHOP_A = "a0000000-0000-4000-8000-000000000001";
+const SHOP_B = "b0000000-0000-4000-8000-000000000002";
+const PLAN = "f0000000-0000-4000-8000-000000000001";
+const OTHER = "f0000000-0000-4000-8000-000000000002";
 
-const shop: Shop = {
-  id: SHOP,
+const shop = (id: string, over: Partial<Shop> = {}): Shop => ({
+  id,
   channel: "rakuten-ichiba",
   name: "shop",
   tags: [],
   updatedAt: "2026-10-04T00:00:00Z",
-};
+  ...over,
+});
+const shops = [shop(SHOP_A), shop(SHOP_B)];
 
-/** +1倍, at most 100P a month. */
+/** +1倍, at most 100P a month, shared between the plans. */
 const card: Benefit = {
   id: "5b000000-0000-4000-8000-000000000001",
   kind: "rate-bonus",
@@ -25,36 +30,29 @@ const card: Benefit = {
   conditions: {},
   amountBasis: "tax-excluded",
   capScope: "month",
+  sharedKey: "card",
   params: { rate: 1, roundingUnit: "item", cap: 100 },
 };
 
-const marathon: Benefit = {
+/** +1倍 from 1 shop, +2倍 from 2, at most 300P in the plan. */
+const shopAround: Benefit = {
   id: "5a000000-0000-4000-8000-000000000002",
   kind: "shop-around",
   category: "campaign",
-  label: "お買い物マラソン",
+  label: "買いまわり",
   enabled: true,
   conditions: {},
   amountBasis: "tax-excluded",
   capScope: "plan",
-  params: { tiers: [{ minShops: 1, rate: 1 }], roundingUnit: "item", cap: 100 },
+  params: {
+    tiers: [
+      { minShops: 1, rate: 1 },
+      { minShops: 2, rate: 2 },
+    ],
+    roundingUnit: "item",
+    cap: 300,
+  },
 };
-
-/** October's card cap: other plans used 30P, and the order adds 100P (`raw` includes it). */
-const line = (over: Partial<CapLine> = {}): CapLine => ({
-  benefit: card,
-  key: "month:default:card:2026-10",
-  scope: "month",
-  period: "2026-10",
-  cap: 100,
-  usedHere: 0,
-  usedElsewhere: 30,
-  sharedWith: [],
-  raw: 130,
-  remaining: 0,
-  rate: 1,
-  ...over,
-});
 
 const item = (id: string, unitPrice: number): LineItem => ({
   id,
@@ -65,61 +63,85 @@ const item = (id: string, unitPrice: number): LineItem => ({
   discount: 0,
 });
 
-const order = (date: string, lineItems: LineItem[]): Order => ({
-  id: "01000000-0000-4000-8000-000000000001",
-  shopId: SHOP,
-  date,
-  lineItems,
-  onHold: false,
-  tags: [],
+let serial = 0;
+/** An order of one ¥`price` item at 10% (¥11,000 earns 100P at +1倍). */
+const order = (date: string, price: number, shopId = SHOP_A, items?: LineItem[]): Order => {
+  serial += 1;
+  const n = String(serial).padStart(2, "0");
+  return {
+    id: `0${n}00000-0000-4000-8000-000000000000`,
+    shopId,
+    date,
+    lineItems: items ?? [item(`1${n}00000-0000-4000-8000-000000000000`, price)],
+    onHold: false,
+    tags: [],
+  };
+};
+
+const plan = (id: string, orders: Order[], benefits: Benefit[] = [card]): Plan => ({
+  id,
+  name: id,
+  period: { start: "2026-10-04", end: "2026-10-09" },
+  benefits,
+  orders,
+  updatedAt: "2026-10-04T00:00:00Z",
 });
 
-const ITEM_1 = "10000000-0000-4000-8000-000000000001";
-const ITEM_2 = "20000000-0000-4000-8000-000000000002";
+const flowsOf = (plans: Plan[], draft: Order, withShops = shops) =>
+  capFlows({ plans, shops: withShops, planId: PLAN, order: draft });
 
 describe("capFlows", () => {
   test("points into the cap and over it, and the price that fills it", () => {
-    // ¥11,000 at 10% → ¥10,000 before tax → 100P: 70P fit, 30P are over.
-    const flows = capFlows({
-      lines: [line()],
-      order: order("2026-10-05", [item(ITEM_1, 11000)]),
-      shop,
-    });
-    expect(flows).toEqual([
+    // Another plan used 30P (¥3,300). ¥11,000 earns 100P: 70P fit, 30P are over.
+    const plans = [plan(OTHER, [order("2026-10-05", 3300)]), plan(PLAN, [])];
+    expect(flowsOf(plans, order("2026-10-06", 11000))).toEqual([
       expect.objectContaining({ points: 100, into: 70, over: 30, fillPrice: 7699 }),
     ]);
   });
 
-  test("a full cap takes nothing and has no fill price", () => {
-    const flows = capFlows({
-      lines: [line({ raw: 200 })],
-      order: order("2026-10-05", [item(ITEM_1, 11000)]),
-      shop,
-    });
-    expect(flows).toEqual([
-      expect.objectContaining({ points: 100, into: 0, over: 100, fillPrice: null }),
+  test("an order of the same day as another shares the cap with it", () => {
+    // Both earn 100P on 10/5 and split the 100P cap.
+    const plans = [plan(PLAN, [order("2026-10-05", 11000)])];
+    expect(flowsOf(plans, order("2026-10-05", 11000, SHOP_B))).toEqual([
+      expect.objectContaining({ points: 100, into: 50, over: 50, fillPrice: null }),
+    ]);
+  });
+
+  test("an order dated before the others gets the cap first", () => {
+    const plans = [plan(PLAN, [order("2026-10-06", 11000)])];
+    expect(flowsOf(plans, order("2026-10-05", 11000, SHOP_B))).toEqual([
+      expect.objectContaining({ points: 100, into: 100, over: 0 }),
     ]);
   });
 
   test("a line of another month, or whose conditions the order misses, takes nothing", () => {
-    const october = order("2026-10-05", [item(ITEM_1, 11000)]);
-    expect(capFlows({ lines: [line({ period: "2026-11" })], order: october, shop })).toEqual([]);
-    const only39 = line({ benefit: { ...card, conditions: { shopTags: ["39shop"] } } });
-    expect(capFlows({ lines: [only39], order: october, shop })).toEqual([]);
+    const plans = [plan(PLAN, [])];
+    expect(flowsOf(plans, order("2026-11-05", 11000))).toEqual([]);
+    const only39 = [plan(PLAN, [], [{ ...card, conditions: { shopTags: ["39shop"] } }])];
+    expect(flowsOf(only39, order("2026-10-05", 11000))).toEqual([]);
   });
 
   test("a shop-around cap takes nothing from a channel that does not receive it", () => {
-    const shopAround = line({ benefit: marathon, scope: "plan", period: null });
-    const october = order("2026-10-05", [item(ITEM_1, 11000)]);
-    expect(capFlows({ lines: [shopAround], order: october, shop })).toHaveLength(1);
-    expect(
-      capFlows({ lines: [shopAround], order: october, shop: { ...shop, channel: "rakuma" } }),
-    ).toEqual([]);
+    const plans = [plan(PLAN, [], [shopAround])];
+    const rakuma = [shop(SHOP_A, { channel: "rakuma" })];
+    expect(flowsOf(plans, order("2026-10-05", 11000))).toHaveLength(1);
+    expect(flowsOf(plans, order("2026-10-05", 11000), rakuma)).toEqual([]);
+  });
+
+  test("an order from a new shop is priced at the rate that shop gives", () => {
+    // With a second shop the first order earns 200P at +2倍, which leaves 100P of 300P.
+    const plans = [plan(PLAN, [order("2026-10-05", 11000)], [shopAround])];
+    expect(flowsOf(plans, order("2026-10-06", 11000, SHOP_B))).toEqual([
+      expect.objectContaining({ points: 200, into: 100, over: 100, fillPrice: 5499 }),
+    ]);
   });
 
   test("an order of several items has no fill price", () => {
-    const two = order("2026-10-05", [item(ITEM_1, 1100), item(ITEM_2, 1100)]);
-    expect(capFlows({ lines: [line({ raw: 50, remaining: 50 })], order: two, shop })).toEqual([
+    const two = order("2026-10-05", 0, SHOP_A, [
+      item("x0000000-0000-4000-8000-000000000001", 1100),
+      item("x0000000-0000-4000-8000-000000000002", 1100),
+    ]);
+    expect(flowsOf([plan(PLAN, [])], two)).toEqual([
       expect.objectContaining({ points: 20, into: 20, fillPrice: null }),
     ]);
   });
