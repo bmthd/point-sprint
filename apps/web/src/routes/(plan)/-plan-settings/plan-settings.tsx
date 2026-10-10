@@ -80,7 +80,7 @@ export function SettingsPanelButton({
         open={open}
         onClose={onClose}
         placement="inline-end"
-        size="lg"
+        size="2xl"
         withCloseButton={false}
         restoreFocus
       >
