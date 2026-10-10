@@ -49,9 +49,16 @@ jobs:
           runtime: node@26
           cache: true
       - run: pnpm install --frozen-lockfile
+      - name: Restore Playwright Chromium
+        id: playwright
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
       # Only the web-browser project needs Chromium, so the other projects run while it installs.
       - parallel:
           - name: Install Chromium
+            if: steps.playwright.outputs.cache-hit != 'true'
             run: pnpm --filter web exec playwright install --with-deps chromium
           - name: Run tests
             run: pnpm test --project '!web-browser'
@@ -69,8 +76,15 @@ jobs:
           runtime: node@26
           cache: true
       - run: pnpm install --frozen-lockfile
+      - name: Restore Playwright Chromium
+        id: playwright
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
       - parallel:
           - name: Install Chromium
+            if: steps.playwright.outputs.cache-hit != 'true'
             run: pnpm --filter web exec playwright install --with-deps chromium
           - name: Build
             run: pnpm build:e2e
