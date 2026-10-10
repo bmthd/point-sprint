@@ -1,5 +1,6 @@
 import type { ShopAroundOutlook, ShopAroundOutlookRow } from "@workspaces/domain";
 import {
+  Box,
   Flex,
   Heading,
   NativeAccordion,
@@ -10,6 +11,7 @@ import {
   type ThProps,
   VisuallyHidden,
 } from "@workspaces/ui";
+import { useState } from "react";
 
 /** The row of the current shop count; below the first tier that is the first row. */
 export function currentRow(outlook: ShopAroundOutlook): ShopAroundOutlookRow | undefined {
@@ -37,7 +39,7 @@ const Td = (props: TdProps) => (
 
 /**
  * 「あと何店舗回る？」: rate and remaining amount until the cap for each shop count from now up to
- * the top tier. `compact` (the phone's summary card) folds it into an accordion.
+ * the top tier. `compact` (the phone's summary card) shows only the current row until expanded.
  */
 export function ShopLadder({
   outlook,
@@ -46,9 +48,15 @@ export function ShopLadder({
   outlook: ShopAroundOutlook;
   compact?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
   const current = currentRow(outlook);
   const longest = Math.max(1, ...outlook.rows.map((row) => row.remainingTaxExcluded ?? 0));
-  const table = (
+  // Wide enough for the longest label of every row, so opening the compact table does not move the columns.
+  const digits = (pick: (row: ShopAroundOutlookRow) => number) =>
+    Math.max(...outlook.rows.map((row) => String(pick(row)).length));
+  const shopsWidth = `calc(${digits((row) => row.shops)}ch + 2em)`;
+  const rateWidth = `calc(${digits((row) => row.rate) + 1}ch + 1em)`;
+  const table = (rows: ShopAroundOutlookRow[]) => (
     <NativeTable.Root
       fontSize="sm"
       fontVariantNumeric="tabular-nums"
@@ -65,7 +73,7 @@ export function ShopLadder({
         </NativeTable.Tr>
       </NativeTable.Thead>
       <NativeTable.Tbody>
-        {outlook.rows.map((row) => {
+        {rows.map((row) => {
           const isCurrent = row === current;
           const remaining = row.remainingTaxExcluded;
           return (
@@ -77,8 +85,12 @@ export function ShopLadder({
               outlineColor="primary.outline"
               fontWeight={isCurrent ? "bold" : undefined}
             >
-              <Td>{row.shops}店舗</Td>
-              <Td>+{row.rate}倍</Td>
+              <Td>
+                <Box minW={shopsWidth}>{row.shops}店舗</Box>
+              </Td>
+              <Td>
+                <Box minW={rateWidth}>+{row.rate}倍</Box>
+              </Td>
               <Td>
                 <Progress
                   value={((remaining ?? 0) / longest) * 100}
@@ -97,20 +109,26 @@ export function ShopLadder({
   return (
     <Flex direction="column" gap="2">
       {compact ? (
-        <NativeAccordion.Root animate={false}>
-          <NativeAccordion.Item>
-            <NativeAccordion.Button fontSize="sm" fontWeight="bold">
-              あと何店舗回る？
-            </NativeAccordion.Button>
-            <NativeAccordion.Panel>{table}</NativeAccordion.Panel>
-          </NativeAccordion.Item>
-        </NativeAccordion.Root>
+        <>
+          <NativeAccordion.Root animate={false}>
+            <NativeAccordion.Item
+              borderWidth="0"
+              onToggle={(event) => setOpen(event.currentTarget.open)}
+            >
+              <NativeAccordion.Button fontSize="sm" fontWeight="bold">
+                あと何店舗回る？
+              </NativeAccordion.Button>
+              <NativeAccordion.Panel px="0">{table(outlook.rows)}</NativeAccordion.Panel>
+            </NativeAccordion.Item>
+          </NativeAccordion.Root>
+          {open ? null : table(outlook.rows.filter((row) => row === current))}
+        </>
       ) : (
         <>
           <Heading as="h3" fontSize="sm">
             あと何店舗回る？
           </Heading>
-          {table}
+          {table(outlook.rows)}
         </>
       )}
       <Text fontSize="xs" color="fg.muted">

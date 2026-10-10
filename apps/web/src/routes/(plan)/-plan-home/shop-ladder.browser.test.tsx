@@ -56,6 +56,7 @@ test("shows only the current row until expanded when compact", async () => {
   const accordion = toggle.element().closest("details");
   expect(accordion).not.toBeNull();
   expect(accordion?.open).toBe(false);
+  expect(rowTexts(screen.getByRole("table").element())).toEqual(["6店舗+5倍約13.0万円"]);
 
   await toggle.click();
   expect(accordion?.open).toBe(true);
