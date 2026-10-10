@@ -127,7 +127,9 @@ function Tile({
         h="auto"
         minH="8"
         py="1"
+        fontSize={{ base: "2xs", sm: "xs" }}
         whiteSpace="normal"
+        wordBreak="keep-all"
         lineHeight="moderate"
       >
         {name}
@@ -155,6 +157,7 @@ function SpuLink(props: LinkProps) {
       rel="noreferrer"
       alignSelf="flex-start"
       gap="1.5"
+      whiteSpace="nowrap"
       {...props}
     >
       楽天で自分のSPUを確認する
@@ -320,7 +323,7 @@ export function SpuCard({
             </Text>
           </Flex>
           <Flex justify="space-between" gap="2" fontSize="xs" color="fg.muted">
-            <Text>
+            <Text whiteSpace="nowrap">
               通常 {num(normal)}倍 ＋ SPU{" "}
               <Text as="b" color="fg">
                 +{num(spu)}倍
