@@ -13,8 +13,8 @@ import {
 } from "@workspaces/ui";
 import { useId, useState } from "react";
 import { ShareIcon } from "../../ui/icons";
-import facebookLogo from "./facebook-logo.png";
-import lineLogo from "./line-logo.png";
+import facebookLogo from "./facebook-logo.svg";
+import lineLogo from "./line-logo.svg";
 import { type ShareTarget, shareLinks, shareMessage } from "./share-target";
 
 /** Whether the device's own share sheet can post `target`. */
@@ -66,7 +66,7 @@ export function ShareButton({
   );
 }
 
-/** The X logo from X's brand toolkit, in the color of the text on the circle under it. */
+/** The X logo from X's brand toolkit, in the color of the text on the square under it. */
 function XLogo() {
   return (
     <svg width="18" height="18" viewBox="0 0 1200 1227" aria-hidden="true">
@@ -78,15 +78,19 @@ function XLogo() {
   );
 }
 
-/** Each service's own icon, as its brand resources give it, 40px across. */
+/**
+ * Each service's logo from its brand resources on a 40px square of its color, all with the same
+ * corners. The Facebook and LINE files are their logos' paths with the circle or the rounded square
+ * under them made the full square.
+ */
 const serviceIcons = {
   X: (
-    <Center boxSize="10" rounded="full" bg="fg" color="bg">
+    <Center boxSize="10" rounded="sm" bg="fg" color="bg">
       <XLogo />
     </Center>
   ),
-  Facebook: <Image src={facebookLogo} alt="" boxSize="10" />,
-  LINE: <Image src={lineLogo} alt="" boxSize="10" rounded="lg" />,
+  Facebook: <Image src={facebookLogo} alt="" boxSize="10" rounded="sm" />,
+  LINE: <Image src={lineLogo} alt="" boxSize="10" rounded="sm" />,
 };
 
 /**
@@ -108,7 +112,7 @@ export function ShareLinks({ target }: { target: ShareTarget }) {
             rel="noopener noreferrer"
             variant="ghost"
             boxSize="12"
-            rounded="full"
+            rounded="md"
             aria-label={link.label}
             icon={serviceIcons[link.service]}
           />
@@ -116,11 +120,11 @@ export function ShareLinks({ target }: { target: ShareTarget }) {
         <IconButton
           variant="ghost"
           boxSize="12"
-          rounded="full"
+          rounded="md"
           aria-label="文面とリンクをコピー"
           onClick={() => onCopy(shareMessage(target))}
           icon={
-            <Center boxSize="10" rounded="full" bg="bg.muted" color="fg">
+            <Center boxSize="10" rounded="sm" bg="bg.muted" color="fg">
               <LinkIcon fontSize="xl" />
             </Center>
           }
