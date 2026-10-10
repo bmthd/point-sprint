@@ -242,10 +242,12 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
 
 function ShopFields({
   form,
+  plan,
   urlId,
   autofill,
 }: {
   form: OrderForm;
+  plan: Plan;
   urlId: string;
   autofill: ItemAutofill;
 }) {
@@ -330,7 +332,7 @@ function ShopFields({
         <FormField of={form} path={["date"]}>
           {(field) => (
             <Field.Root label="注文日" {...errorsOf(field)}>
-              <FormDatePicker field={field} />
+              <FormDatePicker field={field} period={plan.period} />
             </Field.Root>
           )}
         </FormField>
@@ -554,7 +556,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
           }
         >
           <Flex direction="column" gap="3.5">
-            <ShopFields form={form} urlId={urlId} autofill={autofill} />
+            <ShopFields form={form} plan={plan} urlId={urlId} autofill={autofill} />
             <MainItemFields form={form} amountRef={amountRef} />
             <Campaigns form={form} plan={plan} />
             <Preview form={form} plan={plan} original={original} />
