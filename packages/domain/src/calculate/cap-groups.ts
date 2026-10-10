@@ -18,8 +18,6 @@ export function capGroupKey(
       return `campaign:${shared}`;
     case "month":
       return `month:${shared}:${orderDate.slice(0, 7)}`;
-    case "day":
-      return `day:${shared}:${orderDate}`;
     case "occurrence": {
       const occurrence = occurrenceOf(benefit.conditions.dateRule);
       return occurrence === undefined

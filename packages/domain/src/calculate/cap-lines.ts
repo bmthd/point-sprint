@@ -11,8 +11,8 @@ export type CapLine = {
   key: string;
   scope: Benefit["capScope"];
   /**
-   * `YYYY-MM` for a month cap, `YYYY-MM-DD` for a day cap and for the first day of an occurrence
-   * cap, otherwise `null`.
+   * `YYYY-MM` for a month cap, `YYYY-MM-DD` for the first day of an occurrence cap, otherwise
+   * `null`.
    */
   period: string | null;
   cap: number;
@@ -49,19 +49,13 @@ function monthsOf(period: Plan["period"]): string[] {
 }
 
 /** The dates whose groups a benefit's lines show, and each line's `period`. */
-function datesOf(
-  benefit: Benefit,
-  plan: Plan,
-  day: string,
-): { date: string; period: string | null }[] {
+function datesOf(benefit: Benefit, plan: Plan): { date: string; period: string | null }[] {
   switch (benefit.capScope) {
     case "plan":
     case "campaign":
       return [{ date: plan.period.start, period: null }];
     case "month":
       return monthsOf(plan.period).map((month) => ({ date: `${month}-01`, period: month }));
-    case "day":
-      return [{ date: day, period: day }];
     case "occurrence":
       return [{ date: plan.period.start, period: firstDayOf(benefit) }];
   }
@@ -91,21 +85,17 @@ function rateOf(benefit: Benefit, shopCount: number): number {
 
 /**
  * The caps of the plan's enabled benefits that have one, with how much of each is used. Month caps
- * have a line for each month of the period; a day cap is `day`'s when it is in the period, and
- * otherwise the first day's. `plan` must have the account it was calculated with.
+ * have a line for each month of the period. `plan` must have the account it was calculated with.
  */
 export function capLines(
   plan: Plan,
   result: Pick<CalculationResult, "capUsage" | "shopCount">,
-  day: string | undefined,
 ): CapLine[] {
-  const { start, end } = plan.period;
-  const capDay = day !== undefined && day >= start && day <= end ? day : start;
   const owner = { id: plan.id, accountId: planAccountId(plan) };
   return plan.benefits
     .filter((benefit) => benefit.enabled)
     .flatMap((benefit) =>
-      datesOf(benefit, plan, capDay).flatMap(({ date, period }): CapLine[] => {
+      datesOf(benefit, plan).flatMap(({ date, period }): CapLine[] => {
         const key = capGroupKey(owner, benefit, date);
         const usage = result.capUsage[key];
         const caps = [usage?.cap, benefit.params.cap].filter((cap) => cap !== undefined);

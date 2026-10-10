@@ -121,6 +121,35 @@ describe("capFlows", () => {
     expect(flowsOf(only39, order("2026-10-05", 11000))).toEqual([]);
   });
 
+  test("an order goes into the occurrence of its day, on any day of the occurrence", () => {
+    const occurrence = (id: string, dateRule: NonNullable<Benefit["conditions"]["dateRule"]>) => ({
+      ...card,
+      id,
+      capScope: "occurrence" as const,
+      sharedKey: "sports-win",
+      conditions: { dateRule },
+    });
+    const plans = [
+      plan(
+        PLAN,
+        [],
+        [
+          occurrence("5c000000-0000-4000-8000-000000000001", {
+            type: "dates",
+            dates: ["2026-10-05"],
+          }),
+          occurrence("5c000000-0000-4000-8000-000000000002", {
+            type: "range",
+            start: "2026-10-06",
+            end: "2026-10-08",
+          }),
+        ],
+      ),
+    ];
+    const flows = flowsOf(plans, order("2026-10-07", 11000));
+    expect(flows.map((flow) => [flow.line.period, flow.points])).toEqual([["2026-10-06", 100]]);
+  });
+
   test("a shop-around cap takes nothing from a channel that does not receive it", () => {
     const plans = [plan(PLAN, [], [shopAround])];
     const rakuma = [shop(SHOP_A, { channel: "rakuma" })];

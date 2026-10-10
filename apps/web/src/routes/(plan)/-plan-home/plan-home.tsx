@@ -187,7 +187,7 @@ function Home({ plan }: { plan: Plan }) {
   const addOrder = useCallback(() => editOrder(NEW_ORDER), [editOrder]);
   const today = useToday(now);
   const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
-  const lines = useCapLines(plan, today);
+  const lines = useCapLines(plan);
   if (!result) return null;
   const outlook = result.shopAroundOutlook;
   const capList =

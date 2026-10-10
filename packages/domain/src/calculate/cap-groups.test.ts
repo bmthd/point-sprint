@@ -31,12 +31,6 @@ test("month scope uses sharedKey and order month", () => {
   ).toBe(`month:${ACCOUNT_ID}:spu-card:2026-10`);
 });
 
-test("day scope falls back to benefit id", () => {
-  expect(capGroupKey(PLAN, benefit({ capScope: "day" }), "2026-10-05")).toBe(
-    `day:${ACCOUNT_ID}:${BENEFIT_ID}:2026-10-05`,
-  );
-});
-
 test("occurrence scope uses sharedKey and the benefit's days, not the order date", () => {
   const sportsWin = (dates: string[]) =>
     benefit({
@@ -76,7 +70,7 @@ test("plan scope key does not depend on the account", () => {
   );
 });
 
-test.each(["campaign", "month", "day", "occurrence"] as const)(
+test.each(["campaign", "month", "occurrence"] as const)(
   "%s scope keys differ by account",
   (capScope) => {
     const other = { id: PLAN_ID, accountId: "acc00000-0000-4000-8000-000000000002" };
