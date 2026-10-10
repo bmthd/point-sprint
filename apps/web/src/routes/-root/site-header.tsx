@@ -69,6 +69,7 @@ export function SiteHeader() {
           minH="11"
           display="flex"
           alignItems="center"
+          whiteSpace="nowrap"
           _hover={{ textDecoration: "none" }}
         >
           ポイントスプリント
@@ -83,6 +84,7 @@ export function SiteHeader() {
             gap="1"
             px="2"
             color="fg"
+            whiteSpace="nowrap"
             _current={{ fontWeight: "bold" }}
           >
             <ProfileIcon />
