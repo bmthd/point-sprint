@@ -170,13 +170,13 @@ function ShopField({ form }: { form: OrderForm }) {
   );
 }
 
-function ItemFields({ form }: { form: OrderForm }) {
+function ItemFields({ form, plan }: { form: OrderForm; plan: Plan }) {
   return (
     <>
       <FormField of={form} path={["date"]}>
         {(field) => (
           <Field.Root label="注文日" {...errorsOf(field)} minW="0">
-            <FormDatePicker size="lg" field={field} />
+            <FormDatePicker size="lg" field={field} period={plan.period} />
           </Field.Root>
         )}
       </FormField>
@@ -303,7 +303,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
           <UrlField form={form} autofill={autofill} />
           <Box {...fieldGrid}>
             <ShopField form={form} />
-            <ItemFields form={form} />
+            <ItemFields form={form} plan={plan} />
           </Box>
           <Flex wrap="wrap" align="center" gap="2">
             <TagChips form={form} />

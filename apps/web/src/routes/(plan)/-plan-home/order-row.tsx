@@ -32,7 +32,7 @@ import {
   useState,
 } from "react";
 import * as v from "valibot";
-import { orderAtom } from "../../../state/derived";
+import { orderAtom, planAtom } from "../../../state/derived";
 import { changeShop, saveShopAtom } from "../../../state/mutations";
 import {
   copyOrderAtom,
@@ -143,6 +143,7 @@ function OrderEditor({
   order: Order;
   onEdit: (orderId: string) => void;
 }) {
+  const period = useAtomValue(planAtom(planId))?.period;
   const shops = useAtomValue(shopsAtom);
   const sortedShops = useSortedShops(shops);
   const saveShop = useAtomValue(saveShopAtom);
@@ -180,6 +181,7 @@ function OrderEditor({
         <Field label="注文日" error={dateError}>
           <FieldDatePicker
             size="lg"
+            period={period}
             defaultValue={parseIsoDate(order.date)}
             key={order.date}
             onChange={(date) => {
