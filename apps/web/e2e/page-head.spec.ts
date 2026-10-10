@@ -22,9 +22,7 @@ test("a plan's pages show the plan's name in the title", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "このイベントでプランを作る" }).first().click();
   await expect(page).toHaveURL(/\/plan\?id=/);
-  const name = (
-    await page.getByRole("button", { name: /、プランを切り替える$/ }).innerText()
-  ).trim();
+  const name = (await page.getByRole("heading", { level: 1 }).innerText()).trim();
   await expect(page).toHaveTitle(`${name} | ポイントスプリント`);
 
   await page.reload();
