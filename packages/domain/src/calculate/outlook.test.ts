@@ -46,6 +46,17 @@ describe("shopAroundOutlook", () => {
     expect(row?.remainingTaxIncludedApprox).toBeNull();
   });
 
+  test("points with the current basket at each shop count stop at the cap", () => {
+    const result = outlook(3, 7000, { receivingBase: 120000 });
+    expect(result.rows.map((row) => row.points)).toEqual([
+      2400, 3600, 4800, 6000, 7000, 7000, 7000, 7000,
+    ]);
+  });
+
+  test("points are not capped without a cap", () => {
+    expect(outlook(3, null, { receivingBase: 1000000 }).rows.at(-1)?.points).toBe(90000);
+  });
+
   test("next shop gain", () => {
     expect(outlook(4).nextShop).toEqual({ rateDelta: 1, pointsGain: 102 });
   });
@@ -69,6 +80,7 @@ describe("shopAroundOutlook", () => {
       rate: 0,
       remainingTaxExcluded: null,
       remainingTaxIncludedApprox: null,
+      points: 0,
     });
     // One more shop (1 shop) does not reach the first tier, so there is no gain to show.
     expect(result.nextShop).toBeNull();

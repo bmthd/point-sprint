@@ -61,8 +61,8 @@ const folding = {
 };
 
 /**
- * 「あと何店舗回る？」: rate and remaining amount until the cap for each shop count from now up to
- * the top tier. `compact` (the phone's summary card) shows only the current row, the first one, and
+ * 「あと何店舗回る？」: for each shop count from now up to the top tier, the rate, how full the cap
+ * gets with the current basket, and the amount still to buy to fill it. `compact` (the phone's summary card) shows only the current row, the first one, and
  * unfolds the others under it in the same table.
  */
 export function ShopLadder({
@@ -73,7 +73,9 @@ export function ShopLadder({
   compact?: boolean;
 }) {
   const current = currentRow(outlook);
-  const longest = Math.max(1, ...outlook.rows.map((row) => row.remainingTaxExcluded ?? 0));
+  const { cap } = outlook;
+  // Without a cap, the bars compare with the row that earns the most.
+  const scale = cap ?? Math.max(1, ...outlook.rows.map((row) => row.points));
 
   return (
     <Flex direction="column" gap="2" css={compact ? folding : undefined}>
@@ -86,15 +88,20 @@ export function ShopLadder({
             <Th>店舗数</Th>
             <Th>倍率</Th>
             <Th w="full">
-              <VisuallyHidden>残額のグラフ</VisuallyHidden>
+              {cap === null ? (
+                <VisuallyHidden>もらえるポイントのグラフ</VisuallyHidden>
+              ) : (
+                `上限 ${cap.toLocaleString("ja-JP")}P まで`
+              )}
             </Th>
-            <Th textAlign="end">上限までの残額</Th>
+            <Th textAlign="end">あと</Th>
           </NativeTable.Tr>
         </NativeTable.Thead>
         <NativeTable.Tbody>
           {outlook.rows.map((row, index) => {
             const isCurrent = row === current;
             const remaining = row.remainingTaxExcluded;
+            const full = cap !== null && row.points >= cap;
             const fold = compact && index > 0;
             return (
               <NativeTable.Tr
@@ -111,13 +118,13 @@ export function ShopLadder({
                 <Td fold={fold}>+{row.rate}倍</Td>
                 <Td fold={fold} verticalAlign="middle">
                   <Progress
-                    value={((remaining ?? 0) / longest) * 100}
-                    colorScheme={isCurrent ? "primary" : "gray"}
+                    value={(row.points / scale) * 100}
+                    colorScheme={full ? "success" : isCurrent ? "primary" : "gray"}
                     aria-hidden
                   />
                 </Td>
                 <Td fold={fold} textAlign="end">
-                  {remaining === null ? "—" : `約${manYen(remaining)}`}
+                  {full ? "上限" : remaining === null ? "—" : `約${manYen(remaining)}`}
                 </Td>
               </NativeTable.Tr>
             );

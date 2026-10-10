@@ -7,14 +7,14 @@ import { ShopLadder } from "./shop-ladder";
 
 const tiers = Array.from({ length: 9 }, (_, index) => ({ minShops: index + 2, rate: index + 1 }));
 
-const outlook = (shopCount: number) =>
+const outlook = (shopCount: number, receivingBase = 10200) =>
   shopAroundOutlook({
     benefitId: "b0000000-0000-4000-8000-000000000001",
     tiers,
     cap: 7000,
     amountBasis: "tax-excluded",
     shopCount,
-    receivingBase: 10200,
+    receivingBase,
   });
 
 const rowTexts = (table: Element) =>
@@ -42,6 +42,24 @@ test("highlights the current shop count row", async () => {
   ]);
   const current = table.element().querySelectorAll('tbody tr[aria-current="true"]');
   expect(Array.from(current, (row) => row.textContent)).toEqual(["4店舗+3倍約22.3万円"]);
+});
+
+test("rows that reach the cap say so instead of an amount", async () => {
+  await cleanup();
+  const screen = await render(
+    <UIProvider theme={theme} config={config}>
+      <ShopLadder outlook={outlook(3, 120000)} />
+    </UIProvider>,
+  );
+
+  // ¥120,000 at +6倍 and up earns 7,200P or more, past the 7,000P cap.
+  expect(rowTexts(screen.getByRole("table").element()).slice(3)).toEqual([
+    "6店舗+5倍約2.0万円",
+    "7店舗+6倍上限",
+    "8店舗+7倍上限",
+    "9店舗+8倍上限",
+    "10店舗+9倍上限",
+  ]);
 });
 
 /** The body rows a person can see. */
