@@ -118,10 +118,12 @@ export function ShopLadder({
               <NativeAccordion.Button fontSize="sm" fontWeight="bold">
                 あと何店舗回る？
               </NativeAccordion.Button>
-              <NativeAccordion.Panel px="0">{table(outlook.rows)}</NativeAccordion.Panel>
+              {/* The rows live in the table below; an empty panel must not add its open padding. */}
+              <NativeAccordion.Panel _groupOpen={{ pb: "0" }} />
             </NativeAccordion.Item>
           </NativeAccordion.Root>
-          {open ? null : table(outlook.rows.filter((row) => row === current))}
+          {/* Outside the panel, so the current row stays put and the other rows open around it. */}
+          {table(open ? outlook.rows : outlook.rows.filter((row) => row === current))}
         </>
       ) : (
         <>
