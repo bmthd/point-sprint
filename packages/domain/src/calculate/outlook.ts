@@ -11,6 +11,8 @@ export type ShopAroundOutlookRow = {
   remainingTaxExcluded: number | null;
   /** Tax-included estimate at 10%; equal to `remainingTaxExcluded` for a tax-included basis. */
   remainingTaxIncludedApprox: number | null;
+  /** Points the receiving base earns at this rate, up to the cap. */
+  points: number;
 };
 
 export type ShopAroundOutlook = {
@@ -69,6 +71,7 @@ export function shopAroundOutlook(input: {
   const topShops = Math.max(...tiers.map((tier) => tier.minShops));
   // Beyond the top tier the rate no longer changes, so the rows stop at the top tier.
   const firstShops = Math.min(Math.max(shopCount, 1), topShops);
+  const capped = (points: number) => (cap === null ? points : Math.min(cap, points));
 
   const rows: ShopAroundOutlookRow[] = [];
   for (let shops = firstShops; shops <= topShops; shops++) {
@@ -79,13 +82,13 @@ export function shopAroundOutlook(input: {
       rate,
       remainingTaxExcluded,
       remainingTaxIncludedApprox: taxIncludedApprox(remainingTaxExcluded, amountBasis),
+      points: capped(pointsAt(receivingBase, rate)),
     });
   }
 
   // 「あと1店舗で」: the rate at one more shop, not at the next tier.
   const nextRate = tierRate(tiers, shopCount + 1);
   const deltaBp = toBp(nextRate) - toBp(currentRate);
-  const capped = (points: number) => (cap === null ? points : Math.min(cap, points));
   const nextShop =
     deltaBp === 0
       ? null
