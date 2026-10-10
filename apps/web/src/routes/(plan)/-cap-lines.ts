@@ -7,19 +7,19 @@ import { accountSettingsAtom, planResultAtom } from "../../state/derived";
 /** The tax rates a cap's fill price can be shown at. */
 export const CAP_TAX_RATES: TaxRate[] = [0.1, 0.08, 0];
 
-/** The plan's caps, with the account it is calculated with; a day cap is `day`'s. */
-export function useCapLines(plan: Plan, day: string | undefined): CapLine[] {
+/** The plan's caps, with the account it is calculated with. */
+export function useCapLines(plan: Plan): CapLine[] {
   const result = useAtomValue(planResultAtom(plan.id));
   const settings = useAtomValue(accountSettingsAtom);
   return useMemo(
-    () => (result ? capLines(withEffectiveAccount(plan, settings), result, day) : []),
-    [plan, settings, result, day],
+    () => (result ? capLines(withEffectiveAccount(plan, settings), result) : []),
+    [plan, settings, result],
   );
 }
 
 const monthDay = (date: string) => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
 
-/** 「10月」「期間中」: which cap the line is. */
+/** 「10月」「期間中」「10/6」: which cap the line is. An occurrence is shown by its first day. */
 export function scopeText(line: CapLine, today: string | undefined): string {
   const period = line.period ?? "";
   switch (line.scope) {
@@ -29,7 +29,8 @@ export function scopeText(line: CapLine, today: string | undefined): string {
       return "期間中";
     case "month":
       return `${Number(period.slice(5, 7))}月`;
-    case "day":
+    case "occurrence":
+      if (line.period === null) return "1回の開催";
       return period === today ? "今日" : monthDay(period);
   }
 }

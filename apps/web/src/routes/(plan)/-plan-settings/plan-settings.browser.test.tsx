@@ -300,6 +300,20 @@ test("adds a sports-win day at once, and changes it in its row", async () => {
   await expect.element(toggle).not.toBeInTheDocument();
 });
 
+test("adds sports-win again for the next day it does not have", async () => {
+  onOctober6();
+  const screen = await renderSettings(makePlan([], []));
+  const add = screen.getByRole("button", { name: "勝ったら倍を追加" });
+  await add.click();
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
+  await add.click();
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(2);
+  expect((await storedPlan()).benefits.map((benefit) => benefit.conditions.dateRule)).toEqual([
+    { type: "dates", dates: ["2026-10-06"] },
+    { type: "dates", dates: ["2026-10-07"] },
+  ]);
+});
+
 test("adds 39shop for the plan's period once, and refuses a period it already has", async () => {
   const screen = await renderSettings(makePlan([], []));
   await screen.getByRole("button", { name: "39ショップを追加" }).click();

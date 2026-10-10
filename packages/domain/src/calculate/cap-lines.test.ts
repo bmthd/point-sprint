@@ -85,10 +85,10 @@ const plan = (
   ...over,
 });
 
-const linesOf = (plans: Plan[], target: Plan, day?: string) => {
+const linesOf = (plans: Plan[], target: Plan) => {
   const result = calculateAll(plans, shops).get(target.id);
   if (!result) throw new Error("no result");
-  return capLines(target, result, day);
+  return capLines(target, result);
 };
 
 const cardLines = (plans: Plan[], target: Plan) =>
@@ -153,19 +153,20 @@ describe("capLines", () => {
     ]);
   });
 
-  test("a day cap is today's in the period, else the first day's", () => {
-    const daily: Benefit = { ...card, capScope: "day" };
-    const first = plan(FIRST, "2026-10-04", "2026-10-09", [order("1", "2026-10-05", 3300)], {
-      benefits: [daily],
+  test("each occurrence cap has its own line, with its first day", () => {
+    const occurrence = (id: string, date: string): Benefit => ({
+      ...card,
+      id,
+      capScope: "occurrence",
+      sharedKey: "sports-win",
+      conditions: { dateRule: { type: "dates", dates: [date] } },
     });
-    expect(linesOf([first], first, "2026-10-05")).toEqual([
-      expect.objectContaining({ period: "2026-10-05", remaining: 70 }),
-    ]);
-    expect(linesOf([first], first, "2026-11-01")).toEqual([
-      expect.objectContaining({ period: "2026-10-04", remaining: 100 }),
-    ]);
-    expect(linesOf([first], first, undefined)).toEqual([
-      expect.objectContaining({ period: "2026-10-04" }),
+    const first = plan(FIRST, "2026-10-04", "2026-10-09", [order("1", "2026-10-05", 3300)], {
+      benefits: [occurrence(CARD, "2026-10-05"), occurrence(MARATHON, "2026-10-06")],
+    });
+    expect(linesOf([first], first)).toEqual([
+      expect.objectContaining({ scope: "occurrence", period: "2026-10-05", remaining: 70 }),
+      expect.objectContaining({ scope: "occurrence", period: "2026-10-06", remaining: 100 }),
     ]);
   });
 

@@ -21,7 +21,7 @@ function benefitEntry<K extends string, P extends { cap?: number }>(def: Benefit
     enabled: v.boolean(),
     conditions: v.optional(ConditionsSchema, {}),
     amountBasis: v.optional(v.picklist(["tax-excluded", "tax-included"]), "tax-excluded"),
-    capScope: v.optional(v.picklist(["plan", "campaign", "month", "day"]), "plan"),
+    capScope: v.optional(v.picklist(["plan", "campaign", "month", "occurrence"]), "plan"),
     sharedKey: v.optional(v.pipe(v.string(), v.minLength(1))),
     exclusiveGroup: v.optional(v.pipe(v.string(), v.minLength(1))),
     requires: v.optional(IdSchema),
