@@ -1,6 +1,6 @@
 import { Outlet, createFileRoute, useChildMatches } from "@tanstack/react-router";
 import { Box } from "@workspaces/ui";
-import { PageWithSidebar } from "../-sidebar/sidebar";
+import { PageWithSidebar } from "../-page-with-sidebar";
 
 /**
  * The frame of the pages written in Markdown. A route that puts `surface: "paper"` in its context

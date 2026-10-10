@@ -1,7 +1,12 @@
 import { Flex, Heading, Separator, Text, VStack } from "@workspaces/ui";
-import { PageWithSidebar } from "../-sidebar/sidebar";
-import { NoticeDate } from "./notice-date";
-import { type Notice, newestFirst, notices as allNotices, paragraphs } from "./notices";
+import { PageWithSidebar } from "../-page-with-sidebar";
+import { NoticeDate } from "../../-notices/notice-date";
+import {
+  type Notice,
+  newestFirst,
+  notices as allNotices,
+  paragraphs,
+} from "../../-notices/notices";
 
 function NoticeArticle({ notice }: { notice: Notice }) {
   return (
