@@ -1,11 +1,14 @@
 import type { ShopAroundOutlook, ShopAroundOutlookRow } from "@workspaces/domain";
 import {
   Box,
-  type BoxProps,
   Button,
+  Flex,
   Heading,
+  NativeTable,
   Progress,
   Text,
+  type TdProps,
+  type ThProps,
   VisuallyHidden,
 } from "@workspaces/ui";
 import { useId, useState } from "react";
@@ -19,10 +22,21 @@ export function currentRow(outlook: ShopAroundOutlook): ShopAroundOutlookRow | u
 /** Yen as 万円 to one decimal, e.g. 245,000 → 24.5万円. */
 export const manYen = (yen: number) => `${(yen / 10000).toFixed(1)}万円`;
 
-const Th = (props: BoxProps) => (
-  <Box as="th" fontWeight="normal" textAlign="start" px="2" pb="1" whiteSpace="nowrap" {...props} />
+const Th = (props: ThProps) => (
+  <NativeTable.Th
+    fontWeight="normal"
+    textAlign="start"
+    px="2"
+    pt="0"
+    pb="1"
+    whiteSpace="nowrap"
+    borderWidth="0"
+    {...props}
+  />
 );
-const Td = (props: BoxProps) => <Box as="td" px="2" py="1.5" {...props} />;
+const Td = (props: TdProps) => (
+  <NativeTable.Td px="2" py="1.5" whiteSpace="nowrap" borderWidth="0" {...props} />
+);
 
 /**
  * 「あと何店舗回る？」: rate and remaining amount until the cap for each shop count from now up to
@@ -40,9 +54,14 @@ export function ShopLadder({
   const current = currentRow(outlook);
   const rows = compact && !open ? outlook.rows.filter((row) => row === current) : outlook.rows;
   const longest = Math.max(1, ...outlook.rows.map((row) => row.remainingTaxExcluded ?? 0));
+  // Wide enough for the longest label of every row, so opening the compact table does not move the columns.
+  const digits = (pick: (row: ShopAroundOutlookRow) => number) =>
+    Math.max(...outlook.rows.map((row) => String(pick(row)).length));
+  const shopsWidth = `calc(${digits((row) => row.shops)}ch + 2em)`;
+  const rateWidth = `calc(${digits((row) => row.rate) + 1}ch + 1em)`;
 
   return (
-    <Box display="flex" flexDirection="column" gap="2">
+    <Flex direction="column" gap="2">
       {compact ? (
         <Button
           variant="ghost"
@@ -61,31 +80,28 @@ export function ShopLadder({
           あと何店舗回る？
         </Heading>
       )}
-      <Box
-        as="table"
+      <NativeTable.Root
         id={tableId}
-        w="full"
         fontSize="sm"
         fontVariantNumeric="tabular-nums"
         style={{ borderCollapse: "separate", borderSpacing: "0 2px" }}
       >
-        <Box as="thead" fontSize="xs" color="fg.muted">
-          <tr>
+        <NativeTable.Thead fontSize="xs" color="fg.muted">
+          <NativeTable.Tr>
             <Th>店舗数</Th>
             <Th>倍率</Th>
             <Th w="full">
               <VisuallyHidden>残額のグラフ</VisuallyHidden>
             </Th>
             <Th textAlign="end">上限までの残額</Th>
-          </tr>
-        </Box>
-        <tbody>
+          </NativeTable.Tr>
+        </NativeTable.Thead>
+        <NativeTable.Tbody>
           {rows.map((row) => {
             const isCurrent = row === current;
             const remaining = row.remainingTaxExcluded;
             return (
-              <Box
-                as="tr"
+              <NativeTable.Tr
                 key={row.shops}
                 aria-current={isCurrent ? "true" : undefined}
                 bg={isCurrent ? "primary.subtle" : undefined}
@@ -93,8 +109,12 @@ export function ShopLadder({
                 outlineColor="primary.outline"
                 fontWeight={isCurrent ? "bold" : undefined}
               >
-                <Td whiteSpace="nowrap">{row.shops}店舗</Td>
-                <Td whiteSpace="nowrap">+{row.rate}倍</Td>
+                <Td>
+                  <Box minW={shopsWidth}>{row.shops}店舗</Box>
+                </Td>
+                <Td>
+                  <Box minW={rateWidth}>+{row.rate}倍</Box>
+                </Td>
                 <Td>
                   <Progress
                     value={((remaining ?? 0) / longest) * 100}
@@ -102,17 +122,15 @@ export function ShopLadder({
                     aria-hidden
                   />
                 </Td>
-                <Td textAlign="end" whiteSpace="nowrap">
-                  {remaining === null ? "—" : `約${manYen(remaining)}`}
-                </Td>
-              </Box>
+                <Td textAlign="end">{remaining === null ? "—" : `約${manYen(remaining)}`}</Td>
+              </NativeTable.Tr>
             );
           })}
-        </tbody>
-      </Box>
+        </NativeTable.Tbody>
+      </NativeTable.Root>
       <Text fontSize="xs" color="fg.muted">
         残額は税抜・概算。いまの買い物を含めた金額から差し引いています。
       </Text>
-    </Box>
+    </Flex>
   );
 }
