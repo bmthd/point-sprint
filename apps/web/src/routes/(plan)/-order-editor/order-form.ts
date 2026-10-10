@@ -3,7 +3,9 @@ import {
   ChannelIdSchema,
   type Order,
   OrderSchema,
+  type Period,
   type Shop,
+  closestDateInPeriod,
   matchesConditions,
 } from "@workspaces/domain";
 import * as v from "valibot";
@@ -88,24 +90,28 @@ export const emptyItem = (): ItemInput => ({
   shopPointRate: "",
 });
 
-export const emptyInput = (): OrderFormInput => ({
+const emptyInputForDate = (date: string): OrderFormInput => ({
   url: "",
   shop: "",
   newShopName: "",
   channel: "rakuten-ichiba",
   shopCode: "",
-  date: tokyoToday(new Date()),
+  date,
   is39: false,
   repeat: false,
   onHold: false,
   items: [emptyItem()],
 });
 
+/** The editor's fields for a new order in this plan. */
+export const emptyInput = (period: Period): OrderFormInput =>
+  emptyInputForDate(closestDateInPeriod({ date: tokyoToday(new Date()), period }));
+
 /** The editor's fields for an order that is already saved. */
 export function inputOf(order: Order, shops: Shop[]): OrderFormInput {
   const shop = shops.find((other) => other.id === order.shopId);
   return {
-    ...emptyInput(),
+    ...emptyInputForDate(order.date),
     url: order.lineItems[0]?.url ?? "",
     shop: order.shopId,
     date: order.date,
