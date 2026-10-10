@@ -12,7 +12,10 @@ import { monthOf, msUntilTokyoMidnight, tokyoToday } from "../../../ui/dates";
 import { EventSection } from "./event-section";
 import { PlanSection } from "./plan-section";
 
-/** Today in Japan on the client, `undefined` in the HTML rendered ahead of time. */
+/**
+ * Today in Japan on the client. The HTML rendered ahead of time has the day of the build, which the
+ * page also starts from while it hydrates; `undefined` where nothing sets it, as in the tests.
+ */
 export function useToday(now: () => Date): string | undefined {
   // `subscribe` reads `now` through a ref so a new function on each render does not subscribe again.
   const nowRef = useLatestRef(now);
@@ -34,7 +37,7 @@ export function useToday(now: () => Date): string | undefined {
   return useSyncExternalStore(
     subscribe,
     () => tokyoToday(now()),
-    () => undefined,
+    () => import.meta.env.BUILD_DATE,
   );
 }
 
