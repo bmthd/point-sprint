@@ -101,6 +101,7 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
           colorScheme="primary"
           reverse
           justifyContent="space-between"
+          labelProps={{ whiteSpace: { base: "normal", sm: "nowrap" } }}
           disabled={!isSuccess}
           checked={enabled}
           onChange={(event) => {
