@@ -109,7 +109,7 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 順番バッジ | `Badge variant="solid" colorScheme="mono" fullRounded` |
 | 保留中の注文 | カードは点線の枠（`borderStyle="dashed"`）、ポイントは `fg.muted` で取り消し線、バッジは「保留」の `Badge variant="outline" colorScheme="gray"` |
 | プレビュー（この注文で何ポイント） | 強調の数値 `primary.fg` |
-| 「あと何店舗回る？」の現在の行 | 地 `primary.subtle`、枠 `primary.outline`。残額の棒は `Progress`（現在の行は `colorScheme="primary"`、ほかは `"gray"`） |
+| 「あと何店舗回る？」の現在の行 | 地 `primary.subtle`、枠 `primary.outline`。上限までの満たし具合の棒は `Progress`（上限に届く行は `colorScheme="success"`、現在の行は `"primary"`、ほかは `"gray"`） |
 | 警告 | `Alert.Root status="warning"`（既定の見た目） |
 | サイドバー（右カラム） | 読むページ（トップ、Markdown のページ、お問い合わせ、お知らせ）に置く（`PageWithSidebar`）。プランとプロフィールのような作業するページには置かない。PC は本文の右に幅 320px、`lg` 以下は本文の下。各区画は `SidebarSection`（`Card.Root` の既定の panel と `h2` の見出し） |
 | お知らせ | 本文は `/notices` に新しい順にすべて並べる（幅 640px）。サイドバーには最新3件の日付と題名だけを置き、題名は `/notices#<id>` へのリンクにする。`/notices` 自身のサイドバーには出さない。日付は `fg.muted` の `xs` |
