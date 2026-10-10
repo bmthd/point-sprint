@@ -29,9 +29,22 @@ const topLink = (page: Page) => header(page).getByRole("link", { name: "ポイ�
 const profileLink = (page: Page) =>
   header(page).getByRole("link", { name: "プロフィール", exact: true });
 
-/** Waits until the page has hydrated: before that a click reloads the whole document. */
-const ready = (page: Page) =>
-  expect(page.getByRole("main").getByText("読み込み中…")).toHaveCount(0);
+/**
+ * Waits until the page has hydrated: before that a click on a header link reloads the whole
+ * document, and 戻る then has no page to go back to. React marks each element it has hydrated with
+ * a `__reactFiber$` key, so both header links are waited for.
+ */
+const ready = async (page: Page) => {
+  for (const link of [topLink(page), profileLink(page)]) {
+    await expect
+      .poll(() =>
+        link.evaluate((element) =>
+          Object.keys(element).some((key) => key.startsWith("__reactFiber$")),
+        ),
+      )
+      .toBe(true);
+  }
+};
 
 test("every page links to the top and the profile from the header, and 戻る comes back", async ({
   page,
