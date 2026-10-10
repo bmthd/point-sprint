@@ -38,6 +38,7 @@ export function ShareButton({
     <VStack gap="2" alignItems="stretch" {...rest}>
       <Button
         variant="outline"
+        bg="bg.panel"
         size="lg"
         startIcon={<ShareIcon />}
         aria-expanded={open}
@@ -57,6 +58,7 @@ export function ShareButton({
                 target="_blank"
                 rel="noopener noreferrer"
                 variant="outline"
+                bg="bg.panel"
                 size="lg"
                 aria-label={link.label}
               >
@@ -65,6 +67,7 @@ export function ShareButton({
             ))}
             <Button
               variant="outline"
+              bg="bg.panel"
               size="lg"
               aria-label="文面とリンクをコピー"
               onClick={() => onCopy(shareMessage(target))}

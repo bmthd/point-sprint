@@ -70,6 +70,7 @@ export function OrderList({
         <Button
           variant="outline"
           colorScheme="primary"
+          bg="bg.panel"
           size="xl"
           onClick={onAdd}
           startIcon={<PlusIcon />}

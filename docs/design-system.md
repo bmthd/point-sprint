@@ -83,12 +83,12 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 部品 | 使うトークン |
 | --- | --- |
 | ページ | 地 `bg.base`、文字 `fg.base` |
-| カード、表、ボトムシート | プラン一覧とプロフィールは `Card.Root` の既定の `variant="panel"` と `size="md"`、プラン画面は `Card.Root variant="outline"`。中身は `Card.Body` に置く |
+| カード、表、ボトムシート | `Card.Root` の既定の `variant="panel"` と `size="md"`。地 `bg.base` の上に白い面 `bg.panel` を浮かせる。中身は `Card.Body` に置く |
 | サマリーカード | `Card.Root variant="solid" colorScheme="primary"`。ゲージは `Progress colorScheme="mono"`、内訳を開くボタンは `Button variant="subtle" colorScheme="mono"`。補足ラベル `primary.contrast/80`、未到達の買いまわりドット `blackAlpha.400`、到達済みのドット `primary.contrast` |
 | サマリーカードの中の内訳 | 地 `bg.panel` の小さなパネルを置き、その上に `point.*` |
 | 主要ボタン（追加する、保存） | `Button colorScheme="primary"`（solid）。ボトムバーの「注文を追加」は `size="xl"`、そのほかは `size="lg"`。画面を移るボタンは `RouterButton` |
-| 補助のボタン（編集、コピー、貼り付け、続けて追加、キャンセル） | `Button variant="outline"`。プランの画面と注文の編集の「続けて追加」は `size="lg"`、注文の編集の「貼り付け」は既定の size |
-| 控えめなボタン（リセット、並べ替え、行の取っ手と開閉の矢印、開閉の見出し） | `Button` / `IconButton` の `variant="ghost" colorScheme="gray" size="lg"` |
+| 補助のボタン（編集、コピー、貼り付け、続けて追加、キャンセル） | `Button variant="outline"`。`outline` は面を塗らないので、地 `bg.base` の上に置くときは `bg="bg.panel"` を付ける。プランの画面と注文の編集の「続けて追加」は `size="lg"`、注文の編集の「貼り付け」は既定の size |
+| 控えめなボタン（リセット、並べ替え、行の取っ手と開閉の矢印、開閉の見出し、PC のプランの設定） | `Button` / `IconButton` の `variant="ghost" colorScheme="gray" size="lg"` |
 | 入力欄、選択欄 | `Field.Root`（`label`、`invalid`、`errorMessage`）の中に `Input` / `NativeSelect.Root`。プラン画面とプロフィールは `size="lg"`、注文の編集は既定の size。注文の編集の金額は `InputGroup.Root size="xl"` に `¥` の `InputGroup.Addon`。面は `bg.panel`、枠は `border.emphasized`（エラーのときは `border.error`）。Yamada UI の `outline` は面を塗らないので、ルートの `FormControlDefaults` で `Input`、`Textarea`、`NativeSelect`、`DatePicker` にまとめて渡す。これは Yamada UI の CLI が部品のスタイルの一部だけを上書きできるようになるまでの仮の置き方で、そうなったら CLI で `outline` を上書きして `FormControlDefaults` を消す。選択欄はスマホで OS のピッカーを使うため `NativeSelect` にする |
 | プラン設定の入力欄 | `Field` の中に既定の `Input` |
 | 日付の入力欄 | 注文日（注文の編集、プラン画面の追加フォームと行）とキャンペーンの追加の日付は `DatePicker`（`locale="ja"`、`YYYY/MM/DD` の表示）。カレンダーは欄をタップしたときだけ開き、フォーカスや入力では開かない。タップで画面のキーボードは出さない（`inputMode="none"`）が、物理キーボードでは打ち込める。ダイアログを開いたときに欄へ自動でフォーカスしない |
@@ -107,7 +107,7 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 上限の印（SPU が上限に達した） | `Badge colorScheme="primary" variant="solid" fullRounded` |
 | 表示だけのチップ（日付で自動のキャンペーン） | `Tag size="sm" variant="outline" fullRounded` |
 | 順番バッジ | `Badge variant="solid" colorScheme="mono" fullRounded` |
-| 保留中の注文 | カードは `Card.Root variant="outline"` の点線の枠、ポイントは `fg.muted` で取り消し線、バッジは「保留」の `Badge variant="outline" colorScheme="gray"` |
+| 保留中の注文 | カードは点線の枠（`borderStyle="dashed"`）、ポイントは `fg.muted` で取り消し線、バッジは「保留」の `Badge variant="outline" colorScheme="gray"` |
 | プレビュー（この注文で何ポイント） | 強調の数値 `primary.fg` |
 | 「あと何店舗回る？」の現在の行 | 地 `primary.subtle`、枠 `primary.outline`。残額の棒は `Progress`（現在の行は `colorScheme="primary"`、ほかは `"gray"`） |
 | 警告 | `Alert.Root status="warning"`（既定の見た目） |

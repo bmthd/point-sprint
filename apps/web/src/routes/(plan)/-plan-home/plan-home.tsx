@@ -125,7 +125,7 @@ function PlanBar({ plan, desktop }: { plan: Plan; desktop: boolean }) {
 }
 
 const Panel = (props: { children: ReactNode; label: string }) => (
-  <Card.Root as="section" aria-label={props.label} variant="outline">
+  <Card.Root as="section" aria-label={props.label}>
     <Card.Body alignItems="stretch">{props.children}</Card.Body>
   </Card.Root>
 );
