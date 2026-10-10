@@ -50,13 +50,61 @@ export function ShopLadder({
 }) {
   const [open, setOpen] = useState(false);
   const current = currentRow(outlook);
+
+  return (
+    <Flex direction="column" gap="2">
+      {compact ? (
+        <>
+          <NativeAccordion.Root animate={false}>
+            <NativeAccordion.Item
+              borderWidth="0"
+              onToggle={(event) => setOpen(event.currentTarget.open)}
+            >
+              <NativeAccordion.Button fontSize="sm" fontWeight="bold">
+                あと何店舗回る？
+              </NativeAccordion.Button>
+              {/* The rows live in the table below; an empty panel must not add its open padding. */}
+              <NativeAccordion.Panel _groupOpen={{ pb: "0" }} />
+            </NativeAccordion.Item>
+          </NativeAccordion.Root>
+          {/* Outside the panel, so the current row stays put and the other rows open around it. */}
+          <LadderTable
+            outlook={outlook}
+            rows={open ? outlook.rows : outlook.rows.filter((row) => row === current)}
+          />
+        </>
+      ) : (
+        <>
+          <Heading as="h3" fontSize="sm">
+            あと何店舗回る？
+          </Heading>
+          <LadderTable outlook={outlook} rows={outlook.rows} />
+        </>
+      )}
+      <Text fontSize="xs" color="fg.muted">
+        残額は税抜・概算。いまの買い物を含めた金額から差し引いています。
+      </Text>
+    </Flex>
+  );
+}
+
+/** The ladder's table; `rows` may be a subset of the outlook's, laid out as if all were shown. */
+function LadderTable({
+  outlook,
+  rows,
+}: {
+  outlook: ShopAroundOutlook;
+  rows: ShopAroundOutlookRow[];
+}) {
+  const current = currentRow(outlook);
   const longest = Math.max(1, ...outlook.rows.map((row) => row.remainingTaxExcluded ?? 0));
   // Wide enough for the longest label of every row, so opening the compact table does not move the columns.
   const digits = (pick: (row: ShopAroundOutlookRow) => number) =>
     Math.max(...outlook.rows.map((row) => String(pick(row)).length));
   const shopsWidth = `calc(${digits((row) => row.shops)}ch + 2em)`;
   const rateWidth = `calc(${digits((row) => row.rate) + 1}ch + 1em)`;
-  const table = (rows: ShopAroundOutlookRow[]) => (
+
+  return (
     <NativeTable.Root
       fontSize="sm"
       fontVariantNumeric="tabular-nums"
@@ -104,38 +152,5 @@ export function ShopLadder({
         })}
       </NativeTable.Tbody>
     </NativeTable.Root>
-  );
-
-  return (
-    <Flex direction="column" gap="2">
-      {compact ? (
-        <>
-          <NativeAccordion.Root animate={false}>
-            <NativeAccordion.Item
-              borderWidth="0"
-              onToggle={(event) => setOpen(event.currentTarget.open)}
-            >
-              <NativeAccordion.Button fontSize="sm" fontWeight="bold">
-                あと何店舗回る？
-              </NativeAccordion.Button>
-              {/* The rows live in the table below; an empty panel must not add its open padding. */}
-              <NativeAccordion.Panel _groupOpen={{ pb: "0" }} />
-            </NativeAccordion.Item>
-          </NativeAccordion.Root>
-          {/* Outside the panel, so the current row stays put and the other rows open around it. */}
-          {table(open ? outlook.rows : outlook.rows.filter((row) => row === current))}
-        </>
-      ) : (
-        <>
-          <Heading as="h3" fontSize="sm">
-            あと何店舗回る？
-          </Heading>
-          {table(outlook.rows)}
-        </>
-      )}
-      <Text fontSize="xs" color="fg.muted">
-        残額は税抜・概算。いまの買い物を含めた金額から差し引いています。
-      </Text>
-    </Flex>
   );
 }
