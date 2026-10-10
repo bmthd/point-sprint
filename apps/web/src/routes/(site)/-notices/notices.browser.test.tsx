@@ -11,8 +11,8 @@ import { config, theme } from "@workspaces/ui/theme";
 import { expect, test } from "vitest";
 import { page } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
-import { NoticeHeadlines } from "./notice-headlines";
-import type { Notice } from "./notices";
+import { NoticeHeadlines } from "../../-notices/notice-headlines";
+import type { Notice } from "../../-notices/notices";
 import { NoticesPage } from "./notices-page";
 
 const notice = (date: string, title: string): Notice => ({
@@ -102,8 +102,10 @@ test("/notices shows every notice in full, newest first, without the headlines",
   await expect.element(oldest).toHaveAttribute("id", "notice-2026-10-01");
   await expect.element(oldest.getByText("お知らせ 2026-10-01の本文です。")).toBeVisible();
   await expect.element(oldest.getByText("2段落目です。")).toBeVisible();
-  await expect.element(page.getByRole("complementary", { name: "サイドバー" })).toBeInTheDocument();
-  expect(headlines().elements()).toEqual([]);
+  // Read from the document: at a phone's width the sidebar is in the header's menu, hidden here.
+  const sidebar = document.querySelector('aside[aria-label="サイドバー"]');
+  expect(sidebar).not.toBeNull();
+  expect(sidebar?.textContent).not.toContain("お知らせ");
 });
 
 test("/notices says so when there is no notice", async () => {

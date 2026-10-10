@@ -6,7 +6,7 @@ import { useState } from "react";
 import { replacePlan, savePlanAtom } from "../../../state/mutations";
 import { plansAtom, profileAtom, profileQueryAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
-import { PageWithSidebar } from "../-sidebar/sidebar";
+import { PageWithSidebar } from "../-page-with-sidebar";
 import { monthOf, tokyoToday } from "../../../ui/dates";
 import { useToday } from "../../-use-today";
 import { EventSection } from "./event-section";

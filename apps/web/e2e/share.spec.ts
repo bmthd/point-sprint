@@ -80,17 +80,16 @@ test("a shared result's link without figures keeps the site's image", async ({ p
   expect((await request.get("/share/image.png")).status()).toBe(404);
 });
 
-test("the footer shares the site on every page", async ({ page }) => {
+test("the sidebar shares the site, with the links out from the start", async ({ page }) => {
   for (const path of ["/", "/help", "/terms", "/privacy"]) {
     await page.goto(path);
-    const footer = page.getByRole("contentinfo");
-    const button = footer.getByRole("button", { name: "このサイトをシェア" });
-    // Retried: a click before the prerendered page hydrates does nothing.
-    await expect(async () => {
-      if ((await button.getAttribute("aria-expanded")) !== "true") await button.click();
-      await expect(button).toHaveAttribute("aria-expanded", "true", { timeout: 1000 });
-    }).toPass();
-    const href = await footer.getByRole("link", { name: "Facebook でシェア" }).getAttribute("href");
+    const section = page
+      .getByRole("complementary", { name: "サイドバー" })
+      .getByRole("region", { name: "このサイトをシェア" });
+    const href = await section
+      .getByRole("link", { name: "Facebook でシェア" })
+      .getAttribute("href");
     expect(new URL(href ?? "").searchParams.get("u")).toBe(`${siteUrl}/`);
+    await expect(section.getByRole("button", { name: "文面とリンクをコピー" })).toBeVisible();
   }
 });
