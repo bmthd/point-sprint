@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useHydrateAtoms } from "jotai/utils";
+import { itemLookupAtom } from "./-item-autofill";
 import { PlanHome } from "./-plan-home/plan-home";
+import { workerItemLookup } from "./-worker-item-lookup";
 import { planSearchSchema } from "../../planSearch";
 import { pageHead } from "../../page-head";
 
@@ -17,6 +20,7 @@ export const Route = createFileRoute("/(plan)/plan")({
 });
 
 function PlanRoute() {
+  useHydrateAtoms([[itemLookupAtom, { lookup: workerItemLookup }]]);
   const { id } = Route.useSearch();
   return <PlanHome id={id} />;
 }

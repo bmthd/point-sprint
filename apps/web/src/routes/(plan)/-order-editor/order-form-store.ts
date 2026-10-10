@@ -4,8 +4,9 @@
 
 import { type FormStore, getInput, setInput, useField } from "@formisch/react";
 import { useAtomValue } from "jotai";
+import type { ChangeEvent, FocusEvent, KeyboardEvent } from "react";
 import { shopsAtom } from "../../../state/queries";
-import { useItemAutofill } from "../-item-autofill";
+import { type ItemAutofill, useItemAutofill } from "../-item-autofill";
 import { NEW_SHOP, type ShopFromUrl, fieldsFromItem, shopFromItem } from "../-order-fields";
 import type { OrderFormSchema } from "./order-form";
 
@@ -46,4 +47,36 @@ export function useOrderAutofill(form: OrderForm) {
       setInput(form, { path: AMOUNT_PATH, input: fields.unitPrice });
     setInput(form, { path: ["items", 0, "shopPointRate"], input: fields.shopPointRate });
   });
+}
+
+/**
+ * The URL input's handlers for the autofill: a pasted URL is looked up at once, a typed one when
+ * the field is left or Enter is pressed. `onUrl` gets every change of the text, and `onBlur` is the
+ * field's own.
+ */
+export function autofillUrlHandlers(
+  autofill: ItemAutofill,
+  onUrl: (text: string) => void,
+  onBlur: () => void,
+) {
+  return {
+    onChange: (event: ChangeEvent<HTMLInputElement>) => {
+      const text = event.currentTarget.value;
+      onUrl(text);
+      const { inputType } = event.nativeEvent as InputEvent;
+      autofill.onUrlChange(text, inputType === "insertFromPaste");
+    },
+    onBlur: (event: FocusEvent<HTMLInputElement>) => {
+      onBlur();
+      autofill.onUrlCommit(event.currentTarget.value);
+    },
+    onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+      // An Enter that starts a lookup does only that: the form is sent by the next one.
+      if (autofill.onUrlCommit(event.currentTarget.value)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    },
+  };
 }

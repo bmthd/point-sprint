@@ -3,8 +3,8 @@ import { test as base } from "@playwright/test";
 export { expect } from "@playwright/test";
 export type { Locator, Page } from "@playwright/test";
 
-/** Every call to the Rakuten API. */
-export const RAKUTEN_API = "https://openapi.rakuten.co.jp/**";
+/** Every call to the Rakuten API, which only the Worker makes. */
+const RAKUTEN_API = "https://openapi.rakuten.co.jp/**";
 
 /** The images of Rakuten items, in the guides' lists. */
 const RAKUTEN_IMAGES = "https://thumbnail.image.rakuten.co.jp/**";
