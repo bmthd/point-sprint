@@ -9,7 +9,8 @@ declare module "cloudflare:workers" {
     INQUIRY_EMAIL?: { send(message: import("cloudflare:email").EmailMessage): Promise<unknown> };
     RAKUTEN_APPLICATION_ID?: string;
     RAKUTEN_ACCESS_KEY?: string;
-    RAKUTEN_RATE_GATE: DurableObjectNamespace<import("./rakuten-rate-gate").RakutenRateGate>;
+    /** Not in a Preview (`cloudflare.config.ts`). */
+    RAKUTEN_RATE_GATE?: DurableObjectNamespace<import("./rakuten-rate-gate").RakutenRateGate>;
   };
 
   export abstract class DurableObject {

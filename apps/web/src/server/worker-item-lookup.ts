@@ -7,7 +7,10 @@ import { workerRakutenConfig } from "./worker-rakuten-config";
 
 /** `handleItemLookup` with the Worker's secrets and the one rate gate every lookup shares. */
 export function lookupItemInWorker(input: LookupItemInput): Promise<ItemLookupResult> {
-  const gate = env.RAKUTEN_RATE_GATE.get(env.RAKUTEN_RATE_GATE.idFromName("rakuten-api"));
+  const gates = env.RAKUTEN_RATE_GATE;
+  // A Preview has no rate gate, so no lookup either.
+  if (!gates) return Promise.resolve({ ok: false, error: { reason: "unavailable" } });
+  const gate = gates.get(gates.idFromName("rakuten-api"));
   return handleItemLookup(input, {
     config: workerRakutenConfig(),
     takeTurn: (maxWaitMs) => gate.take(maxWaitMs),
