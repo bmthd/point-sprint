@@ -1,9 +1,9 @@
 import type { ShopAroundOutlook, ShopAroundOutlookRow } from "@workspaces/domain";
 import {
   Box,
-  Button,
   Flex,
   Heading,
+  NativeAccordion,
   NativeTable,
   Progress,
   Text,
@@ -11,8 +11,6 @@ import {
   type ThProps,
   VisuallyHidden,
 } from "@workspaces/ui";
-import { useId, useState } from "react";
-import { ChevronIcon } from "../../../ui/icons";
 
 /** The row of the current shop count; below the first tier that is the first row. */
 export function currentRow(outlook: ShopAroundOutlook): ShopAroundOutlookRow | undefined {
@@ -34,13 +32,38 @@ const Th = (props: ThProps) => (
     {...props}
   />
 );
-const Td = (props: TdProps) => (
-  <NativeTable.Td px="2" py="1.5" whiteSpace="nowrap" borderWidth="0" {...props} />
-);
+/** A cell; `fold` lets it fold to no height while the compact ladder is closed. */
+const Td = ({ fold = false, children, ...props }: TdProps & { fold?: boolean }) =>
+  fold ? (
+    <NativeTable.Td px="2" py="0" whiteSpace="nowrap" borderWidth="0" {...props}>
+      <Box display="grid" transitionDuration="slow" transitionProperty="grid-template-rows">
+        <Box overflowY="clip" minH="0">
+          <Box py="1.5">{children}</Box>
+        </Box>
+      </Box>
+    </NativeTable.Td>
+  ) : (
+    <NativeTable.Td px="2" py="1.5" whiteSpace="nowrap" borderWidth="0" {...props}>
+      {children}
+    </NativeTable.Td>
+  );
+
+/** While the compact ladder's details are closed, its folding rows have no height and are hidden. */
+const folding = {
+  "& [data-fold]": {
+    visibility: "hidden",
+    transitionDuration: "slow",
+    transitionProperty: "visibility",
+  },
+  "& [data-fold] > td > div": { gridTemplateRows: "0fr" },
+  "&:has(details[open]) [data-fold]": { visibility: "visible" },
+  "&:has(details[open]) [data-fold] > td > div": { gridTemplateRows: "1fr" },
+};
 
 /**
  * 「あと何店舗回る？」: rate and remaining amount until the cap for each shop count from now up to
- * the top tier. `compact` (the phone's summary card) shows only the current row until expanded.
+ * the top tier. `compact` (the phone's summary card) shows only the current row, the first one, and
+ * unfolds the others under it in the same table.
  */
 export function ShopLadder({
   outlook,
@@ -49,43 +72,15 @@ export function ShopLadder({
   outlook: ShopAroundOutlook;
   compact?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const tableId = useId();
   const current = currentRow(outlook);
-  const rows = compact && !open ? outlook.rows.filter((row) => row === current) : outlook.rows;
   const longest = Math.max(1, ...outlook.rows.map((row) => row.remainingTaxExcluded ?? 0));
-  // Wide enough for the longest label of every row, so opening the compact table does not move the columns.
-  const digits = (pick: (row: ShopAroundOutlookRow) => number) =>
-    Math.max(...outlook.rows.map((row) => String(pick(row)).length));
-  const shopsWidth = `calc(${digits((row) => row.shops)}ch + 2em)`;
-  const rateWidth = `calc(${digits((row) => row.rate) + 1}ch + 1em)`;
 
   return (
-    <Flex direction="column" gap="2">
-      {compact ? (
-        <Button
-          variant="ghost"
-          colorScheme="gray"
-          size="lg"
-          justifyContent="space-between"
-          aria-expanded={open}
-          aria-controls={tableId}
-          onClick={() => setOpen(!open)}
-        >
-          あと何店舗回る？
-          <ChevronIcon open={open} />
-        </Button>
-      ) : (
-        <Heading as="h3" fontSize="sm">
-          あと何店舗回る？
-        </Heading>
-      )}
-      <NativeTable.Root
-        id={tableId}
-        fontSize="sm"
-        fontVariantNumeric="tabular-nums"
-        style={{ borderCollapse: "separate", borderSpacing: "0 2px" }}
-      >
+    <Flex direction="column" gap="2" css={compact ? folding : undefined}>
+      <Heading as="h3" fontSize="sm">
+        あと何店舗回る？
+      </Heading>
+      <NativeTable.Root fontSize="sm" fontVariantNumeric="tabular-nums">
         <NativeTable.Thead fontSize="xs" color="fg.muted">
           <NativeTable.Tr>
             <Th>店舗数</Th>
@@ -97,37 +92,49 @@ export function ShopLadder({
           </NativeTable.Tr>
         </NativeTable.Thead>
         <NativeTable.Tbody>
-          {rows.map((row) => {
+          {outlook.rows.map((row, index) => {
             const isCurrent = row === current;
             const remaining = row.remainingTaxExcluded;
+            const fold = compact && index > 0;
             return (
               <NativeTable.Tr
                 key={row.shops}
+                data-fold={fold ? "" : undefined}
                 aria-current={isCurrent ? "true" : undefined}
                 bg={isCurrent ? "primary.subtle" : undefined}
                 outline={isCurrent ? "1px solid" : undefined}
                 outlineColor="primary.outline"
+                outlineOffset="-1px"
                 fontWeight={isCurrent ? "bold" : undefined}
               >
-                <Td>
-                  <Box minW={shopsWidth}>{row.shops}店舗</Box>
-                </Td>
-                <Td>
-                  <Box minW={rateWidth}>+{row.rate}倍</Box>
-                </Td>
-                <Td>
+                <Td fold={fold}>{row.shops}店舗</Td>
+                <Td fold={fold}>+{row.rate}倍</Td>
+                <Td fold={fold} verticalAlign="middle">
                   <Progress
                     value={((remaining ?? 0) / longest) * 100}
                     colorScheme={isCurrent ? "primary" : "gray"}
                     aria-hidden
                   />
                 </Td>
-                <Td textAlign="end">{remaining === null ? "—" : `約${manYen(remaining)}`}</Td>
+                <Td fold={fold} textAlign="end">
+                  {remaining === null ? "—" : `約${manYen(remaining)}`}
+                </Td>
               </NativeTable.Tr>
             );
           })}
         </NativeTable.Tbody>
       </NativeTable.Root>
+      {compact ? (
+        <NativeAccordion.Root>
+          <NativeAccordion.Item borderWidth="0">
+            <NativeAccordion.Button fontSize="sm" fontWeight="bold" px="2">
+              ほかの店舗数を見る
+            </NativeAccordion.Button>
+            {/* The rows unfold in the table above; an empty panel must not add its open padding. */}
+            <NativeAccordion.Panel _groupOpen={{ pb: "0" }} />
+          </NativeAccordion.Item>
+        </NativeAccordion.Root>
+      ) : null}
       <Text fontSize="xs" color="fg.muted">
         残額は税抜・概算。いまの買い物を含めた金額から差し引いています。
       </Text>

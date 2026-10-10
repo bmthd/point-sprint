@@ -13,7 +13,7 @@ import { saveShopAtom } from "../../../state/mutations";
 import { addOrderAtom } from "../../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
-import { AutofillStatusText } from "../-item-autofill";
+import { AutofillStatus } from "../-item-autofill";
 import {
   OrderFormSchema,
   type OrderFormOutput,
@@ -25,6 +25,7 @@ import {
   AMOUNT_PATH,
   type OrderForm,
   applyShop,
+  autofillUrlHandlers,
   useFormInput,
   useOrderAutofill,
 } from "../-order-editor/order-form-store";
@@ -117,15 +118,17 @@ function UrlField({ form, autofill }: { form: OrderForm; autofill: Autofill }) {
         placeholder="https://item.rakuten.co.jp/…"
         {...bind(url)}
         // The shop of the URL is chosen at once, and stays when the item cannot be looked up.
-        onChange={(event) => {
-          const value = event.currentTarget.value;
-          url.onChange(value);
-          const found = shopFromUrl(value, shops);
-          if (found) applyShop(form, found);
-          autofill.onUrl(value);
-        }}
+        {...autofillUrlHandlers(
+          autofill,
+          (value) => {
+            url.onChange(value);
+            const found = shopFromUrl(value, shops);
+            if (found) applyShop(form, found);
+          },
+          url.props.onBlur,
+        )}
       />
-      <AutofillStatusText status={autofill.status} />
+      <AutofillStatus autofill={autofill} />
     </Field.Root>
   );
 }
@@ -264,9 +267,10 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
       try {
         if (draft.shopChange) await saveShop.mutateAsync(draft.shopChange);
         await addOrder({ planId: plan.id, order: draft.order });
-        autofill.reset();
         reset(form, { initialInput: emptyInput() });
         focus(form, { path: ["url"] });
+        // After the focus moves: leaving the URL field would look up the URL it still shows.
+        autofill.reset();
       } catch {
         // The typed order stays in the form so it can be added again.
         setFailed(true);

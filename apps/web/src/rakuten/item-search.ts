@@ -52,13 +52,10 @@ export type SearchFailure =
 export type SearchResult = { ok: true; items: RakutenItem[] } | { ok: false; error: SearchFailure };
 
 export type SearchOptions = {
-  /** `ITEM_SEARCH_ENDPOINT`, or the dev server's relay to it. */
+  /** `ITEM_SEARCH_ENDPOINT`, or a stand-in for it in the E2E tests. */
   endpoint?: string;
   fetch?: typeof fetch;
-  /**
-   * The `Origin` to send, for calls from the server. A browser sends its own and does not let a
-   * page change it.
-   */
+  /** The `Origin` to send: the API answers only `ALLOWED_ORIGIN`. */
   origin?: string;
   signal?: AbortSignal;
 };
@@ -109,7 +106,7 @@ export async function searchItems(
         ...(config.affiliateId ? { affiliateId: config.affiliateId } : {}),
         ...params,
       },
-      // The calls are spaced out by the caller (`throttledLookup`); a retry would break that.
+      // The calls are spaced out by the caller; a retry would break that.
       retry: 0,
       ...(origin ? { headers: { Origin: origin } } : {}),
       ...(fetch ? { fetch } : {}),
@@ -138,7 +135,7 @@ const isPage = (url: string, { shopCode, itemManageNumber }: ItemPage) => {
  * not the item manage number in the URL, so the shop's items are searched by the manage number and
  * the one on that page is taken. A manage number the search does not know finds nothing.
  */
-export async function lookupItem(
+export async function searchItemPage(
   config: RakutenConfig,
   page: ItemPage,
   options: SearchOptions = {},

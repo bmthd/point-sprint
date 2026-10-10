@@ -39,7 +39,7 @@ import { addOrderAtom, updateOrderAtom } from "../../../state/order-ops";
 import { shopsAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
 import { CloseIcon } from "../../../ui/icons";
-import { AutofillStatusText, useItemAutofill } from "../-item-autofill";
+import { AutofillStatus, type ItemAutofill } from "../-item-autofill";
 import {
   NEW_SHOP,
   TAX_RATES,
@@ -67,6 +67,7 @@ import {
   AMOUNT_PATH,
   type OrderForm,
   applyShop,
+  autofillUrlHandlers,
   useFormInput,
   useOrderAutofill,
 } from "./order-form-store";
@@ -239,8 +240,6 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
   );
 }
 
-type Autofill = ReturnType<typeof useItemAutofill>;
-
 function ShopFields({
   form,
   plan,
@@ -250,7 +249,7 @@ function ShopFields({
   form: OrderForm;
   plan: Plan;
   urlId: string;
-  autofill: Autofill;
+  autofill: ItemAutofill;
 }) {
   const shops = useAtomValue(shopsAtom);
   const sortedShops = useSortedShops(shops);
@@ -262,12 +261,13 @@ function ShopFields({
     url.onChange(text);
     const found = shopFromUrl(text, shops);
     if (found) applyShop(form, found);
-    autofill.onUrl(text);
   };
 
   const paste = async () => {
     try {
-      onUrl(await navigator.clipboard.readText());
+      const text = await navigator.clipboard.readText();
+      onUrl(text);
+      autofill.onUrlChange(text, true);
     } catch {
       // Reading the clipboard was not allowed; the URL can still be pasted into the field.
       document.getElementById(urlId)?.focus();
@@ -300,13 +300,13 @@ function ShopFields({
             {...(url.errors === null
               ? { "aria-describedby": urlUnknown ? hintId : undefined }
               : {})}
-            onChange={(event) => onUrl(event.currentTarget.value)}
+            {...autofillUrlHandlers(autofill, onUrl, url.props.onBlur)}
           />
           <Button type="button" variant="outline" flex="none" onClick={() => void paste()}>
             貼り付け
           </Button>
         </Flex>
-        <AutofillStatusText status={autofill.status} />
+        <AutofillStatus autofill={autofill} />
       </Field.Root>
       <Box display="grid" gridTemplateColumns="minmax(0, 1fr) 150px" alignItems="start" gap="2">
         <Field.Root label="ショップ" {...errorsOf(shop)}>
@@ -527,9 +527,10 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
         if (original) await updateOrder({ planId: plan.id, order: draft.order });
         else await addOrder({ planId: plan.id, order: draft.order });
         if (keepOpen) {
-          autofill.reset();
           reset(form, { initialInput: emptyInput() });
           focus(form, { path: AMOUNT_PATH });
+          // After the focus moves: leaving the URL field would look up the URL it still shows.
+          autofill.reset();
         } else {
           onClose();
         }

@@ -1,46 +1,57 @@
-import type { ItemPage, LookupResult } from "./item-search";
+import * as v from "valibot";
+import type { ItemPage, LookupFailure, RakutenItem } from "./item-search";
 
-export type ItemLookup = (page: ItemPage) => Promise<LookupResult>;
+// The item lookup as the browser asks the Worker for it (`src/server/lookup-item.ts`).
+
+/** How long the first lookup of a URL may wait for its turn at the API. */
+export const FIRST_MAX_WAIT_MS = 5_000;
+
+/** How long a lookup may wait when the user chose to wait. A longer wait is not offered. */
+export const LONGEST_WAIT_MS = 30_000;
+
+export const LookupItemInputSchema = v.object({
+  page: v.object({
+    shopCode: v.pipe(v.string(), v.nonEmpty(), v.maxLength(100)),
+    itemManageNumber: v.pipe(v.string(), v.nonEmpty(), v.maxLength(200)),
+  }),
+  maxWaitMs: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(LONGEST_WAIT_MS)),
+});
+
+export type LookupItemInput = v.InferOutput<typeof LookupItemInputSchema>;
+
+export type ItemLookupFailure =
+  | LookupFailure
+  /** Its turn at the API was more than `maxWaitMs` away; `waitMs` is how far. */
+  | { reason: "busy"; waitMs: number }
+  /** The Worker has no Rakuten settings. */
+  | { reason: "unavailable" };
+
+export type ItemLookupResult =
+  | { ok: true; item: RakutenItem }
+  | { ok: false; error: ItemLookupFailure };
+
+export type ItemLookupOptions = { maxWaitMs: number; signal?: AbortSignal };
+
+export type ItemLookup = (page: ItemPage, options: ItemLookupOptions) => Promise<ItemLookupResult>;
 
 type Options = {
-  /** The least time between two calls: the API answers 429 above about one call a second. */
-  intervalMs?: number;
   /** How long a found item is reused for the same item page. */
   cacheMs?: number;
   now?: () => number;
-  wait?: (ms: number) => Promise<void>;
 };
 
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-/**
- * `lookup` with calls spaced out by `intervalMs`, and found items kept for `cacheMs`. A lookup of
- * an item page already on its way shares that call. Failures are not kept, so they can be tried
- * again.
- */
-export function throttledLookup(
+/** `lookup` with found items kept for `cacheMs`. Failures are not kept, so they can be tried again. */
+export function cachedLookup(
   lookup: ItemLookup,
-  { intervalMs = 1100, cacheMs = 5 * 60_000, now = Date.now, wait = sleep }: Options = {},
+  { cacheMs = 5 * 60_000, now = Date.now }: Options = {},
 ): ItemLookup {
-  const cache = new Map<string, { at: number; result: Promise<LookupResult> }>();
-  let nextCallAt = 0;
-
-  const call = async (page: ItemPage) => {
-    const at = Math.max(now(), nextCallAt);
-    nextCallAt = at + intervalMs;
-    if (at > now()) await wait(at - now());
-    return lookup(page);
-  };
-
-  return (page) => {
+  const cache = new Map<string, { at: number; item: RakutenItem }>();
+  return async (page, options) => {
     const key = `${page.shopCode}/${page.itemManageNumber}`;
     const kept = cache.get(key);
-    if (kept && now() - kept.at < cacheMs) return kept.result;
-    const result = call(page);
-    cache.set(key, { at: now(), result });
-    void result.then((settled) => {
-      if (!settled.ok && cache.get(key)?.result === result) cache.delete(key);
-    });
+    if (kept && now() - kept.at < cacheMs) return { ok: true, item: kept.item };
+    const result = await lookup(page, options);
+    if (result.ok) cache.set(key, { at: now(), item: result.item });
     return result;
   };
 }

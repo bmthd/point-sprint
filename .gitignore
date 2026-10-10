@@ -4,7 +4,7 @@ node_modules/
 
 # environment
 # .env.development and .env.production are committed: PUBLIC_* values in plain text, secrets
-# encrypted by dotenvx (.env.production only). The private keys are not
+# encrypted by dotenvx. The private keys are not
 .env.keys
 .env.local
 .env.*.local

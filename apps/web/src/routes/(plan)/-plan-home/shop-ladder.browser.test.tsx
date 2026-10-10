@@ -44,7 +44,13 @@ test("highlights the current shop count row", async () => {
   expect(Array.from(current, (row) => row.textContent)).toEqual(["4店舗+3倍約22.3万円"]);
 });
 
-test("shows only the current row until expanded when compact", async () => {
+/** The body rows a person can see. */
+const visibleRowTexts = () =>
+  Array.from(document.querySelectorAll("tbody tr"))
+    .filter((row) => row.checkVisibility({ visibilityProperty: true }))
+    .map((row) => row.textContent);
+
+test("shows only the current row until the others are opened when compact", async () => {
   await cleanup();
   const screen = await render(
     <UIProvider theme={theme} config={config}>
@@ -52,11 +58,19 @@ test("shows only the current row until expanded when compact", async () => {
     </UIProvider>,
   );
 
-  const toggle = screen.getByRole("button", { name: "あと何店舗回る？" });
-  await expect.element(toggle).toHaveAttribute("aria-expanded", "false");
-  expect(rowTexts(screen.getByRole("table").element())).toEqual(["6店舗+5倍約13.0万円"]);
+  await expect.element(screen.getByRole("heading", { name: "あと何店舗回る？" })).toBeVisible();
+  // One table: the other rows open inside it, under the current one.
+  expect(document.querySelectorAll("table")).toHaveLength(1);
+  expect(visibleRowTexts()).toEqual(["6店舗+5倍約13.0万円"]);
 
-  await toggle.click();
-  await expect.element(toggle).toHaveAttribute("aria-expanded", "true");
-  expect(rowTexts(screen.getByRole("table").element())).toHaveLength(5);
+  await screen.getByText("ほかの店舗数を見る", { exact: true }).click();
+  await expect
+    .poll(visibleRowTexts)
+    .toEqual([
+      "6店舗+5倍約13.0万円",
+      "7店舗+6倍約10.6万円",
+      "8店舗+7倍約9.0万円",
+      "9店舗+8倍約7.7万円",
+      "10店舗+9倍約6.8万円",
+    ]);
 });
