@@ -1,14 +1,13 @@
 import type { Order } from "@workspaces/domain";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useEffect } from "react";
-import { beforeEach, expect, test, vi } from "vitest";
+import { beforeEach, expect, onTestFinished, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { updateOrderAtom } from "../../../state/order-ops";
 import { plansQueryAtom, shopsQueryAtom } from "../../../state/queries";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import { DATE_PICKER_FIELD, misalignedFields } from "../../../test-layout";
-import { tokyoToday } from "../../../ui/dates";
 import { OrderTable } from "./order-table";
 import {
   PLAN,
@@ -168,6 +167,12 @@ test("fits 1024px without horizontal scroll", async () => {
 });
 
 test("enter in the add form adds an order and refocuses the first field", async () => {
+  // The new order is dated today, so today is in the plan's period (10/4 to 10/9) for it to count.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-10-05T03:00:00Z"));
+  onTestFinished(() => {
+    vi.useRealTimers();
+  });
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
 
   await expect.poll(() => rows().length).toBe(1);
@@ -197,7 +202,7 @@ test("enter in the add form adds an order and refocuses the first field", async 
   await expect.poll(async () => (await stored())?.length).toBe(2);
   expect((await stored())?.[1]).toMatchObject({
     shopId: shopId(4),
-    date: tokyoToday(new Date()),
+    date: "2026-10-05",
     onHold: false,
     tags: [],
     lineItems: [{ name: "フェイスタオル", unitPrice: 11000, quantity: 1, taxRate: 0.08 }],
