@@ -66,9 +66,13 @@ jobs:
         run: pnpm test --project web-browser
 
   e2e:
-    name: E2E
+    name: E2E (${{ matrix.shard }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ["1/2", "2/2"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
@@ -89,12 +93,12 @@ jobs:
           - name: Build
             run: pnpm build:e2e
       - name: Run E2E tests
-        run: pnpm --filter web exec playwright test
+        run: pnpm --filter web exec playwright test --shard=${{ matrix.shard }}
       - name: Upload Playwright failure artifacts
         if: ${{ failure() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: playwright-test-results
+          name: playwright-test-results-${{ matrix.shard }}
           path: apps/web/test-results/
           if-no-files-found: ignore
           retention-days: 30
