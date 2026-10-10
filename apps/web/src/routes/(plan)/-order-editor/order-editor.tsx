@@ -44,7 +44,7 @@ import {
   NEW_SHOP,
   TAX_RATES,
   TaxRateOptions,
-  ToggleChip,
+  CampaignCheck,
   shopFromUrl,
   useSortedShops,
 } from "../-order-fields";
@@ -72,6 +72,7 @@ import {
   useOrderAutofill,
 } from "./order-form-store";
 import { OrderPreviewBox } from "./order-preview";
+import { CapFlows } from "../-cap-flows";
 
 /** The editor's target in the URL (`edit=`): a new order, or the id of the order to edit. */
 export const NEW_ORDER = "new";
@@ -213,25 +214,36 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
   const is39 = useField(form, { path: ["is39"] });
   const repeat = useField(form, { path: ["repeat"] });
   const date = useField(form, { path: ["date"] });
-  const plus = (rate: number) => (rate > 0 ? ` +${rate}` : "");
+  const plus = (rate: number) => (rate > 0 ? `+${rate}` : "");
   const byDate = dateCampaigns(plan.benefits, typeof date.input === "string" ? date.input : "");
   return (
     <Fieldset.Root legend="キャンペーン">
-      <Flex wrap="wrap" gap="2">
-        <ToggleChip pressed={is39.input === true} onClick={() => is39.onChange(!is39.input)}>
-          39ショップ{plus(tagBonus(plan.benefits, { shop: "39shop" }))}
-        </ToggleChip>
-        <ToggleChip pressed={repeat.input === true} onClick={() => repeat.onChange(!repeat.input)}>
-          リピート購入{plus(tagBonus(plan.benefits, { order: "repeat" }))}
-        </ToggleChip>
-      </Flex>
+      {/* Two cards of one width, so their checks line up. */}
+      <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
+        <CampaignCheck
+          campaign="39shop"
+          checked={is39.input === true}
+          onChange={() => is39.onChange(!is39.input)}
+          rate={plus(tagBonus(plan.benefits, { shop: "39shop" }))}
+        >
+          39ショップ
+        </CampaignCheck>
+        <CampaignCheck
+          campaign="repeat"
+          checked={repeat.input === true}
+          onChange={() => repeat.onChange(!repeat.input)}
+          rate={plus(tagBonus(plan.benefits, { order: "repeat" }))}
+        >
+          リピート購入
+        </CampaignCheck>
+      </Box>
       {byDate.length > 0 ? (
         <Flex wrap="wrap" align="center" gap="1.5" fontSize="xs" color="fg.muted">
           <span>日付で自動：</span>
           {byDate.map((benefit) => (
             <CampaignChip key={benefit.id}>
               {benefit.label}
-              {plus(rateOf(benefit))}
+              {rateOf(benefit) > 0 ? ` ${plus(rateOf(benefit))}` : ""}
             </CampaignChip>
           ))}
         </Flex>
@@ -507,7 +519,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
   const keepOpenId = useId();
   // The fields start from the order as it was when the editor opened.
   const [initialInput] = useState<OrderFormInput>(() =>
-    original ? inputOf(original, shops) : emptyInput(),
+    original ? inputOf(original, shops) : emptyInput(plan.period),
   );
   const form = useForm({ schema: OrderFormSchema, initialInput });
   const autofill = useOrderAutofill(form);
@@ -527,7 +539,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
         if (original) await updateOrder({ planId: plan.id, order: draft.order });
         else await addOrder({ planId: plan.id, order: draft.order });
         if (keepOpen) {
-          reset(form, { initialInput: emptyInput() });
+          reset(form, { initialInput: emptyInput(plan.period) });
           focus(form, { path: AMOUNT_PATH });
           // After the focus moves: leaving the URL field would look up the URL it still shows.
           autofill.reset();
@@ -560,6 +572,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
             <MainItemFields form={form} amountRef={amountRef} />
             <Campaigns form={form} plan={plan} />
             <Preview form={form} plan={plan} original={original} />
+            {original ? null : <CapFlows plan={plan} form={form} />}
             <Details form={form} defaultOpen={(original?.lineItems.length ?? 1) > 1} />
           </Flex>
         </Form>

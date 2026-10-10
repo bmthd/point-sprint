@@ -1,19 +1,20 @@
 import {
   type Benefit,
-  type CampaignTemplate,
   type Plan,
   campaignTemplates,
   officialEvents,
+  templateOfCampaign,
 } from "@workspaces/domain";
-import { Flex, Button, Card, CheckboxCard, Heading, IconButton, Image, Text } from "@workspaces/ui";
+import { Box, Card, Flex, Heading, IconButton, Image, Switch, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { toggleBenefitAtom } from "../../../state/order-ops";
-import { CloseIcon } from "../../../ui/icons";
-import { rateText } from "../-order-shared";
-import { CampaignAddDialog, TemplateList } from "./campaign-adder";
+import { PencilIcon } from "../../../ui/icons";
+import { imageUrl, rateText } from "../-order-shared";
+import { CampaignAddButtons } from "./campaign-adder";
+import { CampaignEditor } from "./campaign-editor";
 import { useDeleteCampaign } from "./delete-campaign";
-import { imageUrl, useSaveSettingsChange, whenText } from "./settings-shared";
+import { useSaveSettingsChange, whenText } from "./settings-shared";
 
 type RateBenefit = Extract<Benefit, { kind: "rate-bonus" }>;
 
@@ -40,56 +41,118 @@ const campaignsOf = (plan: Plan) =>
       benefit.category === "campaign" && benefit.kind === "rate-bonus",
   );
 
-function CampaignToggle({ benefit, onToggle }: { benefit: RateBenefit; onToggle: () => void }) {
+/**
+ * One campaign: its image, name, rate and days, then ✎ for one the user added, then whether it
+ * is on and its switch. The ✎ keeps its place on every row, so the switches line up.
+ */
+function CampaignRow({
+  plan,
+  benefit,
+  editing,
+  onEdit,
+  onToggle,
+  onDelete,
+}: {
+  plan: Plan;
+  benefit: RateBenefit;
+  editing: boolean;
+  onEdit: () => void;
+  onToggle: () => void;
+  onDelete: () => void;
+}) {
   const when = whenText(benefit.conditions.dateRule);
+  const name = `${benefit.label} ${rateText(benefit.params.rate)} ${when}`;
+  const template = isAddedCampaign(plan, benefit) ? templateOfCampaign(benefit) : undefined;
+  const editorId = useId();
   return (
-    <CheckboxCard.Root
-      checked={benefit.enabled}
-      onChange={onToggle}
-      colorScheme="primary"
-      size="sm"
-      w="auto"
-      inputProps={{ "aria-label": `${benefit.label} ${rateText(benefit.params.rate)} ${when}` }}
-    >
-      <Flex as="span" align="center" gap="2">
-        {benefit.imagePath ? (
-          <Image
-            src={imageUrl(benefit.imagePath)}
-            alt={benefit.label}
-            boxSize="10"
-            objectFit="contain"
-            flexShrink="0"
-          />
-        ) : null}
-        <Flex as="span" direction="column">
-          <CheckboxCard.Label>
-            {benefit.label}{" "}
-            <Text as="span" fontVariantNumeric="tabular-nums">
-              {rateText(benefit.params.rate)}
+    <Flex as="li" direction="column" gap="2">
+      <Flex align="center" gap="2" minH="12">
+        <Flex flex="1" align="center" gap="2" minW="0">
+          {benefit.imagePath ? (
+            <Image
+              src={imageUrl(benefit.imagePath)}
+              alt={benefit.label}
+              boxSize="10"
+              objectFit="contain"
+              flexShrink="0"
+            />
+          ) : (
+            <Box boxSize="10" flexShrink="0" />
+          )}
+          <Flex direction="column" minW="0">
+            <Text as="span" fontWeight="medium">
+              {benefit.label}{" "}
+              <Text as="span" fontVariantNumeric="tabular-nums">
+                {rateText(benefit.params.rate)}
+              </Text>
             </Text>
-          </CheckboxCard.Label>
-          <CheckboxCard.Description fontVariantNumeric="tabular-nums">
-            {when}
-          </CheckboxCard.Description>
+            <Text as="span" fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
+              {when}
+            </Text>
+          </Flex>
         </Flex>
+        <Box boxSize="11" flexShrink="0">
+          {template ? (
+            <IconButton
+              variant={editing ? "subtle" : "ghost"}
+              colorScheme={editing ? "primary" : undefined}
+              aria-label={`${benefit.label}を編集`}
+              aria-expanded={editing}
+              aria-controls={editing ? editorId : undefined}
+              onClick={onEdit}
+            >
+              <PencilIcon />
+            </IconButton>
+          ) : null}
+        </Box>
+        <Text
+          as="span"
+          w="7"
+          flexShrink="0"
+          textAlign="end"
+          fontSize="sm"
+          fontWeight="medium"
+          color={benefit.enabled ? "primary.fg" : "fg.muted"}
+        >
+          {benefit.enabled ? "ON" : "OFF"}
+        </Text>
+        <Switch
+          checked={benefit.enabled}
+          onChange={onToggle}
+          colorScheme="primary"
+          size="md"
+          flexShrink="0"
+          inputProps={{ "aria-label": name }}
+        />
       </Flex>
-    </CheckboxCard.Root>
+      {editing && template ? (
+        <CampaignEditor
+          id={editorId}
+          plan={plan}
+          benefit={benefit}
+          template={template}
+          onDelete={onDelete}
+        />
+      ) : null}
+    </Flex>
   );
 }
 
-/** The campaigns as toggles, 「＋ 追加」 and its templates. */
+/**
+ * The campaigns with their switches, and a button for each template that adds it at once. A campaign
+ * just added opens its values, to be changed there.
+ */
 export function CampaignToggles({ plan }: { plan: Plan }) {
   const toggle = useSetAtom(toggleBenefitAtom);
   const save = useSaveSettingsChange(plan.id);
-  const [addOpen, setAddOpen] = useState(false);
-  const [template, setTemplate] = useState<CampaignTemplate>();
+  const [editingId, setEditingId] = useState<string>();
   const addRef = useRef<HTMLButtonElement>(null);
   const deletion = useDeleteCampaign(plan, addRef);
   const campaigns = campaignsOf(plan);
 
   return (
     <Card.Root as="section" aria-label="キャンペーン">
-      <Card.Body alignItems="stretch">
+      <Card.Body alignItems="stretch" gap="4">
         <Flex align="center" justify="space-between" gap="2">
           <Heading as="h2" fontSize="md">
             キャンペーン
@@ -98,39 +161,26 @@ export function CampaignToggles({ plan }: { plan: Plan }) {
             エントリーしたものを ON に
           </Text>
         </Flex>
-        <Flex wrap="wrap" gap="2">
-          {campaigns.map((benefit) => (
-            <Flex key={benefit.id} align="stretch" gap="0.5">
-              <CampaignToggle
+        {campaigns.length > 0 ? (
+          <Flex as="ul" listStyle="none" m="0" p="0" direction="column" gap="2">
+            {campaigns.map((benefit) => (
+              <CampaignRow
+                key={benefit.id}
+                plan={plan}
                 benefit={benefit}
+                editing={editingId === benefit.id}
+                onEdit={() => setEditingId(editingId === benefit.id ? undefined : benefit.id)}
                 onToggle={() => save(toggle({ planId: plan.id, benefitId: benefit.id }))}
+                onDelete={() => deletion.ask(benefit)}
               />
-              {isAddedCampaign(plan, benefit) ? (
-                <IconButton
-                  variant="ghost"
-                  aria-label={`${benefit.label}を削除`}
-                  onClick={() => deletion.ask(benefit)}
-                  alignSelf="center"
-                >
-                  <CloseIcon />
-                </IconButton>
-              ) : null}
-            </Flex>
-          ))}
-          <Button
-            ref={addRef}
-            variant="outline"
-            colorScheme="primary"
-            aria-expanded={addOpen}
-            onClick={() => setAddOpen((open) => !open)}
-            alignSelf="center"
-          >
-            ＋ 追加
-          </Button>
-        </Flex>
-        {addOpen ? <TemplateList onPick={setTemplate} /> : null}
-
-        <CampaignAddDialog plan={plan} template={template} onClose={() => setTemplate(undefined)} />
+            ))}
+          </Flex>
+        ) : null}
+        <CampaignAddButtons
+          plan={plan}
+          firstRef={addRef}
+          onAdded={(benefit) => setEditingId(benefit.id)}
+        />
         {deletion.dialog}
       </Card.Body>
     </Card.Root>

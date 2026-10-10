@@ -2,7 +2,6 @@ import type { Benefit, Plan, Shop } from "@workspaces/domain";
 import { beforeEach, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { createMemoryRepository } from "../../../storage/memory-repository";
-import { tokyoToday } from "../../../ui/dates";
 import {
   PLAN,
   baseBenefit,
@@ -15,6 +14,7 @@ import {
   shopId,
   shops,
   spuBenefit,
+  tapCard,
 } from "../-test-fixtures";
 
 beforeEach(async () => {
@@ -62,10 +62,7 @@ test("adds an order and closes", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
   await expect.element(amountOf(sheet)).toHaveFocus();
-  expect(sheet.getByLabelText("注文日").element()).toHaveProperty(
-    "value",
-    tokyoToday(new Date()).replaceAll("-", "/"),
-  );
+  expect(sheet.getByLabelText("注文日").element()).toHaveProperty("value", "2026/10/09");
 
   await fillOrder(sheet, { shop: "ショップ4", amount: "3,300", name: "洗濯洗剤" });
   await sheet.getByRole("button", { name: "追加する" }).click();
@@ -165,10 +162,10 @@ test("repeat chip sets the order tag", async () => {
   await fillOrder(sheet, { shop: "ショップ4", amount: "11000" });
   await expect.poll(previewOf).toContain("× 1% → 100P");
 
-  const chip = sheet.getByRole("button", { name: /^リピート購入/ });
-  await expect.element(chip).toHaveTextContent("リピート購入 +1");
-  await chip.click();
-  await expect.element(chip).toHaveAttribute("aria-pressed", "true");
+  const chip = sheet.getByRole("checkbox", { name: /^リピート購入/ });
+  await expect.element(chip).toHaveAccessibleName("リピート購入 +1");
+  await tapCard(chip);
+  await expect.element(chip).toBeChecked();
   await expect.poll(previewOf).toContain("× 2% → 200P");
 
   await sheet.getByRole("button", { name: "追加する" }).click();
@@ -179,10 +176,10 @@ test("39shop chip marks the shop", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
   await fillOrder(sheet, { shop: "ショップ4", amount: "3300" });
-  const chip = sheet.getByRole("button", { name: /^39ショップ/ });
-  await expect.element(chip).toHaveAttribute("aria-pressed", "false");
-  await chip.click();
-  await expect.element(chip).toHaveAttribute("aria-pressed", "true");
+  const chip = sheet.getByRole("checkbox", { name: /^39ショップ/ });
+  await expect.element(chip).not.toBeChecked();
+  await tapCard(chip);
+  await expect.element(chip).toBeChecked();
   await sheet.getByRole("button", { name: "追加する" }).click();
 
   await expect.poll(async () => (await storedShop(shopId(4)))?.tags).toEqual(["39shop"]);
@@ -222,9 +219,7 @@ test("pasting an Ichiba URL selects the matching shop", async () => {
     .element(sheet.getByLabelText(/^商品のURL/))
     .toHaveValue("https://item.rakuten.co.jp/shop-four/item-1/");
   await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue(shopId(4));
-  await expect
-    .element(sheet.getByRole("button", { name: /^39ショップ/ }))
-    .toHaveAttribute("aria-pressed", "true");
+  await expect.element(sheet.getByRole("checkbox", { name: /^39ショップ/ })).toBeChecked();
   readText.mockRestore();
 
   // A code that is not in the registry starts a new shop with that code.

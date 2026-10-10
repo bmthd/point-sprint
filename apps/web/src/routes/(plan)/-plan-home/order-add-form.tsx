@@ -33,13 +33,14 @@ import { PlusIcon } from "../../../ui/icons";
 import {
   NEW_SHOP,
   TaxRateOptions,
-  ToggleChip,
+  CampaignCheck,
   fieldGrid,
   shopFromUrl,
   useSortedShops,
 } from "../-order-fields";
 import { orderSaveFailedAtom, pointsText } from "../-order-shared";
 import { FormDatePicker } from "../-date-picker-field";
+import { CapFlows } from "../-cap-flows";
 
 const sumOfTotals = (results: Map<string, { total: number }>) =>
   [...results.values()].reduce((sum, result) => sum + result.total, 0);
@@ -234,12 +235,20 @@ function TagChips({ form }: { form: OrderForm }) {
   const repeat = useField(form, { path: ["repeat"] });
   return (
     <>
-      <ToggleChip pressed={is39.input === true} onClick={() => is39.onChange(!is39.input)}>
+      <CampaignCheck
+        campaign="39shop"
+        checked={is39.input === true}
+        onChange={() => is39.onChange(!is39.input)}
+      >
         39ショップ
-      </ToggleChip>
-      <ToggleChip pressed={repeat.input === true} onClick={() => repeat.onChange(!repeat.input)}>
+      </CampaignCheck>
+      <CampaignCheck
+        campaign="repeat"
+        checked={repeat.input === true}
+        onChange={() => repeat.onChange(!repeat.input)}
+      >
         リピート購入
-      </ToggleChip>
+      </CampaignCheck>
     </>
   );
 }
@@ -255,7 +264,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
   const setFailed = useSetAtom(orderSaveFailedAtom);
   const run = useSingleFlight();
   const [open, setOpen] = useState(plan.orders.length === 0);
-  const form = useForm({ schema: OrderFormSchema, initialInput: emptyInput() });
+  const form = useForm({ schema: OrderFormSchema, initialInput: emptyInput(plan.period) });
   const autofill = useOrderAutofill(form);
   const formId = useId();
 
@@ -267,7 +276,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
       try {
         if (draft.shopChange) await saveShop.mutateAsync(draft.shopChange);
         await addOrder({ planId: plan.id, order: draft.order });
-        reset(form, { initialInput: emptyInput() });
+        reset(form, { initialInput: emptyInput(plan.period) });
         focus(form, { path: ["url"] });
         // After the focus moves: leaving the URL field would look up the URL it still shows.
         autofill.reset();
@@ -316,6 +325,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
               追加する
             </Button>
           </Flex>
+          <CapFlows plan={plan} form={form} />
         </Flex>
       </Form>
     </List.Item>

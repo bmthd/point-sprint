@@ -24,7 +24,7 @@ const Th = (props: ThProps) => (
   <NativeTable.Th
     fontWeight="normal"
     textAlign="start"
-    px="2"
+    px={{ base: "2", sm: "1" }}
     pt="0"
     pb="1"
     whiteSpace="nowrap"
@@ -35,7 +35,13 @@ const Th = (props: ThProps) => (
 /** A cell; `fold` lets it fold to no height while the compact ladder is closed. */
 const Td = ({ fold = false, children, ...props }: TdProps & { fold?: boolean }) =>
   fold ? (
-    <NativeTable.Td px="2" py="0" whiteSpace="nowrap" borderWidth="0" {...props}>
+    <NativeTable.Td
+      px={{ base: "2", sm: "1" }}
+      py="0"
+      whiteSpace="nowrap"
+      borderWidth="0"
+      {...props}
+    >
       <Box display="grid" transitionDuration="slow" transitionProperty="grid-template-rows">
         <Box overflowY="clip" minH="0">
           <Box py="1.5">{children}</Box>
@@ -43,7 +49,13 @@ const Td = ({ fold = false, children, ...props }: TdProps & { fold?: boolean }) 
       </Box>
     </NativeTable.Td>
   ) : (
-    <NativeTable.Td px="2" py="1.5" whiteSpace="nowrap" borderWidth="0" {...props}>
+    <NativeTable.Td
+      px={{ base: "2", sm: "1" }}
+      py="1.5"
+      whiteSpace="nowrap"
+      borderWidth="0"
+      {...props}
+    >
       {children}
     </NativeTable.Td>
   );

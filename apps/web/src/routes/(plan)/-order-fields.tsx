@@ -1,9 +1,16 @@
-import { type ChannelId, type Shop, type ShopTag, channels, parseUrl } from "@workspaces/domain";
-import { Flex, Button, Text, Field as UIField } from "@workspaces/ui";
+import {
+  type ChannelId,
+  type Shop,
+  type ShopTag,
+  campaignTemplates,
+  channels,
+  parseUrl,
+} from "@workspaces/domain";
+import { CheckboxCard, Flex, Image, Text, Field as UIField } from "@workspaces/ui";
 import { type ReactNode, useId, useMemo } from "react";
 import { type ShopChange, changeShop, replaceShop } from "../../state/mutations";
 import type { RakutenItem } from "../../rakuten/item-search";
-import { taxRateLabel } from "./-order-shared";
+import { imageUrl, taxRateLabel } from "./-order-shared";
 
 // Fields shared by the desktop list's edit grid, its add form and the order editor.
 
@@ -94,30 +101,58 @@ export function TaxRateOptions() {
   ));
 }
 
-/** A chip that is on or off (39ショップ, リピート購入). */
-export function ToggleChip({
-  pressed,
-  onClick,
+const campaignImage = (id: "39shop" | "repeat") =>
+  campaignTemplates.find((template) => template.id === id)?.benefit.imagePath;
+
+/**
+ * 39ショップ or リピート購入 on the order: a card with the campaign's image, checked when the order
+ * gets it. Checking it changes the card's colors only, never its size. `rate` (「+1」) goes on a
+ * line of its own, so a narrow card does not break the name.
+ */
+export function CampaignCheck({
+  campaign,
+  checked,
+  onChange,
   describedBy,
+  rate,
   children,
 }: {
-  pressed: boolean;
-  onClick: () => void;
+  campaign: "39shop" | "repeat";
+  rate?: string;
+  checked: boolean;
+  onChange: () => void;
   describedBy?: string;
   children: ReactNode;
 }) {
+  const imagePath = campaignImage(campaign);
   return (
-    <Button
-      size="lg"
-      variant={pressed ? "solid" : "outline"}
-      colorScheme="mono"
-      aria-pressed={pressed}
-      aria-describedby={describedBy}
-      onClick={onClick}
+    <CheckboxCard.Root
+      checked={checked}
+      onChange={onChange}
+      colorScheme="primary"
+      size="sm"
+      w="auto"
+      minH="11"
+      alignItems="center"
+      inputProps={{ "aria-describedby": describedBy }}
     >
-      {pressed ? <span aria-hidden="true">✓</span> : null}
-      {children}
-    </Button>
+      <Flex as="span" align="center" gap="2">
+        {imagePath ? (
+          <Image src={imageUrl(imagePath)} alt="" boxSize="7" objectFit="contain" flexShrink="0" />
+        ) : null}
+        <CheckboxCard.Label wordBreak="keep-all">
+          {children}
+          {rate ? (
+            <>
+              {" "}
+              <Text as="span" display="block" fontVariantNumeric="tabular-nums">
+                {rate}
+              </Text>
+            </>
+          ) : null}
+        </CheckboxCard.Label>
+      </Flex>
+    </CheckboxCard.Root>
   );
 }
 

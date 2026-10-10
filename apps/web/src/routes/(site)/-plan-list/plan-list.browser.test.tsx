@@ -20,7 +20,8 @@ import { repositoryAtom } from "../../../state/repository";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
 import { TestColorMode } from "../../../test-color-mode";
-import { PlanList, useToday } from "./plan-list";
+import { useToday } from "../../-use-today";
+import { PlanList } from "./plan-list";
 
 // 2026-10-05 12:00 in Japan: the October marathon (10/4〜10/9) is running.
 const now = () => new Date("2026-10-05T03:00:00Z");
