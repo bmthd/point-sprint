@@ -109,7 +109,7 @@ export function ShopLadder({
               >
                 <Td fold={fold}>{row.shops}店舗</Td>
                 <Td fold={fold}>+{row.rate}倍</Td>
-                <Td fold={fold}>
+                <Td fold={fold} verticalAlign="middle">
                   <Progress
                     value={((remaining ?? 0) / longest) * 100}
                     colorScheme={isCurrent ? "primary" : "gray"}
