@@ -25,7 +25,6 @@ import { updateBenefitAtom } from "../../../state/order-ops";
 import { imageUrl } from "../-order-shared";
 import { SPECS } from "./campaign-form";
 import { useSaveSettingsChange } from "./settings-shared";
-import { SportsWinAdder } from "./sports-win-adder";
 
 /** The images of 勝ったら倍's two choices: one team won, or both did. */
 const SPORTS_CHOICES = [
@@ -223,7 +222,6 @@ export function CampaignEditor({
       <Text fontSize="xs" color="fg.muted">
         Enter か、欄の外を押すと保存します。
       </Text>
-      {spec.date ? <SportsWinAdder plan={plan} benefit={benefit} template={template} /> : null}
       <Button variant="outline" colorScheme="danger" onClick={onDelete} alignSelf="flex-start">
         {benefit.label}を削除
       </Button>
