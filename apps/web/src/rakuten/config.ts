@@ -1,7 +1,8 @@
 import * as v from "valibot";
 import { siteUrl } from "../site-url.ts";
 
-// The Rakuten API settings, shared by the browser (item lookup) and the build (the guides' item lists).
+// The Rakuten API settings, read only by the server: the Worker's item lookup and the build's
+// guide item lists.
 
 /** The only site the app's settings let call the API: Rakuten checks the `Origin` header. */
 export const ALLOWED_ORIGIN = siteUrl;
@@ -9,10 +10,7 @@ export const ALLOWED_ORIGIN = siteUrl;
 export const ITEM_SEARCH_ENDPOINT =
   "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701";
 
-/** Where the dev server relays calls to the API, putting `ALLOWED_ORIGIN` in place of localhost. */
-export const DEV_PROXY_PATH = "/rakuten-api";
-
-// The values are kept in plain text; one encrypted by mistake stays `encrypted:…` without the key.
+// A value read without the dotenvx key stays `encrypted:…`.
 const KeySchema = v.pipe(
   v.string(),
   v.trim(),
@@ -21,8 +19,9 @@ const KeySchema = v.pipe(
 );
 
 /**
- * The application id, the access key and the affiliate id. None of them is a secret: the access
- * key works from anywhere that sends the allowed `Origin`, so it is shipped to the browser.
+ * The application id, the access key and the affiliate id. The terms of use (第5条第2項) ask that
+ * the application id be kept from others, so the id and the key are secrets the browser never
+ * gets. The affiliate id is public: it is in every affiliate link.
  */
 export const RakutenConfigSchema = v.object({
   applicationId: KeySchema,
@@ -33,14 +32,14 @@ export const RakutenConfigSchema = v.object({
 export type RakutenConfig = v.InferOutput<typeof RakutenConfigSchema>;
 
 /**
- * The settings in `PUBLIC_RAKUTEN_APPLICATION_ID`, `PUBLIC_RAKUTEN_ACCESS_KEY` and
- * `PUBLIC_RAKUTEN_AFFILIATE_ID`, or `undefined` when they are missing or encrypted.
+ * The settings in `RAKUTEN_APPLICATION_ID`, `RAKUTEN_ACCESS_KEY` and `RAKUTEN_AFFILIATE_ID`, or
+ * `undefined` when they are missing or encrypted.
  */
 export function readRakutenConfig(env: Record<string, string | undefined>) {
   const parsed = v.safeParse(RakutenConfigSchema, {
-    applicationId: env.PUBLIC_RAKUTEN_APPLICATION_ID,
-    accessKey: env.PUBLIC_RAKUTEN_ACCESS_KEY,
-    ...(env.PUBLIC_RAKUTEN_AFFILIATE_ID ? { affiliateId: env.PUBLIC_RAKUTEN_AFFILIATE_ID } : {}),
+    applicationId: env.RAKUTEN_APPLICATION_ID,
+    accessKey: env.RAKUTEN_ACCESS_KEY,
+    ...(env.RAKUTEN_AFFILIATE_ID ? { affiliateId: env.RAKUTEN_AFFILIATE_ID } : {}),
   });
   return parsed.success ? parsed.output : undefined;
 }

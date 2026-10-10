@@ -26,8 +26,8 @@ jobs:
           runtime: node@26
           cache: true
       - run: pnpm install --frozen-lockfile
-      # dotenvx decrypts the secrets in .env.production. The public values are plain text and are
-      # built in without the key.
+      # dotenvx decrypts the secrets in .env.production, which the prerendering of the guides uses.
+      # The public values are plain text and are built in without the key.
       - run: pnpm build
         env:
           DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}
@@ -41,7 +41,8 @@ jobs:
           umask 077
           secrets="$RUNNER_TEMP/worker-secrets.json"
           pnpm exec dotenvx get -f ../../.env.production --strict \
-            -ik TURNSTILE_SECRET_KEY INQUIRY_TO_ADDRESS > "$secrets"
+            -ik TURNSTILE_SECRET_KEY INQUIRY_TO_ADDRESS RAKUTEN_APPLICATION_ID RAKUTEN_ACCESS_KEY \
+            > "$secrets"
           jq -r '.[] | "::add-mask::" + .' "$secrets"
           pnpm exec cf deploy --prebuilt --message "${GITHUB_SHA::7}" --secrets-file "$secrets"
         env:
