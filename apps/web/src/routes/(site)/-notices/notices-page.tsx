@@ -1,4 +1,4 @@
-import { Box, Heading, Separator, Text, VStack } from "@workspaces/ui";
+import { Flex, Heading, Separator, Text, VStack } from "@workspaces/ui";
 import { PageWithSidebar } from "../-page-with-sidebar";
 import { NoticeDate } from "../../-notices/notice-date";
 import {
@@ -10,7 +10,7 @@ import {
 
 function NoticeArticle({ notice }: { notice: Notice }) {
   return (
-    <Box as="article" id={notice.id} display="flex" flexDirection="column" gap="2">
+    <Flex as="article" id={notice.id} direction="column" gap="2">
       <NoticeDate date={notice.date} />
       <Heading as="h2" fontSize="md">
         {notice.title}
@@ -20,7 +20,7 @@ function NoticeArticle({ notice }: { notice: Notice }) {
           {paragraph}
         </Text>
       ))}
-    </Box>
+    </Flex>
   );
 }
 

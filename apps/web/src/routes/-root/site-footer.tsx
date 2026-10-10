@@ -1,5 +1,5 @@
 import type { LinkProps } from "@tanstack/react-router";
-import { Box, Text } from "@workspaces/ui";
+import { Box, Flex, Text } from "@workspaces/ui";
 import { RouterLink } from "../../ui/router-link";
 
 /** The footer's links. */
@@ -25,15 +25,14 @@ export function SiteFooter() {
         "body:has([data-bottom-bar]) &": { pb: "calc(8rem + env(safe-area-inset-bottom))" },
       }}
     >
-      <Box maxW="1280px" mx="auto" px="4" py="6" display="flex" flexDirection="column" gap="2">
+      <Flex maxW="1280px" mx="auto" px="4" py="6" direction="column" gap="2">
         {footerLinks.length > 0 ? (
-          <Box
+          <Flex
             as="nav"
             aria-label="サイトの案内"
-            display="flex"
-            justifyContent="center"
+            justify="center"
             columnGap="4"
-            flexWrap="wrap"
+            wrap="wrap"
             fontSize="sm"
           >
             {footerLinks.map((link) => (
@@ -48,12 +47,12 @@ export function SiteFooter() {
                 {link.label}
               </RouterLink>
             ))}
-          </Box>
+          </Flex>
         ) : null}
         <Text fontSize="xs" color="fg.muted" textAlign="center">
           入力した内容はこのブラウザの中にだけ保存されます。ブラウザのデータを消すと、プランも消えます。
         </Text>
-      </Box>
+      </Flex>
     </Box>
   );
 }

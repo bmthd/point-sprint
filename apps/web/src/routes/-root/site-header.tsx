@@ -1,6 +1,7 @@
 import {
   Box,
   Drawer,
+  Flex,
   IconButton,
   MenuIcon,
   MoonIcon,
@@ -83,13 +84,12 @@ function ColorModeButton() {
 export function SiteHeader() {
   return (
     <Box as="header" borderBottomWidth="1px" borderColor="border">
-      <Box
+      <Flex
         maxW="1280px"
         mx="auto"
         h="14"
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
+        align="center"
+        justify="space-between"
         gap="2"
         pl={{ base: "6", lg: "4" }}
         pr={{ base: "4", lg: "2" }}
@@ -108,12 +108,12 @@ export function SiteHeader() {
         >
           ポイントスプリント
         </RouterLink>
-        <Box display={{ base: "flex", lg: "none" }} alignItems="center" gap="1">
+        <Flex display={{ base: "flex", lg: "none" }} align="center" gap="1">
           <ColorModeButton />
           <ProfileLink />
-        </Box>
+        </Flex>
         <SiteMenu />
-      </Box>
+      </Flex>
     </Box>
   );
 }

@@ -51,6 +51,7 @@ export function ShareButton({
     <VStack gap="2" alignItems="stretch" {...rest}>
       <Button
         variant="outline"
+        bg="bg.panel"
         size="lg"
         startIcon={<ShareIcon />}
         aria-expanded={open}

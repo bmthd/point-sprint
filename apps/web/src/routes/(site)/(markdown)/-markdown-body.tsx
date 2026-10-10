@@ -31,7 +31,7 @@ export const markdownComponents = {
   ),
   li: ({ children }) => <List.Item>{children}</List.Item>,
   "md-details": ({ summary, children }: { summary: string; children?: ReactNode }) => (
-    <NativeAccordion.Root animate={false} borderBottomWidth="1px" borderColor="border">
+    <NativeAccordion.Root borderBottomWidth="1px" borderColor="border">
       <NativeAccordion.Item>
         <NativeAccordion.Button fontWeight="bold">{summary}</NativeAccordion.Button>
         <NativeAccordion.Panel>{children}</NativeAccordion.Panel>

@@ -5,7 +5,7 @@ import {
   campaignTemplates,
   officialEvents,
 } from "@workspaces/domain";
-import { Box, Button, Card, CheckboxCard, Heading, IconButton, Image, Text } from "@workspaces/ui";
+import { Flex, Button, Card, CheckboxCard, Heading, IconButton, Image, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useRef, useState } from "react";
 import { toggleBenefitAtom } from "../../../state/order-ops";
@@ -51,7 +51,7 @@ function CampaignToggle({ benefit, onToggle }: { benefit: RateBenefit; onToggle:
       w="auto"
       inputProps={{ "aria-label": `${benefit.label} ${rateText(benefit.params.rate)} ${when}` }}
     >
-      <Box as="span" display="flex" alignItems="center" gap="2">
+      <Flex as="span" align="center" gap="2">
         {benefit.imagePath ? (
           <Image
             src={imageUrl(benefit.imagePath)}
@@ -61,7 +61,7 @@ function CampaignToggle({ benefit, onToggle }: { benefit: RateBenefit; onToggle:
             flexShrink="0"
           />
         ) : null}
-        <Box as="span" display="flex" flexDirection="column">
+        <Flex as="span" direction="column">
           <CheckboxCard.Label>
             {benefit.label}{" "}
             <Text as="span" fontVariantNumeric="tabular-nums">
@@ -71,8 +71,8 @@ function CampaignToggle({ benefit, onToggle }: { benefit: RateBenefit; onToggle:
           <CheckboxCard.Description fontVariantNumeric="tabular-nums">
             {when}
           </CheckboxCard.Description>
-        </Box>
-      </Box>
+        </Flex>
+      </Flex>
     </CheckboxCard.Root>
   );
 }
@@ -90,17 +90,17 @@ export function CampaignToggles({ plan }: { plan: Plan }) {
   return (
     <Card.Root as="section" aria-label="キャンペーン">
       <Card.Body alignItems="stretch">
-        <Box display="flex" alignItems="center" justifyContent="space-between" gap="2">
+        <Flex align="center" justify="space-between" gap="2">
           <Heading as="h2" fontSize="md">
             キャンペーン
           </Heading>
           <Text fontSize="xs" color="fg.muted">
             エントリーしたものを ON に
           </Text>
-        </Box>
-        <Box display="flex" flexWrap="wrap" gap="2">
+        </Flex>
+        <Flex wrap="wrap" gap="2">
           {campaigns.map((benefit) => (
-            <Box key={benefit.id} display="flex" alignItems="stretch" gap="0.5">
+            <Flex key={benefit.id} align="stretch" gap="0.5">
               <CampaignToggle
                 benefit={benefit}
                 onToggle={() => save(toggle({ planId: plan.id, benefitId: benefit.id }))}
@@ -115,7 +115,7 @@ export function CampaignToggles({ plan }: { plan: Plan }) {
                   <CloseIcon />
                 </IconButton>
               ) : null}
-            </Box>
+            </Flex>
           ))}
           <Button
             ref={addRef}
@@ -127,7 +127,7 @@ export function CampaignToggles({ plan }: { plan: Plan }) {
           >
             ＋ 追加
           </Button>
-        </Box>
+        </Flex>
         {addOpen ? <TemplateList onPick={setTemplate} /> : null}
 
         <CampaignAddDialog plan={plan} template={template} onClose={() => setTemplate(undefined)} />

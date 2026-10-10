@@ -2,11 +2,11 @@ import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import type { Plan } from "@workspaces/domain";
 import {
   Box,
+  Flex,
   Button,
   Card,
   Heading,
   Menu,
-  Text,
   VStack,
   useDisclosure,
   useMediaQuery,
@@ -43,35 +43,36 @@ function PlanSwitcher({ plan }: { plan: Plan }) {
     .filter((other) => other.id !== plan.id)
     .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
   return (
-    <Menu.Root>
-      <Menu.Trigger>
-        <Button
-          variant="ghost"
-          colorScheme="gray"
-          size="lg"
-          aria-label={`${plan.name}、プランを切り替える`}
-          minW="0"
-          textAlign="start"
-        >
-          <Text as="span" fontSize="md" fontWeight="bold" lineClamp={1}>
-            {plan.name}
-          </Text>
-          <ChevronIcon size={16} />
-        </Button>
-      </Menu.Trigger>
-      <Menu.Content>
-        {others.map((other) => (
-          <Menu.Item
-            key={other.id}
-            onClick={() => void navigate({ to: "/plan", search: { id: other.id } })}
+    <Box display="flex" alignItems="center" gap="1" minW="0">
+      <Heading as="h1" fontSize="md" lineClamp={1}>
+        {plan.name}
+      </Heading>
+      <Menu.Root>
+        <Menu.Trigger>
+          <Button
+            variant="ghost"
+            colorScheme="gray"
+            size="sm"
+            aria-label="プランを切り替える"
+            flex="none"
           >
-            {other.name}
-          </Menu.Item>
-        ))}
-        {others.length > 0 ? <Menu.Separator /> : null}
-        <Menu.Item onClick={() => void navigate({ to: "/" })}>プランの一覧</Menu.Item>
-      </Menu.Content>
-    </Menu.Root>
+            <ChevronIcon size={16} />
+          </Button>
+        </Menu.Trigger>
+        <Menu.Content>
+          {others.map((other) => (
+            <Menu.Item
+              key={other.id}
+              onClick={() => void navigate({ to: "/plan", search: { id: other.id } })}
+            >
+              {other.name}
+            </Menu.Item>
+          ))}
+          {others.length > 0 ? <Menu.Separator /> : null}
+          <Menu.Item onClick={() => void navigate({ to: "/" })}>プランの一覧</Menu.Item>
+        </Menu.Content>
+      </Menu.Root>
+    </Box>
   );
 }
 
@@ -107,25 +108,24 @@ function SettingsEntry({ plan, desktop }: { plan: Plan; desktop: boolean }) {
 /** The plan's own bar under the site header: which plan this is, and its settings. */
 function PlanBar({ plan, desktop }: { plan: Plan; desktop: boolean }) {
   return (
-    <Box
+    <Flex
       maxW="1280px"
       mx="auto"
       h="14"
-      display="flex"
-      alignItems="center"
-      justifyContent="space-between"
+      align="center"
+      justify="space-between"
       gap="2"
       pl={{ base: "6", lg: "3" }}
       pr={{ base: "6", lg: "2" }}
     >
       <PlanSwitcher plan={plan} />
       <SettingsEntry plan={plan} desktop={desktop} />
-    </Box>
+    </Flex>
   );
 }
 
 const Panel = (props: { children: ReactNode; label: string }) => (
-  <Card.Root as="section" aria-label={props.label} variant="outline">
+  <Card.Root as="section" aria-label={props.label}>
     <Card.Body alignItems="stretch">{props.children}</Card.Body>
   </Card.Root>
 );

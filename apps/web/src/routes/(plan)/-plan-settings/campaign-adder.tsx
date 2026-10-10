@@ -12,6 +12,7 @@ import {
 import { Field as FormField, type FormStore, useField, useForm } from "@formisch/react";
 import {
   Box,
+  Flex,
   Button,
   Field,
   HStack,
@@ -74,7 +75,7 @@ export function TemplateList({ onPick }: { onPick: (template: CampaignTemplate) 
             whiteSpace="normal"
             lineHeight="moderate"
           >
-            <Box as="span" display="flex" alignItems="center" gap="2">
+            <Flex as="span" align="center" gap="2">
               {template.benefit.imagePath ? (
                 <Image
                   src={imageUrl(template.benefit.imagePath)}
@@ -92,7 +93,7 @@ export function TemplateList({ onPick }: { onPick: (template: CampaignTemplate) 
                   {SPECS[template.id]?.hint}
                 </Text>
               </Box>
-            </Box>
+            </Flex>
           </Button>
         </List.Item>
       ))}
@@ -126,10 +127,12 @@ function TextField({
 /** A date field of the form. */
 function DateField({
   form,
+  plan,
   name,
   label,
 }: {
   form: FormStore<CampaignFormSchema>;
+  plan: Plan;
   name: "date" | "start" | "end";
   label: string;
 }) {
@@ -137,7 +140,7 @@ function DateField({
     <FormField of={form} path={[name]}>
       {(field) => (
         <Field.Root label={label} {...errorsOf(field)} minW="0">
-          <FormDatePicker field={field} />
+          <FormDatePicker field={field} period={plan.period} />
         </Field.Root>
       )}
     </FormField>
@@ -227,7 +230,7 @@ function CampaignForm({
             {spec.label ? <TextField form={form} name="label" label="名前" /> : null}
             {spec.date ? (
               <>
-                <DateField form={form} name="date" label="日付" />
+                <DateField form={form} plan={plan} name="date" label="日付" />
                 <RadioCardGroup.Root
                   aria-label="倍率"
                   value={String(choice)}
@@ -270,8 +273,8 @@ function CampaignForm({
                 alignItems="start"
                 gap="2"
               >
-                <DateField form={form} name="start" label="開始日" />
-                <DateField form={form} name="end" label="終了日" />
+                <DateField form={form} plan={plan} name="start" label="開始日" />
+                <DateField form={form} plan={plan} name="end" label="終了日" />
               </Box>
             ) : null}
             {spec.rate ? (
