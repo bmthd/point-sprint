@@ -106,16 +106,19 @@ const campaignImage = (id: "39shop" | "repeat") =>
 
 /**
  * 39ショップ or リピート購入 on the order: a card with the campaign's image, checked when the order
- * gets it. Checking it changes the card's colors only, never its size.
+ * gets it. Checking it changes the card's colors only, never its size. `rate` (「+1」) goes on a
+ * line of its own, so a narrow card does not break the name.
  */
 export function CampaignCheck({
   campaign,
   checked,
   onChange,
   describedBy,
+  rate,
   children,
 }: {
   campaign: "39shop" | "repeat";
+  rate?: string;
   checked: boolean;
   onChange: () => void;
   describedBy?: string;
@@ -137,7 +140,17 @@ export function CampaignCheck({
         {imagePath ? (
           <Image src={imageUrl(imagePath)} alt="" boxSize="7" objectFit="contain" flexShrink="0" />
         ) : null}
-        <CheckboxCard.Label fontVariantNumeric="tabular-nums">{children}</CheckboxCard.Label>
+        <CheckboxCard.Label wordBreak="keep-all">
+          {children}
+          {rate ? (
+            <>
+              {" "}
+              <Text as="span" display="block" fontVariantNumeric="tabular-nums">
+                {rate}
+              </Text>
+            </>
+          ) : null}
+        </CheckboxCard.Label>
       </Flex>
     </CheckboxCard.Root>
   );

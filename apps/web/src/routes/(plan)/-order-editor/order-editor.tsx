@@ -213,7 +213,7 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
   const is39 = useField(form, { path: ["is39"] });
   const repeat = useField(form, { path: ["repeat"] });
   const date = useField(form, { path: ["date"] });
-  const plus = (rate: number) => (rate > 0 ? ` +${rate}` : "");
+  const plus = (rate: number) => (rate > 0 ? `+${rate}` : "");
   const byDate = dateCampaigns(plan.benefits, typeof date.input === "string" ? date.input : "");
   return (
     <Fieldset.Root legend="キャンペーン">
@@ -223,15 +223,17 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
           campaign="39shop"
           checked={is39.input === true}
           onChange={() => is39.onChange(!is39.input)}
+          rate={plus(tagBonus(plan.benefits, { shop: "39shop" }))}
         >
-          39ショップ{plus(tagBonus(plan.benefits, { shop: "39shop" }))}
+          39ショップ
         </CampaignCheck>
         <CampaignCheck
           campaign="repeat"
           checked={repeat.input === true}
           onChange={() => repeat.onChange(!repeat.input)}
+          rate={plus(tagBonus(plan.benefits, { order: "repeat" }))}
         >
-          リピート購入{plus(tagBonus(plan.benefits, { order: "repeat" }))}
+          リピート購入
         </CampaignCheck>
       </Box>
       {byDate.length > 0 ? (
@@ -240,7 +242,7 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
           {byDate.map((benefit) => (
             <CampaignChip key={benefit.id}>
               {benefit.label}
-              {plus(rateOf(benefit))}
+              {rateOf(benefit) > 0 ? ` ${plus(rateOf(benefit))}` : ""}
             </CampaignChip>
           ))}
         </Flex>
