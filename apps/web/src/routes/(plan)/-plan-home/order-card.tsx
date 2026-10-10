@@ -74,6 +74,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
 
   const base = order.lineItems.reduce((sum, item) => sum + taxExcludedTarget(item), 0);
   const amount = order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0);
+  const title = orderTitle(order);
 
   return (
     <Card.Root
@@ -109,9 +110,16 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 {monthDayWithWeekday(order.date)}
               </Text>
             </Flex>
-            <Text as="span" fontSize="sm" fontWeight="medium" lineClamp={1}>
-              {orderTitle(order)}
-            </Text>
+            {/* Without a memo the line still shows, so every card is as tall as the others. */}
+            {title ? (
+              <Text as="span" fontSize="sm" fontWeight="medium" lineClamp={1}>
+                {title}
+              </Text>
+            ) : (
+              <Text as="span" fontSize="sm" color="fg.muted">
+                メモなし
+              </Text>
+            )}
             <Flex as="span" align="center" wrap="wrap" gap="1.5" fontSize="xs" color="fg.muted">
               <Text as="span" fontVariantNumeric="tabular-nums">
                 {yen(amount)}
