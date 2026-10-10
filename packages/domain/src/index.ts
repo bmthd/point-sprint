@@ -22,10 +22,14 @@ export {
   type ShopAroundOutlook,
   type ShopAroundOutlookRow,
 } from "./calculate/outlook";
+export { capFlows, type CapFlow } from "./calculate/cap-flows";
+export { capLines, type CapLine } from "./calculate/cap-lines";
+export { pointsForPrice, priceToFill, type TaxRate } from "./calculate/fill-price";
 export type {
   BenefitTotal,
   BreakdownRow,
   CalculationResult,
+  CapGroupUsage,
   CalculationWarning,
   HeldEstimate,
 } from "./calculate/types";
