@@ -1,5 +1,15 @@
 import { taxExcludedTarget, taxIncludedTarget } from "@workspaces/domain";
-import { Box, Button, Card, IconButton, List, Switch, Text, VisuallyHidden } from "@workspaces/ui";
+import {
+  Box,
+  Flex,
+  Button,
+  Card,
+  IconButton,
+  List,
+  Switch,
+  Text,
+  VisuallyHidden,
+} from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { memo, useId, useMemo, useRef } from "react";
 import { orderAtom } from "../../../state/derived";
@@ -73,7 +83,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
       borderStyle={held ? "dashed" : undefined}
       overflow="hidden"
     >
-      <Box display="flex" alignItems="center">
+      <Flex align="center">
         <Button
           variant="ghost"
           colorScheme="gray"
@@ -91,27 +101,19 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
           lineHeight="normal"
         >
           <OrderBadge badge={props.badge} />
-          <Box as="span" flex="1" minW="0" display="flex" flexDirection="column" gap="0.5">
-            <Box as="span" display="flex" gap="1.5" fontSize="xs" color="fg.muted">
+          <Flex as="span" flex="1" minW="0" direction="column" gap="0.5">
+            <Flex as="span" gap="1.5" fontSize="xs" color="fg.muted">
               <Text as="span" lineClamp={1}>
                 {shopName}
               </Text>
               <Text as="span" flex="none" fontVariantNumeric="tabular-nums">
                 {monthDayWithWeekday(order.date)}
               </Text>
-            </Box>
+            </Flex>
             <Text as="span" fontSize="sm" fontWeight="medium" lineClamp={1}>
               {orderTitle(order)}
             </Text>
-            <Box
-              as="span"
-              display="flex"
-              alignItems="center"
-              flexWrap="wrap"
-              gap="1.5"
-              fontSize="xs"
-              color="fg.muted"
-            >
+            <Flex as="span" align="center" wrap="wrap" gap="1.5" fontSize="xs" color="fg.muted">
               <Text as="span" fontVariantNumeric="tabular-nums">
                 {yen(amount)}
               </Text>
@@ -119,13 +121,12 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
               {points.campaigns.map((label) => (
                 <CampaignChip key={label}>{label}</CampaignChip>
               ))}
-            </Box>
-          </Box>
-          <Box
+            </Flex>
+          </Flex>
+          <Flex
             as="span"
-            display="flex"
-            flexDirection="column"
-            alignItems="flex-end"
+            direction="column"
+            align="flex-end"
             gap="0.5"
             fontVariantNumeric="tabular-nums"
           >
@@ -144,13 +145,13 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 </Text>
               </>
             )}
-          </Box>
-          <Box as="span" color="fg.muted" display="flex">
+          </Flex>
+          <Flex as="span" color="fg.muted">
             <ChevronIcon open={open} />
-          </Box>
+          </Flex>
         </Button>
         {reordering ? (
-          <Box display="flex" flex="none" pr="1">
+          <Flex flex="none" pr="1">
             <IconButton
               ref={upRef}
               variant="ghost"
@@ -173,9 +174,9 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
             >
               <ArrowIcon direction="down" />
             </IconButton>
-          </Box>
+          </Flex>
         ) : null}
-      </Box>
+      </Flex>
       <Box
         id={bodyId}
         hidden={!open}
@@ -203,18 +204,18 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 </List.Item>
               ))}
             </List.Root>
-            <Box display="flex" justifyContent="space-between" fontSize="xs" color="fg.muted">
+            <Flex justify="space-between" fontSize="xs" color="fg.muted">
               <span>税抜の基準額</span>
               <Text as="span" fontVariantNumeric="tabular-nums">
                 {yen(base)}
               </Text>
-            </Box>
+            </Flex>
             {held ? (
               <Text fontSize="sm" color="fg.muted">
                 保留中の注文は合計と買い回りに入りません。
               </Text>
             ) : (
-              <Box display="flex" flexDirection="column" gap="1.5" fontSize="sm">
+              <Flex direction="column" gap="1.5" fontSize="sm">
                 {points.rows.map((row) => (
                   <Box
                     key={row.key}
@@ -244,7 +245,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                     </Text>
                   </Box>
                 ))}
-              </Box>
+              </Flex>
             )}
             <Switch
               checked={!held}

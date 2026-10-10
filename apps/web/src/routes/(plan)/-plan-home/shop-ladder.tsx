@@ -1,6 +1,7 @@
 import type { ShopAroundOutlook, ShopAroundOutlookRow } from "@workspaces/domain";
 import {
   Box,
+  Flex,
   type BoxProps,
   Button,
   Heading,
@@ -42,7 +43,7 @@ export function ShopLadder({
   const longest = Math.max(1, ...outlook.rows.map((row) => row.remainingTaxExcluded ?? 0));
 
   return (
-    <Box display="flex" flexDirection="column" gap="2">
+    <Flex direction="column" gap="2">
       {compact ? (
         <Button
           variant="ghost"
@@ -113,6 +114,6 @@ export function ShopLadder({
       <Text fontSize="xs" color="fg.muted">
         残額は税抜・概算。いまの買い物を含めた金額から差し引いています。
       </Text>
-    </Box>
+    </Flex>
   );
 }

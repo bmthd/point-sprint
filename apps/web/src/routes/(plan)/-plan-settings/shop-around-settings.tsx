@@ -1,5 +1,5 @@
 import { type Benefit, type Plan, officialEvents } from "@workspaces/domain";
-import { Box, Button, Card, Text } from "@workspaces/ui";
+import { Box, Flex, Button, Card, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
 import * as v from "valibot";
@@ -136,29 +136,28 @@ function ShopAroundEditor({
         whiteSpace="normal"
         lineHeight="moderate"
       >
-        <Box as="span" flex="1" display="flex" flexDirection="column" gap="0.5" minW="0">
+        <Flex as="span" flex="1" direction="column" gap="0.5" minW="0">
           <Text as="span" fontSize="md" fontWeight="bold">
             {name}
           </Text>
           <Text as="span" fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
             {summaryOf(benefit, period)}
           </Text>
-        </Box>
+        </Flex>
         <Text as="span" fontSize="sm" color="primary.fg">
           変更
         </Text>
         <ChevronIcon open={open} />
       </Button>
       {open ? (
-        <Box
+        <Flex
           id={panelId}
           borderTopWidth="1px"
           borderColor="border"
           px="4"
           pt="3"
           pb="4"
-          display="flex"
-          flexDirection="column"
+          direction="column"
           gap="2.5"
         >
           <Box
@@ -216,7 +215,7 @@ function ShopAroundEditor({
               この買いまわりを削除
             </Button>
           ) : null}
-        </Box>
+        </Flex>
       ) : null}
     </>
   );
