@@ -19,6 +19,8 @@ export type CapLine = {
   usedElsewhere: number;
   /** IDs of the other plans that received points from the cap. */
   sharedWith: string[];
+  /** Raw points of every member of the cap group, before the cap. */
+  raw: number;
   /** Points the cap can still give: the cap minus the raw points of every member. */
   remaining: number;
   /** +N倍 one more yen earns; a shop-around benefit's rate at the plan's shop count. */
@@ -103,6 +105,7 @@ export function capLines(
             usedHere: points[plan.id] ?? 0,
             usedElsewhere: others.reduce((sum, [, used]) => sum + used, 0),
             sharedWith: others.map(([id]) => id),
+            raw: usage?.raw ?? 0,
             remaining: Math.max(0, cap - (usage?.raw ?? 0)),
             rate: rateOf(benefit, result.shopCount),
           },

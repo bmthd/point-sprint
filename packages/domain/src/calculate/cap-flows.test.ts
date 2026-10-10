@@ -40,7 +40,7 @@ const marathon: Benefit = {
   params: { tiers: [{ minShops: 1, rate: 1 }], roundingUnit: "item", cap: 100 },
 };
 
-/** October's card cap with 70P left. */
+/** October's card cap: other plans used 30P, and the order adds 100P (`raw` includes it). */
 const line = (over: Partial<CapLine> = {}): CapLine => ({
   benefit: card,
   key: "month:default:card:2026-10",
@@ -50,7 +50,8 @@ const line = (over: Partial<CapLine> = {}): CapLine => ({
   usedHere: 0,
   usedElsewhere: 30,
   sharedWith: [],
-  remaining: 70,
+  raw: 130,
+  remaining: 0,
   rate: 1,
   ...over,
 });
@@ -91,7 +92,7 @@ describe("capFlows", () => {
 
   test("a full cap takes nothing and has no fill price", () => {
     const flows = capFlows({
-      lines: [line({ remaining: 0 })],
+      lines: [line({ raw: 200 })],
       order: order("2026-10-05", [item(ITEM_1, 11000)]),
       shop,
     });
@@ -118,7 +119,7 @@ describe("capFlows", () => {
 
   test("an order of several items has no fill price", () => {
     const two = order("2026-10-05", [item(ITEM_1, 1100), item(ITEM_2, 1100)]);
-    expect(capFlows({ lines: [line()], order: two, shop })).toEqual([
+    expect(capFlows({ lines: [line({ raw: 50, remaining: 50 })], order: two, shop })).toEqual([
       expect.objectContaining({ points: 20, into: 20, fillPrice: null }),
     ]);
   });

@@ -107,6 +107,7 @@ describe("capLines", () => {
         usedHere: 0,
         usedElsewhere: 30,
         sharedWith: [FIRST],
+        raw: 30,
         remaining: 70,
         rate: 1,
       }),

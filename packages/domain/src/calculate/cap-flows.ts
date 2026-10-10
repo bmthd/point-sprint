@@ -25,7 +25,8 @@ export type CapFlow = {
 
 /**
  * For each cap the order's points go into, how much fits and how much is over. `lines` must be
- * `capLines` for the order's date, without the order. The rate is the plan's now.
+ * `capLines` of a calculation with the order added, for the order's date, so a shop-around rate
+ * is the one the order's shop gives and the other orders' points are at that rate too.
  */
 export function capFlows(input: {
   lines: CapLine[];
@@ -59,11 +60,11 @@ export function capFlows(input: {
     const earned = pointsFor(items, line.rate, benefit.params.roundingUnit);
     const points = [...earned.values()].reduce((sum, value) => sum + value, 0);
     if (points === 0) return [];
-    const into = Math.min(points, line.remaining);
+    // What everything else leaves of the cap.
+    const room = Math.max(0, line.cap - (line.raw - points));
+    const into = Math.min(points, room);
     const fillPrice =
-      single && line.remaining > 0
-        ? priceToFill(line.remaining, single.taxRate, line.rate, benefit.amountBasis)
-        : null;
+      single && room > 0 ? priceToFill(room, single.taxRate, line.rate, benefit.amountBasis) : null;
     return [{ line, points, into, over: points - into, fillPrice }];
   });
 }
