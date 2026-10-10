@@ -1,6 +1,6 @@
 import { ClientOnly, useCanGoBack, useRouter } from "@tanstack/react-router";
 import { toggleBenefits } from "@workspaces/domain";
-import { Alert, Box, Card, Heading, Text, VStack } from "@workspaces/ui";
+import { Alert, Box, Flex, Card, Heading, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { saveProfileAtom } from "../../../state/mutations";
@@ -117,12 +117,12 @@ function BackLink() {
 export function Profile() {
   return (
     <>
-      <Box maxW="640px" mx="auto" h="14" display="flex" alignItems="center" gap="1" px="2">
+      <Flex maxW="640px" mx="auto" h="14" align="center" gap="1" px="2">
         <BackLink />
         <Heading as="h1" fontSize="lg">
           プロフィール
         </Heading>
-      </Box>
+      </Flex>
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="16">
         <ClientOnly>
           <ProfileContent />

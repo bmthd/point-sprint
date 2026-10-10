@@ -4,7 +4,7 @@
 
 import { Field as FormField, focus, reset, setInput, useField, useForm } from "@formisch/react";
 import { type Plan, calculateAll } from "@workspaces/domain";
-import { Box, Button, Field, Input, List, NativeSelect, Text } from "@workspaces/ui";
+import { Box, Flex, Button, Field, Input, List, NativeSelect, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type KeyboardEvent, useDeferredValue, useId, useMemo, useState } from "react";
 import { Form, bind, errorsOf } from "../../../form/form";
@@ -13,7 +13,7 @@ import { saveShopAtom } from "../../../state/mutations";
 import { addOrderAtom } from "../../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
-import { AutofillStatusText } from "../-item-autofill";
+import { AutofillStatus } from "../-item-autofill";
 import {
   OrderFormSchema,
   type OrderFormOutput,
@@ -25,6 +25,7 @@ import {
   AMOUNT_PATH,
   type OrderForm,
   applyShop,
+  autofillUrlHandlers,
   useFormInput,
   useOrderAutofill,
 } from "../-order-editor/order-form-store";
@@ -38,6 +39,7 @@ import {
   useSortedShops,
 } from "../-order-fields";
 import { orderSaveFailedAtom, pointsText } from "../-order-shared";
+import { FormDatePicker } from "../-date-picker-field";
 
 const sumOfTotals = (results: Map<string, { total: number }>) =>
   [...results.values()].reduce((sum, result) => sum + result.total, 0);
@@ -116,15 +118,17 @@ function UrlField({ form, autofill }: { form: OrderForm; autofill: Autofill }) {
         placeholder="https://item.rakuten.co.jp/…"
         {...bind(url)}
         // The shop of the URL is chosen at once, and stays when the item cannot be looked up.
-        onChange={(event) => {
-          const value = event.currentTarget.value;
-          url.onChange(value);
-          const found = shopFromUrl(value, shops);
-          if (found) applyShop(form, found);
-          autofill.onUrl(value);
-        }}
+        {...autofillUrlHandlers(
+          autofill,
+          (value) => {
+            url.onChange(value);
+            const found = shopFromUrl(value, shops);
+            if (found) applyShop(form, found);
+          },
+          url.props.onBlur,
+        )}
       />
-      <AutofillStatusText status={autofill.status} />
+      <AutofillStatus autofill={autofill} />
     </Field.Root>
   );
 }
@@ -175,7 +179,7 @@ function ItemFields({ form }: { form: OrderForm }) {
       <FormField of={form} path={["date"]}>
         {(field) => (
           <Field.Root label="注文日" {...errorsOf(field)} minW="0">
-            <Input size="lg" type="date" fontVariantNumeric="tabular-nums" {...bind(field)} />
+            <FormDatePicker size="lg" field={field} />
           </Field.Root>
         )}
       </FormField>
@@ -263,9 +267,10 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
       try {
         if (draft.shopChange) await saveShop.mutateAsync(draft.shopChange);
         await addOrder({ planId: plan.id, order: draft.order });
-        autofill.reset();
         reset(form, { initialInput: emptyInput() });
         focus(form, { path: ["url"] });
+        // After the focus moves: leaving the URL field would look up the URL it still shows.
+        autofill.reset();
       } catch {
         // The typed order stays in the form so it can be added again.
         setFailed(true);
@@ -298,28 +303,20 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
         </Text>
       </Button>
       <Form of={form} id={formId} hidden={!open} onKeyDown={onKeyDown} onSubmit={add}>
-        <Box
-          display="flex"
-          flexDirection="column"
-          gap="3"
-          borderTopWidth="1px"
-          pt="3.5"
-          pb="4"
-          px="4"
-        >
+        <Flex direction="column" gap="3" borderTopWidth="1px" pt="3.5" pb="4" px="4">
           <UrlField form={form} autofill={autofill} />
           <Box {...fieldGrid}>
             <ShopField form={form} />
             <ItemFields form={form} />
           </Box>
-          <Box display="flex" flexWrap="wrap" alignItems="center" gap="2">
+          <Flex wrap="wrap" align="center" gap="2">
             <TagChips form={form} />
             <Preview plan={plan} form={form} />
             <Button type="submit" colorScheme="primary" size="lg">
               追加する
             </Button>
-          </Box>
-        </Box>
+          </Flex>
+        </Flex>
       </Form>
     </List.Item>
   );

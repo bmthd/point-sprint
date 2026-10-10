@@ -1,4 +1,4 @@
-import { Box, IconButton, MoonIcon, SunIcon, Text, useColorMode } from "@workspaces/ui";
+import { Box, Flex, IconButton, MoonIcon, SunIcon, Text, useColorMode } from "@workspaces/ui";
 import { RouterLink } from "../../ui/router-link";
 
 function ProfileIcon() {
@@ -49,13 +49,12 @@ function ColorModeButton() {
 export function SiteHeader() {
   return (
     <Box as="header" borderBottomWidth="1px" borderColor="border">
-      <Box
+      <Flex
         maxW="1280px"
         mx="auto"
         h="14"
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
+        align="center"
+        justify="space-between"
         gap="2"
         pl={{ base: "6", lg: "4" }}
         pr={{ base: "4", lg: "2" }}
@@ -74,7 +73,7 @@ export function SiteHeader() {
         >
           ポイントスプリント
         </RouterLink>
-        <Box display="flex" alignItems="center" gap="1">
+        <Flex align="center" gap="1">
           <ColorModeButton />
           <RouterLink
             to="/profile"
@@ -91,8 +90,8 @@ export function SiteHeader() {
               プロフィール
             </Text>
           </RouterLink>
-        </Box>
-      </Box>
+        </Flex>
+      </Flex>
     </Box>
   );
 }

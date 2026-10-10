@@ -66,7 +66,7 @@ export function StorageHealthFailure() {
     <Alert.Root status="error" role="alert" alignItems="center">
       <Alert.Icon />
       <Alert.Description flex="1">保存データの状態を確認できませんでした。</Alert.Description>
-      <Button variant="outline" size="lg" onClick={() => void refetch()}>
+      <Button variant="outline" bg="bg.panel" size="lg" onClick={() => void refetch()}>
         再試行
       </Button>
     </Alert.Root>

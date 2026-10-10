@@ -2,6 +2,7 @@ import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import type { Plan } from "@workspaces/domain";
 import {
   Box,
+  Flex,
   Button,
   Card,
   Heading,
@@ -107,25 +108,24 @@ function SettingsEntry({ plan, desktop }: { plan: Plan; desktop: boolean }) {
 /** The plan's own bar under the site header: which plan this is, and its settings. */
 function PlanBar({ plan, desktop }: { plan: Plan; desktop: boolean }) {
   return (
-    <Box
+    <Flex
       maxW="1280px"
       mx="auto"
       h="14"
-      display="flex"
-      alignItems="center"
-      justifyContent="space-between"
+      align="center"
+      justify="space-between"
       gap="2"
       pl={{ base: "6", lg: "3" }}
       pr={{ base: "6", lg: "2" }}
     >
       <PlanSwitcher plan={plan} />
       <SettingsEntry plan={plan} desktop={desktop} />
-    </Box>
+    </Flex>
   );
 }
 
 const Panel = (props: { children: ReactNode; label: string }) => (
-  <Card.Root as="section" aria-label={props.label} variant="outline">
+  <Card.Root as="section" aria-label={props.label}>
     <Card.Body alignItems="stretch">{props.children}</Card.Body>
   </Card.Root>
 );

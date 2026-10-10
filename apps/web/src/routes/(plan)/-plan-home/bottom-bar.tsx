@@ -1,5 +1,5 @@
 import type { CalculationResult, Plan } from "@workspaces/domain";
-import { Box, Button, Text } from "@workspaces/ui";
+import { Flex, Button, Text } from "@workspaces/ui";
 import { PlusIcon } from "../../../ui/icons";
 import { countedAmount, effectiveRate } from "./summary-card";
 
@@ -17,7 +17,7 @@ export function BottomBar({
 }) {
   const amount = countedAmount(plan);
   return (
-    <Box
+    <Flex
       aria-label="合計"
       role="region"
       data-bottom-bar
@@ -31,11 +31,10 @@ export function BottomBar({
       px="4"
       pt="2.5"
       pb="calc(18px + env(safe-area-inset-bottom))"
-      display="flex"
-      alignItems="center"
+      align="center"
       gap="3"
     >
-      <Box flex="1" display="flex" flexDirection="column" fontVariantNumeric="tabular-nums">
+      <Flex flex="1" direction="column" fontVariantNumeric="tabular-nums">
         <Text as="span" fontSize="xs" color="fg.muted">
           ¥{num(amount)}・{result.shopCount}店舗
         </Text>
@@ -45,10 +44,10 @@ export function BottomBar({
             {effectiveRate(result.total, amount)}%
           </Text>
         </Text>
-      </Box>
+      </Flex>
       <Button colorScheme="primary" size="xl" onClick={onAdd} startIcon={<PlusIcon />}>
         注文を追加
       </Button>
-    </Box>
+    </Flex>
   );
 }

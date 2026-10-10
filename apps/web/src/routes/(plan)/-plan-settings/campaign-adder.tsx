@@ -9,12 +9,11 @@ import {
   hasCampaignOccurrence,
   instantiateCampaign,
 } from "@workspaces/domain";
-import { Field as FormField, type FormStore, setInput, useField, useForm } from "@formisch/react";
+import { Field as FormField, type FormStore, useField, useForm } from "@formisch/react";
 import {
   Box,
+  Flex,
   Button,
-  DatePicker,
-  type DatePickerProps,
   Field,
   HStack,
   Image,
@@ -25,44 +24,23 @@ import {
   RadioCardGroup,
   Text,
   VStack,
-  useFieldProps,
 } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useState } from "react";
 import * as v from "valibot";
-import { dateSchema } from "../../../form/field-schemas";
 import { Form, bind, errorsOf } from "../../../form/form";
 import { addBenefitAtom } from "../../../state/order-ops";
 import { type CampaignFormSchema, SPECS, campaignFormSchema } from "./campaign-form";
 import { imageUrl } from "./settings-shared";
+import { FormDatePicker, isDate } from "../-date-picker-field";
 
 /** The templates the user adds with dates or a period of their own, in the master's order. */
 export const addableTemplates = campaignTemplates.filter(
   (template) => template.occurrence !== "fixed" && SPECS[template.id] !== undefined,
 );
 
-const DateText = dateSchema("日付");
-const isDate = (text: unknown): text is string => v.is(DateText, text);
 const grouped = (value: number | undefined) =>
   value === undefined ? "" : value.toLocaleString("ja-JP");
-
-/** `2026-10-06` → that day at midnight here, or `undefined` for anything else. */
-const parseIsoDate = (text: unknown) => {
-  if (!isDate(text)) return undefined;
-  const [year, month, day] = text.split("-").map(Number);
-  return new Date(year ?? 0, (month ?? 1) - 1, day);
-};
-
-/** A day → `2026-10-06`, the text the form's date fields hold. */
-const isoDate = (date: Date) =>
-  [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
-
-/** How a date field shows its day: `2026/10/06`. */
-const DATE_FORMAT = { input: { year: "numeric", month: "2-digit", day: "2-digit" } } as const;
 
 /** The images of 勝ったら倍's two choices: one team won, or both did. */
 const SPORTS_CHOICES = [
@@ -97,7 +75,7 @@ export function TemplateList({ onPick }: { onPick: (template: CampaignTemplate) 
             whiteSpace="normal"
             lineHeight="moderate"
           >
-            <Box as="span" display="flex" alignItems="center" gap="2">
+            <Flex as="span" align="center" gap="2">
               {template.benefit.imagePath ? (
                 <Image
                   src={imageUrl(template.benefit.imagePath)}
@@ -115,7 +93,7 @@ export function TemplateList({ onPick }: { onPick: (template: CampaignTemplate) 
                   {SPECS[template.id]?.hint}
                 </Text>
               </Box>
-            </Box>
+            </Flex>
           </Button>
         </List.Item>
       ))}
@@ -146,35 +124,7 @@ function TextField({
   );
 }
 
-/**
- * A `DatePicker` in a `Field`. The picker puts the field's `aria-invalid` and error description on
- * its box, not on the input that has the label, so they are given to the input as well.
- */
-function FieldDatePicker(props: DatePickerProps) {
-  const { ariaProps } = useFieldProps();
-  return (
-    <DatePicker
-      locale="ja"
-      format={DATE_FORMAT}
-      placeholder="YYYY/MM/DD"
-      openOnFocus={false}
-      openOnChange={false}
-      fontVariantNumeric="tabular-nums"
-      // The input keeps its own width otherwise, too wide for half of the dialog.
-      minW="0"
-      // A tap brings up the calendar alone, not the on-screen keyboard as well. A real keyboard can
-      // still type a day.
-      inputProps={{ ...ariaProps, minW: "0", inputMode: "none" }}
-      {...props}
-    />
-  );
-}
-
-/**
- * A date field of the form: a day typed in, or picked from the calendar that opens when the field
- * is tapped. Focusing or typing does not open the calendar, so moving the focus to an error does
- * not cover the form with it.
- */
+/** A date field of the form. */
 function DateField({
   form,
   name,
@@ -188,13 +138,7 @@ function DateField({
     <FormField of={form} path={[name]}>
       {(field) => (
         <Field.Root label={label} {...errorsOf(field)} minW="0">
-          <FieldDatePicker
-            ref={field.props.ref}
-            name={field.props.name}
-            value={parseIsoDate(field.input)}
-            onChange={(date) => setInput(form, { path: [name], input: date ? isoDate(date) : "" })}
-            onBlur={field.props.onBlur}
-          />
+          <FormDatePicker field={field} />
         </Field.Root>
       )}
     </FormField>

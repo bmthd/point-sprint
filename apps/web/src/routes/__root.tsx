@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { Box, ColorModeScript, UIProvider } from "@workspaces/ui";
+import { Box, Flex, ColorModeScript, UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import type { ReactNode } from "react";
 import { AppProviders } from "../app-providers";
@@ -8,6 +8,7 @@ import { SiteFooter } from "./-root/site-footer";
 import { SiteHeader } from "./-root/site-header";
 import { ErrorPage } from "./-root/error-page";
 import { NotFoundPage, notFoundTitle } from "./-root/not-found-page";
+import { FormControlDefaults } from "../ui/form-control-defaults";
 import { GoogleTagScripts } from "../google-tags/google-tag-scripts";
 import { defaultDescription, defaultTitle, pageTitle, siteName, siteUrl } from "../page-head";
 
@@ -66,11 +67,11 @@ export const Route = createRootRoute({
 function SiteLayout({ children }: { children: ReactNode }) {
   return (
     // The footer stays at the bottom of the screen on a short page.
-    <Box bg="bg" color="fg" minH="100dvh" display="flex" flexDirection="column">
+    <Flex bg="bg" color="fg" minH="100dvh" direction="column">
       <SiteHeader />
       <Box flex="1">{children}</Box>
       <SiteFooter />
-    </Box>
+    </Flex>
   );
 }
 
@@ -93,7 +94,9 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body suppressHydrationWarning>
         <ColorModeScript defaultValue={config.defaultColorMode} />
         <UIProvider theme={theme} config={config} storage={colorModeStorage}>
-          <AppProviders>{children}</AppProviders>
+          <FormControlDefaults>
+            <AppProviders>{children}</AppProviders>
+          </FormControlDefaults>
         </UIProvider>
         <Scripts />
       </body>

@@ -3,6 +3,7 @@ import {
   Badge,
   type BadgeProps,
   Box,
+  Flex,
   Button,
   Card,
   CheckboxCard,
@@ -83,7 +84,7 @@ function Tile({
   const on = benefit.enabled;
   const badgeId = useId();
   return (
-    <Box display="flex" flexDirection="column" alignItems="center" gap="1" minW="0">
+    <Flex direction="column" align="center" gap="1" minW="0">
       <CheckboxCard.Root
         checked={on}
         onChange={onToggle}
@@ -122,7 +123,7 @@ function Tile({
       >
         {name}
       </Button>
-    </Box>
+    </Flex>
   );
 }
 
@@ -164,7 +165,7 @@ function DetailBody({
   );
   const targets = benefit.conditions.channels?.map((id) => channels[id].label).join("・");
   return (
-    <Box display="flex" flexDirection="column" gap="2" fontSize="sm">
+    <Flex direction="column" gap="2" fontSize="sm">
       <Box fontVariantNumeric="tabular-nums">
         <Text>倍率 {rateText(benefit.params.rate)}</Text>
         <Text>{capText(benefit)}</Text>
@@ -186,7 +187,7 @@ function DetailBody({
       ) : null}
       <Text color="fg.muted">達成の条件は楽天のページで確かめて、達成したものを ON にします。</Text>
       <SpuLink />
-    </Box>
+    </Flex>
   );
 }
 
@@ -266,7 +267,7 @@ export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResu
   return (
     <Card.Root as="section" aria-label="SPU">
       <Card.Body alignItems="stretch">
-        <Box display="flex" alignItems="flex-end" justifyContent="space-between" gap="3">
+        <Flex align="flex-end" justify="space-between" gap="3">
           <Box>
             <Text fontSize="xs" color="fg.muted">
               SPU を入れて全商品
@@ -291,7 +292,7 @@ export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResu
             <br />
             タップで ON / OFF
           </Text>
-        </Box>
+        </Flex>
 
         <SpuTileGrid
           benefits={plan.benefits}
@@ -299,15 +300,7 @@ export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResu
           onToggle={(benefitId) => save(toggle({ planId: plan.id, benefitId }))}
         />
 
-        <Box
-          display="flex"
-          flexWrap="wrap"
-          alignItems="center"
-          columnGap="3"
-          rowGap="1.5"
-          fontSize="xs"
-          color="fg.muted"
-        >
+        <Flex wrap="wrap" align="center" columnGap="3" rowGap="1.5" fontSize="xs" color="fg.muted">
           <Box as="span" display="inline-flex" alignItems="center" gap="1">
             <Box
               as="span"
@@ -330,7 +323,7 @@ export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResu
           <Box as="span" ms="auto">
             名前を押すと上限・条件
           </Box>
-        </Box>
+        </Flex>
         <SpuLink />
       </Card.Body>
     </Card.Root>
