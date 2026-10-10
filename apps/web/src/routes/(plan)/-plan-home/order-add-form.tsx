@@ -4,7 +4,7 @@
 
 import { Field as FormField, focus, reset, setInput, useField, useForm } from "@formisch/react";
 import { type Plan, calculateAll } from "@workspaces/domain";
-import { Box, Button, Field, Input, List, NativeSelect, Text } from "@workspaces/ui";
+import { Box, Flex, Button, Field, Input, List, NativeSelect, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type KeyboardEvent, useDeferredValue, useId, useMemo, useState } from "react";
 import { Form, bind, errorsOf } from "../../../form/form";
@@ -299,28 +299,20 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
         </Text>
       </Button>
       <Form of={form} id={formId} hidden={!open} onKeyDown={onKeyDown} onSubmit={add}>
-        <Box
-          display="flex"
-          flexDirection="column"
-          gap="3"
-          borderTopWidth="1px"
-          pt="3.5"
-          pb="4"
-          px="4"
-        >
+        <Flex direction="column" gap="3" borderTopWidth="1px" pt="3.5" pb="4" px="4">
           <UrlField form={form} autofill={autofill} />
           <Box {...fieldGrid}>
             <ShopField form={form} />
             <ItemFields form={form} />
           </Box>
-          <Box display="flex" flexWrap="wrap" alignItems="center" gap="2">
+          <Flex wrap="wrap" align="center" gap="2">
             <TagChips form={form} />
             <Preview plan={plan} form={form} />
             <Button type="submit" colorScheme="primary" size="lg">
               追加する
             </Button>
-          </Box>
-        </Box>
+          </Flex>
+        </Flex>
       </Form>
     </List.Item>
   );

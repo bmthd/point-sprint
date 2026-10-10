@@ -1,5 +1,15 @@
 import { type Account, DEFAULT_ACCOUNT_ID, type Profile, accountsOf } from "@workspaces/domain";
-import { Box, Button, Card, IconButton, Modal, Switch, Text, useDisclosure } from "@workspaces/ui";
+import {
+  Box,
+  Flex,
+  Button,
+  Card,
+  IconButton,
+  Modal,
+  Switch,
+  Text,
+  useDisclosure,
+} from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useRef, useState } from "react";
 import { CommitField } from "../../../form/commit-field";
@@ -25,10 +35,9 @@ function AccountRow({
   onDelete?: () => void;
 }) {
   return (
-    <Box
+    <Flex
       as="li"
-      display="flex"
-      alignItems="center"
+      align="center"
       gap="1"
       py="2"
       borderTopWidth="1px"
@@ -50,7 +59,7 @@ function AccountRow({
           <CloseIcon />
         </IconButton>
       ) : null}
-    </Box>
+    </Flex>
   );
 }
 

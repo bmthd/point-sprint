@@ -1,5 +1,5 @@
 import type { Plan } from "@workspaces/domain";
-import { Box, Button, List, Text } from "@workspaces/ui";
+import { Flex, Button, List, Text } from "@workspaces/ui";
 import { useAtom } from "jotai";
 import { useRef } from "react";
 import { reorderModeAtom } from "../../../state/ui";
@@ -29,10 +29,10 @@ export function OrderList({
   let counted = 0;
 
   return (
-    <Box display="flex" flexDirection="column" gap="2.5">
-      <Box display="flex" alignItems="center" justifyContent="space-between">
+    <Flex direction="column" gap="2.5">
+      <Flex align="center" justify="space-between">
         <OrdersHeading orders={orders} headingRef={heading} />
-        <Box display="flex">
+        <Flex>
           <HeaderButton
             pressed={reordering}
             disabled={!reordering && orders.length < 2}
@@ -43,8 +43,8 @@ export function OrderList({
           <HeaderButton disabled={orders.length === 0} onClick={askReset}>
             リセット
           </HeaderButton>
-        </Box>
-      </Box>
+        </Flex>
+      </Flex>
       <SaveFailedAlert />
       {orders.length === 0 ? (
         <Text fontSize="sm" color="fg.muted">
@@ -79,6 +79,6 @@ export function OrderList({
         </Button>
       ) : null}
       {dialog}
-    </Box>
+    </Flex>
   );
 }

@@ -1,5 +1,5 @@
 import { type CalculationResult, type Plan, taxIncludedTarget } from "@workspaces/domain";
-import { Box, Button, Card, Progress, Text } from "@workspaces/ui";
+import { Box, Flex, Button, Card, Progress, Text } from "@workspaces/ui";
 import { useId, useState } from "react";
 import { ChevronIcon } from "../../../ui/icons";
 import { PointBreakdown } from "./point-breakdown";
@@ -28,7 +28,7 @@ const Label = (props: { children: string }) => (
 
 function ShopDots({ count }: { count: number }) {
   return (
-    <Box display="flex" gap="1.5" role="img" aria-label={`買い回り ${DOTS}店舗中${count}店舗`}>
+    <Flex gap="1.5" role="img" aria-label={`買い回り ${DOTS}店舗中${count}店舗`}>
       {Array.from({ length: DOTS }, (_, index) => (
         <Box
           key={index}
@@ -41,22 +41,22 @@ function ShopDots({ count }: { count: number }) {
           borderColor="primary.contrast"
         />
       ))}
-    </Box>
+    </Flex>
   );
 }
 
 function Gauge({ points, cap }: { points: number; cap: number }) {
   const share = cap === 0 ? 1 : Math.min(1, points / cap);
   return (
-    <Box display="flex" flexDirection="column" gap="1.5">
-      <Box display="flex" justifyContent="space-between">
+    <Flex direction="column" gap="1.5">
+      <Flex justify="space-between">
         <Label>マラソン上限</Label>
         <Text as="span" fontSize="xs" color="primary.contrast/80" fontVariantNumeric="tabular-nums">
           {num(points)} / {num(cap)}P
         </Text>
-      </Box>
+      </Flex>
       <Progress value={share * 100} colorScheme="mono" aria-hidden />
-    </Box>
+    </Flex>
   );
 }
 
@@ -83,7 +83,7 @@ export function SummaryCard({
   return (
     <Card.Root as="section" aria-label="サマリー" variant="solid" colorScheme="primary">
       <Card.Body alignItems="stretch">
-        <Box display="flex" alignItems="flex-end" justifyContent="space-between">
+        <Flex align="flex-end" justify="space-between">
           <Box>
             <Label>獲得予定</Label>
             <Text
@@ -107,12 +107,12 @@ export function SummaryCard({
               </Text>
             </Text>
           </Box>
-        </Box>
+        </Flex>
 
         {outlook ? (
-          <Box display="flex" flexDirection="column" gap="2">
+          <Flex direction="column" gap="2">
             <ShopDots count={Math.min(outlook.shopCount, DOTS)} />
-            <Box display="flex" justifyContent="space-between" fontSize="sm">
+            <Flex justify="space-between" fontSize="sm">
               <span>
                 <Text as="b" fontVariantNumeric="tabular-nums">
                   {outlook.shopCount}
@@ -125,7 +125,7 @@ export function SummaryCard({
                   +{outlook.currentRate}倍
                 </Text>
               </span>
-            </Box>
+            </Flex>
             {outlook.nextShop ? (
               <Text fontSize="sm" bg="blackAlpha.400" rounded="lg" px="2.5" py="2">
                 あと1店舗で全商品{" "}
@@ -139,11 +139,11 @@ export function SummaryCard({
                 ）
               </Text>
             ) : null}
-          </Box>
+          </Flex>
         ) : null}
 
         {outlook && (outlook.cap !== null || remaining != null) ? (
-          <Box display="flex" flexDirection="column" gap="1.5">
+          <Flex direction="column" gap="1.5">
             {outlook.cap !== null ? (
               <Gauge points={result.groupTotals.marathon} cap={outlook.cap} />
             ) : null}
@@ -163,7 +163,7 @@ export function SummaryCard({
                 </Text>
               </Text>
             ) : null}
-          </Box>
+          </Flex>
         ) : null}
 
         {compact && outlook ? (
@@ -195,9 +195,8 @@ export function SummaryCard({
             </Box>
           </>
         ) : (
-          <Box
-            display="flex"
-            justifyContent="space-between"
+          <Flex
+            justify="space-between"
             borderTopWidth="1px"
             borderColor="blackAlpha.400"
             pt="2.5"
@@ -208,7 +207,7 @@ export function SummaryCard({
               合計金額
             </Text>
             <span>¥{num(amount)}</span>
-          </Box>
+          </Flex>
         )}
       </Card.Body>
     </Card.Root>

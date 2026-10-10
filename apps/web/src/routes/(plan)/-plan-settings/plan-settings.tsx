@@ -1,5 +1,5 @@
 import type { Plan } from "@workspaces/domain";
-import { Box, Button, Drawer, Heading, IconButton, Text, VStack } from "@workspaces/ui";
+import { Box, Flex, Button, Drawer, Heading, IconButton, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { planResultAtom } from "../../../state/derived";
 import { BackIcon, CloseIcon, PencilIcon } from "../../../ui/icons";
@@ -109,7 +109,7 @@ function SettingsScreen({ plan }: { plan: Plan }) {
   return (
     <>
       {/* 戻る goes back to this plan, which the site header has no link to. */}
-      <Box maxW="640px" mx="auto" h="14" display="flex" alignItems="center" gap="1" px="2">
+      <Flex maxW="640px" mx="auto" h="14" align="center" gap="1" px="2">
         <RouterLink
           to="/plan"
           search={{ id: plan.id }}
@@ -127,7 +127,7 @@ function SettingsScreen({ plan }: { plan: Plan }) {
         <Heading as="h1" fontSize="lg">
           プランの設定
         </Heading>
-      </Box>
+      </Flex>
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="32">
         <SettingsContent plan={plan} />
       </Box>
