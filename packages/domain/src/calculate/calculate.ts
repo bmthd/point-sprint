@@ -35,6 +35,8 @@ type OrderContext = {
 type BenefitItem = {
   planId: string;
   lineItemId: string;
+  /** The order date: earlier orders get a shared cap first. */
+  date: string;
   groupKey: string;
   raw: number;
   points: number;
@@ -138,7 +140,7 @@ function planPhase(plan: Plan, shops: Shop[], shopsById: Map<string, Shop>): Pla
       const items = eligible.map(({ lineItemId, orderDate }) => {
         const points = raw.get(lineItemId) ?? 0;
         const groupKey = capGroupKey(groupOwner, benefit, orderDate);
-        return { planId: plan.id, lineItemId, groupKey, raw: points, points };
+        return { planId: plan.id, lineItemId, date: orderDate, groupKey, raw: points, points };
       });
       const receivingBase = eligible.reduce((sum, item) => sum + item.amount, 0);
       return { benefit, items, receivingBase };
@@ -168,19 +170,39 @@ function collectGroups(phases: PlanPhase[]): Map<string, CapGroup> {
   return groups;
 }
 
-/** Caps each group and writes the allocated points back onto its members. */
+/**
+ * Caps each group and writes the allocated points back onto its members. The earlier orders get
+ * the cap first, so adding a later plan never takes points from an earlier one; the members of
+ * one day split what is left by their raw points.
+ */
 function applyCap(group: CapGroup): void {
   const { cap, mismatch } = resolveGroupCap(group.caps);
-  const members = [...group.members].sort(byPlanThenLineItem);
-  const raws = members.map((member) => member.raw);
-  const rawSum = raws.reduce((sum, points) => sum + points, 0);
+  const rawSum = group.members.reduce((sum, member) => sum + member.raw, 0);
   group.mismatch = mismatch;
   group.capReached = cap !== undefined && rawSum >= cap;
   if (cap === undefined || rawSum <= cap) return;
-  const allocated = largestRemainder(cap, raws);
-  members.forEach((member, index) => {
-    member.points = allocated[index] ?? 0;
-  });
+  const days = new Map<string, BenefitItem[]>();
+  const sorted = [...group.members].sort(
+    (a, b) => compareIds(a.date, b.date) || byPlanThenLineItem(a, b),
+  );
+  for (const member of sorted) {
+    const day = days.get(member.date);
+    if (day) day.push(member);
+    else days.set(member.date, [member]);
+  }
+  let left = cap;
+  for (const members of days.values()) {
+    const raws = members.map((member) => member.raw);
+    const share = Math.min(
+      left,
+      raws.reduce((sum, points) => sum + points, 0),
+    );
+    const allocated = largestRemainder(share, raws);
+    members.forEach((member, index) => {
+      member.points = allocated[index] ?? 0;
+    });
+    left -= share;
+  }
 }
 
 function shopRateRows(orders: OrderContext[]): BreakdownRow[] {
