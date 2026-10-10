@@ -16,6 +16,7 @@ import type {
   BenefitTotal,
   BreakdownRow,
   CalculationResult,
+  CapGroupUsage,
   CalculationWarning,
   HeldEstimate,
 } from "./types";
@@ -35,6 +36,8 @@ type OrderContext = {
 type BenefitItem = {
   planId: string;
   lineItemId: string;
+  /** The order date: earlier orders get a shared cap first. */
+  date: string;
   groupKey: string;
   raw: number;
   points: number;
@@ -51,6 +54,7 @@ type PlanPhase = {
 };
 
 type CapGroup = {
+  accountId: string;
   members: BenefitItem[];
   caps: (number | undefined)[];
   capReached: boolean;
@@ -138,7 +142,7 @@ function planPhase(plan: Plan, shops: Shop[], shopsById: Map<string, Shop>): Pla
       const items = eligible.map(({ lineItemId, orderDate }) => {
         const points = raw.get(lineItemId) ?? 0;
         const groupKey = capGroupKey(groupOwner, benefit, orderDate);
-        return { planId: plan.id, lineItemId, groupKey, raw: points, points };
+        return { planId: plan.id, lineItemId, date: orderDate, groupKey, raw: points, points };
       });
       const receivingBase = eligible.reduce((sum, item) => sum + item.amount, 0);
       return { benefit, items, receivingBase };
@@ -148,13 +152,19 @@ function planPhase(plan: Plan, shops: Shop[], shopsById: Map<string, Shop>): Pla
 
 function collectGroups(phases: PlanPhase[]): Map<string, CapGroup> {
   const groups = new Map<string, CapGroup>();
-  for (const { entries } of phases) {
+  for (const { plan, entries } of phases) {
     for (const { benefit, items } of entries) {
       const keysOfEntry = new Set<string>();
       for (const item of items) {
         let group = groups.get(item.groupKey);
         if (!group) {
-          group = { members: [], caps: [], capReached: false, mismatch: false };
+          group = {
+            accountId: planAccountId(plan),
+            members: [],
+            caps: [],
+            capReached: false,
+            mismatch: false,
+          };
           groups.set(item.groupKey, group);
         }
         group.members.push(item);
@@ -168,19 +178,39 @@ function collectGroups(phases: PlanPhase[]): Map<string, CapGroup> {
   return groups;
 }
 
-/** Caps each group and writes the allocated points back onto its members. */
+/**
+ * Caps each group and writes the allocated points back onto its members. The earlier orders get
+ * the cap first, so adding a later plan never takes points from an earlier one; the members of
+ * one day split what is left by their raw points.
+ */
 function applyCap(group: CapGroup): void {
   const { cap, mismatch } = resolveGroupCap(group.caps);
-  const members = [...group.members].sort(byPlanThenLineItem);
-  const raws = members.map((member) => member.raw);
-  const rawSum = raws.reduce((sum, points) => sum + points, 0);
+  const rawSum = group.members.reduce((sum, member) => sum + member.raw, 0);
   group.mismatch = mismatch;
   group.capReached = cap !== undefined && rawSum >= cap;
   if (cap === undefined || rawSum <= cap) return;
-  const allocated = largestRemainder(cap, raws);
-  members.forEach((member, index) => {
-    member.points = allocated[index] ?? 0;
-  });
+  const days = new Map<string, BenefitItem[]>();
+  const sorted = [...group.members].sort(
+    (a, b) => compareIds(a.date, b.date) || byPlanThenLineItem(a, b),
+  );
+  for (const member of sorted) {
+    const day = days.get(member.date);
+    if (day) day.push(member);
+    else days.set(member.date, [member]);
+  }
+  let left = cap;
+  for (const members of days.values()) {
+    const raws = members.map((member) => member.raw);
+    const share = Math.min(
+      left,
+      raws.reduce((sum, points) => sum + points, 0),
+    );
+    const allocated = largestRemainder(share, raws);
+    members.forEach((member, index) => {
+      member.points = allocated[index] ?? 0;
+    });
+    left -= share;
+  }
 }
 
 function shopRateRows(orders: OrderContext[]): BreakdownRow[] {
@@ -236,6 +266,30 @@ function outlookOf(phase: PlanPhase, groups: Map<string, CapGroup>): ShopAroundO
   });
 }
 
+function usageOf(group: CapGroup): CapGroupUsage {
+  const points: Record<string, number> = {};
+  for (const member of group.members) {
+    points[member.planId] = (points[member.planId] ?? 0) + member.points;
+  }
+  const raw = group.members.reduce((sum, member) => sum + member.raw, 0);
+  return { cap: resolveGroupCap(group.caps).cap, raw, points };
+}
+
+/**
+ * The usage of every group of `accountId`. A plain record, not a `Map`, so that structural
+ * comparisons of results see its contents.
+ */
+function capUsageOf(
+  groups: Map<string, CapGroup>,
+  accountId: string,
+): Record<string, CapGroupUsage> {
+  const usage: Record<string, CapGroupUsage> = {};
+  for (const [key, group] of groups) {
+    if (group.accountId === accountId) usage[key] = usageOf(group);
+  }
+  return usage;
+}
+
 type CoreResult = Omit<CalculationResult, "heldEstimates">;
 
 function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
@@ -279,6 +333,7 @@ function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
     warnings: [...phase.warnings, ...mismatchWarnings],
     groupTotals,
     shopAroundOutlook: outlookOf(phase, groups),
+    capUsage: capUsageOf(groups, planAccountId(phase.plan)),
   };
 }
 
