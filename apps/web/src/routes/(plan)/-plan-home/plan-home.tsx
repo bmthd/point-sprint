@@ -229,7 +229,14 @@ function Home({ plan }: { plan: Plan }) {
           gridColumn={{ base: "2", lg: "1" }}
           gridRow="1"
         >
-          <SummaryCard plan={plan} result={result} compact={!wide} />
+          <SummaryCard
+            plan={plan}
+            result={result}
+            compact={!wide}
+            lines={lines}
+            today={today}
+            taxRate={taxRate}
+          />
           <Warnings plan={plan} warnings={result.warnings} hasShopAround={outlook !== null} />
           {wide ? capList : null}
           {wide ? (

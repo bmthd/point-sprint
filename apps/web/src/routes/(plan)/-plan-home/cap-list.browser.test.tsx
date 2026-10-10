@@ -2,7 +2,7 @@ import type { Benefit, Order, Plan } from "@workspaces/domain";
 import { beforeEach, expect, test } from "vitest";
 import { page } from "vitest/browser";
 import { createMemoryRepository } from "../../../storage/memory-repository";
-import { PLAN, baseBenefit, renderPlanHome, shopId, shops } from "../-test-fixtures";
+import { PLAN, baseBenefit, marathon, renderPlanHome, shopId, shops } from "../-test-fixtures";
 
 const FIRST = "f0000000-0000-4000-8000-0000000000f1";
 
@@ -87,4 +87,26 @@ test("without a capped benefit there is no list", async () => {
   await renderPlanHome(createMemoryRepository({ shops, plans: plans(3300, [baseBenefit]) }));
   await expect.poll(() => document.querySelector('section[aria-label="サマリー"]')).not.toBeNull();
   expect(caps()).toBeNull();
+});
+
+test("the summary names the cap that the least money fills", async () => {
+  // The plan's own 1,000P cap needs more money than the card's 70P, and the marathon's rate is
+  // 0 with no shops yet, so no money fills it.
+  const ownCap: Benefit = {
+    ...card,
+    id: "b0000000-0000-4000-8000-0000000000c2",
+    label: "キャンペーン",
+    capScope: "plan",
+    sharedKey: undefined,
+    params: { rate: 1, roundingUnit: "item", cap: 1000 },
+  };
+  await renderPlanHome(
+    createMemoryRepository({
+      shops,
+      plans: plans(3300, [baseBenefit, card, ownCap, ...marathon]),
+    }),
+  );
+  await expect
+    .poll(() => document.querySelector('section[aria-label="サマリー"]')?.textContent)
+    .toContain("次に上限に届くのは楽天カード特典分 あと¥7,699（10月の枠・1回目と共有）");
 });
