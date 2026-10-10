@@ -10,6 +10,7 @@ import {
   Image,
   Link,
   Modal,
+  SimpleGrid,
   Text,
   useDisclosure,
 } from "@workspaces/ui";
@@ -69,6 +70,11 @@ function capText(benefit: Benefit) {
   return `${scope} ${pointsText(cap)}`;
 }
 
+/** Tiles stay this size; the row fits as many columns as the width allows. */
+const TILE_SIZE = "76px";
+/** Wider than a tile so long names under it wrap less. */
+const COLUMN_MIN_WIDTH = "96px";
+
 function Tile({
   benefit,
   capped,
@@ -91,8 +97,7 @@ function Tile({
         colorScheme="primary"
         size="sm"
         withIndicator={false}
-        aspectRatio="1"
-        maxW="76px"
+        boxSize={TILE_SIZE}
         alignItems="center"
         justifyContent="center"
         inputProps={{
@@ -211,11 +216,10 @@ export function SpuTileGrid({
   return (
     <>
       {tiles.length > 0 ? (
-        <Box
+        <SimpleGrid
           role="group"
           aria-label="SPU のサービス"
-          display="grid"
-          gridTemplateColumns="repeat(4, minmax(0, 1fr))"
+          minChildWidth={COLUMN_MIN_WIDTH}
           columnGap="1.5"
           rowGap="2"
         >
@@ -231,7 +235,7 @@ export function SpuTileGrid({
               }}
             />
           ))}
-        </Box>
+        </SimpleGrid>
       ) : (
         <Text fontSize="sm" color="fg.muted">
           SPU はありません。
