@@ -16,6 +16,7 @@ import type {
   BenefitTotal,
   BreakdownRow,
   CalculationResult,
+  CapGroupUsage,
   CalculationWarning,
   HeldEstimate,
 } from "./types";
@@ -53,6 +54,7 @@ type PlanPhase = {
 };
 
 type CapGroup = {
+  accountId: string;
   members: BenefitItem[];
   caps: (number | undefined)[];
   capReached: boolean;
@@ -150,13 +152,19 @@ function planPhase(plan: Plan, shops: Shop[], shopsById: Map<string, Shop>): Pla
 
 function collectGroups(phases: PlanPhase[]): Map<string, CapGroup> {
   const groups = new Map<string, CapGroup>();
-  for (const { entries } of phases) {
+  for (const { plan, entries } of phases) {
     for (const { benefit, items } of entries) {
       const keysOfEntry = new Set<string>();
       for (const item of items) {
         let group = groups.get(item.groupKey);
         if (!group) {
-          group = { members: [], caps: [], capReached: false, mismatch: false };
+          group = {
+            accountId: planAccountId(plan),
+            members: [],
+            caps: [],
+            capReached: false,
+            mismatch: false,
+          };
           groups.set(item.groupKey, group);
         }
         group.members.push(item);
@@ -258,6 +266,30 @@ function outlookOf(phase: PlanPhase, groups: Map<string, CapGroup>): ShopAroundO
   });
 }
 
+function usageOf(group: CapGroup): CapGroupUsage {
+  const points: Record<string, number> = {};
+  for (const member of group.members) {
+    points[member.planId] = (points[member.planId] ?? 0) + member.points;
+  }
+  const raw = group.members.reduce((sum, member) => sum + member.raw, 0);
+  return { cap: resolveGroupCap(group.caps).cap, raw, points };
+}
+
+/**
+ * The usage of every group of `accountId`. A plain record, not a `Map`, so that structural
+ * comparisons of results see its contents.
+ */
+function capUsageOf(
+  groups: Map<string, CapGroup>,
+  accountId: string,
+): Record<string, CapGroupUsage> {
+  const usage: Record<string, CapGroupUsage> = {};
+  for (const [key, group] of groups) {
+    if (group.accountId === accountId) usage[key] = usageOf(group);
+  }
+  return usage;
+}
+
 type CoreResult = Omit<CalculationResult, "heldEstimates">;
 
 function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
@@ -301,6 +333,7 @@ function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
     warnings: [...phase.warnings, ...mismatchWarnings],
     groupTotals,
     shopAroundOutlook: outlookOf(phase, groups),
+    capUsage: capUsageOf(groups, planAccountId(phase.plan)),
   };
 }
 
