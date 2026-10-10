@@ -170,7 +170,7 @@ export function SummaryCard({
 
         {compact ? (
           <Box bg="bg.panel" color="fg" rounded="xl" px="3" py="2">
-            <NativeAccordion.Root animate={false}>
+            <NativeAccordion.Root>
               <NativeAccordion.Item borderWidth="0">
                 <NativeAccordion.Button fontSize="sm" fontWeight="bold">
                   ポイントの内訳を見る

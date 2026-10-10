@@ -1,6 +1,5 @@
 import type { ShopAroundOutlook, ShopAroundOutlookRow } from "@workspaces/domain";
 import {
-  Box,
   Flex,
   Heading,
   NativeAccordion,
@@ -11,7 +10,6 @@ import {
   type ThProps,
   VisuallyHidden,
 } from "@workspaces/ui";
-import { useState } from "react";
 
 /** The row of the current shop count; below the first tier that is the first row. */
 export function currentRow(outlook: ShopAroundOutlook): ShopAroundOutlookRow | undefined {
@@ -39,7 +37,8 @@ const Td = (props: TdProps) => (
 
 /**
  * 「あと何店舗回る？」: rate and remaining amount until the cap for each shop count from now up to
- * the top tier. `compact` (the phone's summary card) shows only the current row until expanded.
+ * the top tier. `compact` (the phone's summary card) shows only the current row, the first one, and
+ * opens the others below it.
  */
 export function ShopLadder({
   outlook,
@@ -48,38 +47,29 @@ export function ShopLadder({
   outlook: ShopAroundOutlook;
   compact?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const current = currentRow(outlook);
+  const [first, ...others] = outlook.rows;
 
   return (
     <Flex direction="column" gap="2">
-      {compact ? (
+      <Heading as="h3" fontSize="sm">
+        あと何店舗回る？
+      </Heading>
+      {compact && first ? (
         <>
-          <NativeAccordion.Root animate={false}>
-            <NativeAccordion.Item
-              borderWidth="0"
-              onToggle={(event) => setOpen(event.currentTarget.open)}
-            >
-              <NativeAccordion.Button fontSize="sm" fontWeight="bold">
-                あと何店舗回る？
+          <LadderTable outlook={outlook} shown={[first]} />
+          <NativeAccordion.Root>
+            <NativeAccordion.Item borderWidth="0">
+              <NativeAccordion.Button fontSize="sm" fontWeight="bold" px="2">
+                ほかの店舗数を見る
               </NativeAccordion.Button>
-              {/* The rows live in the table below; an empty panel must not add its open padding. */}
-              <NativeAccordion.Panel _groupOpen={{ pb: "0" }} />
+              <NativeAccordion.Panel px="0">
+                <LadderTable outlook={outlook} shown={others} head={false} />
+              </NativeAccordion.Panel>
             </NativeAccordion.Item>
           </NativeAccordion.Root>
-          {/* Outside the panel, so the current row stays put and the other rows open around it. */}
-          <LadderTable
-            outlook={outlook}
-            rows={open ? outlook.rows : outlook.rows.filter((row) => row === current)}
-          />
         </>
       ) : (
-        <>
-          <Heading as="h3" fontSize="sm">
-            あと何店舗回る？
-          </Heading>
-          <LadderTable outlook={outlook} rows={outlook.rows} />
-        </>
+        <LadderTable outlook={outlook} shown={outlook.rows} />
       )}
       <Text fontSize="xs" color="fg.muted">
         残額は税抜・概算。いまの買い物を含めた金額から差し引いています。
@@ -88,21 +78,21 @@ export function ShopLadder({
   );
 }
 
-/** The ladder's table; `rows` may be a subset of the outlook's, laid out as if all were shown. */
+/**
+ * The ladder's table, showing the `shown` rows. Every row is laid out, the rest collapsed, so the
+ * tables the compact ladder splits into share their column widths.
+ */
 function LadderTable({
   outlook,
-  rows,
+  shown,
+  head = true,
 }: {
   outlook: ShopAroundOutlook;
-  rows: ShopAroundOutlookRow[];
+  shown: ShopAroundOutlookRow[];
+  head?: boolean;
 }) {
   const current = currentRow(outlook);
   const longest = Math.max(1, ...outlook.rows.map((row) => row.remainingTaxExcluded ?? 0));
-  // Wide enough for the longest label of every row, so opening the compact table does not move the columns.
-  const digits = (pick: (row: ShopAroundOutlookRow) => number) =>
-    Math.max(...outlook.rows.map((row) => String(pick(row)).length));
-  const shopsWidth = `calc(${digits((row) => row.shops)}ch + 2em)`;
-  const rateWidth = `calc(${digits((row) => row.rate) + 1}ch + 1em)`;
 
   return (
     <NativeTable.Root
@@ -111,7 +101,7 @@ function LadderTable({
       style={{ borderCollapse: "separate", borderSpacing: "0 2px" }}
     >
       <NativeTable.Thead fontSize="xs" color="fg.muted">
-        <NativeTable.Tr>
+        <NativeTable.Tr visibility={head ? undefined : "collapse"}>
           <Th>店舗数</Th>
           <Th>倍率</Th>
           <Th w="full">
@@ -121,24 +111,21 @@ function LadderTable({
         </NativeTable.Tr>
       </NativeTable.Thead>
       <NativeTable.Tbody>
-        {rows.map((row) => {
+        {outlook.rows.map((row) => {
           const isCurrent = row === current;
           const remaining = row.remainingTaxExcluded;
           return (
             <NativeTable.Tr
               key={row.shops}
+              visibility={shown.includes(row) ? undefined : "collapse"}
               aria-current={isCurrent ? "true" : undefined}
               bg={isCurrent ? "primary.subtle" : undefined}
               outline={isCurrent ? "1px solid" : undefined}
               outlineColor="primary.outline"
               fontWeight={isCurrent ? "bold" : undefined}
             >
-              <Td>
-                <Box minW={shopsWidth}>{row.shops}店舗</Box>
-              </Td>
-              <Td>
-                <Box minW={rateWidth}>+{row.rate}倍</Box>
-              </Td>
+              <Td>{row.shops}店舗</Td>
+              <Td>+{row.rate}倍</Td>
               <Td>
                 <Progress
                   value={((remaining ?? 0) / longest) * 100}
