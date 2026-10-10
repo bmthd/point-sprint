@@ -20,7 +20,8 @@ import { repositoryAtom } from "../../../state/repository";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
 import { TestColorMode } from "../../../test-color-mode";
-import { PlanList, useToday } from "./plan-list";
+import { useToday } from "../../-use-today";
+import { PlanList } from "./plan-list";
 
 // 2026-10-05 12:00 in Japan: the October marathon (10/4〜10/9) is running.
 const now = () => new Date("2026-10-05T03:00:00Z");
@@ -122,11 +123,14 @@ test("creates a plan from an official event and navigates to it", async () => {
   const repository = createMemoryRepository();
   const { screen, router } = await renderPlanList(repository);
 
-  await expect.element(screen.getByText("開催中")).toBeVisible();
+  const current = screen.getByRole("listitem").filter({ hasText: "お買い物マラソン&ジャンル祭" });
+  const next = screen.getByRole("listitem").filter({ hasText: "お買い物マラソン第二弾" });
+  await expect.element(current.getByText("開催中")).toBeVisible();
   await expect
-    .element(screen.getByText("・買いまわり最大 +9倍・上限 7,000P", { exact: false }))
+    .element(current.getByText("・買いまわり最大 +9倍・上限 7,000P", { exact: false }))
     .toBeVisible();
-  await screen.getByRole("button", { name: "このイベントでプランを作る" }).click();
+  await expect.element(next.getByText("開催予定")).toBeVisible();
+  await current.getByRole("button", { name: "このイベントでプランを作る" }).click();
 
   await expect.poll(() => router.state.location.pathname).toBe("/plan");
   const [created, ...rest] = await repository.plans.list();
@@ -149,6 +153,40 @@ test("creates a plan without an event", async () => {
   expect(created?.officialEventId).toBeUndefined();
   expect(created?.period).toEqual({ start: "2026-10-05", end: "2026-10-05" });
   expect(router.state.location.search).toEqual({ id: created?.id });
+});
+
+test("asks before creating a plan whose name is taken, and can open the existing one", async () => {
+  const repository = createMemoryRepository({
+    plans: [plan(PLAN_A, "10月の買い物", "2026-10-01T00:00:00.000Z", 0)],
+  });
+  const { screen, router } = await renderPlanList(repository);
+  await expect.element(screen.getByRole("link", { name: /10月の買い物/ })).toBeVisible();
+
+  await screen.getByRole("button", { name: "イベントを選ばずにプランを作る" }).click();
+  const dialog = screen.getByRole("dialog");
+  await expect.element(dialog.getByText("「10月の買い物」はすでにあります。")).toBeVisible();
+  expect(await repository.plans.list()).toHaveLength(1);
+
+  await dialog.getByRole("button", { name: "既存のプランを開く" }).click();
+  await expect.poll(() => router.state.location.pathname).toBe("/plan");
+  expect(router.state.location.search).toEqual({ id: PLAN_A });
+  expect(await repository.plans.list()).toHaveLength(1);
+});
+
+test("creates a second plan with a taken name when asked to", async () => {
+  const repository = createMemoryRepository({
+    plans: [plan(PLAN_A, "10月の買い物", "2026-10-01T00:00:00.000Z", 0)],
+  });
+  const { screen, router } = await renderPlanList(repository);
+  await expect.element(screen.getByRole("link", { name: /10月の買い物/ })).toBeVisible();
+
+  await screen.getByRole("button", { name: "イベントを選ばずにプランを作る" }).click();
+  await screen.getByRole("dialog").getByRole("button", { name: "新しく作る" }).click();
+
+  await expect.poll(() => router.state.location.pathname).toBe("/plan");
+  const plans = await repository.plans.list();
+  expect(plans.map((created) => created.name)).toEqual(["10月の買い物", "10月の買い物"]);
+  expect(router.state.location.search).not.toEqual({ id: PLAN_A });
 });
 
 test("lists plans with their totals", async () => {

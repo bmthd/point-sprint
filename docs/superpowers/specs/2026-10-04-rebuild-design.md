@@ -201,9 +201,9 @@ CalculationResult = {   // 下の項目に加えて heldEstimates: { orderId, po
 | `plan` | プランごと、特典ごと（プラン ID と特典 ID） | ユーザーが自分で作った特典 |
 | `campaign` | 同じアカウントのプランをまたいで1つ（アカウントと `sharedKey`） | お買い物マラソン、39ショップの1回の開催 |
 | `month` | 同じアカウントのプランをまたいで暦月ごと（アカウントと `sharedKey` と注文日の年月） | SPU、5と0のつく日 |
-| `day` | 同じアカウントのプランをまたいで日ごと（アカウントと `sharedKey` と注文日） | 勝ったら倍 |
+| `occurrence` | 同じアカウントのプランをまたいで開催ごと（アカウントと `sharedKey` と特典の日付の規則の日付） | 勝ったら倍。開催 1 回ごとに特典を 1 件作る |
 
-上限は楽天アカウントごとにかかるので、プランをまたいで共有する上限（`campaign`、`month`、`day`）は、同じアカウントのプランの間だけで共有する。異なるアカウントのプランは、同じキャンペーン、同じ月、同じ日でも上限を共有しない。
+上限は楽天アカウントごとにかかるので、プランをまたいで共有する上限（`campaign`、`month`、`occurrence`）は、同じアカウントのプランの間だけで共有する。異なるアカウントのプランは、同じキャンペーン、同じ月、同じ開催でも上限を共有しない。
 
 `sharedKey` を省いたときは特典の ID をキーにする。プランを作るときに特典を複製しても ID は変わらないので、同じマスタから作った特典は自動的に同じグループになる。同じグループの特典の上限がプランごとに異なるとき（ユーザーが片方だけ編集したとき）は、最も小さい上限を使い、警告を出す。
 
@@ -298,7 +298,7 @@ Seitu は1人の作者が開発する比較的新しいライブラリ（採用�
 
 - 公開してよい値は変数名を `PUBLIC_` で始め、平文で置く（`dotenvx set … --plain`）。楽天 API の3つの値（`PUBLIC_RAKUTEN_*`）と Turnstile のサイトキー（`PUBLIC_TURNSTILE_SITE_KEY`）がこれにあたる。
 - 秘密の値（`TURNSTILE_SECRET_KEY`、`INQUIRY_TO_ADDRESS`、`CLOUDFLARE_API_TOKEN`）は `.env.production` に dotenvx で暗号化して置く。`.env.development` には秘密の値を置かず、Turnstile は Cloudflare のテスト用キーを、`INQUIRY_TO_ADDRESS` は仮のアドレスを平文で置く。
-- Worker が使う秘密の値（`TURNSTILE_SECRET_KEY`、`INQUIRY_TO_ADDRESS`）は `cloudflare.config.ts` で `bindings.secret()` として宣言する。ローカル（`pnpm dev`、`vite preview`）では Cloudflare の Vite プラグインが環境変数から値を取る。値はビルドの出力には入らないので、本番の Worker への登録は計画4で行う。
+- Worker が使う秘密の値（`TURNSTILE_SECRET_KEY`、`INQUIRY_TO_ADDRESS`）は `cloudflare.config.ts` で `bindings.secret()` として宣言する。ローカル（`pnpm dev`、`vite preview`）では Cloudflare の Vite プラグインが環境変数から値を取る。値はビルドの出力には入らないので、本番の Worker にはデプロイのたびに登録する。`deploy.yml` が `.env.production` からこの2つだけを dotenvx で復号して JSON に書き出し、`cf deploy --prebuilt --secrets-file` で Worker のバージョンと一緒に上げる。秘密の値を足すときは、`bindings.secret()` の宣言と `deploy.yml` の `dotenvx get -ik` の両方に足す。宣言した秘密の値が Worker に登録されていないと `cf deploy` が失敗するので、片方だけ足した漏れはデプロイで分かる。PR のプレビュー（`cf previews deploy`）には秘密の値を渡さない。PR のジョブに本番の鍵を渡したくないことと、Turnstile のウィジェットが `point-sprint.bmth.dev` でしか動かないことが理由で、プレビューのお問い合わせは `config` の段階で止まる。
 - 秘密鍵は `.env.keys` に置き、コミットしない。デプロイでは GitHub の Secret `DOTENV_PRIVATE_KEY_PRODUCTION` から渡す。
 - `pnpm dev` と `pnpm build` は `dotenvx run` でファイルを読む。`vite.config.ts` は `PUBLIC_` で始まる値だけを Vite の `loadEnv` でルートのファイルから直接読み、クライアントに渡す。鍵がなくても（PR の CI やプレビューでも）公開の値はビルドに入る。
 

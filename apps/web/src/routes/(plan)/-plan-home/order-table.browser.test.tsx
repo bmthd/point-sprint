@@ -1,14 +1,13 @@
 import type { Order } from "@workspaces/domain";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useEffect } from "react";
-import { beforeEach, expect, test, vi } from "vitest";
+import { beforeEach, expect, onTestFinished, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { updateOrderAtom } from "../../../state/order-ops";
 import { plansQueryAtom, shopsQueryAtom } from "../../../state/queries";
 import { createMemoryRepository } from "../../../storage/memory-repository";
-import { misalignedFields } from "../../../test-layout";
-import { tokyoToday } from "../../../ui/dates";
+import { DATE_PICKER_FIELD, misalignedFields } from "../../../test-layout";
 import { OrderTable } from "./order-table";
 import {
   PLAN,
@@ -25,6 +24,7 @@ import {
   shops,
   spuBenefit,
   summaryText,
+  tapCard,
 } from "../-test-fixtures";
 
 const rowRenders = vi.hoisted(() => new Map<string, number>());
@@ -147,7 +147,11 @@ test("fits 1024px without horizontal scroll", async () => {
       .element()
       .closest("label"),
     screen.getByRole("button", { name: `${long}の注文の詳細と編集` }).element(),
-    ...Array.from(list()?.querySelectorAll("input:not([type=checkbox]), select, button") ?? []),
+    // A date picker's box, not its input, is what is tapped.
+    ...Array.from(
+      list()?.querySelectorAll("input:not([type=checkbox]), select, button") ?? [],
+      (control) => control.closest(DATE_PICKER_FIELD) ?? control,
+    ),
   ];
   for (const control of controls) {
     const { width, height } = (control as HTMLElement).getBoundingClientRect();
@@ -164,6 +168,12 @@ test("fits 1024px without horizontal scroll", async () => {
 });
 
 test("enter in the add form adds an order and refocuses the first field", async () => {
+  // The new order is dated today, so today is in the plan's period (10/4 to 10/9) for it to count.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-10-05T03:00:00Z"));
+  onTestFinished(() => {
+    vi.useRealTimers();
+  });
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
 
   await expect.poll(() => rows().length).toBe(1);
@@ -193,7 +203,7 @@ test("enter in the add form adds an order and refocuses the first field", async 
   await expect.poll(async () => (await stored())?.length).toBe(2);
   expect((await stored())?.[1]).toMatchObject({
     shopId: shopId(4),
-    date: tokyoToday(new Date()),
+    date: "2026-10-05",
     onHold: false,
     tags: [],
     lineItems: [{ name: "フェイスタオル", unitPrice: 11000, quantity: 1, taxRate: 0.08 }],
@@ -294,16 +304,14 @@ test("a pasted URL picks the shop, or starts a new one", async () => {
   const shop = screen.getByRole("combobox", { name: "ショップ" });
   await url.fill("https://item.rakuten.co.jp/shop-four/item-1/");
   await expect.element(shop).toHaveValue(shopId(4));
-  await expect
-    .element(screen.getByRole("button", { name: "39ショップ" }))
-    .toHaveAttribute("aria-pressed", "true");
+  await expect.element(screen.getByRole("checkbox", { name: "39ショップ" })).toBeChecked();
 
   await url.fill("https://item.rakuten.co.jp/coffee-beans/item-2/");
   await expect.element(shop).toHaveValue("new");
   const name = screen.getByRole("textbox", { name: "新しいショップの名前" });
   await expect.element(name).toHaveValue("coffee-beans");
   await name.fill("コーヒー豆の店");
-  await screen.getByRole("button", { name: "リピート購入" }).click();
+  await tapCard(screen.getByRole("checkbox", { name: "リピート購入" }));
   await screen.getByRole("textbox", { name: "金額（税込）" }).fill("2160");
   await screen.getByRole("button", { name: "追加する" }).click();
 
@@ -438,13 +446,11 @@ test("expanded row shows group totals and edits the order", async () => {
   await expect.poll(() => rowOf("ショップ0")?.textContent).toContain("バスタオル");
   await userEvent.selectOptions(screen.getByRole("combobox", { name: "税率" }), "8%");
   // The closed add form's date field is the second one.
-  await screen.getByLabelText("注文日").first().fill("2026-10-07");
+  await screen.getByLabelText("注文日").first().fill("2026/10/07");
   await screen.getByRole("textbox", { name: "ショップ独自倍率" }).fill("3");
   await userEvent.keyboard("{Enter}");
-  await screen.getByRole("button", { name: "リピート購入" }).click();
-  await expect
-    .element(screen.getByRole("button", { name: "リピート購入" }))
-    .toHaveAttribute("aria-pressed", "true");
+  await tapCard(screen.getByRole("checkbox", { name: "リピート購入" }));
+  await expect.element(screen.getByRole("checkbox", { name: "リピート購入" })).toBeChecked();
 
   await expect
     .poll(async () => (await stored())?.[0])
@@ -454,11 +460,11 @@ test("expanded row shows group totals and edits the order", async () => {
       lineItems: [{ name: "バスタオル", unitPrice: 22000, taxRate: 0.08, shopPointRate: 3 }],
     });
 
-  const shopTag = screen.getByRole("button", { name: "39ショップ" });
+  const shopTag = screen.getByRole("checkbox", { name: "39ショップ" });
   await expect
     .element(shopTag)
     .toHaveAccessibleDescription("このショップの注文すべてに反映されます");
-  await shopTag.click();
+  await tapCard(shopTag);
   await expect
     .poll(async () => (await repository().shops.list()).find((s) => s.id === shopId(0))?.tags)
     .toEqual(["39shop"]);
@@ -491,7 +497,7 @@ test("a row of several items does not edit their tax and shop rates inline", asy
   expect(panel.getByText("商品ごとに異なります").elements()).toHaveLength(2);
 
   // A change to the order's own fields leaves each item's rates as they were.
-  await screen.getByRole("button", { name: "リピート購入" }).click();
+  await tapCard(screen.getByRole("checkbox", { name: "リピート購入" }));
   await expect.poll(async () => (await stored())?.[0]?.tags).toEqual(["repeat"]);
   expect(
     (await stored())?.[0]?.lineItems.map((item) => [item.taxRate, item.shopPointRate]),

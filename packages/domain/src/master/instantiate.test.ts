@@ -6,7 +6,13 @@ import type { OrderTag } from "../model/common";
 import type { Plan } from "../model/plan";
 import type { Shop } from "../model/shop";
 import { campaignTemplates } from "./campaigns";
-import { hasCampaignOccurrence, instantiateCampaign } from "./instantiate";
+import {
+  campaignInputOf,
+  editCampaign,
+  hasCampaignOccurrence,
+  instantiateCampaign,
+  templateOfCampaign,
+} from "./instantiate";
 
 const NEW_ID = "99999999-9999-4999-8999-999999999999";
 const SHOP = "a0000000-0000-4000-8000-000000000001";
@@ -246,5 +252,53 @@ describe("hasCampaignOccurrence", () => {
     const t = template("custom-rate");
     const plan = emptyPlan([instantiateCampaign(t, { id: NEW_ID, period: PERIOD })]);
     expect(hasCampaignOccurrence(plan, t, { period: PERIOD })).toBe(false);
+  });
+});
+
+describe("editCampaign", () => {
+  test("finds the template a campaign was made from", () => {
+    const period = { start: "2026-10-04", end: "2026-10-09" };
+    for (const id of ["sports-win", "39shop", "repeat", "shop-around-manual", "custom-rate"]) {
+      const b = instantiateCampaign(template(id), {
+        id: NEW_ID,
+        dates: ["2026-10-05"],
+        period,
+        cap: 1000,
+      });
+      expect(templateOfCampaign(b)?.id).toBe(id);
+    }
+    expect(templateOfCampaign(instantiateCampaign(template("pointday"), { id: NEW_ID }))).toBe(
+      undefined,
+    );
+  });
+
+  test("a changed period moves the sharedKey with its start, and keeps the rest", () => {
+    const t = template("repeat");
+    const b = {
+      ...instantiateCampaign(t, {
+        id: NEW_ID,
+        period: { start: "2026-10-04", end: "2026-10-09" },
+        cap: 500,
+        minOrderAmount: 5000,
+      }),
+      enabled: false,
+    };
+    const edited = editCampaign(t, b, { period: { start: "2026-10-05", end: "2026-10-09" } });
+    expect(edited).toMatchObject({
+      id: NEW_ID,
+      enabled: false,
+      sharedKey: "repeat:2026-10-05",
+      conditions: { minOrderAmount: 5000, orderTags: ["repeat"] },
+      params: { cap: 500 },
+    });
+    expect(campaignInputOf(edited).period).toEqual({ start: "2026-10-05", end: "2026-10-09" });
+  });
+
+  test("a sports-win day of both teams shows the other image, and back", () => {
+    const t = template("sports-win");
+    const b = instantiateCampaign(t, { id: NEW_ID, dates: ["2026-10-05"], rate: 1 });
+    const both = editCampaign(t, b, { rate: 2 });
+    expect(both.imagePath).toBe("/img/campaign/sports-w.webp");
+    expect(editCampaign(t, both, { rate: 1 }).imagePath).toBe("/img/campaign/sports.webp");
   });
 });

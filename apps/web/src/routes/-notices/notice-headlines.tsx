@@ -1,5 +1,5 @@
 import { List, Text } from "@workspaces/ui";
-import { RouterLink } from "../../../ui/router-link";
+import { RouterLink } from "../../ui/router-link";
 import { SidebarSection } from "../-sidebar/sidebar-section";
 import { NoticeDate } from "./notice-date";
 import { type Notice, newestFirst, notices as allNotices } from "./notices";

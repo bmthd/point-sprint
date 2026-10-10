@@ -1,6 +1,21 @@
-import { Box, Button, type StackProps, Text, VStack, useClipboard } from "@workspaces/ui";
+import {
+  Box,
+  Button,
+  Center,
+  HStack,
+  IconButton,
+  Image,
+  LinkIcon,
+  type StackProps,
+  Text,
+  VStack,
+  useClipboard,
+} from "@workspaces/ui";
 import { useId, useState } from "react";
 import { ShareIcon } from "../../ui/icons";
+import facebookLogo from "./facebook-logo.svg";
+import lineLogo from "./line-logo.svg";
+import xLogo from "./x-logo.svg";
 import { type ShareTarget, shareLinks, shareMessage } from "./share-target";
 
 /** Whether the device's own share sheet can post `target`. */
@@ -18,7 +33,6 @@ export function ShareButton({
   ...rest
 }: { label: string; target: ShareTarget } & StackProps) {
   const [open, setOpen] = useState(false);
-  const { copied, onCopy } = useClipboard();
   const panelId = useId();
 
   const share = async () => {
@@ -38,6 +52,7 @@ export function ShareButton({
     <VStack gap="2" alignItems="stretch" {...rest}>
       <Button
         variant="outline"
+        bg="bg.panel"
         size="lg"
         startIcon={<ShareIcon />}
         aria-expanded={open}
@@ -47,33 +62,60 @@ export function ShareButton({
         {label}
       </Button>
       <Box id={panelId} hidden={!open}>
-        {open ? (
-          <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
-            {shareLinks(target).map((link) => (
-              <Button
-                key={link.service}
-                as="a"
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="outline"
-                size="lg"
-                aria-label={link.label}
-              >
-                {link.service}
-              </Button>
-            ))}
-            <Button
-              variant="outline"
-              size="lg"
-              aria-label="文面とリンクをコピー"
-              onClick={() => onCopy(shareMessage(target))}
-            >
-              コピー
-            </Button>
-          </Box>
-        ) : null}
+        {open ? <ShareLinks target={target} /> : null}
       </Box>
+    </VStack>
+  );
+}
+
+/**
+ * Each service's logo from its brand resources on a 40px square of its color, all with the same
+ * corners. The files are the logos' paths: X's on a square of its black, Facebook's and LINE's
+ * with the circle or the rounded square under them made the full square.
+ */
+const serviceIcons = {
+  X: <Image src={xLogo} alt="" boxSize="10" rounded="sm" />,
+  Facebook: <Image src={facebookLogo} alt="" boxSize="10" rounded="sm" />,
+  LINE: <Image src={lineLogo} alt="" boxSize="10" rounded="sm" />,
+};
+
+/**
+ * The links to X, Facebook and LINE and a copy button: a row of icons, named for a screen reader,
+ * with what the copy did under them.
+ */
+export function ShareLinks({ target }: { target: ShareTarget }) {
+  const { copied, onCopy } = useClipboard();
+
+  return (
+    <VStack gap="2" alignItems="stretch">
+      <HStack gap="3" justifyContent="center">
+        {shareLinks(target).map((link) => (
+          <IconButton
+            key={link.service}
+            as="a"
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="ghost"
+            boxSize="12"
+            rounded="md"
+            aria-label={link.label}
+            icon={serviceIcons[link.service]}
+          />
+        ))}
+        <IconButton
+          variant="ghost"
+          boxSize="12"
+          rounded="md"
+          aria-label="文面とリンクをコピー"
+          onClick={() => onCopy(shareMessage(target))}
+          icon={
+            <Center boxSize="10" rounded="sm" bg="bg.muted" color="fg">
+              <LinkIcon fontSize="xl" />
+            </Center>
+          }
+        />
+      </HStack>
       <Text
         role="status"
         fontSize="sm"

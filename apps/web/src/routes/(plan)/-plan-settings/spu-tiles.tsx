@@ -3,23 +3,26 @@ import {
   Badge,
   type BadgeProps,
   Box,
+  Flex,
   Button,
+  Heading,
   Card,
   CheckboxCard,
-  Flex,
   Image,
   Link,
+  type LinkProps,
   Modal,
+  SimpleGrid,
   Text,
-  Wrap,
   useDisclosure,
+  VStack,
 } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useState } from "react";
 import { toggleBenefitAtom } from "../../../state/order-ops";
 import { ExternalIcon } from "../../../ui/icons";
-import { pointsText, rateText } from "../-order-shared";
-import { imageUrl, SPU_PAGE_URL, useSaveSettingsChange } from "./settings-shared";
+import { imageUrl, pointsText, rateText } from "../-order-shared";
+import { SPU_PAGE_URL, useSaveSettingsChange } from "./settings-shared";
 
 type RateBenefit = Extract<Benefit, { kind: "rate-bonus" }>;
 
@@ -38,8 +41,8 @@ export const spuTiles = (benefits: Benefit[]): RateBenefit[] =>
       (benefit.category === "spu" || (benefit.category === "base" && !isNormalPoint(benefit))),
   );
 
-const enabledRate = (plan: Plan, category: Benefit["category"]) =>
-  plan.benefits.reduce(
+const enabledRate = (benefits: Benefit[], category: Benefit["category"]) =>
+  benefits.reduce(
     (sum, benefit) =>
       benefit.kind === "rate-bonus" && benefit.category === category && benefit.enabled
         ? sum + benefit.params.rate
@@ -48,7 +51,7 @@ const enabledRate = (plan: Plan, category: Benefit["category"]) =>
   );
 
 /** The sum of the rates of the SPU (category `spu`) that are on. */
-export const spuRate = (plan: Plan) => enabledRate(plan, "spu");
+export const spuRate = (plan: Plan) => enabledRate(plan.benefits, "spu");
 
 /** The card's normal points are shown under a short name. */
 export const tileName = (benefit: Benefit) =>
@@ -65,10 +68,15 @@ function capText(benefit: Benefit) {
     month: "月間上限",
     plan: "このプランでの上限",
     campaign: "期間中の上限",
-    day: "1日の上限",
+    occurrence: "開催ごとの上限",
   }[benefit.capScope];
   return `${scope} ${pointsText(cap)}`;
 }
+
+/** Tiles stay this size; the row fits as many columns as the width allows. */
+const TILE_SIZE = "76px";
+/** Wider than a tile so long names under it wrap less. */
+const COLUMN_MIN_WIDTH = "96px";
 
 function Tile({
   benefit,
@@ -85,15 +93,14 @@ function Tile({
   const on = benefit.enabled;
   const badgeId = useId();
   return (
-    <Box display="flex" flexDirection="column" alignItems="center" gap="1" minW="0">
+    <Flex direction="column" align="center" gap="1" minW="0">
       <CheckboxCard.Root
         checked={on}
         onChange={onToggle}
         colorScheme="primary"
         size="sm"
         withIndicator={false}
-        aspectRatio="1"
-        maxW="76px"
+        boxSize={TILE_SIZE}
         alignItems="center"
         justifyContent="center"
         inputProps={{
@@ -119,14 +126,18 @@ function Tile({
         h="auto"
         minH="8"
         py="1"
+        fontSize={{ base: "2xs", sm: "xs" }}
         whiteSpace="normal"
+        wordBreak="keep-all"
         lineHeight="moderate"
       >
         {name}
       </Button>
-    </Box>
+    </Flex>
   );
 }
+
+const noneCapped: ReadonlySet<string> = new Set();
 
 /** 「上限」: the SPU reached its cap in this plan. */
 function CapBadge(props: BadgeProps) {
@@ -137,9 +148,17 @@ function CapBadge(props: BadgeProps) {
   );
 }
 
-function SpuLink() {
+function SpuLink(props: LinkProps) {
   return (
-    <Link href={SPU_PAGE_URL} target="_blank" rel="noreferrer" alignSelf="flex-start" gap="1.5">
+    <Link
+      href={SPU_PAGE_URL}
+      target="_blank"
+      rel="noreferrer"
+      alignSelf="flex-start"
+      gap="1.5"
+      whiteSpace="nowrap"
+      {...props}
+    >
       楽天で自分のSPUを確認する
       <ExternalIcon />
     </Link>
@@ -166,7 +185,7 @@ function DetailBody({
   );
   const targets = benefit.conditions.channels?.map((id) => channels[id].label).join("・");
   return (
-    <Box display="flex" flexDirection="column" gap="2" fontSize="sm">
+    <Flex direction="column" gap="2" fontSize="sm">
       <Box fontVariantNumeric="tabular-nums">
         <Text>倍率 {rateText(benefit.params.rate)}</Text>
         <Text>{capText(benefit)}</Text>
@@ -188,7 +207,7 @@ function DetailBody({
       ) : null}
       <Text color="fg.muted">達成の条件は楽天のページで確かめて、達成したものを ON にします。</Text>
       <SpuLink />
-    </Box>
+    </Flex>
   );
 }
 
@@ -196,7 +215,7 @@ function DetailBody({
  * The SPU tiles with the detail dialog behind each name. Works on any list of benefits: a plan's,
  * or the profile's defaults. `capped` holds the ids that reached their cap (none for a profile).
  */
-export function SpuTileGrid({
+function SpuTileGrid({
   benefits,
   capped,
   onToggle,
@@ -212,11 +231,10 @@ export function SpuTileGrid({
   return (
     <>
       {tiles.length > 0 ? (
-        <Box
+        <SimpleGrid
           role="group"
           aria-label="SPU のサービス"
-          display="grid"
-          gridTemplateColumns="repeat(4, minmax(0, 1fr))"
+          minChildWidth={COLUMN_MIN_WIDTH}
           columnGap="1.5"
           rowGap="2"
         >
@@ -232,7 +250,7 @@ export function SpuTileGrid({
               }}
             />
           ))}
-        </Box>
+        </SimpleGrid>
       ) : (
         <Text fontSize="sm" color="fg.muted">
           SPU はありません。
@@ -255,54 +273,74 @@ export function SpuTileGrid({
   );
 }
 
-/** The SPU section: the total, the tiles and their legend. */
-export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResult }) {
-  const toggle = useSetAtom(toggleBenefitAtom);
-  const save = useSaveSettingsChange(plan.id);
-  const capped = new Set(
-    result.benefitTotals.filter((total) => total.capReached).map((total) => total.benefitId),
-  );
-  const normal = enabledRate(plan, "base");
-  const spu = spuRate(plan);
+/**
+ * The SPU card: the total rate, the tiles and their legend. The plan's settings and the profile's
+ * defaults show the same card, so the two read alike.
+ */
+export function SpuCard({
+  title,
+  note,
+  benefits,
+  capped,
+  onToggle,
+}: {
+  title: string;
+  /** A line under the rate, for what the card's changes apply to. */
+  note?: string;
+  benefits: Benefit[];
+  /** The ids that reached their cap. `undefined` when there is no plan to reach them in. */
+  capped?: ReadonlySet<string>;
+  onToggle: (benefitId: string) => void;
+}) {
+  const normal = enabledRate(benefits, "base");
+  const spu = enabledRate(benefits, "spu");
+  const titleId = useId();
 
   return (
-    <Card.Root as="section" aria-label="SPU">
+    <Card.Root as="section" aria-labelledby={titleId}>
       <Card.Body alignItems="stretch">
-        <Box display="flex" alignItems="flex-end" justifyContent="space-between" gap="3">
-          <Box>
+        {/* The heading, the rate and its breakdown read as one block. */}
+        <VStack gap="1" alignItems="stretch" fontVariantNumeric="tabular-nums">
+          <Flex align="center" justify="space-between" gap="2">
+            <Heading as="h2" id={titleId} fontSize="md">
+              {title}
+            </Heading>
             <Text fontSize="xs" color="fg.muted">
-              SPU を入れて全商品
+              達成したものを ON に
             </Text>
-            <Text
-              fontSize="4xl"
-              fontWeight="bold"
-              lineHeight="1.1"
-              fontVariantNumeric="tabular-nums"
-            >
+          </Flex>
+          {/* 「ポイント倍率」 is what 楽天's SPU page calls this number. */}
+          <Flex align="baseline" gap="2">
+            <Text fontSize="sm" color="fg.muted">
+              ポイント倍率
+            </Text>
+            <Text fontSize="4xl" fontWeight="bold" lineHeight="1.1">
               {num(normal + spu)}
               <Text as="span" fontSize="md" fontWeight="medium">
                 倍
               </Text>
             </Text>
-          </Box>
-          <Text fontSize="xs" color="fg.muted" textAlign="end" fontVariantNumeric="tabular-nums">
-            通常 {num(normal)}倍 ＋ SPU{" "}
-            <Text as="b" color="fg">
-              +{num(spu)}倍
+          </Flex>
+          <Flex justify="space-between" gap="2" fontSize="xs" color="fg.muted">
+            <Text whiteSpace="nowrap">
+              通常 {num(normal)}倍 ＋ SPU{" "}
+              <Text as="b" color="fg">
+                +{num(spu)}倍
+              </Text>
             </Text>
-            <br />
-            タップで ON / OFF
+            <SpuLink fontSize="xs" alignSelf="auto" />
+          </Flex>
+        </VStack>
+        {note ? (
+          <Text fontSize="xs" color="fg.muted">
+            {note}
           </Text>
-        </Box>
+        ) : null}
 
-        <SpuTileGrid
-          benefits={plan.benefits}
-          capped={capped}
-          onToggle={(benefitId) => save(toggle({ planId: plan.id, benefitId }))}
-        />
+        <SpuTileGrid benefits={benefits} capped={capped ?? noneCapped} onToggle={onToggle} />
 
-        <Wrap alignItems="center" columnGap="3" rowGap="1.5" fontSize="xs" color="fg.muted">
-          <Flex as="span" alignItems="center" gap="1">
+        <Flex wrap="wrap" align="center" columnGap="3" rowGap="1.5" fontSize="xs" color="fg.muted">
+          <Flex as="span" align="center" gap="1">
             <Box
               as="span"
               boxSize="3"
@@ -313,20 +351,38 @@ export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResu
             />
             ON
           </Flex>
-          <Flex as="span" alignItems="center" gap="1">
+          <Flex as="span" align="center" gap="1">
             <Box as="span" boxSize="3" rounded="sm" borderWidth="1px" borderColor="border" />
             OFF
           </Flex>
-          <Flex as="span" alignItems="center" gap="1">
-            <CapBadge as="span" />
-            このプランで上限に達した
-          </Flex>
+          {capped ? (
+            <Flex as="span" align="center" gap="1">
+              <CapBadge as="span" />
+              このプランで上限に達した
+            </Flex>
+          ) : null}
           <Text as="span" ms="auto">
             名前を押すと上限・条件
           </Text>
-        </Wrap>
-        <SpuLink />
+        </Flex>
       </Card.Body>
     </Card.Root>
+  );
+}
+
+/** The plan's SPU card. */
+export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResult }) {
+  const toggle = useSetAtom(toggleBenefitAtom);
+  const save = useSaveSettingsChange(plan.id);
+  const capped = new Set(
+    result.benefitTotals.filter((total) => total.capReached).map((total) => total.benefitId),
+  );
+  return (
+    <SpuCard
+      title="SPU"
+      benefits={plan.benefits}
+      capped={capped}
+      onToggle={(benefitId) => save(toggle({ planId: plan.id, benefitId }))}
+    />
   );
 }

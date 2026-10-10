@@ -21,6 +21,13 @@ export type OrderTag = v.InferOutput<typeof OrderTagSchema>;
 export const PeriodSchema = v.object({ start: IsoDateSchema, end: IsoDateSchema });
 export type Period = v.InferOutput<typeof PeriodSchema>;
 
+/** The date in `period` nearest to `date`. */
+export function closestDateInPeriod({ date, period }: { date: string; period: Period }): string {
+  if (date < period.start) return period.start;
+  if (date > period.end) return period.end;
+  return date;
+}
+
 export const DateRuleSchema = v.variant("type", [
   v.object({
     type: v.literal("daysOfMonth"),

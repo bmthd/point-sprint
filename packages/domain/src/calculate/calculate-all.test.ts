@@ -12,6 +12,8 @@ const SHOP_B = "b0000000-0000-4000-8000-000000000002";
 
 const PLAN_1 = "f0000000-0000-4000-8000-000000000001";
 const PLAN_2 = "f0000000-0000-4000-8000-000000000002";
+/** Sorts before the other plans. */
+const PLAN_0 = "e0000000-0000-4000-8000-000000000001";
 
 const ITEM_1 = "10000000-0000-4000-8000-000000000001";
 const ITEM_2 = "20000000-0000-4000-8000-000000000002";
@@ -167,7 +169,15 @@ describe("calculateAll", () => {
     expectTotalsMatchBreakdown(results);
   });
 
-  test("day scope caps each day separately", () => {
+  test("occurrence scope caps each occurrence separately", () => {
+    const occurrence = (id: string, date: string) =>
+      bonus({
+        id,
+        capScope: "occurrence",
+        sharedKey: "sports-win",
+        conditions: { dateRule: { type: "dates", dates: [date] } },
+        cap: 15,
+      });
     const results = calculateAll(
       [
         plan(
@@ -177,20 +187,15 @@ describe("calculateAll", () => {
             order(ORDER_2, ITEM_2, "2026-10-05", SHOP_B),
             order(ORDER_3, ITEM_3, "2026-10-06"),
           ],
-          [bonus({ capScope: "day", cap: 15 })],
+          [occurrence(BONUS_ID, "2026-10-05"), occurrence(SHOP_AROUND_ID, "2026-10-06")],
         ),
       ],
       shops,
     );
     const r1 = resultOf(results, PLAN_1);
     expect((pointsOf(r1, ITEM_1) ?? 0) + (pointsOf(r1, ITEM_2) ?? 0)).toBe(15);
-    expect(pointsOf(r1, ITEM_3)).toBe(10);
-    expect(totalOf(r1)).toEqual({
-      benefitId: BONUS_ID,
-      rawPoints: 30,
-      cappedPoints: 25,
-      capReached: true,
-    });
+    expect(pointsOf(r1, ITEM_3, SHOP_AROUND_ID)).toBe(10);
+    expect(r1.total).toBe(25);
     expectTotalsMatchBreakdown(results);
   });
 
@@ -219,14 +224,44 @@ describe("calculateAll", () => {
     expectTotalsMatchBreakdown(results);
   });
 
+  test("a shared cap goes to the earlier orders first", () => {
+    const b = bonus({ capScope: "campaign", sharedKey: "marathon-2026-10", cap: 15 });
+    const first = plan(PLAN_1, [order(ORDER_1, ITEM_1, "2026-10-05")], [b]);
+    const alone = calculateAll([first], shops);
+    // The second plan's id sorts first, but its order is later: it gets only what is left.
+    const later = plan(PLAN_0, [order(ORDER_2, ITEM_2, "2026-10-20")], [b]);
+    const results = calculateAll([later, first], shops);
+    expect(resultOf(results, PLAN_1).total).toBe(resultOf(alone, PLAN_1).total);
+    expect(pointsOf(resultOf(results, PLAN_1), ITEM_1)).toBe(10);
+    expect(pointsOf(resultOf(results, PLAN_0), ITEM_2)).toBe(5);
+    expectTotalsMatchBreakdown(results);
+  });
+
+  test("within one plan, the earlier order gets the cap first", () => {
+    const results = calculateAll(
+      [
+        plan(
+          PLAN_1,
+          [order(ORDER_1, ITEM_1, "2026-10-06"), order(ORDER_2, ITEM_2, "2026-10-05", SHOP_B)],
+          [bonus({ cap: 15 })],
+        ),
+      ],
+      shops,
+    );
+    const r1 = resultOf(results, PLAN_1);
+    expect(pointsOf(r1, ITEM_2)).toBe(10);
+    expect(pointsOf(r1, ITEM_1)).toBe(5);
+    expectTotalsMatchBreakdown(results);
+  });
+
   describe("accounts", () => {
     const sharedCases = [
       { capScope: "campaign", dates: ["2026-10-05", "2026-10-20"] },
       { capScope: "month", dates: ["2026-10-05", "2026-10-20"] },
-      { capScope: "day", dates: ["2026-10-05", "2026-10-05"] },
+      { capScope: "occurrence", dates: ["2026-10-05", "2026-10-06"] },
     ] as const;
     const twoPlans = (
-      capScope: "campaign" | "month" | "day",
+      capScope: "campaign" | "month" | "occurrence",
       dates: readonly [string, string],
       accounts: [string | undefined, string | undefined],
     ) => {

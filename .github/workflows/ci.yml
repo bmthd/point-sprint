@@ -49,9 +49,16 @@ jobs:
           runtime: node@26
           cache: true
       - run: pnpm install --frozen-lockfile
+      - name: Restore Playwright Chromium
+        id: playwright
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
       # Only the web-browser project needs Chromium, so the other projects run while it installs.
       - parallel:
           - name: Install Chromium
+            if: steps.playwright.outputs.cache-hit != 'true'
             run: pnpm --filter web exec playwright install --with-deps chromium
           - name: Run tests
             run: pnpm test --project '!web-browser'
@@ -59,9 +66,17 @@ jobs:
         run: pnpm test --project web-browser
 
   e2e:
-    name: E2E
+    name: E2E (${{ matrix.shard }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: "1/2"
+            artifact_suffix: shard-1-of-2
+          - shard: "2/2"
+            artifact_suffix: shard-2-of-2
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
@@ -69,18 +84,25 @@ jobs:
           runtime: node@26
           cache: true
       - run: pnpm install --frozen-lockfile
+      - name: Restore Playwright Chromium
+        id: playwright
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
       - parallel:
           - name: Install Chromium
+            if: steps.playwright.outputs.cache-hit != 'true'
             run: pnpm --filter web exec playwright install --with-deps chromium
           - name: Build
             run: pnpm build:e2e
       - name: Run E2E tests
-        run: pnpm --filter web exec playwright test
+        run: pnpm --filter web exec playwright test --shard=${{ matrix.shard }}
       - name: Upload Playwright failure artifacts
         if: ${{ failure() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: playwright-test-results
+          name: playwright-test-results-${{ matrix.artifact_suffix }}
           path: apps/web/test-results/
           if-no-files-found: ignore
           retention-days: 30

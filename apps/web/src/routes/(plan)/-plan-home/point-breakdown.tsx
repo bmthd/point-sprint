@@ -1,5 +1,5 @@
 import { POINT_GROUPS, type PointGroup } from "@workspaces/domain";
-import { Box, List, Text } from "@workspaces/ui";
+import { Box, Flex, List, Text } from "@workspaces/ui";
 
 const labels: Record<PointGroup, string> = {
   base: "通常",
@@ -29,9 +29,8 @@ export function PointBreakdown({
 }) {
   const sum = POINT_GROUPS.reduce((total, group) => total + totals[group], 0);
   return (
-    <Box display="flex" flexDirection="column" gap="2.5">
-      <Box
-        display="flex"
+    <Flex direction="column" gap="2.5">
+      <Flex
         h="3.5"
         rounded="lg"
         overflow="hidden"
@@ -44,7 +43,7 @@ export function PointBreakdown({
               <Box key={group} w={`${(totals[group] / sum) * 100}%`} bg={pointFill(group, 3)} />
             ))
           : null}
-      </Box>
+      </Flex>
       <List.Root
         aria-label="ポイントの内訳"
         display={legend === "grid" ? "grid" : "flex"}
@@ -70,6 +69,6 @@ export function PointBreakdown({
           </List.Item>
         ))}
       </List.Root>
-    </Box>
+    </Flex>
   );
 }

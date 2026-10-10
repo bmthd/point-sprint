@@ -1,17 +1,14 @@
 import { taxExcludedTarget, taxIncludedTarget } from "@workspaces/domain";
 import {
   Box,
+  Flex,
   Button,
   Card,
-  Flex,
-  HStack,
   IconButton,
   List,
   Switch,
   Text,
-  VStack,
   VisuallyHidden,
-  Wrap,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { memo, useId, useMemo, useRef } from "react";
@@ -77,16 +74,16 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
 
   const base = order.lineItems.reduce((sum, item) => sum + taxExcludedTarget(item), 0);
   const amount = order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0);
+  const title = orderTitle(order);
 
   return (
     <List.Item>
       <Card.Root
-        variant="outline"
         // A held order is told apart by its dashed frame, as well as its 「保留」 badge.
         borderStyle={held ? "dashed" : undefined}
         overflow="hidden"
       >
-        <Box display="flex" alignItems="center">
+        <Flex align="center">
           <Button
             variant="ghost"
             colorScheme="gray"
@@ -104,19 +101,26 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
             lineHeight="normal"
           >
             <OrderBadge badge={props.badge} />
-            <VStack as="span" flex="1" minW="0" gap="0.5">
-              <HStack as="span" gap="1.5" fontSize="xs" color="fg.muted">
+            <Flex as="span" flex="1" minW="0" direction="column" gap="0.5">
+              <Flex as="span" gap="1.5" fontSize="xs" color="fg.muted">
                 <Text as="span" lineClamp={1}>
                   {shopName}
                 </Text>
                 <Text as="span" flex="none" fontVariantNumeric="tabular-nums">
                   {monthDayWithWeekday(order.date)}
                 </Text>
-              </HStack>
-              <Text as="span" fontSize="sm" fontWeight="medium" lineClamp={1}>
-                {orderTitle(order)}
-              </Text>
-              <Wrap as="span" alignItems="center" gap="1.5" fontSize="xs" color="fg.muted">
+              </Flex>
+              {/* Without a memo the line still shows, so every card is as tall as the others. */}
+              {title ? (
+                <Text as="span" fontSize="sm" fontWeight="medium" lineClamp={1}>
+                  {title}
+                </Text>
+              ) : (
+                <Text as="span" fontSize="sm" color="fg.muted">
+                  メモなし
+                </Text>
+              )}
+              <Flex as="span" align="center" wrap="wrap" gap="1.5" fontSize="xs" color="fg.muted">
                 <Text as="span" fontVariantNumeric="tabular-nums">
                   {yen(amount)}
                 </Text>
@@ -124,12 +128,12 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 {points.campaigns.map((label) => (
                   <CampaignChip key={label}>{label}</CampaignChip>
                 ))}
-              </Wrap>
-            </VStack>
-            <VStack
+              </Flex>
+            </Flex>
+            <Flex
               as="span"
-              w="auto"
-              alignItems="flex-end"
+              direction="column"
+              align="flex-end"
               gap="0.5"
               fontVariantNumeric="tabular-nums"
             >
@@ -148,13 +152,13 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                   </Text>
                 </>
               )}
-            </VStack>
+            </Flex>
             <Flex as="span" color="fg.muted">
               <ChevronIcon open={open} />
             </Flex>
           </Button>
           {reordering ? (
-            <Box display="flex" flex="none" pr="1">
+            <Flex flex="none" pr="1">
               <IconButton
                 ref={upRef}
                 variant="ghost"
@@ -177,9 +181,9 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
               >
                 <ArrowIcon direction="down" />
               </IconButton>
-            </Box>
+            </Flex>
           ) : null}
-        </Box>
+        </Flex>
         <Box
           id={bodyId}
           hidden={!open}
@@ -207,18 +211,18 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                   </List.Item>
                 ))}
               </List.Root>
-              <Box display="flex" justifyContent="space-between" fontSize="xs" color="fg.muted">
+              <Flex justify="space-between" fontSize="xs" color="fg.muted">
                 <span>税抜の基準額</span>
                 <Text as="span" fontVariantNumeric="tabular-nums">
                   {yen(base)}
                 </Text>
-              </Box>
+              </Flex>
               {held ? (
                 <Text fontSize="sm" color="fg.muted">
                   保留中の注文は合計と買い回りに入りません。
                 </Text>
               ) : (
-                <Box display="flex" flexDirection="column" gap="1.5" fontSize="sm">
+                <Flex direction="column" gap="1.5" fontSize="sm">
                   {points.rows.map((row) => (
                     <Box
                       key={row.key}
@@ -248,7 +252,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                       </Text>
                     </Box>
                   ))}
-                </Box>
+                </Flex>
               )}
               <Switch
                 checked={!held}

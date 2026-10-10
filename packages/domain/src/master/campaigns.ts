@@ -43,7 +43,9 @@ export const campaignTemplates: CampaignTemplate[] = [
       imagePath: "/img/campaign/sports.webp",
       enabled: false,
       amountBasis: "tax-excluded",
-      capScope: "day",
+      // 上限は「キャンペーン開催ごとに 1,000 ポイント」。開催 1 回ごとに特典を 1 件作る。
+      // 出典: https://event.rakuten.co.jp/campaign/sports/ （確認日 2026-10-11）
+      capScope: "occurrence",
       sharedKey: "sports-win",
       // 既定は片方のチームの勝利（+1倍）。両チームが勝った日は rate: 2 で作る。日付はユーザーが入れる。
       conditions: { channels: [...CHANNELS], minOrderAmount: 1000 },

@@ -1,5 +1,5 @@
 import { type Shop, channels } from "@workspaces/domain";
-import { Box, Card, Heading, List, Switch, Text } from "@workspaces/ui";
+import { Card, Flex, Heading, List, Switch, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { CommitField } from "../../../form/commit-field";
 import { ShopNameSchema } from "../../../form/field-schemas";
@@ -35,7 +35,7 @@ function ShopRow({
         schema={ShopNameSchema}
         onCommit={(name) => onSave((current) => ({ ...current, name }))}
       />
-      <Box display="flex" alignItems="center" justifyContent="space-between" gap="3">
+      <Flex align="center" justify="space-between" gap="3">
         <Text fontSize="xs" color="fg.muted" minW="0" overflowWrap="anywhere">
           購入先 {channels[shop.channel].label}
           <br />
@@ -54,7 +54,7 @@ function ShopRow({
         >
           39ショップ
         </Switch>
-      </Box>
+      </Flex>
     </List.Item>
   );
 }

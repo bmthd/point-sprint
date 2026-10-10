@@ -1,8 +1,6 @@
 import type { LinkProps } from "@tanstack/react-router";
-import { Box, Text } from "@workspaces/ui";
+import { Box, Flex, Text } from "@workspaces/ui";
 import { RouterLink } from "../../ui/router-link";
-import { ShareButton } from "../-share/share-button";
-import { siteShareTarget } from "../-share/share-target";
 
 /** The footer's links. */
 export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [
@@ -14,8 +12,7 @@ export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [
 ];
 
 /**
- * The footer on every page: the links, sharing the site, and where the data is kept (it applies to
- * every page).
+ * The footer on every page: the links and where the data is kept (it applies to every page).
  */
 export function SiteFooter() {
   return (
@@ -28,15 +25,14 @@ export function SiteFooter() {
         "body:has([data-bottom-bar]) &": { pb: "calc(8rem + env(safe-area-inset-bottom))" },
       }}
     >
-      <Box maxW="1280px" mx="auto" px="4" py="6" display="flex" flexDirection="column" gap="2">
+      <Flex maxW="1280px" mx="auto" px="4" py="6" direction="column" gap="2">
         {footerLinks.length > 0 ? (
-          <Box
+          <Flex
             as="nav"
             aria-label="サイトの案内"
-            display="flex"
-            justifyContent="center"
+            justify="center"
             columnGap="4"
-            flexWrap="wrap"
+            wrap="wrap"
             fontSize="sm"
           >
             {footerLinks.map((link) => (
@@ -51,19 +47,12 @@ export function SiteFooter() {
                 {link.label}
               </RouterLink>
             ))}
-          </Box>
+          </Flex>
         ) : null}
-        <ShareButton
-          label="このサイトをシェア"
-          target={siteShareTarget}
-          alignSelf="center"
-          w="full"
-          maxW="sm"
-        />
         <Text fontSize="xs" color="fg.muted" textAlign="center">
           入力した内容はこのブラウザの中にだけ保存されます。ブラウザのデータを消すと、プランも消えます。
         </Text>
-      </Box>
+      </Flex>
     </Box>
   );
 }

@@ -1,4 +1,5 @@
 import type { Benefit } from "../model/benefit";
+import type { DateRule } from "../model/common";
 
 /**
  * Key of the group whose raw points share one cap (see spec §3 "上限の共有範囲"). Caps shared
@@ -17,8 +18,27 @@ export function capGroupKey(
       return `campaign:${shared}`;
     case "month":
       return `month:${shared}:${orderDate.slice(0, 7)}`;
-    case "day":
-      return `day:${shared}:${orderDate}`;
+    case "occurrence": {
+      const occurrence = occurrenceOf(benefit.conditions.dateRule);
+      return occurrence === undefined
+        ? `occurrence:${shared}`
+        : `occurrence:${shared}:${occurrence}`;
+    }
+  }
+}
+
+/**
+ * Which occurrence of a campaign a benefit is: its days. Copies of the benefit in other plans of the
+ * account share the cap when they are for the same days.
+ */
+function occurrenceOf(rule: DateRule | undefined): string | undefined {
+  switch (rule?.type) {
+    case "dates":
+      return [...rule.dates].sort().join(",");
+    case "range":
+      return `${rule.start}~${rule.end}`;
+    default:
+      return undefined;
   }
 }
 

@@ -16,7 +16,7 @@ export function ErrorPage() {
         <Button colorScheme="primary" size="lg" onClick={() => void router.invalidate()}>
           再読み込み
         </Button>
-        <RouterButton to="/" variant="outline" size="lg">
+        <RouterButton to="/" variant="outline" bg="bg.panel" size="lg">
           トップに戻る
         </RouterButton>
       </HStack>

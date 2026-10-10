@@ -4,7 +4,7 @@
 
 import { Field as FormField, focus, reset, setInput, useField, useForm } from "@formisch/react";
 import { type Plan, calculateAll } from "@workspaces/domain";
-import { Box, Button, Field, Input, List, NativeSelect, Text } from "@workspaces/ui";
+import { Box, Flex, Button, Field, Input, List, NativeSelect, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type KeyboardEvent, useDeferredValue, useId, useMemo, useState } from "react";
 import { Form, bind, errorsOf } from "../../../form/form";
@@ -13,7 +13,7 @@ import { saveShopAtom } from "../../../state/mutations";
 import { addOrderAtom } from "../../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
-import { AutofillStatusText } from "../-item-autofill";
+import { AutofillStatus } from "../-item-autofill";
 import {
   OrderFormSchema,
   type OrderFormOutput,
@@ -25,6 +25,7 @@ import {
   AMOUNT_PATH,
   type OrderForm,
   applyShop,
+  autofillUrlHandlers,
   useFormInput,
   useOrderAutofill,
 } from "../-order-editor/order-form-store";
@@ -32,12 +33,14 @@ import { PlusIcon } from "../../../ui/icons";
 import {
   NEW_SHOP,
   TaxRateOptions,
-  ToggleChip,
+  CampaignCheck,
   fieldGrid,
   shopFromUrl,
   useSortedShops,
 } from "../-order-fields";
 import { orderSaveFailedAtom, pointsText } from "../-order-shared";
+import { FormDatePicker } from "../-date-picker-field";
+import { CapFlows } from "../-cap-flows";
 
 const sumOfTotals = (results: Map<string, { total: number }>) =>
   [...results.values()].reduce((sum, result) => sum + result.total, 0);
@@ -116,15 +119,17 @@ function UrlField({ form, autofill }: { form: OrderForm; autofill: Autofill }) {
         placeholder="https://item.rakuten.co.jp/…"
         {...bind(url)}
         // The shop of the URL is chosen at once, and stays when the item cannot be looked up.
-        onChange={(event) => {
-          const value = event.currentTarget.value;
-          url.onChange(value);
-          const found = shopFromUrl(value, shops);
-          if (found) applyShop(form, found);
-          autofill.onUrl(value);
-        }}
+        {...autofillUrlHandlers(
+          autofill,
+          (value) => {
+            url.onChange(value);
+            const found = shopFromUrl(value, shops);
+            if (found) applyShop(form, found);
+          },
+          url.props.onBlur,
+        )}
       />
-      <AutofillStatusText status={autofill.status} />
+      <AutofillStatus autofill={autofill} />
     </Field.Root>
   );
 }
@@ -169,13 +174,13 @@ function ShopField({ form }: { form: OrderForm }) {
   );
 }
 
-function ItemFields({ form }: { form: OrderForm }) {
+function ItemFields({ form, plan }: { form: OrderForm; plan: Plan }) {
   return (
     <>
       <FormField of={form} path={["date"]}>
         {(field) => (
           <Field.Root label="注文日" {...errorsOf(field)} minW="0">
-            <Input size="lg" type="date" fontVariantNumeric="tabular-nums" {...bind(field)} />
+            <FormDatePicker size="lg" field={field} period={plan.period} />
           </Field.Root>
         )}
       </FormField>
@@ -230,12 +235,20 @@ function TagChips({ form }: { form: OrderForm }) {
   const repeat = useField(form, { path: ["repeat"] });
   return (
     <>
-      <ToggleChip pressed={is39.input === true} onClick={() => is39.onChange(!is39.input)}>
+      <CampaignCheck
+        campaign="39shop"
+        checked={is39.input === true}
+        onChange={() => is39.onChange(!is39.input)}
+      >
         39ショップ
-      </ToggleChip>
-      <ToggleChip pressed={repeat.input === true} onClick={() => repeat.onChange(!repeat.input)}>
+      </CampaignCheck>
+      <CampaignCheck
+        campaign="repeat"
+        checked={repeat.input === true}
+        onChange={() => repeat.onChange(!repeat.input)}
+      >
         リピート購入
-      </ToggleChip>
+      </CampaignCheck>
     </>
   );
 }
@@ -251,7 +264,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
   const setFailed = useSetAtom(orderSaveFailedAtom);
   const run = useSingleFlight();
   const [open, setOpen] = useState(plan.orders.length === 0);
-  const form = useForm({ schema: OrderFormSchema, initialInput: emptyInput() });
+  const form = useForm({ schema: OrderFormSchema, initialInput: emptyInput(plan.period) });
   const autofill = useOrderAutofill(form);
   const formId = useId();
 
@@ -263,9 +276,10 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
       try {
         if (draft.shopChange) await saveShop.mutateAsync(draft.shopChange);
         await addOrder({ planId: plan.id, order: draft.order });
-        autofill.reset();
-        reset(form, { initialInput: emptyInput() });
+        reset(form, { initialInput: emptyInput(plan.period) });
         focus(form, { path: ["url"] });
+        // After the focus moves: leaving the URL field would look up the URL it still shows.
+        autofill.reset();
       } catch {
         // The typed order stays in the form so it can be added again.
         setFailed(true);
@@ -298,28 +312,21 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
         </Text>
       </Button>
       <Form of={form} id={formId} hidden={!open} onKeyDown={onKeyDown} onSubmit={add}>
-        <Box
-          display="flex"
-          flexDirection="column"
-          gap="3"
-          borderTopWidth="1px"
-          pt="3.5"
-          pb="4"
-          px="4"
-        >
+        <Flex direction="column" gap="3" borderTopWidth="1px" pt="3.5" pb="4" px="4">
           <UrlField form={form} autofill={autofill} />
           <Box {...fieldGrid}>
             <ShopField form={form} />
-            <ItemFields form={form} />
+            <ItemFields form={form} plan={plan} />
           </Box>
-          <Box display="flex" flexWrap="wrap" alignItems="center" gap="2">
+          <Flex wrap="wrap" align="center" gap="2">
             <TagChips form={form} />
             <Preview plan={plan} form={form} />
             <Button type="submit" colorScheme="primary" size="lg">
               追加する
             </Button>
-          </Box>
-        </Box>
+          </Flex>
+          <CapFlows plan={plan} form={form} />
+        </Flex>
       </Form>
     </List.Item>
   );

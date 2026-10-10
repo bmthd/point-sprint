@@ -14,8 +14,8 @@ import {
   defaultAccount,
   standardSpu,
 } from "@workspaces/domain";
-import { beforeEach, expect, test } from "vitest";
-import { type Locator, page, userEvent } from "vitest/browser";
+import { beforeEach, expect, onTestFinished, test, vi } from "vitest";
+import { page, userEvent } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import { misalignedFields } from "../../../test-layout";
@@ -27,22 +27,13 @@ import {
   order,
   renderPlanHome,
   shops,
+  tapCard,
 } from "../-test-fixtures";
 import { PlanSettings } from "./plan-settings";
 
 beforeEach(async () => {
   await page.viewport(390, 844);
 });
-
-/**
- * Taps a checkbox card (an SPU tile, a campaign). Its checkbox is visually hidden under the card, so
- * the card (its label) is tapped.
- */
-const tapCard = (tile: Locator) => {
-  const label = tile.element().closest("label");
-  if (!label) throw new Error("no card label");
-  return page.elementLocator(label).click();
-};
 
 const spuByLabel = (label: string): Benefit => {
   const benefit = standardSpu.find((candidate) => candidate.label === label);
@@ -108,7 +99,7 @@ test("tile toggles SPU and updates the total", async () => {
     .element(spuSection(screen).getByRole("img", { name: "楽天モバイル", exact: true }))
     .toHaveAttribute("src", "https://assets.bmth.dev/point-sprint/img/spu/service_mobile_v2.webp");
   await expect.element(mobile).not.toBeChecked();
-  expect(spuText(screen)).toContain("SPU を入れて全商品1倍");
+  expect(spuText(screen)).toContain("ポイント倍率1倍");
   // 通常ポイント is not a tile; 楽天カード通常分 is, under a short name.
   expect(screen.getByRole("checkbox", { name: /^通常ポイント/ }).query()).toBeNull();
   await expect
@@ -117,14 +108,14 @@ test("tile toggles SPU and updates the total", async () => {
 
   await tapCard(mobile);
   await expect.element(mobile).toBeChecked();
-  await expect.poll(() => spuText(screen)).toContain("SPU を入れて全商品5倍");
+  await expect.poll(() => spuText(screen)).toContain("ポイント倍率5倍");
   expect(spuText(screen)).toContain("SPU +4倍");
   await expect.poll(async () => (await storedBenefit("楽天モバイル"))?.enabled).toBe(true);
 
   // The card's own normal points count as 通常, not as SPU. Turning them on also turns on the
   // card's SPU bonus, which requires them.
   await tapCard(screen.getByRole("checkbox", { name: "楽天カード（通常） +1倍" }));
-  await expect.poll(() => spuText(screen)).toContain("SPU を入れて全商品7倍");
+  await expect.poll(() => spuText(screen)).toContain("ポイント倍率7倍");
   expect(spuText(screen)).toContain("通常 2倍");
   expect(spuText(screen)).toContain("SPU +5倍");
   await expect
@@ -156,10 +147,22 @@ test("campaigns show the image from their master data", async () => {
     getComputedStyle(screen.getByRole("img", { name: "5と0のつく日" }).element()).borderRadius,
   ).toBe("0px");
 
-  await screen.getByRole("button", { name: "＋ 追加" }).click();
-  await expect
-    .element(screen.getByRole("img", { name: "勝ったら倍" }))
-    .toHaveAttribute("src", "https://assets.bmth.dev/point-sprint/img/campaign/sports.webp");
+  const campaign = screen
+    .getByRole("region", { name: "キャンペーン" })
+    .getByRole("switch", { name: "5と0のつく日 +1倍 日付で自動" });
+  const campaignSection = screen.getByRole("region", { name: "キャンペーン" });
+  await expect.element(campaignSection.getByText("OFF", { exact: true })).toBeVisible();
+  await tapCard(campaign);
+  await expect.element(campaignSection.getByText("ON", { exact: true })).toBeVisible();
+
+  const sportsImage = screen
+    .getByRole("button", { name: "勝ったら倍を追加" })
+    .element()
+    .querySelector("img");
+  expect(sportsImage).toHaveAttribute(
+    "src",
+    "https://assets.bmth.dev/point-sprint/img/campaign/sports.webp",
+  );
 });
 
 test("enabling premium card turns off the regular card", async () => {
@@ -236,132 +239,140 @@ test("cap badge appears when the cap is reached", async () => {
     .toHaveAttribute("href", "https://event.rakuten.co.jp/campaign/point-up/everyday/point/");
 });
 
-test("adds a sports-win day from the template", async () => {
-  const screen = await renderSettings(makePlan([], []));
-  const add = screen.getByRole("button", { name: "＋ 追加" });
-  await expect.element(add).toHaveAttribute("aria-expanded", "false");
-  await add.click();
-  await expect.element(add).toHaveAttribute("aria-expanded", "true");
+/** Today is 10/6, inside the plan's period (10/4 to 10/9). */
+const onOctober6 = () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-10-06T03:00:00Z"));
+  onTestFinished(() => {
+    vi.useRealTimers();
+  });
+};
 
-  await screen.getByRole("button", { name: /^勝ったら倍/ }).click();
-  const dialog = screen.getByRole("dialog", { name: "勝ったら倍を追加" });
-  const date = dialog.getByLabelText("日付");
-  // Opening the dialog neither focuses the date nor opens its calendar.
-  await expect.element(date).toBeVisible();
-  await expect.element(date).not.toHaveFocus();
-  await expect.element(screen.getByRole("grid")).not.toBeInTheDocument();
-  // The dialog shows the campaign's image, which follows the chosen rate.
-  const thumbnail = () => dialog.element().querySelector("header img");
-  expect(thumbnail()).toHaveAttribute(
-    "src",
-    "https://assets.bmth.dev/point-sprint/img/campaign/sports.webp",
-  );
+const pointDay = () => {
+  const benefit = campaignTemplates.find((template) => template.id === "pointday")?.benefit;
+  if (!benefit) throw new Error("no pointday campaign");
+  return structuredClone(benefit);
+};
 
-  // Tapping the date opens the calendar, not the on-screen keyboard, and a day picked there fills
-  // it in.
-  await expect.element(date).toHaveAttribute("inputmode", "none");
-  await date.click();
-  const calendar = screen.getByRole("grid");
-  await calendar.getByText("6", { exact: true }).click();
-  await expect.element(date).toHaveValue("2026/10/06");
-  await expect.element(calendar).not.toBeInTheDocument();
-  const rate = dialog.getByRole("radiogroup", { name: "倍率" });
-  const double = rate.getByRole("radio", { name: /^\+2倍/ });
-  await expect.element(rate.getByRole("radio", { name: /^\+1倍/ })).toBeChecked();
-  // The radio is visually hidden under its card, so the card's text is tapped.
-  await rate.getByText("両方のチームが勝った日").click();
-  await expect.element(double).toBeChecked();
-  await expect
-    .poll(thumbnail)
-    .toHaveAttribute("src", "https://assets.bmth.dev/point-sprint/img/campaign/sports-w.webp");
-  await dialog.getByRole("button", { name: "追加する" }).click();
+test("adds a sports-win day at once, and changes it in its row", async () => {
+  onOctober6();
+  const screen = await renderSettings(makePlan([pointDay()], []));
+  await screen.getByRole("button", { name: "勝ったら倍を追加" }).click();
 
-  await expect.element(dialog).not.toBeInTheDocument();
-  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
-  expect((await storedPlan()).benefits[0]).toMatchObject({
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(2);
+  expect((await storedPlan()).benefits[1]).toMatchObject({
     label: "勝ったら倍",
-    category: "campaign",
     enabled: true,
     conditions: { dateRule: { type: "dates", dates: ["2026-10-06"] } },
-    params: { rate: 2 },
+    params: { rate: 1 },
   });
-  const toggle = screen.getByRole("checkbox", { name: "勝ったら倍 +2倍 10/6" });
+  // The campaign just added opens its values.
+  const edit = screen.getByRole("button", { name: "勝ったら倍を編集" });
+  await expect.element(edit).toHaveAttribute("aria-expanded", "true");
+  const date = screen.getByLabelText("日付");
+  await expect.element(date).toHaveValue("2026-10-06");
+
+  // The switch of every row is in the same place, whether the row has ✎ or not.
+  const switchOf = (name: RegExp) =>
+    screen.getByRole("switch", { name }).element().getBoundingClientRect();
+  expect(switchOf(/^勝ったら倍/).left).toBe(switchOf(/^5と0のつく日/).left);
+
+  await screen.getByText("両方のチームが勝った日").click();
+  await expect
+    .poll(async () => (await storedPlan()).benefits[1]?.imagePath)
+    .toBe("/img/campaign/sports-w.webp");
+  await date.fill("2026-10-07");
+  await userEvent.keyboard("{Enter}");
+  const toggle = screen.getByRole("switch", { name: "勝ったら倍 +2倍 10/7" });
   await expect.element(toggle).toBeChecked();
+  expect((await storedPlan()).benefits[1]?.conditions.dateRule).toEqual({
+    type: "dates",
+    dates: ["2026-10-07"],
+  });
 
   await tapCard(toggle);
-  await expect.element(toggle).not.toBeChecked();
-  await expect.poll(async () => (await storedPlan()).benefits[0]?.enabled).toBe(false);
+  await expect.poll(async () => (await storedPlan()).benefits[1]?.enabled).toBe(false);
 
   // An added campaign can be deleted after a confirmation.
   await screen.getByRole("button", { name: "勝ったら倍を削除" }).click();
   await screen.getByRole("button", { name: "削除する" }).click();
-  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(0);
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
   await expect.element(toggle).not.toBeInTheDocument();
 });
 
-test("prevents adding the same 39shop period twice", async () => {
+test("adds sports-win again for the next day it does not have", async () => {
+  onOctober6();
   const screen = await renderSettings(makePlan([], []));
-  const add39 = async () => {
-    const add = screen.getByRole("button", { name: "＋ 追加" });
-    if (add.element().getAttribute("aria-expanded") === "false") await add.click();
-    await screen
-      .getByRole("list", { name: "追加できるキャンペーン" })
-      .getByRole("button", { name: /^39ショップ/ })
-      .click();
-    return screen.getByRole("dialog", { name: "39ショップを追加" });
-  };
-
-  const first = await add39();
-  await expect.element(first.getByLabelText("開始日")).toHaveValue("2026/10/04");
-  await expect.element(first.getByLabelText("終了日")).toHaveValue("2026/10/09");
-  await first.getByRole("button", { name: "追加する" }).click();
-  await expect.element(first).not.toBeInTheDocument();
+  const add = screen.getByRole("button", { name: "勝ったら倍を追加" });
+  await add.click();
   await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
-  await expect
-    .element(screen.getByRole("checkbox", { name: /^39ショップ \+1倍/ }))
-    .toHaveAccessibleName(/10\/4〜10\/9$/);
-
-  const second = await add39();
-  await expect
-    .element(second.getByText("この期間の39ショップはもう追加してあります"))
-    .toBeVisible();
-  await expect.element(second.getByRole("button", { name: "追加する" })).toBeDisabled();
-
-  // Another period is a different occurrence.
-  await second.getByLabelText("開始日").fill("2026-10-05");
-  await expect.element(second.getByRole("button", { name: "追加する" })).toBeEnabled();
-  await second.getByRole("button", { name: "キャンセル" }).click();
-  expect((await storedPlan()).benefits).toHaveLength(1);
+  await add.click();
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(2);
+  expect((await storedPlan()).benefits.map((benefit) => benefit.conditions.dateRule)).toEqual([
+    { type: "dates", dates: ["2026-10-06"] },
+    { type: "dates", dates: ["2026-10-07"] },
+  ]);
 });
 
-test("a campaign's form says what to fix, and focuses the first field to fix", async () => {
+test("adds 39shop for the plan's period once, and refuses a period it already has", async () => {
   const screen = await renderSettings(makePlan([], []));
-  await screen.getByRole("button", { name: "＋ 追加" }).click();
-  await screen.getByRole("button", { name: /^リピート購入/ }).click();
-  const dialog = screen.getByRole("dialog", { name: "リピート購入を追加" });
-  const end = dialog.getByLabelText("終了日");
-  const cap = dialog.getByLabelText("獲得上限（P）");
-  await end.fill("2026-10-01");
-  await dialog.getByLabelText("条件金額（円）").fill("３，９８０円");
-  await dialog.getByRole("button", { name: "追加する" }).click();
-
+  await screen.getByRole("button", { name: "39ショップを追加" }).click();
   await expect
-    .element(end)
-    .toHaveAccessibleDescription("終了日は開始日と同じ日か、それより後の日にしてください");
-  await expect.element(cap).toHaveAccessibleDescription("獲得上限を入れてください");
-  await expect.element(end).toHaveFocus();
-  // The start date stays level with the end date and its error.
-  expect(misalignedFields(dialog.element())).toEqual([]);
-  expect((await storedPlan()).benefits).toHaveLength(0);
+    .element(screen.getByRole("switch", { name: /^39ショップ \+1倍/ }))
+    .toHaveAccessibleName(/10\/4〜10\/9$/);
+  const added = screen.getByRole("button", { name: "39ショップ（追加済み）" });
+  await expect.element(added).toBeDisabled();
 
-  await end.fill("2026-10-09");
-  await cap.fill("1,000P");
-  await dialog.getByRole("button", { name: "追加する" }).click();
-  await expect.element(dialog).not.toBeInTheDocument();
+  // Another period is a different occurrence, so the template can be added again.
+  const start = screen.getByLabelText("開始日");
+  await start.fill("2026-10-05");
+  await start.element().blur();
+  await expect
+    .poll(async () => (await storedPlan()).benefits[0]?.sharedKey)
+    .toBe("39shop:2026-10-05");
+  await screen.getByRole("button", { name: "39ショップを追加" }).click();
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(2);
+
+  const second = screen.getByLabelText("開始日");
+  await second.fill("2026-10-05");
+  await second.element().blur();
+  await expect
+    .element(second)
+    .toHaveAccessibleDescription("この期間の39ショップはもう追加してあります");
+  expect((await storedPlan()).benefits[1]?.sharedKey).toBe("39shop:2026-10-04");
+});
+
+test("adds a repeat purchase with a cap to start from, and says what to fix", async () => {
+  const screen = await renderSettings(makePlan([], []));
+  await screen.getByRole("button", { name: "リピート購入を追加" }).click();
   await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
   expect((await storedPlan()).benefits[0]).toMatchObject({
     params: { cap: 1000 },
     conditions: { minOrderAmount: 3980 },
+  });
+
+  const end = screen.getByLabelText("終了日");
+  await end.fill("2026-10-01");
+  await end.element().blur();
+  await expect
+    .element(end)
+    .toHaveAccessibleDescription("終了日は開始日と同じ日か、それより後の日にしてください");
+  // The start date stays level with the end date and its error.
+  expect(misalignedFields(screen.getByRole("region", { name: "キャンペーン" }).element())).toEqual(
+    [],
+  );
+
+  const cap = screen.getByLabelText("獲得上限（P）");
+  await cap.fill("たくさん");
+  await cap.element().blur();
+  await expect.element(cap).toHaveAccessibleDescription("獲得上限は0以上の整数で入れてください");
+  await cap.fill("２，０００Ｐ");
+  await cap.element().blur();
+  await expect.poll(async () => (await storedPlan()).benefits[0]?.params.cap).toBe(2000);
+  expect((await storedPlan()).benefits[0]?.conditions.dateRule).toEqual({
+    type: "range",
+    start: "2026-10-04",
+    end: "2026-10-09",
   });
 });
 

@@ -28,7 +28,7 @@ function LoadError({ onRetry }: { onRetry: () => void }) {
   return (
     <VStack as="main" alignItems="center" gap="4" px="4" py="16" textAlign="center">
       <Text role="alert">保存されたデータを読み込めませんでした。</Text>
-      <Button variant="outline" size="lg" onClick={onRetry}>
+      <Button variant="outline" bg="bg.panel" size="lg" onClick={onRetry}>
         もう一度読み込む
       </Button>
     </VStack>

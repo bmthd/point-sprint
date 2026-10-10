@@ -169,9 +169,10 @@ test("shows total and effective rate", async () => {
   expect(summaryText()).toContain("実質還元率6.5%");
   expect(summaryText()).toContain("4店舗を買い回り中");
   expect(summaryText()).toContain("マラソン +3倍");
-  // The cap left for this plan is the whole 7,000P; ¥193,334 more (tax-excluded) reaches it.
-  expect(summaryText()).toContain("1,200 / 7,000P");
-  expect(summaryText()).toContain("上限まであと 約21.3万円 買えます");
+  // 5,800P of the 7,000P cap are left: ¥193,334 before tax at +3倍, ¥212,667 at 10%.
+  expect(summaryText()).toContain(
+    "次に上限に届くのはショップ買いまわり あと¥212,667（期間中の枠）",
+  );
   const dots = summary()?.querySelector('[aria-label="買い回り 10店舗中4店舗"]');
   expect(dots?.children).toHaveLength(10);
 
@@ -203,11 +204,13 @@ test("breakdown opens and sums to total", async () => {
   const repository = createMemoryRepository({ shops, plans: [marathonPlan()] });
   const { screen } = await renderPlanHome(repository);
 
-  const toggle = screen.getByRole("button", { name: "ポイントの内訳を見る" });
-  await expect.element(toggle).toHaveAttribute("aria-expanded", "false");
+  const toggle = screen.getByText("ポイントの内訳を見る", { exact: true });
+  const accordion = toggle.element().closest("details");
+  expect(accordion).not.toBeNull();
+  expect(accordion?.open).toBe(false);
   await expect.poll(summaryText).toContain("2,600P");
   await toggle.click();
-  await expect.element(toggle).toHaveAttribute("aria-expanded", "true");
+  expect(accordion?.open).toBe(true);
 
   const legend = screen.getByRole("list", { name: "ポイントの内訳" });
   await expect.element(legend).toBeVisible();
@@ -250,16 +253,14 @@ test("shows warnings for orders outside the period and unknown shops", async () 
     .toBeVisible();
 });
 
-test("switches to another plan from the header", async () => {
+test("shows the plan name as text and switches plans from a separate menu button", async () => {
   const other = makePlan({ id: OTHER_PLAN, name: "10月の普段の買い物", benefits: [], orders: [] });
   const repository = createMemoryRepository({ shops, plans: [marathonPlan(), other] });
   const { screen, router } = await renderPlanHome(repository);
 
-  // The accessible name starts with the plan name the button shows.
-  const switcher = screen.getByRole("button", {
-    name: "10月 お買い物マラソン、プランを切り替える",
-    exact: true,
-  });
+  const title = screen.getByText("10月 お買い物マラソン", { exact: true });
+  expect(title.element().closest("button")).toBeNull();
+  const switcher = screen.getByRole("button", { name: "プランを切り替える", exact: true });
   await expect.element(switcher).toBeVisible();
   await switcher.click();
   await screen.getByRole("menuitem", { name: "10月の普段の買い物" }).click();
@@ -328,6 +329,6 @@ test("says the cap is reached when nothing is left to buy", async () => {
   const plan = makePlan({ benefits: [baseBenefit, ...marathon], orders: [0, 1, 2, 3].map(big) });
   await renderPlanHome(createMemoryRepository({ shops, plans: [plan] }));
 
-  await expect.poll(summaryText).toContain("上限に達しました");
-  expect(summaryText()).not.toContain("上限まであと");
+  await expect.poll(summaryText).toContain("上限のある特典は、すべて上限に届きました");
+  expect(summaryText()).not.toContain("次に上限に届くのは");
 });

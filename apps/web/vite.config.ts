@@ -5,21 +5,18 @@ import { defineConfig, loadEnv } from "vite";
 import { ogFonts } from "./og-fonts-plugin.ts";
 import { parseGoogleTagsEnv } from "./src/google-tags/env.ts";
 import { prerenderedPages, robotsTxt } from "./src/prerender-pages.ts";
-import {
-  ALLOWED_ORIGIN,
-  DEV_PROXY_PATH,
-  ITEM_SEARCH_ENDPOINT,
-  readRakutenConfig,
-} from "./src/rakuten/config.ts";
+import { readRakutenConfig } from "./src/rakuten/config.ts";
+import { tokyoToday } from "./src/ui/dates.ts";
 
 export default defineConfig(({ command, mode, isPreview }) => {
   // Only the `PUBLIC_` values reach the browser. They are plain text in `.env.development` and
   // `.env.production` at the root, so they are read without the dotenvx key, also by builds that do
-  // not go through `pnpm build`. Without them, no item lookup, and the guides show no items.
-  const publicEnv = loadEnv(mode, "../..", "PUBLIC_");
-  const rakutenConfig = readRakutenConfig(publicEnv);
-  // `vite preview` serves what was built, with the settings the build had.
-  if (!rakutenConfig && !isPreview) {
+  // not go through `pnpm build`. So is the Rakuten affiliate id, which only the Worker reads.
+  const publicEnv = loadEnv(mode, "../..", ["PUBLIC_", "RAKUTEN_AFFILIATE_ID"]);
+  // The Rakuten keys are the Worker's secrets, which dotenvx decrypts into the environment
+  // (cloudflare.config.ts). Without them, no item lookup, and the guides show no items.
+  // `vite preview` is given its secrets by whoever runs it.
+  if (!readRakutenConfig(process.env) && !isPreview) {
     console.warn(
       "Rakuten API settings are missing or encrypted: item lookup and the guides' items are off.",
     );
@@ -47,7 +44,15 @@ export default defineConfig(({ command, mode, isPreview }) => {
       },
     ],
     define: {
-      "import.meta.env.RAKUTEN_CONFIG": JSON.stringify(rakutenConfig ?? null),
+      // The HTML rendered ahead of time lists the events of this day, as the page does once running.
+      "import.meta.env.BUILD_DATE": JSON.stringify(tokyoToday(new Date())),
+      "import.meta.env.RAKUTEN_AFFILIATE_ID": JSON.stringify(
+        publicEnv.RAKUTEN_AFFILIATE_ID?.trim() || null,
+      ),
+      // The E2E build sends the item lookup to a stand-in for the API (e2e/fake-rakuten-api.ts).
+      "import.meta.env.ITEM_LOOKUP_ENDPOINT": JSON.stringify(
+        process.env.ITEM_LOOKUP_ENDPOINT || null,
+      ),
       // The E2E build sends the guides' item searches nowhere, so that no test calls the API.
       "import.meta.env.GUIDE_ITEMS_ENDPOINT": JSON.stringify(
         process.env.GUIDE_ITEMS_ENDPOINT || null,
@@ -58,18 +63,6 @@ export default defineConfig(({ command, mode, isPreview }) => {
       ),
       "import.meta.env.GA_MEASUREMENT_ID": JSON.stringify(googleTagIds?.measurementId),
       "import.meta.env.ADSENSE_CLIENT_ID": JSON.stringify(googleTagIds?.adsenseClientId),
-    },
-    server: {
-      proxy: {
-        // The API answers only `ALLOWED_ORIGIN`, which cannot be localhost.
-        [DEV_PROXY_PATH]: {
-          target: new URL(ITEM_SEARCH_ENDPOINT).origin,
-          changeOrigin: true,
-          rewrite: (path) => path.slice(DEV_PROXY_PATH.length),
-          // Lower case, to replace the browser's `origin` rather than send a second one.
-          headers: { origin: ALLOWED_ORIGIN },
-        },
-      },
     },
     build: {
       // Yamada UI and Emotion put the shared chunk just over Vite's 500 kB default; splitting them

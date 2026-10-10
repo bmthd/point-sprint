@@ -1,5 +1,5 @@
 import { type OfficialEvent, officialEvents } from "@workspaces/domain";
-import { Badge, Box, Button, Card, Heading, List, Text, VStack } from "@workspaces/ui";
+import { Badge, Button, Card, Flex, Heading, List, Text, VStack } from "@workspaces/ui";
 import { monthDayWithWeekday } from "../../../ui/dates";
 
 /** The most a shop-around benefit adds, and the cap on what it pays. */
@@ -25,7 +25,7 @@ function EventCard({ event, status, disabled, onCreate }: EventCardProps) {
     <List.Item>
       <Card.Root>
         <Card.Body>
-          <Box display="flex" alignItems="center" gap="2">
+          <Flex align="center" gap="2">
             {status ? (
               <Badge
                 colorScheme={status === "active" ? "primary" : "mono"}
@@ -37,7 +37,7 @@ function EventCard({ event, status, disabled, onCreate }: EventCardProps) {
             <Text fontSize="md" fontWeight="bold">
               {event.name}
             </Text>
-          </Box>
+          </Flex>
           <Text fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
             {monthDayWithWeekday(event.period.start)} 〜 {monthDayWithWeekday(event.period.end)}
             {shopAroundSummary(event)}
@@ -57,7 +57,7 @@ function EventCard({ event, status, disabled, onCreate }: EventCardProps) {
 }
 
 type EventSectionProps = {
-  /** Today in Japan as `YYYY-MM-DD`, or `undefined` while rendering ahead of time. */
+  /** Today in Japan as `YYYY-MM-DD`, the day of the build in the HTML rendered ahead of time. */
   today: string | undefined;
   disabled: boolean;
   onCreate: (event: OfficialEvent) => void;

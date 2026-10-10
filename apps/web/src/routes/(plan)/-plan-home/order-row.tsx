@@ -8,16 +8,14 @@ import {
 } from "@workspaces/domain";
 import {
   Box,
+  Flex,
   Button,
   Checkbox,
-  HStack,
   IconButton,
-  Input,
   List,
   NativeSelect,
   Text,
   VisuallyHidden,
-  Wrap,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
@@ -34,7 +32,7 @@ import {
   useState,
 } from "react";
 import * as v from "valibot";
-import { orderAtom } from "../../../state/derived";
+import { orderAtom, planAtom } from "../../../state/derived";
 import { changeShop, saveShopAtom } from "../../../state/mutations";
 import {
   copyOrderAtom,
@@ -58,12 +56,13 @@ import {
   ReadOnlyField,
   TaxRateOptions,
   type TaxRateValue,
-  ToggleChip,
+  CampaignCheck,
   fieldGrid,
   withTag,
   taxRateValue,
   useSortedShops,
 } from "../-order-fields";
+import { FieldDatePicker, isoDate, parseIsoDate } from "../-date-picker-field";
 import {
   CampaignChip,
   OrderBadge,
@@ -144,6 +143,7 @@ function OrderEditor({
   order: Order;
   onEdit: (orderId: string) => void;
 }) {
+  const period = useAtomValue(planAtom(planId))?.period;
   const shops = useAtomValue(shopsAtom);
   const sortedShops = useSortedShops(shops);
   const saveShop = useAtomValue(saveShopAtom);
@@ -179,14 +179,13 @@ function OrderEditor({
           </NativeSelect.Root>
         </Field>
         <Field label="注文日" error={dateError}>
-          <Input
+          <FieldDatePicker
             size="lg"
-            type="date"
-            fontVariantNumeric="tabular-nums"
-            defaultValue={order.date}
+            period={period}
+            defaultValue={parseIsoDate(order.date)}
             key={order.date}
-            onChange={(event) => {
-              const parsed = v.safeParse(OrderDateSchema, event.currentTarget.value);
+            onChange={(date) => {
+              const parsed = v.safeParse(OrderDateSchema, date ? isoDate(date) : "");
               setDateError(parsed.success ? undefined : parsed.issues[0].message);
               if (parsed.success && parsed.output !== order.date) {
                 saveOrder({ ...order, date: parsed.output });
@@ -276,11 +275,12 @@ function OrderEditor({
           点あるので、商品名・金額・税率・ショップ独自倍率は「商品を編集」から変えられます。
         </Text>
       )}
-      <Box display="flex" flexWrap="wrap" gap="2">
-        <ToggleChip
-          pressed={shop?.tags.includes("39shop") ?? false}
+      <Flex wrap="wrap" gap="2">
+        <CampaignCheck
+          campaign="39shop"
+          checked={shop?.tags.includes("39shop") ?? false}
           describedBy={shopTagHintId}
-          onClick={() => {
+          onChange={() => {
             if (!shop) return;
             const on = !shop.tags.includes("39shop");
             save(
@@ -294,23 +294,24 @@ function OrderEditor({
           }}
         >
           39ショップ
-        </ToggleChip>
+        </CampaignCheck>
         <Text id={shopTagHintId} alignSelf="center" fontSize="xs" color="fg.muted">
           このショップの注文すべてに反映されます
         </Text>
-        <ToggleChip
-          pressed={order.tags.includes("repeat")}
-          onClick={() => saveOrder({ ...order, tags: toggleTag<OrderTag>(order.tags, "repeat") })}
+        <CampaignCheck
+          campaign="repeat"
+          checked={order.tags.includes("repeat")}
+          onChange={() => saveOrder({ ...order, tags: toggleTag<OrderTag>(order.tags, "repeat") })}
         >
           リピート購入
-        </ToggleChip>
+        </CampaignCheck>
         <Box flex="1" />
         {single ? null : (
           <Button variant="outline" size="lg" onClick={() => onEdit(order.id)}>
             商品を編集
           </Button>
         )}
-      </Box>
+      </Flex>
     </>
   );
 }
@@ -465,44 +466,33 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
           onChange={() => save(toggleHold({ planId, orderId }))}
         />
         <OrderBadge badge={props.badge} />
-        <Box minW="0" display="flex" flexDirection="column" gap="0.5">
-          <HStack gap="2" fontSize="xs" color="fg.muted">
+        <Flex minW="0" direction="column" gap="0.5">
+          <Flex as="span" gap="2" fontSize="xs" color="fg.muted">
             <Text as="span" lineClamp={1} wordBreak="break-all">
               {shopName}
             </Text>
             <Text as="span" flex="none" fontVariantNumeric="tabular-nums">
               {monthDayWithWeekday(order.date)}
             </Text>
-          </HStack>
+          </Flex>
           <Text as="span" fontSize="sm" fontWeight="medium" lineClamp={1} wordBreak="break-all">
             {orderTitle(order)}
           </Text>
           {points.campaigns.length > 0 ? (
-            <Wrap gap="1">
+            <Flex as="span" wrap="wrap" gap="1">
               {points.campaigns.map((label) => (
                 <CampaignChip key={label}>{label}</CampaignChip>
               ))}
-            </Wrap>
+            </Flex>
           ) : null}
-        </Box>
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="flex-end"
-          fontSize="sm"
-          fontVariantNumeric="tabular-nums"
-        >
+        </Flex>
+        <Flex direction="column" align="flex-end" fontSize="sm" fontVariantNumeric="tabular-nums">
           <span>{yen(amount)}</span>
           <Text as="span" fontSize="2xs" color="fg.muted">
             {taxLabel(order.lineItems)}
           </Text>
-        </Box>
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="flex-end"
-          fontVariantNumeric="tabular-nums"
-        >
+        </Flex>
+        <Flex direction="column" align="flex-end" fontVariantNumeric="tabular-nums">
           {held ? (
             <Text as="s" fontWeight="bold" color="fg.muted">
               <VisuallyHidden>保留中の見込み </VisuallyHidden>
@@ -518,7 +508,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
               </Text>
             </>
           )}
-        </Box>
+        </Flex>
         <IconButton
           variant="ghost"
           size="lg"
@@ -545,7 +535,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
       >
         {open ? (
           <>
-            <Box display="flex" flexDirection="column" gap="2">
+            <Flex direction="column" gap="2">
               {held ? (
                 <Text fontSize="sm" color="fg.muted">
                   保留中の注文は合計と買い回りに入りません。
@@ -556,9 +546,9 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
               <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
                 {`税抜の基準額 ${yen(base)}`}
               </Text>
-            </Box>
+            </Flex>
             <OrderEditor planId={planId} order={order} onEdit={props.onEdit} />
-            <Box display="flex" flexWrap="wrap" gap="2" justifyContent="flex-end">
+            <Flex wrap="wrap" gap="2" justify="flex-end">
               <Button
                 variant="outline"
                 size="lg"
@@ -574,7 +564,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
               >
                 削除
               </Button>
-            </Box>
+            </Flex>
           </>
         ) : null}
       </Box>
