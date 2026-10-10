@@ -15,6 +15,7 @@ import { useId, useState } from "react";
 import { ShareIcon } from "../../ui/icons";
 import facebookLogo from "./facebook-logo.svg";
 import lineLogo from "./line-logo.svg";
+import xLogo from "./x-logo.svg";
 import { type ShareTarget, shareLinks, shareMessage } from "./share-target";
 
 /** Whether the device's own share sheet can post `target`. */
@@ -67,29 +68,13 @@ export function ShareButton({
   );
 }
 
-/** The X logo from X's brand toolkit, in the color of the text on the square under it. */
-function XLogo() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 1200 1227" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"
-      />
-    </svg>
-  );
-}
-
 /**
  * Each service's logo from its brand resources on a 40px square of its color, all with the same
- * corners. The Facebook and LINE files are their logos' paths with the circle or the rounded square
- * under them made the full square.
+ * corners. The files are the logos' paths: X's on a square of its black, Facebook's and LINE's
+ * with the circle or the rounded square under them made the full square.
  */
 const serviceIcons = {
-  X: (
-    <Center boxSize="10" rounded="sm" bg="fg" color="bg">
-      <XLogo />
-    </Center>
-  ),
+  X: <Image src={xLogo} alt="" boxSize="10" rounded="sm" />,
   Facebook: <Image src={facebookLogo} alt="" boxSize="10" rounded="sm" />,
   LINE: <Image src={lineLogo} alt="" boxSize="10" rounded="sm" />,
 };
