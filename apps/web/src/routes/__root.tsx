@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { AppProviders } from "../app-providers";
 import { SiteFooter } from "./-root/site-footer";
 import { SiteHeader } from "./-root/site-header";
+import { ViewportMeta } from "./-root/viewport-meta";
 import { ErrorPage } from "./-root/error-page";
 import { NotFoundPage, notFoundTitle } from "./-root/not-found-page";
 import { FormControlDefaults } from "../ui/form-control-defaults";
@@ -16,7 +17,6 @@ export const Route = createRootRoute({
   head: ({ match }) => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
       // Each route's `pageHead` replaces these and adds the per-page OGP tags.
       { title: defaultTitle },
       { name: "description", content: defaultDescription },
@@ -86,6 +86,7 @@ function RootDocument({ children }: { children: ReactNode }) {
     <html lang="ja" suppressHydrationWarning>
       <head>
         <HeadContent />
+        <ViewportMeta />
         <GoogleTagScripts />
         {/* Both stay: the route head keeps only the last meta of a name. */}
         <meta name="theme-color" media="(prefers-color-scheme: light)" content={themeColor.light} />
