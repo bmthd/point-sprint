@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { Benefit } from "../model/benefit";
 import type { LineItem, Order } from "../model/order";
+import { DEFAULT_ACCOUNT_ID } from "../model/account";
 import type { Plan } from "../model/plan";
 import type { Shop } from "../model/shop";
 import { calculate, calculateAll } from "./calculate";
@@ -11,6 +12,8 @@ const SHOP_B = "b0000000-0000-4000-8000-000000000002";
 
 const PLAN_1 = "f0000000-0000-4000-8000-000000000001";
 const PLAN_2 = "f0000000-0000-4000-8000-000000000002";
+/** Sorts before the other plans. */
+const PLAN_0 = "e0000000-0000-4000-8000-000000000001";
 
 const ITEM_1 = "10000000-0000-4000-8000-000000000001";
 const ITEM_2 = "20000000-0000-4000-8000-000000000002";
@@ -19,6 +22,8 @@ const ITEM_3 = "30000000-0000-4000-8000-000000000003";
 const ORDER_1 = "01000000-0000-4000-8000-000000000001";
 const ORDER_2 = "02000000-0000-4000-8000-000000000002";
 const ORDER_3 = "03000000-0000-4000-8000-000000000003";
+
+const ACCOUNT_2 = "acc00000-0000-4000-8000-000000000002";
 
 const BONUS_ID = "5b000000-0000-4000-8000-000000000001";
 const SHOP_AROUND_ID = "5a000000-0000-4000-8000-000000000002";
@@ -216,6 +221,88 @@ describe("calculateAll", () => {
     expectTotalsMatchBreakdown(results);
   });
 
+  test("a shared cap goes to the earlier orders first", () => {
+    const b = bonus({ capScope: "campaign", sharedKey: "marathon-2026-10", cap: 15 });
+    const first = plan(PLAN_1, [order(ORDER_1, ITEM_1, "2026-10-05")], [b]);
+    const alone = calculateAll([first], shops);
+    // The second plan's id sorts first, but its order is later: it gets only what is left.
+    const later = plan(PLAN_0, [order(ORDER_2, ITEM_2, "2026-10-20")], [b]);
+    const results = calculateAll([later, first], shops);
+    expect(resultOf(results, PLAN_1).total).toBe(resultOf(alone, PLAN_1).total);
+    expect(pointsOf(resultOf(results, PLAN_1), ITEM_1)).toBe(10);
+    expect(pointsOf(resultOf(results, PLAN_0), ITEM_2)).toBe(5);
+    expectTotalsMatchBreakdown(results);
+  });
+
+  test("within one plan, the earlier order gets the cap first", () => {
+    const results = calculateAll(
+      [
+        plan(
+          PLAN_1,
+          [order(ORDER_1, ITEM_1, "2026-10-06"), order(ORDER_2, ITEM_2, "2026-10-05", SHOP_B)],
+          [bonus({ cap: 15 })],
+        ),
+      ],
+      shops,
+    );
+    const r1 = resultOf(results, PLAN_1);
+    expect(pointsOf(r1, ITEM_2)).toBe(10);
+    expect(pointsOf(r1, ITEM_1)).toBe(5);
+    expectTotalsMatchBreakdown(results);
+  });
+
+  describe("accounts", () => {
+    const sharedCases = [
+      { capScope: "campaign", dates: ["2026-10-05", "2026-10-20"] },
+      { capScope: "month", dates: ["2026-10-05", "2026-10-20"] },
+      { capScope: "day", dates: ["2026-10-05", "2026-10-05"] },
+    ] as const;
+    const twoPlans = (
+      capScope: "campaign" | "month" | "day",
+      dates: readonly [string, string],
+      accounts: [string | undefined, string | undefined],
+    ) => {
+      const b = bonus({ capScope, sharedKey: "shared", cap: 15 });
+      const [first, second] = accounts;
+      return calculateAll(
+        [
+          { ...plan(PLAN_1, [order(ORDER_1, ITEM_1, dates[0])], [b]), accountId: first },
+          { ...plan(PLAN_2, [order(ORDER_2, ITEM_2, dates[1])], [b]), accountId: second },
+        ],
+        shops,
+      );
+    };
+
+    test.each(sharedCases)(
+      "$capScope cap is shared between plans of the same account",
+      ({ capScope, dates }) => {
+        const results = twoPlans(capScope, dates, [ACCOUNT_2, ACCOUNT_2]);
+        expect(resultOf(results, PLAN_1).total + resultOf(results, PLAN_2).total).toBe(15);
+        expectTotalsMatchBreakdown(results);
+      },
+    );
+
+    test.each(sharedCases)(
+      "$capScope cap applies to each account on its own",
+      ({ capScope, dates }) => {
+        const results = twoPlans(capScope, dates, [undefined, ACCOUNT_2]);
+        expect(resultOf(results, PLAN_1).total).toBe(10);
+        expect(resultOf(results, PLAN_2).total).toBe(10);
+        expect(totalOf(resultOf(results, PLAN_1))?.capReached).toBe(false);
+        expectTotalsMatchBreakdown(results);
+      },
+    );
+
+    test("a plan with no account is the default account's", () => {
+      const results = twoPlans(
+        "month",
+        ["2026-10-05", "2026-10-20"],
+        [undefined, DEFAULT_ACCOUNT_ID],
+      );
+      expect(resultOf(results, PLAN_1).total + resultOf(results, PLAN_2).total).toBe(15);
+    });
+  });
+
   test("mismatched caps use the minimum and warn", () => {
     const results = calculateAll(
       [
@@ -227,7 +314,10 @@ describe("calculateAll", () => {
     const r1 = resultOf(results, PLAN_1);
     const r2 = resultOf(results, PLAN_2);
     expect(r1.total + r2.total).toBe(12);
-    const warning = { type: "shared-cap-mismatch", groupKey: `month:${BONUS_ID}:2026-10` };
+    const warning = {
+      type: "shared-cap-mismatch",
+      groupKey: `month:${DEFAULT_ACCOUNT_ID}:${BONUS_ID}:2026-10`,
+    };
     expect(r1.warnings).toEqual([warning]);
     expect(r2.warnings).toEqual([warning]);
     expectTotalsMatchBreakdown(results);
@@ -245,7 +335,7 @@ describe("calculateAll", () => {
     const r2 = resultOf(results, PLAN_2);
     expect(r1.total + r2.total).toBe(15);
     expect(r2.warnings).toEqual([
-      { type: "shared-cap-mismatch", groupKey: `month:${BONUS_ID}:2026-10` },
+      { type: "shared-cap-mismatch", groupKey: `month:${DEFAULT_ACCOUNT_ID}:${BONUS_ID}:2026-10` },
     ]);
     expectTotalsMatchBreakdown(results);
   });

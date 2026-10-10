@@ -1,3 +1,4 @@
+export * from "./model/account";
 export * from "./model/benefit";
 export * from "./model/campaign-template";
 export * from "./model/common";
@@ -21,10 +22,14 @@ export {
   type ShopAroundOutlook,
   type ShopAroundOutlookRow,
 } from "./calculate/outlook";
+export { capFlows, type CapFlow } from "./calculate/cap-flows";
+export { capLines, type CapLine } from "./calculate/cap-lines";
+export { pointsForPrice, priceToFill, type TaxRate } from "./calculate/fill-price";
 export type {
   BenefitTotal,
   BreakdownRow,
   CalculationResult,
+  CapGroupUsage,
   CalculationWarning,
   HeldEstimate,
 } from "./calculate/types";
@@ -32,7 +37,14 @@ export * from "./migrations";
 export { standardSpu } from "./master/spu";
 export { officialEvents } from "./master/events";
 export { campaignTemplates } from "./master/campaigns";
-export { hasCampaignOccurrence, instantiateCampaign } from "./master/instantiate";
+export {
+  type CampaignInput,
+  campaignInputOf,
+  editCampaign,
+  hasCampaignOccurrence,
+  instantiateCampaign,
+  templateOfCampaign,
+} from "./master/instantiate";
 export { createPlan } from "./master/create-plan";
 export { copyOrder, moveOrder } from "./plan-ops/order-ops";
 export { toggleBenefit, toggleBenefits } from "./plan-ops/benefit-ops";

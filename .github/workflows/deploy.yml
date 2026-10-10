@@ -6,10 +6,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# A newer push supersedes a deploy still in progress.
+# Deploys queue instead of cancelling, so a running `cf deploy` is never
+# interrupted mid-way; the latest queued push still wins.
 concurrency:
   group: deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -25,13 +26,25 @@ jobs:
           runtime: node@26
           cache: true
       - run: pnpm install --frozen-lockfile
-      # dotenvx decrypts the secrets in .env.production. The public values are plain text and are
-      # built in without the key.
+      # dotenvx decrypts the secrets in .env.production, which the prerendering of the guides uses.
+      # The public values are plain text and are built in without the key.
       - run: pnpm build
         env:
           DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}
+      # The Worker's secrets (`bindings.secret()` in cloudflare.config.ts) go up with each version,
+      # decrypted from .env.production. Only those keys are written, so CLOUDFLARE_API_TOKEN stays
+      # out of the Worker. --strict fails the step when the file cannot be decrypted, and cf
+      # refuses to deploy while a declared secret has no value.
       - name: Deploy
         working-directory: apps/web
-        run: pnpm exec cf deploy --prebuilt --message "${GITHUB_SHA::7}"
+        run: |
+          umask 077
+          secrets="$RUNNER_TEMP/worker-secrets.json"
+          pnpm exec dotenvx get -f ../../.env.production --strict \
+            -ik TURNSTILE_SECRET_KEY INQUIRY_TO_ADDRESS RAKUTEN_APPLICATION_ID RAKUTEN_ACCESS_KEY \
+            > "$secrets"
+          jq -r '.[] | "::add-mask::" + .' "$secrets"
+          pnpm exec cf deploy --prebuilt --message "${GITHUB_SHA::7}" --secrets-file "$secrets"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}

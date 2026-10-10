@@ -2,7 +2,8 @@ import { type BreakdownRow, calculateAll } from "@workspaces/domain";
 import { atom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
-import { plansAtom, shopsAtom } from "./queries";
+import { accountSettingsOf, withEffectiveAccount } from "./accounts";
+import { plansAtom, profileAtom, shopsAtom } from "./queries";
 
 /** Structural equality for the plain data that plans and calculation results are made of. */
 export function deepEqual(a: unknown, b: unknown): boolean {
@@ -21,8 +22,18 @@ export function deepEqual(a: unknown, b: unknown): boolean {
   );
 }
 
-/** Every plan at once, because caps can be shared between plans. */
-export const calculationAtom = atom((get) => calculateAll(get(plansAtom), get(shopsAtom)));
+/**
+ * Whether the user tells accounts apart, and the accounts. Only the parts of the profile the
+ * accounts are made of, so a change to the SPU defaults does not recalculate every plan.
+ */
+export const accountSettingsAtom = selectAtom(profileAtom, accountSettingsOf, deepEqual);
+
+/** Every plan at once, because caps can be shared between plans of the same account. */
+export const calculationAtom = atom((get) => {
+  const settings = get(accountSettingsAtom);
+  const plans = get(plansAtom).map((plan) => withEffectiveAccount(plan, settings));
+  return calculateAll(plans, get(shopsAtom));
+});
 
 export const planAtom = atomFamily((id: string) =>
   selectAtom(plansAtom, (plans) => plans.find((plan) => plan.id === id)),

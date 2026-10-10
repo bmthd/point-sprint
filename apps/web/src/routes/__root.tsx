@@ -1,18 +1,22 @@
 /// <reference types="vite/client" />
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { Box, ColorModeScript, UIProvider } from "@workspaces/ui";
+import { Box, Flex, ColorModeScript, UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import type { ReactNode } from "react";
 import { AppProviders } from "../app-providers";
-import { SiteFooter } from "../features/layout/site-footer";
-import { SiteHeader } from "../features/layout/site-header";
-import { defaultDescription, defaultTitle, siteName, siteUrl } from "../page-head";
+import { SiteFooter } from "./-root/site-footer";
+import { SiteHeader } from "./-root/site-header";
+import { ViewportMeta } from "./-root/viewport-meta";
+import { ErrorPage } from "./-root/error-page";
+import { NotFoundPage, notFoundTitle } from "./-root/not-found-page";
+import { FormControlDefaults } from "../ui/form-control-defaults";
+import { GoogleTagScripts } from "../google-tags/google-tag-scripts";
+import { defaultDescription, defaultTitle, pageTitle, siteName, siteUrl } from "../page-head";
 
 export const Route = createRootRoute({
-  head: () => ({
+  head: ({ match }) => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
       // Each route's `pageHead` replaces these and adds the per-page OGP tags.
       { title: defaultTitle },
       { name: "description", content: defaultDescription },
@@ -24,6 +28,11 @@ export const Route = createRootRoute({
       { property: "og:image:height", content: "630" },
       { property: "og:image:alt", content: `${siteName}の計算画面` },
       { name: "twitter:card", content: "summary_large_image" },
+      // No route matched: the router marks the root as the boundary of the not-found page, which has
+      // no route of its own to give it a head. The last title wins.
+      ...(match._notFound
+        ? [{ title: pageTitle(notFoundTitle) }, { name: "robots", content: "noindex" }]
+        : []),
     ],
     links: [
       { rel: "icon", href: "/favicon.ico", sizes: "any" },
@@ -38,21 +47,31 @@ export const Route = createRootRoute({
       },
     ],
   }),
-  component: RootComponent,
+  // The document stays when the root's component gives way to the error page.
+  shellComponent: RootDocument,
+  component: () => (
+    <SiteLayout>
+      <Outlet />
+    </SiteLayout>
+  ),
+  // Rendered in the root's `Outlet`, so within the header and footer.
+  notFoundComponent: NotFoundPage,
+  // Replaces the root's component, so it brings the header and footer back.
+  errorComponent: () => (
+    <SiteLayout>
+      <ErrorPage />
+    </SiteLayout>
+  ),
 });
 
-function RootComponent() {
+function SiteLayout({ children }: { children: ReactNode }) {
   return (
-    <RootDocument>
-      {/* The footer stays at the bottom of the screen on a short page. */}
-      <Box bg="bg" color="fg" minH="100dvh" display="flex" flexDirection="column">
-        <SiteHeader />
-        <Box flex="1">
-          <Outlet />
-        </Box>
-        <SiteFooter />
-      </Box>
-    </RootDocument>
+    // The footer stays at the bottom of the screen on a short page.
+    <Flex bg="bg" color="fg" minH="100dvh" direction="column">
+      <SiteHeader />
+      <Box flex="1">{children}</Box>
+      <SiteFooter />
+    </Flex>
   );
 }
 
@@ -67,6 +86,8 @@ function RootDocument({ children }: { children: ReactNode }) {
     <html lang="ja" suppressHydrationWarning>
       <head>
         <HeadContent />
+        <ViewportMeta />
+        <GoogleTagScripts />
         {/* Both stay: the route head keeps only the last meta of a name. */}
         <meta name="theme-color" media="(prefers-color-scheme: light)" content={themeColor.light} />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content={themeColor.dark} />
@@ -74,7 +95,9 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body suppressHydrationWarning>
         <ColorModeScript defaultValue={config.defaultColorMode} />
         <UIProvider theme={theme} config={config} storage={colorModeStorage}>
-          <AppProviders>{children}</AppProviders>
+          <FormControlDefaults>
+            <AppProviders>{children}</AppProviders>
+          </FormControlDefaults>
         </UIProvider>
         <Scripts />
       </body>

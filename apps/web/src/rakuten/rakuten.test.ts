@@ -1,7 +1,8 @@
 import { expect, test, vi } from "vitest";
 import { readRakutenConfig } from "./config";
-import { type ItemLookup, throttledLookup } from "./item-lookup";
-import { type ItemPage, type LookupResult, lookupItem, searchItems } from "./item-search";
+import { type ItemLookup, type ItemLookupResult, cachedLookup } from "./item-lookup";
+import { type ItemPage, type LookupResult, searchItemPage, searchItems } from "./item-search";
+import { siteUrl } from "../site-url";
 
 const page: ItemPage = { shopCode: "shop-a", itemManageNumber: "item-1" };
 
@@ -22,6 +23,10 @@ const apiItem = (fields: Record<string, unknown> = {}) => ({
   shopName: "ショップA",
   shopCode: "shop-a",
   reviewCount: 3,
+  mediumImageUrls: [
+    { imageUrl: "https://thumbnail.image.rakuten.co.jp/@0_mall/shop-a/item-1.jpg?_ex=128x128" },
+    { imageUrl: "https://thumbnail.image.rakuten.co.jp/@0_mall/shop-a/item-1b.jpg?_ex=128x128" },
+  ],
   ...fields,
 });
 
@@ -37,22 +42,22 @@ const fetchReturning = (response: Response | Error) =>
 test("reads the settings, and none while they are missing or still encrypted", () => {
   expect(
     readRakutenConfig({
-      PUBLIC_RAKUTEN_APPLICATION_ID: "app-id",
-      PUBLIC_RAKUTEN_ACCESS_KEY: " access-key ",
-      PUBLIC_RAKUTEN_AFFILIATE_ID: "aff-id",
+      RAKUTEN_APPLICATION_ID: "app-id",
+      RAKUTEN_ACCESS_KEY: " access-key ",
+      RAKUTEN_AFFILIATE_ID: "aff-id",
     }),
   ).toEqual(config);
   expect(
     readRakutenConfig({
-      PUBLIC_RAKUTEN_APPLICATION_ID: "app-id",
-      PUBLIC_RAKUTEN_ACCESS_KEY: "access-key",
+      RAKUTEN_APPLICATION_ID: "app-id",
+      RAKUTEN_ACCESS_KEY: "access-key",
     }),
   ).toEqual({ applicationId: "app-id", accessKey: "access-key" });
-  expect(readRakutenConfig({ PUBLIC_RAKUTEN_APPLICATION_ID: "app-id" })).toBeUndefined();
+  expect(readRakutenConfig({ RAKUTEN_APPLICATION_ID: "app-id" })).toBeUndefined();
   expect(
     readRakutenConfig({
-      PUBLIC_RAKUTEN_APPLICATION_ID: "encrypted:BCx…",
-      PUBLIC_RAKUTEN_ACCESS_KEY: "key",
+      RAKUTEN_APPLICATION_ID: "encrypted:BCx…",
+      RAKUTEN_ACCESS_KEY: "key",
     }),
   ).toBeUndefined();
 });
@@ -80,25 +85,13 @@ test("sends the settings and the parameters, and the origin only when asked", as
   });
   expect(first.headers.get("Origin")).toBeNull();
 
-  await searchItems(
-    config,
-    {},
-    {
-      fetch: fetcher,
-      endpoint: "http://localhost:5173/rakuten-api/ichibams/api/IchibaItem/Search/20260701",
-      origin: "https://point-sprint.bmth.dev",
-    },
-  );
-  const relayed = sentRequest(fetcher, 1);
-  expect(new URL(relayed.url).pathname).toBe(
-    "/rakuten-api/ichibams/api/IchibaItem/Search/20260701",
-  );
-  expect(relayed.headers.get("Origin")).toBe("https://point-sprint.bmth.dev");
+  await searchItems(config, {}, { fetch: fetcher, origin: siteUrl });
+  expect(sentRequest(fetcher, 1).headers.get("Origin")).toBe(siteUrl);
 });
 
-test("a 429 is not retried: the caller spaces the calls out", async () => {
+test("a 429 is not retried: the rate gate spaces the calls out", async () => {
   const fetcher = vi.fn<typeof fetch>(async () => json({ error: "too_many_requests" }, 429));
-  expect(await lookupItem(config, page, { fetch: fetcher })).toEqual({
+  expect(await searchItemPage(config, page, { fetch: fetcher })).toEqual({
     ok: false,
     error: { reason: "rate-limited" },
   });
@@ -106,7 +99,7 @@ test("a 429 is not retried: the caller spaces the calls out", async () => {
 });
 
 test("keeps only the fields the app uses", async () => {
-  const result = await lookupItem(config, page, {
+  const result = await searchItemPage(config, page, {
     fetch: fetchReturning(json({ count: 1, Items: [{ Item: apiItem() }] })),
   });
   expect(result).toEqual({
@@ -121,6 +114,7 @@ test("keeps only the fields the app uses", async () => {
       pageUrl: "https://item.rakuten.co.jp/shop-a/item-1/",
       itemUrl: apiItem().itemUrl,
       affiliateUrl: apiItem().affiliateUrl,
+      imageUrl: "https://thumbnail.image.rakuten.co.jp/@0_mall/shop-a/item-1.jpg?_ex=128x128",
     },
   });
 });
@@ -140,7 +134,7 @@ test("searches the shop by the manage number and takes the item on that page", a
       ],
     }),
   );
-  const result = await lookupItem(config, page, { fetch: fetcher });
+  const result = await searchItemPage(config, page, { fetch: fetcher });
   expect(result.ok && result.item.itemCode).toBe("shop-a:10000001");
   expect(Object.fromEntries(new URL(sentRequest(fetcher, 0).url).searchParams)).toMatchObject({
     shopCode: "shop-a",
@@ -151,7 +145,7 @@ test("searches the shop by the manage number and takes the item on that page", a
 });
 
 test("items only on other pages are not found", async () => {
-  const result = await lookupItem(config, page, {
+  const result = await searchItemPage(config, page, {
     fetch: fetchReturning(
       json({
         Items: [{ Item: apiItem({ itemUrl: "https://item.rakuten.co.jp/shop-b/item-1/" }) }],
@@ -161,8 +155,15 @@ test("items only on other pages are not found", async () => {
   expect(result).toEqual({ ok: false, error: { reason: "not-found" } });
 });
 
+test("an item without images has no image", async () => {
+  const result = await searchItemPage(config, page, {
+    fetch: fetchReturning(json({ Items: [{ Item: apiItem({ mediumImageUrls: [] }) }] })),
+  });
+  expect(result.ok && result.item.imageUrl).toBeUndefined();
+});
+
 test("a price without tax is not given as the price with tax", async () => {
-  const result = await lookupItem(config, page, {
+  const result = await searchItemPage(config, page, {
     fetch: fetchReturning(json({ Items: [{ Item: apiItem({ taxFlag: 1 }) }] })),
   });
   expect(result.ok && result.item.taxIncludedPrice).toBeUndefined();
@@ -201,7 +202,7 @@ test.each<[string, Response | Error, LookupResult]>([
     { ok: false, error: { reason: "invalid-response" } },
   ],
 ])("%s fails the lookup", async (_case, response, expected) => {
-  expect(await lookupItem(config, page, { fetch: fetchReturning(response) })).toEqual(expected);
+  expect(await searchItemPage(config, page, { fetch: fetchReturning(response) })).toEqual(expected);
 });
 
 const pageOf = (itemManageNumber: string): ItemPage => ({ shopCode: "shop-a", itemManageNumber });
@@ -218,60 +219,29 @@ const found = ({ itemManageNumber }: ItemPage): LookupResult => ({
     pageUrl: `https://item.rakuten.co.jp/shop-a/${itemManageNumber}/`,
     itemUrl: `https://item.rakuten.co.jp/shop-a/${itemManageNumber}/`,
     affiliateUrl: "",
+    imageUrl: undefined,
   },
 });
 
-/** A clock that only moves when the lookup waits. */
-function fakeClock() {
+test("a found item is kept for five minutes, and a failure is not kept", async () => {
   let time = 1_000_000;
-  const waits: number[] = [];
-  return {
-    now: () => time,
-    wait: async (ms: number) => {
-      waits.push(ms);
-      time += ms;
-    },
-    advance: (ms: number) => {
-      time += ms;
-    },
-    waits,
-  };
-}
-
-test("calls are spaced out, and the same item page is called once", async () => {
-  const clock = fakeClock();
-  const lookup = vi.fn<ItemLookup>(async (asked) => found(asked));
-  const throttled = throttledLookup(lookup, { intervalMs: 1100, ...clock });
-
-  const [a, b, again] = await Promise.all([
-    throttled(pageOf("1")),
-    throttled(pageOf("2")),
-    throttled(pageOf("1")),
-  ]);
-  expect(a).toEqual(found(pageOf("1")));
-  expect(b).toEqual(found(pageOf("2")));
-  expect(again).toBe(a);
-  expect(lookup.mock.calls).toEqual([[pageOf("1")], [pageOf("2")]]);
-  expect(clock.waits).toEqual([1100]);
-
-  // Kept for a while, then asked again.
-  clock.advance(60_000);
-  await throttled(pageOf("1"));
-  expect(lookup).toHaveBeenCalledTimes(2);
-  clock.advance(5 * 60_000);
-  await throttled(pageOf("1"));
-  expect(lookup).toHaveBeenCalledTimes(3);
-});
-
-test("a failed lookup is not kept", async () => {
-  const clock = fakeClock();
   const lookup = vi
     .fn<ItemLookup>()
-    .mockResolvedValueOnce({ ok: false, error: { reason: "rate-limited" } })
-    .mockResolvedValue(found(pageOf("1")));
-  const throttled = throttledLookup(lookup, clock);
+    .mockResolvedValueOnce({ ok: false, error: { reason: "busy", waitMs: 6000 } })
+    .mockImplementation(async (asked) => found(asked));
+  const cached = cachedLookup(lookup, { now: () => time });
+  const options = { maxWaitMs: 5000 };
 
-  expect(await throttled(pageOf("1"))).toEqual({ ok: false, error: { reason: "rate-limited" } });
-  expect(await throttled(pageOf("1"))).toEqual(found(pageOf("1")));
+  const busy: ItemLookupResult = { ok: false, error: { reason: "busy", waitMs: 6000 } };
+  expect(await cached(pageOf("1"), options)).toEqual(busy);
+  expect(await cached(pageOf("1"), options)).toEqual(found(pageOf("1")));
+  expect(await cached(pageOf("1"), options)).toEqual(found(pageOf("1")));
   expect(lookup).toHaveBeenCalledTimes(2);
+  expect(lookup).toHaveBeenLastCalledWith(pageOf("1"), options);
+
+  await cached(pageOf("2"), options);
+  expect(lookup).toHaveBeenCalledTimes(3);
+  time += 5 * 60_000;
+  await cached(pageOf("1"), options);
+  expect(lookup).toHaveBeenCalledTimes(4);
 });

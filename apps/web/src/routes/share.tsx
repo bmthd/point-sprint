@@ -5,8 +5,8 @@ import {
   resultImagePath,
   resultSearchSchema,
   resultSummary,
-} from "../features/share/result-card";
-import { SharedResultPage } from "../features/share/shared-result-page";
+} from "./-share/result-card";
+import { SharedResultPage } from "./-shared-result-page";
 import { pageHead, siteUrl } from "../page-head";
 
 /**

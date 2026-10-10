@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import type { Plan, Profile, Shop } from "@workspaces/domain";
+import { CURRENT_SCHEMA_VERSION, type Plan, type Profile, type Shop } from "@workspaces/domain";
 import { expect, test, vi } from "vitest";
 import { createIndexedDbRepository } from "./indexed-db-repository";
 
@@ -95,7 +95,7 @@ test("a failed migration deletes and recreates the database", async () => {
     name,
     migrations: [
       {
-        to: 2,
+        to: CURRENT_SCHEMA_VERSION + 1,
         stores: {
           plans: () => {
             throw new Error("broken migration");
@@ -131,7 +131,12 @@ test("a migration rewrites stored rows", async () => {
 
   const repo = createIndexedDbRepository({
     name,
-    migrations: [{ to: 2, stores: { plans: (row) => ({ ...(row as Plan), name: "migrated" }) } }],
+    migrations: [
+      {
+        to: CURRENT_SCHEMA_VERSION + 1,
+        stores: { plans: (row) => ({ ...(row as Plan), name: "migrated" }) },
+      },
+    ],
   });
 
   expect(await repo.plans.list()).toEqual([{ ...plan, name: "migrated" }]);

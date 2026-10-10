@@ -19,6 +19,7 @@
     "packages/ui/src/theme/tokens/z-indices.ts"
   ],
   "words": [
+    "nosniff",
     "bmthd",
     "rakuten",
     "rakuma",
@@ -56,6 +57,7 @@
     "ultrawide",
     "prerender",
     "prerendered",
+    "prerenders",
     "esbuild",
     "workerd",
     "contentinfo",
@@ -64,7 +66,13 @@
     "siteverify",
     "remoteip",
     "bmth",
+    "noopener",
     "takumi",
-    "IHDR"
+    "IHDR",
+    "adsense",
+    "adsbygoogle",
+    "googletagmanager",
+    "googlesyndication",
+    "pagead"
   ]
 }

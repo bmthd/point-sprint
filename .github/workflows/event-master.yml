@@ -1,0 +1,53 @@
+# Opens an issue when the official event master runs out: the top page lists only events that have
+# not ended, so the next event has to be added (docs/event-master.md) and deployed before then.
+name: Event master
+
+on:
+  schedule:
+    # 09:00 in Japan.
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    name: Check upcoming events
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The check imports only the master, so it needs Node to strip the types but no install.
+      - uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
+        with:
+          runtime: node@26
+      - id: check
+        name: Check the master
+        continue-on-error: true
+        run: node packages/domain/scripts/check-event-master.ts 2>&1 | tee "$RUNNER_TEMP/check.txt"
+      # A failure for any other reason also opens the issue, which links to this run's log.
+      - name: Open an issue
+        if: ${{ steps.check.outcome == 'failure' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TITLE: 公式イベントのマスタに次のイベントを足す
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          DOC_URL: ${{ github.server_url }}/${{ github.repository }}/blob/main/docs/event-master.md
+        run: |
+          open=$(gh issue list --state open --search "\"$TITLE\" in:title" --json title \
+            --jq '[.[] | select(.title == env.TITLE)] | length')
+          if [ "$open" != "0" ]; then
+            echo "An issue is already open."
+            exit 0
+          fi
+          gh issue create --title "$TITLE" --body "$(cat <<EOF
+          $(cat "$RUNNER_TEMP/check.txt")
+
+          トップページは終了していないイベントだけを出すため、このままでは「開催中・開催予定のイベント」が空になります。[docs/event-master.md]($DOC_URL) の手順で次のイベントを足し、デプロイしてください。
+
+          検知したワークフロー: $RUN_URL
+          EOF
+          )"

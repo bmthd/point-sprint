@@ -30,7 +30,7 @@
 - SPU の設定（プロフィール）とショップ台帳
 - 公式イベント（マスタデータ）からのプラン作成と、特典の編集
 - 商品 URL からの商品情報の取得
-- ビルド時に生成する広告、Google Analytics、AdSense、共有ボタン
+- 買い物ガイドの記事と、記事に埋め込む楽天の商品一覧（ビルド時に生成する）、Google Analytics、AdSense、共有ボタン
 - 問い合わせフォーム、利用規約、お知らせ
 - 購入先は楽天市場、楽天ブックス、ラクマ
 
@@ -63,7 +63,7 @@
 | 端末内の保存 | IndexedDB を Seitu で読み書きする。書き込みはプラン単位。消えてもよい |
 | D1 移行後の端末内の保存 | 残す（ログインしない利用者のため）。ログイン後に IndexedDB を同期元にするかは D1 の仕様で決める |
 | マスタデータ | Git リポジトリ内のデータファイル。ビルド時に検証して配信する |
-| 広告の更新 | デプロイのときだけ |
+| 買い物ガイドの商品一覧の更新 | デプロイのときだけ |
 | パッケージ構成 | `apps/web`、`packages/ui`、`packages/domain` |
 | リントと整形 | oxlint、oxfmt |
 | テスト | Vitest（単体テストとブラウザモード）、Playwright |
@@ -75,7 +75,7 @@
 
 配信先は Cloudflare Workers の1つだけにする。TanStack Start の `prerender` で全ページをビルド時に HTML にし、静的アセットとして返す。このため、ページを表示するだけでは Worker の処理は動かない。Worker の処理が動くのは問い合わせのサーバー関数だけであり、将来のログインと D1 保存も同じ Worker に追加する。
 
-楽天 API を呼ぶ場面は、ビルド時の広告の取得と、ブラウザからの商品情報の取得の2つである。
+楽天 API を呼ぶ場面は、ビルド時の買い物ガイドの商品一覧の取得と、ブラウザからの商品情報の取得の2つである。
 
 SPU のサービスアイコンとキャンペーン画像は楽天の画像なので、リポジトリには入れない。R2 のバケット `bmth-assets` の `point-sprint/img/` に置き、カスタムドメイン `https://assets.bmth.dev` から配信する。マスタデータの `imagePath` は `/img/...` のままにし、画面で表示するときに配信元の URL を前に付ける。
 
@@ -98,9 +98,10 @@ oxlint、oxfmt、TypeScript、cspell、Vitest、Playwright を使う。CI は Gi
 `packages/domain/model` に Valibot のスキーマとして定義し、TypeScript の型はスキーマから導出する。
 
 ```ts
-Profile    { spuBenefits: Benefit[] }
+Profile    { spuBenefits: Benefit[], multiAccount?, accounts?: Account[] }
+Account    { id, name }
 Shop       { id, channel: ChannelId, shopCode?, name, tags: ShopTag[] }
-Plan       { id, name, officialEventId?, period: { start, end },
+Plan       { id, name, officialEventId?, accountId?, period: { start, end },
              benefits: Benefit[],
              orders: Order[] }
 Order      { id, shopId, date, onHold, tags: OrderTag[], lineItems: LineItem[] }
@@ -110,7 +111,7 @@ Benefit    { id, kind: BenefitKindId, category: "base" | "spu" | "campaign",
              label, enabled, params, conditions,
              amountBasis: "tax-excluded" | "tax-included",
              capScope: "plan" | "campaign" | "month" | "day",
-             sharedKey?, exclusiveGroup? }
+             sharedKey?, exclusiveGroup?, requires? }
 Conditions { channels?, shopIds?, shopTags?, orderTags?, dateRule?, minOrderAmount? }
 DateRule   { type: "daysOfMonth", days } | { type: "range", start, end }
            | { type: "dates", dates }
@@ -124,7 +125,10 @@ OrderTag   "repeat"
 - ショップ独自の倍率は特典ではなく `LineItem.shopPointRate` に持つ。値は商品検索 API の `pointRate` から入り、内訳には「ショップ倍率」の行として出す。
 - `Benefit.amountBasis` は、ポイントの対象額を税抜の対象額にするか税込の対象額にするかを決める（既定は `"tax-excluded"`）。楽天カード通常分（カード本体の還元）だけが `"tax-included"` である。
 - `Benefit.capScope` と `sharedKey` は上限の共有範囲を決める（3節「上限の共有範囲」）。
+- `Account` は計算用の楽天アカウントで、利用者が見分けるための名前だけを持つ。認証情報は扱わない。`Plan.accountId` はそのプランで購入するアカウントで、省いたときは既定のアカウント（固定の ID `DEFAULT_ACCOUNT_ID`、名前「メイン」）とする。アカウントを導入する前に保存したプランも既定のアカウントのものになるので、マイグレーションは要らない。
+- `Profile.accounts` は既定のアカウントを含むすべてのアカウントで、省いたときは既定のアカウント1件とする。既定のアカウントは名前を変えられるが、削除できない。`Profile.multiAccount` が `true` のときだけ、プランごとのアカウントを計算に使い、画面にアカウントの選択欄を出す。それまでは、すべてのプランを既定のアカウントのものとして計算する。削除したアカウントを指すプランも、既定のアカウントのものとして計算する。
 - `Benefit.exclusiveGroup` が同じ特典は、同時に1つしか有効にできない（楽天カードと楽天プレミアムカードの特典分など）。1つを有効にすると、同じグループのほかの特典は無効になる。この切り替えは `toggleBenefit(plan, benefitId)` が行う。
+- `Benefit.requires` は、その特典が前提にする特典の ID である。楽天カード特典分と楽天プレミアムカードの特典分は、楽天カードで払ったときに付くので、楽天カード通常分を前提にする。前提の特典は、前提にする特典のどれかが有効なときだけ有効にする。前提にする特典を有効にすると前提の特典も有効になり、最後の1つを無効にすると前提の特典も無効になる。前提の特典を有効にしたときに前提にする特典がどれも無効なら、並びの最初の1つ（楽天カード特典分）を有効にする。前提の特典を無効にすると、前提にする特典もすべて無効になる。この切り替えも `toggleBenefit` が行い、旧サイトの連動と同じ結果になる。
 - `Shop.tags` はショップの属性で、最初のリリースでは `"39shop"`（送料無料ラインを 3,980円以下に設定しているショップ）だけを持つ。`Conditions.shopTags` を指定した特典は、そのすべての属性を持つショップの注文だけを対象にする。
 - `Order.onHold`（保留）が `true` の注文は、計算から外す。買い回りのショップ数にも、合計にも、上限にも入れない。画面では、含めた場合のポイントを取り消し線で参考に出す（3節の `heldEstimates`）。
 - `Order.tags` は注文の属性で、最初のリリースでは `"repeat"`（以前に買った商品を同じショップでもう一度買う、リピート購入）だけを持つ。`Conditions.orderTags` を指定した特典は、その属性をすべて持つ注文だけを対象にする。
@@ -195,9 +199,11 @@ CalculationResult = {   // 下の項目に加えて heldEstimates: { orderId, po
 | `capScope` | 上限をかける単位（グループのキー） | 例 |
 |---|---|---|
 | `plan` | プランごと、特典ごと（プラン ID と特典 ID） | ユーザーが自分で作った特典 |
-| `campaign` | プランをまたいで1つ（`sharedKey`） | お買い物マラソン、39ショップの1回の開催 |
-| `month` | プランをまたいで暦月ごと（`sharedKey` と注文日の年月） | SPU、5と0のつく日 |
-| `day` | プランをまたいで日ごと（`sharedKey` と注文日） | 勝ったら倍 |
+| `campaign` | 同じアカウントのプランをまたいで1つ（アカウントと `sharedKey`） | お買い物マラソン、39ショップの1回の開催 |
+| `month` | 同じアカウントのプランをまたいで暦月ごと（アカウントと `sharedKey` と注文日の年月） | SPU、5と0のつく日 |
+| `day` | 同じアカウントのプランをまたいで日ごと（アカウントと `sharedKey` と注文日） | 勝ったら倍 |
+
+上限は楽天アカウントごとにかかるので、プランをまたいで共有する上限（`campaign`、`month`、`day`）は、同じアカウントのプランの間だけで共有する。異なるアカウントのプランは、同じキャンペーン、同じ月、同じ日でも上限を共有しない。
 
 `sharedKey` を省いたときは特典の ID をキーにする。プランを作るときに特典を複製しても ID は変わらないので、同じマスタから作った特典は自動的に同じグループになる。同じグループの特典の上限がプランごとに異なるとき（ユーザーが片方だけ編集したとき）は、最も小さい上限を使い、警告を出す。
 
@@ -262,15 +268,17 @@ Seitu は1人の作者が開発する比較的新しいライブラリ（採用�
 
 | パス | 内容 | 静的に入る内容 |
 |---|---|---|
-| `/` | プランの一覧と新規作成。開催中・開催予定の公式イベントを案内する | 公式イベント、お知らせ、広告 |
-| `/plan?id=…` | プランの詳細。注文のカード一覧（追加、編集、コピー、並べ替え、保留、削除）、特典のパネル（SPU とキャンペーンの ON/OFF と、倍率・上限の上書き）、結果（合計、上限の到達状況、ショップ数、商品ごとの内訳） | 広告 |
+| `/` | プランの一覧と新規作成。開催中・開催予定の公式イベントを案内する | 公式イベント、お知らせ |
+| `/plan?id=…` | プランの詳細。注文のカード一覧（追加、編集、コピー、並べ替え、保留、削除）、特典のパネル（SPU とキャンペーンの ON/OFF と、倍率・上限の上書き）、結果（合計、上限の到達状況、ショップ数、商品ごとの内訳） | なし |
 | `/profile` | SPU の設定とショップ台帳 | SPU の標準定義 |
 | `/inquiry` | 問い合わせフォーム | なし |
 | `/terms` | 利用規約 | 本文 |
+| `/guides` | 買い物ガイドの記事の一覧（新しい順） | 記事のタイトル、説明、公開日、更新日 |
+| `/guides/<slug>` | 買い物ガイドの記事。観点（「1000円ポッキリで買えるもの」など）ごとに1本 | 本文、記事に埋め込む楽天の商品一覧 |
 
 プランの詳細は `/plan/$id` ではなく `/plan?id=…` にする。パスにプラン ID を入れると、ビルド時に存在しないパスを Worker で描画する必要が生じるが、クエリパラメータにすれば事前レンダリングした1枚の HTML ですべてのプランを表示できる。
 
-共通のレイアウトは、ヘッダー、フッター、共有ボタン、ビルド時に生成した広告枠、Google Analytics、AdSense からなる。スマートフォンの画面幅を基準にし、PC では結果のパネルを横に置く。
+共通のレイアウトは、ヘッダー、フッター、共有ボタン、Google Analytics、AdSense からなる。バナーのような広告は AdSense に任せ、楽天の商品は買い物ガイドの記事の中にだけ出す。最初の表示のページビューは gtag の `config` が送り、画面遷移のページビューは GA4 の拡張計測（「ブラウザの履歴イベントに基づくページの変更」）が送る。アプリはページビューを自分で送らないので、この設定は ON のままにする。スマートフォンの画面幅を基準にし、PC では結果のパネルを横に置く。
 
 ## 6. 外部との連携
 
@@ -278,7 +286,7 @@ Seitu は1人の作者が開発する比較的新しいライブラリ（採用�
 
 新しい API（`openapi.rakuten.co.jp`）を使う。`applicationId`、`accessKey`、`affiliateId` は環境変数で渡して Valibot で検証する。レスポンスも Valibot で検証し、必要なフィールドだけを取り出す。
 
-呼び出しは `apps/web/src/rakuten/` にまとめ、ブラウザ（商品情報の取得）とビルド時（広告）の両方から使う。
+呼び出しは `apps/web/src/rakuten/` にまとめ、ブラウザ（商品情報の取得）とビルド時（買い物ガイドの商品一覧）の両方から使う。
 
 - `config.ts`: 環境変数 `PUBLIC_RAKUTEN_APPLICATION_ID`、`PUBLIC_RAKUTEN_ACCESS_KEY`、`PUBLIC_RAKUTEN_AFFILIATE_ID` の検証。値が足りないか `encrypted:` のままのときは、商品情報の取得を無効にしてビルドを続ける。ビルドは検証した値をクライアントに埋め込む
 - `item-search.ts`: 商品検索 API の呼び出し。失敗は通信エラー、429、その他の HTTP エラー、想定外のレスポンス、該当なしに分けて返す。サーバーから呼ぶときは `Origin: https://point-sprint.bmth.dev` を付ける
@@ -290,7 +298,7 @@ Seitu は1人の作者が開発する比較的新しいライブラリ（採用�
 
 - 公開してよい値は変数名を `PUBLIC_` で始め、平文で置く（`dotenvx set … --plain`）。楽天 API の3つの値（`PUBLIC_RAKUTEN_*`）と Turnstile のサイトキー（`PUBLIC_TURNSTILE_SITE_KEY`）がこれにあたる。
 - 秘密の値（`TURNSTILE_SECRET_KEY`、`INQUIRY_TO_ADDRESS`、`CLOUDFLARE_API_TOKEN`）は `.env.production` に dotenvx で暗号化して置く。`.env.development` には秘密の値を置かず、Turnstile は Cloudflare のテスト用キーを、`INQUIRY_TO_ADDRESS` は仮のアドレスを平文で置く。
-- Worker が使う秘密の値（`TURNSTILE_SECRET_KEY`、`INQUIRY_TO_ADDRESS`）は `cloudflare.config.ts` で `bindings.secret()` として宣言する。ローカル（`pnpm dev`、`vite preview`）では Cloudflare の Vite プラグインが環境変数から値を取る。値はビルドの出力には入らないので、本番の Worker への登録は計画4で行う。
+- Worker が使う秘密の値（`TURNSTILE_SECRET_KEY`、`INQUIRY_TO_ADDRESS`）は `cloudflare.config.ts` で `bindings.secret()` として宣言する。ローカル（`pnpm dev`、`vite preview`）では Cloudflare の Vite プラグインが環境変数から値を取る。値はビルドの出力には入らないので、本番の Worker にはデプロイのたびに登録する。`deploy.yml` が `.env.production` からこの2つだけを dotenvx で復号して JSON に書き出し、`cf deploy --prebuilt --secrets-file` で Worker のバージョンと一緒に上げる。秘密の値を足すときは、`bindings.secret()` の宣言と `deploy.yml` の `dotenvx get -ik` の両方に足す。宣言した秘密の値が Worker に登録されていないと `cf deploy` が失敗するので、片方だけ足した漏れはデプロイで分かる。PR のプレビュー（`cf previews deploy`）には秘密の値を渡さない。PR のジョブに本番の鍵を渡したくないことと、Turnstile のウィジェットが `point-sprint.bmth.dev` でしか動かないことが理由で、プレビューのお問い合わせは `config` の段階で止まる。
 - 秘密鍵は `.env.keys` に置き、コミットしない。デプロイでは GitHub の Secret `DOTENV_PRIVATE_KEY_PRODUCTION` から渡す。
 - `pnpm dev` と `pnpm build` は `dotenvx run` でファイルを読む。`vite.config.ts` は `PUBLIC_` で始まる値だけを Vite の `loadEnv` でルートのファイルから直接読み、クライアントに渡す。鍵がなくても（PR の CI やプレビューでも）公開の値はビルドに入る。
 
@@ -306,9 +314,19 @@ Seitu は1人の作者が開発する比較的新しいライブラリ（採用�
 
 通信エラー、商品が見つからない、レート制限のいずれかで手順3が失敗したときは、手順1と2の結果を残し、自動入力できなかったことを表示する。楽天 API は `Origin` ヘッダーがアプリ設定の「許可された Web サイト」（`https://point-sprint.bmth.dev`）と一致するときだけ応答する。`Origin` はサーバー側から自由に付けられるので、`accessKey` は公開されてもよい値として扱う。開発中は `localhost` が許可されないため、開発サーバー（Vite の `server.proxy`）で `/rakuten-api` への呼び出しを API に中継し、`Origin` を付け替える。本番では中継せず、ブラウザから API を直接呼ぶ（検証結果は `docs/superpowers/spikes/2026-10-04-external-integrations.md`）。
 
-### 広告
+### 買い物ガイド
 
-ルートの loader でビルド時に商品検索 API を呼び、結果を HTML に埋め込む。API の呼び出しが失敗したときはビルドを止めず、広告枠を空にする。広告が出ないことは、サイト全体の公開を止める理由にならないからである。広告はデプロイのときだけ更新する。
+利用者が「マラソンで何を買うか」を探すときの助けとして、観点ごとの買い物ガイドの記事を書き、記事の中にその観点に合う楽天市場の商品の一覧を埋め込む。記事は定期的に増やし、検索からの流入も狙う。
+
+- 記事は `apps/web/src/guides/articles/<slug>.md` に1本1ファイルで書き、`/guides/<slug>` で公開する。タイトル、description、公開日、更新日は Markdown の frontmatter に書く。記事を足すときは、このファイルを1つ足すだけで、ページ、一覧（`/guides`）、事前レンダリング、サイトマップに反映される
+- 商品の一覧は、独自構文 `:::items{keyword="1000円ポッキリ" genreId=100227 minPrice=1000 maxPrice=1000 hits=6}` で置く。受け付けるパラメータは商品検索 API の `keyword`、`NGKeyword`、`genreId`、`minPrice`、`maxPrice`、`sort`、`postageFlag`、`hits`（1〜30、既定6）で、Valibot で検証する。誤った構文はビルドを止める
+- 記事のルートの loader がサーバー関数 `getGuide` を呼び、サーバー関数が記事の構文の条件で商品検索 API を呼ぶ（`Origin: https://point-sprint.bmth.dev` を付ける）。全記事の呼び出しを1つの列に並べ、1.1秒以上あけて順番に呼び、同じ条件は1回にまとめる。結果は事前レンダリングした HTML に入る
+- API を呼ぶのは事前レンダリングのときだけにする。事前レンダリングは Worker を `localhost` で動かして行うので、リクエストのホスト名が `localhost` のときだけ呼ぶ。公開した Worker のサーバー関数は外から呼べるため、実行時にも API を呼ぶと、ブラウザの商品情報の取得と共有する呼び出しの制限を使い切られうるからである。TanStack Start の静的なサーバー関数（`staticFunctionMiddleware`）は、事前レンダリングが Cloudflare の Worker の中で動くと結果のファイルを書き出せないため使わない
+- 記事へのリンクは、ルーターの遷移ではなくページの読み込みにする。実行時のサーバー関数は商品を返さないので、利用者が見るのはいつも事前レンダリングした HTML である
+- 設定があるのに、どの記事にも一覧が1つも入らなかったときは、ビルドの後のチェックで警告する。判定が外れて一覧が黙って消えることに気づくためである
+- 呼び出しに失敗したとき、または設定がないときは、ビルドを止めず、その一覧だけを出さない。記事の本文は出す。一覧が出ないことは、サイト全体の公開を止める理由にならないからである
+- 一覧には商品画像、商品名、税込の価格、ショップ名を出し、アフィリエイトリンク（`rel="sponsored"`）で楽天市場に送る。PR であることと、価格がビルドした時点のものであることを添える。商品はデプロイのときだけ更新する
+- サイトマップは、ビルドの後に事前レンダリングした HTML から生成する（canonical の URL、`noindex` のページは除く。記事は更新日を `lastmod` にする）
 
 ### 問い合わせ
 

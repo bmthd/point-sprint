@@ -1,4 +1,5 @@
-import { expect, test } from "@playwright/test";
+import { siteUrl } from "../src/site-url";
+import { expect, test } from "./fixtures";
 
 // The prerendered HTML holds each page's title; a plan's pages put the plan's name in once loaded.
 
@@ -8,6 +9,7 @@ test("each page has its own title", async ({ page }) => {
     { path: "/profile", title: "プロフィール | ポイントスプリント" },
     { path: "/help", title: "使い方・注意事項 | ポイントスプリント" },
     { path: "/terms", title: "利用規約 | ポイントスプリント" },
+    { path: "/privacy", title: "プライバシーポリシー | ポイントスプリント" },
   ];
   for (const { path, title } of pages) {
     await page.goto(path);
@@ -20,9 +22,7 @@ test("a plan's pages show the plan's name in the title", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "このイベントでプランを作る" }).first().click();
   await expect(page).toHaveURL(/\/plan\?id=/);
-  const name = (
-    await page.getByRole("button", { name: /、プランを切り替える$/ }).innerText()
-  ).trim();
+  const name = (await page.getByRole("heading", { level: 1 }).innerText()).trim();
   await expect(page).toHaveTitle(`${name} | ポイントスプリント`);
 
   await page.reload();
@@ -31,10 +31,7 @@ test("a plan's pages show the plan's name in the title", async ({ page }) => {
   await page.goto(page.url().replace("/plan?", "/plan/settings?"));
   await expect(page).toHaveTitle(`${name}の設定 | ポイントスプリント`);
 
-  await page
-    .getByRole("banner")
-    .getByRole("link", { name: "プロフィール（SPU・ショップ台帳）" })
-    .click();
+  await page.getByRole("banner").getByRole("link", { name: "プロフィール", exact: true }).click();
   await expect(page).toHaveTitle("プロフィール | ポイントスプリント");
 });
 
@@ -53,4 +50,9 @@ test("the files the head links to are served", async ({ request }) => {
     const response = await request.get(path);
     expect(response.status(), path).toBe(200);
   }
+});
+
+test("robots.txt points to the sitemap on the site's domain", async ({ request }) => {
+  const robots = await (await request.get("/robots.txt")).text();
+  expect(robots).toContain(`Sitemap: ${siteUrl}/sitemap.xml`);
 });

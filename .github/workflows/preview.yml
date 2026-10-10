@@ -27,6 +27,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # cf builds the preview itself, so this only runs the prerender check.
       - run: pnpm build
+      # The Worker's secrets are not given, so cf warns they are missing and the inquiry stops at
+      # `config`. This job runs the PR's code, so it gets no key to .env.production.
       - name: Deploy preview
         id: preview
         working-directory: apps/web
@@ -48,3 +50,18 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           URL: ${{ steps.preview.outputs.url }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      # Turns root-relative links under "## レビュー観点" in the PR body into preview links,
+      # so the author can list pages by path before the URL exists.
+      - name: Link the pages listed in the PR body
+        run: |
+          gh pr view "$PR_NUMBER" --json body --jq .body > "$RUNNER_TEMP/body.md"
+          perl -pe 'if (/^## /) { $in = /^## レビュー観点\s*$/ } s{\]\(/}{]($ENV{URL}/}g if $in' \
+            "$RUNNER_TEMP/body.md" > "$RUNNER_TEMP/linked.md"
+          if ! cmp -s "$RUNNER_TEMP/body.md" "$RUNNER_TEMP/linked.md"; then
+            gh pr edit "$PR_NUMBER" --body-file "$RUNNER_TEMP/linked.md"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          URL: ${{ steps.preview.outputs.url }}
