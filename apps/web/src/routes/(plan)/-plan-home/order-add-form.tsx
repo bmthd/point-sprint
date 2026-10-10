@@ -40,6 +40,7 @@ import {
 } from "../-order-fields";
 import { orderSaveFailedAtom, pointsText } from "../-order-shared";
 import { FormDatePicker } from "../-date-picker-field";
+import { CapFlows } from "../-cap-flows";
 
 const sumOfTotals = (results: Map<string, { total: number }>) =>
   [...results.values()].reduce((sum, result) => sum + result.total, 0);
@@ -324,6 +325,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
               追加する
             </Button>
           </Flex>
+          <CapFlows plan={plan} form={form} />
         </Flex>
       </Form>
     </List.Item>

@@ -169,9 +169,10 @@ test("shows total and effective rate", async () => {
   expect(summaryText()).toContain("実質還元率6.5%");
   expect(summaryText()).toContain("4店舗を買い回り中");
   expect(summaryText()).toContain("マラソン +3倍");
-  // The cap left for this plan is the whole 7,000P; ¥193,334 more (tax-excluded) reaches it.
-  expect(summaryText()).toContain("1,200 / 7,000P");
-  expect(summaryText()).toContain("上限まであと 約21.3万円 買えます");
+  // 5,800P of the 7,000P cap are left: ¥193,334 before tax at +3倍, ¥212,667 at 10%.
+  expect(summaryText()).toContain(
+    "次に上限に届くのはショップ買いまわり あと¥212,667（期間中の枠）",
+  );
   const dots = summary()?.querySelector('[aria-label="買い回り 10店舗中4店舗"]');
   expect(dots?.children).toHaveLength(10);
 
@@ -328,6 +329,6 @@ test("says the cap is reached when nothing is left to buy", async () => {
   const plan = makePlan({ benefits: [baseBenefit, ...marathon], orders: [0, 1, 2, 3].map(big) });
   await renderPlanHome(createMemoryRepository({ shops, plans: [plan] }));
 
-  await expect.poll(summaryText).toContain("上限に達しました");
-  expect(summaryText()).not.toContain("上限まであと");
+  await expect.poll(summaryText).toContain("上限のある特典は、すべて上限に届きました");
+  expect(summaryText()).not.toContain("次に上限に届くのは");
 });

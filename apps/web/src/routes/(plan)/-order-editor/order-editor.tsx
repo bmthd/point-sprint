@@ -72,6 +72,7 @@ import {
   useOrderAutofill,
 } from "./order-form-store";
 import { OrderPreviewBox } from "./order-preview";
+import { CapFlows } from "../-cap-flows";
 
 /** The editor's target in the URL (`edit=`): a new order, or the id of the order to edit. */
 export const NEW_ORDER = "new";
@@ -571,6 +572,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
             <MainItemFields form={form} amountRef={amountRef} />
             <Campaigns form={form} plan={plan} />
             <Preview form={form} plan={plan} original={original} />
+            {original ? null : <CapFlows plan={plan} form={form} />}
             <Details form={form} defaultOpen={(original?.lineItems.length ?? 1) > 1} />
           </Flex>
         </Form>
