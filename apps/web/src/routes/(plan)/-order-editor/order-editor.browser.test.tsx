@@ -2,7 +2,6 @@ import type { Benefit, Plan, Shop } from "@workspaces/domain";
 import { beforeEach, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { createMemoryRepository } from "../../../storage/memory-repository";
-import { tokyoToday } from "../../../ui/dates";
 import {
   PLAN,
   baseBenefit,
@@ -62,10 +61,7 @@ test("adds an order and closes", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
   await expect.element(amountOf(sheet)).toHaveFocus();
-  expect(sheet.getByLabelText("注文日").element()).toHaveProperty(
-    "value",
-    tokyoToday(new Date()).replaceAll("-", "/"),
-  );
+  expect(sheet.getByLabelText("注文日").element()).toHaveProperty("value", "2026/10/09");
 
   await fillOrder(sheet, { shop: "ショップ4", amount: "3,300", name: "洗濯洗剤" });
   await sheet.getByRole("button", { name: "追加する" }).click();
