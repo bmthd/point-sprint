@@ -54,6 +54,7 @@ function datesOf(
   switch (benefit.capScope) {
     case "plan":
     case "campaign":
+    case "occurrence":
       return [{ date: plan.period.start, period: null }];
     case "month":
       return monthsOf(plan.period).map((month) => ({ date: `${month}-01`, period: month }));

@@ -70,6 +70,11 @@ export const addBenefit = (plan: Plan, benefit: Benefit): Plan => ({
   benefits: [...plan.benefits, benefit],
 });
 
+export const addBenefits = (plan: Plan, benefits: Benefit[]): Plan => ({
+  ...plan,
+  benefits: [...plan.benefits, ...benefits],
+});
+
 export const removeBenefit = (plan: Plan, benefitId: string): Plan => ({
   ...plan,
   benefits: plan.benefits.filter((benefit) => benefit.id !== benefitId),
@@ -149,6 +154,11 @@ export const addBenefitAtom = planOperationAtom(
   ({ benefit }: { benefit: Benefit }) =>
     (plan) =>
       addBenefit(plan, benefit),
+);
+export const addBenefitsAtom = planOperationAtom(
+  ({ benefits }: { benefits: Benefit[] }) =>
+    (plan) =>
+      addBenefits(plan, benefits),
 );
 export const removeBenefitAtom = planOperationAtom(
   ({ benefitId }: { benefitId: string }) =>

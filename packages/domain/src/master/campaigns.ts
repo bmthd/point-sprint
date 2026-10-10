@@ -43,7 +43,7 @@ export const campaignTemplates: CampaignTemplate[] = [
       imagePath: "/img/campaign/sports.webp",
       enabled: false,
       amountBasis: "tax-excluded",
-      capScope: "day",
+      capScope: "occurrence",
       sharedKey: "sports-win",
       // 既定は片方のチームの勝利（+1倍）。両チームが勝った日は rate: 2 で作る。日付はユーザーが入れる。
       conditions: { channels: [...CHANNELS], minOrderAmount: 1000 },

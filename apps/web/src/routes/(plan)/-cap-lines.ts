@@ -27,6 +27,8 @@ export function scopeText(line: CapLine, today: string | undefined): string {
       return "このプラン";
     case "campaign":
       return "期間中";
+    case "occurrence":
+      return "開催ごと";
     case "month":
       return `${Number(period.slice(5, 7))}月`;
     case "day":

@@ -19,6 +19,8 @@ export function capGroupKey(
       return `month:${shared}:${orderDate.slice(0, 7)}`;
     case "day":
       return `day:${shared}:${orderDate}`;
+    case "occurrence":
+      return `occurrence:${plan.accountId}:${benefit.id}`;
   }
 }
 

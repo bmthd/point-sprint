@@ -43,6 +43,18 @@ test("campaign scope uses sharedKey", () => {
   ).toBe(`campaign:${ACCOUNT_ID}:marathon`);
 });
 
+test("occurrence scope uses the benefit instance and shares it across an account's plans", () => {
+  const occurrence = benefit({ capScope: "occurrence", sharedKey: "sports-win" });
+  const otherPlan = { id: "f0000000-0000-4000-8000-000000000002", accountId: ACCOUNT_ID };
+
+  expect(capGroupKey(PLAN, occurrence, "2026-10-05")).toBe(
+    `occurrence:${ACCOUNT_ID}:${BENEFIT_ID}`,
+  );
+  expect(capGroupKey(otherPlan, occurrence, "2026-10-06")).toBe(
+    capGroupKey(PLAN, occurrence, "2026-10-05"),
+  );
+});
+
 test("plan scope key does not depend on the account", () => {
   const other = { id: PLAN_ID, accountId: "acc00000-0000-4000-8000-000000000002" };
   expect(capGroupKey(other, benefit(), "2026-10-05")).toBe(
@@ -50,10 +62,13 @@ test("plan scope key does not depend on the account", () => {
   );
 });
 
-test.each(["campaign", "month", "day"] as const)("%s scope keys differ by account", (capScope) => {
-  const other = { id: PLAN_ID, accountId: "acc00000-0000-4000-8000-000000000002" };
-  const shared = benefit({ capScope, sharedKey: "marathon" });
-  expect(capGroupKey(other, shared, "2026-10-05")).not.toBe(
-    capGroupKey(PLAN, shared, "2026-10-05"),
-  );
-});
+test.each(["campaign", "month", "day", "occurrence"] as const)(
+  "%s scope keys differ by account",
+  (capScope) => {
+    const other = { id: PLAN_ID, accountId: "acc00000-0000-4000-8000-000000000002" };
+    const shared = benefit({ capScope, sharedKey: "marathon" });
+    expect(capGroupKey(other, shared, "2026-10-05")).not.toBe(
+      capGroupKey(PLAN, shared, "2026-10-05"),
+    );
+  },
+);

@@ -12,6 +12,7 @@ import {
   type Profile,
   campaignTemplates,
   defaultAccount,
+  instantiateCampaign,
   standardSpu,
 } from "@workspaces/domain";
 import { beforeEach, expect, onTestFinished, test, vi } from "vitest";
@@ -254,20 +255,41 @@ const pointDay = () => {
   return structuredClone(benefit);
 };
 
-test("adds a sports-win day at once, and changes it in its row", async () => {
+test("adds several sports-win occurrences together, and changes one in its row", async () => {
   onOctober6();
   const screen = await renderSettings(makePlan([pointDay()], []));
   await screen.getByRole("button", { name: "勝ったら倍を追加" }).click();
 
-  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(2);
+  await expect.element(screen.getByRole("heading", { name: "勝ったら倍を追加" })).toBeVisible();
+  await expect.element(screen.getByLabelText("日付 1")).toHaveValue("2026-10-06");
+  await screen.getByRole("button", { name: "開催を追加" }).click();
+  const secondDate = screen.getByLabelText("日付 2");
+  await secondDate.fill("2026-10-06");
+  await expect
+    .element(secondDate)
+    .toHaveAccessibleDescription("この日の勝ったら倍はもう追加してあります");
+  await expect.element(screen.getByRole("button", { name: "追加する" })).toBeDisabled();
+  await secondDate.fill("");
+  await expect.element(screen.getByRole("button", { name: "追加する" })).toBeDisabled();
+  await secondDate.fill("2026-10-07");
+  await screen.getByLabelText("倍率 2").getByText("両方のチームが勝った日").click();
+  await screen.getByRole("button", { name: "追加する" }).click();
+
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(3);
   expect((await storedPlan()).benefits[1]).toMatchObject({
     label: "勝ったら倍",
     enabled: true,
     conditions: { dateRule: { type: "dates", dates: ["2026-10-06"] } },
     params: { rate: 1 },
   });
+  expect((await storedPlan()).benefits[2]).toMatchObject({
+    label: "勝ったら倍",
+    enabled: true,
+    conditions: { dateRule: { type: "dates", dates: ["2026-10-07"] } },
+    params: { rate: 2 },
+  });
   // The campaign just added opens its values.
-  const edit = screen.getByRole("button", { name: "勝ったら倍を編集" });
+  const edit = screen.getByRole("button", { name: "勝ったら倍を編集" }).first();
   await expect.element(edit).toHaveAttribute("aria-expanded", "true");
   const date = screen.getByLabelText("日付");
   await expect.element(date).toHaveValue("2026-10-06");
@@ -275,19 +297,19 @@ test("adds a sports-win day at once, and changes it in its row", async () => {
   // The switch of every row is in the same place, whether the row has ✎ or not.
   const switchOf = (name: RegExp) =>
     screen.getByRole("switch", { name }).element().getBoundingClientRect();
-  expect(switchOf(/^勝ったら倍/).left).toBe(switchOf(/^5と0のつく日/).left);
+  expect(switchOf(/^勝ったら倍 \+1倍 10\/6$/).left).toBe(switchOf(/^5と0のつく日/).left);
 
   await screen.getByText("両方のチームが勝った日").click();
   await expect
     .poll(async () => (await storedPlan()).benefits[1]?.imagePath)
     .toBe("/img/campaign/sports-w.webp");
-  await date.fill("2026-10-07");
+  await date.fill("2026-10-08");
   await userEvent.keyboard("{Enter}");
-  const toggle = screen.getByRole("switch", { name: "勝ったら倍 +2倍 10/7" });
+  const toggle = screen.getByRole("switch", { name: "勝ったら倍 +2倍 10/8" });
   await expect.element(toggle).toBeChecked();
   expect((await storedPlan()).benefits[1]?.conditions.dateRule).toEqual({
     type: "dates",
-    dates: ["2026-10-07"],
+    dates: ["2026-10-08"],
   });
 
   await tapCard(toggle);
@@ -296,8 +318,27 @@ test("adds a sports-win day at once, and changes it in its row", async () => {
   // An added campaign can be deleted after a confirmation.
   await screen.getByRole("button", { name: "勝ったら倍を削除" }).click();
   await screen.getByRole("button", { name: "削除する" }).click();
-  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(2);
   await expect.element(toggle).not.toBeInTheDocument();
+});
+
+test("refuses a sports-win date that is already in the plan", async () => {
+  onOctober6();
+  const sports = campaignTemplates.find((template) => template.id === "sports-win");
+  if (!sports) throw new Error("no sports-win campaign");
+  const existing = instantiateCampaign(sports, {
+    id: "e6cb1cc4-7941-4247-8917-c922e687ce24",
+    dates: ["2026-10-06"],
+  });
+  const screen = await renderSettings(makePlan([existing], []));
+  await screen.getByRole("button", { name: "勝ったら倍を追加" }).click();
+  const date = screen.getByLabelText("日付 1");
+  await date.fill("2026-10-06");
+
+  await expect
+    .element(date)
+    .toHaveAccessibleDescription("この日の勝ったら倍はもう追加してあります");
+  await expect.element(screen.getByRole("button", { name: "追加する" })).toBeDisabled();
 });
 
 test("adds 39shop for the plan's period once, and refuses a period it already has", async () => {

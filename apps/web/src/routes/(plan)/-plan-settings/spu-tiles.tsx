@@ -69,6 +69,7 @@ function capText(benefit: Benefit) {
     plan: "このプランでの上限",
     campaign: "期間中の上限",
     day: "1日の上限",
+    occurrence: "開催ごとの上限",
   }[benefit.capScope];
   return `${scope} ${pointsText(cap)}`;
 }
