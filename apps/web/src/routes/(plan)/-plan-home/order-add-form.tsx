@@ -256,7 +256,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
   const setFailed = useSetAtom(orderSaveFailedAtom);
   const run = useSingleFlight();
   const [open, setOpen] = useState(plan.orders.length === 0);
-  const form = useForm({ schema: OrderFormSchema, initialInput: emptyInput() });
+  const form = useForm({ schema: OrderFormSchema, initialInput: emptyInput(plan.period) });
   const autofill = useOrderAutofill(form);
   const formId = useId();
 
@@ -268,7 +268,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
       try {
         if (draft.shopChange) await saveShop.mutateAsync(draft.shopChange);
         await addOrder({ planId: plan.id, order: draft.order });
-        reset(form, { initialInput: emptyInput() });
+        reset(form, { initialInput: emptyInput(plan.period) });
         focus(form, { path: ["url"] });
         // After the focus moves: leaving the URL field would look up the URL it still shows.
         autofill.reset();

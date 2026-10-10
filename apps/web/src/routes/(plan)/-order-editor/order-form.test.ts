@@ -1,9 +1,11 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
+import { OrderSchema } from "@workspaces/domain";
 import { NEW_SHOP } from "../-order-fields";
-import { type ItemInput, OrderFormSchema, emptyInput, emptyItem } from "./order-form";
+import { type ItemInput, OrderFormSchema, emptyInput, emptyItem, inputOf } from "./order-form";
 
 const SHOP_ID = "a0000000-0000-4000-8000-000000000001";
+const PERIOD = { start: "2026-10-04", end: "2026-10-09" };
 
 const item = (fields: Partial<ItemInput>): ItemInput => ({
   ...emptyItem(),
@@ -14,7 +16,7 @@ const item = (fields: Partial<ItemInput>): ItemInput => ({
 /** The errors of each field, by its path joined with dots. */
 function errorsOf(fields: Partial<ReturnType<typeof emptyInput>>) {
   const result = v.safeParse(OrderFormSchema, {
-    ...emptyInput(),
+    ...emptyInput(PERIOD),
     shop: SHOP_ID,
     items: [item({})],
     ...fields,
@@ -93,7 +95,7 @@ test("a coupon is at most the item's price times its quantity", () => {
 
 test("numbers are normalized before they are checked", () => {
   const result = v.parse(OrderFormSchema, {
-    ...emptyInput(),
+    ...emptyInput(PERIOD),
     shop: SHOP_ID,
     items: [
       item({
@@ -110,4 +112,23 @@ test("numbers are normalized before they are checked", () => {
     discount: 100,
     shopPointRate: 3,
   });
+});
+
+test("a saved order keeps its date when opened", () => {
+  const order = v.parse(OrderSchema, {
+    id: "b0000000-0000-4000-8000-000000000001",
+    shopId: SHOP_ID,
+    date: "2026-10-01",
+    lineItems: [
+      {
+        id: "c0000000-0000-4000-8000-000000000001",
+        name: "商品",
+        unitPrice: 1000,
+        quantity: 1,
+        taxRate: 0.1,
+      },
+    ],
+  });
+
+  expect(inputOf(order, []).date).toBe("2026-10-01");
 });

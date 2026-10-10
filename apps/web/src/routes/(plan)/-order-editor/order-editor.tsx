@@ -508,7 +508,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
   const keepOpenId = useId();
   // The fields start from the order as it was when the editor opened.
   const [initialInput] = useState<OrderFormInput>(() =>
-    original ? inputOf(original, shops) : emptyInput(),
+    original ? inputOf(original, shops) : emptyInput(plan.period),
   );
   const form = useForm({ schema: OrderFormSchema, initialInput });
   const autofill = useOrderAutofill(form);
@@ -528,7 +528,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
         if (original) await updateOrder({ planId: plan.id, order: draft.order });
         else await addOrder({ planId: plan.id, order: draft.order });
         if (keepOpen) {
-          reset(form, { initialInput: emptyInput() });
+          reset(form, { initialInput: emptyInput(plan.period) });
           focus(form, { path: AMOUNT_PATH });
           // After the focus moves: leaving the URL field would look up the URL it still shows.
           autofill.reset();
