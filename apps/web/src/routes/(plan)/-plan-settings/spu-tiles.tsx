@@ -5,14 +5,17 @@ import {
   Box,
   Flex,
   Button,
+  Heading,
   Card,
   CheckboxCard,
   Image,
   Link,
+  type LinkProps,
   Modal,
   SimpleGrid,
   Text,
   useDisclosure,
+  VStack,
 } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useState } from "react";
@@ -141,9 +144,16 @@ function CapBadge(props: BadgeProps) {
   );
 }
 
-function SpuLink() {
+function SpuLink(props: LinkProps) {
   return (
-    <Link href={SPU_PAGE_URL} target="_blank" rel="noreferrer" alignSelf="flex-start" gap="1.5">
+    <Link
+      href={SPU_PAGE_URL}
+      target="_blank"
+      rel="noreferrer"
+      alignSelf="flex-start"
+      gap="1.5"
+      {...props}
+    >
       楽天で自分のSPUを確認する
       <ExternalIcon />
     </Link>
@@ -271,32 +281,38 @@ export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResu
   return (
     <Card.Root as="section" aria-label="SPU">
       <Card.Body alignItems="stretch">
-        <Flex align="flex-end" justify="space-between" gap="3">
-          <Box>
+        {/* The heading, the rate and its breakdown read as one block. */}
+        <VStack gap="1" alignItems="stretch" fontVariantNumeric="tabular-nums">
+          <Flex align="center" justify="space-between" gap="2">
+            <Heading as="h2" fontSize="md">
+              SPU
+            </Heading>
             <Text fontSize="xs" color="fg.muted">
-              SPU を入れて全商品
+              達成したものを ON に
             </Text>
-            <Text
-              fontSize="4xl"
-              fontWeight="bold"
-              lineHeight="1.1"
-              fontVariantNumeric="tabular-nums"
-            >
+          </Flex>
+          {/* 「ポイント倍率」 is what 楽天's SPU page calls this number. */}
+          <Flex align="baseline" gap="2">
+            <Text fontSize="sm" color="fg.muted">
+              ポイント倍率
+            </Text>
+            <Text fontSize="4xl" fontWeight="bold" lineHeight="1.1">
               {num(normal + spu)}
               <Text as="span" fontSize="md" fontWeight="medium">
                 倍
               </Text>
             </Text>
-          </Box>
-          <Text fontSize="xs" color="fg.muted" textAlign="end" fontVariantNumeric="tabular-nums">
-            通常 {num(normal)}倍 ＋ SPU{" "}
-            <Text as="b" color="fg">
-              +{num(spu)}倍
+          </Flex>
+          <Flex justify="space-between" gap="2" fontSize="xs" color="fg.muted">
+            <Text>
+              通常 {num(normal)}倍 ＋ SPU{" "}
+              <Text as="b" color="fg">
+                +{num(spu)}倍
+              </Text>
             </Text>
-            <br />
-            タップで ON / OFF
-          </Text>
-        </Flex>
+            <SpuLink fontSize="xs" alignSelf="auto" />
+          </Flex>
+        </VStack>
 
         <SpuTileGrid
           benefits={plan.benefits}
@@ -328,7 +344,6 @@ export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResu
             名前を押すと上限・条件
           </Box>
         </Flex>
-        <SpuLink />
       </Card.Body>
     </Card.Root>
   );

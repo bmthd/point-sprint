@@ -108,7 +108,7 @@ test("tile toggles SPU and updates the total", async () => {
     .element(spuSection(screen).getByRole("img", { name: "楽天モバイル", exact: true }))
     .toHaveAttribute("src", "https://assets.bmth.dev/point-sprint/img/spu/service_mobile_v2.webp");
   await expect.element(mobile).not.toBeChecked();
-  expect(spuText(screen)).toContain("SPU を入れて全商品1倍");
+  expect(spuText(screen)).toContain("ポイント倍率1倍");
   // 通常ポイント is not a tile; 楽天カード通常分 is, under a short name.
   expect(screen.getByRole("checkbox", { name: /^通常ポイント/ }).query()).toBeNull();
   await expect
@@ -117,14 +117,14 @@ test("tile toggles SPU and updates the total", async () => {
 
   await tapCard(mobile);
   await expect.element(mobile).toBeChecked();
-  await expect.poll(() => spuText(screen)).toContain("SPU を入れて全商品5倍");
+  await expect.poll(() => spuText(screen)).toContain("ポイント倍率5倍");
   expect(spuText(screen)).toContain("SPU +4倍");
   await expect.poll(async () => (await storedBenefit("楽天モバイル"))?.enabled).toBe(true);
 
   // The card's own normal points count as 通常, not as SPU. Turning them on also turns on the
   // card's SPU bonus, which requires them.
   await tapCard(screen.getByRole("checkbox", { name: "楽天カード（通常） +1倍" }));
-  await expect.poll(() => spuText(screen)).toContain("SPU を入れて全商品7倍");
+  await expect.poll(() => spuText(screen)).toContain("ポイント倍率7倍");
   expect(spuText(screen)).toContain("通常 2倍");
   expect(spuText(screen)).toContain("SPU +5倍");
   await expect
