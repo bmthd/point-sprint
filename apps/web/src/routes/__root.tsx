@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { Box, ColorModeScript, UIProvider } from "@workspaces/ui";
+import { Box, Flex, ColorModeScript, UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import type { ReactNode } from "react";
 import { AppProviders } from "../app-providers";
@@ -67,11 +67,11 @@ export const Route = createRootRoute({
 function SiteLayout({ children }: { children: ReactNode }) {
   return (
     // The footer stays at the bottom of the screen on a short page.
-    <Box bg="bg" color="fg" minH="100dvh" display="flex" flexDirection="column">
+    <Flex bg="bg" color="fg" minH="100dvh" direction="column">
       <SiteHeader />
       <Box flex="1">{children}</Box>
       <SiteFooter />
-    </Box>
+    </Flex>
   );
 }
 

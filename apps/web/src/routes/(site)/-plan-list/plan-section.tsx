@@ -1,6 +1,15 @@
 import { RouterLink } from "../../../ui/router-link";
 import type { Plan } from "@workspaces/domain";
-import { Box, Card, Heading, IconButton, Modal, Text, VStack, useDisclosure } from "@workspaces/ui";
+import {
+  Flex,
+  Card,
+  Heading,
+  IconButton,
+  Modal,
+  Text,
+  VStack,
+  useDisclosure,
+} from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useRef, useState } from "react";
 import { accountIdOf } from "../../../state/accounts";
@@ -38,7 +47,7 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
     <Card.Root as="li">
       <Card.Body flexDirection="row" alignItems="center">
         <RouterLink to="/plan" search={{ id: plan.id }} colorScheme="mono" flex="1" minW="0">
-          <Box flex="1" minW="0" display="flex" flexDirection="column" gap="0.5">
+          <Flex flex="1" minW="0" direction="column" gap="0.5">
             <Text fontSize="md" fontWeight="bold" lineClamp={1}>
               {plan.name}
             </Text>
@@ -46,7 +55,7 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
               {account ? `${account.name}・` : null}
               {formatPeriod(plan.period)}・{result?.shopCount ?? 0}店舗・{plan.orders.length}件
             </Text>
-          </Box>
+          </Flex>
           <Text fontSize="lg" fontWeight="bold" fontVariantNumeric="tabular-nums">
             {(result?.total ?? 0).toLocaleString("ja-JP")}P
           </Text>

@@ -1,5 +1,5 @@
 import type { Plan } from "@workspaces/domain";
-import { Box, Card, List, Text, VisuallyHidden } from "@workspaces/ui";
+import { Flex, Card, List, Text, VisuallyHidden } from "@workspaces/ui";
 import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { OrderAddForm } from "./order-add-form";
 import { OrderListContext, OrderRow } from "./order-row";
@@ -28,13 +28,13 @@ export function OrderTable({ plan, onEdit }: { plan: Plan; onEdit: (orderId: str
   let counted = 0;
 
   return (
-    <Box display="flex" flexDirection="column" gap="2.5">
-      <Box display="flex" alignItems="center" justifyContent="space-between">
+    <Flex direction="column" gap="2.5">
+      <Flex align="center" justify="space-between">
         <OrdersHeading orders={orders} headingRef={heading} id={headingId} />
         <HeaderButton disabled={orders.length === 0} onClick={askReset}>
           リセット
         </HeaderButton>
-      </Box>
+      </Flex>
       <SaveFailedAlert />
       <VisuallyHidden id={handleHintId}>
         ドラッグするか、上下の矢印キーで順番を変えられます。
@@ -63,6 +63,6 @@ export function OrderTable({ plan, onEdit }: { plan: Plan; onEdit: (orderId: str
         表示は目安です。実際の付与ポイントとは誤差が出ることがあります。入力した内容はこのブラウザの中にだけ保存されます。
       </Text>
       {dialog}
-    </Box>
+    </Flex>
   );
 }

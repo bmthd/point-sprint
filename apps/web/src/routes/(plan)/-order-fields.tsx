@@ -1,5 +1,5 @@
 import { type ChannelId, type Shop, type ShopTag, channels, parseUrl } from "@workspaces/domain";
-import { Box, Button, Text, Field as UIField } from "@workspaces/ui";
+import { Flex, Button, Text, Field as UIField } from "@workspaces/ui";
 import { type ReactNode, useId, useMemo } from "react";
 import { type ShopChange, changeShop, replaceShop } from "../../state/mutations";
 import type { RakutenItem } from "../../rakuten/item-search";
@@ -63,7 +63,7 @@ export function Field({
 export function ReadOnlyField({ label, value }: { label: string; value: string }) {
   const labelId = useId();
   return (
-    <Box display="flex" flexDirection="column" gap="1" minW="0">
+    <Flex direction="column" gap="1" minW="0">
       <Text id={labelId} fontSize="xs" color="fg.muted">
         {label}
       </Text>
@@ -78,7 +78,7 @@ export function ReadOnlyField({ label, value }: { label: string; value: string }
       >
         {value}
       </Text>
-    </Box>
+    </Flex>
   );
 }
 

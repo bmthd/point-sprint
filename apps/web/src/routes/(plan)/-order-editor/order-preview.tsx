@@ -6,7 +6,7 @@ import {
   calculateAll,
   taxExcludedTarget,
 } from "@workspaces/domain";
-import { Box, Text } from "@workspaces/ui";
+import { Flex, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { calculationAtom } from "../../../state/derived";
@@ -105,14 +105,13 @@ export function OrderPreviewBox({
   );
 
   return (
-    <Box
+    <Flex
       aria-live="polite"
       data-preview
       rounded="xl"
       bg="primary.subtle"
       p="3"
-      display="flex"
-      flexDirection="column"
+      direction="column"
       gap="1"
       fontVariantNumeric="tabular-nums"
     >
@@ -146,6 +145,6 @@ export function OrderPreviewBox({
           ) : null}
         </>
       )}
-    </Box>
+    </Flex>
   );
 }

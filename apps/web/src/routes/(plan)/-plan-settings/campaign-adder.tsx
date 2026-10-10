@@ -12,6 +12,7 @@ import {
 import { Field as FormField, type FormStore, useField, useForm } from "@formisch/react";
 import {
   Box,
+  Flex,
   Button,
   Field,
   HStack,
@@ -74,7 +75,7 @@ export function TemplateList({ onPick }: { onPick: (template: CampaignTemplate) 
             whiteSpace="normal"
             lineHeight="moderate"
           >
-            <Box as="span" display="flex" alignItems="center" gap="2">
+            <Flex as="span" align="center" gap="2">
               {template.benefit.imagePath ? (
                 <Image
                   src={imageUrl(template.benefit.imagePath)}
@@ -92,7 +93,7 @@ export function TemplateList({ onPick }: { onPick: (template: CampaignTemplate) 
                   {SPECS[template.id]?.hint}
                 </Text>
               </Box>
-            </Box>
+            </Flex>
           </Button>
         </List.Item>
       ))}
