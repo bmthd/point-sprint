@@ -16,6 +16,7 @@ import {
 import { type Order, type Plan, channels } from "@workspaces/domain";
 import {
   Box,
+  Flex,
   Button,
   ButtonGroup,
   Drawer,
@@ -216,23 +217,16 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
   const byDate = dateCampaigns(plan.benefits, typeof date.input === "string" ? date.input : "");
   return (
     <Fieldset.Root legend="キャンペーン">
-      <Box display="flex" flexWrap="wrap" gap="2">
+      <Flex wrap="wrap" gap="2">
         <ToggleChip pressed={is39.input === true} onClick={() => is39.onChange(!is39.input)}>
           39ショップ{plus(tagBonus(plan.benefits, { shop: "39shop" }))}
         </ToggleChip>
         <ToggleChip pressed={repeat.input === true} onClick={() => repeat.onChange(!repeat.input)}>
           リピート購入{plus(tagBonus(plan.benefits, { order: "repeat" }))}
         </ToggleChip>
-      </Box>
+      </Flex>
       {byDate.length > 0 ? (
-        <Box
-          display="flex"
-          flexWrap="wrap"
-          alignItems="center"
-          gap="1.5"
-          fontSize="xs"
-          color="fg.muted"
-        >
+        <Flex wrap="wrap" align="center" gap="1.5" fontSize="xs" color="fg.muted">
           <span>日付で自動：</span>
           {byDate.map((benefit) => (
             <CampaignChip key={benefit.id}>
@@ -240,7 +234,7 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
               {plus(rateOf(benefit))}
             </CampaignChip>
           ))}
-        </Box>
+        </Flex>
       ) : null}
     </Fieldset.Root>
   );
@@ -292,7 +286,7 @@ function ShopFields({
         helperMessage={urlUnknown ? "このURLからはショップを選べません" : undefined}
         helperMessageProps={{ id: hintId }}
       >
-        <Box display="flex" gap="2">
+        <Flex gap="2">
           <Input
             {...bind(url)}
             flex="1"
@@ -309,7 +303,7 @@ function ShopFields({
           <Button type="button" variant="outline" flex="none" onClick={() => void paste()}>
             貼り付け
           </Button>
-        </Box>
+        </Flex>
         <AutofillStatus autofill={autofill} />
       </Field.Root>
       <Box display="grid" gridTemplateColumns="minmax(0, 1fr) 150px" alignItems="start" gap="2">
@@ -443,7 +437,7 @@ function Details({ form, defaultOpen }: { form: OrderForm; defaultOpen: boolean 
           詳細設定（数量・クーポン・ショップ倍率・保留・商品を追加）
         </NativeAccordion.Button>
         <NativeAccordion.Panel>
-          <Box display="flex" flexDirection="column" gap="2">
+          <Flex direction="column" gap="2">
             <ItemDetailFields form={form} index={0} />
             <FormField of={form} path={["onHold"]}>
               {(field) => (
@@ -462,7 +456,7 @@ function Details({ form, defaultOpen }: { form: OrderForm; defaultOpen: boolean 
             </FormField>
             <FieldArray of={form} path={["items"]}>
               {(items) => (
-                <Box display="flex" flexDirection="column" gap="2">
+                <Flex direction="column" gap="2">
                   {items.items.map((key, index) =>
                     index === 0 ? null : <ExtraItem key={key} form={form} index={index} />,
                   )}
@@ -471,7 +465,7 @@ function Details({ form, defaultOpen }: { form: OrderForm; defaultOpen: boolean 
                       {items.errors[0]}
                     </Text>
                   ) : null}
-                </Box>
+                </Flex>
               )}
             </FieldArray>
             <Button
@@ -483,7 +477,7 @@ function Details({ form, defaultOpen }: { form: OrderForm; defaultOpen: boolean 
             >
               ＋ 同じショップの商品を追加
             </Button>
-          </Box>
+          </Flex>
         </NativeAccordion.Panel>
       </NativeAccordion.Item>
     </NativeAccordion.Root>
@@ -559,13 +553,13 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
             save(output, (event.nativeEvent as SubmitEvent).submitter?.id === keepOpenId)
           }
         >
-          <Box display="flex" flexDirection="column" gap="3.5">
+          <Flex direction="column" gap="3.5">
             <ShopFields form={form} urlId={urlId} autofill={autofill} />
             <MainItemFields form={form} amountRef={amountRef} />
             <Campaigns form={form} plan={plan} />
             <Preview form={form} plan={plan} original={original} />
             <Details form={form} defaultOpen={(original?.lineItems.length ?? 1) > 1} />
-          </Box>
+          </Flex>
         </Form>
       </parts.Body>
       <parts.Footer
@@ -578,7 +572,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
             保存できませんでした。もう一度お試しください。
           </Text>
         ) : null}
-        <Box display="flex" gap="2" alignSelf="stretch">
+        <Flex gap="2" alignSelf="stretch">
           {original ? null : (
             <Button
               id={keepOpenId}
@@ -594,7 +588,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
           <Button type="submit" form={formId} colorScheme="primary" size="lg" flex="1">
             {original ? "保存する" : "追加する"}
           </Button>
-        </Box>
+        </Flex>
       </parts.Footer>
     </>
   );

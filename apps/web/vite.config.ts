@@ -6,6 +6,7 @@ import { ogFonts } from "./og-fonts-plugin.ts";
 import { parseGoogleTagsEnv } from "./src/google-tags/env.ts";
 import { prerenderedPages, robotsTxt } from "./src/prerender-pages.ts";
 import { readRakutenConfig } from "./src/rakuten/config.ts";
+import { tokyoToday } from "./src/ui/dates.ts";
 
 export default defineConfig(({ command, mode, isPreview }) => {
   // Only the `PUBLIC_` values reach the browser. They are plain text in `.env.development` and
@@ -43,6 +44,8 @@ export default defineConfig(({ command, mode, isPreview }) => {
       },
     ],
     define: {
+      // The HTML rendered ahead of time lists the events of this day, as the page does once running.
+      "import.meta.env.BUILD_DATE": JSON.stringify(tokyoToday(new Date())),
       "import.meta.env.RAKUTEN_AFFILIATE_ID": JSON.stringify(
         publicEnv.RAKUTEN_AFFILIATE_ID?.trim() || null,
       ),
