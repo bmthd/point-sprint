@@ -3,7 +3,8 @@
 "use no memo";
 
 import type { FieldElementProps } from "@formisch/react";
-import { DatePicker, type DatePickerProps, useFieldProps } from "@workspaces/ui";
+import type { Plan } from "@workspaces/domain";
+import { Box, DatePicker, type DatePickerProps, useFieldProps } from "@workspaces/ui";
 import * as v from "valibot";
 import { dateSchema } from "../../form/field-schemas";
 
@@ -30,13 +31,47 @@ export const isoDate = (date: Date) =>
 /** How a date field shows its day: `2026/10/06`. */
 const DATE_FORMAT = { input: { year: "numeric", month: "2-digit", day: "2-digit" } } as const;
 
+/** The days of an event, as a plan holds them: `2026-10-04` to `2026-10-09`. */
+type Period = Plan["period"];
+
+/**
+ * A day of the calendar inside `period`, on a pale face. A selected day keeps the picker's own
+ * solid face. Days outside it are left to the picker.
+ */
+const periodDay =
+  (period: Period) =>
+  ({ value }: { value: Date }) => {
+    const day = isoDate(value);
+    if (day < period.start || day > period.end) return undefined;
+    return (
+      <Box
+        as="span"
+        display="inline-flex"
+        alignItems="center"
+        justifyContent="center"
+        boxSize="full"
+        rounded="{cell-rounded}"
+        bg="primary.subtle"
+        css={{ "[data-selected] > &": { bg: "transparent" } }}
+      >
+        {value.getDate()}
+      </Box>
+    );
+  };
+
 /**
  * A `DatePicker` in a `Field`: a day typed in, or picked from the calendar that opens when the
  * field is tapped. Focusing or typing does not open the calendar, so moving the focus to an error
  * does not cover the form with it. The picker puts the field's `aria-invalid` and error description
  * on its box, not on the input that has the label, so they are given to the input as well.
  */
-export function FieldDatePicker(props: DatePickerProps) {
+export function FieldDatePicker({
+  period,
+  ...props
+}: DatePickerProps & {
+  /** The event's days, marked on the calendar. */
+  period?: Period;
+}) {
   const { ariaProps } = useFieldProps();
   return (
     <DatePicker
@@ -51,6 +86,7 @@ export function FieldDatePicker(props: DatePickerProps) {
       // A tap brings up the calendar alone, not the on-screen keyboard as well. A real keyboard can
       // still type a day.
       inputProps={{ ...ariaProps, minW: "0", inputMode: "none" }}
+      calendarProps={period ? { day: periodDay(period) } : undefined}
       {...props}
     />
   );
@@ -67,7 +103,9 @@ type DateFieldState = {
 export function FormDatePicker({
   field,
   ...props
-}: Omit<DatePickerProps, "value" | "onChange"> & { field: DateFieldState }) {
+}: Omit<Parameters<typeof FieldDatePicker>[0], "value" | "onChange"> & {
+  field: DateFieldState;
+}) {
   const { name, ref, onBlur } = field.props;
   return (
     <FieldDatePicker
