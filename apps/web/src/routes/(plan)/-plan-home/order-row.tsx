@@ -56,7 +56,7 @@ import {
   ReadOnlyField,
   TaxRateOptions,
   type TaxRateValue,
-  ToggleChip,
+  CampaignCheck,
   fieldGrid,
   withTag,
   taxRateValue,
@@ -276,10 +276,11 @@ function OrderEditor({
         </Text>
       )}
       <Flex wrap="wrap" gap="2">
-        <ToggleChip
-          pressed={shop?.tags.includes("39shop") ?? false}
+        <CampaignCheck
+          campaign="39shop"
+          checked={shop?.tags.includes("39shop") ?? false}
           describedBy={shopTagHintId}
-          onClick={() => {
+          onChange={() => {
             if (!shop) return;
             const on = !shop.tags.includes("39shop");
             save(
@@ -293,16 +294,17 @@ function OrderEditor({
           }}
         >
           39ショップ
-        </ToggleChip>
+        </CampaignCheck>
         <Text id={shopTagHintId} alignSelf="center" fontSize="xs" color="fg.muted">
           このショップの注文すべてに反映されます
         </Text>
-        <ToggleChip
-          pressed={order.tags.includes("repeat")}
-          onClick={() => saveOrder({ ...order, tags: toggleTag<OrderTag>(order.tags, "repeat") })}
+        <CampaignCheck
+          campaign="repeat"
+          checked={order.tags.includes("repeat")}
+          onChange={() => saveOrder({ ...order, tags: toggleTag<OrderTag>(order.tags, "repeat") })}
         >
           リピート購入
-        </ToggleChip>
+        </CampaignCheck>
         <Box flex="1" />
         {single ? null : (
           <Button variant="outline" size="lg" onClick={() => onEdit(order.id)}>

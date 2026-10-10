@@ -63,8 +63,8 @@ export function ShopAroundSettings({ plan }: { plan: Plan }) {
         />
       ) : (
         <Text px="4" py="3" fontSize="sm" color="fg.muted">
-          このプランに買いまわりはありません。プリセットのない回は「＋
-          追加」の「買いまわり（手動）」で作れます。
+          このプランに買いまわりはありません。プリセットのない回は、キャンペーンの「＋
+          買いまわり（手動）」で作れます。
         </Text>
       )}
       {deletion.dialog}

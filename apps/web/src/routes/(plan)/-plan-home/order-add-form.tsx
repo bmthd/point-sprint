@@ -33,7 +33,7 @@ import { PlusIcon } from "../../../ui/icons";
 import {
   NEW_SHOP,
   TaxRateOptions,
-  ToggleChip,
+  CampaignCheck,
   fieldGrid,
   shopFromUrl,
   useSortedShops,
@@ -235,12 +235,20 @@ function TagChips({ form }: { form: OrderForm }) {
   const repeat = useField(form, { path: ["repeat"] });
   return (
     <>
-      <ToggleChip pressed={is39.input === true} onClick={() => is39.onChange(!is39.input)}>
+      <CampaignCheck
+        campaign="39shop"
+        checked={is39.input === true}
+        onChange={() => is39.onChange(!is39.input)}
+      >
         39ショップ
-      </ToggleChip>
-      <ToggleChip pressed={repeat.input === true} onClick={() => repeat.onChange(!repeat.input)}>
+      </CampaignCheck>
+      <CampaignCheck
+        campaign="repeat"
+        checked={repeat.input === true}
+        onChange={() => repeat.onChange(!repeat.input)}
+      >
         リピート購入
-      </ToggleChip>
+      </CampaignCheck>
     </>
   );
 }

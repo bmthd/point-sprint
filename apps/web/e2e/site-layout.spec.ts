@@ -29,21 +29,28 @@ const topLink = (page: Page) => header(page).getByRole("link", { name: "ポイ�
 const profileLink = (page: Page) =>
   header(page).getByRole("link", { name: "プロフィール", exact: true });
 
-/** Waits until the page has hydrated: before that a click reloads the whole document. */
-const ready = (page: Page) =>
-  expect(page.getByRole("main").getByText("読み込み中…")).toHaveCount(0);
+/** Waits until the page shows its content: a plan's page shows it once the plan has loaded. */
+const ready = async (page: Page) => {
+  await expect(page.getByRole("main")).toBeVisible();
+  await expect(page.getByText("読み込み中…")).toHaveCount(0);
+};
 
-test("every page links to the top and the profile from the header, and 戻る comes back", async ({
-  page,
-}) => {
-  const id = await createPlan(page);
-  for (const { name, path } of pages(id)) {
-    await test.step(name, async () => {
-      await page.goto(path);
-      await ready(page);
-      await topLink(page).click();
-      await expect(page).toHaveURL(/\/$/);
+// One test per page, like the footer's: the retries of every page together take more than one
+// test's time allows.
+for (const { name } of pages("")) {
+  test(`${name} links to the top and the profile from the header, and 戻る comes back`, async ({
+    page,
+  }) => {
+    const id = await createPlan(page);
+    const path = pages(id).find((p) => p.name === name)?.path ?? "";
+    await page.goto(path);
+    await ready(page);
+    await topLink(page).click();
+    await expect(page).toHaveURL(/\/$/);
 
+    // Retried from the page: a click before the page hydrates loads the profile as a new
+    // document, and 戻る then has no page to go back to.
+    await expect(async () => {
       await page.goto(path);
       await ready(page);
       await profileLink(page).click();
@@ -52,10 +59,12 @@ test("every page links to the top and the profile from the header, and 戻る co
       if (path === "/profile") return;
       await page.getByRole("link", { name: "戻る" }).click();
       // The preview server answers a page's path with its directory (`/help/`).
-      await expect(page).toHaveURL(new RegExp(`${path.replace(/[?]/g, "\\?")}/?$`));
-    });
-  }
-});
+      await expect(page).toHaveURL(new RegExp(`${path.replace(/[?]/g, "\\?")}/?$`), {
+        timeout: 2000,
+      });
+    }).toPass();
+  });
+}
 
 test("the header marks the page being shown", async ({ page }) => {
   const id = await createPlan(page);
@@ -81,8 +90,12 @@ test("on a phone the header has the site name and the menu, which has the profil
   const box = (await topLink(page).boundingBox())!;
   expect(box.height).toBeLessThanOrEqual(44);
 
-  await header(page).getByRole("button", { name: "メニュー" }).click();
   const menu = page.getByRole("dialog", { name: "メニュー" });
+  // Retried: a click before the page hydrates does nothing.
+  await expect(async () => {
+    await header(page).getByRole("button", { name: "メニュー" }).click();
+    await expect(menu).toBeVisible({ timeout: 1000 });
+  }).toPass();
   const dark = menu.getByRole("switch", { name: "ダークモード" });
   // The switch's input is hidden under its look: a person clicks the label.
   await menu.getByText("ダークモード").click();
@@ -109,11 +122,16 @@ for (const { name } of pages("")) {
       .getByRole("link")
       .evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
     for (const href of targets) {
-      await page.goto(path);
-      await ready(page);
-      await footer(page).locator(`a[href="${href}"]`).click();
-      // The preview server answers a page's path with its directory (`/help/`).
-      await expect(page).toHaveURL(new RegExp(`${href.replace(/[?]/g, "\\?")}/?$`));
+      // Retried from the page: a click while the page hydrates can do nothing.
+      await expect(async () => {
+        await page.goto(path);
+        await ready(page);
+        await footer(page).locator(`a[href="${href}"]`).click();
+        // The preview server answers a page's path with its directory (`/help/`).
+        await expect(page).toHaveURL(new RegExp(`${href.replace(/[?]/g, "\\?")}/?$`), {
+          timeout: 2000,
+        });
+      }).toPass();
       await expect(page.getByRole("main")).toBeVisible();
     }
   });
@@ -126,10 +144,13 @@ test("the footer links to each page that tells about the site", async ({ page })
     { label: "利用規約", path: "/terms", heading: "利用規約" },
     { label: "プライバシーポリシー", path: "/privacy", heading: "プライバシーポリシー" },
   ]) {
-    await page.goto("/");
-    await ready(page);
-    await footer(page).getByRole("link", { name: label }).click();
-    await expect(page).toHaveURL(new RegExp(`${path}/?$`));
+    // Retried from the page: a click while the page hydrates can do nothing.
+    await expect(async () => {
+      await page.goto("/");
+      await ready(page);
+      await footer(page).getByRole("link", { name: label }).click();
+      await expect(page).toHaveURL(new RegExp(`${path}/?$`), { timeout: 2000 });
+    }).toPass();
     await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
   }
 });

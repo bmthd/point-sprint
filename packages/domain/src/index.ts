@@ -37,7 +37,14 @@ export * from "./migrations";
 export { standardSpu } from "./master/spu";
 export { officialEvents } from "./master/events";
 export { campaignTemplates } from "./master/campaigns";
-export { hasCampaignOccurrence, instantiateCampaign } from "./master/instantiate";
+export {
+  type CampaignInput,
+  campaignInputOf,
+  editCampaign,
+  hasCampaignOccurrence,
+  instantiateCampaign,
+  templateOfCampaign,
+} from "./master/instantiate";
 export { createPlan } from "./master/create-plan";
 export { copyOrder, moveOrder } from "./plan-ops/order-ops";
 export { toggleBenefit, toggleBenefits } from "./plan-ops/benefit-ops";

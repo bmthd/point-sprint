@@ -2,6 +2,10 @@ import type { Benefit } from "../model/benefit";
 import type { CampaignTemplate } from "../model/campaign-template";
 import type { Id, IsoDate, Period } from "../model/common";
 import type { Plan } from "../model/plan";
+import { campaignTemplates } from "./campaigns";
+
+/** What a campaign is made with, beside its id. */
+export type CampaignInput = Omit<Input, "id">;
 
 type Input = {
   id: Id;
@@ -87,4 +91,53 @@ export function hasCampaignOccurrence(
       });
     }
   }
+}
+
+/**
+ * The template a campaign the user added was made from: the one whose `sharedKey` it carries, or
+ * 自由な倍率 for a rate without one. `undefined` for anything else.
+ */
+export function templateOfCampaign(benefit: Benefit): CampaignTemplate | undefined {
+  const key = benefit.sharedKey;
+  if (key === undefined) {
+    return benefit.kind === "rate-bonus"
+      ? campaignTemplates.find((template) => template.id === "custom-rate")
+      : undefined;
+  }
+  return campaignTemplates.find((template) => {
+    const templateKey = template.benefit.sharedKey;
+    return (
+      template.occurrence !== "fixed" &&
+      templateKey !== undefined &&
+      (key === templateKey || key.startsWith(`${templateKey}:`))
+    );
+  });
+}
+
+/** What a campaign was made with, so that it can be made again with some of it changed. */
+export function campaignInputOf(benefit: Benefit): CampaignInput {
+  const rule = benefit.conditions.dateRule;
+  return {
+    ...(rule?.type === "dates" ? { dates: [...rule.dates] } : {}),
+    ...(rule?.type === "range" ? { period: { start: rule.start, end: rule.end } } : {}),
+    ...(benefit.kind === "rate-bonus" ? { rate: benefit.params.rate } : {}),
+    ...(benefit.params.cap === undefined ? {} : { cap: benefit.params.cap }),
+    ...(benefit.conditions.minOrderAmount === undefined
+      ? {}
+      : { minOrderAmount: benefit.conditions.minOrderAmount }),
+    label: benefit.label,
+  };
+}
+
+/**
+ * The campaign made again from `template` with `change` over what it was made with. It keeps its
+ * id and whether it is on.
+ */
+export function editCampaign(
+  template: CampaignTemplate,
+  benefit: Benefit,
+  change: CampaignInput,
+): Benefit {
+  const input = { ...campaignInputOf(benefit), ...change, id: benefit.id };
+  return { ...instantiateCampaign(template, input), enabled: benefit.enabled };
 }
