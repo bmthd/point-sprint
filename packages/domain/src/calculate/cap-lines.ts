@@ -10,7 +10,10 @@ export type CapLine = {
   /** The cap group's key (`capGroupKey`). */
   key: string;
   scope: Benefit["capScope"];
-  /** `YYYY-MM` for a month cap, `YYYY-MM-DD` for a day cap, otherwise `null`. */
+  /**
+   * `YYYY-MM` for a month cap, `YYYY-MM-DD` for a day cap and for the first day of an occurrence
+   * cap, otherwise `null`.
+   */
   period: string | null;
   cap: number;
   /** Points this plan received from the cap. */
@@ -59,6 +62,21 @@ function datesOf(
       return monthsOf(plan.period).map((month) => ({ date: `${month}-01`, period: month }));
     case "day":
       return [{ date: day, period: day }];
+    case "occurrence":
+      return [{ date: plan.period.start, period: firstDayOf(benefit) }];
+  }
+}
+
+/** The first day a benefit is for, when its days are set. */
+function firstDayOf(benefit: Benefit): string | null {
+  const rule = benefit.conditions.dateRule;
+  switch (rule?.type) {
+    case "dates":
+      return [...rule.dates].sort()[0] ?? null;
+    case "range":
+      return rule.start;
+    default:
+      return null;
   }
 }
 

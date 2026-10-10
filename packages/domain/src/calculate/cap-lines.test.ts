@@ -169,6 +169,23 @@ describe("capLines", () => {
     ]);
   });
 
+  test("each occurrence cap has its own line, with its first day", () => {
+    const occurrence = (id: string, date: string): Benefit => ({
+      ...card,
+      id,
+      capScope: "occurrence",
+      sharedKey: "sports-win",
+      conditions: { dateRule: { type: "dates", dates: [date] } },
+    });
+    const first = plan(FIRST, "2026-10-04", "2026-10-09", [order("1", "2026-10-05", 3300)], {
+      benefits: [occurrence(CARD, "2026-10-05"), occurrence(MARATHON, "2026-10-06")],
+    });
+    expect(linesOf([first], first, "2026-10-06")).toEqual([
+      expect.objectContaining({ scope: "occurrence", period: "2026-10-05", remaining: 70 }),
+      expect.objectContaining({ scope: "occurrence", period: "2026-10-06", remaining: 100 }),
+    ]);
+  });
+
   test("benefits without a cap, and disabled ones, have no line", () => {
     const first = plan(FIRST, "2026-10-04", "2026-10-09", [], {
       benefits: [

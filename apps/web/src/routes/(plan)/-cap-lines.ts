@@ -19,7 +19,7 @@ export function useCapLines(plan: Plan, day: string | undefined): CapLine[] {
 
 const monthDay = (date: string) => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
 
-/** 「10月」「期間中」: which cap the line is. */
+/** 「10月」「期間中」「10/6」: which cap the line is. An occurrence is shown by its first day. */
 export function scopeText(line: CapLine, today: string | undefined): string {
   const period = line.period ?? "";
   switch (line.scope) {
@@ -30,6 +30,9 @@ export function scopeText(line: CapLine, today: string | undefined): string {
     case "month":
       return `${Number(period.slice(5, 7))}月`;
     case "day":
+      return period === today ? "今日" : monthDay(period);
+    case "occurrence":
+      if (line.period === null) return "1回の開催";
       return period === today ? "今日" : monthDay(period);
   }
 }

@@ -196,6 +196,36 @@ describe("calculateAll", () => {
     expectTotalsMatchBreakdown(results);
   });
 
+  test("occurrence scope caps each occurrence separately", () => {
+    const occurrence = (id: string, date: string) =>
+      bonus({
+        id,
+        capScope: "occurrence",
+        sharedKey: "sports-win",
+        conditions: { dateRule: { type: "dates", dates: [date] } },
+        cap: 15,
+      });
+    const results = calculateAll(
+      [
+        plan(
+          PLAN_1,
+          [
+            order(ORDER_1, ITEM_1, "2026-10-05"),
+            order(ORDER_2, ITEM_2, "2026-10-05", SHOP_B),
+            order(ORDER_3, ITEM_3, "2026-10-06"),
+          ],
+          [occurrence(BONUS_ID, "2026-10-05"), occurrence(SHOP_AROUND_ID, "2026-10-06")],
+        ),
+      ],
+      shops,
+    );
+    const r1 = resultOf(results, PLAN_1);
+    expect((pointsOf(r1, ITEM_1) ?? 0) + (pointsOf(r1, ITEM_2) ?? 0)).toBe(15);
+    expect(pointsOf(r1, ITEM_3, SHOP_AROUND_ID)).toBe(10);
+    expect(r1.total).toBe(25);
+    expectTotalsMatchBreakdown(results);
+  });
+
   test("plan scope is not shared", () => {
     const b = bonus({ capScope: "plan", cap: 15 });
     const results = calculateAll(
@@ -256,9 +286,10 @@ describe("calculateAll", () => {
       { capScope: "campaign", dates: ["2026-10-05", "2026-10-20"] },
       { capScope: "month", dates: ["2026-10-05", "2026-10-20"] },
       { capScope: "day", dates: ["2026-10-05", "2026-10-05"] },
+      { capScope: "occurrence", dates: ["2026-10-05", "2026-10-06"] },
     ] as const;
     const twoPlans = (
-      capScope: "campaign" | "month" | "day",
+      capScope: "campaign" | "month" | "day" | "occurrence",
       dates: readonly [string, string],
       accounts: [string | undefined, string | undefined],
     ) => {

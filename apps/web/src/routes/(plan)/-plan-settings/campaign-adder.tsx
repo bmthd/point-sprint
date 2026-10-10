@@ -23,7 +23,7 @@ export const addableTemplates = campaignTemplates.filter(
 );
 
 /** Every day of `period`, from its start. */
-function daysOf(period: Plan["period"]) {
+export function daysOf(period: Plan["period"]) {
   const days: string[] = [];
   const day = new Date(`${period.start}T00:00:00Z`);
   for (let text = period.start; text <= period.end;) {

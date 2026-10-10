@@ -300,6 +300,48 @@ test("adds a sports-win day at once, and changes it in its row", async () => {
   await expect.element(toggle).not.toBeInTheDocument();
 });
 
+test("adds more sports-win occurrences at once, one campaign for each", async () => {
+  onOctober6();
+  const screen = await renderSettings(makePlan([], []));
+  await screen.getByRole("button", { name: "勝ったら倍を追加" }).click();
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
+
+  // It starts from the first free day after the one being edited.
+  const first = screen.getByLabelText("1件目の開催日");
+  await expect.element(first).toHaveValue("2026/10/07");
+  await screen.getByRole("button", { name: "＋ 開催日を足す" }).click();
+  await expect.element(screen.getByLabelText("2件目の開催日")).toHaveValue("2026/10/08");
+  await screen.getByLabelText("2件目の倍率").selectOptions("2");
+  await screen.getByRole("button", { name: "まとめて追加" }).click();
+
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(3);
+  const added = (await storedPlan()).benefits.map((benefit) => ({
+    dates: benefit.conditions.dateRule,
+    rate: benefit.kind === "rate-bonus" ? benefit.params.rate : undefined,
+    capScope: benefit.capScope,
+  }));
+  expect(added).toEqual([
+    { dates: { type: "dates", dates: ["2026-10-06"] }, rate: 1, capScope: "occurrence" },
+    { dates: { type: "dates", dates: ["2026-10-07"] }, rate: 1, capScope: "occurrence" },
+    { dates: { type: "dates", dates: ["2026-10-08"] }, rate: 2, capScope: "occurrence" },
+  ]);
+  // The form starts again from the next free day.
+  await expect.element(screen.getByLabelText("1件目の開催日")).toHaveValue("2026/10/09");
+
+  // A day the plan already has is refused, and so is the same day twice.
+  await screen.getByLabelText("1件目の開催日").fill("2026/10/07");
+  await screen.getByRole("button", { name: "まとめて追加" }).click();
+  await expect
+    .element(screen.getByLabelText("1件目の開催日"))
+    .toHaveAccessibleDescription("この日の勝ったら倍はもう追加してあります");
+  await screen.getByLabelText("1件目の開催日").fill("2026/10/09");
+  await screen.getByRole("button", { name: "＋ 開催日を足す" }).click();
+  await screen.getByLabelText("2件目の開催日").fill("2026/10/09");
+  await screen.getByRole("button", { name: "まとめて追加" }).click();
+  await expect.element(screen.getByRole("alert")).toHaveTextContent("同じ開催日が2回入っています");
+  expect((await storedPlan()).benefits).toHaveLength(3);
+});
+
 test("adds 39shop for the plan's period once, and refuses a period it already has", async () => {
   const screen = await renderSettings(makePlan([], []));
   await screen.getByRole("button", { name: "39ショップを追加" }).click();

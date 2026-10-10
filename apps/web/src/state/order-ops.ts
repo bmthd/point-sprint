@@ -150,6 +150,11 @@ export const addBenefitAtom = planOperationAtom(
     (plan) =>
       addBenefit(plan, benefit),
 );
+export const addBenefitsAtom = planOperationAtom(
+  ({ benefits }: { benefits: Benefit[] }) =>
+    (plan) =>
+      benefits.reduce(addBenefit, plan),
+);
 export const removeBenefitAtom = planOperationAtom(
   ({ benefitId }: { benefitId: string }) =>
     (plan) =>
