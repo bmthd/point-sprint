@@ -340,7 +340,7 @@ export function SpuCard({
         <SpuTileGrid benefits={benefits} capped={capped ?? noneCapped} onToggle={onToggle} />
 
         <Flex wrap="wrap" align="center" columnGap="3" rowGap="1.5" fontSize="xs" color="fg.muted">
-          <Box as="span" display="inline-flex" alignItems="center" gap="1">
+          <Flex as="span" align="center" gap="1">
             <Box
               as="span"
               boxSize="3"
@@ -350,20 +350,20 @@ export function SpuCard({
               borderColor="primary.muted"
             />
             ON
-          </Box>
-          <Box as="span" display="inline-flex" alignItems="center" gap="1">
+          </Flex>
+          <Flex as="span" align="center" gap="1">
             <Box as="span" boxSize="3" rounded="sm" borderWidth="1px" borderColor="border" />
             OFF
-          </Box>
+          </Flex>
           {capped ? (
-            <Box as="span" display="inline-flex" alignItems="center" gap="1">
+            <Flex as="span" align="center" gap="1">
               <CapBadge as="span" />
               このプランで上限に達した
-            </Box>
+            </Flex>
           ) : null}
-          <Box as="span" ms="auto">
+          <Text as="span" ms="auto">
             名前を押すと上限・条件
-          </Box>
+          </Text>
         </Flex>
       </Card.Body>
     </Card.Root>

@@ -5,7 +5,7 @@ import {
   officialEvents,
   templateOfCampaign,
 } from "@workspaces/domain";
-import { Box, Card, Flex, Heading, IconButton, Image, Switch, Text } from "@workspaces/ui";
+import { Box, Card, Flex, Heading, IconButton, Image, List, Switch, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
 import { toggleBenefitAtom } from "../../../state/order-ops";
@@ -65,7 +65,7 @@ function CampaignRow({
   const template = isAddedCampaign(plan, benefit) ? templateOfCampaign(benefit) : undefined;
   const editorId = useId();
   return (
-    <Flex as="li" direction="column" gap="2">
+    <List.Item display="flex" flexDirection="column" gap="2">
       <Flex align="center" gap="2" minH="12">
         <Flex flex="1" align="center" gap="2" minW="0">
           {benefit.imagePath ? (
@@ -134,7 +134,7 @@ function CampaignRow({
           onDelete={onDelete}
         />
       ) : null}
-    </Flex>
+    </List.Item>
   );
 }
 
@@ -162,7 +162,7 @@ export function CampaignToggles({ plan }: { plan: Plan }) {
           </Text>
         </Flex>
         {campaigns.length > 0 ? (
-          <Flex as="ul" listStyle="none" m="0" p="0" direction="column" gap="2">
+          <List.Root gap="2">
             {campaigns.map((benefit) => (
               <CampaignRow
                 key={benefit.id}
@@ -174,7 +174,7 @@ export function CampaignToggles({ plan }: { plan: Plan }) {
                 onDelete={() => deletion.ask(benefit)}
               />
             ))}
-          </Flex>
+          </List.Root>
         ) : null}
         <CampaignAddButtons
           plan={plan}

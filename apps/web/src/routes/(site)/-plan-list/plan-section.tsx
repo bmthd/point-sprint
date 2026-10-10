@@ -5,6 +5,7 @@ import {
   Card,
   Heading,
   IconButton,
+  List,
   Modal,
   Text,
   VStack,
@@ -44,33 +45,35 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
     ? settings.accounts.find((candidate) => candidate.id === accountId)
     : undefined;
   return (
-    <Card.Root as="li">
-      <Card.Body flexDirection="row" alignItems="center">
-        <RouterLink to="/plan" search={{ id: plan.id }} colorScheme="mono" flex="1" minW="0">
-          <Flex flex="1" minW="0" direction="column" gap="0.5">
-            <Text fontSize="md" fontWeight="bold" lineClamp={1}>
-              {plan.name}
+    <List.Item>
+      <Card.Root>
+        <Card.Body flexDirection="row" alignItems="center">
+          <RouterLink to="/plan" search={{ id: plan.id }} colorScheme="mono" flex="1" minW="0">
+            <Flex flex="1" minW="0" direction="column" gap="0.5">
+              <Text fontSize="md" fontWeight="bold" lineClamp={1}>
+                {plan.name}
+              </Text>
+              <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
+                {account ? `${account.name}・` : null}
+                {formatPeriod(plan.period)}・{result?.shopCount ?? 0}店舗・{plan.orders.length}件
+              </Text>
+            </Flex>
+            <Text fontSize="lg" fontWeight="bold" fontVariantNumeric="tabular-nums">
+              {(result?.total ?? 0).toLocaleString("ja-JP")}P
             </Text>
-            <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
-              {account ? `${account.name}・` : null}
-              {formatPeriod(plan.period)}・{result?.shopCount ?? 0}店舗・{plan.orders.length}件
-            </Text>
-          </Flex>
-          <Text fontSize="lg" fontWeight="bold" fontVariantNumeric="tabular-nums">
-            {(result?.total ?? 0).toLocaleString("ja-JP")}P
-          </Text>
-        </RouterLink>
-        <IconButton
-          variant="ghost"
-          colorScheme="danger"
-          size="lg"
-          aria-label={`${plan.name}を削除`}
-          onClick={() => onDelete(plan)}
-        >
-          <TrashIcon />
-        </IconButton>
-      </Card.Body>
-    </Card.Root>
+          </RouterLink>
+          <IconButton
+            variant="ghost"
+            colorScheme="danger"
+            size="lg"
+            aria-label={`${plan.name}を削除`}
+            onClick={() => onDelete(plan)}
+          >
+            <TrashIcon />
+          </IconButton>
+        </Card.Body>
+      </Card.Root>
+    </List.Item>
   );
 }
 
@@ -96,7 +99,7 @@ export function PlanSection() {
           まだプランがありません。上のボタンから作れます。
         </Text>
       ) : (
-        <VStack as="ul" listStyle="none" m="0" p="0" gap="2.5" alignItems="stretch">
+        <List.Root gap="2.5">
           {sorted.map((plan) => (
             <PlanRow
               key={plan.id}
@@ -108,7 +111,7 @@ export function PlanSection() {
               }}
             />
           ))}
-        </VStack>
+        </List.Root>
       )}
       <Modal.Root
         open={open}

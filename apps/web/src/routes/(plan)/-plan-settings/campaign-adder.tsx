@@ -7,7 +7,7 @@ import {
   hasCampaignOccurrence,
   instantiateCampaign,
 } from "@workspaces/domain";
-import { Button, Flex, Image, Text } from "@workspaces/ui";
+import { Button, Flex, Image, List, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import type { Ref } from "react";
 import { addBenefitAtom } from "../../../state/order-ops";
@@ -98,21 +98,13 @@ export function CampaignAddButtons({
       <Text fontSize="xs" color="fg.muted">
         押すとプランの期間で追加します。期間や倍率は追加した後に ✎ で変えられます。
       </Text>
-      <Flex
-        as="ul"
-        listStyle="none"
-        m="0"
-        p="0"
-        wrap="wrap"
-        gap="2"
-        aria-label="キャンペーンを追加"
-      >
+      <List.Root flexDirection="row" flexWrap="wrap" gap="2" aria-label="キャンペーンを追加">
         {addableTemplates.map((template, index) => {
           // Whether any day is left does not depend on today, which a render cannot read.
           const full = defaultInput(plan, template, plan.period.start) === undefined;
           const imagePath = template.benefit.imagePath;
           return (
-            <li key={template.id}>
+            <List.Item key={template.id}>
               <Button
                 ref={index === 0 ? firstRef : undefined}
                 variant="outline"
@@ -128,10 +120,10 @@ export function CampaignAddButtons({
                 ) : null}
                 {template.name}
               </Button>
-            </li>
+            </List.Item>
           );
         })}
-      </Flex>
+      </List.Root>
     </Flex>
   );
 }

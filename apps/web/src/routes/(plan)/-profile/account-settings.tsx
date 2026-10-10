@@ -1,10 +1,11 @@
 import { type Account, DEFAULT_ACCOUNT_ID, type Profile, accountsOf } from "@workspaces/domain";
 import {
   Box,
-  Flex,
   Button,
   Card,
+  Heading,
   IconButton,
+  List,
   Modal,
   Switch,
   Text,
@@ -35,9 +36,9 @@ function AccountRow({
   onDelete?: () => void;
 }) {
   return (
-    <Flex
-      as="li"
-      align="center"
+    <List.Item
+      display="flex"
+      alignItems="center"
       gap="1"
       py="2"
       borderTopWidth="1px"
@@ -59,7 +60,7 @@ function AccountRow({
           <CloseIcon />
         </IconButton>
       ) : null}
-    </Flex>
+    </List.Item>
   );
 }
 
@@ -94,9 +95,9 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
   return (
     <Card.Root as="section" aria-labelledby="advanced-settings-title">
       <Card.Body alignItems="stretch">
-        <Text as="h2" id="advanced-settings-title" fontSize="md" fontWeight="bold">
+        <Heading as="h2" id="advanced-settings-title" fontSize="md">
           詳細設定
-        </Text>
+        </Heading>
         <Switch
           colorScheme="primary"
           reverse
@@ -115,7 +116,7 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
         </Text>
         {enabled ? (
           <>
-            <Box as="ul" aria-label="楽天アカウント" listStyleType="none" m="0" p="0">
+            <List.Root aria-label="楽天アカウント" gap="0">
               {accounts.map((account) => (
                 <AccountRow
                   key={account.id}
@@ -138,7 +139,7 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
                   }
                 />
               ))}
-            </Box>
+            </List.Root>
             <Button
               ref={addRef}
               variant="outline"
