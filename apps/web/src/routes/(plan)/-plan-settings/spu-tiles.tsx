@@ -41,8 +41,8 @@ export const spuTiles = (benefits: Benefit[]): RateBenefit[] =>
       (benefit.category === "spu" || (benefit.category === "base" && !isNormalPoint(benefit))),
   );
 
-const enabledRate = (plan: Plan, category: Benefit["category"]) =>
-  plan.benefits.reduce(
+const enabledRate = (benefits: Benefit[], category: Benefit["category"]) =>
+  benefits.reduce(
     (sum, benefit) =>
       benefit.kind === "rate-bonus" && benefit.category === category && benefit.enabled
         ? sum + benefit.params.rate
@@ -51,7 +51,7 @@ const enabledRate = (plan: Plan, category: Benefit["category"]) =>
   );
 
 /** The sum of the rates of the SPU (category `spu`) that are on. */
-export const spuRate = (plan: Plan) => enabledRate(plan, "spu");
+export const spuRate = (plan: Plan) => enabledRate(plan.benefits, "spu");
 
 /** The card's normal points are shown under a short name. */
 export const tileName = (benefit: Benefit) =>
@@ -135,6 +135,8 @@ function Tile({
   );
 }
 
+const noneCapped: ReadonlySet<string> = new Set();
+
 /** 「上限」: the SPU reached its cap in this plan. */
 function CapBadge(props: BadgeProps) {
   return (
@@ -210,7 +212,7 @@ function DetailBody({
  * The SPU tiles with the detail dialog behind each name. Works on any list of benefits: a plan's,
  * or the profile's defaults. `capped` holds the ids that reached their cap (none for a profile).
  */
-export function SpuTileGrid({
+function SpuTileGrid({
   benefits,
   capped,
   onToggle,
@@ -268,24 +270,37 @@ export function SpuTileGrid({
   );
 }
 
-/** The SPU section: the total, the tiles and their legend. */
-export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResult }) {
-  const toggle = useSetAtom(toggleBenefitAtom);
-  const save = useSaveSettingsChange(plan.id);
-  const capped = new Set(
-    result.benefitTotals.filter((total) => total.capReached).map((total) => total.benefitId),
-  );
-  const normal = enabledRate(plan, "base");
-  const spu = spuRate(plan);
+/**
+ * The SPU card: the total rate, the tiles and their legend. The plan's settings and the profile's
+ * defaults show the same card, so the two read alike.
+ */
+export function SpuCard({
+  title,
+  note,
+  benefits,
+  capped,
+  onToggle,
+}: {
+  title: string;
+  /** A line under the rate, for what the card's changes apply to. */
+  note?: string;
+  benefits: Benefit[];
+  /** The ids that reached their cap. `undefined` when there is no plan to reach them in. */
+  capped?: ReadonlySet<string>;
+  onToggle: (benefitId: string) => void;
+}) {
+  const normal = enabledRate(benefits, "base");
+  const spu = enabledRate(benefits, "spu");
+  const titleId = useId();
 
   return (
-    <Card.Root as="section" aria-label="SPU">
+    <Card.Root as="section" aria-labelledby={titleId}>
       <Card.Body alignItems="stretch">
         {/* The heading, the rate and its breakdown read as one block. */}
         <VStack gap="1" alignItems="stretch" fontVariantNumeric="tabular-nums">
           <Flex align="center" justify="space-between" gap="2">
-            <Heading as="h2" fontSize="md">
-              SPU
+            <Heading as="h2" id={titleId} fontSize="md">
+              {title}
             </Heading>
             <Text fontSize="xs" color="fg.muted">
               達成したものを ON に
@@ -313,12 +328,13 @@ export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResu
             <SpuLink fontSize="xs" alignSelf="auto" />
           </Flex>
         </VStack>
+        {note ? (
+          <Text fontSize="xs" color="fg.muted">
+            {note}
+          </Text>
+        ) : null}
 
-        <SpuTileGrid
-          benefits={plan.benefits}
-          capped={capped}
-          onToggle={(benefitId) => save(toggle({ planId: plan.id, benefitId }))}
-        />
+        <SpuTileGrid benefits={benefits} capped={capped ?? noneCapped} onToggle={onToggle} />
 
         <Flex wrap="wrap" align="center" columnGap="3" rowGap="1.5" fontSize="xs" color="fg.muted">
           <Box as="span" display="inline-flex" alignItems="center" gap="1">
@@ -336,15 +352,34 @@ export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResu
             <Box as="span" boxSize="3" rounded="sm" borderWidth="1px" borderColor="border" />
             OFF
           </Box>
-          <Box as="span" display="inline-flex" alignItems="center" gap="1">
-            <CapBadge as="span" />
-            このプランで上限に達した
-          </Box>
+          {capped ? (
+            <Box as="span" display="inline-flex" alignItems="center" gap="1">
+              <CapBadge as="span" />
+              このプランで上限に達した
+            </Box>
+          ) : null}
           <Box as="span" ms="auto">
             名前を押すと上限・条件
           </Box>
         </Flex>
       </Card.Body>
     </Card.Root>
+  );
+}
+
+/** The plan's SPU card. */
+export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResult }) {
+  const toggle = useSetAtom(toggleBenefitAtom);
+  const save = useSaveSettingsChange(plan.id);
+  const capped = new Set(
+    result.benefitTotals.filter((total) => total.capReached).map((total) => total.benefitId),
+  );
+  return (
+    <SpuCard
+      title="SPU"
+      benefits={plan.benefits}
+      capped={capped}
+      onToggle={(benefitId) => save(toggle({ planId: plan.id, benefitId }))}
+    />
   );
 }

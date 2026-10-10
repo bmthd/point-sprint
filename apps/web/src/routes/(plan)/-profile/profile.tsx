@@ -1,6 +1,6 @@
 import { ClientOnly, useCanGoBack, useRouter } from "@tanstack/react-router";
 import { toggleBenefits } from "@workspaces/domain";
-import { Alert, Box, Flex, Card, Heading, Text, VStack } from "@workspaces/ui";
+import { Alert, Box, Flex, Heading, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { saveProfileAtom } from "../../../state/mutations";
@@ -8,11 +8,9 @@ import { profileAtom, profileQueryAtom, storageHealthQueryAtom } from "../../../
 import { BackIcon } from "../../../ui/icons";
 import { RouterLink } from "../../../ui/router-link";
 import { StorageHealthFailure, storageMessages } from "../-warnings";
-import { SpuTileGrid } from "../-plan-settings/spu-tiles";
+import { SpuCard } from "../-plan-settings/spu-tiles";
 import { AccountSettings } from "./account-settings";
 import { ShopRegistry } from "./shop-registry";
-
-const noneCapped: ReadonlySet<string> = new Set();
 
 function StorageNotice() {
   const { data } = useAtomValue(storageHealthQueryAtom);
@@ -34,36 +32,25 @@ function SpuDefaults({ onFailed }: { onFailed: (failed: boolean) => void }) {
   const profile = useAtomValue(profileAtom);
   const { isSuccess } = useAtomValue(profileQueryAtom);
   const { mutateAsync: saveProfile } = useAtomValue(saveProfileAtom);
-  return (
-    <Card.Root as="section" aria-labelledby="spu-defaults-title">
-      <Card.Body alignItems="stretch">
-        <Text as="h2" id="spu-defaults-title" fontSize="md" fontWeight="bold">
-          SPU の初期値
-        </Text>
-        <Text fontSize="xs" color="fg.muted">
-          ここでの変更は、これから作るプランの初期値になります。作成済みのプランは変わりません。
-        </Text>
-        {isSuccess ? (
-          <SpuTileGrid
-            benefits={profile.spuBenefits}
-            capped={noneCapped}
-            onToggle={(benefitId) => {
-              onFailed(false);
-              saveProfile({
-                change: (current) => ({
-                  ...current,
-                  spuBenefits: toggleBenefits(current.spuBenefits, benefitId),
-                }),
-              }).catch(() => onFailed(true));
-            }}
-          />
-        ) : (
-          <Text role="status" fontSize="sm" color="fg.muted">
-            読み込み中…
-          </Text>
-        )}
-      </Card.Body>
-    </Card.Root>
+  return isSuccess ? (
+    <SpuCard
+      title="SPU の初期値"
+      note="ここでの変更は、これから作るプランの初期値になります。作成済みのプランは変わりません。"
+      benefits={profile.spuBenefits}
+      onToggle={(benefitId) => {
+        onFailed(false);
+        saveProfile({
+          change: (current) => ({
+            ...current,
+            spuBenefits: toggleBenefits(current.spuBenefits, benefitId),
+          }),
+        }).catch(() => onFailed(true));
+      }}
+    />
+  ) : (
+    <Text role="status" fontSize="sm" color="fg.muted">
+      読み込み中…
+    </Text>
   );
 }
 
