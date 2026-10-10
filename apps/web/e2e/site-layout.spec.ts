@@ -84,6 +84,29 @@ test("the header marks the page being shown", async ({ page }) => {
   }
 });
 
+test("on a phone the header has the site name and the menu, which has the profile and the color mode", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/help");
+  await ready(page);
+  await expect(profileLink(page)).toBeHidden();
+  const box = (await topLink(page).boundingBox())!;
+  expect(box.height).toBeLessThanOrEqual(44);
+
+  await header(page).getByRole("button", { name: "メニュー" }).click();
+  const menu = page.getByRole("dialog", { name: "メニュー" });
+  const dark = menu.getByRole("switch", { name: "ダークモード" });
+  // The switch's input is hidden under its look: a person clicks the label.
+  await menu.getByText("ダークモード").click();
+  await expect(page.locator("html")).toHaveAttribute("data-mode", "dark");
+  await expect(dark).toBeChecked();
+
+  await menu.getByRole("link", { name: "プロフィール", exact: true }).click();
+  await expect(page).toHaveURL(/\/profile\/?$/);
+  await expect(menu).toHaveCount(0);
+});
+
 // One test per page: together they follow dozens of links, more than one test's time allows.
 for (const { name } of pages("")) {
   test(`${name} has the footer, and each footer link opens its page`, async ({ page }) => {

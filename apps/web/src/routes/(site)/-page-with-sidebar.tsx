@@ -1,13 +1,13 @@
-import { Box, Grid, VStack } from "@workspaces/ui";
+import { Box, Grid } from "@workspaces/ui";
 import type { ReactNode } from "react";
-import { NoticeHeadlines } from "../-notices/notice-headlines";
+import { SiteSidebar } from "../-sidebar/sidebar";
 
 /** The right column's width on a wide screen. */
 const SIDEBAR_WIDTH = "320px";
 
 /**
  * A page with the sidebar: on a wide screen the sidebar is a column to the right of `main`; at the
- * `lg` breakpoint and below (a phone or a tablet) it follows `main`, above the footer. `maxW` is
+ * `lg` breakpoint and below (a phone or a tablet) it is in the header's menu instead. `maxW` is
  * the width of the page's own content, which stays the same with or without the sidebar.
  * `/notices`, which has the notices in full, leaves their headlines out with `noticeHeadlines`.
  */
@@ -37,20 +37,7 @@ export function PageWithSidebar({
       <Box as="main" minW="0">
         {children}
       </Box>
-      <SiteSidebar noticeHeadlines={noticeHeadlines} />
+      <SiteSidebar noticeHeadlines={noticeHeadlines} display={{ base: "flex", lg: "none" }} />
     </Grid>
-  );
-}
-
-/**
- * The sections of the sidebar, top to bottom. Each one is a `SidebarSection` (or, for an ad slot,
- * a box of the same width): a new one is a line here. The share buttons (#11) go last, so they
- * close the right column on a wide screen and come right after the content on a phone.
- */
-export function SiteSidebar({ noticeHeadlines = true }: { noticeHeadlines?: boolean }) {
-  return (
-    <VStack as="aside" aria-label="サイドバー" gap="md" alignItems="stretch" minW="0">
-      {noticeHeadlines ? <NoticeHeadlines /> : null}
-    </VStack>
   );
 }

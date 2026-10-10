@@ -7,7 +7,7 @@ import { replacePlan, savePlanAtom } from "../../../state/mutations";
 import { plansAtom, profileAtom, profileQueryAtom } from "../../../state/queries";
 import { useLatestRef } from "../../../use-latest-ref";
 import { useSingleFlight } from "../../../use-single-flight";
-import { PageWithSidebar } from "../-sidebar/sidebar";
+import { PageWithSidebar } from "../-page-with-sidebar";
 import { monthOf, msUntilTokyoMidnight, tokyoToday } from "../../../ui/dates";
 import { EventSection } from "./event-section";
 import { PlanSection } from "./plan-section";
