@@ -40,7 +40,7 @@ export function OrderTable({ plan, onEdit }: { plan: Plan; onEdit: (orderId: str
         ドラッグするか、上下の矢印キーで順番を変えられます。
       </VisuallyHidden>
       <VisuallyHidden role="status">{announcement}</VisuallyHidden>
-      <Card.Root variant="outline" overflow="hidden">
+      <Card.Root overflow="hidden">
         <List.Root as="ol" aria-labelledby={headingId} gap="0">
           <OrderListContext value={context}>
             {orders.map((order, index) => (

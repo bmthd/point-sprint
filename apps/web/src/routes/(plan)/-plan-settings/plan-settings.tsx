@@ -66,7 +66,8 @@ export function SettingsPanelButton({
   return (
     <>
       <Button
-        variant="outline"
+        variant="ghost"
+        colorScheme="gray"
         aria-label={`プランの設定（${summary}）`}
         onClick={onOpen}
         flex="none"

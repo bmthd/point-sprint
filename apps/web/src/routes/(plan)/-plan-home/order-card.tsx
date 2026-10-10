@@ -78,7 +78,6 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
   return (
     <Card.Root
       as="li"
-      variant="outline"
       // A held order is told apart by its dashed frame, as well as its 「保留」 badge.
       borderStyle={held ? "dashed" : undefined}
       overflow="hidden"
