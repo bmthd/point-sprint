@@ -169,18 +169,18 @@ export function SummaryCard({
         ) : null}
 
         {compact ? (
-          <NativeAccordion.Root animate={false}>
-            <NativeAccordion.Item>
-              <NativeAccordion.Button fontSize="sm" fontWeight="bold">
-                ポイントの内訳を見る
-              </NativeAccordion.Button>
-              <NativeAccordion.Panel>
-                <Box bg="bg.panel" color="fg" rounded="xl" p="3">
+          <Box bg="bg.panel" color="fg" rounded="xl" px="3" py="2">
+            <NativeAccordion.Root animate={false}>
+              <NativeAccordion.Item>
+                <NativeAccordion.Button fontSize="sm" fontWeight="bold">
+                  ポイントの内訳を見る
+                </NativeAccordion.Button>
+                <NativeAccordion.Panel>
                   <PointBreakdown totals={result.groupTotals} />
-                </Box>
-              </NativeAccordion.Panel>
-            </NativeAccordion.Item>
-          </NativeAccordion.Root>
+                </NativeAccordion.Panel>
+              </NativeAccordion.Item>
+            </NativeAccordion.Root>
+          </Box>
         ) : (
           <Flex
             justify="space-between"
