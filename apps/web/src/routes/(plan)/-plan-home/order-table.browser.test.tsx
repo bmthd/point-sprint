@@ -24,6 +24,7 @@ import {
   shops,
   spuBenefit,
   summaryText,
+  tapCard,
 } from "../-test-fixtures";
 
 const rowRenders = vi.hoisted(() => new Map<string, number>());
@@ -303,16 +304,14 @@ test("a pasted URL picks the shop, or starts a new one", async () => {
   const shop = screen.getByRole("combobox", { name: "ショップ" });
   await url.fill("https://item.rakuten.co.jp/shop-four/item-1/");
   await expect.element(shop).toHaveValue(shopId(4));
-  await expect
-    .element(screen.getByRole("button", { name: "39ショップ" }))
-    .toHaveAttribute("aria-pressed", "true");
+  await expect.element(screen.getByRole("checkbox", { name: "39ショップ" })).toBeChecked();
 
   await url.fill("https://item.rakuten.co.jp/coffee-beans/item-2/");
   await expect.element(shop).toHaveValue("new");
   const name = screen.getByRole("textbox", { name: "新しいショップの名前" });
   await expect.element(name).toHaveValue("coffee-beans");
   await name.fill("コーヒー豆の店");
-  await screen.getByRole("button", { name: "リピート購入" }).click();
+  await tapCard(screen.getByRole("checkbox", { name: "リピート購入" }));
   await screen.getByRole("textbox", { name: "金額（税込）" }).fill("2160");
   await screen.getByRole("button", { name: "追加する" }).click();
 
@@ -450,10 +449,8 @@ test("expanded row shows group totals and edits the order", async () => {
   await screen.getByLabelText("注文日").first().fill("2026/10/07");
   await screen.getByRole("textbox", { name: "ショップ独自倍率" }).fill("3");
   await userEvent.keyboard("{Enter}");
-  await screen.getByRole("button", { name: "リピート購入" }).click();
-  await expect
-    .element(screen.getByRole("button", { name: "リピート購入" }))
-    .toHaveAttribute("aria-pressed", "true");
+  await tapCard(screen.getByRole("checkbox", { name: "リピート購入" }));
+  await expect.element(screen.getByRole("checkbox", { name: "リピート購入" })).toBeChecked();
 
   await expect
     .poll(async () => (await stored())?.[0])
@@ -463,11 +460,11 @@ test("expanded row shows group totals and edits the order", async () => {
       lineItems: [{ name: "バスタオル", unitPrice: 22000, taxRate: 0.08, shopPointRate: 3 }],
     });
 
-  const shopTag = screen.getByRole("button", { name: "39ショップ" });
+  const shopTag = screen.getByRole("checkbox", { name: "39ショップ" });
   await expect
     .element(shopTag)
     .toHaveAccessibleDescription("このショップの注文すべてに反映されます");
-  await shopTag.click();
+  await tapCard(shopTag);
   await expect
     .poll(async () => (await repository().shops.list()).find((s) => s.id === shopId(0))?.tags)
     .toEqual(["39shop"]);
@@ -500,7 +497,7 @@ test("a row of several items does not edit their tax and shop rates inline", asy
   expect(panel.getByText("商品ごとに異なります").elements()).toHaveLength(2);
 
   // A change to the order's own fields leaves each item's rates as they were.
-  await screen.getByRole("button", { name: "リピート購入" }).click();
+  await tapCard(screen.getByRole("checkbox", { name: "リピート購入" }));
   await expect.poll(async () => (await stored())?.[0]?.tags).toEqual(["repeat"]);
   expect(
     (await stored())?.[0]?.lineItems.map((item) => [item.taxRate, item.shopPointRate]),

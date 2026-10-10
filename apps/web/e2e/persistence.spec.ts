@@ -49,7 +49,7 @@ test("orders, plan settings, profile and shops survive a reload", async ({ page 
   const tile = settings.getByRole("checkbox", { name: "楽天モバイル +4倍" });
   const campaign = settings
     .getByRole("region", { name: "キャンペーン" })
-    .getByRole("checkbox", { name: /^5と0のつく日/ });
+    .getByRole("switch", { name: /^5と0のつく日/ });
   const tileWas = await tile.isChecked();
   const campaignWas = await campaign.isChecked();
   await tapCard(tile);

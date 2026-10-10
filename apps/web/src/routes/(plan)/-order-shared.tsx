@@ -27,6 +27,12 @@ import { openOrderIdAtom } from "../../state/ui";
 
 // What the phone's order cards and the desktop's order list have in common.
 
+/** Rakuten's service and campaign images are served from R2, not kept in the repository. */
+const IMAGE_ORIGIN = "https://assets.bmth.dev/point-sprint";
+
+/** A benefit's `imagePath` (`/img/...`) → the URL its image is served from. */
+export const imageUrl = (imagePath: string) => `${IMAGE_ORIGIN}${imagePath}`;
+
 type OrderKey = { planId: string; orderId: string };
 const sameOrderKey = (a: OrderKey, b: OrderKey) => a.planId === b.planId && a.orderId === b.orderId;
 

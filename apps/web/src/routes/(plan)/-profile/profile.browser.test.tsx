@@ -8,27 +8,17 @@ import {
 } from "@tanstack/react-router";
 import { standardSpu } from "@workspaces/domain";
 import { beforeEach, expect, test } from "vitest";
-import { type Locator, page, userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import { createIndexedDbRepository } from "../../../storage/indexed-db-repository";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
-import { Providers, shops } from "../-test-fixtures";
+import { Providers, shops, tapCard } from "../-test-fixtures";
 import { Profile } from "./profile";
 
 beforeEach(async () => {
   await page.viewport(390, 844);
 });
-
-/**
- * Taps a checkbox card (an SPU tile, a campaign). Its checkbox is visually hidden under the card, so
- * the card (its label) is tapped.
- */
-const tapCard = (tile: Locator) => {
-  const label = tile.element().closest("label");
-  if (!label) throw new Error("no card label");
-  return page.elementLocator(label).click();
-};
 
 async function renderProfile(
   repository: Repository = createMemoryRepository({ shops }),

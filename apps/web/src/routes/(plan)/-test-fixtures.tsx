@@ -13,6 +13,7 @@ import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
 import { useHydrateAtoms } from "jotai/utils";
 import type { ReactNode } from "react";
+import { type Locator, page } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import type { ItemLookup } from "../../rakuten/item-lookup";
 import { repositoryAtom } from "../../state/repository";
@@ -167,3 +168,13 @@ export async function renderPlanHome(
 
 export const summaryText = () =>
   document.querySelector('section[aria-label="サマリー"]')?.textContent;
+
+/**
+ * Taps a checkbox card (an SPU tile, a campaign, 39ショップ). Its checkbox is visually hidden under the card, so
+ * the card (its label) is tapped.
+ */
+export const tapCard = (tile: Locator) => {
+  const label = tile.element().closest("label");
+  if (!label) throw new Error("no card label");
+  return page.elementLocator(label).click();
+};

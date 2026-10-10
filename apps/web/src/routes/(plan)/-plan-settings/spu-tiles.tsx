@@ -21,8 +21,8 @@ import { useSetAtom } from "jotai";
 import { useId, useState } from "react";
 import { toggleBenefitAtom } from "../../../state/order-ops";
 import { ExternalIcon } from "../../../ui/icons";
-import { pointsText, rateText } from "../-order-shared";
-import { imageUrl, SPU_PAGE_URL, useSaveSettingsChange } from "./settings-shared";
+import { imageUrl, pointsText, rateText } from "../-order-shared";
+import { SPU_PAGE_URL, useSaveSettingsChange } from "./settings-shared";
 
 type RateBenefit = Extract<Benefit, { kind: "rate-bonus" }>;
 
