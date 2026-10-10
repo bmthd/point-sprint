@@ -1,5 +1,5 @@
 import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
-import type { Plan } from "@workspaces/domain";
+import type { Plan, TaxRate } from "@workspaces/domain";
 import {
   Box,
   Flex,
@@ -12,7 +12,7 @@ import {
   useMediaQuery,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { type ReactNode, useCallback, useEffect, useRef } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { planResultAtom } from "../../../state/derived";
 import { plansAtom } from "../../../state/queries";
 import { NEW_ORDER, OrderEditor } from "../-order-editor/order-editor";
@@ -22,6 +22,9 @@ import { ShareButton } from "../../-share/share-button";
 import { planFigures } from "../../-share/result-card";
 import { resultShareTarget } from "../../-share/share-target";
 import { BottomBar } from "./bottom-bar";
+import { CapList } from "./cap-list";
+import { useCapLines } from "../-cap-lines";
+import { useToday } from "../../-use-today";
 import { ChevronIcon, SlidersIcon } from "../../../ui/icons";
 import { OrderList } from "./order-list";
 import { OrderTable } from "./order-table";
@@ -124,8 +127,8 @@ function PlanBar({ plan, desktop }: { plan: Plan; desktop: boolean }) {
   );
 }
 
-const Panel = (props: { children: ReactNode; label: string }) => (
-  <Card.Root as="section" aria-label={props.label}>
+const Panel = (props: { children: ReactNode; label: string; id?: string }) => (
+  <Card.Root as="section" id={props.id} aria-label={props.label}>
     <Card.Body alignItems="stretch">{props.children}</Card.Body>
   </Card.Root>
 );
@@ -173,6 +176,8 @@ function useOrderEditorTarget(plan: Plan) {
   return { target, open, close };
 }
 
+const now = () => new Date();
+
 function Home({ plan }: { plan: Plan }) {
   const result = useAtomValue(planResultAtom(plan.id));
   const wide = useMediaQuery(WIDE);
@@ -180,8 +185,17 @@ function Home({ plan }: { plan: Plan }) {
   const editor = useOrderEditorTarget(plan);
   const { open: editOrder } = editor;
   const addOrder = useCallback(() => editOrder(NEW_ORDER), [editOrder]);
+  const today = useToday(now);
+  const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
+  const lines = useCapLines(plan, today);
   if (!result) return null;
   const outlook = result.shopAroundOutlook;
+  const capList =
+    lines.length === 0 ? null : (
+      <Panel id="caps" label="上限までの残り">
+        <CapList lines={lines} today={today} taxRate={taxRate} onTaxRate={setTaxRate} />
+      </Panel>
+    );
   const shareResult = (
     <ShareButton
       label="結果をシェア"
@@ -217,6 +231,7 @@ function Home({ plan }: { plan: Plan }) {
         >
           <SummaryCard plan={plan} result={result} compact={!wide} />
           <Warnings plan={plan} warnings={result.warnings} hasShopAround={outlook !== null} />
+          {wide ? capList : null}
           {wide ? (
             <Panel label="ポイントの内訳">
               <Heading as="h3" fontSize="sm">
@@ -246,11 +261,12 @@ function Home({ plan }: { plan: Plan }) {
             <OrderList plan={plan} onEdit={editOrder} onAdd={wide ? addOrder : undefined} />
           )}
         </Box>
-        {/* On a phone the share button comes after the orders; on a wide screen it ends the right column. */}
+        {/* On a phone the caps and the share button come after the orders; on a wide screen they are in the right column. */}
         {wide ? null : (
-          <Box gridColumn="1" gridRow="3">
+          <VStack gridColumn="1" gridRow="3" gap="6" alignItems="stretch">
+            {capList}
             {shareResult}
-          </Box>
+          </VStack>
         )}
       </Box>
       {wide ? null : <BottomBar plan={plan} result={result} onAdd={addOrder} />}
