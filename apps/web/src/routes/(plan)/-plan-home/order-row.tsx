@@ -167,10 +167,15 @@ function OrderEditor({
         <Field label="ショップ">
           <NativeSelect.Root
             size="lg"
-            value={order.shopId}
-            onChange={(event) => saveOrder({ ...order, shopId: event.currentTarget.value })}
+            value={order.shopId ?? ""}
+            onChange={(event) =>
+              saveOrder({ ...order, shopId: event.currentTarget.value || undefined })
+            }
           >
-            {shop ? null : <option value={order.shopId}>不明なショップ</option>}
+            <option value="">未入力</option>
+            {shop || order.shopId === undefined ? null : (
+              <option value={order.shopId}>不明なショップ</option>
+            )}
             {shop?.name === "" ? <option value={order.shopId}>ショップ未入力</option> : null}
             {sortedShops.map((other) => (
               <option key={other.id} value={other.id}>
@@ -279,10 +284,20 @@ function OrderEditor({
       <Flex wrap="wrap" gap="2">
         <CampaignCheck
           campaign="39shop"
-          checked={shop?.tags.includes("39shop") ?? false}
-          describedBy={shopTagHintId}
+          checked={shop?.tags.includes("39shop") ?? order.shopTags?.includes("39shop") ?? false}
+          describedBy={shop ? shopTagHintId : undefined}
           onChange={() => {
-            if (!shop) return;
+            if (!shop) {
+              saveOrder({
+                ...order,
+                shopTags: withTag(
+                  order.shopTags ?? [],
+                  "39shop",
+                  !(order.shopTags ?? []).includes("39shop"),
+                ),
+              });
+              return;
+            }
             const on = !shop.tags.includes("39shop");
             save(
               saveShop.mutateAsync(
@@ -296,9 +311,11 @@ function OrderEditor({
         >
           39ショップ
         </CampaignCheck>
-        <Text id={shopTagHintId} alignSelf="center" fontSize="xs" color="fg.muted">
-          このショップの注文すべてに反映されます
-        </Text>
+        {shop ? (
+          <Text id={shopTagHintId} alignSelf="center" fontSize="xs" color="fg.muted">
+            このショップの注文すべてに反映されます
+          </Text>
+        ) : null}
         <CampaignCheck
           campaign="repeat"
           checked={order.tags.includes("repeat")}

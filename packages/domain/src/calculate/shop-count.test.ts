@@ -38,6 +38,15 @@ const order = (shopId: string, ...lineItems: LineItem[]): Order => ({
 });
 
 describe("countShops", () => {
+  test("orders without a shop each count separately and never combine their amounts", () => {
+    const unnamed = (id: string, amount: number): Order => {
+      const { shopId: _shopId, ...rest } = order(SHOP_A, item({ unitPrice: amount }));
+      return { ...rest, id };
+    };
+    expect(countShops([unnamed("one", 1000), unnamed("two", 1000)], [])).toBe(2);
+    expect(countShops([unnamed("one", 600), unnamed("two", 400)], [])).toBe(0);
+    expect(countShops([{ ...unnamed("one", 1000), onHold: true }], [])).toBe(0);
+  });
   test("999 yen is not counted, 1,000 yen is", () => {
     expect(countShops([order(SHOP_A, item({ unitPrice: 999 }))], [shop(SHOP_A)])).toBe(0);
     expect(countShops([order(SHOP_A, item({ unitPrice: 1000 }))], [shop(SHOP_A)])).toBe(1);

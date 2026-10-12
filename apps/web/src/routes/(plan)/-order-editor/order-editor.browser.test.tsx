@@ -66,12 +66,14 @@ test("adds unnamed orders without adding shop choices", async () => {
   await expect.poll(async () => (await stored()).length).toBe(5);
   const first = (await stored()).at(-1);
   if (!first) throw new Error("missing order");
-  expect((await storedShop(first.shopId))?.name).toBe("");
+  expect(first.shopId).toBeUndefined();
+  expect(await repository().shops.list()).toHaveLength(shops.length);
   await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue("");
   await fillOrder(sheet, { amount: "1500", name: "コーヒー豆" });
   await sheet.getByRole("button", { name: "追加する" }).click();
   await expect.poll(async () => (await stored()).length).toBe(6);
-  expect((await stored()).at(-1)?.shopId).not.toBe(first.shopId);
+  expect((await stored()).at(-1)?.shopId).toBeUndefined();
+  expect(await repository().shops.list()).toHaveLength(shops.length);
   await expect.element(screen.getByText("洗濯洗剤", { exact: true })).toBeVisible();
   await expect.element(screen.getByText("コーヒー豆", { exact: true })).toBeVisible();
 });

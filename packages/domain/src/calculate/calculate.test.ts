@@ -106,6 +106,16 @@ function expectBreakdownSumsToTotal(result: CalculationResult) {
 }
 
 describe("calculate", () => {
+  test("orders without shops receive base and shop-around points without unknown-shop warnings", () => {
+    const orders = [
+      order(ORDER_1, SHOP_A, [item(ITEM_1, 1100)]),
+      order(ORDER_2, SHOP_B, [item(ITEM_2, 1100)]),
+    ].map(({ shopId: _shopId, ...unnamed }) => unnamed);
+    const result = calculate(plan(orders), []);
+    expect(result.shopCount).toBe(2);
+    expect(result.total).toBe(40);
+    expect(result.warnings).toEqual([]);
+  });
   test("base points only", () => {
     const result = calculate(plan([order(ORDER_1, SHOP_A, [item(ITEM_1, 3300)])]), shops);
     expect(result.total).toBe(30);

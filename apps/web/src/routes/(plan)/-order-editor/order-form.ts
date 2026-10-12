@@ -113,9 +113,10 @@ export function inputOf(order: Order, shops: Shop[]): OrderFormInput {
   return {
     ...emptyInputForDate(order.date),
     url: order.lineItems[0]?.url ?? "",
-    shop: order.shopId,
+    shop: order.shopId ?? "",
     date: order.date,
-    is39: shop?.tags.includes("39shop") ?? false,
+    channel: shop?.channel ?? order.channel ?? "rakuten-ichiba",
+    is39: shop?.tags.includes("39shop") ?? order.shopTags?.includes("39shop") ?? false,
     repeat: order.tags.includes("repeat"),
     onHold: order.onHold,
     items: order.lineItems.map((item) => ({
@@ -152,6 +153,8 @@ export function draftOf(
     ...original,
     id: original?.id ?? crypto.randomUUID(),
     shopId,
+    channel: shopId === undefined ? output.channel : undefined,
+    shopTags: shopId === undefined ? (output.is39 ? ["39shop"] : []) : undefined,
     date: output.date,
     onHold: output.onHold,
     tags: output.repeat ? ["repeat"] : [],

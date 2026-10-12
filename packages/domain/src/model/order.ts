@@ -1,5 +1,6 @@
 import * as v from "valibot";
-import { IdSchema, IsoDateSchema, OrderTagSchema } from "./common";
+import { ChannelIdSchema, IdSchema, IsoDateSchema, OrderTagSchema, ShopTagSchema } from "./common";
+import type { Shop } from "./shop";
 
 export const LineItemSchema = v.pipe(
   v.object({
@@ -22,10 +23,29 @@ export type LineItem = v.InferOutput<typeof LineItemSchema>;
 
 export const OrderSchema = v.object({
   id: IdSchema,
-  shopId: IdSchema,
+  /** Omitted when the shop is not specified; each such order counts separately. */
+  shopId: v.optional(IdSchema),
+  /** Purchase context for an order without a registered shop. */
+  channel: v.optional(ChannelIdSchema),
+  shopTags: v.optional(v.array(ShopTagSchema)),
   date: IsoDateSchema,
   lineItems: v.pipe(v.array(LineItemSchema), v.minLength(1)),
   onHold: v.optional(v.boolean(), false),
   tags: v.optional(v.array(OrderTagSchema), []),
 });
 export type Order = v.InferOutput<typeof OrderSchema>;
+
+export const hasShop = (order: Order): order is Order & { shopId: string } =>
+  order.shopId !== undefined;
+
+export function orderShopContext(
+  order: Order,
+  shop: Shop | undefined,
+): {
+  channel: Shop["channel"] | null;
+  shopTags: Shop["tags"] | null;
+} {
+  return hasShop(order)
+    ? { channel: shop?.channel ?? null, shopTags: shop?.tags ?? null }
+    : { channel: order.channel ?? "rakuten-ichiba", shopTags: order.shopTags ?? [] };
+}

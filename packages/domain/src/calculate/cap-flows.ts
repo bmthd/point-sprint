@@ -2,7 +2,7 @@ import { taxExcludedTarget, taxIncludedTarget } from "../amounts/target-amount";
 import { benefitKinds, pointsFor } from "../benefit-kinds";
 import { channels } from "../channels";
 import { matchesConditions } from "../conditions/matches";
-import type { Order } from "../model/order";
+import { type Order, orderShopContext } from "../model/order";
 import type { Plan } from "../model/plan";
 import type { Shop } from "../model/shop";
 import { calculateAll } from "./calculate";
@@ -51,8 +51,7 @@ export function capFlows(input: {
   if (!plan || !result) return [];
   const shop = shops.find((other) => other.id === order.shopId);
   const context = {
-    channel: shop?.channel ?? null,
-    shopTags: shop?.tags ?? null,
+    ...orderShopContext(order, shop),
     shopId: order.shopId,
     date: order.date,
     orderTaxIncluded: order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0),

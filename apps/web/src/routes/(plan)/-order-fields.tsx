@@ -234,7 +234,7 @@ export type ShopChoice = {
 
 /** The order's shop, and what to save to the registry before the order. */
 export type ShopToSave = {
-  shopId: string;
+  shopId: string | undefined;
   /** The shop as it will be once saved, for the preview. */
   shop: Shop | undefined;
   /** The change to save first. */
@@ -247,31 +247,32 @@ export type ShopToSave = {
  * changed, so a change saved to it elsewhere in the meantime is kept.
  */
 export function shopToSave(choice: ShopChoice, shops: Shop[]): ShopToSave {
+  if (
+    choice.shop === "" ||
+    (choice.shop === NEW_SHOP && choice.newShopName === "" && choice.shopCode === "")
+  ) {
+    return { shopId: undefined, shop: undefined, change: undefined };
+  }
   const tags = (current: ShopTag[]) => withTag(current, "39shop", choice.is39);
   const mark = (shop: Shop): ShopToSave => ({
     shopId: shop.id,
     shop: { ...shop, tags: tags(shop.tags) },
     change: changeShop(shop.id, (current) => ({ ...current, tags: tags(current.tags) })),
   });
-  if (choice.shop === NEW_SHOP || choice.shop === "") {
+  if (choice.shop === NEW_SHOP) {
     // A shop from a URL is the same shop only with the same shop code; a typed name is matched by
     // name, on the same channel.
-    const existing =
-      choice.shop === ""
-        ? undefined
-        : shops.find(
-            (other) =>
-              other.channel === choice.channel &&
-              (choice.shopCode
-                ? other.shopCode === choice.shopCode
-                : choice.newShopName !== "" && other.name === choice.newShopName),
-          );
+    const existing = shops.find(
+      (other) =>
+        other.channel === choice.channel &&
+        (choice.shopCode ? other.shopCode === choice.shopCode : other.name === choice.newShopName),
+    );
     if (existing) return mark(existing);
     const shop: Shop = {
       id: crypto.randomUUID(),
       channel: choice.channel,
-      ...(choice.shop === NEW_SHOP && choice.shopCode ? { shopCode: choice.shopCode } : {}),
-      name: choice.shop === "" ? "" : choice.newShopName,
+      ...(choice.shopCode ? { shopCode: choice.shopCode } : {}),
+      name: choice.newShopName || choice.shopCode,
       tags: tags([]),
       updatedAt: new Date().toISOString(),
     };

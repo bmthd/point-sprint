@@ -5,7 +5,7 @@ export interface ConditionContext {
   channel: ChannelId | null;
   /** `null` when the order's shop is not in the shop registry. */
   shopTags: ShopTag[] | null;
-  shopId: string;
+  shopId: string | undefined;
   date: string;
   orderTaxIncluded: number;
   orderTags: OrderTag[];
@@ -14,7 +14,7 @@ export interface ConditionContext {
 export function matchesConditions(conditions: Conditions, ctx: ConditionContext): boolean {
   const { channels, shopIds, shopTags, dateRule, minOrderAmount, orderTags } = conditions;
   if (channels && (ctx.channel === null || !channels.includes(ctx.channel))) return false;
-  if (shopIds && !shopIds.includes(ctx.shopId)) return false;
+  if (shopIds && (ctx.shopId === undefined || !shopIds.includes(ctx.shopId))) return false;
   if (
     shopTags &&
     (ctx.shopTags === null || !shopTags.every((tag) => ctx.shopTags?.includes(tag)))

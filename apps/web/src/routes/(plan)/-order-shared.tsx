@@ -197,6 +197,7 @@ export const orderTitle = (order: Order) => {
 
 export function useShopName(shopId: string) {
   const shops = useAtomValue(shopsAtom);
+  if (shopId === "") return "ショップ未入力";
   const shop = shops.find((shop) => shop.id === shopId);
   return shop ? shop.name || "ショップ未入力" : "不明なショップ";
 }
