@@ -117,7 +117,9 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 </Text>
               ) : (
                 <Text as="span" fontSize="sm" color="fg.muted">
-                  メモなし
+                  {shopName === "ショップ未入力"
+                    ? `${monthDayWithWeekday(order.date)}の注文`
+                    : "メモなし"}
                 </Text>
               )}
               <Flex as="span" align="center" wrap="wrap" gap="1.5" fontSize="xs" color="fg.muted">

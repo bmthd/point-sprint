@@ -1,8 +1,15 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
-import { OrderSchema } from "@workspaces/domain";
+import { OrderSchema, countShops } from "@workspaces/domain";
 import { NEW_SHOP } from "../-order-fields";
-import { type ItemInput, OrderFormSchema, emptyInput, emptyItem, inputOf } from "./order-form";
+import {
+  type ItemInput,
+  OrderFormSchema,
+  draftOfInput,
+  emptyInput,
+  emptyItem,
+  inputOf,
+} from "./order-form";
 
 const SHOP_ID = "a0000000-0000-4000-8000-000000000001";
 const PERIOD = { start: "2026-10-04", end: "2026-10-09" };
@@ -41,16 +48,27 @@ test("the URL must be a web address when it is filled in", () => {
   });
 });
 
-test("a shop must be chosen, and a new shop named", () => {
-  expect(errorsOf({ shop: "" })).toEqual({ shop: "ショップを選んでください" });
-  expect(errorsOf({ shop: NEW_SHOP, newShopName: " " })).toEqual({
-    newShopName: "ショップの名前を入れてください",
-  });
+test("a shop and its name can be omitted", () => {
+  expect(errorsOf({ shop: "" })).toEqual({});
+  expect(errorsOf({ shop: NEW_SHOP, newShopName: " " })).toEqual({});
   expect(errorsOf({ shop: NEW_SHOP, newShopName: "あ".repeat(101) })).toEqual({
     newShopName: "ショップの名前は100文字以内で入れてください",
   });
   // The name of a new shop is not asked for when a registered shop is chosen.
   expect(errorsOf({ newShopName: "" })).toEqual({});
+});
+
+test("unnamed orders count separately and keep their shop when edited", () => {
+  const input = { ...emptyInput(PERIOD), date: PERIOD.start, items: [item({})] };
+  const first = draftOfInput(input, [], undefined);
+  if (!first?.shop) throw new Error("missing first shop");
+  const second = draftOfInput(input, [first.shop], undefined);
+  if (!second?.shop) throw new Error("missing second shop");
+  expect(first.shop.name).toBe("");
+  expect(second.shop.name).toBe("");
+  expect(countShops([first.order, second.order], [first.shop, second.shop], PERIOD)).toBe(2);
+  const edited = draftOfInput(inputOf(first.order, [first.shop]), [first.shop], first.order);
+  expect(edited?.order.shopId).toBe(first.order.shopId);
 });
 
 test("the order date must be a date", () => {

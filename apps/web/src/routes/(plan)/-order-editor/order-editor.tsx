@@ -332,7 +332,11 @@ function ShopFields({
               if (chosen) setInput(form, { path: ["is39"], input: chosen.tags.includes("39shop") });
             }}
           >
-            <option value="">ショップを選ぶ</option>
+            {shops.some((other) => other.id === shop.input && other.name === "") ? (
+              <option value={String(shop.input)}>未入力</option>
+            ) : (
+              <option value="">未入力</option>
+            )}
             {sortedShops.map((other) => (
               <option key={other.id} value={other.id}>
                 {other.name}

@@ -63,7 +63,9 @@ function ShopRow({
 export function ShopRegistry({ onFailed }: { onFailed: (failed: boolean) => void }) {
   const shops = useAtomValue(shopsAtom);
   const { mutateAsync: saveShop } = useAtomValue(saveShopAtom);
-  const sorted = [...shops].sort((a, b) => a.name.localeCompare(b.name, "ja"));
+  const sorted = shops
+    .filter((shop) => shop.name !== "")
+    .sort((a, b) => a.name.localeCompare(b.name, "ja"));
   const save = (shopId: string, change: (shop: Shop) => Shop) => {
     onFailed(false);
     const saving = saveShop(changeShop(shopId, change));

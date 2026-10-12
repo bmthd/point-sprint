@@ -197,7 +197,8 @@ export const orderTitle = (order: Order) => {
 
 export function useShopName(shopId: string) {
   const shops = useAtomValue(shopsAtom);
-  return shops.find((shop) => shop.id === shopId)?.name ?? "不明なショップ";
+  const shop = shops.find((shop) => shop.id === shopId);
+  return shop ? shop.name || "ショップ未入力" : "不明なショップ";
 }
 
 /** A campaign that gave the order points, as a small display-only chip. */

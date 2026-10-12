@@ -58,6 +58,24 @@ async function fillOrder(
   if (values.name) await sheet.getByLabelText("商品名メモ（任意）").fill(values.name);
 }
 
+test("adds unnamed orders without adding shop choices", async () => {
+  const screen = await renderWith();
+  const sheet = await openAdd(screen);
+  await fillOrder(sheet, { amount: "3300", name: "洗濯洗剤" });
+  await sheet.getByRole("button", { name: "続けて追加" }).click();
+  await expect.poll(async () => (await stored()).length).toBe(5);
+  const first = (await stored()).at(-1);
+  if (!first) throw new Error("missing order");
+  expect((await storedShop(first.shopId))?.name).toBe("");
+  await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue("");
+  await fillOrder(sheet, { amount: "1500", name: "コーヒー豆" });
+  await sheet.getByRole("button", { name: "追加する" }).click();
+  await expect.poll(async () => (await stored()).length).toBe(6);
+  expect((await stored()).at(-1)?.shopId).not.toBe(first.shopId);
+  await expect.element(screen.getByText("洗濯洗剤", { exact: true })).toBeVisible();
+  await expect.element(screen.getByText("コーヒー豆", { exact: true })).toBeVisible();
+});
+
 test("adds an order and closes", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
@@ -114,16 +132,12 @@ test("invalid price is not saved", async () => {
   await expect.element(amountOf(sheet)).toHaveFocus();
   await expect.element(sheet).toBeVisible();
 
-  await sheet.getByLabelText("ショップ", { exact: true }).selectOptions("ショップを選ぶ");
+  await sheet.getByLabelText("ショップ", { exact: true }).selectOptions("未入力");
   await amountOf(sheet).fill("");
   await sheet.getByRole("button", { name: "続けて追加" }).click();
-  await expect.element(sheet.getByText("ショップを選んでください")).toBeVisible();
-  await expect
-    .element(sheet.getByLabelText("ショップ", { exact: true }))
-    .toHaveAccessibleDescription("ショップを選んでください");
   await expect.element(sheet.getByText("金額を入れてください")).toBeVisible();
   // The first field with an error on screen takes the focus.
-  await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveFocus();
+  await expect.element(amountOf(sheet)).toHaveFocus();
   expect(await stored()).toHaveLength(4);
 });
 

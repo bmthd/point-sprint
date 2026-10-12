@@ -90,7 +90,11 @@ export function ReadOnlyField({ label, value }: { label: string; value: string }
 }
 
 export function useSortedShops(shops: Shop[]) {
-  return useMemo(() => [...shops].sort((a, b) => a.name.localeCompare(b.name, "ja")), [shops]);
+  return useMemo(
+    () =>
+      shops.filter((shop) => shop.name !== "").sort((a, b) => a.name.localeCompare(b.name, "ja")),
+    [shops],
+  );
 }
 
 export function TaxRateOptions() {
@@ -249,20 +253,25 @@ export function shopToSave(choice: ShopChoice, shops: Shop[]): ShopToSave {
     shop: { ...shop, tags: tags(shop.tags) },
     change: changeShop(shop.id, (current) => ({ ...current, tags: tags(current.tags) })),
   });
-  if (choice.shop === NEW_SHOP) {
+  if (choice.shop === NEW_SHOP || choice.shop === "") {
     // A shop from a URL is the same shop only with the same shop code; a typed name is matched by
     // name, on the same channel.
-    const existing = shops.find(
-      (other) =>
-        other.channel === choice.channel &&
-        (choice.shopCode ? other.shopCode === choice.shopCode : other.name === choice.newShopName),
-    );
+    const existing =
+      choice.shop === ""
+        ? undefined
+        : shops.find(
+            (other) =>
+              other.channel === choice.channel &&
+              (choice.shopCode
+                ? other.shopCode === choice.shopCode
+                : choice.newShopName !== "" && other.name === choice.newShopName),
+          );
     if (existing) return mark(existing);
     const shop: Shop = {
       id: crypto.randomUUID(),
       channel: choice.channel,
-      ...(choice.shopCode ? { shopCode: choice.shopCode } : {}),
-      name: choice.newShopName,
+      ...(choice.shop === NEW_SHOP && choice.shopCode ? { shopCode: choice.shopCode } : {}),
+      name: choice.shop === "" ? "" : choice.newShopName,
       tags: tags([]),
       updatedAt: new Date().toISOString(),
     };
