@@ -68,6 +68,7 @@ import {
   type OrderForm,
   applyShop,
   autofillUrlHandlers,
+  urlFromPastedText,
   useFormInput,
   useOrderAutofill,
 } from "./order-form-store";
@@ -277,7 +278,7 @@ function ShopFields({
 
   const paste = async () => {
     try {
-      const text = await navigator.clipboard.readText();
+      const text = urlFromPastedText(await navigator.clipboard.readText());
       onUrl(text);
       autofill.onUrlChange(text, true);
     } catch {

@@ -16,6 +16,8 @@ export type OrderForm = FormStore<typeof OrderFormSchema>;
 
 export const AMOUNT_PATH = ["items", 0, "unitPrice"] as const;
 
+export const urlFromPastedText = (text: string) => text.match(/https?:\/\/\S+/i)?.[0] ?? text;
+
 /** The form's input, re-read whenever a field changes (`useField` subscribes this component). */
 export function useFormInput(form: OrderForm) {
   useField(form, { path: ["shop"] });
@@ -61,10 +63,13 @@ export function autofillUrlHandlers(
 ) {
   return {
     onChange: (event: ChangeEvent<HTMLInputElement>) => {
-      const text = event.currentTarget.value;
-      onUrl(text);
       const { inputType } = event.nativeEvent as InputEvent;
-      autofill.onUrlChange(text, inputType === "insertFromPaste");
+      const pasted = inputType === "insertFromPaste";
+      const text = pasted
+        ? urlFromPastedText(event.currentTarget.value)
+        : event.currentTarget.value;
+      onUrl(text);
+      autofill.onUrlChange(text, pasted);
     },
     onBlur: (event: FocusEvent<HTMLInputElement>) => {
       onBlur();

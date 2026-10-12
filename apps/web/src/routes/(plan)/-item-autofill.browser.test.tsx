@@ -16,6 +16,7 @@ import {
 // The Rakuten API is never called here: every test gives the editor a lookup of its own.
 
 const ITEM_URL = "https://item.rakuten.co.jp/coffee-beans/blend-500g/";
+const RAKUTEN_SHARE = "ブレンドコーヒー豆 500g\n[楽天] #Rakuten" + "ichiba\n" + ITEM_URL;
 
 const item = (fields: Partial<RakutenItem> = {}): RakutenItem => ({
   itemCode: "coffee-beans:10000123",
@@ -82,12 +83,12 @@ describe("the phone sheet", () => {
     await page.viewport(390, 844);
   });
 
-  test("a pasted Ichiba URL fills in the item and a new shop, which can be edited", async () => {
+  test("pasted Rakuten shared text fills in the item and a new shop, which can be edited", async () => {
     const lookup = answering({ ok: true, item: item() });
     const screen = await renderWith(lookup);
     const sheet = await openSheet(screen);
 
-    await paste(sheet.getByLabelText(/^商品のURL/), ITEM_URL);
+    await paste(sheet.getByLabelText(/^商品のURL/), RAKUTEN_SHARE);
     await expect
       .element(sheet.getByLabelText("商品名メモ（任意）"))
       .toHaveValue("ブレンドコーヒー豆 500g");
