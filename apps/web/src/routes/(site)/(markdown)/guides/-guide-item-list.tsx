@@ -1,4 +1,4 @@
-import { Badge, Box, Card, HStack, Image, LinkBox, SimpleGrid, Text } from "@workspaces/ui";
+import { Badge, Box, Card, HStack, Image, LinkBox, List, Text } from "@workspaces/ui";
 import type { GuideItem } from "../../../../guides/guide-items";
 
 /** "2026年10月8日": the day in Japan, the same on the server and in the browser. */
@@ -60,11 +60,18 @@ export function GuideItemList({ items, fetchedAt }: GuideItemListProps) {
         </HStack>
       </Card.Header>
       <Card.Body>
-        <SimpleGrid as="ul" columns={{ base: 3, sm: 2 }} gap="4" listStyle="none" m="0" p="0">
+        <List.Root
+          display="grid"
+          gridTemplateColumns={{
+            base: "repeat(3, minmax(0, 1fr))",
+            sm: "repeat(2, minmax(0, 1fr))",
+          }}
+          gap="4"
+        >
           {items.map((item) => (
             <ItemCard key={item.itemCode} item={item} />
           ))}
-        </SimpleGrid>
+        </List.Root>
       </Card.Body>
       <Card.Footer>
         <Text fontSize="xs" color="fg.muted">

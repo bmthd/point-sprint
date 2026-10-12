@@ -1,5 +1,5 @@
 import { type Shop, channels } from "@workspaces/domain";
-import { Box, Flex, Card, Switch, Text } from "@workspaces/ui";
+import { Card, Flex, List, Switch, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { CommitField } from "../../../form/commit-field";
 import { ShopNameSchema } from "../../../form/field-schemas";
@@ -18,9 +18,9 @@ function ShopRow({
   onSave: (change: (shop: Shop) => Shop) => Promise<unknown>;
 }) {
   return (
-    <Flex
-      as="li"
-      direction="column"
+    <List.Item
+      display="flex"
+      flexDirection="column"
       gap="1"
       py="2.5"
       borderTopWidth="1px"
@@ -55,7 +55,7 @@ function ShopRow({
           39ショップ
         </Switch>
       </Flex>
-    </Flex>
+    </List.Item>
   );
 }
 
@@ -80,11 +80,11 @@ export function ShopRegistry({ onFailed }: { onFailed: (failed: boolean) => void
           注文で入力したショップがここに並びます。名前と39ショップかどうかを直せます。
         </Text>
         {sorted.length > 0 ? (
-          <Box as="ul" aria-label="ショップ台帳" listStyleType="none" m="0" p="0">
+          <List.Root aria-label="ショップ台帳" gap="0">
             {sorted.map((shop) => (
               <ShopRow key={shop.id} shop={shop} onSave={(change) => save(shop.id, change)} />
             ))}
-          </Box>
+          </List.Root>
         ) : (
           <Text fontSize="sm" color="fg.muted">
             まだショップがありません。

@@ -1,4 +1,5 @@
 import type { Order } from "@workspaces/domain";
+import { List } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { Profiler, type ReactNode, useEffect } from "react";
 import { expect, test } from "vitest";
@@ -112,7 +113,8 @@ test("held card shows the estimate struck through", async () => {
   const estimate = held?.querySelector("s");
   expect(estimate?.textContent).toContain("900P");
   expect(getComputedStyle(estimate as HTMLElement).textDecorationLine).toBe("line-through");
-  expect(getComputedStyle(held as HTMLElement).borderStyle).toBe("dashed");
+  // The list item holds the card, which has the frame.
+  expect(getComputedStyle(held?.firstElementChild as HTMLElement).borderStyle).toBe("dashed");
   expect(held?.querySelector('[data-badge="order"]')?.textContent).toBe("保留");
 });
 
@@ -214,7 +216,7 @@ test("editing one order does not re-render other order cards", async () => {
   const screen = await render(
     <Providers repository={repository}>
       <Loaded>
-        <ul aria-label="注文">
+        <List.Root aria-label="注文">
           {[0, 1].map((index) => (
             <Profiler key={index} id={`card-${index}`} onRender={count}>
               <OrderCard
@@ -228,7 +230,7 @@ test("editing one order does not re-render other order cards", async () => {
               />
             </Profiler>
           ))}
-        </ul>
+        </List.Root>
       </Loaded>
     </Providers>,
   );

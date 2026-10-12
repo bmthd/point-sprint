@@ -1,4 +1,4 @@
-import { Text, VStack } from "@workspaces/ui";
+import { List, Text } from "@workspaces/ui";
 import { RouterLink } from "../../ui/router-link";
 import { SidebarSection } from "../-sidebar/sidebar-section";
 import { NoticeDate } from "./notice-date";
@@ -21,16 +21,22 @@ export function NoticeHeadlines({ notices = allNotices }: { notices?: readonly N
         </Text>
       ) : (
         <>
-          <VStack as="ul" listStyle="none" m="0" p="0" gap="3" alignItems="stretch">
+          <List.Root gap="3">
             {latest.map((notice) => (
-              <VStack as="li" key={notice.id} gap="0.5" alignItems="start">
+              <List.Item
+                key={notice.id}
+                display="flex"
+                flexDirection="column"
+                gap="0.5"
+                alignItems="start"
+              >
                 <NoticeDate date={notice.date} />
                 <RouterLink to="/notices" hash={notice.id} fontSize="sm" color="link">
                   {notice.title}
                 </RouterLink>
-              </VStack>
+              </List.Item>
             ))}
-          </VStack>
+          </List.Root>
           <RouterLink to="/notices" fontSize="sm" color="link" alignSelf="end">
             すべてのお知らせ
           </RouterLink>
