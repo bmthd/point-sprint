@@ -171,6 +171,7 @@ function OrderEditor({
             onChange={(event) => saveOrder({ ...order, shopId: event.currentTarget.value })}
           >
             {shop ? null : <option value={order.shopId}>不明なショップ</option>}
+            {shop?.name === "" ? <option value={order.shopId}>ショップ未入力</option> : null}
             {sortedShops.map((other) => (
               <option key={other.id} value={other.id}>
                 {other.name}
@@ -476,7 +477,8 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
             </Text>
           </Flex>
           <Text as="span" fontSize="sm" fontWeight="medium" lineClamp={1} wordBreak="break-all">
-            {orderTitle(order)}
+            {orderTitle(order) ||
+              (shopName === "ショップ未入力" ? `${monthDayWithWeekday(order.date)}の注文` : "")}
           </Text>
           {points.campaigns.length > 0 ? (
             <Flex as="span" wrap="wrap" gap="1">

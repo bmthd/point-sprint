@@ -219,11 +219,10 @@ test("an invalid add form shows errors and saves nothing", async () => {
   await amount.fill("abc");
   await userEvent.keyboard("{Enter}");
 
-  await expect.element(screen.getByText("ショップを選んでください")).toBeVisible();
   await expect.element(screen.getByText("金額は0以上の整数で入れてください")).toBeVisible();
   await expect.element(amount).toHaveAttribute("aria-invalid", "true");
   // The first field with an error takes the focus.
-  await expect.element(screen.getByRole("combobox", { name: "ショップ" })).toHaveFocus();
+  await expect.element(amount).toHaveFocus();
   await expect.element(amount).toHaveValue("abc");
   expect(rows().length).toBe(1);
   expect((await stored())?.length).toBe(1);

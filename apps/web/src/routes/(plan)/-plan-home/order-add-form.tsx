@@ -90,7 +90,7 @@ function Preview({ plan, form }: { plan: Plan; form: OrderForm }) {
         </>
       ) : (
         <Text as="span" color="fg.muted">
-          ショップと金額を入れると、増えるポイントの目安が出ます
+          金額を入れると、増えるポイントの目安が出ます
         </Text>
       )}
     </Text>
@@ -152,7 +152,7 @@ function ShopField({ form }: { form: OrderForm }) {
             setInput(form, { path: ["is39"], input: chosen?.tags.includes("39shop") ?? false });
           }}
         >
-          <option value="">ショップを選ぶ</option>
+          <option value="">未入力</option>
           {sortedShops.map((other) => (
             <option key={other.id} value={other.id}>
               {other.name}

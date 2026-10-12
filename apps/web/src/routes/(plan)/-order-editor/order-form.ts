@@ -48,7 +48,7 @@ const ItemSchema = v.pipe(
 
 /** What is wrong with the new shop's name, when a new shop is chosen. */
 const newShopNameError = (values: { shop: string; newShopName: string }) =>
-  values.shop === NEW_SHOP
+  values.shop === NEW_SHOP && values.newShopName.trim() !== ""
     ? v.safeParse(ShopNameSchema, values.newShopName).issues?.[0].message
     : undefined;
 
@@ -56,7 +56,7 @@ const newShopNameError = (values: { shop: string; newShopName: string }) =>
 export const OrderFormSchema = v.pipe(
   v.object({
     url: ItemUrlSchema,
-    shop: v.pipe(v.string(), v.nonEmpty("ショップを選んでください")),
+    shop: v.string(),
     date: OrderDateSchema,
     newShopName: v.pipe(v.string(), v.trim()),
     channel: ChannelIdSchema,
