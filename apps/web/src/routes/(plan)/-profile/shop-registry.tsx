@@ -1,5 +1,5 @@
 import { type Shop, channels } from "@workspaces/domain";
-import { Card, Flex, List, Switch, Text } from "@workspaces/ui";
+import { Card, Flex, Heading, List, Switch, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { CommitField } from "../../../form/commit-field";
 import { ShopNameSchema } from "../../../form/field-schemas";
@@ -73,9 +73,9 @@ export function ShopRegistry({ onFailed }: { onFailed: (failed: boolean) => void
   return (
     <Card.Root as="section" aria-labelledby="shop-registry-title">
       <Card.Body alignItems="stretch">
-        <Text as="h2" id="shop-registry-title" fontSize="md" fontWeight="bold">
+        <Heading as="h2" id="shop-registry-title" fontSize="md">
           ショップ台帳
-        </Text>
+        </Heading>
         <Text fontSize="xs" color="fg.muted">
           注文で入力したショップがここに並びます。名前と39ショップかどうかを直せます。
         </Text>
