@@ -212,7 +212,10 @@ test("pasting an Ichiba URL selects the matching shop", async () => {
   const sheet = await openAdd(screen);
   const readText = vi
     .spyOn(navigator.clipboard, "readText")
-    .mockResolvedValue("https://item.rakuten.co.jp/shop-four/item-1/");
+    .mockResolvedValue(
+      "ブレンドコーヒー豆 500g\n[楽天] #Rakuten" +
+        "ichiba\nhttps://item.rakuten.co.jp/shop-four/item-1/",
+    );
 
   await sheet.getByRole("button", { name: "貼り付け" }).click();
   await expect
