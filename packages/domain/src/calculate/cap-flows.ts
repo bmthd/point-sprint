@@ -63,9 +63,10 @@ export function capFlows(input: {
   const [only, ...rest] = order.lineItems;
   const single =
     only && rest.length === 0 && only.quantity === 1 && only.discount === 0 ? only : undefined;
-  return capLines(plan, result, order.date).flatMap((line): CapFlow[] => {
+  return capLines(plan, result).flatMap((line): CapFlow[] => {
     const { benefit } = line;
-    if (line.period !== null && !order.date.startsWith(line.period)) return [];
+    // An occurrence's days are in its benefit's conditions, checked below.
+    if (line.scope === "month" && !order.date.startsWith(line.period ?? "")) return [];
     if (benefitKinds[benefit.kind].onlyReceivingChannels && !receives) return [];
     if (!matchesConditions(benefit.conditions, context)) return [];
     const items = order.lineItems.map((item) => ({

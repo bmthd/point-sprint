@@ -68,7 +68,6 @@ function capText(benefit: Benefit) {
     month: "月間上限",
     plan: "このプランでの上限",
     campaign: "期間中の上限",
-    day: "1日の上限",
     occurrence: "開催ごとの上限",
   }[benefit.capScope];
   return `${scope} ${pointsText(cap)}`;
@@ -127,7 +126,9 @@ function Tile({
         h="auto"
         minH="8"
         py="1"
+        fontSize={{ base: "2xs", sm: "xs" }}
         whiteSpace="normal"
+        wordBreak="keep-all"
         lineHeight="moderate"
       >
         {name}
@@ -155,6 +156,7 @@ function SpuLink(props: LinkProps) {
       rel="noreferrer"
       alignSelf="flex-start"
       gap="1.5"
+      whiteSpace="nowrap"
       {...props}
     >
       楽天で自分のSPUを確認する
@@ -320,7 +322,7 @@ export function SpuCard({
             </Text>
           </Flex>
           <Flex justify="space-between" gap="2" fontSize="xs" color="fg.muted">
-            <Text>
+            <Text whiteSpace="nowrap">
               通常 {num(normal)}倍 ＋ SPU{" "}
               <Text as="b" color="fg">
                 +{num(spu)}倍
@@ -338,7 +340,7 @@ export function SpuCard({
         <SpuTileGrid benefits={benefits} capped={capped ?? noneCapped} onToggle={onToggle} />
 
         <Flex wrap="wrap" align="center" columnGap="3" rowGap="1.5" fontSize="xs" color="fg.muted">
-          <Box as="span" display="inline-flex" alignItems="center" gap="1">
+          <Flex as="span" align="center" gap="1">
             <Box
               as="span"
               boxSize="3"
@@ -348,20 +350,20 @@ export function SpuCard({
               borderColor="primary.muted"
             />
             ON
-          </Box>
-          <Box as="span" display="inline-flex" alignItems="center" gap="1">
+          </Flex>
+          <Flex as="span" align="center" gap="1">
             <Box as="span" boxSize="3" rounded="sm" borderWidth="1px" borderColor="border" />
             OFF
-          </Box>
+          </Flex>
           {capped ? (
-            <Box as="span" display="inline-flex" alignItems="center" gap="1">
+            <Flex as="span" align="center" gap="1">
               <CapBadge as="span" />
               このプランで上限に達した
-            </Box>
+            </Flex>
           ) : null}
-          <Box as="span" ms="auto">
+          <Text as="span" ms="auto">
             名前を押すと上限・条件
-          </Box>
+          </Text>
         </Flex>
       </Card.Body>
     </Card.Root>
