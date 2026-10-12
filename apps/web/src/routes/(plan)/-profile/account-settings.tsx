@@ -1,7 +1,6 @@
 import { type Account, DEFAULT_ACCOUNT_ID, type Profile, accountsOf } from "@workspaces/domain";
 import {
   Box,
-  Flex,
   Button,
   Card,
   IconButton,
