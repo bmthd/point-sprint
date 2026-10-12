@@ -264,21 +264,27 @@ Seitu は1人の作者が開発する比較的新しいライブラリ（採用�
 
 ## 5. 画面とルート
 
-全ページを事前レンダリングする。ユーザーのデータは端末にしかないため、HTML には外枠と静的な内容だけが入り、データの部分はブラウザで読み込んだあとに描画する。
+`/share` と `/share/image.png` を除く全ページを事前レンダリングする。共有結果はクエリパラメータごとに OGP タグと画像を変えるため、Worker がリクエストごとに描画する。ユーザーのデータは端末にしかないため、事前レンダリングする HTML には外枠と静的な内容だけが入り、データの部分はブラウザで読み込んだあとに描画する。
 
 | パス | 内容 | 静的に入る内容 |
 |---|---|---|
 | `/` | プランの一覧と新規作成。開催中・開催予定の公式イベントを案内する | 公式イベント、お知らせ |
-| `/plan?id=…` | プランの詳細。注文のカード一覧（追加、編集、コピー、並べ替え、保留、削除）、特典のパネル（SPU とキャンペーンの ON/OFF と、倍率・上限の上書き）、結果（合計、上限の到達状況、ショップ数、商品ごとの内訳） | なし |
+| `/plan` | `id` クエリパラメータで選んだプランの詳細。注文のカード一覧（追加、編集、コピー、並べ替え、保留、削除）、特典のパネル（SPU とキャンペーンの ON/OFF と、倍率・上限の上書き）、結果（合計、上限の到達状況、ショップ数、商品ごとの内訳） | なし |
+| `/plan/settings` | `id` クエリパラメータで選んだプランの SPU、キャンペーン、買いまわり、アカウントの設定 | なし |
 | `/profile` | SPU の設定とショップ台帳 | SPU の標準定義 |
+| `/help` | 使い方・注意事項 | 本文 |
 | `/inquiry` | 問い合わせフォーム | なし |
 | `/terms` | 利用規約 | 本文 |
+| `/privacy` | プライバシーポリシー | 本文 |
+| `/notices` | お知らせの一覧 | お知らせ本文 |
 | `/guides` | 買い物ガイドの記事の一覧（新しい順） | 記事のタイトル、説明、公開日、更新日 |
 | `/guides/<slug>` | 買い物ガイドの記事。観点（「1000円ポッキリで買えるもの」など）ごとに1本 | 本文、記事に埋め込む楽天の商品一覧 |
+| `/share` | クエリパラメータで受け取った共有結果 | Worker がリクエストごとに描画 |
+| `/share/image.png` | クエリパラメータで受け取った共有結果の OGP 画像 | Worker がリクエストごとに PNG を生成 |
 
 プランの詳細は `/plan/$id` ではなく `/plan?id=…` にする。パスにプラン ID を入れると、ビルド時に存在しないパスを Worker で描画する必要が生じるが、クエリパラメータにすれば事前レンダリングした1枚の HTML ですべてのプランを表示できる。
 
-共通のレイアウトは、ヘッダー、フッター、共有ボタン、Google Analytics、AdSense からなる。バナーのような広告は AdSense に任せ、楽天の商品は買い物ガイドの記事の中にだけ出す。最初の表示のページビューは gtag の `config` が送り、画面遷移のページビューは GA4 の拡張計測（「ブラウザの履歴イベントに基づくページの変更」）が送る。アプリはページビューを自分で送らないので、この設定は ON のままにする。スマートフォンの画面幅を基準にし、PC では結果のパネルを横に置く。
+共通のレイアウトはヘッダーとフッターを持ち、Google Analytics と AdSense のスクリプトを読み込む。共有ボタンは各ページのサイドバーまたはプランの画面に置く。AdSense の広告枠はまだどの画面にも置いていないため、広告は表示されない。配置は [#68](https://github.com/bmthd/point-sprint/issues/68) で扱う。楽天の商品は買い物ガイドの記事の中にだけ出す。最初の表示のページビューは gtag の `config` が送り、画面遷移のページビューは GA4 の拡張計測（「ブラウザの履歴イベントに基づくページの変更」）が送る。アプリはページビューを自分で送らないので、この設定は ON のままにする。スマートフォンの画面幅を基準にし、PC では結果のパネルを横に置く。
 
 ## 6. 外部との連携
 
@@ -286,19 +292,19 @@ Seitu は1人の作者が開発する比較的新しいライブラリ（採用�
 
 新しい API（`openapi.rakuten.co.jp`）を使う。`applicationId`、`accessKey`、`affiliateId` は環境変数で渡して Valibot で検証する。レスポンスも Valibot で検証し、必要なフィールドだけを取り出す。
 
-呼び出しは `apps/web/src/rakuten/` にまとめ、ブラウザ（商品情報の取得）とビルド時（買い物ガイドの商品一覧）の両方から使う。
+呼び出しは `apps/web/src/rakuten/` にまとめる。商品情報の取得では、ブラウザが Worker のサーバー関数を呼び、Worker が API を呼ぶ。買い物ガイドの商品一覧はビルド時に Worker が API を呼ぶ。
 
-- `config.ts`: 環境変数 `PUBLIC_RAKUTEN_APPLICATION_ID`、`PUBLIC_RAKUTEN_ACCESS_KEY`、`PUBLIC_RAKUTEN_AFFILIATE_ID` の検証。値が足りないか `encrypted:` のままのときは、商品情報の取得を無効にしてビルドを続ける。ビルドは検証した値をクライアントに埋め込む
+- `config.ts`: 環境変数 `RAKUTEN_APPLICATION_ID`、`RAKUTEN_ACCESS_KEY`、`RAKUTEN_AFFILIATE_ID` の検証。値が足りないか `encrypted:` のままのときは、商品情報の取得と買い物ガイドの商品一覧を無効にしてビルドを続ける。アプリケーション ID とアクセスキーは Worker の秘密値で、ブラウザに埋め込まない
 - `item-search.ts`: 商品検索 API の呼び出し。失敗は通信エラー、429、その他の HTTP エラー、想定外のレスポンス、該当なしに分けて返す。サーバーから呼ぶときは `Origin: https://point-sprint.bmth.dev` を付ける
-- `item-lookup.ts`: 呼び出しの間隔を1.1秒以上あけ、見つかった商品を商品ページ（ショップコードと商品管理番号）ごとに5分間キャッシュする
+- `item-lookup.ts`: ブラウザ側では、見つかった商品を商品ページ（ショップコードと商品管理番号）ごとに5分間キャッシュする。Worker は全利用者の呼び出しを Durable Object で100msごとに1件ずつ API へ送る
 
 ### 環境変数
 
 環境変数はリポジトリのルートの `.env.development`（`pnpm dev`）と `.env.production`（`pnpm build`）に置き、どちらもコミットする。ファイル名の末尾の環境名は dotenvx の決まりに合わせたもので、`.env.production` は鍵 `DOTENV_PRIVATE_KEY_PRODUCTION` で復号する。
 
-- 公開してよい値は変数名を `PUBLIC_` で始め、平文で置く（`dotenvx set … --plain`）。楽天 API の3つの値（`PUBLIC_RAKUTEN_*`）と Turnstile のサイトキー（`PUBLIC_TURNSTILE_SITE_KEY`）がこれにあたる。
-- 秘密の値（`TURNSTILE_SECRET_KEY`、`INQUIRY_TO_ADDRESS`、`CLOUDFLARE_API_TOKEN`）は `.env.production` に dotenvx で暗号化して置く。`.env.development` には秘密の値を置かず、Turnstile は Cloudflare のテスト用キーを、`INQUIRY_TO_ADDRESS` は仮のアドレスを平文で置く。
-- Worker が使う秘密の値（`TURNSTILE_SECRET_KEY`、`INQUIRY_TO_ADDRESS`）は `cloudflare.config.ts` で `bindings.secret()` として宣言する。ローカル（`pnpm dev`、`vite preview`）では Cloudflare の Vite プラグインが環境変数から値を取る。値はビルドの出力には入らないので、本番の Worker にはデプロイのたびに登録する。`deploy.yml` が `.env.production` からこの2つだけを dotenvx で復号して JSON に書き出し、`cf deploy --prebuilt --secrets-file` で Worker のバージョンと一緒に上げる。秘密の値を足すときは、`bindings.secret()` の宣言と `deploy.yml` の `dotenvx get -ik` の両方に足す。宣言した秘密の値が Worker に登録されていないと `cf deploy` が失敗するので、片方だけ足した漏れはデプロイで分かる。PR のプレビュー（`cf previews deploy`）には秘密の値を渡さない。PR のジョブに本番の鍵を渡したくないことと、Turnstile のウィジェットが `point-sprint.bmth.dev` でしか動かないことが理由で、プレビューのお問い合わせは `config` の段階で止まる。
+- 公開してよい値は変数名を `PUBLIC_` で始め、平文で置く（`dotenvx set … --plain`）。Turnstile のサイトキー（`PUBLIC_TURNSTILE_SITE_KEY`）と Google Analytics、AdSense の ID がこれにあたる。`RAKUTEN_AFFILIATE_ID` はアフィリエイトリンクに含まれる公開値なので平文で置く。
+- 秘密の値（`TURNSTILE_SECRET_KEY`、`INQUIRY_TO_ADDRESS`、`RAKUTEN_APPLICATION_ID`、`RAKUTEN_ACCESS_KEY`、`CLOUDFLARE_API_TOKEN`）は `.env.production` に dotenvx で暗号化して置く。`.env.development` でもローカルの商品情報取得に必要な楽天 API の値を暗号化して置く。Turnstile は Cloudflare のテスト用キーを、`INQUIRY_TO_ADDRESS` は仮のアドレスを平文で置く。
+- Worker が使う秘密の値（`TURNSTILE_SECRET_KEY`、`INQUIRY_TO_ADDRESS`、`RAKUTEN_APPLICATION_ID`、`RAKUTEN_ACCESS_KEY`）は `cloudflare.config.ts` で `bindings.secret()` として宣言する。ローカル（`pnpm dev`、`vite preview`）では Cloudflare の Vite プラグインが環境変数から値を取る。値はビルドの出力には入らないので、本番の Worker にはデプロイのたびに登録する。`deploy.yml` が `.env.production` からこの4つを dotenvx で復号して JSON に書き出し、`cf deploy --prebuilt --secrets-file` で Worker のバージョンと一緒に上げる。秘密の値を足すときは、`bindings.secret()` の宣言と `deploy.yml` の `dotenvx get -ik` の両方に足す。宣言した秘密の値が Worker に登録されていないと `cf deploy` が失敗するので、片方だけ足した漏れはデプロイで分かる。PR のプレビュー（`cf previews deploy`）には秘密の値を渡さない。PR のジョブに本番の鍵を渡したくないことと、Turnstile のウィジェットが `point-sprint.bmth.dev` でしか動かないことが理由で、プレビューのお問い合わせは `config` の段階で止まる。
 - 秘密鍵は `.env.keys` に置き、コミットしない。デプロイでは GitHub の Secret `DOTENV_PRIVATE_KEY_PRODUCTION` から渡す。
 - `pnpm dev` と `pnpm build` は `dotenvx run` でファイルを読む。`vite.config.ts` は `PUBLIC_` で始まる値だけを Vite の `loadEnv` でルートのファイルから直接読み、クライアントに渡す。鍵がなくても（PR の CI やプレビューでも）公開の値はビルドに入る。
 
@@ -308,11 +314,11 @@ Seitu は1人の作者が開発する比較的新しいライブラリ（採用�
 
 1. 購入先のパーサーが、URL からショップコードと商品管理番号を取り出す。
 2. ショップ台帳とショップコードで照合し、台帳になければショップを登録する。
-3. 購入先が商品情報の取得に対応し（楽天市場だけ）、URL から商品管理番号が取り出せたときだけ、商品検索 API を呼ぶ。API の `itemCode` は商品管理番号とは別の値なので、ショップコードと商品管理番号（キーワード）で検索し、商品ページの URL が一致する商品を使う。商品管理番号が検索の対象になっていない商品は見つからず、自動入力できない。商品名、税込の単価、ショップ（台帳になければショップ名とショップコードで登録）、ショップ独自倍率（`pointRate` が2以上のとき）を注文の入力欄に入れる。入れた値はユーザーが編集できる。税別の価格（`taxFlag` が1）は単価に入れない。
+3. 購入先が商品情報の取得に対応し（楽天市場だけ）、URL から商品管理番号が取り出せたときだけ、Worker のサーバー関数を呼ぶ。Worker が商品検索 API を呼ぶ。API の `itemCode` は商品管理番号とは別の値なので、ショップコードと商品管理番号（キーワード）で検索し、商品ページの URL が一致する商品を使う。商品管理番号が検索の対象になっていない商品は見つからず、自動入力できない。商品名、税込の単価、ショップ（台帳になければショップ名とショップコードで登録）、ショップ独自倍率（`pointRate` が2以上のとき）を注文の入力欄に入れる。入れた値はユーザーが編集できる。税別の価格（`taxFlag` が1）は単価に入れない。
 
 注文に保存する商品 URL は、アフィリエイトリンクではなく、ユーザーが貼った商品 URL にする。アフィリエイトリンク（`hb.afl.rakuten.co.jp`）は購入先のパーサーで読めないため、保存すると、編集のときに URL からショップを判定できなくなるからである。今の画面には保存した URL へのリンクを出す場所がないので、アフィリエイトリンクを持つ利点もない。商品へのリンクを出すときは、そのときにアフィリエイトリンクを組み立てる。
 
-通信エラー、商品が見つからない、レート制限のいずれかで手順3が失敗したときは、手順1と2の結果を残し、自動入力できなかったことを表示する。楽天 API は `Origin` ヘッダーがアプリ設定の「許可された Web サイト」（`https://point-sprint.bmth.dev`）と一致するときだけ応答する。`Origin` はサーバー側から自由に付けられるので、`accessKey` は公開されてもよい値として扱う。開発中は `localhost` が許可されないため、開発サーバー（Vite の `server.proxy`）で `/rakuten-api` への呼び出しを API に中継し、`Origin` を付け替える。本番では中継せず、ブラウザから API を直接呼ぶ（検証結果は `docs/superpowers/spikes/2026-10-04-external-integrations.md`）。
+通信エラー、商品が見つからない、レート制限、または Worker の待ち行列が混んでいるために手順3が失敗したときは、手順1と2の結果を残し、自動入力できなかったことを表示する。楽天 API は `Origin` ヘッダーがアプリ設定の「許可された Web サイト」（`https://point-sprint.bmth.dev`）と一致するときだけ応答する。Worker がこのヘッダーを付け、アプリケーション ID とアクセスキーをブラウザへ渡さない。プレビューには API 呼び出しを配分する Durable Object がないため、商品情報の取得は利用できない。
 
 ### 買い物ガイド
 
@@ -343,7 +349,7 @@ Worker の実行環境に依存する部分（`cloudflare:workers` の `env`、`
 
 次のどれかが成り立たないときは、この節を見直す。
 
-- ブラウザから商品検索 API を呼べるか。CORS が使えなければ JSONP（`callback` パラメータ）で呼べるか
+- Worker から商品検索 API を呼び、`Origin: https://point-sprint.bmth.dev` を付けたときに応答を受け取れるか
 - ビルド時（サーバー側）から、Referer の制限を受けずに商品検索 API を呼べるか
 - `send_email` と Turnstile が、使う予定のドメインで動くか
 
