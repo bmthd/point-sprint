@@ -13,9 +13,9 @@ export const markdownComponents = {
     </Heading>
   ),
   h2: ({ children, id }) => (
-    <Text as="h2" id={id} fontSize="md" fontWeight="bold" mt="8" mb="2">
+    <Heading as="h2" id={id} fontSize="md" mt="8" mb="2">
       {children}
-    </Text>
+    </Heading>
   ),
   p: ({ children }) => <Text my="2">{children}</Text>,
   a: ({ children, href }) => <Link href={href}>{children}</Link>,

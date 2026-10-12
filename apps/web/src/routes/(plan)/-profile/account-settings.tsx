@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Card,
+  Heading,
   IconButton,
   List,
   Modal,
@@ -94,9 +95,9 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
   return (
     <Card.Root as="section" aria-labelledby="advanced-settings-title">
       <Card.Body alignItems="stretch">
-        <Text as="h2" id="advanced-settings-title" fontSize="md" fontWeight="bold">
+        <Heading as="h2" id="advanced-settings-title" fontSize="md">
           詳細設定
-        </Text>
+        </Heading>
         <Switch
           colorScheme="primary"
           reverse
