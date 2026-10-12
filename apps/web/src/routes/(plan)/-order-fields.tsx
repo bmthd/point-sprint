@@ -90,11 +90,7 @@ export function ReadOnlyField({ label, value }: { label: string; value: string }
 }
 
 export function useSortedShops(shops: Shop[]) {
-  return useMemo(
-    () =>
-      shops.filter((shop) => shop.name !== "").sort((a, b) => a.name.localeCompare(b.name, "ja")),
-    [shops],
-  );
+  return useMemo(() => [...shops].sort((a, b) => a.name.localeCompare(b.name, "ja")), [shops]);
 }
 
 export function TaxRateOptions() {

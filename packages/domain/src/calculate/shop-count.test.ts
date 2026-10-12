@@ -41,7 +41,7 @@ describe("countShops", () => {
   test("orders without a shop each count separately and never combine their amounts", () => {
     const unnamed = (id: string, amount: number): Order => {
       const { shopId: _shopId, ...rest } = order(SHOP_A, item({ unitPrice: amount }));
-      return { ...rest, id };
+      return { ...rest, id, channel: "rakuten-ichiba", shopTags: [] };
     };
     expect(countShops([unnamed("one", 1000), unnamed("two", 1000)], [])).toBe(2);
     expect(countShops([unnamed("one", 600), unnamed("two", 400)], [])).toBe(0);

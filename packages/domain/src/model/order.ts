@@ -21,21 +21,31 @@ export const LineItemSchema = v.pipe(
 );
 export type LineItem = v.InferOutput<typeof LineItemSchema>;
 
-export const OrderSchema = v.object({
+const commonEntries = {
   id: IdSchema,
-  /** Omitted when the shop is not specified; each such order counts separately. */
-  shopId: v.optional(IdSchema),
-  /** Purchase context for an order without a registered shop. */
-  channel: v.optional(ChannelIdSchema),
-  shopTags: v.optional(v.array(ShopTagSchema)),
   date: IsoDateSchema,
   lineItems: v.pipe(v.array(LineItemSchema), v.minLength(1)),
   onHold: v.optional(v.boolean(), false),
   tags: v.optional(v.array(OrderTagSchema), []),
-});
+};
+
+export const OrderSchema = v.union([
+  v.object({
+    ...commonEntries,
+    shopId: IdSchema,
+    channel: v.exactOptional(v.never()),
+    shopTags: v.exactOptional(v.never()),
+  }),
+  v.object({
+    ...commonEntries,
+    shopId: v.exactOptional(v.never()),
+    channel: ChannelIdSchema,
+    shopTags: v.array(ShopTagSchema),
+  }),
+]);
 export type Order = v.InferOutput<typeof OrderSchema>;
 
-export const hasShop = (order: Order): order is Order & { shopId: string } =>
+export const hasShop = (order: Order): order is Extract<Order, { shopId: string }> =>
   order.shopId !== undefined;
 
 export function orderShopContext(
@@ -47,5 +57,5 @@ export function orderShopContext(
 } {
   return hasShop(order)
     ? { channel: shop?.channel ?? null, shopTags: shop?.tags ?? null }
-    : { channel: order.channel ?? "rakuten-ichiba", shopTags: order.shopTags ?? [] };
+    : { channel: order.channel, shopTags: order.shopTags };
 }

@@ -150,11 +150,10 @@ export function draftOf(
   const { shopId, shop, change: shopChange } = shopToSave(output, shops);
   const items = new Map(original?.lineItems.map((item) => [item.id, item]));
   const parsed = v.safeParse(OrderSchema, {
-    ...original,
     id: original?.id ?? crypto.randomUUID(),
-    shopId,
-    channel: shopId === undefined ? output.channel : undefined,
-    shopTags: shopId === undefined ? (output.is39 ? ["39shop"] : []) : undefined,
+    ...(shopId === undefined
+      ? { channel: output.channel, shopTags: output.is39 ? ["39shop"] : [] }
+      : { shopId }),
     date: output.date,
     onHold: output.onHold,
     tags: output.repeat ? ["repeat"] : [],

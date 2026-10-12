@@ -199,7 +199,7 @@ export function useShopName(shopId: string) {
   const shops = useAtomValue(shopsAtom);
   if (shopId === "") return "ショップ未入力";
   const shop = shops.find((shop) => shop.id === shopId);
-  return shop ? shop.name || "ショップ未入力" : "不明なショップ";
+  return shop ? shop.name : "不明なショップ";
 }
 
 /** A campaign that gave the order points, as a small display-only chip. */

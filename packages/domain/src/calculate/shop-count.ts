@@ -19,11 +19,7 @@ export function countShops(
     if (order.date < period.start || order.date > period.end) continue;
     const sum = order.lineItems.reduce((acc, item) => acc + taxIncludedTarget(item), 0);
     if (!hasShop(order)) {
-      if (
-        channels[order.channel ?? "rakuten-ichiba"].countsTowardShopAround &&
-        sum >= SHOP_AROUND_MIN_AMOUNT
-      )
-        count++;
+      if (channels[order.channel].countsTowardShopAround && sum >= SHOP_AROUND_MIN_AMOUNT) count++;
       continue;
     }
     totals.set(order.shopId, (totals.get(order.shopId) ?? 0) + sum);

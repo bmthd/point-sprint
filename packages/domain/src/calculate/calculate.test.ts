@@ -110,7 +110,11 @@ describe("calculate", () => {
     const orders = [
       order(ORDER_1, SHOP_A, [item(ITEM_1, 1100)]),
       order(ORDER_2, SHOP_B, [item(ITEM_2, 1100)]),
-    ].map(({ shopId: _shopId, ...unnamed }) => unnamed);
+    ].map(({ shopId: _shopId, ...unnamed }): Order => ({
+      ...unnamed,
+      channel: "rakuten-ichiba",
+      shopTags: [],
+    }));
     const result = calculate(plan(orders), []);
     expect(result.shopCount).toBe(2);
     expect(result.total).toBe(40);

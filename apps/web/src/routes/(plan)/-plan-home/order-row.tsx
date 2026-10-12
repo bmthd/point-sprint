@@ -3,6 +3,8 @@ import {
   type Order,
   type OrderTag,
   type Shop,
+  hasShop,
+  orderShopContext,
   taxExcludedTarget,
   taxIncludedTarget,
 } from "@workspaces/domain";
@@ -168,15 +170,25 @@ function OrderEditor({
           <NativeSelect.Root
             size="lg"
             value={order.shopId ?? ""}
-            onChange={(event) =>
-              saveOrder({ ...order, shopId: event.currentTarget.value || undefined })
-            }
+            onChange={(event) => {
+              const { shopId: _shopId, channel: _channel, shopTags: _shopTags, ...common } = order;
+              const shopId = event.currentTarget.value;
+              const context = orderShopContext(order, shop);
+              saveOrder(
+                shopId
+                  ? { ...common, shopId }
+                  : {
+                      ...common,
+                      channel: context.channel ?? "rakuten-ichiba",
+                      shopTags: context.shopTags ?? [],
+                    },
+              );
+            }}
           >
             <option value="">未入力</option>
             {shop || order.shopId === undefined ? null : (
               <option value={order.shopId}>不明なショップ</option>
             )}
-            {shop?.name === "" ? <option value={order.shopId}>ショップ未入力</option> : null}
             {sortedShops.map((other) => (
               <option key={other.id} value={other.id}>
                 {other.name}
@@ -287,7 +299,7 @@ function OrderEditor({
           checked={shop?.tags.includes("39shop") ?? order.shopTags?.includes("39shop") ?? false}
           describedBy={shop ? shopTagHintId : undefined}
           onChange={() => {
-            if (!shop) {
+            if (!hasShop(order)) {
               saveOrder({
                 ...order,
                 shopTags: withTag(
@@ -298,6 +310,7 @@ function OrderEditor({
               });
               return;
             }
+            if (!shop) return;
             const on = !shop.tags.includes("39shop");
             save(
               saveShop.mutateAsync(

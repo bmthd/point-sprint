@@ -67,6 +67,55 @@ test("round-trips plans, shops and profile", async () => {
   expect(repo.wasReset()).toBe(false);
 });
 
+test("version 3 unnamed shops migrate atomically to orders without losing purchase context", async () => {
+  const name = uniqueName();
+  const order = {
+    id: "00000000-0000-4000-8000-000000000003",
+    shopId: shop.id,
+    date: "2026-10-05",
+    lineItems: [
+      {
+        id: "00000000-0000-4000-8000-000000000004",
+        name: "商品",
+        unitPrice: 1500,
+        quantity: 1,
+        taxRate: 0.1,
+        discount: 0,
+      },
+    ],
+    onHold: false,
+    tags: [],
+  };
+  await new Promise<void>((resolve, reject) => {
+    const request = indexedDB.open(name, 3);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      db.createObjectStore("plans", { keyPath: "id" }).put({ ...plan, orders: [order] });
+      db.createObjectStore("shops", { keyPath: "id" }).put({
+        ...shop,
+        name: "",
+        channel: "rakuma",
+        tags: ["39shop"],
+      });
+      db.createObjectStore("profile");
+      db.createObjectStore("quarantine", { autoIncrement: true });
+    };
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      request.result.close();
+      resolve();
+    };
+  });
+  const repo = createIndexedDbRepository({ name });
+  const { shopId: _shopId, ...common } = order;
+  expect((await repo.plans.get(plan.id))?.orders).toEqual([
+    { ...common, channel: "rakuma", shopTags: ["39shop"] },
+  ]);
+  expect(await repo.shops.list()).toEqual([]);
+  expect(await repo.quarantined()).toBe(0);
+  expect(repo.wasReset()).toBe(false);
+});
+
 test("put rejects an invalid plan", async () => {
   const repo = createIndexedDbRepository({ name: uniqueName() });
 

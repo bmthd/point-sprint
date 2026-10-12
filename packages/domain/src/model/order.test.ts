@@ -25,6 +25,31 @@ describe("LineItemSchema", () => {
 });
 
 describe("OrderSchema", () => {
+  const common = {
+    id: "7a1c9d2e-0b3f-4c5d-8e6f-2a3b4c5d6e7f",
+    date: "2026-10-04",
+    lineItems: [validItem],
+  };
+  test("requires purchase information without a shop and forbids mixing both shapes", () => {
+    expect(
+      v.safeParse(OrderSchema, { ...common, channel: "rakuten-ichiba", shopTags: [] }).success,
+    ).toBe(true);
+    expect(v.safeParse(OrderSchema, common).success).toBe(false);
+    expect(v.safeParse(OrderSchema, { ...common, channel: "rakuten-ichiba" }).success).toBe(false);
+    expect(v.safeParse(OrderSchema, { ...common, shopTags: [] }).success).toBe(false);
+    const shopId = "9b8a7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
+    expect(v.safeParse(OrderSchema, { ...common, shopId, channel: "rakuma" }).success).toBe(false);
+    expect(v.safeParse(OrderSchema, { ...common, shopId, shopTags: [] }).success).toBe(false);
+    expect(v.safeParse(OrderSchema, { ...common, shopId, channel: undefined }).success).toBe(false);
+    expect(
+      v.safeParse(OrderSchema, {
+        ...common,
+        shopId: undefined,
+        channel: "rakuten-ichiba",
+        shopTags: [],
+      }).success,
+    ).toBe(false);
+  });
   test("order defaults onHold false and tags empty", () => {
     const order = v.parse(OrderSchema, {
       id: "7a1c9d2e-0b3f-4c5d-8e6f-2a3b4c5d6e7f",

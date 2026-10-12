@@ -90,6 +90,20 @@ test("an order without a shop keeps its purchase context when edited", () => {
   expect(edited?.shopChange).toBeUndefined();
 });
 
+test("switching between specified and unspecified shops removes the old shape", () => {
+  const input = { ...emptyInput(PERIOD), date: PERIOD.start, items: [item({})] };
+  const registered = draftOfInput({ ...input, shop: SHOP_ID }, [], undefined);
+  if (!registered) throw new Error("missing registered order");
+  const unspecified = draftOfInput(input, [], registered.order);
+  if (!unspecified) throw new Error("missing unspecified order");
+  expect(unspecified.order).not.toHaveProperty("shopId");
+  expect(unspecified.order).toMatchObject({ channel: "rakuten-ichiba", shopTags: [] });
+  const restored = draftOfInput({ ...input, shop: SHOP_ID }, [], unspecified.order);
+  expect(restored?.order.shopId).toBe(SHOP_ID);
+  expect(restored?.order).not.toHaveProperty("channel");
+  expect(restored?.order).not.toHaveProperty("shopTags");
+});
+
 test("the order date must be a date", () => {
   expect(errorsOf({ date: "" })).toEqual({ date: "注文日を入れてください" });
 });

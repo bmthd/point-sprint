@@ -27,7 +27,12 @@ const shop = (id: string): Shop => ({
 const shops = [shop(SHOP_1), shop(SHOP_2)];
 
 /** 1,100 yen incl. tax = 1,000 yen excl. tax → 10 points at +1. */
-const order = (id: string, itemId: string, shopId: string, over: Partial<Order> = {}): Order => ({
+const order = (
+  id: string,
+  itemId: string,
+  shopId: string,
+  over: Partial<Extract<Order, { shopId: string }>> = {},
+): Order => ({
   id,
   shopId,
   date: "2026-10-05",
