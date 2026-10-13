@@ -108,7 +108,7 @@ export function OrderPreviewBox({
     <Flex
       aria-live="polite"
       data-preview
-      rounded="xl"
+      rounded="md"
       bg="primary.subtle"
       p="3"
       direction="column"

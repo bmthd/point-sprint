@@ -97,16 +97,14 @@ export function ShareLinks({ target }: { target: ShareTarget }) {
             target="_blank"
             rel="noopener noreferrer"
             variant="ghost"
-            boxSize="12"
-            rounded="md"
+            size="xl"
             aria-label={link.label}
             icon={serviceIcons[link.service]}
           />
         ))}
         <IconButton
           variant="ghost"
-          boxSize="12"
-          rounded="md"
+          size="xl"
           aria-label="文面とリンクをコピー"
           onClick={() => onCopy(shareMessage(target))}
           icon={

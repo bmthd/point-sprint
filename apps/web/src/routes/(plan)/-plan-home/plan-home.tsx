@@ -17,7 +17,7 @@ import { planResultAtom } from "../../../state/derived";
 import { plansAtom } from "../../../state/queries";
 import { NEW_ORDER, OrderEditor } from "../-order-editor/order-editor";
 import { SettingsPanelButton } from "../-plan-settings/plan-settings";
-import { RouterLink } from "../../../ui/router-link";
+import { RouterIconButton } from "../../../ui/router-link";
 import { ShareButton } from "../../-share/share-button";
 import { planFigures } from "../../-share/result-card";
 import { resultShareTarget } from "../../-share/share-target";
@@ -90,21 +90,15 @@ function SettingsEntry({ plan, desktop }: { plan: Plan; desktop: boolean }) {
       onClose={panel.onClose}
     />
   ) : (
-    <RouterLink
+    <RouterIconButton
       to="/plan/settings"
       search={{ id: plan.id }}
       aria-label="プランの設定（SPU・上限・キャンペーン）"
-      boxSize="11"
+      size="lg"
+      variant="ghost"
       flex="none"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      rounded="xl"
-      color="fg"
-      _hover={{ bg: "bg.muted" }}
-    >
-      <SlidersIcon />
-    </RouterLink>
+      icon={<SlidersIcon />}
+    />
   );
 }
 

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { saveProfileAtom } from "../../../state/mutations";
 import { profileAtom, profileQueryAtom, storageHealthQueryAtom } from "../../../state/queries";
 import { BackIcon } from "../../../ui/icons";
-import { RouterLink } from "../../../ui/router-link";
+import { RouterIconButton } from "../../../ui/router-link";
 import { StorageHealthFailure, storageMessages } from "../-warnings";
 import { SpuCard } from "../-plan-settings/spu-tiles";
 import { AccountSettings } from "./account-settings";
@@ -76,7 +76,7 @@ function BackLink() {
   const router = useRouter();
   const canGoBack = useCanGoBack();
   return (
-    <RouterLink
+    <RouterIconButton
       to="/"
       aria-label="戻る"
       onClick={(event) => {
@@ -84,16 +84,10 @@ function BackLink() {
         event.preventDefault();
         router.history.back();
       }}
-      boxSize="11"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      rounded="xl"
-      color="fg"
-      _hover={{ bg: "bg.muted" }}
-    >
-      <BackIcon />
-    </RouterLink>
+      size="lg"
+      variant="ghost"
+      icon={<BackIcon />}
+    />
   );
 }
 
