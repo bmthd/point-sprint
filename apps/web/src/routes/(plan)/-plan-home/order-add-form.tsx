@@ -3,7 +3,7 @@
 "use no memo";
 
 import { Field as FormField, focus, reset, setInput, useField, useForm } from "@formisch/react";
-import { type Plan, calculateAll } from "@workspaces/domain";
+import { type Plan, calculateAll, channels } from "@workspaces/domain";
 import { Box, Flex, Button, Field, Input, List, NativeSelect, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type KeyboardEvent, useDeferredValue, useId, useMemo, useState } from "react";
@@ -166,6 +166,21 @@ function ShopField({ form }: { form: OrderForm }) {
           {(field) => (
             <Field.Root label="新しいショップの名前" {...errorsOf(field)} minW="0">
               <Input size="lg" {...bind(field)} />
+            </Field.Root>
+          )}
+        </FormField>
+      ) : null}
+      {shop.input === "" || shop.input === NEW_SHOP ? (
+        <FormField of={form} path={["channel"]}>
+          {(field) => (
+            <Field.Root label="購入先" {...errorsOf(field)} minW="0">
+              <NativeSelect.Root size="lg" {...bind(field)}>
+                {Object.values(channels).map((channel) => (
+                  <option key={channel.id} value={channel.id}>
+                    {channel.label}
+                  </option>
+                ))}
+              </NativeSelect.Root>
             </Field.Root>
           )}
         </FormField>

@@ -66,14 +66,44 @@ test("adds unnamed orders without adding shop choices", async () => {
   await expect.poll(async () => (await stored()).length).toBe(5);
   const first = (await stored()).at(-1);
   if (!first) throw new Error("missing order");
-  expect((await storedShop(first.shopId))?.name).toBe("");
+  expect(first.shopId).toBeUndefined();
+  expect(await repository().shops.list()).toHaveLength(shops.length);
   await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue("");
   await fillOrder(sheet, { amount: "1500", name: "コーヒー豆" });
   await sheet.getByRole("button", { name: "追加する" }).click();
   await expect.poll(async () => (await stored()).length).toBe(6);
-  expect((await stored()).at(-1)?.shopId).not.toBe(first.shopId);
+  expect((await stored()).at(-1)?.shopId).toBeUndefined();
+  expect(await repository().shops.list()).toHaveLength(shops.length);
   await expect.element(screen.getByText("洗濯洗剤", { exact: true })).toBeVisible();
   await expect.element(screen.getByText("コーヒー豆", { exact: true })).toBeVisible();
+});
+
+test("an unnamed order can choose Rakuma without creating a shop", async () => {
+  const screen = await renderWith();
+  const sheet = await openAdd(screen);
+  await sheet.getByLabelText("購入先", { exact: true }).selectOptions("rakuma");
+  await fillOrder(sheet, { amount: "1500" });
+  await sheet.getByRole("button", { name: "追加する" }).click();
+  await expect.poll(async () => (await stored()).length).toBe(5);
+  expect((await stored()).at(-1)).toMatchObject({ channel: "rakuma", shopTags: [] });
+  expect((await stored()).at(-1)).not.toHaveProperty("shopId");
+  expect(await repository().shops.list()).toHaveLength(shops.length);
+});
+
+test("clearing a registered shop clears its 39shop mark", async () => {
+  const marked = shops.map((shop, index): Shop =>
+    index === 0 ? { ...shop, tags: ["39shop"] } : shop,
+  );
+  const screen = await renderWith(marathonPlan(), marked);
+  const sheet = await openAdd(screen);
+  await sheet.getByLabelText("ショップ", { exact: true }).selectOptions(shopId(0));
+  await expect.element(sheet.getByRole("checkbox", { name: "39ショップ" })).toBeChecked();
+  await sheet.getByLabelText("ショップ", { exact: true }).selectOptions("");
+  await expect.element(sheet.getByRole("checkbox", { name: "39ショップ" })).not.toBeChecked();
+  await fillOrder(sheet, { amount: "1500" });
+  await sheet.getByRole("button", { name: "追加する" }).click();
+  await expect.poll(async () => (await stored()).length).toBe(5);
+  expect((await stored()).at(-1)?.shopTags).toEqual([]);
 });
 
 test("adds an order and closes", async () => {

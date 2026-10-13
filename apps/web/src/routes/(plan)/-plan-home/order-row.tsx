@@ -3,6 +3,9 @@ import {
   type Order,
   type OrderTag,
   type Shop,
+  hasShop,
+  orderShopContext,
+  withShop,
   taxExcludedTarget,
   taxIncludedTarget,
 } from "@workspaces/domain";
@@ -167,11 +170,17 @@ function OrderEditor({
         <Field label="ショップ">
           <NativeSelect.Root
             size="lg"
-            value={order.shopId}
-            onChange={(event) => saveOrder({ ...order, shopId: event.currentTarget.value })}
+            value={order.shopId ?? ""}
+            onChange={(event) => {
+              const shopId = event.currentTarget.value;
+              const context = orderShopContext(order, shop);
+              saveOrder(withShop(order, shopId || undefined, { ...context, shopTags: [] }));
+            }}
           >
-            {shop ? null : <option value={order.shopId}>不明なショップ</option>}
-            {shop?.name === "" ? <option value={order.shopId}>ショップ未入力</option> : null}
+            <option value="">未入力</option>
+            {shop || order.shopId === undefined ? null : (
+              <option value={order.shopId}>不明なショップ</option>
+            )}
             {sortedShops.map((other) => (
               <option key={other.id} value={other.id}>
                 {other.name}
@@ -279,9 +288,16 @@ function OrderEditor({
       <Flex wrap="wrap" gap="2">
         <CampaignCheck
           campaign="39shop"
-          checked={shop?.tags.includes("39shop") ?? false}
-          describedBy={shopTagHintId}
+          checked={shop?.tags.includes("39shop") ?? order.shopTags?.includes("39shop") ?? false}
+          describedBy={shop ? shopTagHintId : undefined}
           onChange={() => {
+            if (!hasShop(order)) {
+              saveOrder({
+                ...order,
+                shopTags: withTag(order.shopTags, "39shop", !order.shopTags.includes("39shop")),
+              });
+              return;
+            }
             if (!shop) return;
             const on = !shop.tags.includes("39shop");
             save(
@@ -296,9 +312,11 @@ function OrderEditor({
         >
           39ショップ
         </CampaignCheck>
-        <Text id={shopTagHintId} alignSelf="center" fontSize="xs" color="fg.muted">
-          このショップの注文すべてに反映されます
-        </Text>
+        {shop ? (
+          <Text id={shopTagHintId} alignSelf="center" fontSize="xs" color="fg.muted">
+            このショップの注文すべてに反映されます
+          </Text>
+        ) : null}
         <CampaignCheck
           campaign="repeat"
           checked={order.tags.includes("repeat")}
@@ -344,7 +362,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   const copyOrder = useSetAtom(copyOrderAtom);
   const moveOrder = useSetAtom(moveOrderAtom);
   const save = useSaveOrderChange();
-  const shopName = useShopName(order?.shopId ?? "");
+  const shopName = useShopName(order);
   const { draggedRef, focusAfterMoveRef, announce, handleHintId } = useListContext();
   const detailId = useId();
   const handleRef = useRef<HTMLButtonElement>(null);

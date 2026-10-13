@@ -58,17 +58,50 @@ test("a shop and its name can be omitted", () => {
   expect(errorsOf({ newShopName: "" })).toEqual({});
 });
 
-test("unnamed orders count separately and keep their shop when edited", () => {
+test("orders without a shop count separately without creating shops", () => {
   const input = { ...emptyInput(PERIOD), date: PERIOD.start, items: [item({})] };
   const first = draftOfInput(input, [], undefined);
-  if (!first?.shop) throw new Error("missing first shop");
-  const second = draftOfInput(input, [first.shop], undefined);
-  if (!second?.shop) throw new Error("missing second shop");
-  expect(first.shop.name).toBe("");
-  expect(second.shop.name).toBe("");
-  expect(countShops([first.order, second.order], [first.shop, second.shop], PERIOD)).toBe(2);
-  const edited = draftOfInput(inputOf(first.order, [first.shop]), [first.shop], first.order);
-  expect(edited?.order.shopId).toBe(first.order.shopId);
+  const second = draftOfInput(input, [], undefined);
+  if (!first || !second) throw new Error("missing order draft");
+  expect(first.shop).toBeUndefined();
+  expect(first.shopChange).toBeUndefined();
+  expect(first.order.shopId).toBeUndefined();
+  expect(second.order.shopId).toBeUndefined();
+  expect(countShops([first.order, second.order], [], PERIOD)).toBe(2);
+  const edited = draftOfInput(inputOf(first.order, []), [], first.order);
+  expect(edited?.order.shopId).toBeUndefined();
+  expect(edited?.order.id).toBe(first.order.id);
+});
+
+test("an order without a shop keeps its purchase context when edited", () => {
+  const draft = draftOfInput(
+    { ...emptyInput(PERIOD), date: PERIOD.start, channel: "rakuma", is39: true, items: [item({})] },
+    [],
+    undefined,
+  );
+  if (!draft) throw new Error("missing order draft");
+  expect(draft.order).toMatchObject({ channel: "rakuma", shopTags: ["39shop"] });
+  const edited = draftOfInput(inputOf(draft.order, []), [], draft.order);
+  expect(edited?.order).toMatchObject({
+    id: draft.order.id,
+    channel: "rakuma",
+    shopTags: ["39shop"],
+  });
+  expect(edited?.shopChange).toBeUndefined();
+});
+
+test("switching between specified and unspecified shops removes the old shape", () => {
+  const input = { ...emptyInput(PERIOD), date: PERIOD.start, items: [item({})] };
+  const registered = draftOfInput({ ...input, shop: SHOP_ID }, [], undefined);
+  if (!registered) throw new Error("missing registered order");
+  const unspecified = draftOfInput(input, [], registered.order);
+  if (!unspecified) throw new Error("missing unspecified order");
+  expect(unspecified.order).not.toHaveProperty("shopId");
+  expect(unspecified.order).toMatchObject({ channel: "rakuten-ichiba", shopTags: [] });
+  const restored = draftOfInput({ ...input, shop: SHOP_ID }, [], unspecified.order);
+  expect(restored?.order.shopId).toBe(SHOP_ID);
+  expect(restored?.order).not.toHaveProperty("channel");
+  expect(restored?.order).not.toHaveProperty("shopTags");
 });
 
 test("the order date must be a date", () => {

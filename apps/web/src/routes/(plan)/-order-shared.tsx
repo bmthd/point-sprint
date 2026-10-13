@@ -195,10 +195,12 @@ export const orderTitle = (order: Order) => {
   return `${first?.name ?? ""}${rest > 0 ? ` 他${rest}点` : ""}`;
 };
 
-export function useShopName(shopId: string) {
+export function useShopName(order: Order | undefined) {
   const shops = useAtomValue(shopsAtom);
-  const shop = shops.find((shop) => shop.id === shopId);
-  return shop ? shop.name || "ショップ未入力" : "不明なショップ";
+  if (!order) return "不明なショップ";
+  if (order.shopId === undefined) return "ショップ未入力";
+  const shop = shops.find((shop) => shop.id === order.shopId);
+  return shop ? shop.name : "不明なショップ";
 }
 
 /** A campaign that gave the order points, as a small display-only chip. */
@@ -317,7 +319,7 @@ export function useOrderConfirm(plan: Plan, headingRef: RefObject<HTMLElement | 
     confirm?.kind === "delete"
       ? plan.orders.find((order) => order.id === confirm.orderId)
       : undefined;
-  const targetShop = useShopName(target?.shopId ?? "");
+  const targetShop = useShopName(target);
 
   const dialog = (
     <Modal.Root

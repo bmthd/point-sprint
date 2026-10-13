@@ -5,6 +5,9 @@ import {
   OrderSchema,
   type Period,
   type Shop,
+  DEFAULT_ORDER_CHANNEL,
+  orderPurchase,
+  orderShopContext,
   closestDateInPeriod,
   matchesConditions,
 } from "@workspaces/domain";
@@ -94,7 +97,7 @@ const emptyInputForDate = (date: string): OrderFormInput => ({
   url: "",
   shop: "",
   newShopName: "",
-  channel: "rakuten-ichiba",
+  channel: DEFAULT_ORDER_CHANNEL,
   shopCode: "",
   date,
   is39: false,
@@ -110,12 +113,14 @@ export const emptyInput = (period: Period): OrderFormInput =>
 /** The editor's fields for an order that is already saved. */
 export function inputOf(order: Order, shops: Shop[]): OrderFormInput {
   const shop = shops.find((other) => other.id === order.shopId);
+  const context = orderShopContext(order, shop);
   return {
     ...emptyInputForDate(order.date),
     url: order.lineItems[0]?.url ?? "",
-    shop: order.shopId,
+    shop: order.shopId ?? "",
     date: order.date,
-    is39: shop?.tags.includes("39shop") ?? false,
+    channel: context.channel ?? DEFAULT_ORDER_CHANNEL,
+    is39: context.shopTags?.includes("39shop") ?? false,
     repeat: order.tags.includes("repeat"),
     onHold: order.onHold,
     items: order.lineItems.map((item) => ({
@@ -149,9 +154,8 @@ export function draftOf(
   const { shopId, shop, change: shopChange } = shopToSave(output, shops);
   const items = new Map(original?.lineItems.map((item) => [item.id, item]));
   const parsed = v.safeParse(OrderSchema, {
-    ...original,
     id: original?.id ?? crypto.randomUUID(),
-    shopId,
+    ...orderPurchase(shopId, { channel: output.channel, shopTags: output.is39 ? ["39shop"] : [] }),
     date: output.date,
     onHold: output.onHold,
     tags: output.repeat ? ["repeat"] : [],

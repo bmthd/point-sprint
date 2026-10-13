@@ -5,7 +5,7 @@ import { channels } from "../channels";
 import { matchesConditions } from "../conditions/matches";
 import type { Benefit } from "../model/benefit";
 import type { ChannelId, OrderTag, ShopTag } from "../model/common";
-import type { LineItem } from "../model/order";
+import { type LineItem, hasShop, orderShopContext } from "../model/order";
 import { type Plan, planAccountId } from "../model/plan";
 import type { Shop } from "../model/shop";
 import { capGroupKey, resolveGroupCap } from "./cap-groups";
@@ -23,7 +23,7 @@ import type {
 
 type OrderContext = {
   orderId: string;
-  shopId: string;
+  shopId: string | undefined;
   channel: ChannelId | null;
   shopTags: ShopTag[] | null;
   date: string;
@@ -111,16 +111,15 @@ function eligibleItems(
 function orderContexts(plan: Plan, shops: Map<string, Shop>, warnings: CalculationWarning[]) {
   const active = plan.orders.filter((order) => !order.onHold);
   return active.map((order): OrderContext => {
-    const shop = shops.get(order.shopId);
-    if (!shop) warnings.push({ type: "unknown-shop", orderId: order.id });
+    const shop = hasShop(order) ? shops.get(order.shopId) : undefined;
+    if (hasShop(order) && !shop) warnings.push({ type: "unknown-shop", orderId: order.id });
     if (order.date < plan.period.start || order.date > plan.period.end) {
       warnings.push({ type: "order-outside-period", orderId: order.id });
     }
     return {
       orderId: order.id,
       shopId: order.shopId,
-      channel: shop?.channel ?? null,
-      shopTags: shop?.tags ?? null,
+      ...orderShopContext(order, shop),
       date: order.date,
       orderTaxIncluded: order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0),
       orderTags: order.tags,

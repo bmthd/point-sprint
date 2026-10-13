@@ -238,7 +238,8 @@ test("hides shop-around parts when the plan has none", async () => {
 
 test("shows warnings for orders outside the period and unknown shops", async () => {
   const outside = { ...order(1), date: "2026-10-11" };
-  const unknown = { ...order(2), shopId: "a0000000-0000-4000-8000-0000000000ff" };
+  const { channel: _channel, shopTags: _shopTags, ...common } = order(2);
+  const unknown = { ...common, shopId: "a0000000-0000-4000-8000-0000000000ff" };
   const plan = makePlan({
     benefits: [baseBenefit, ...marathon],
     orders: [order(0), outside, unknown],
