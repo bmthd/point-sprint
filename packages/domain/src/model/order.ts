@@ -1,5 +1,12 @@
 import * as v from "valibot";
-import { ChannelIdSchema, IdSchema, IsoDateSchema, OrderTagSchema, ShopTagSchema } from "./common";
+import {
+  type ChannelId,
+  ChannelIdSchema,
+  IdSchema,
+  IsoDateSchema,
+  OrderTagSchema,
+  ShopTagSchema,
+} from "./common";
 import type { Shop } from "./shop";
 
 export const LineItemSchema = v.pipe(
@@ -44,6 +51,29 @@ export const OrderSchema = v.union([
   }),
 ]);
 export type Order = v.InferOutput<typeof OrderSchema>;
+export const DEFAULT_ORDER_CHANNEL: ChannelId = "rakuten-ichiba";
+
+type PurchaseFields =
+  | Pick<Extract<Order, { shopId: string }>, "shopId" | "channel" | "shopTags">
+  | Pick<Extract<Order, { channel: ChannelId }>, "shopId" | "channel" | "shopTags">;
+
+export function orderPurchase(
+  shopId: string | undefined,
+  context: ReturnType<typeof orderShopContext>,
+): PurchaseFields {
+  return shopId === undefined
+    ? { channel: context.channel ?? DEFAULT_ORDER_CHANNEL, shopTags: context.shopTags ?? [] }
+    : { shopId };
+}
+
+export function withShop(
+  order: Order,
+  shopId: string | undefined,
+  context: ReturnType<typeof orderShopContext>,
+): Order {
+  const { shopId: _shopId, channel: _channel, shopTags: _shopTags, ...common } = order;
+  return { ...common, ...orderPurchase(shopId, context) };
+}
 
 export const hasShop = (order: Order): order is Extract<Order, { shopId: string }> =>
   order.shopId !== undefined;

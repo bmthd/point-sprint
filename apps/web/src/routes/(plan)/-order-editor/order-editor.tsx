@@ -329,7 +329,7 @@ function ShopFields({
               const value = event.currentTarget.value;
               shop.onChange(value);
               const chosen = shops.find((other) => other.id === value);
-              if (chosen) setInput(form, { path: ["is39"], input: chosen.tags.includes("39shop") });
+              setInput(form, { path: ["is39"], input: chosen?.tags.includes("39shop") ?? false });
             }}
           >
             <option value="">未入力</option>
@@ -350,15 +350,22 @@ function ShopFields({
           )}
         </FormField>
       </Box>
-      {shop.input === NEW_SHOP ? (
-        <Box display="grid" gridTemplateColumns="minmax(0, 1fr) 150px" alignItems="start" gap="2">
-          <FormField of={form} path={["newShopName"]}>
-            {(field) => (
-              <Field.Root label="新しいショップの名前" {...errorsOf(field)}>
-                <Input {...bind(field)} />
-              </Field.Root>
-            )}
-          </FormField>
+      {shop.input === NEW_SHOP || shop.input === "" ? (
+        <Box
+          display="grid"
+          gridTemplateColumns={shop.input === NEW_SHOP ? "minmax(0, 1fr) 150px" : "minmax(0, 1fr)"}
+          alignItems="start"
+          gap="2"
+        >
+          {shop.input === NEW_SHOP ? (
+            <FormField of={form} path={["newShopName"]}>
+              {(field) => (
+                <Field.Root label="新しいショップの名前" {...errorsOf(field)}>
+                  <Input {...bind(field)} />
+                </Field.Root>
+              )}
+            </FormField>
+          ) : null}
           <FormField of={form} path={["channel"]}>
             {(field) => (
               <Field.Root label="購入先" invalid={field.errors !== null}>

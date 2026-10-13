@@ -5,6 +5,7 @@ import {
   type Shop,
   hasShop,
   orderShopContext,
+  withShop,
   taxExcludedTarget,
   taxIncludedTarget,
 } from "@workspaces/domain";
@@ -171,18 +172,9 @@ function OrderEditor({
             size="lg"
             value={order.shopId ?? ""}
             onChange={(event) => {
-              const { shopId: _shopId, channel: _channel, shopTags: _shopTags, ...common } = order;
               const shopId = event.currentTarget.value;
               const context = orderShopContext(order, shop);
-              saveOrder(
-                shopId
-                  ? { ...common, shopId }
-                  : {
-                      ...common,
-                      channel: context.channel ?? "rakuten-ichiba",
-                      shopTags: context.shopTags ?? [],
-                    },
-              );
+              saveOrder(withShop(order, shopId || undefined, { ...context, shopTags: [] }));
             }}
           >
             <option value="">未入力</option>
@@ -302,11 +294,7 @@ function OrderEditor({
             if (!hasShop(order)) {
               saveOrder({
                 ...order,
-                shopTags: withTag(
-                  order.shopTags ?? [],
-                  "39shop",
-                  !(order.shopTags ?? []).includes("39shop"),
-                ),
+                shopTags: withTag(order.shopTags, "39shop", !order.shopTags.includes("39shop")),
               });
               return;
             }
@@ -374,7 +362,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   const copyOrder = useSetAtom(copyOrderAtom);
   const moveOrder = useSetAtom(moveOrderAtom);
   const save = useSaveOrderChange();
-  const shopName = useShopName(order?.shopId ?? "");
+  const shopName = useShopName(order);
   const { draggedRef, focusAfterMoveRef, announce, handleHintId } = useListContext();
   const detailId = useId();
   const handleRef = useRef<HTMLButtonElement>(null);

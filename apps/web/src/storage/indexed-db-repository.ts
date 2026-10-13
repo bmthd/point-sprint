@@ -2,7 +2,6 @@ import {
   CURRENT_SCHEMA_VERSION,
   type Migration,
   migrateRow,
-  migrateOrderPurchases,
   migrations as domainMigrations,
   type Plan,
   PlanSchema,
@@ -18,7 +17,6 @@ import * as v from "valibot";
 import type { Repository } from "./repository";
 
 const PROFILE_KEY = "profile";
-const LegacyShopSchema = v.object({ ...ShopSchema.entries, name: v.string() });
 
 const QuarantineSchema = v.object({
   store: v.picklist(["plans", "shops", "profile"]),
@@ -129,39 +127,11 @@ function openDatabase(name: string, migrations: readonly Migration[], state: Ope
       }),
       quarantine: createIndexedDbTable({ autoIncrement: true, schema: QuarantineSchema }),
     },
-    onUpgrade: ({ oldVersion, migrate, transaction }) => {
+    onUpgrade: ({ oldVersion, migrate }) => {
       // A new database (oldVersion 0) has no rows; an index-only bump has no migrations to apply.
       if (oldVersion === 0 || !migrations.some((m) => m.to > oldVersion)) return;
-      if (oldVersion < 4 && migrations === domainMigrations) {
-        const request = transaction.objectStore("shops").getAll();
-        request.onsuccess = () => {
-          const rows = v.parse(v.array(v.unknown()), request.result);
-          const shops = rows.flatMap((row) => {
-            const parsed = v.safeParse(LegacyShopSchema, row);
-            return parsed.success ? [parsed.output] : [];
-          });
-          migrate("plans", (row) => {
-            const migrated = migrateWith<unknown>(
-              "plans",
-              oldVersion,
-            )(migrateOrderPurchases(row, shops));
-            const plan = v.safeParse(PlanSchema, migrated);
-            return plan.success ? plan.output : row;
-          });
-          migrate("shops", (row) => {
-            const shop = v.safeParse(LegacyShopSchema, row);
-            if (shop.success && shop.output.name === "" && shop.output.shopCode) {
-              return { ...shop.output, name: shop.output.shopCode };
-            }
-            return shop.success && shop.output.name === "" && !shop.output.shopCode
-              ? null
-              : migrateWith<Shop>("shops", oldVersion)(row);
-          });
-        };
-      } else {
-        migrate("plans", migrateWith<Plan>("plans", oldVersion));
-        migrate("shops", migrateWith<Shop>("shops", oldVersion));
-      }
+      migrate("plans", migrateWith<Plan>("plans", oldVersion));
+      migrate("shops", migrateWith<Shop>("shops", oldVersion));
       migrate("profile", migrateWith<Profile>("profile", oldVersion));
     },
   });
