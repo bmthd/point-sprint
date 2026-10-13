@@ -73,10 +73,13 @@ function capText(benefit: Benefit) {
   return `${scope} ${pointsText(cap)}`;
 }
 
-/** Tiles stay this size; the row fits as many columns as the width allows. */
+/** Tiles grow up to this size; the row fits as many columns as the width allows. */
 const TILE_SIZE = "76px";
-/** Wider than a tile so long names under it wrap less. */
-const COLUMN_MIN_WIDTH = "96px";
+/**
+ * Wider than a tile so long names under it wrap less. On a phone, narrower so a row holds four
+ * tiles, which shrink to the column, and the names lose their side padding.
+ */
+const COLUMN_MIN_WIDTH = { base: "96px", sm: "72px" };
 
 function Tile({
   benefit,
@@ -100,7 +103,9 @@ function Tile({
         colorScheme="primary"
         size="sm"
         withIndicator={false}
-        boxSize={TILE_SIZE}
+        w="full"
+        maxW={TILE_SIZE}
+        aspectRatio="1"
         alignItems="center"
         justifyContent="center"
         inputProps={{
@@ -116,7 +121,7 @@ function Tile({
         </Text>
         {capped ? <CapBadge id={badgeId} position="absolute" top="-2" right="-2" /> : null}
       </CheckboxCard.Root>
-      {/* Long names (楽天プレミアムカード（特典分）) wrap instead of overflowing the column. */}
+      {/* Long names (楽天プレミアムカード（特典分）) wrap at a phrase, or anywhere when one phrase is wider than the column. */}
       <Button
         variant="ghost"
         size="xs"
@@ -126,9 +131,11 @@ function Tile({
         h="auto"
         minH="8"
         py="1"
-        fontSize={{ base: "2xs", sm: "xs" }}
+        fontSize="2xs"
         whiteSpace="normal"
+        px={{ base: "1", sm: "0" }}
         wordBreak="keep-all"
+        overflowWrap="anywhere"
         lineHeight="moderate"
       >
         {name}
@@ -235,7 +242,7 @@ function SpuTileGrid({
           role="group"
           aria-label="SPU のサービス"
           minChildWidth={COLUMN_MIN_WIDTH}
-          columnGap="1.5"
+          columnGap={{ base: "1.5", sm: "1" }}
           rowGap="2"
         >
           {tiles.map((benefit) => (
@@ -297,7 +304,8 @@ export function SpuCard({
   const titleId = useId();
 
   return (
-    <Card.Root as="section" aria-labelledby={titleId}>
+    // On a phone the smaller card leaves more width to the tiles.
+    <Card.Root as="section" aria-labelledby={titleId} size={{ base: "md", sm: "sm" }}>
       <Card.Body alignItems="stretch">
         {/* The heading, the rate and its breakdown read as one block. */}
         <VStack gap="1" alignItems="stretch" fontVariantNumeric="tabular-nums">
