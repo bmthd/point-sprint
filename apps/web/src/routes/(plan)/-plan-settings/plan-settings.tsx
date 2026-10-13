@@ -4,7 +4,7 @@ import { useAtomValue } from "jotai";
 import { planResultAtom } from "../../../state/derived";
 import { BackIcon, CloseIcon, PencilIcon } from "../../../ui/icons";
 import { PlanPage } from "../-plan-page";
-import { RouterButton, RouterLink } from "../../../ui/router-link";
+import { RouterButton, RouterIconButton } from "../../../ui/router-link";
 import { AccountPicker } from "./account-picker";
 import { CampaignToggles } from "./campaign-toggles";
 import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared";
@@ -110,20 +110,14 @@ function SettingsScreen({ plan }: { plan: Plan }) {
     <>
       {/* 戻る goes back to this plan, which the site header has no link to. */}
       <Flex maxW="640px" mx="auto" h="14" align="center" gap="1" px="2">
-        <RouterLink
+        <RouterIconButton
           to="/plan"
           search={{ id: plan.id }}
           aria-label="戻る"
-          boxSize="11"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          rounded="xl"
-          color="fg"
-          _hover={{ bg: "bg.muted" }}
-        >
-          <BackIcon />
-        </RouterLink>
+          size="lg"
+          variant="ghost"
+          icon={<BackIcon />}
+        />
         <Heading as="h1" fontSize="lg">
           プランの設定
         </Heading>

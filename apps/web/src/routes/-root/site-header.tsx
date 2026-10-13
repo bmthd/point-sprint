@@ -64,8 +64,7 @@ function ColorModeButton() {
     <IconButton
       aria-label={`現在は${colorModeLabel}モードです。${nextColorModeLabel}モードに切り替える`}
       onClick={toggleColorMode}
-      boxSize="11"
-      rounded="xl"
+      size="lg"
       variant="ghost"
       color="fg"
       _hover={{ bg: "bg.muted" }}
@@ -131,8 +130,7 @@ function SiteMenu() {
       <IconButton
         aria-label="メニュー"
         display={{ base: "none", lg: "inline-flex" }}
-        boxSize="11"
-        rounded="xl"
+        size="lg"
         variant="ghost"
         color="fg"
         _hover={{ bg: "bg.muted" }}

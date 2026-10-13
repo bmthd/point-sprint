@@ -87,7 +87,7 @@ function NextCap({
   }
   const shared = sharedText(next.line, plans);
   return (
-    <Text fontSize="sm" bg="blackAlpha.400" rounded="lg" px="2.5" py="2">
+    <Text fontSize="sm" bg="blackAlpha.400" rounded="md" px="2.5" py="2">
       次に上限に届くのは<Text as="b">{next.line.benefit.label}</Text> あと
       <Text as="b" fontVariantNumeric="tabular-nums">
         {yen(next.price)}
@@ -174,7 +174,7 @@ export function SummaryCard({
               </span>
             </Flex>
             {outlook.nextShop ? (
-              <Text fontSize="sm" bg="blackAlpha.400" rounded="lg" px="2.5" py="2">
+              <Text fontSize="sm" bg="blackAlpha.400" rounded="md" px="2.5" py="2">
                 あと1店舗で全商品{" "}
                 <Text as="b" fontVariantNumeric="tabular-nums">
                   +{outlook.nextShop.rateDelta}倍
@@ -192,13 +192,13 @@ export function SummaryCard({
         <NextCap lines={lines} today={today} taxRate={taxRate} />
 
         {compact && outlook ? (
-          <Box bg="bg.panel" color="fg" rounded="xl" px="3" py="2">
+          <Box bg="bg.panel" color="fg" rounded="md" px="3" py="2">
             <ShopLadder outlook={outlook} compact />
           </Box>
         ) : null}
 
         {compact ? (
-          <Box bg="bg.panel" color="fg" rounded="xl" px="3" py="2">
+          <Box bg="bg.panel" color="fg" rounded="md" px="3" py="2">
             <NativeAccordion.Root>
               <NativeAccordion.Item borderWidth="0">
                 <NativeAccordion.Button fontSize="sm" fontWeight="bold">
