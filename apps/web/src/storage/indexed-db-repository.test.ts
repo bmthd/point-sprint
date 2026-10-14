@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import { CURRENT_SCHEMA_VERSION, type Plan, type Profile, type Shop } from "@workspaces/domain";
 import { expect, test, vi } from "vitest";
 import { createIndexedDbRepository } from "./indexed-db-repository";
+import { OutdatedDatabaseError } from "./repository";
 
 const now = "2026-10-05T00:00:00.000Z";
 const plan: Plan = {
@@ -44,6 +45,20 @@ async function putRaw(name: string, store: string, row: unknown): Promise<void> 
   });
   raw.close();
 }
+
+async function countRaw(name: string, store: string): Promise<number> {
+  const raw = await openRaw(name);
+  const count = await new Promise<number>((resolve, reject) => {
+    const request = raw.transaction(store).objectStore(store).count();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  raw.close();
+  return count;
+}
+
+const newerApp = (name: string) =>
+  createIndexedDbRepository({ name, migrations: [{ to: CURRENT_SCHEMA_VERSION + 1, stores: {} }] });
 
 test("round-trips plans, shops and profile", async () => {
   const repo = createIndexedDbRepository({ name: uniqueName() });
@@ -186,4 +201,30 @@ test("clear removes every stored row, including the quarantined ones", async () 
   expect(await repo.shops.list()).toEqual([]);
   expect(await repo.profile.get()).toBeUndefined();
   expect(await repo.quarantined()).toBe(0);
+});
+
+test("an app older than the database stops reading and writing, and keeps the rows", async () => {
+  const name = uniqueName();
+  await newerApp(name).plans.put(plan);
+  // A row in a shape only the newer app knows.
+  await putRaw(name, "plans", { id: "future", name: 1 });
+
+  const older = createIndexedDbRepository({ name });
+
+  await expect(older.plans.list()).rejects.toBeInstanceOf(OutdatedDatabaseError);
+  await expect(older.plans.put({ ...plan, name: "old" })).rejects.toBeInstanceOf(
+    OutdatedDatabaseError,
+  );
+  expect(await countRaw(name, "plans")).toBe(2);
+  expect(await countRaw(name, "quarantine")).toBe(0);
+});
+
+test("an open app stops once a newer app upgrades the database", async () => {
+  const name = uniqueName();
+  const older = createIndexedDbRepository({ name });
+  await older.plans.put(plan);
+
+  await newerApp(name).plans.list();
+
+  await expect(older.plans.list()).rejects.toBeInstanceOf(OutdatedDatabaseError);
 });

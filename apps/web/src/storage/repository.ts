@@ -17,3 +17,11 @@ export interface Repository {
   /** True when the database could not be opened at its current version and was recreated empty. */
   wasReset(): boolean;
 }
+
+/** The database was upgraded by a newer version of the app; this one must reload to use it. */
+export class OutdatedDatabaseError extends Error {
+  constructor() {
+    super("The database belongs to a newer version of the app.");
+    this.name = "OutdatedDatabaseError";
+  }
+}

@@ -14,7 +14,7 @@ import {
 import { createIndexedDb } from "seitu/web/indexed-db";
 import { createIndexedDbTable } from "seitu/web/indexed-db-table";
 import * as v from "valibot";
-import type { Repository } from "./repository";
+import { OutdatedDatabaseError, type Repository } from "./repository";
 
 const PROFILE_KEY = "profile";
 
@@ -58,11 +58,14 @@ type OpenState = {
   migrationFailed: boolean;
 };
 
+const schemaVersion = (migrations: readonly Migration[]) =>
+  Math.max(CURRENT_SCHEMA_VERSION, ...migrations.map((m) => m.to));
+
 function openDatabase(name: string, migrations: readonly Migration[], state: OpenState) {
   // The IndexedDB version doubles as the schema version that `onUpgrade` migrates from. Seitu
   // bumps it on its own when a store or index is missing, so never add a store or an index
   // without bumping CURRENT_SCHEMA_VERSION, or later migrations would be skipped.
-  const version = Math.max(CURRENT_SCHEMA_VERSION, ...migrations.map((m) => m.to));
+  const version = schemaVersion(migrations);
 
   // Re-reads the row in one transaction with the `quarantine` write, and moves it only if it is
   // still invalid, so a valid row written after the failed read is never removed.
@@ -160,6 +163,7 @@ export function createIndexedDbRepository(
 ): Repository {
   const name = options.name ?? "point-sprint";
   const migrations = options.migrations ?? domainMigrations;
+  const version = schemaVersion(migrations);
   const state: OpenState = { moves: new Map(), migrationFailed: false };
   let reset = false;
   let opened: Promise<ReturnType<typeof openDatabase>> | undefined;
@@ -189,6 +193,9 @@ export function createIndexedDbRepository(
   // Waiting for moves to `quarantine` in flight keeps a read from seeing a row being moved.
   const settled = async () => {
     const db = await connect();
+    // Seitu reopens at whatever version a newer app upgraded the database to. Reading its rows
+    // here would set aside the ones this app cannot parse, and writing would overwrite them.
+    if ((await db["~"].getDatabase()).version > version) throw new OutdatedDatabaseError();
     await Promise.all(state.moves.values());
     return db;
   };
