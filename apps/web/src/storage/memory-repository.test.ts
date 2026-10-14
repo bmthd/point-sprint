@@ -42,10 +42,17 @@ async function scenario(repo: Repository) {
     profile: await repo.profile.get(),
   };
   await repo.plans.delete(planB.id);
+  const afterDelete = await repo.plans.list();
+  await repo.clear();
   return {
     invalidPut,
     afterPuts,
-    afterDelete: await repo.plans.list(),
+    afterDelete,
+    afterClear: {
+      plans: await repo.plans.list(),
+      shops: await repo.shops.list(),
+      profile: await repo.profile.get(),
+    },
     quarantined: await repo.quarantined(),
     wasReset: repo.wasReset(),
   };
@@ -59,6 +66,7 @@ test("memory repository behaves like the IndexedDB one", async () => {
   expect(fromMemory.invalidPut).toBe("rejected");
   expect(fromMemory.afterPuts.plans.map((p) => p.name)).toEqual(["A2", "B"]);
   expect(fromMemory.afterPuts.shops[0]?.tags).toEqual([]);
+  expect(fromMemory.afterClear).toEqual({ plans: [], shops: [], profile: undefined });
 });
 
 test("memory repository starts from the initial data and does not share references", async () => {

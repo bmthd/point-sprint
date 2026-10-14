@@ -52,6 +52,11 @@ export function createMemoryRepository(
       get: async () => structuredClone(profile),
       put: async (next) => putProfile(next),
     },
+    clear: async () => {
+      plans.clear();
+      shops.clear();
+      profile = undefined;
+    },
     quarantined: async () => 0,
     wasReset: () => false,
   };

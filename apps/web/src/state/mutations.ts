@@ -150,3 +150,13 @@ export const saveProfileAtom = atomWithMutation<void, ProfileChange, Error, Snap
     ),
   };
 });
+
+/** Removes every stored row, then reads everything again so each screen starts over empty. */
+export const clearDataAtom = atomWithMutation<void, void>((get) => {
+  const repository = get(repositoryAtom);
+  const client = get(queryClientAtom);
+  return {
+    mutationFn: () => repository.clear(),
+    onSettled: () => client.resetQueries(),
+  };
+});

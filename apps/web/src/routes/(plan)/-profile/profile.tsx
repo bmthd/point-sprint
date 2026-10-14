@@ -9,6 +9,7 @@ import { BackIcon } from "../../../ui/icons";
 import { RouterIconButton } from "../../../ui/router-link";
 import { StorageHealthFailure, storageMessages } from "../-warnings";
 import { SpuCard } from "../-plan-settings/spu-tiles";
+import { ResetDataButton } from "../../-reset-data";
 import { AccountSettings } from "./account-settings";
 import { ShopRegistry } from "./shop-registry";
 
@@ -67,6 +68,7 @@ function ProfileContent() {
       <SpuDefaults onFailed={setFailed} />
       <ShopRegistry onFailed={setFailed} />
       <AccountSettings onFailed={setFailed} />
+      <ResetDataButton />
     </VStack>
   );
 }

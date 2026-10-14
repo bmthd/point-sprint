@@ -13,6 +13,7 @@ import {
 } from "@workspaces/ui";
 import { RouterLink } from "../../ui/router-link";
 import { CloseIcon } from "../../ui/icons";
+import { ResetDataButton } from "../-reset-data";
 import { SiteSidebar } from "../-sidebar/sidebar";
 
 function ProfileIcon() {
@@ -169,6 +170,7 @@ function SiteMenu() {
             >
               ダークモード
             </Switch>
+            <ResetDataButton onDone={onClose} />
           </Drawer.Body>
         </Drawer.Content>
       </Drawer.Root>
