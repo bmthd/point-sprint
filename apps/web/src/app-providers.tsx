@@ -27,6 +27,7 @@ function OutdatedDialog({ open }: { open: boolean }) {
       withCloseButton={false}
       title="新しい版に更新されました"
       body={<Text>別のタブで新しい版のアプリが開かれました。再読み込みすると続けられます。</Text>}
+      footerProps={{ justifyContent: "center" }}
       success={{ children: "再読み込み", colorScheme: "primary" }}
       onSuccess={() => window.location.reload()}
     />
