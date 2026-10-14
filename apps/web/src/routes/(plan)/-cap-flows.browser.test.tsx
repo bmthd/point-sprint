@@ -1,5 +1,5 @@
 import type { Benefit, Plan } from "@workspaces/domain";
-import { beforeEach, expect, test } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 import { createMemoryRepository } from "../../storage/memory-repository";
 import { PLAN, baseBenefit, order, renderPlanHome, shops } from "./-test-fixtures";
@@ -51,8 +51,11 @@ test("the amount typed shows where its points go, and a button fills the cap", a
   await expect.poll(flows).toContain("エントリーキャンペーン（このプラン） +70P・30P はみ出す");
   await form.getByRole("button", { name: "¥7,699 で使い切る" }).click();
   await expect.element(amount).toHaveValue("7699");
-  await expect.poll(flows).toContain("+70P");
-  expect(flows()).not.toContain("はみ出す");
+  // The flows lag the field (useDeferredValue), and "+70P" is already there before the click.
+  await vi.waitFor(() => {
+    expect(flows()).toContain("+70P");
+    expect(flows()).not.toContain("はみ出す");
+  });
 });
 
 test("nothing is shown until an amount is typed", async () => {
