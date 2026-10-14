@@ -498,13 +498,12 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
             {orderTitle(order) ||
               (shopName === "ショップ未入力" ? `${monthDayWithWeekday(order.date)}の注文` : "")}
           </Text>
-          {points.campaigns.length > 0 ? (
-            <Flex as="span" wrap="wrap" gap="1">
-              {points.campaigns.map((label) => (
-                <CampaignChip key={label}>{label}</CampaignChip>
-              ))}
-            </Flex>
-          ) : null}
+          {/* Kept, one chip high, on rows without campaigns so every closed row is as tall. */}
+          <Flex as="span" wrap="wrap" gap="1" minH="5.5">
+            {points.campaigns.map((label) => (
+              <CampaignChip key={label}>{label}</CampaignChip>
+            ))}
+          </Flex>
         </Flex>
         <Flex direction="column" align="flex-end" fontSize="sm" fontVariantNumeric="tabular-nums">
           <span>{yen(amount)}</span>
