@@ -85,9 +85,9 @@ test("hold toggle moves the order out of the shop count", async () => {
 
   await expect.poll(summaryText).toContain("4店舗を買い回り中");
   toggleOf("ショップ1")?.click();
-  const counted = screen.getByRole("switch", { name: "買い回りにカウント（オフで保留）" });
+  const counted = screen.getByRole("switch", { name: "購入決定（オフで保留）" });
   // The switch's input sits under its track, so it is clicked through its label.
-  const label = screen.getByText("買い回りにカウント（オフで保留）");
+  const label = screen.getByText("購入決定（オフで保留）");
   await expect.element(counted).toBeChecked();
   await label.click();
 

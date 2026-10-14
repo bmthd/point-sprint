@@ -13,10 +13,10 @@ import {
   Box,
   Flex,
   Button,
-  Checkbox,
   IconButton,
   List,
   NativeSelect,
+  Switch,
   Text,
   VisuallyHidden,
 } from "@workspaces/ui";
@@ -93,6 +93,8 @@ export type OrderListContext = {
   announce: (message: string) => void;
   /** The id of the text that explains the arrow keys on a handle. */
   handleHintId: string;
+  /** The id of the text that explains what turning 購入決定 off does. */
+  holdHintId: string;
 };
 
 export const OrderListContext = createContext<OrderListContext | null>(null);
@@ -104,7 +106,7 @@ const useListContext = () => {
 };
 
 /** The columns of a closed row. Only the middle one (shop, item, campaigns) grows and shrinks. */
-export const rowColumns = "44px 44px 36px minmax(0, 1fr) auto auto 44px";
+export const rowColumns = "44px 56px 36px minmax(0, 1fr) auto auto 44px";
 
 const withItems = (order: Order, change: (item: LineItem) => LineItem): Order => ({
   ...order,
@@ -363,7 +365,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   const moveOrder = useSetAtom(moveOrderAtom);
   const save = useSaveOrderChange();
   const shopName = useShopName(order);
-  const { draggedRef, focusAfterMoveRef, announce, handleHintId } = useListContext();
+  const { draggedRef, focusAfterMoveRef, announce, handleHintId, holdHintId } = useListContext();
   const detailId = useId();
   const handleRef = useRef<HTMLButtonElement>(null);
   const [dropSide, setDropSide] = useState<"before" | "after" | null>(null);
@@ -474,14 +476,17 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
         >
           <GripIcon />
         </IconButton>
-        <Checkbox
-          size="lg"
+        <Switch
+          size="sm"
           colorScheme="primary"
           boxSize="11"
+          justifySelf="center"
           justifyContent="center"
-          cursor="pointer"
           checked={!held}
-          inputProps={{ "aria-label": `${shopName}の注文を買い回りにカウント` }}
+          inputProps={{
+            "aria-label": `${shopName}の注文を購入決定`,
+            "aria-describedby": holdHintId,
+          }}
           onChange={() => save(toggleHold({ planId, orderId }))}
         />
         <OrderBadge badge={props.badge} />
@@ -512,21 +517,26 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
           </Text>
         </Flex>
         <Flex direction="column" align="flex-end" fontVariantNumeric="tabular-nums">
+          {/* Held or not, two lines, so turning 購入決定 off leaves the row where it is. */}
           {held ? (
             <Text as="s" fontWeight="bold" color="fg.muted">
               <VisuallyHidden>保留中の見込み </VisuallyHidden>
               {pointsText(points.estimate ?? 0)}
             </Text>
           ) : (
-            <>
-              <Text as="span" fontWeight="bold">
-                {pointsText(points.total)}
-              </Text>
-              <Text as="span" fontSize="2xs" color="fg.muted">
-                {rateText(points.rate, false)}
-              </Text>
-            </>
+            <Text as="span" fontWeight="bold">
+              {pointsText(points.total)}
+            </Text>
           )}
+          {/* Both labels share one cell, so the column is as wide whichever one shows. */}
+          <Box display="grid" justifyItems="end" fontSize="2xs" color="fg.muted">
+            <Text as="span" gridArea="1 / 1" visibility={held ? "hidden" : undefined}>
+              {rateText(points.rate, false)}
+            </Text>
+            <Text as="span" gridArea="1 / 1" visibility={held ? undefined : "hidden"} aria-hidden>
+              保留中
+            </Text>
+          </Box>
         </Flex>
         <IconButton
           variant="ghost"
@@ -550,18 +560,17 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
         pt="3.5"
         pb="4"
         pr="4"
-        pl="120px"
+        pl="132px"
       >
         {open ? (
           <>
             <Flex direction="column" gap="2">
-              {held ? (
-                <Text fontSize="sm" color="fg.muted">
-                  保留中の注文は合計と買い回りに入りません。
-                </Text>
-              ) : (
-                <PointBreakdown totals={groupTotalsOf(points.rows)} legend="line" />
-              )}
+              {/* A held order has no points; its note takes the legend's place, so it is as tall. */}
+              <PointBreakdown
+                totals={groupTotalsOf(points.rows)}
+                legend="line"
+                note={held ? "保留中の注文は合計と買い回りに入りません。" : undefined}
+              />
               <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
                 {`税抜の基準額 ${yen(base)}`}
               </Text>

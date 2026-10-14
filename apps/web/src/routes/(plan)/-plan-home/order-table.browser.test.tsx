@@ -139,11 +139,11 @@ test("fits 1024px without horizontal scroll", async () => {
     .last()
     .selectOptions("＋ 新しいショップ");
 
-  // Every control is at least 44px both ways (the checkbox through its label).
+  // Every control is at least 44px both ways (the switch through its label).
   const controls = [
     screen.getByRole("button", { name: `${long}の注文を並べ替え` }).element(),
     screen
-      .getByRole("checkbox", { name: `${long}の注文を買い回りにカウント` })
+      .getByRole("switch", { name: `${long}の注文を購入決定` })
       .element()
       .closest("label"),
     screen.getByRole("button", { name: `${long}の注文の詳細と編集` }).element(),
@@ -375,11 +375,11 @@ test("drag the handle onto another row to reorder", async () => {
   expect(events.at(-1)).toBe("dragend");
 });
 
-test("count checkbox toggles hold", async () => {
+test("購入決定 switch toggles hold", async () => {
   const screen = await renderWith();
 
   await expect.poll(summaryText).toContain("4店舗を買い回り中");
-  const counted = screen.getByRole("checkbox", { name: "ショップ1の注文を買い回りにカウント" });
+  const counted = screen.getByRole("switch", { name: "ショップ1の注文を購入決定" });
   await expect.element(counted).toBeChecked();
   // The input itself is visually hidden; a click lands on the box drawn in its label.
   await userEvent.click(counted.element().closest("label") as HTMLElement);
@@ -394,7 +394,7 @@ test("count checkbox toggles hold", async () => {
   expect(rowOf("ショップ1")?.querySelector("s")?.textContent).toContain("900P");
   await expect.poll(async () => (await stored())?.[1]?.onHold).toBe(true);
 
-  // With the keyboard: Space on the focused checkbox counts it again.
+  // With the keyboard: Space on the focused switch counts it again.
   counted.element().focus();
   await userEvent.keyboard(" ");
   await expect.poll(summaryText).toContain("4店舗を買い回り中");
