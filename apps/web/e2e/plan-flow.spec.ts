@@ -25,10 +25,10 @@ test("create plan, add order, see points, hold it, reload keeps data", async ({ 
   await expect(breakdown).toContainText("通常30P");
   await expect(summary).toContainText("獲得予定30P");
 
-  const count = list.getByRole("checkbox", { name: "テスト商店の注文を買い回りにカウント" });
+  const count = list.getByRole("switch", { name: "テスト商店の注文を購入決定" });
   await expect(count).toBeChecked();
-  // The input itself is visually hidden; a click lands on the box drawn in its label.
-  await count.locator("xpath=..").click();
+  // The input itself is visually hidden; a click lands on the track drawn in its label.
+  await count.locator("xpath=ancestor::label[1]").click();
   await expect(count).not.toBeChecked();
   await expect(breakdown).toContainText("通常0P");
   await expect(summary).toContainText("獲得予定0P");
@@ -38,7 +38,7 @@ test("create plan, add order, see points, hold it, reload keeps data", async ({ 
   const reloaded = page.getByRole("region", { name: "注文のリスト" });
   await expect(reloaded.getByText("テスト商店").first()).toBeVisible();
   await expect(
-    reloaded.getByRole("checkbox", { name: "テスト商店の注文を買い回りにカウント" }),
+    reloaded.getByRole("switch", { name: "テスト商店の注文を購入決定" }),
   ).not.toBeChecked();
   await expect(page.getByRole("list", { name: "ポイントの内訳" })).toContainText("通常0P");
   await expect(page.getByRole("region", { name: "サマリー" })).toContainText("獲得予定0P");
@@ -46,8 +46,8 @@ test("create plan, add order, see points, hold it, reload keeps data", async ({ 
 
   // Counting it again brings the points back, and that survives a reload too.
   await reloaded
-    .getByRole("checkbox", { name: "テスト商店の注文を買い回りにカウント" })
-    .locator("xpath=..")
+    .getByRole("switch", { name: "テスト商店の注文を購入決定" })
+    .locator("xpath=ancestor::label[1]")
     .click();
   await expect(page.getByRole("list", { name: "ポイントの内訳" })).toContainText("通常30P");
   await page.reload();
