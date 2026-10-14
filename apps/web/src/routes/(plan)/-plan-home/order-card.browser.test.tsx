@@ -102,16 +102,16 @@ test("hold toggle moves the order out of the shop count", async () => {
   await expect.poll(summaryText).toContain("4店舗を買い回り中");
 });
 
-test("held card shows the estimate struck through", async () => {
+test("held card shows, struck through, the points it would get once counted", async () => {
   const plan = marathonPlan([order(0), order(1), order(2), order(3, { onHold: true })]);
   await renderPlanHome(createMemoryRepository({ shops, plans: [plan] }));
 
   await expect.poll(heading).toBe("注文 4件（保留 1）");
   const held = cardOf("ショップ3");
-  // Counting it again adds 通常 100 + SPU 200, and the marathon goes from +2倍 on three shops (600) to
-  // +3倍 on four (1,200): 900P in all.
+  // Counted, it gets 通常 100 + SPU 200 + the marathon at +3倍 on four shops (300): 600P. The 300P
+  // the other orders gain from the fourth shop are theirs, not this order's.
   const estimate = held?.querySelector("s");
-  expect(estimate?.textContent).toContain("900P");
+  expect(estimate?.textContent).toContain("600P");
   expect(getComputedStyle(estimate as HTMLElement).textDecorationLine).toBe("line-through");
   // The list item holds the card, which has the frame.
   expect(getComputedStyle(held?.firstElementChild as HTMLElement).borderStyle).toBe("dashed");

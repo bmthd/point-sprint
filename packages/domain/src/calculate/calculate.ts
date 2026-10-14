@@ -348,11 +348,17 @@ const sumOfTotals = (results: Map<string, CoreResult>) =>
   [...results.values()].reduce((sum, result) => sum + result.total, 0);
 
 /**
- * Recalculates every plan with only `orderId` of `plan` unheld, and returns the increase of the
- * sum of all plans' totals. Summing over all plans keeps points that merely move between plans
+ * Recalculates every plan with only `orderId` of `plan` unheld. The points are the increase of the
+ * sum of all plans' totals: summing over all plans keeps points that merely move between plans
  * sharing a cap group out of the estimate.
  */
-function heldEstimate(plans: Plan[], shops: Shop[], plan: Plan, orderId: string, before: number) {
+function heldEstimate(
+  plans: Plan[],
+  shops: Shop[],
+  plan: Plan,
+  orderId: string,
+  before: number,
+): HeldEstimate {
   const unheld = plans.map((other) =>
     other.id !== plan.id
       ? other
@@ -363,7 +369,17 @@ function heldEstimate(plans: Plan[], shops: Shop[], plan: Plan, orderId: string,
           ),
         },
   );
-  return sumOfTotals(calculateCore(unheld, shops)) - before;
+  const results = calculateCore(unheld, shops);
+  const lineItemIds = new Set(
+    plan.orders.find((order) => order.id === orderId)?.lineItems.map((item) => item.id),
+  );
+  const result = results.get(plan.id);
+  return {
+    orderId,
+    points: sumOfTotals(results) - before,
+    rows: (result?.breakdown ?? []).filter((row) => lineItemIds.has(row.lineItemId)),
+    shopCount: result?.shopCount ?? 0,
+  };
 }
 
 /** Calculates every plan at once, because caps can be shared across plans. Keyed by plan ID. */
@@ -376,10 +392,7 @@ export function calculateAll(plans: Plan[], shops: Shop[]): Map<string, Calculat
       if (!result) return [];
       const heldEstimates = plan.orders
         .filter((order) => order.onHold)
-        .map((order): HeldEstimate => ({
-          orderId: order.id,
-          points: heldEstimate(plans, shops, plan, order.id, before),
-        }));
+        .map((order) => heldEstimate(plans, shops, plan, order.id, before));
       return [[plan.id, { ...result, heldEstimates }] as const];
     }),
   );

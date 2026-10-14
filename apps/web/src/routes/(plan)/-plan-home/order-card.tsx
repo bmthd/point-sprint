@@ -59,6 +59,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
   const moveOrder = useSetAtom(moveOrderAtom);
   const shopName = useShopName(order);
   const bodyId = useId();
+  const holdNoteId = useId();
   const upRef = useRef<HTMLButtonElement>(null);
   const downRef = useRef<HTMLButtonElement>(null);
 
@@ -100,7 +101,10 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
             textAlign="start"
             lineHeight="normal"
           >
-            <OrderBadge badge={props.badge} />
+            {/* As wide as 「保留」, so the text beside it stays put when the order is held. */}
+            <Flex as="span" flex="none" w="10" justify="center">
+              <OrderBadge badge={props.badge} />
+            </Flex>
             <Flex as="span" flex="1" minW="0" direction="column" gap="0.5">
               <Flex as="span" gap="1.5" fontSize="xs" color="fg.muted">
                 <Text as="span" lineClamp={1}>
@@ -122,7 +126,16 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                     : "メモなし"}
                 </Text>
               )}
-              <Flex as="span" align="center" wrap="wrap" gap="1.5" fontSize="xs" color="fg.muted">
+              {/* One chip high with or without campaigns, so every card is as tall. */}
+              <Flex
+                as="span"
+                align="center"
+                wrap="wrap"
+                gap="1.5"
+                minH="5.5"
+                fontSize="xs"
+                color="fg.muted"
+              >
                 <Text as="span" fontVariantNumeric="tabular-nums">
                   {yen(amount)}
                 </Text>
@@ -139,21 +152,30 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
               gap="0.5"
               fontVariantNumeric="tabular-nums"
             >
+              {/* Held or not, two lines, and the rate and 保留中 share one cell, like a row. */}
               {held ? (
                 <Text as="s" fontSize="md" fontWeight="bold" color="fg.muted">
                   <VisuallyHidden>保留中の見込み </VisuallyHidden>
-                  {pointsText(points.estimate ?? 0)}
+                  {pointsText(points.total)}
                 </Text>
               ) : (
-                <>
-                  <Text as="span" fontSize="md" fontWeight="bold">
-                    {pointsText(points.total)}
-                  </Text>
-                  <Text as="span" fontSize="2xs" color="fg.muted">
-                    {rateText(points.rate, false)}
-                  </Text>
-                </>
+                <Text as="span" fontSize="md" fontWeight="bold">
+                  {pointsText(points.total)}
+                </Text>
               )}
+              <Box as="span" display="grid" justifyItems="end" fontSize="2xs" color="fg.muted">
+                <Text as="span" gridArea="1 / 1" visibility={held ? "hidden" : undefined}>
+                  {rateText(points.rate, false)}
+                </Text>
+                <Text
+                  as="span"
+                  gridArea="1 / 1"
+                  visibility={held ? undefined : "hidden"}
+                  aria-hidden
+                >
+                  保留中
+                </Text>
+              </Box>
             </Flex>
             <Flex as="span" color="fg.muted">
               <ChevronIcon open={open} />
@@ -219,52 +241,65 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                   {yen(base)}
                 </Text>
               </Flex>
-              {held ? (
-                <Text fontSize="sm" color="fg.muted">
-                  保留中の注文は合計と買い回りに入りません。
-                </Text>
-              ) : (
-                <Flex direction="column" gap="1.5" fontSize="sm">
-                  {points.rows.map((row) => (
-                    <Box
-                      key={row.key}
-                      data-row="benefit"
-                      display="grid"
-                      gridTemplateColumns="14px 1fr 56px 56px"
-                      alignItems="center"
-                      gap="2"
-                    >
-                      <Box boxSize="2.5" rounded="xs" bg={pointFill(row.group, 2)} aria-hidden />
-                      <span>{row.label}</span>
-                      <Text
-                        as="span"
-                        textAlign="end"
-                        color="fg.muted"
-                        fontVariantNumeric="tabular-nums"
-                      >
-                        {rateText(row.rate, row.group !== "base")}
-                      </Text>
-                      <Text
-                        as="span"
-                        textAlign="end"
-                        fontWeight="medium"
-                        fontVariantNumeric="tabular-nums"
-                      >
-                        {pointsText(row.points)}
-                      </Text>
-                    </Box>
-                  ))}
-                </Flex>
-              )}
-              <Switch
-                checked={!held}
-                onChange={() => save(toggleHold({ planId, orderId }))}
-                colorScheme="primary"
-                flexDirection="row-reverse"
-                justifyContent="space-between"
+              {/* A held order's lines are the ones it would have once counted, faded and struck. */}
+              <Flex
+                direction="column"
+                gap="1.5"
+                fontSize="sm"
+                color={held ? "fg.muted" : undefined}
+                aria-label={held ? "購入決定にしたときの内訳" : undefined}
               >
-                購入決定（オフで保留）
-              </Switch>
+                {points.rows.map((row) => (
+                  <Box
+                    key={row.key}
+                    data-row="benefit"
+                    display="grid"
+                    gridTemplateColumns="14px 1fr 56px 56px"
+                    alignItems="center"
+                    gap="2"
+                  >
+                    <Box
+                      boxSize="2.5"
+                      rounded="xs"
+                      bg={pointFill(row.group, 2)}
+                      opacity={held ? 0.4 : undefined}
+                      aria-hidden
+                    />
+                    <span>{row.label}</span>
+                    <Text
+                      as="span"
+                      textAlign="end"
+                      color="fg.muted"
+                      fontVariantNumeric="tabular-nums"
+                    >
+                      {rateText(row.rate, row.group !== "base")}
+                    </Text>
+                    <Text
+                      as={held ? "s" : "span"}
+                      textAlign="end"
+                      fontWeight="medium"
+                      fontVariantNumeric="tabular-nums"
+                    >
+                      {pointsText(row.points)}
+                    </Text>
+                  </Box>
+                ))}
+              </Flex>
+              <Flex direction="column" gap="1">
+                <Switch
+                  checked={!held}
+                  onChange={() => save(toggleHold({ planId, orderId }))}
+                  colorScheme="primary"
+                  flexDirection="row-reverse"
+                  justifyContent="space-between"
+                  inputProps={{ "aria-describedby": holdNoteId }}
+                >
+                  購入決定（オフで保留）
+                </Switch>
+                <Text id={holdNoteId} fontSize="xs" color="fg.muted">
+                  オフにすると合計と買い回りに入りません。
+                </Text>
+              </Flex>
               <Box display="grid" gridTemplateColumns="repeat(3, minmax(0, 1fr))" gap="2">
                 <Button variant="outline" size="lg" onClick={() => props.onEdit(orderId)}>
                   編集

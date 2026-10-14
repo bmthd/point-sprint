@@ -121,8 +121,17 @@ describe("held orders", () => {
     );
     // Unheld: base 10 + 10 and shop-around (2 shops, +1) 10 + 10 = 40. Held: base 10.
     expect(unheld.total).toBe(40);
-    expect(held.heldEstimates).toEqual([{ orderId: ORDER_B, points: unheld.total - held.total }]);
+    expect(held.heldEstimates).toEqual([
+      {
+        orderId: ORDER_B,
+        points: unheld.total - held.total,
+        // What order B itself earns once counted: the rows it has in the unheld result.
+        rows: unheld.breakdown.filter((row) => row.lineItemId === ITEM_B),
+        shopCount: unheld.shopCount,
+      },
+    ]);
     expect(held.heldEstimates[0]?.points).toBe(30);
+    expect(held.heldEstimates[0]?.rows.map((row) => row.points)).toEqual([10, 10]);
     expect(unheld.heldEstimates).toEqual([]);
   });
 
@@ -137,7 +146,7 @@ describe("held orders", () => {
     );
     expect(result.total).toBe(20);
     expect(result.benefitTotals.find((t) => t.benefitId === CAPPED_ID)?.capReached).toBe(true);
-    expect(result.heldEstimates).toEqual([{ orderId: ORDER_B, points: 10 }]);
+    expect(result.heldEstimates).toMatchObject([{ orderId: ORDER_B, points: 10 }]);
   });
 });
 
@@ -161,5 +170,5 @@ test("held estimate is the net increase across plans sharing a cap", () => {
   const results = calculateAll([plan1, plan2], shops);
   // Plan 2 already fills the cap; releasing order A from hold only splits the same 10 points 5/5.
   expect(results.get(PLAN_2)?.total).toBe(10);
-  expect(results.get(PLAN_ID)?.heldEstimates).toEqual([{ orderId: ORDER_A, points: 0 }]);
+  expect(results.get(PLAN_ID)?.heldEstimates).toMatchObject([{ orderId: ORDER_A, points: 0 }]);
 });

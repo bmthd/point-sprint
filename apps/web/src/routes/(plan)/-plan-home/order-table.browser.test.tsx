@@ -389,9 +389,9 @@ test("購入決定 switch toggles hold", async () => {
   await expect.poll(heading).toBe("注文 4件（保留 1）");
   expect(rowOf("ショップ1")?.querySelector('[data-badge="order"]')?.textContent).toBe("保留");
   expect(rowOf("ショップ2")?.querySelector('[data-badge="order"]')?.textContent).toBe("2");
-  // Counting it again adds 通常 100 + SPU 200, and the marathon goes from +2倍 on three shops to
-  // +3倍 on four: 900P in all.
-  expect(rowOf("ショップ1")?.querySelector("s")?.textContent).toContain("900P");
+  // Held, it shows struck the points it had counted: 通常 100 + SPU 200 + the marathon at +3倍 on
+  // four shops (300).
+  expect(rowOf("ショップ1")?.querySelector("s")?.textContent).toContain("600P");
   await expect.poll(async () => (await stored())?.[1]?.onHold).toBe(true);
 
   // With the keyboard: Space on the focused switch counts it again.

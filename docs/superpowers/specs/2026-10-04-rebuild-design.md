@@ -130,7 +130,7 @@ OrderTag   "repeat"
 - `Benefit.exclusiveGroup` が同じ特典は、同時に1つしか有効にできない（楽天カードと楽天プレミアムカードの特典分など）。1つを有効にすると、同じグループのほかの特典は無効になる。この切り替えは `toggleBenefit(plan, benefitId)` が行う。
 - `Benefit.requires` は、その特典が前提にする特典の ID である。楽天カード特典分と楽天プレミアムカードの特典分は、楽天カードで払ったときに付くので、楽天カード通常分を前提にする。前提の特典は、前提にする特典のどれかが有効なときだけ有効にする。前提にする特典を有効にすると前提の特典も有効になり、最後の1つを無効にすると前提の特典も無効になる。前提の特典を有効にしたときに前提にする特典がどれも無効なら、並びの最初の1つ（楽天カード特典分）を有効にする。前提の特典を無効にすると、前提にする特典もすべて無効になる。この切り替えも `toggleBenefit` が行い、旧サイトの連動と同じ結果になる。
 - `Shop.tags` はショップの属性で、最初のリリースでは `"39shop"`（送料無料ラインを 3,980円以下に設定しているショップ）だけを持つ。`Conditions.shopTags` を指定した特典は、そのすべての属性を持つショップの注文だけを対象にする。
-- `Order.onHold`（保留）が `true` の注文は、計算から外す。買い回りのショップ数にも、合計にも、上限にも入れない。画面では、含めた場合のポイントを取り消し線で参考に出す（3節の `heldEstimates`）。
+- `Order.onHold`（保留）が `true` の注文は、計算から外す。買い回りのショップ数にも、合計にも、上限にも入れない。画面では、その注文を数えたときに自分に付くポイント・倍率・キャンペーンを、取り消し線と薄い色で参考に出す（3節の `heldEstimates` の `rows` と `shopCount`）。数えるかどうかを切り替えても、出す値は変わらない。
 - `Order.tags` は注文の属性で、最初のリリースでは `"repeat"`（以前に買った商品を同じショップでもう一度買う、リピート購入）だけを持つ。`Conditions.orderTags` を指定した特典は、その属性をすべて持つ注文だけを対象にする。
 - `Plan.orders` の並びは画面での並びであり、計算結果には影響しない。注文は並べ替えとコピーができる。コピーは、ID をすべて新しくした同じ内容の注文を、元の注文の直後に入れる。
 - `Benefit.category` は、内訳の4区分（通常、SPU、マラソン、キャンペーン）を決める。`base` は通常（通常ポイントと楽天カード通常分）、`spu` は SPU、`shop-around` の種類の特典はマラソン、それ以外の `campaign` とショップ倍率はキャンペーンに数える。
@@ -170,7 +170,7 @@ IndexedDB には、プランごと、プロフィール、ショップごとに1
 ```ts
 calculateAll(plans, shops) → Map<PlanId, CalculationResult>
 calculate(plan, shops) → CalculationResult   // calculateAll([plan], shops) の1件
-CalculationResult = {   // 下の項目に加えて heldEstimates: { orderId, points }[] と shopAroundOutlook を返す
+CalculationResult = {   // 下の項目に加えて heldEstimates: { orderId, points, rows, shopCount }[] と shopAroundOutlook を返す
   breakdown: { lineItemId, source: BenefitId | "shop-rate", points }[],
   benefitTotals: { benefitId, rawPoints, cappedPoints, capReached }[],
   shopCount, total, warnings
@@ -211,7 +211,7 @@ CalculationResult = {   // 下の項目に加えて heldEstimates: { orderId, po
 
 ### 画面のための計算結果
 
-- `heldEstimates`: 保留中の注文ごとに、その注文の保留を外したときに増える合計ポイント。全プランを計算し直し、全プランの合計の和の差分を取る。上限を共有するプランの間でポイントが移るだけの分は増えたことにしない。
+- `heldEstimates`: 保留中の注文ごとに、その注文の保留だけを外して全プランを計算し直した結果。`points` は全プランの合計の和の増分で、上限を共有するプランの間でポイントが移るだけの分は増えたことにしない。`rows` はそのときのこの注文の内訳の行、`shopCount` はそのときのプランのショップ数（`rows` の倍率を出すため）。
 - `shopAroundOutlook`: 買いまわりの特典があるとき、いまのショップ数から10ショップまでの各ショップ数について、倍率と、上限に達するまでに買える残りの金額（税抜と、税率10%として換算した税込の概算。特典の対象額が税込のときは換算しない）。上限は、その特典の上限のグループの上限（食い違うときは最小）から、グループのほかの対象（ほかのプランなど）がすでに得た生のポイントを引いた、このプランに残っている分を使う。「あと1店舗で全商品 +◯倍（約 +◯P）」は、いまのショップ数に1を足したときの倍率で求め、倍率が変わらないときは出さない。
 
 ### 計算の手順
