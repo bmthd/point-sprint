@@ -263,7 +263,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 flexDirection="row-reverse"
                 justifyContent="space-between"
               >
-                買い回りにカウント（オフで保留）
+                購入決定（オフで保留）
               </Switch>
               <Box display="grid" gridTemplateColumns="repeat(3, minmax(0, 1fr))" gap="2">
                 <Button variant="outline" size="lg" onClick={() => props.onEdit(orderId)}>
