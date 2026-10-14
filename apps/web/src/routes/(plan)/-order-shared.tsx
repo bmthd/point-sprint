@@ -46,6 +46,10 @@ export type OrderPointRow = {
   points: number;
 };
 
+/**
+ * An order's points. A held order gets the ones it would have once counted, so turning 購入決定
+ * on and off changes how they are drawn, not what they are.
+ */
 export type OrderCardPoints = {
   rows: OrderPointRow[];
   total: number;
@@ -53,8 +57,6 @@ export type OrderCardPoints = {
   rate: number;
   /** Labels of the campaigns that gave the order points. */
   campaigns: string[];
-  /** For a held order, how many points counting it again would add. */
-  estimate: number | undefined;
 };
 
 const groupLabels: Record<Exclude<PointGroup, "campaign">, string> = {
@@ -130,7 +132,8 @@ const heldEstimateAtom = atomFamily(
   ({ planId, orderId }: OrderKey) =>
     selectAtom(
       planResultAtom(planId),
-      (result) => result?.heldEstimates.find((estimate) => estimate.orderId === orderId)?.points,
+      (result) => result?.heldEstimates.find((estimate) => estimate.orderId === orderId),
+      deepEqual,
     ),
   sameOrderKey,
 );
@@ -143,14 +146,18 @@ export const orderCardPointsAtom = atomFamily(
   (key: OrderKey) =>
     selectAtom(
       atom((get): OrderCardPoints => {
-        const { rows, total } = get(orderPointsAtom(key));
-        const lines = orderPointRows(
-          rows,
-          get(benefitsAtom(key.planId)),
-          get(shopCountAtom(key.planId)),
-          get(orderAtom(key))?.lineItems ?? [],
-        );
-        return { ...lines, total, estimate: get(heldEstimateAtom(key)) };
+        const counted = get(orderPointsAtom(key));
+        const estimate = get(heldEstimateAtom(key));
+        const rows = estimate?.rows ?? counted.rows;
+        return {
+          ...orderPointRows(
+            rows,
+            get(benefitsAtom(key.planId)),
+            estimate?.shopCount ?? get(shopCountAtom(key.planId)),
+            get(orderAtom(key))?.lineItems ?? [],
+          ),
+          total: rows.reduce((sum, row) => sum + row.points, 0),
+        };
       }),
       (points) => points,
       deepEqual,

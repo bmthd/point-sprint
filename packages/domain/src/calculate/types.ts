@@ -51,4 +51,11 @@ export type CapGroupUsage = {
   points: Record<string, number>;
 };
 
-export type HeldEstimate = { orderId: string; points: number };
+export type HeldEstimate = {
+  orderId: string;
+  points: number;
+  /** The order's own breakdown rows once it is counted, with every other order as it is. */
+  rows: BreakdownRow[];
+  /** The plan's shop count once the order is counted, for the rates behind `rows`. */
+  shopCount: number;
+};

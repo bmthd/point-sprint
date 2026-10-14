@@ -521,7 +521,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
           {held ? (
             <Text as="s" fontWeight="bold" color="fg.muted">
               <VisuallyHidden>保留中の見込み </VisuallyHidden>
-              {pointsText(points.estimate ?? 0)}
+              {pointsText(points.total)}
             </Text>
           ) : (
             <Text as="span" fontWeight="bold">
@@ -565,12 +565,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
         {open ? (
           <>
             <Flex direction="column" gap="2">
-              {/* A held order has no points; its note takes the legend's place, so it is as tall. */}
-              <PointBreakdown
-                totals={groupTotalsOf(points.rows)}
-                legend="line"
-                note={held ? "保留中の注文は合計と買い回りに入りません。" : undefined}
-              />
+              <PointBreakdown totals={groupTotalsOf(points.rows)} legend="line" held={held} />
               <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
                 {`税抜の基準額 ${yen(base)}`}
               </Text>
