@@ -41,6 +41,15 @@ const plainIssues = (issues: readonly Issue[]) =>
 type Rejected = { store: StoreName; key: IDBValidKey; issues: readonly Issue[] };
 
 const schemas = { plans: PlanSchema, shops: ShopSchema, profile: ProfileSchema };
+const STORES = ["plans", "shops", "profile", "quarantine"] as const;
+
+function completion(transaction: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  });
+}
 
 type OpenState = {
   /** Moves to `quarantine` in flight, keyed by store and row key so a row is moved at most once. */
@@ -70,11 +79,7 @@ function openDatabase(name: string, migrations: readonly Migration[], state: Ope
         .add({ store, value: current, issues: plainIssues(issues) });
       source.delete(key);
     };
-    await new Promise<void>((resolve, reject) => {
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-      transaction.onabort = () => reject(transaction.error);
-    });
+    await completion(transaction);
   };
 
   // `onValidationError` is synchronous, so the move runs in the background and every repository
@@ -202,6 +207,12 @@ export function createIndexedDbRepository(
     profile: {
       get: async () => (await settled()).stores.profile.get(PROFILE_KEY),
       put: async (profile) => (await settled()).stores.profile.put(profile, PROFILE_KEY),
+    },
+    clear: async () => {
+      const database = await (await settled())["~"].getDatabase();
+      const transaction = database.transaction(STORES, "readwrite");
+      for (const store of STORES) transaction.objectStore(store).clear();
+      await completion(transaction);
     },
     quarantined: async () => (await settled()).stores.quarantine.count(),
     wasReset: () => reset,

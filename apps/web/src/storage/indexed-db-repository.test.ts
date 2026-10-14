@@ -170,3 +170,20 @@ test("a valid row written while a bad one is being moved is kept", async () => {
   expect(await repo.plans.get(plan.id)).toEqual(plan);
   expect(await repo.quarantined()).toBe(0);
 });
+
+test("clear removes every stored row, including the quarantined ones", async () => {
+  const name = uniqueName();
+  const repo = createIndexedDbRepository({ name });
+  await repo.plans.put(plan);
+  await repo.shops.put(shop);
+  await repo.profile.put(profile);
+  await putRaw(name, "plans", { id: "broken", name: 1 });
+  await repo.plans.list();
+
+  await repo.clear();
+
+  expect(await repo.plans.list()).toEqual([]);
+  expect(await repo.shops.list()).toEqual([]);
+  expect(await repo.profile.get()).toBeUndefined();
+  expect(await repo.quarantined()).toBe(0);
+});

@@ -288,3 +288,29 @@ test("accounts stay hidden until they are turned on in the advanced settings", a
   await expect.element(toggle).not.toBeChecked();
   expect(screen.getByRole("list", { name: "楽天アカウント" }).query()).toBeNull();
 });
+
+test("データを初期化 removes every stored row and goes to the top", async () => {
+  const repository = createMemoryRepository({
+    shops,
+    profile: { spuBenefits: [], updatedAt: "2026-10-05T00:00:00.000Z" },
+  });
+  const screen = await renderProfile(repository);
+
+  await screen.getByRole("button", { name: "データを初期化" }).click();
+  await screen.getByRole("button", { name: "初期化する" }).click();
+
+  await expect.element(screen.getByText("一覧")).toBeVisible();
+  expect(await repository.shops.list()).toEqual([]);
+  expect(await repository.profile.get()).toBeUndefined();
+});
+
+test("キャンセル in the reset dialog keeps the data", async () => {
+  const repository = createMemoryRepository({ shops });
+  const screen = await renderProfile(repository);
+
+  await screen.getByRole("button", { name: "データを初期化" }).click();
+  await screen.getByRole("button", { name: "キャンセル" }).click();
+
+  await expect.element(screen.getByRole("heading", { name: "プロフィール" })).toBeVisible();
+  expect(await repository.shops.list()).toHaveLength(shops.length);
+});

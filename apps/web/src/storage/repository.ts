@@ -12,6 +12,8 @@ export interface Repository {
   profile: { get(): Promise<Profile | undefined>; put(profile: Profile): Promise<void> };
   /** Number of stored rows that failed validation on read and were moved aside. */
   quarantined(): Promise<number>;
+  /** Removes every stored row, the quarantined ones included, in one transaction. */
+  clear(): Promise<void>;
   /** True when the database could not be opened at its current version and was recreated empty. */
   wasReset(): boolean;
 }
