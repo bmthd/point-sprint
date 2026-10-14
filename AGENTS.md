@@ -20,6 +20,12 @@
 - 見た目は部品の `variant`、`size`、`colorScheme` で選び、色はテーマのトークンで指定する（`docs/design-system.md`）
 - Yamada UI にない部品を作ったときは、探した部品の名前と、使わなかった理由を PR に書く
 
+## 保存するデータの形
+
+`packages/domain/src/model` の保存する形を変えたら、`CURRENT_SCHEMA_VERSION`（`packages/domain/src/migrations/index.ts`）を 1 上げる。移し替える処理がいらない変更でも上げる。
+
+アプリは、自分の版より新しいデータベースを開くと、読み書きを止めて再読み込みを促す。版を上げると、開いたままの古いタブが新しい形のデータを読めずに退避したり、古い形で上書きしたりするのを防げる。
+
 ## PR の本文
 
 本文は `.github/pull_request_template.md` の節で書く。
