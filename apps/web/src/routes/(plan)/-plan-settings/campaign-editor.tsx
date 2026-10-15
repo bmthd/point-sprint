@@ -11,6 +11,7 @@ import { Box, Button, Flex, Image, RadioCard, RadioCardGroup, Text } from "@work
 import { useSetAtom } from "jotai";
 import * as v from "valibot";
 import { CommitField } from "../../../form/commit-field";
+import { CommitDatePicker } from "../-date-picker-field";
 import {
   END_BEFORE_START,
   START_AFTER_END,
@@ -96,7 +97,7 @@ export function CampaignEditor({
       ) : null}
       {spec.date ? (
         <>
-          <CommitField
+          <CommitDatePicker
             key={`date:${date}`}
             label="日付"
             initial={date}
@@ -107,6 +108,7 @@ export function CampaignEditor({
                 `この日の${template.name}はもう追加してあります`,
               ),
             )}
+            period={plan.period}
             onCommit={(day) => set({ dates: [day] })}
           />
           <RadioCardGroup.Root
@@ -139,7 +141,7 @@ export function CampaignEditor({
       ) : null}
       {spec.period ? (
         <Box {...twoColumns}>
-          <CommitField
+          <CommitDatePicker
             key={`start:${period.start}:${period.end}`}
             label="開始日"
             initial={period.start}
@@ -151,11 +153,12 @@ export function CampaignEditor({
                 `この期間の${template.name}はもう追加してあります`,
               ),
             )}
+            period={plan.period}
             onCommit={(start) =>
               change((current) => ({ period: { start, end: current.period?.end ?? period.end } }))
             }
           />
-          <CommitField
+          <CommitDatePicker
             key={`end:${period.start}:${period.end}`}
             label="終了日"
             initial={period.end}
@@ -163,6 +166,7 @@ export function CampaignEditor({
               dateSchema("終了日"),
               v.check((end) => end >= period.start, END_BEFORE_START),
             )}
+            period={plan.period}
             onCommit={(end) =>
               change((current) => ({
                 period: { start: current.period?.start ?? period.start, end },

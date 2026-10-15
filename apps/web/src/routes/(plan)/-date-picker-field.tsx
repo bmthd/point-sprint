@@ -4,7 +4,8 @@
 
 import type { FieldElementProps } from "@formisch/react";
 import type { Plan } from "@workspaces/domain";
-import { Box, DatePicker, type DatePickerProps, useFieldProps } from "@workspaces/ui";
+import { Box, DatePicker, type DatePickerProps, Field, useFieldProps } from "@workspaces/ui";
+import { useState } from "react";
 import * as v from "valibot";
 import { dateSchema } from "../../form/field-schemas";
 
@@ -116,5 +117,44 @@ export function FormDatePicker({
       onBlur={onBlur}
       {...props}
     />
+  );
+}
+
+/**
+ * A `FieldDatePicker` with its label that saves a day as soon as it is picked or typed in, and only
+ * when `schema` accepts it. Its error shows until a day it accepts is chosen. Give it a `key` of the
+ * saved day, and of anything its schema checks against, so it follows changes made elsewhere.
+ */
+export function CommitDatePicker<T>({
+  label,
+  initial,
+  schema,
+  onCommit,
+  period,
+}: {
+  label: string;
+  /** The saved day, as `2026-10-06`. */
+  initial: string;
+  schema: v.GenericSchema<string, T>;
+  /** Saves the day; a rejected promise means it was not saved. */
+  onCommit: (value: T) => Promise<unknown>;
+  /** The event's days, marked on the calendar. */
+  period?: Period;
+}) {
+  const [error, setError] = useState<string>();
+  return (
+    <Field.Root label={label} invalid={error !== undefined} errorMessage={error} minW="0">
+      <FieldDatePicker
+        size="lg"
+        period={period}
+        defaultValue={parseIsoDate(initial)}
+        onChange={(date) => {
+          const text = date ? isoDate(date) : "";
+          const parsed = v.safeParse(schema, text);
+          setError(parsed.success ? undefined : parsed.issues[0].message);
+          if (parsed.success && text !== initial) void onCommit(parsed.output).catch(() => {});
+        }}
+      />
+    </Field.Root>
   );
 }
