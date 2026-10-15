@@ -282,6 +282,8 @@ test("accounts stay hidden until they are turned on in the advanced settings", a
   await expect
     .poll(async () => (await storedProfile(repository)).accounts?.map((a) => a.name))
     .toEqual(["メイン"]);
+  // A click while the dialog is still closing lands on its overlay, not on the switch.
+  await expect.element(screen.getByRole("dialog")).not.toBeInTheDocument();
 
   // Turning it off hides the accounts again.
   await screen.getByText("複数の楽天アカウントを使い分ける").click();

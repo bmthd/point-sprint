@@ -1,5 +1,6 @@
 import { newestFirst, notices } from "../src/routes/-notices/notices";
-import { type Page, expect, test } from "./fixtures";
+import { expect, test } from "./fixtures";
+import { NoticesPage, SitePage } from "./pages";
 
 // The notices are in full on /notices. The sidebar lists their headlines: on a wide screen beside
 // the content of the pages that read (the pages for working on a plan have none), on a phone in the
@@ -9,19 +10,6 @@ const latest = newestFirst(notices)[0]!;
 
 const withHeadlines = ["/", "/help", "/terms", "/privacy", "/inquiry", "/guides"];
 const withoutSidebar = ["/profile", "/plan", "/plan/settings"];
-
-const sidebar = (page: Page) => page.getByRole("complementary", { name: "サイドバー" });
-/** Opens the header's menu. Retried: a click before the prerendered page hydrates does nothing. */
-async function openMenu(page: Page) {
-  const menu = page.getByRole("dialog", { name: "メニュー" });
-  await expect(async () => {
-    await page.getByRole("banner").getByRole("button", { name: "メニュー" }).click();
-    await expect(menu).toBeVisible({ timeout: 1000 });
-  }).toPass();
-  return menu;
-}
-
-const headlines = (page: Page) => sidebar(page).getByRole("region", { name: "お知らせ" });
 
 test("the HTML rendered at build time has the headlines on the pages that read", async ({
   request,
@@ -45,20 +33,19 @@ test("/notices has every notice in full, and its HTML rendered at build time too
     expect(html).toContain(`id="${notice.id}"`);
     expect(html).toContain(notice.title);
   }
-  await page.goto("/notices");
-  const article = page.getByRole("main").getByRole("article").first();
+  const article = (await NoticesPage.open(page)).latest;
   await expect(article.getByRole("heading", { level: 2, name: latest.title })).toBeVisible();
   await expect(article.locator("time")).toHaveAttribute("datetime", latest.date);
 });
 
 test("on a wide screen the sidebar is a column to the right of the content", async ({ page }) => {
   for (const path of withHeadlines) {
-    await page.goto(path);
-    await expect(headlines(page).getByRole("link", { name: latest.title })).toBeVisible();
-    const main = (await page.getByRole("main").boundingBox())!;
-    const aside = (await sidebar(page).boundingBox())!;
-    expect(aside.x, path).toBeGreaterThanOrEqual(main.x + main.width);
-    expect(Math.abs(aside.y - main.y), path).toBeLessThan(1);
+    const { sidebar, main } = await SitePage.open(page, path);
+    await expect(sidebar.headlines.getByRole("link", { name: latest.title })).toBeVisible();
+    const mainBox = (await main.boundingBox())!;
+    const aside = (await sidebar.root.boundingBox())!;
+    expect(aside.x, path).toBeGreaterThanOrEqual(mainBox.x + mainBox.width);
+    expect(Math.abs(aside.y - mainBox.y), path).toBeLessThan(1);
     expect(aside.width, path).toBe(320);
   }
 });
@@ -66,12 +53,12 @@ test("on a wide screen the sidebar is a column to the right of the content", asy
 test("on a phone the sidebar is in the header's menu, on every page", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const path of [...withHeadlines, ...withoutSidebar]) {
-    await page.goto(path);
-    await expect(page.getByRole("main").getByText("読み込み中…")).toHaveCount(0);
-    await expect(sidebar(page)).toHaveCount(0);
-    const menu = await openMenu(page);
-    await expect(menu.getByRole("link", { name: latest.title })).toBeVisible();
-    await expect(menu.getByRole("region", { name: "このサイトをシェア" })).toBeVisible();
+    const site = await SitePage.open(page, path);
+    await expect(site.main.getByText("読み込み中…")).toHaveCount(0);
+    await expect(site.sidebar.root).toHaveCount(0);
+    const menu = await site.header.openMenu();
+    await expect(menu.headline(latest.title)).toBeVisible();
+    await expect(menu.shareSite).toBeVisible();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,
     );
@@ -81,11 +68,10 @@ test("on a phone the sidebar is in the header's menu, on every page", async ({ p
 
 test("a headline in the sidebar goes to the notice on /notices", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/help");
-  await expect(page.getByRole("main").getByText("読み込み中…")).toHaveCount(0);
-  await openMenu(page);
-  await headlines(page).getByRole("link", { name: latest.title }).click();
-  await expect(page).toHaveURL(new RegExp(`/notices/?#${latest.id}$`));
-  await expect(page.locator(`#${latest.id}`)).toBeInViewport();
-  await expect(sidebar(page).getByRole("region", { name: "お知らせ" })).toHaveCount(0);
+  const site = await SitePage.open(page, "/help");
+  await expect(site.main.getByText("読み込み中…")).toHaveCount(0);
+  const menu = await site.header.openMenu();
+  const noticesPage = await menu.goToNotice(latest.title, latest.id);
+  await expect(noticesPage.notice(latest.id)).toBeInViewport();
+  await expect(noticesPage.sidebar.headlines).toHaveCount(0);
 });
