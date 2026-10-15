@@ -1,5 +1,12 @@
-import { type Benefit, type CalculationResult, type Plan, channels } from "@workspaces/domain";
 import {
+  type Benefit,
+  type CalculationResult,
+  type Plan,
+  channels,
+  spuPurchaseRules,
+} from "@workspaces/domain";
+import {
+  Alert,
   Badge,
   type BadgeProps,
   Box,
@@ -21,6 +28,7 @@ import { useSetAtom } from "jotai";
 import { useId, useState } from "react";
 import { toggleBenefitAtom } from "../../../state/order-ops";
 import { ExternalIcon } from "../../../ui/icons";
+import { useSpuOffMessages } from "../-warnings";
 import { imageUrl, pointsText, rateText } from "../-order-shared";
 import { SPU_PAGE_URL, useSaveSettingsChange } from "./settings-shared";
 
@@ -191,6 +199,7 @@ function DetailBody({
     (other) => other.id === benefit.requires || other.requires === benefit.id,
   );
   const targets = benefit.conditions.channels?.map((id) => channels[id].label).join("・");
+  const rule = spuPurchaseRules.find((candidate) => candidate.benefitId === benefit.id);
   return (
     <Flex direction="column" gap="2" fontSize="sm">
       <Box fontVariantNumeric="tabular-nums">
@@ -210,6 +219,12 @@ function DetailBody({
       {linked.length > 0 ? (
         <Text color="fg.muted">
           {linked.map(tileName).join("・")}と一緒に ON / OFF が切り替わります。
+        </Text>
+      ) : null}
+      {rule ? (
+        <Text color="fg.muted">
+          {channels[rule.channel].label}で 1 回 {rule.minOrderAmount.toLocaleString("ja-JP")}
+          円以上の注文を入れると、自動で ON になります。
         </Text>
       ) : null}
       <Text color="fg.muted">達成の条件は楽天のページで確かめて、達成したものを ON にします。</Text>
@@ -289,6 +304,7 @@ export function SpuCard({
   note,
   benefits,
   capped,
+  warnings = [],
   onToggle,
 }: {
   title: string;
@@ -297,6 +313,8 @@ export function SpuCard({
   benefits: Benefit[];
   /** The ids that reached their cap. `undefined` when there is no plan to reach them in. */
   capped?: ReadonlySet<string>;
+  /** Warnings shown above the tiles. */
+  warnings?: string[];
   onToggle: (benefitId: string) => void;
 }) {
   const normal = enabledRate(benefits, "base");
@@ -345,6 +363,13 @@ export function SpuCard({
           </Text>
         ) : null}
 
+        {warnings.map((warning) => (
+          <Alert.Root key={warning} status="warning" role="status" alignItems="center">
+            <Alert.Icon />
+            <Alert.Description>{warning}</Alert.Description>
+          </Alert.Root>
+        ))}
+
         <SpuTileGrid benefits={benefits} capped={capped ?? noneCapped} onToggle={onToggle} />
 
         <Flex wrap="wrap" align="center" columnGap="3" rowGap="1.5" fontSize="xs" color="fg.muted">
@@ -382,6 +407,7 @@ export function SpuCard({
 export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResult }) {
   const toggle = useSetAtom(toggleBenefitAtom);
   const save = useSaveSettingsChange(plan.id);
+  const warnings = useSpuOffMessages(plan);
   const capped = new Set(
     result.benefitTotals.filter((total) => total.capReached).map((total) => total.benefitId),
   );
@@ -390,6 +416,7 @@ export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResu
       title="SPU"
       benefits={plan.benefits}
       capped={capped}
+      warnings={warnings}
       onToggle={(benefitId) => save(toggle({ planId: plan.id, benefitId }))}
     />
   );

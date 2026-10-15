@@ -5,8 +5,8 @@
 // 各項目の倍率と月間獲得上限ポイント数は、ページの「特典N」と各特典のルール
 // （「▼月間獲得上限ポイント数」）から写した。
 // ページの「■対象サービス」は楽天市場での通常購入・定期購入・頒布会・楽天ブックス・楽天Kobo・
-// Rakuten Fashion・楽天24エクスプレスなので、どの項目も channels を楽天市場と楽天ブックスに限る
-// （ラクマでの購入は対象外）。
+// Rakuten Fashion・楽天24エクスプレスなので、どの項目も channels を楽天市場、楽天ブックス、
+// 楽天Kobo に限る。
 // 各項目の達成条件（「月に一度以上3,000円以上」など、楽天市場の外での利用）は
 // conditions で表せないため、ユーザーが自分の達成状況に合わせて enabled を切り替える。
 // 旧サイトになかった新しい4サービスのアイコンは、上記の公式SPUページが配信する画像を
@@ -17,7 +17,7 @@ import type { ChannelId } from "../model/common";
 type AmountBasis = Benefit["amountBasis"];
 type CapScope = Benefit["capScope"];
 
-const SPU_CHANNELS: ChannelId[] = ["rakuten-ichiba", "rakuten-books"];
+const SPU_CHANNELS: ChannelId[] = ["rakuten-ichiba", "rakuten-books", "rakuten-kobo"];
 
 function spu(
   id: string,
@@ -59,6 +59,20 @@ function spu(
 export const CARD_NORMAL_ID = "9527dde1-c708-44fa-b2cf-5b7b35e0f3d1";
 export const CARD_BONUS_ID = "864f3f89-dacc-4313-a528-dac222c383cc";
 export const PREMIUM_CARD_BONUS_ID = "b3acca83-be7b-4c8a-9637-7706296679d4";
+
+export const BOOKS_SPU_ID = "c6a1511e-c5e8-4c68-958a-4b1d5dd3ea42";
+export const KOBO_SPU_ID = "e86e12fd-173a-48a4-995d-2408c4b1d4c2";
+
+/**
+ * SPU の項目のうち、達成の条件がこのアプリの注文で表せるもの。購入先 `channel` での 1 回の注文が
+ * `minOrderAmount` 円（クーポン利用後・税込）以上なら達成になる。
+ * 出典は上と同じ SPU のページの「特典3」「特典4」（1注文3,000円以上）。
+ */
+export const spuPurchaseRules: { benefitId: string; channel: ChannelId; minOrderAmount: number }[] =
+  [
+    { benefitId: BOOKS_SPU_ID, channel: "rakuten-books", minOrderAmount: 3000 },
+    { benefitId: KOBO_SPU_ID, channel: "rakuten-kobo", minOrderAmount: 3000 },
+  ];
 
 export const standardSpu: Benefit[] = [
   // 「お買い物通常ポイント：1倍（楽天市場から進呈）」。上限の記載なし。
@@ -119,12 +133,12 @@ export const standardSpu: Benefit[] = [
   }),
   // 「特典3 楽天ブックスで…3,000円以上…ポイント+0.5倍」「500ポイント」。
   // 付与対象は「当月の楽天市場でのお買い物」で、楽天ブックスでの購入に限らない。
-  spu("c6a1511e-c5e8-4c68-958a-4b1d5dd3ea42", "楽天ブックス", "/img/spu/service_books.webp", {
+  spu(BOOKS_SPU_ID, "楽天ブックス", "/img/spu/service_books.webp", {
     rate: 0.5,
     cap: 500,
   }),
   // 「特典4 楽天Koboで…3,000円以上…ポイント+0.5倍」「500ポイント」。
-  spu("e86e12fd-173a-48a4-995d-2408c4b1d4c2", "楽天Kobo", "/img/spu/service_kobo.webp", {
+  spu(KOBO_SPU_ID, "楽天Kobo", "/img/spu/service_kobo.webp", {
     rate: 0.5,
     cap: 500,
   }),

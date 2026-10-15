@@ -20,9 +20,9 @@ test("days ending in 0 or 5", () => {
 });
 
 test("channel filter", () => {
-  expect(matchesConditions({ channels: ["rakuten-ichiba"] }, { ...ctx, channel: "rakuma" })).toBe(
-    false,
-  );
+  expect(
+    matchesConditions({ channels: ["rakuten-ichiba"] }, { ...ctx, channel: "rakuten-kobo" }),
+  ).toBe(false);
 });
 
 test("minimum order amount boundary", () => {

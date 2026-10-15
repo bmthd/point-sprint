@@ -34,10 +34,13 @@ describe("OrderSchema", () => {
     const shopId = "9b8a7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
     const unspecified = v.parse(OrderSchema, {
       ...common,
-      channel: "rakuma",
+      channel: "rakuten-kobo",
       shopTags: ["39shop"],
     });
-    const registered = withShop(unspecified, shopId, { channel: "rakuma", shopTags: ["39shop"] });
+    const registered = withShop(unspecified, shopId, {
+      channel: "rakuten-kobo",
+      shopTags: ["39shop"],
+    });
     expect(registered).toEqual({
       ...common,
       lineItems: [{ ...validItem, discount: 0 }],
@@ -65,7 +68,9 @@ describe("OrderSchema", () => {
     expect(v.safeParse(OrderSchema, { ...common, channel: "rakuten-ichiba" }).success).toBe(false);
     expect(v.safeParse(OrderSchema, { ...common, shopTags: [] }).success).toBe(false);
     const shopId = "9b8a7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
-    expect(v.safeParse(OrderSchema, { ...common, shopId, channel: "rakuma" }).success).toBe(false);
+    expect(v.safeParse(OrderSchema, { ...common, shopId, channel: "rakuten-kobo" }).success).toBe(
+      false,
+    );
     expect(v.safeParse(OrderSchema, { ...common, shopId, shopTags: [] }).success).toBe(false);
     expect(v.safeParse(OrderSchema, { ...common, shopId, channel: undefined }).success).toBe(false);
     expect(

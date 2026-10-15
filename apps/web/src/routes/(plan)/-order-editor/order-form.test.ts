@@ -75,16 +75,22 @@ test("orders without a shop count separately without creating shops", () => {
 
 test("an order without a shop keeps its purchase context when edited", () => {
   const draft = draftOfInput(
-    { ...emptyInput(PERIOD), date: PERIOD.start, channel: "rakuma", is39: true, items: [item({})] },
+    {
+      ...emptyInput(PERIOD),
+      date: PERIOD.start,
+      channel: "rakuten-kobo",
+      is39: true,
+      items: [item({})],
+    },
     [],
     undefined,
   );
   if (!draft) throw new Error("missing order draft");
-  expect(draft.order).toMatchObject({ channel: "rakuma", shopTags: ["39shop"] });
+  expect(draft.order).toMatchObject({ channel: "rakuten-kobo", shopTags: ["39shop"] });
   const edited = draftOfInput(inputOf(draft.order, []), [], draft.order);
   expect(edited?.order).toMatchObject({
     id: draft.order.id,
-    channel: "rakuma",
+    channel: "rakuten-kobo",
     shopTags: ["39shop"],
   });
   expect(edited?.shopChange).toBeUndefined();

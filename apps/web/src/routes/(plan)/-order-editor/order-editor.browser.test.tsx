@@ -1,4 +1,12 @@
-import type { Benefit, Plan, Shop } from "@workspaces/domain";
+import {
+  type Benefit,
+  BOOKS_SPU_ID,
+  KOBO_SPU_ID,
+  type Order,
+  type Plan,
+  type Shop,
+  standardSpu,
+} from "@workspaces/domain";
 import { beforeEach, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { createMemoryRepository } from "../../../storage/memory-repository";
@@ -78,14 +86,14 @@ test("adds unnamed orders without adding shop choices", async () => {
   await expect.element(screen.getByText("コーヒー豆", { exact: true })).toBeVisible();
 });
 
-test("an unnamed order can choose Rakuma without creating a shop", async () => {
+test("an unnamed order can choose Kobo without creating a shop", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
-  await sheet.getByLabelText("購入先", { exact: true }).selectOptions("rakuma");
+  await sheet.getByLabelText("購入先", { exact: true }).selectOptions("rakuten-kobo");
   await fillOrder(sheet, { amount: "1500" });
   await sheet.getByRole("button", { name: "追加する" }).click();
   await expect.poll(async () => (await stored()).length).toBe(5);
-  expect((await stored()).at(-1)).toMatchObject({ channel: "rakuma", shopTags: [] });
+  expect((await stored()).at(-1)).toMatchObject({ channel: "rakuten-kobo", shopTags: [] });
   expect((await stored()).at(-1)).not.toHaveProperty("shopId");
   expect(await repository().shops.list()).toHaveLength(shops.length);
 });
@@ -495,4 +503,30 @@ test("an edit= for an order that does not exist is dropped from the URL", async 
   await expect.poll(() => screen.router.state.location.search).toEqual({ id: PLAN });
   expect(screen.router.history.length).toBe(1);
   expect(document.querySelector("[role=dialog]")).toBeNull();
+});
+
+const storedBenefit = async (id: string) =>
+  (await repository().plans.get(PLAN))?.benefits.find((benefit) => benefit.id === id);
+
+test("a Books order of 3,000円 or more turns the Books SPU on", async () => {
+  const screen = await renderWith(makePlan([...structuredClone(standardSpu), ...marathon], []));
+  const sheet = await openAdd(screen);
+  await sheet.getByLabelText("購入先", { exact: true }).selectOptions("rakuten-books");
+  await fillOrder(sheet, { amount: "3000" });
+  await sheet.getByRole("button", { name: "追加する" }).click();
+  await expect.poll(async () => (await storedBenefit(BOOKS_SPU_ID))?.enabled).toBe(true);
+  expect((await storedBenefit(KOBO_SPU_ID))?.enabled).toBe(false);
+});
+
+test("an achieved SPU that is off is warned about", async () => {
+  const { shopId: _shopId, ...common } = order(0);
+  const unnamed: Order = { ...common, channel: "rakuten-books", shopTags: [] };
+  await renderWith(makePlan([...structuredClone(standardSpu), ...marathon], [unnamed]));
+  await expect
+    .element(
+      page.getByText(
+        "楽天ブックスで 3,000円以上の注文がありますが、SPU の楽天ブックスが OFF です。",
+      ),
+    )
+    .toBeVisible();
 });

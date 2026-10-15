@@ -9,7 +9,7 @@ export type IsoDate = v.InferOutput<typeof IsoDateSchema>;
 export const TimestampSchema = v.pipe(v.string(), v.isoTimestamp());
 export type Timestamp = v.InferOutput<typeof TimestampSchema>;
 
-export const ChannelIdSchema = v.picklist(["rakuten-ichiba", "rakuten-books", "rakuma"]);
+export const ChannelIdSchema = v.picklist(["rakuten-ichiba", "rakuten-books", "rakuten-kobo"]);
 export type ChannelId = v.InferOutput<typeof ChannelIdSchema>;
 
 export const ShopTagSchema = v.picklist(["39shop"]);
