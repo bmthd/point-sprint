@@ -36,11 +36,18 @@ const Label = (props: { children: string }) => (
 );
 
 /**
- * One chevron per shop; the tip of each sits in the notch of the next. A bare URL, because
- * `maskImage` wraps a value that is not a CSS function in `url()`.
+ * One chevron per shop; the tip of each sits in the notch of the next, and the first one starts
+ * flat. A bare URL, because `maskImage` wraps a value that is not a CSS function in `url()`.
  */
 const CHEVRONS = `data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 12" preserveAspectRatio="none"><polygon points="0,0 16,0 22,6 16,12 0,12 6,6"/></svg>',
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SHOP_STEPS * 24} 12" preserveAspectRatio="none">${Array.from(
+    { length: SHOP_STEPS },
+    (_, index) => {
+      const x = index * 24;
+      const notch = index === 0 ? 0 : 6;
+      return `<polygon points="${x},0 ${x + 16},0 ${x + 22},6 ${x + 16},12 ${x},12 ${x + notch},6"/>`;
+    },
+  ).join("")}</svg>`,
 )}`;
 
 /** The shops bought from so far as a row of chevrons, with the next shop's chevron lit faintly. */
@@ -59,8 +66,7 @@ function ShopChevrons({ count }: { count: number }) {
       rangeColor="primary.contrast"
       bg={`linear-gradient(to right, ${track} ${count * step}%, ${next} ${count * step}% ${(count + 1) * step}%, ${track} ${(count + 1) * step}%)`}
       maskImage={CHEVRONS}
-      maskSize={`${step}% 100%`}
-      maskRepeat="repeat-x"
+      maskSize="100% 100%"
     />
   );
 }
