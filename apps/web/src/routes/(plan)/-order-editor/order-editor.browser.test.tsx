@@ -78,14 +78,14 @@ test("adds unnamed orders without adding shop choices", async () => {
   await expect.element(screen.getByText("コーヒー豆", { exact: true })).toBeVisible();
 });
 
-test("an unnamed order can choose Rakuma without creating a shop", async () => {
+test("an unnamed order can choose Kobo without creating a shop", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
-  await sheet.getByLabelText("購入先", { exact: true }).selectOptions("rakuma");
+  await sheet.getByLabelText("購入先", { exact: true }).selectOptions("rakuten-kobo");
   await fillOrder(sheet, { amount: "1500" });
   await sheet.getByRole("button", { name: "追加する" }).click();
   await expect.poll(async () => (await stored()).length).toBe(5);
-  expect((await stored()).at(-1)).toMatchObject({ channel: "rakuma", shopTags: [] });
+  expect((await stored()).at(-1)).toMatchObject({ channel: "rakuten-kobo", shopTags: [] });
   expect((await stored()).at(-1)).not.toHaveProperty("shopId");
   expect(await repository().shops.list()).toHaveLength(shops.length);
 });

@@ -5,8 +5,8 @@
 // 各項目の倍率と月間獲得上限ポイント数は、ページの「特典N」と各特典のルール
 // （「▼月間獲得上限ポイント数」）から写した。
 // ページの「■対象サービス」は楽天市場での通常購入・定期購入・頒布会・楽天ブックス・楽天Kobo・
-// Rakuten Fashion・楽天24エクスプレスなので、どの項目も channels を楽天市場と楽天ブックスに限る
-// （ラクマでの購入は対象外）。
+// Rakuten Fashion・楽天24エクスプレスなので、どの項目も channels を楽天市場、楽天ブックス、
+// 楽天Kobo に限る。
 // 各項目の達成条件（「月に一度以上3,000円以上」など、楽天市場の外での利用）は
 // conditions で表せないため、ユーザーが自分の達成状況に合わせて enabled を切り替える。
 // 旧サイトになかった新しい4サービスのアイコンは、上記の公式SPUページが配信する画像を
@@ -17,7 +17,7 @@ import type { ChannelId } from "../model/common";
 type AmountBasis = Benefit["amountBasis"];
 type CapScope = Benefit["capScope"];
 
-const SPU_CHANNELS: ChannelId[] = ["rakuten-ichiba", "rakuten-books"];
+const SPU_CHANNELS: ChannelId[] = ["rakuten-ichiba", "rakuten-books", "rakuten-kobo"];
 
 function spu(
   id: string,

@@ -65,12 +65,12 @@ describe("countShops", () => {
     ];
     expect(countShops(orders, [shop(SHOP_A)])).toBe(1);
   });
-  test("Rakuma counts as a shop", () => {
+  test("Kobo counts as a shop", () => {
     const orders = [
       order(SHOP_A, item({ unitPrice: 1000 })),
       order(SHOP_B, item({ unitPrice: 1000 })),
     ];
-    expect(countShops(orders, [shop(SHOP_A), shop(SHOP_B, "rakuma")])).toBe(2);
+    expect(countShops(orders, [shop(SHOP_A), shop(SHOP_B, "rakuten-kobo")])).toBe(2);
   });
   test("discount is subtracted before the threshold", () => {
     const orders = [order(SHOP_A, item({ unitPrice: 1100, discount: 200 }))];
