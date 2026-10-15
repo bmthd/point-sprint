@@ -1,6 +1,7 @@
 import {
   type Benefit,
   copyOrder,
+  enableAchievedSpu,
   moveOrder,
   type Order,
   type Plan,
@@ -8,6 +9,7 @@ import {
 } from "@workspaces/domain";
 import { atom } from "jotai";
 import { savePlanAtom } from "./mutations";
+import { shopsAtom } from "./queries";
 
 const replaceOrder = (plan: Plan, orderId: string, change: (order: Order) => Order): Plan => {
   if (!plan.orders.some((order) => order.id === orderId)) {
@@ -96,15 +98,18 @@ export const updateBenefit = (
  * the change once per operation; the change is then applied to the plan as it is when the mutation
  * runs, not when the atom is set. Operations set one after another therefore compose: each sees the
  * ones before it, and one that fails is left out of the later ones' saves.
+ *
+ * A change whose orders newly achieve an SPU (楽天ブックス、楽天Kobo) also turns that SPU on.
  */
 function planOperationAtom<TArgs>(toChange: (args: TArgs) => (plan: Plan) => Plan) {
   return atom(null, (get, _set, { planId, ...args }: { planId: string } & TArgs) => {
     const change = toChange(args as unknown as TArgs);
+    const shops = get(shopsAtom);
     return get(savePlanAtom).mutateAsync({
       planId,
       change: (plan) => {
         if (!plan) throw new Error(`plan ${planId} does not exist`);
-        return change(plan);
+        return enableAchievedSpu(plan, change(plan), shops);
       },
     });
   });

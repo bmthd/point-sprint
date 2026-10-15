@@ -1,10 +1,33 @@
-import type { CalculationWarning, Plan } from "@workspaces/domain";
+import {
+  type CalculationWarning,
+  channels,
+  disabledAchievedSpu,
+  type Plan,
+  spuPurchaseRules,
+} from "@workspaces/domain";
 import { Alert, Button, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { storageHealthQueryAtom } from "../../state/queries";
+import { shopsAtom, storageHealthQueryAtom } from "../../state/queries";
 
 /** `2026-10-11` → `10/11`. */
 const monthDay = (date: string) => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+
+/**
+ * The SPU that the plan's orders achieve but the user turned off: 「楽天ブックスで 3,000円以上の注文
+ * がありますが、SPU の楽天ブックスが OFF です。」
+ */
+export function useSpuOffMessages(plan: Plan): string[] {
+  const shops = useAtomValue(shopsAtom);
+  return disabledAchievedSpu(plan, shops).flatMap((benefitId) => {
+    const rule = spuPurchaseRules.find((candidate) => candidate.benefitId === benefitId);
+    const benefit = plan.benefits.find((candidate) => candidate.id === benefitId);
+    if (!rule || !benefit) return [];
+    const amount = rule.minOrderAmount.toLocaleString("ja-JP");
+    return [
+      `${channels[rule.channel].label}で ${amount}円以上の注文がありますが、SPU の${benefit.label}が OFF です。`,
+    ];
+  });
+}
 
 /** What went wrong while reading the stored data, if anything. */
 export function storageMessages(
@@ -84,7 +107,10 @@ export function Warnings({
   hasShopAround: boolean;
 }) {
   const { data: storage } = useAtomValue(storageHealthQueryAtom);
-  const messages = messagesOf(plan, warnings, hasShopAround, storage);
+  const messages = [
+    ...messagesOf(plan, warnings, hasShopAround, storage),
+    ...useSpuOffMessages(plan),
+  ];
   return (
     <VStack gap="2" alignItems="stretch" _empty={{ display: "none" }}>
       <StorageHealthFailure />
