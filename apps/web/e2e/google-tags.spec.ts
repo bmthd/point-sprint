@@ -1,4 +1,5 @@
 import { type Page, expect, test } from "./fixtures";
+import { TopPage } from "./pages";
 
 // What gtag() pushed: the inline snippet queues each call's arguments in `dataLayer`.
 const gtagCalls = (page: Page) =>
@@ -22,10 +23,9 @@ test("loads gtag.js and AdSense and configures GA once without manual page views
       googleRequests.push(request.url());
   });
 
-  await page.goto("/");
-  await expect(page.getByRole("link", { name: /プロフィール/ })).toBeVisible();
-  await page.getByRole("link", { name: /プロフィール/ }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "プロフィール" })).toBeVisible();
+  const top = await TopPage.open(page);
+  const profile = await top.header.goToProfile();
+  await expect(profile.heading).toBeVisible();
 
   // Each script was loaded once, and navigating did not load or run them again.
   expect(googleRequests.toSorted()).toEqual([

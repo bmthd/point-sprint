@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures";
+import { GuidePage, GuidesPage } from "./pages";
 import { siteUrl } from "../src/site-url";
 
 // The E2E build sends the guides' item searches nowhere (`GUIDE_ITEMS_ENDPOINT`), so that no test
@@ -9,22 +10,20 @@ const GUIDE = "/guides/1000yen-items";
 const TITLE = "1000円ポッキリで買えるもの";
 
 test("the guide list leads to each guide", async ({ page }) => {
-  await page.goto("/guides");
+  const guides = await GuidesPage.open(page);
   await expect(page).toHaveTitle("買い物ガイド | ポイントスプリント");
-  await page.getByRole("link", { name: TITLE }).click();
-  // A page load: the static files are served at the path with a trailing slash.
-  await expect(page).toHaveURL(new RegExp(`${GUIDE}/?$`));
-  await expect(page.getByRole("heading", { level: 1, name: TITLE })).toBeVisible();
+  const guide = await guides.goToGuide(TITLE, GUIDE);
+  await expect(guide.heading(1, TITLE)).toBeVisible();
 });
 
 test("a guide whose searches failed shows its text and dates without lists", async ({ page }) => {
-  await page.goto(GUIDE);
+  const guide = await GuidePage.open(page, GUIDE);
   await expect(page).toHaveTitle(`${TITLE} | ポイントスプリント`);
   await expect(page.getByText(/公開日 2026年10月8日/)).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: "食品" })).toBeVisible();
+  await expect(guide.heading(2, "食品")).toBeVisible();
   await expect(page.getByText(/日持ちのする食品を選ぶと/)).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: "美容" })).toBeVisible();
-  await expect(page.getByRole("complementary", { name: "楽天市場の商品（広告）" })).toHaveCount(0);
+  await expect(guide.heading(2, "美容")).toBeVisible();
+  await expect(guide.itemLists).toHaveCount(0);
 });
 
 test("a guide is prerendered as an article", async ({ request }) => {

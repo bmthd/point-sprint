@@ -1,56 +1,40 @@
 import { expect, test } from "./fixtures";
+import { TopPage } from "./pages";
 
 test("create plan, add order, see points, hold it, reload keeps data", async ({ page }) => {
   // The October marathon runs 10/4 to 10/9; the order date defaults to today.
   await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
 
-  await page.goto("/");
-  await page.getByRole("button", { name: "このイベントでプランを作る" }).first().click();
-  await expect(page).toHaveURL(/\/plan\?id=/);
+  let plan = await (await TopPage.open(page)).createPlan();
 
   // Desktop: the add accordion at the end of the list.
-  const list = page.getByRole("region", { name: "注文のリスト" });
-  const form = list.locator("form");
-  await expect(form).toBeVisible();
-  await form
-    .getByRole("combobox", { name: "ショップ", exact: true })
-    .selectOption({ label: "＋ 新しいショップ" });
-  await form.getByRole("textbox", { name: "新しいショップの名前" }).fill("テスト商店");
-  await form.getByRole("textbox", { name: "金額（税込）" }).fill("3300");
-  await form.getByRole("button", { name: "追加する" }).click();
+  await expect(plan.addForm.root).toBeVisible();
+  await plan.addForm.newShop("テスト商店");
+  await plan.addForm.price.fill("3300");
+  await plan.addForm.submit.click();
 
-  const summary = page.getByRole("region", { name: "サマリー" });
-  const breakdown = page.getByRole("list", { name: "ポイントの内訳" });
-  await expect(list.getByText("テスト商店").first()).toBeVisible();
-  await expect(breakdown).toContainText("通常30P");
-  await expect(summary).toContainText("獲得予定30P");
+  await expect(plan.orders.getByText("テスト商店").first()).toBeVisible();
+  await expect(plan.breakdown).toContainText("通常30P");
+  await expect(plan.summary).toContainText("獲得予定30P");
 
-  const count = list.getByRole("switch", { name: "テスト商店の注文を購入決定" });
-  await expect(count).toBeChecked();
-  // The input itself is visually hidden; a click lands on the track drawn in its label.
-  await count.locator("xpath=ancestor::label[1]").click();
-  await expect(count).not.toBeChecked();
-  await expect(breakdown).toContainText("通常0P");
-  await expect(summary).toContainText("獲得予定0P");
-  await expect(list.locator("s")).toContainText("30P");
+  await expect(plan.counted("テスト商店")).toBeChecked();
+  await plan.toggleCounted("テスト商店");
+  await expect(plan.counted("テスト商店")).not.toBeChecked();
+  await expect(plan.breakdown).toContainText("通常0P");
+  await expect(plan.summary).toContainText("獲得予定0P");
+  await expect(plan.struckPoints).toContainText("30P");
 
-  await page.reload();
-  const reloaded = page.getByRole("region", { name: "注文のリスト" });
-  await expect(reloaded.getByText("テスト商店").first()).toBeVisible();
-  await expect(
-    reloaded.getByRole("switch", { name: "テスト商店の注文を購入決定" }),
-  ).not.toBeChecked();
-  await expect(page.getByRole("list", { name: "ポイントの内訳" })).toContainText("通常0P");
-  await expect(page.getByRole("region", { name: "サマリー" })).toContainText("獲得予定0P");
-  await expect(reloaded.locator("s")).toContainText("30P");
+  plan = await plan.reload();
+  await expect(plan.orders.getByText("テスト商店").first()).toBeVisible();
+  await expect(plan.counted("テスト商店")).not.toBeChecked();
+  await expect(plan.breakdown).toContainText("通常0P");
+  await expect(plan.summary).toContainText("獲得予定0P");
+  await expect(plan.struckPoints).toContainText("30P");
 
   // Counting it again brings the points back, and that survives a reload too.
-  await reloaded
-    .getByRole("switch", { name: "テスト商店の注文を購入決定" })
-    .locator("xpath=ancestor::label[1]")
-    .click();
-  await expect(page.getByRole("list", { name: "ポイントの内訳" })).toContainText("通常30P");
-  await page.reload();
-  await expect(page.getByRole("list", { name: "ポイントの内訳" })).toContainText("通常30P");
-  await expect(page.getByRole("region", { name: "サマリー" })).toContainText("獲得予定30P");
+  await plan.toggleCounted("テスト商店");
+  await expect(plan.breakdown).toContainText("通常30P");
+  plan = await plan.reload();
+  await expect(plan.breakdown).toContainText("通常30P");
+  await expect(plan.summary).toContainText("獲得予定30P");
 });
