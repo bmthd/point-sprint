@@ -5,7 +5,7 @@ import {
   type TaxRate,
   taxIncludedTarget,
 } from "@workspaces/domain";
-import { Box, Card, Flex, Link, NativeAccordion, Text } from "@workspaces/ui";
+import { Box, Card, Flex, Link, NativeAccordion, Progress, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { plansAtom } from "../../../state/queries";
 import { scopeText, sharedText } from "../-cap-lines";
@@ -14,7 +14,7 @@ import { fillPriceOf } from "./cap-list";
 import { PointBreakdown } from "./point-breakdown";
 import { ShopLadder } from "./shop-ladder";
 
-const DOTS = 10;
+const SHOP_STEPS = 10;
 
 /** Tax-included target amount of the orders that are not held. */
 export function countedAmount(plan: Plan): number {
@@ -35,22 +35,33 @@ const Label = (props: { children: string }) => (
   <Text as="span" fontSize="xs" color="primary.contrast/80" {...props} />
 );
 
-function ShopDots({ count }: { count: number }) {
+/**
+ * One chevron per shop; the tip of each sits in the notch of the next. A bare URL, because
+ * `maskImage` wraps a value that is not a CSS function in `url()`.
+ */
+const CHEVRONS = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 12" preserveAspectRatio="none"><polygon points="0,0 16,0 22,6 16,12 0,12 6,6"/></svg>',
+)}`;
+
+/** The shops bought from so far as a row of chevrons, with the next shop's chevron lit faintly. */
+function ShopChevrons({ count }: { count: number }) {
+  const step = 100 / SHOP_STEPS;
+  const track = "{colors.blackAlpha.400}";
+  const next = "color-mix(in srgb, {colors.primary.contrast} 40%, transparent)";
   return (
-    <Flex gap="1.5" role="img" aria-label={`買い回り ${DOTS}店舗中${count}店舗`}>
-      {Array.from({ length: DOTS }, (_, index) => (
-        <Box
-          key={index}
-          flex="1"
-          h="3"
-          rounded="full"
-          boxSizing="border-box"
-          bg={index < count ? "primary.contrast" : index === count ? undefined : "blackAlpha.400"}
-          borderWidth={index === count ? "2px" : undefined}
-          borderColor="primary.contrast"
-        />
-      ))}
-    </Flex>
+    <Progress
+      aria-label="買い回り"
+      aria-valuetext={`${SHOP_STEPS}店舗中${count}店舗`}
+      max={SHOP_STEPS}
+      value={count}
+      size="lg"
+      shape="square"
+      rangeColor="primary.contrast"
+      bg={`linear-gradient(to right, ${track} ${count * step}%, ${next} ${count * step}% ${(count + 1) * step}%, ${track} ${(count + 1) * step}%)`}
+      maskImage={CHEVRONS}
+      maskSize={`${step}% 100%`}
+      maskRepeat="repeat-x"
+    />
   );
 }
 
@@ -158,7 +169,7 @@ export function SummaryCard({
 
         {outlook ? (
           <Flex direction="column" gap="2">
-            <ShopDots count={Math.min(outlook.shopCount, DOTS)} />
+            <ShopChevrons count={Math.min(outlook.shopCount, SHOP_STEPS)} />
             <Flex justify="space-between" fontSize="sm">
               <span>
                 <Text as="b" fontVariantNumeric="tabular-nums">
