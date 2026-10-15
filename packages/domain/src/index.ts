@@ -52,4 +52,5 @@ export {
   achievedSpuPurchases,
   disabledAchievedSpu,
   enableAchievedSpu,
+  lostSpuPurchases,
 } from "./plan-ops/spu-purchases";

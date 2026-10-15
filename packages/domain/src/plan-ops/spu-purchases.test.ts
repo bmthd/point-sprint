@@ -5,7 +5,12 @@ import type { Order } from "../model/order";
 import type { Plan } from "../model/plan";
 import type { Shop } from "../model/shop";
 import { toggleBenefit } from "./benefit-ops";
-import { achievedSpuPurchases, disabledAchievedSpu, enableAchievedSpu } from "./spu-purchases";
+import {
+  achievedSpuPurchases,
+  disabledAchievedSpu,
+  enableAchievedSpu,
+  lostSpuPurchases,
+} from "./spu-purchases";
 
 const BOOKS_SHOP = "b0000000-0000-4000-8000-000000000001";
 const shops: Shop[] = [
@@ -107,5 +112,32 @@ describe("enableAchievedSpu", () => {
       shops,
     );
     expect(disabledAchievedSpu(after, shops)).toEqual([]);
+  });
+});
+
+describe("lostSpuPurchases", () => {
+  const on = (orders: Order[]) => enableAchievedSpu(plan([]), plan(orders), shops);
+
+  test("holding or deleting the only achieving order loses the SPU that is on", () => {
+    const books = order(3000, { shopId: BOOKS_SHOP });
+    const before = on([books]);
+    const held = { ...before, orders: [{ ...books, onHold: true }] };
+    expect(lostSpuPurchases(before, held, shops)).toEqual([BOOKS_SPU_ID]);
+    expect(lostSpuPurchases(before, { ...before, orders: [] }, shops)).toEqual([BOOKS_SPU_ID]);
+  });
+
+  test("another achieving order keeps it, and an SPU that is off is not lost", () => {
+    const first = order(3000, { channel: "rakuten-books" });
+    const second = order(3500, { channel: "rakuten-books" });
+    const before = on([first, second]);
+    expect(lostSpuPurchases(before, { ...before, orders: [second] }, shops)).toEqual([]);
+    const off = toggleBenefit(on([first]), BOOKS_SPU_ID);
+    expect(lostSpuPurchases(off, { ...off, orders: [] }, shops)).toEqual([]);
+  });
+
+  test("a shop that moves to another channel loses it", () => {
+    const before = on([order(3000, { shopId: BOOKS_SHOP })]);
+    const moved = shops.map((shop) => ({ ...shop, channel: "rakuten-ichiba" as const }));
+    expect(lostSpuPurchases(before, before, moved, shops)).toEqual([BOOKS_SPU_ID]);
   });
 });

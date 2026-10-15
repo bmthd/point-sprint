@@ -46,3 +46,21 @@ export function enableAchievedSpu(before: Plan | undefined, after: Plan, shops: 
   }
   return benefits === after.benefits ? after : { ...after, benefits };
 }
+
+/**
+ * The SPU benefits that `before`'s orders achieved and `after`'s no longer do, and that are still
+ * on in `after`: an order was held, deleted or changed so that it no longer meets the rule.
+ * `beforeShops` are the shops as they were before, when a shop's channel changed with them.
+ */
+export function lostSpuPurchases(
+  before: Plan,
+  after: Plan,
+  shops: Shop[],
+  beforeShops: Shop[] = shops,
+): string[] {
+  const was = achievedSpuPurchases(before, beforeShops);
+  const now = achievedSpuPurchases(after, shops);
+  return after.benefits
+    .filter((benefit) => benefit.enabled && was.has(benefit.id) && !now.has(benefit.id))
+    .map((benefit) => benefit.id);
+}
