@@ -6,6 +6,7 @@ import * as v from "valibot";
 import { updateBenefitAtom } from "../../../state/order-ops";
 import { ChevronIcon } from "../../../ui/icons";
 import { CommitField } from "../../../form/commit-field";
+import { CommitDatePicker } from "../-date-picker-field";
 import {
   END_BEFORE_START,
   START_AFTER_END,
@@ -167,7 +168,7 @@ function ShopAroundEditor({
             alignItems="start"
             gap="2"
           >
-            <CommitField
+            <CommitDatePicker
               key={`start:${period.start}:${period.end}`}
               label="開始日"
               initial={period.start}
@@ -175,9 +176,10 @@ function ShopAroundEditor({
                 dateSchema("開始日"),
                 v.check((start) => start <= period.end, START_AFTER_END),
               )}
+              period={plan.period}
               onCommit={(start) => withPeriod({ start })}
             />
-            <CommitField
+            <CommitDatePicker
               key={`end:${period.start}:${period.end}`}
               label="終了日"
               initial={period.end}
@@ -185,6 +187,7 @@ function ShopAroundEditor({
                 dateSchema("終了日"),
                 v.check((end) => end >= period.start, END_BEFORE_START),
               )}
+              period={plan.period}
               onCommit={(end) => withPeriod({ end })}
             />
           </Box>

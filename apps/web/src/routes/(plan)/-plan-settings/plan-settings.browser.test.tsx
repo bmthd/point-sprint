@@ -270,7 +270,7 @@ test("adds a sports-win day at once, and changes it in its row", async () => {
   const edit = screen.getByRole("button", { name: "勝ったら倍を編集" });
   await expect.element(edit).toHaveAttribute("aria-expanded", "true");
   const date = screen.getByLabelText("日付");
-  await expect.element(date).toHaveValue("2026-10-06");
+  await expect.element(date).toHaveValue("2026/10/06");
 
   // The switch of every row is in the same place, whether the row has ✎ or not.
   const switchOf = (name: RegExp) =>
@@ -281,7 +281,7 @@ test("adds a sports-win day at once, and changes it in its row", async () => {
   await expect
     .poll(async () => (await storedPlan()).benefits[1]?.imagePath)
     .toBe("/img/campaign/sports-w.webp");
-  await date.fill("2026-10-07");
+  await date.fill("2026/10/07");
   await userEvent.keyboard("{Enter}");
   const toggle = screen.getByRole("switch", { name: "勝ったら倍 +2倍 10/7" });
   await expect.element(toggle).toBeChecked();
@@ -325,7 +325,7 @@ test("adds 39shop for the plan's period once, and refuses a period it already ha
 
   // Another period is a different occurrence, so the template can be added again.
   const start = screen.getByLabelText("開始日");
-  await start.fill("2026-10-05");
+  await start.fill("2026/10/05");
   await start.element().blur();
   await expect
     .poll(async () => (await storedPlan()).benefits[0]?.sharedKey)
@@ -334,7 +334,7 @@ test("adds 39shop for the plan's period once, and refuses a period it already ha
   await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(2);
 
   const second = screen.getByLabelText("開始日");
-  await second.fill("2026-10-05");
+  await second.fill("2026/10/05");
   await second.element().blur();
   await expect
     .element(second)
@@ -352,7 +352,7 @@ test("adds a repeat purchase with a cap to start from, and says what to fix", as
   });
 
   const end = screen.getByLabelText("終了日");
-  await end.fill("2026-10-01");
+  await end.fill("2026/10/01");
   await end.element().blur();
   await expect
     .element(end)
@@ -396,7 +396,7 @@ test("a period's end before its start is not saved", async () => {
   const screen = await renderSettings(makePlan(structuredClone(marathon), [order(0)]));
   await screen.getByRole("button", { name: /ショップ買いまわり/ }).click();
   const end = screen.getByLabelText("終了日");
-  await end.fill("2026-10-01");
+  await end.fill("2026/10/01");
   await end.element().blur();
   await expect
     .element(end)
@@ -406,7 +406,7 @@ test("a period's end before its start is not saved", async () => {
     misalignedFields(screen.getByRole("region", { name: "買いまわりと上限" }).element()),
   ).toEqual([]);
   const start = screen.getByLabelText("開始日");
-  await start.fill("2026-10-10");
+  await start.fill("2026/10/10");
   await start.element().blur();
   await expect
     .element(start)
@@ -434,7 +434,7 @@ test("overrides the shop-around cap", async () => {
   await expect.element(row.getByText("10/4〜10/9・最大 +9倍・上限 5,000P")).toBeVisible();
 
   const end = screen.getByLabelText("終了日");
-  await end.fill("2026-10-10");
+  await end.fill("2026/10/10");
   await end.element().dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
   await expect
     .poll(async () => (await storedPlan()).benefits[0]?.conditions.dateRule)
@@ -456,9 +456,9 @@ test("start and end dates committed back to back both persist", async () => {
   await screen.getByRole("button", { name: /ショップ買いまわり/ }).click();
   const start = screen.getByLabelText("開始日").element() as HTMLInputElement;
   const end = screen.getByLabelText("終了日").element() as HTMLInputElement;
-  typeInto(start, "2026-10-03");
-  typeInto(end, "2026-10-10");
-  await expect.element(screen.getByLabelText("終了日")).toHaveValue("2026-10-10");
+  typeInto(start, "2026/10/03");
+  typeInto(end, "2026/10/10");
+  await expect.element(screen.getByLabelText("終了日")).toHaveValue("2026/10/10");
   // Both commits come from the same render, before either save has updated the plan.
   enter(start);
   enter(end);
