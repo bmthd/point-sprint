@@ -150,11 +150,13 @@ describe("capFlows", () => {
     expect(flows.map((flow) => [flow.line.period, flow.points])).toEqual([["2026-10-06", 100]]);
   });
 
-  test("a shop-around cap takes nothing from a channel that does not receive it", () => {
+  test("a shop-around cap takes from a Kobo order like an Ichiba order", () => {
     const plans = [plan(PLAN, [], [shopAround])];
-    const rakuma = [shop(SHOP_A, { channel: "rakuma" })];
-    expect(flowsOf(plans, order("2026-10-05", 11000))).toHaveLength(1);
-    expect(flowsOf(plans, order("2026-10-05", 11000), rakuma)).toEqual([]);
+    const kobo = [shop(SHOP_A, { channel: "rakuten-kobo" })];
+    expect(flowsOf(plans, order("2026-10-05", 11000), kobo)).toEqual(
+      flowsOf(plans, order("2026-10-05", 11000)),
+    );
+    expect(flowsOf(plans, order("2026-10-05", 11000), kobo)).toHaveLength(1);
   });
 
   test("an order from a new shop is priced at the rate that shop gives", () => {

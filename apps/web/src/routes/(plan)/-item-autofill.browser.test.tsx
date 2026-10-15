@@ -281,7 +281,7 @@ describe("the phone sheet", () => {
     await expect.element(sheet.getByText(TOO_BUSY)).toBeVisible();
   });
 
-  test("Books, Rakuma and shop pages pick the shop without a lookup", async () => {
+  test("Books, Kobo and shop pages pick the shop without a lookup", async () => {
     const lookup = answering({ ok: true, item: item() });
     const screen = await renderWith(lookup);
     const sheet = await openSheet(screen);
@@ -289,8 +289,8 @@ describe("the phone sheet", () => {
 
     await paste(url, "https://books.rakuten.co.jp/rb/12345/");
     await expect.element(sheet.getByLabelText("新しいショップの名前")).toHaveValue("楽天ブックス");
-    await paste(url, "https://item.fril.jp/abc");
-    await expect.element(sheet.getByLabelText("新しいショップの名前")).toHaveValue("ラクマ");
+    await paste(url, "https://books.rakuten.co.jp/rk/0a1b2c3d4e5f3a7b8c9d0e1f2a3b4c5d/");
+    await expect.element(sheet.getByLabelText("新しいショップの名前")).toHaveValue("楽天Kobo");
     await paste(url, "https://www.rakuten.co.jp/coffee-beans/");
     await expect.element(sheet.getByLabelText("新しいショップの名前")).toHaveValue("coffee-beans");
     await userEvent.keyboard("{Enter}");

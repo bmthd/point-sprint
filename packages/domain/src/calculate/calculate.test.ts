@@ -9,7 +9,7 @@ import type { CalculationResult } from "./types";
 const SHOP_A = "a0000000-0000-4000-8000-000000000001";
 const SHOP_B = "b0000000-0000-4000-8000-000000000002";
 const SHOP_C = "c0000000-0000-4000-8000-000000000003";
-const SHOP_R = "d0000000-0000-4000-8000-000000000004";
+const SHOP_K = "d0000000-0000-4000-8000-000000000004";
 const SHOP_UNKNOWN = "e0000000-0000-4000-8000-000000000005";
 
 const ITEM_1 = "10000000-0000-4000-8000-000000000001";
@@ -35,7 +35,7 @@ const shops: Shop[] = [
   shop(SHOP_A, "rakuten-ichiba"),
   shop(SHOP_B, "rakuten-ichiba"),
   shop(SHOP_C, "rakuten-ichiba"),
-  shop(SHOP_R, "rakuma"),
+  shop(SHOP_K, "rakuten-kobo"),
 ];
 
 const item = (id: string, unitPrice: number, over: Partial<LineItem> = {}): LineItem => ({
@@ -152,17 +152,18 @@ describe("calculate", () => {
     expectBreakdownSumsToTotal(result);
   });
 
-  test("Rakuma counts but does not receive shop-around", () => {
+  test("Kobo counts and receives shop-around", () => {
     const result = calculate(
       plan([
         order(ORDER_1, SHOP_A, [item(ITEM_1, 1100)]),
-        order(ORDER_2, SHOP_R, [item(ITEM_2, 1100)]),
+        order(ORDER_2, SHOP_K, [item(ITEM_2, 1100)]),
       ]),
       shops,
     );
     expect(result.shopCount).toBe(2);
     expect(rowsOf(result, SHOP_AROUND_ID)).toEqual([
       { lineItemId: ITEM_1, source: SHOP_AROUND_ID, points: 10 },
+      { lineItemId: ITEM_2, source: SHOP_AROUND_ID, points: 10 },
     ]);
     expectBreakdownSumsToTotal(result);
   });

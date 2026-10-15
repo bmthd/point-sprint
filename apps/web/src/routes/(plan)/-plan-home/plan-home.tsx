@@ -33,6 +33,7 @@ import { PointBreakdown } from "./point-breakdown";
 import { ShopLadder } from "./shop-ladder";
 import { SummaryCard, countedAmount, effectiveRate } from "./summary-card";
 import { Warnings } from "../-warnings";
+import { useSpuLossNotice } from "./spu-loss-notice";
 
 /** Same as the `lg` breakpoint: from here the summary is a column to the right of the orders. */
 const WIDE = "(min-width: 61em)";
@@ -174,6 +175,7 @@ const now = () => new Date();
 
 function Home({ plan }: { plan: Plan }) {
   const result = useAtomValue(planResultAtom(plan.id));
+  useSpuLossNotice(plan);
   const wide = useMediaQuery(WIDE);
   const desktop = useMediaQuery(DESKTOP);
   const editor = useOrderEditorTarget(plan);

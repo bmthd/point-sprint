@@ -1,7 +1,7 @@
 import type { ChannelId } from "../model/common";
-import { rakuma } from "./rakuma";
 import { rakutenBooks } from "./rakuten-books";
 import { rakutenIchiba } from "./rakuten-ichiba";
+import { rakutenKobo } from "./rakuten-kobo";
 import type { ChannelDef, ParsedUrl } from "./types";
 
 export type { ChannelDef, ParsedUrl } from "./types";
@@ -9,7 +9,7 @@ export type { ChannelDef, ParsedUrl } from "./types";
 export const channels: Record<ChannelId, ChannelDef> = {
   "rakuten-ichiba": rakutenIchiba,
   "rakuten-books": rakutenBooks,
-  rakuma,
+  "rakuten-kobo": rakutenKobo,
 };
 
 export function parseUrl(input: string): ParsedUrl | null {
@@ -19,7 +19,8 @@ export function parseUrl(input: string): ParsedUrl | null {
   } catch {
     return null;
   }
-  for (const channel of Object.values(channels)) {
+  // Kobo の /rk/ を楽天ブックスより先に見る。
+  for (const channel of [rakutenIchiba, rakutenKobo, rakutenBooks]) {
     const parsed = channel.parseUrl(url);
     if (parsed) return parsed;
   }
