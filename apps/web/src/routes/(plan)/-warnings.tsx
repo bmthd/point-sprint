@@ -7,6 +7,7 @@ import {
 } from "@workspaces/domain";
 import { Alert, Button, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
+import { QuarantineNotice } from "./-quarantine-notice";
 import { shopsAtom, storageHealthQueryAtom } from "../../state/queries";
 
 /** `2026-10-11` → `10/11`. */
@@ -29,18 +30,11 @@ export function useSpuOffMessages(plan: Plan): string[] {
   });
 }
 
-/** What went wrong while reading the stored data, if anything. */
-export function storageMessages(
-  storage: { quarantined: number; wasReset: boolean } | undefined,
-): string[] {
+/** What went wrong while opening the stored data, if anything. Rows set aside have their own notice. */
+export function storageMessages(storage: { wasReset: boolean } | undefined): string[] {
   const messages: string[] = [];
   if (storage?.wasReset) {
     messages.push("保存されたデータを開けなかったため、空の状態からやり直しています。");
-  }
-  if (storage && storage.quarantined > 0) {
-    messages.push(
-      `読み込めなかったデータが${storage.quarantined}件あります。表示と計算には含めていません。`,
-    );
   }
   return messages;
 }
@@ -49,7 +43,7 @@ function messagesOf(
   plan: Plan,
   warnings: CalculationWarning[],
   hasShopAround: boolean,
-  storage: { quarantined: number; wasReset: boolean } | undefined,
+  storage: { wasReset: boolean } | undefined,
 ): string[] {
   const messages: string[] = [];
   const ordersOf = (type: CalculationWarning["type"]) =>
@@ -114,6 +108,7 @@ export function Warnings({
   return (
     <VStack gap="2" alignItems="stretch" _empty={{ display: "none" }}>
       <StorageHealthFailure />
+      <QuarantineNotice />
       {messages.map((message) => (
         <Alert.Root key={message} status="warning" role="status" alignItems="center">
           <Alert.Icon />

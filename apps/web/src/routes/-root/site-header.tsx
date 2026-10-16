@@ -6,10 +6,10 @@ import {
   MenuIcon,
   MoonIcon,
   SunIcon,
-  Switch,
   Text,
   useColorMode,
   useDisclosure,
+  useSystemColorMode,
 } from "@workspaces/ui";
 import { RouterLink } from "../../ui/router-link";
 import { CloseIcon } from "../../ui/icons";
@@ -55,16 +55,21 @@ function ProfileLink() {
   );
 }
 
+const colorModeLabels = { light: "ライト", dark: "ダーク" } as const;
+
+/**
+ * Switches between light and dark. A choice the device already makes is not kept: the site goes
+ * back to following the device. Only a choice against it is kept, as an override.
+ */
 function ColorModeButton() {
-  const { colorMode, toggleColorMode } = useColorMode();
-  const nextColorMode = colorMode === "light" ? "dark" : "light";
-  const colorModeLabel = colorMode === "light" ? "ライト" : "ダーク";
-  const nextColorModeLabel = nextColorMode === "light" ? "ライト" : "ダーク";
+  const { colorMode, changeColorMode } = useColorMode();
+  const { getSystemColorMode } = useSystemColorMode({ defaultColorMode: "light" });
+  const next = colorMode === "light" ? "dark" : "light";
 
   return (
     <IconButton
-      aria-label={`現在は${colorModeLabel}モードです。${nextColorModeLabel}モードに切り替える`}
-      onClick={toggleColorMode}
+      aria-label={`カラーモード（${colorModeLabels[colorMode]}）。${colorModeLabels[next]}に切り替える`}
+      onClick={() => changeColorMode(next === getSystemColorMode() ? "system" : next)}
       size="lg"
       variant="ghost"
       color="fg"
@@ -76,10 +81,10 @@ function ColorModeButton() {
 
 /**
  * The header on every page: the site name (to the top) and the profile. The router marks the link
- * to the page being shown with `aria-current="page"`. The color mode switch (#3) goes next to the
- * profile link. The profile link spells out its name: it moves to a page, unlike the icon buttons
- * that act in place. At the `lg` breakpoint and below the site name leaves no room for them: the
- * menu has them, with the sidebar.
+ * to the page being shown with `aria-current="page"`. The color mode switch is on every width, left of
+ * the profile link or the menu. The profile link spells out its name: it moves to a page, unlike
+ * the icon buttons that act in place. At the `lg` breakpoint and below the site name leaves no room
+ * for it: the menu has it, with the sidebar.
  */
 export function SiteHeader() {
   return (
@@ -108,23 +113,24 @@ export function SiteHeader() {
         >
           ポイントスプリント
         </RouterLink>
-        <Flex display={{ base: "flex", lg: "none" }} align="center" gap="1">
+        <Flex align="center" gap="1">
           <ColorModeButton />
-          <ProfileLink />
+          <Box display={{ base: "contents", lg: "none" }}>
+            <ProfileLink />
+          </Box>
+          <SiteMenu />
         </Flex>
-        <SiteMenu />
       </Flex>
     </Box>
   );
 }
 
 /**
- * The menu at the `lg` breakpoint and below: the profile, the sidebar, and the color mode. It closes
+ * The menu at the `lg` breakpoint and below: the profile and the sidebar. It closes
  * on a link: one in the site moves to its page, one to a service opens in a new tab.
  */
 function SiteMenu() {
   const { open, onOpen, onClose } = useDisclosure();
-  const { colorMode, toggleColorMode } = useColorMode();
 
   return (
     <>
@@ -145,7 +151,7 @@ function SiteMenu() {
         withCloseButton={false}
         restoreFocus
       >
-        <Drawer.Content bg="bg">
+        <Drawer.Content bg="bg" roundedLeft="l2">
           <Drawer.Header justifyContent="space-between">
             <Drawer.Title as="h2">メニュー</Drawer.Title>
             <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>
@@ -161,15 +167,6 @@ function SiteMenu() {
           >
             <ProfileLink />
             <SiteSidebar />
-            <Switch
-              checked={colorMode === "dark"}
-              onChange={toggleColorMode}
-              minH="11"
-              justifyContent="space-between"
-              flexDirection="row-reverse"
-            >
-              ダークモード
-            </Switch>
             <ResetDataButton onDone={onClose} />
           </Drawer.Body>
         </Drawer.Content>

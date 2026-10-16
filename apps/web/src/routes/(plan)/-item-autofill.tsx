@@ -188,7 +188,14 @@ export function AutofillStatus({ autofill }: { autofill: ItemAutofill }) {
       {state.kind === "busy" ? (
         <VStack gap="0" alignItems="flex-start">
           {message("混み合っているため、自動入力を止めました。商品名と金額は手で入れてください。")}
-          <Link as="button" type="button" fontSize="xs" minH="10" onClick={autofill.offerWait}>
+          <Link
+            as="button"
+            type="button"
+            fontSize="xs"
+            minH="10"
+            color="link"
+            onClick={autofill.offerWait}
+          >
             待って取得する
           </Link>
         </VStack>
