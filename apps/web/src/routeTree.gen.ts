@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as EventsDotjsonRouteImport } from './routes/events[.]json'
 import { Route as ShareRouteImport } from './routes/share'
 import { Route as planPlanRouteImport } from './routes/(plan)/plan'
 import { Route as planProfileRouteImport } from './routes/(plan)/profile'
@@ -24,6 +25,11 @@ import { Route as sitemarkdownTermsRouteImport } from './routes/(site)/(markdown
 import { Route as sitemarkdownGuidesIndexRouteImport } from './routes/(site)/(markdown)/guides/index'
 import { Route as sitemarkdownGuidesSlugRouteImport } from './routes/(site)/(markdown)/guides/$slug'
 
+const EventsDotjsonRoute = EventsDotjsonRouteImport.update({
+  id: '/events.json',
+  path: '/events.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShareRoute = ShareRouteImport.update({
   id: '/share',
   path: '/share',
@@ -95,6 +101,7 @@ const sitemarkdownGuidesSlugRoute = sitemarkdownGuidesSlugRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/events.json': typeof EventsDotjsonRoute
   '/share': typeof ShareRoute
   '/plan': typeof planPlanRoute
   '/profile': typeof planProfileRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/guides/': typeof sitemarkdownGuidesIndexRoute
 }
 export interface FileRoutesByTo {
+  '/events.json': typeof EventsDotjsonRoute
   '/share': typeof ShareRoute
   '/plan': typeof planPlanRoute
   '/profile': typeof planProfileRoute
@@ -126,6 +134,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/events.json': typeof EventsDotjsonRoute
   '/share': typeof ShareRoute
   '/(site)/(markdown)': typeof sitemarkdownRouteRouteWithChildren
   '/(plan)/plan': typeof planPlanRoute
@@ -144,6 +153,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/events.json'
     | '/share'
     | '/plan'
     | '/profile'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/guides/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/events.json'
     | '/share'
     | '/plan'
     | '/profile'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/guides'
   id:
     | '__root__'
+    | '/events.json'
     | '/share'
     | '/(site)/(markdown)'
     | '/(plan)/plan'
@@ -191,6 +203,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  EventsDotjsonRoute: typeof EventsDotjsonRoute
   ShareRoute: typeof ShareRoute
   sitemarkdownRouteRoute: typeof sitemarkdownRouteRouteWithChildren
   planPlanRoute: typeof planPlanRoute
@@ -204,6 +217,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/events.json': {
+      id: '/events.json'
+      path: '/events.json'
+      fullPath: '/events.json'
+      preLoaderRoute: typeof EventsDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/share': {
       id: '/share'
       path: '/share'
@@ -325,6 +345,7 @@ const sitemarkdownRouteRouteWithChildren =
   sitemarkdownRouteRoute._addFileChildren(sitemarkdownRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  EventsDotjsonRoute: EventsDotjsonRoute,
   ShareRoute: ShareRoute,
   sitemarkdownRouteRoute: sitemarkdownRouteRouteWithChildren,
   planPlanRoute: planPlanRoute,

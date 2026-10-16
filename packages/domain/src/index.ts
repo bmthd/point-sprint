@@ -35,7 +35,6 @@ export type {
 } from "./calculate/types";
 export * from "./migrations";
 export { BOOKS_SPU_ID, KOBO_SPU_ID, spuPurchaseRules, standardSpu } from "./master/spu";
-export { officialEvents } from "./master/events";
 export { campaignTemplates } from "./master/campaigns";
 export {
   type CampaignInput,

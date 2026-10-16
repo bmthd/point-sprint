@@ -16,7 +16,8 @@
     "*.tsbuildinfo",
     "ui.json",
     "packages/ui/src/**/registry.json",
-    "packages/ui/src/theme/tokens/z-indices.ts"
+    "packages/ui/src/theme/tokens/z-indices.ts",
+    "apps/web/src/server/event-pages/*.html"
   ],
   "words": [
     "nosniff",
@@ -72,6 +73,9 @@
     "adsbygoogle",
     "googletagmanager",
     "googlesyndication",
-    "pagead"
+    "pagead",
+    "strftime",
+    "autoincrement",
+    "khtml"
   ]
 }

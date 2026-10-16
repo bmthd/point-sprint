@@ -2,9 +2,7 @@ import * as v from "valibot";
 import { expect, test } from "vitest";
 import { BenefitSchema } from "../model/benefit";
 import { CampaignTemplateSchema } from "../model/campaign-template";
-import { OfficialEventSchema } from "../model/official-event";
 import { campaignTemplates } from "./campaigns";
-import { officialEvents } from "./events";
 import { instantiateCampaign } from "./instantiate";
 import { standardSpu } from "./spu";
 
@@ -21,30 +19,6 @@ test("standard SPU includes base points", () => {
   );
   expect(base.length).toBeGreaterThanOrEqual(1);
   expect(base.some((b) => b.kind === "rate-bonus" && b.params.roundingUnit === "item")).toBe(true);
-});
-
-test("official events parse", () => {
-  for (const event of officialEvents) {
-    v.parse(OfficialEventSchema, event);
-    expect(event.period.start <= event.period.end).toBe(true);
-  }
-});
-
-test("each event has its own id, and its shop-around runs over its period", () => {
-  const ids = officialEvents.map((event) => event.id);
-  expect(new Set(ids).size).toBe(ids.length);
-  for (const event of officialEvents) {
-    const shopAround = event.benefits.filter((b) => b.kind === "shop-around");
-    for (const benefit of shopAround) {
-      expect(benefit.sharedKey).toBe(event.id);
-      expect(benefit.conditions.dateRule).toEqual({ type: "range", ...event.period });
-    }
-  }
-});
-
-test("benefit ids are unique across SPU and every event", () => {
-  const ids = [...standardSpu, ...officialEvents.flatMap((e) => e.benefits)].map((b) => b.id);
-  expect(new Set(ids).size).toBe(ids.length);
 });
 
 test("card normal and card SPU are separate benefits", () => {
@@ -72,11 +46,7 @@ test("campaign templates parse", () => {
     expect(template.benefit.category).toBe("campaign");
     expect(template.benefit.enabled).toBe(false);
   }
-  const ids = [
-    ...standardSpu,
-    ...officialEvents.flatMap((e) => e.benefits),
-    ...campaignTemplates.map((t) => t.benefit),
-  ].map((b) => b.id);
+  const ids = [...standardSpu, ...campaignTemplates.map((t) => t.benefit)].map((b) => b.id);
   expect(new Set(ids).size).toBe(ids.length);
   const templateIds = campaignTemplates.map((t) => t.id);
   expect(new Set(templateIds).size).toBe(templateIds.length);

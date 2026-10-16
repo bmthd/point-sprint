@@ -1,6 +1,6 @@
-import { type Benefit, type Plan, officialEvents } from "@workspaces/domain";
+import type { Benefit, Plan } from "@workspaces/domain";
 import { Box, Flex, Button, Card, Text } from "@workspaces/ui";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
 import * as v from "valibot";
 import { updateBenefitAtom } from "../../../state/order-ops";
@@ -13,6 +13,7 @@ import {
   dateSchema,
   pointsSchema,
 } from "../../../form/field-schemas";
+import { officialEventsAtom } from "../../-official-events";
 import { rateText } from "../-order-shared";
 import { isAddedCampaign } from "./campaign-toggles";
 import { useDeleteCampaign } from "./delete-campaign";
@@ -91,8 +92,9 @@ function ShopAroundEditor({
   const panelId = useId();
   const added = isAddedCampaign(plan, benefit);
 
-  const name =
-    officialEvents.find((event) => event.id === plan.officialEventId)?.name ?? benefit.label;
+  const events = useAtomValue(officialEventsAtom);
+  // The benefit's own label until the events load, or when the event is no longer served.
+  const name = events.find((event) => event.id === plan.officialEventId)?.name ?? benefit.label;
   const rule = benefit.conditions.dateRule;
   const period = rule?.type === "range" ? { start: rule.start, end: rule.end } : plan.period;
   const change = (next: (current: ShopAroundBenefit) => ShopAroundBenefit) => {

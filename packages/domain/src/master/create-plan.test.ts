@@ -1,14 +1,32 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
+import type { OfficialEvent } from "../model/official-event";
 import { PlanSchema, type Profile } from "../model/plan";
 import { campaignTemplates } from "./campaigns";
 import { createPlan } from "./create-plan";
-import { officialEvents } from "./events";
 import { standardSpu } from "./spu";
 
 const now = "2026-10-04T12:34:56.000Z";
 const profile: Profile = { spuBenefits: standardSpu, updatedAt: now };
-const event = officialEvents[0];
+const event: OfficialEvent = {
+  id: "marathon-2026-10-04",
+  name: "お買い物マラソン第一弾",
+  period: { start: "2026-10-04", end: "2026-10-09" },
+  benefits: [
+    {
+      id: "b31ed383-3fb7-425f-9391-70ecc965aa0e",
+      kind: "shop-around",
+      category: "campaign",
+      label: "ショップ買いまわり",
+      enabled: true,
+      amountBasis: "tax-excluded",
+      capScope: "campaign",
+      sharedKey: "marathon-2026-10-04",
+      conditions: { dateRule: { type: "range", start: "2026-10-04", end: "2026-10-09" } },
+      params: { tiers: [{ minShops: 2, rate: 1 }], cap: 7000, roundingUnit: "item" },
+    },
+  ],
+};
 const planId = "0f1e2d3c-4b5a-4968-8776-655443322110";
 const fixedTemplates = campaignTemplates.filter((t) => t.occurrence === "fixed");
 
@@ -18,7 +36,6 @@ function idSequence() {
 }
 
 test("snapshots profile SPU and event benefits", () => {
-  if (!event) throw new Error("no official event");
   const plan = createPlan({ id: planId, name: "plan", event, profile, now, newId: idSequence() });
   expect(plan.benefits).toHaveLength(
     profile.spuBenefits.length + event.benefits.length + fixedTemplates.length,

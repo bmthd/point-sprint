@@ -1,10 +1,4 @@
-import {
-  type Benefit,
-  type Plan,
-  campaignTemplates,
-  officialEvents,
-  templateOfCampaign,
-} from "@workspaces/domain";
+import { type Benefit, type Plan, campaignTemplates, templateOfCampaign } from "@workspaces/domain";
 import { Box, Card, Flex, Heading, IconButton, Image, List, Switch, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
@@ -29,9 +23,9 @@ const fixedKeys = new Set(
  * ending in 5 or 0) and the official event's benefits come with the plan.
  */
 export function isAddedCampaign(plan: Plan, benefit: Benefit) {
-  const event = officialEvents.find((candidate) => candidate.id === plan.officialEventId);
-  if (event?.benefits.some((eventBenefit) => eventBenefit.id === benefit.id)) return false;
-  return benefit.sharedKey === undefined || !fixedKeys.has(benefit.sharedKey);
+  // The event's benefits share its id as their key (`sharedKey`).
+  if (benefit.sharedKey === undefined) return true;
+  return benefit.sharedKey !== plan.officialEventId && !fixedKeys.has(benefit.sharedKey);
 }
 
 /** The plan's campaigns that are toggled here: every campaign but the shop-around. */
