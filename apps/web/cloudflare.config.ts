@@ -19,11 +19,13 @@ export default defineConfig(({ isPreview }) => ({
     name: WORKER_NAME,
     compatibilityDate: "2026-10-01",
     observability: { enabled: true },
-    // Start's default entry and the cron's handler, with the Durable Object classes exported next to it.
+    // Start's default entry and the cron's handler, with the Durable Object classes exported next to
+    // it.
     entrypoint: "./src/server.ts",
     // Collects the official events from Rakuten's pages (src/server/collect-events.ts) four times a
-    // day: 10:05, 16:05, 22:05 and 04:05 in Japan. A round's page goes up around 10:00.
-    triggers: [triggers.scheduled({ schedule: "5 1,7,13,19 * * *" })],
+    // day: 10:05, 16:05, 22:05 and 04:05 in Japan. A round's page goes up around 10:00. A Preview
+    // cannot have triggers, so it serves what its database holds.
+    ...(isPreview ? {} : { triggers: [triggers.scheduled({ schedule: "5 1,7,13,19 * * *" })] }),
     // The turns at the Rakuten API, shared by every user (src/server/rakuten-rate-gate.ts).
     // SQLite storage, which the Workers Free plan has; the turns are kept in memory only. A Preview
     // cannot create the class, so it has none, and no item lookup.

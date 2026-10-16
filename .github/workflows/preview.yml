@@ -39,6 +39,8 @@ jobs:
         id: preview
         working-directory: apps/web
         run: |
+          # A failed deploy fails the step, not only `tee`.
+          set -o pipefail
           pnpm exec cf previews deploy "pr-$PR_NUMBER" | tee "$RUNNER_TEMP/preview.log"
           # The result is the JSON object at the end of the output.
           url=$(sed -n '/^{/,/^}/p' "$RUNNER_TEMP/preview.log" | jq -r '.preview_urls[0]')
