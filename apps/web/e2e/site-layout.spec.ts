@@ -80,22 +80,28 @@ test("on a phone the header has the site name, the color mode and the menu, whic
 });
 
 for (const width of [390, 1280]) {
-  test(`at ${width}px the color mode follows the device until ライト or ダーク is chosen`, async ({
+  test(`at ${width}px the color mode switch keeps only a choice against the device`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.emulateMedia({ colorScheme: "dark" });
     const { header } = await openReady(page, "/help");
     const html = page.locator("html");
+    const stored = () => page.evaluate(() => localStorage.getItem("color-mode"));
     await expect(html).toHaveAttribute("data-mode", "dark");
-    await expect(header.colorModeButton).toHaveAccessibleName("カラーモード（端末）");
 
-    await header.chooseColorMode("ライト");
+    // Against the device: kept, and the device no longer decides.
+    await header.switchColorMode();
     await expect(html).toHaveAttribute("data-mode", "light");
-    await expect(header.colorModeButton).toHaveAccessibleName("カラーモード（ライト）");
+    expect(await stored()).toBe("light");
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(html).toHaveAttribute("data-mode", "light");
 
-    await header.chooseColorMode("端末");
+    // Back to what the device makes: the site follows the device again.
+    await header.switchColorMode();
     await expect(html).toHaveAttribute("data-mode", "dark");
+    expect(await stored()).toBe("system");
     await page.emulateMedia({ colorScheme: "light" });
     await expect(html).toHaveAttribute("data-mode", "light");
   });

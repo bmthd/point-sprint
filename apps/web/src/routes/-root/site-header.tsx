@@ -1,18 +1,15 @@
-import type { ReactNode } from "react";
 import {
   Box,
   Drawer,
   Flex,
   IconButton,
-  Menu,
   MenuIcon,
-  MonitorSmartphoneIcon,
   MoonIcon,
   SunIcon,
   Text,
-  type ColorModeWithSystem,
   useColorMode,
   useDisclosure,
+  useSystemColorMode,
 } from "@workspaces/ui";
 import { RouterLink } from "../../ui/router-link";
 import { CloseIcon } from "../../ui/icons";
@@ -58,57 +55,33 @@ function ProfileLink() {
   );
 }
 
-const colorModes = [
-  { value: "system", label: "端末", icon: <MonitorSmartphoneIcon /> },
-  { value: "light", label: "ライト", icon: <SunIcon /> },
-  { value: "dark", label: "ダーク", icon: <MoonIcon /> },
-] as const satisfies readonly { value: ColorModeWithSystem; label: string; icon: ReactNode }[];
+const colorModeLabels = { light: "ライト", dark: "ダーク" } as const;
 
-/** The color mode: the device's, light or dark, chosen from a menu under an icon of the current choice. */
-function ColorModeMenu() {
-  const { internalColorMode, changeColorMode } = useColorMode();
-  const current = colorModes.find((mode) => mode.value === internalColorMode) ?? colorModes[0];
+/**
+ * Switches between light and dark. A choice the device already makes is not kept: the site goes
+ * back to following the device. Only a choice against it is kept, as an override.
+ */
+function ColorModeButton() {
+  const { colorMode, changeColorMode } = useColorMode();
+  const { getSystemColorMode } = useSystemColorMode({ defaultColorMode: "light" });
+  const next = colorMode === "light" ? "dark" : "light";
 
   return (
-    <Menu.Root placement="end-end">
-      <Menu.Trigger>
-        <IconButton
-          aria-label={`カラーモード（${current.label}）`}
-          size="lg"
-          variant="ghost"
-          color="fg"
-          _hover={{ bg: "bg.muted" }}
-          icon={current.icon}
-        />
-      </Menu.Trigger>
-      <Menu.Content minW="40">
-        <Menu.OptionGroup<"radio">
-          type="radio"
-          label="カラーモード"
-          value={internalColorMode}
-          onChange={(value) => changeColorMode(value as ColorModeWithSystem)}
-        >
-          {colorModes.map(({ value, label, icon }) => (
-            // Yamada UI marks the chosen item only by its look: a screen reader needs `aria-checked`.
-            <Menu.OptionItem
-              key={value}
-              value={value}
-              aria-checked={value === internalColorMode}
-              gap="2"
-            >
-              {icon}
-              {label}
-            </Menu.OptionItem>
-          ))}
-        </Menu.OptionGroup>
-      </Menu.Content>
-    </Menu.Root>
+    <IconButton
+      aria-label={`カラーモード（${colorModeLabels[colorMode]}）。${colorModeLabels[next]}に切り替える`}
+      onClick={() => changeColorMode(next === getSystemColorMode() ? "system" : next)}
+      size="lg"
+      variant="ghost"
+      color="fg"
+      _hover={{ bg: "bg.muted" }}
+      icon={colorMode === "light" ? <SunIcon /> : <MoonIcon />}
+    />
   );
 }
 
 /**
  * The header on every page: the site name (to the top) and the profile. The router marks the link
- * to the page being shown with `aria-current="page"`. The color mode menu is on every width, left of
+ * to the page being shown with `aria-current="page"`. The color mode switch is on every width, left of
  * the profile link or the menu. The profile link spells out its name: it moves to a page, unlike
  * the icon buttons that act in place. At the `lg` breakpoint and below the site name leaves no room
  * for it: the menu has it, with the sidebar.
@@ -141,7 +114,7 @@ export function SiteHeader() {
           ポイントスプリント
         </RouterLink>
         <Flex align="center" gap="1">
-          <ColorModeMenu />
+          <ColorModeButton />
           <Box display={{ base: "contents", lg: "none" }}>
             <ProfileLink />
           </Box>

@@ -38,13 +38,14 @@ export class Header {
     return new ProfilePage(this.page);
   }
 
-  /** Chooses the color mode (端末, ライト or ダーク) from the menu under its icon. */
-  async chooseColorMode(label: "端末" | "ライト" | "ダーク") {
+  /** Switches between light and dark. Retried: a click before the prerendered page hydrates does nothing. */
+  async switchColorMode() {
+    const html = this.page.locator("html");
+    const before = await html.getAttribute("data-mode");
     await expect(async () => {
       await this.colorModeButton.click();
-      await expect(this.page.getByRole("menu")).toBeVisible({ timeout: 1000 });
+      await expect(html).not.toHaveAttribute("data-mode", before ?? "", { timeout: 1000 });
     }).toPass();
-    await this.page.getByRole("menuitemradio", { name: label }).click();
   }
 
   /** Opens the menu, on a phone. Retried: a click before the prerendered page hydrates does nothing. */
