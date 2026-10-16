@@ -167,6 +167,7 @@ function SpuLink(props: LinkProps) {
   return (
     <Link
       href={SPU_PAGE_URL}
+      color="link"
       target="_blank"
       rel="noreferrer"
       alignSelf="flex-start"

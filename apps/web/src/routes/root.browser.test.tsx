@@ -90,7 +90,7 @@ test.each([
     expected: {
       base: "rgb(18, 18, 18)",
       panel: "rgb(30, 30, 30)",
-      emphasized: "rgb(110, 110, 110)",
+      emphasized: "rgb(138, 138, 138)",
     },
   },
 ] as const)(
