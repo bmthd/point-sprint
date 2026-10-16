@@ -64,23 +64,48 @@ test("the header marks the page being shown", async ({ page }) => {
   }
 });
 
-test("on a phone the header has the site name and the menu, which has the profile and the color mode", async ({
+test("on a phone the header has the site name, the color mode and the menu, which has the profile", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const { header } = await openReady(page, "/help");
   await expect(header.profileLink).toBeHidden();
+  await expect(header.colorModeButton).toBeVisible();
   const box = (await header.topLink.boundingBox())!;
   expect(box.height).toBeLessThanOrEqual(44);
 
   const menu = await header.openMenu();
-  await menu.toggleDarkMode();
-  await expect(page.locator("html")).toHaveAttribute("data-mode", "dark");
-  await expect(menu.darkMode).toBeChecked();
-
   await menu.goToProfile();
   await expect(menu.root).toHaveCount(0);
 });
+
+for (const width of [390, 1280]) {
+  test(`at ${width}px the color mode switch keeps only a choice against the device`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.emulateMedia({ colorScheme: "dark" });
+    const { header } = await openReady(page, "/help");
+    const html = page.locator("html");
+    const stored = () => page.evaluate(() => localStorage.getItem("color-mode"));
+    await expect(html).toHaveAttribute("data-mode", "dark");
+
+    // Against the device: kept, and the device no longer decides.
+    await header.switchColorMode();
+    await expect(html).toHaveAttribute("data-mode", "light");
+    expect(await stored()).toBe("light");
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(html).toHaveAttribute("data-mode", "light");
+
+    // Back to what the device makes: the site follows the device again.
+    await header.switchColorMode();
+    await expect(html).toHaveAttribute("data-mode", "dark");
+    expect(await stored()).toBe("system");
+    await page.emulateMedia({ colorScheme: "light" });
+    await expect(html).toHaveAttribute("data-mode", "light");
+  });
+}
 
 // One test per page: together they follow dozens of links, more than one test's time allows.
 for (const { name } of pages("")) {
