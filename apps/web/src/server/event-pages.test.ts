@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
 import { periodOf, readCurrentRound, readSchedule } from "./event-pages";
 
-// The pages as fetched on 2026-10-17, while the marathon page still showed the second round.
+// The parts of the pages it reads, cut out of them as fetched on 2026-10-17, while the marathon page
+// still showed the second round.
 const fixture = (name: string) =>
   readFileSync(new URL(`event-pages/${name}`, import.meta.url), "utf8");
 const schedule = fixture("schedule-2026-10.html");

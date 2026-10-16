@@ -16,8 +16,7 @@
     "*.tsbuildinfo",
     "ui.json",
     "packages/ui/src/**/registry.json",
-    "packages/ui/src/theme/tokens/z-indices.ts",
-    "apps/web/src/server/event-pages/*.html"
+    "packages/ui/src/theme/tokens/z-indices.ts"
   ],
   "words": [
     "nosniff",
@@ -76,6 +75,7 @@
     "pagead",
     "strftime",
     "autoincrement",
-    "khtml"
+    "khtml",
+    "miniflare"
   ]
 }
