@@ -127,6 +127,24 @@ export const campaignTemplates: CampaignTemplate[] = [
     },
   },
   {
+    // 期間中の合計額（税込）で倍率が決まるキャンペーン（超ポイントバック祭など）を、利用者が段階を入れて作る。
+    // sharedKey がないので何度でも足せる。段階と上限は回ごとに違うので、足した後に利用者が直す。
+    id: "spend-tiers-manual",
+    name: "合計額で倍率（手動）",
+    occurrence: "user-period",
+    benefit: {
+      id: "6f1d2a43-8c5e-4b7a-9d10-3e2f1a0b9c8d",
+      kind: "spend-tiers",
+      category: "campaign",
+      label: "合計額で倍率",
+      enabled: false,
+      amountBasis: "tax-excluded",
+      capScope: "plan",
+      conditions: {},
+      params: { tiers: [{ minAmount: 5000, rate: 1 }], cap: 1000, roundingUnit: "item" },
+    },
+  },
+  {
     // 利用者が自分で倍率を決めるキャンペーン。sharedKey がないので何度でも足せる。
     id: "custom-rate",
     name: "自由な倍率",

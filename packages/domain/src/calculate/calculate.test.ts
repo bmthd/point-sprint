@@ -301,3 +301,102 @@ describe("calculate", () => {
     expectBreakdownSumsToTotal(result);
   });
 });
+
+describe("spend-tiers", () => {
+  const SPEND_ID = "5c000000-0000-4000-8000-000000000003";
+  const spendTiers = (over: Partial<Benefit> = {}): Benefit =>
+    ({
+      id: SPEND_ID,
+      kind: "spend-tiers",
+      category: "campaign",
+      label: "合計額で倍率",
+      enabled: true,
+      amountBasis: "tax-excluded",
+      capScope: "plan",
+      conditions: {},
+      params: {
+        tiers: [
+          { minAmount: 3300, rate: 1 },
+          { minAmount: 5500, rate: 2 },
+        ],
+        cap: 1000,
+        roundingUnit: "item",
+      },
+      ...over,
+    }) as Benefit;
+  // ¥1,100 tax included is ¥1,000 tax excluded.
+  const ordersOf = (count: number) =>
+    [ITEM_1, ITEM_2, ITEM_3]
+      .slice(0, count)
+      .map((itemId, index) =>
+        order([ORDER_1, ORDER_2, ORDER_3][index]!, SHOP_A, [item(itemId, 1100 * (index + 1))]),
+      );
+
+  test("the total of the orders sets the rate every order gets", () => {
+    // ¥1,100 + ¥2,200 = ¥3,300 reaches the first tier; both orders get +1.
+    const result = calculate(plan(ordersOf(2), [spendTiers()]), shops);
+    expect(rowsOf(result, SPEND_ID).map((row) => row.points)).toEqual([10, 20]);
+    expect(result.rates[SPEND_ID]).toBe(1);
+    expect(result.spendTotals[SPEND_ID]).toBe(3300);
+  });
+
+  test("a total below the first tier gives nothing", () => {
+    const result = calculate(plan(ordersOf(1), [spendTiers()]), shops);
+    expect(rowsOf(result, SPEND_ID)).toEqual([]);
+    expect(result.rates[SPEND_ID]).toBe(0);
+  });
+
+  test("a higher tier raises the rate of the earlier orders too", () => {
+    // ¥1,100 + ¥2,200 + ¥3,300 = ¥6,600: +2 on all three.
+    const result = calculate(plan(ordersOf(3), [spendTiers()]), shops);
+    expect(rowsOf(result, SPEND_ID).map((row) => row.points)).toEqual([20, 40, 60]);
+  });
+
+  test("held orders are not summed", () => {
+    const orders = ordersOf(2);
+    orders[1] = { ...orders[1]!, onHold: true };
+    const result = calculate(plan(orders, [spendTiers()]), shops);
+    expect(result.spendTotals[SPEND_ID]).toBe(1100);
+    expect(rowsOf(result, SPEND_ID)).toEqual([]);
+    expect(result.heldEstimates[0]?.rates[SPEND_ID]).toBe(1);
+  });
+
+  test("only the orders matching its conditions are summed", () => {
+    const orders = ordersOf(3);
+    orders[2] = { ...orders[2]!, tags: ["repeat"] };
+    const result = calculate(
+      plan(orders, [spendTiers({ conditions: { orderTags: ["repeat"] } })]),
+      shops,
+    );
+    expect(result.spendTotals[SPEND_ID]).toBe(3300);
+    expect(rowsOf(result, SPEND_ID).map((row) => row.points)).toEqual([30]);
+  });
+
+  test("its days are the date rule's, or the plan's period without one", () => {
+    const orders = [
+      order(ORDER_1, SHOP_A, [item(ITEM_1, 3300)], "2026-10-05"),
+      order(ORDER_2, SHOP_A, [item(ITEM_2, 3300)], "2026-10-12"),
+    ];
+    const inRule = calculate(
+      plan(orders, [
+        spendTiers({
+          conditions: { dateRule: { type: "range", start: "2026-10-12", end: "2026-10-12" } },
+        }),
+      ]),
+      shops,
+    );
+    expect(inRule.spendTotals[SPEND_ID]).toBe(3300);
+    const inPlan = calculate(plan(orders, [spendTiers()]), shops);
+    expect(inPlan.spendTotals[SPEND_ID]).toBe(3300);
+  });
+
+  test("the cap holds", () => {
+    const orders = [order(ORDER_1, SHOP_A, [item(ITEM_1, 110000)])];
+    const result = calculate(plan(orders, [spendTiers()]), shops);
+    expect(totalOf(result, SPEND_ID)).toMatchObject({
+      rawPoints: 2000,
+      cappedPoints: 1000,
+      capReached: true,
+    });
+  });
+});

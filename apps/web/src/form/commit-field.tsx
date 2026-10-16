@@ -3,7 +3,7 @@
 "use no memo";
 
 import { getInput, reset, useField, useForm, validate } from "@formisch/react";
-import { Field, Input, VisuallyHidden } from "@workspaces/ui";
+import { Field, Input } from "@workspaces/ui";
 import { useRef } from "react";
 import * as v from "valibot";
 import { bind, errorsOf } from "./form";
@@ -59,12 +59,14 @@ export function CommitField<T>({
 
   return (
     <Field.Root
-      label={hideLabel ? <VisuallyHidden>{label}</VisuallyHidden> : label}
+      // A hidden label still takes the field's gap above the input, so the input names itself.
+      label={hideLabel ? undefined : label}
       {...errorsOf(field)}
       minW="0"
     >
       <Input
         size="lg"
+        aria-label={hideLabel ? label : undefined}
         inputMode={inputMode}
         placeholder={placeholder}
         fontVariantNumeric={align === "end" ? "tabular-nums" : undefined}

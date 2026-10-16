@@ -14,7 +14,12 @@ const tiers = [
 ];
 const items = [{ lineItemId: "a", orderId: "o1", amount: 10000 }];
 const run = (shopCount: number) =>
-  shopAround.rawPoints({ params: { tiers, roundingUnit: "item" }, items, shopCount });
+  shopAround.rawPoints({
+    params: { tiers, roundingUnit: "item" },
+    items,
+    shopCount,
+    spendTotal: 0,
+  });
 
 test("one shop gives no bonus", () => {
   expect(run(1).get("a")).toBe(0);

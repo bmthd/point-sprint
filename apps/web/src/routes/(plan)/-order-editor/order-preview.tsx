@@ -73,7 +73,7 @@ export function previewOf(input: {
   return {
     newShopCount: shopCountAfter > shopCountBefore ? shopCountAfter : undefined,
     base: draft.order.lineItems.reduce((sum, item) => sum + taxExcludedTarget(item), 0),
-    rate: orderPointRows(rows, benefits, shopCountAfter, draft.order.lineItems).rate,
+    rate: orderPointRows(rows, benefits, planAfter?.rates ?? {}, draft.order.lineItems).rate,
     points,
     held: draft.order.onHold,
     shopAroundRateGain:
