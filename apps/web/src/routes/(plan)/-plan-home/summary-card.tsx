@@ -35,39 +35,26 @@ const Label = (props: { children: string }) => (
   <Text as="span" fontSize="xs" color="primary.contrast/80" {...props} />
 );
 
-/** How far each arrow's tip reaches into the next one, as a percentage of the whole bar. */
-const TIP = 2.5;
-
-/** A bar `width`% wide of the whole that ends in a tip. */
-const arrowClip = (width: number) => {
-  const back = `calc(100% - ${(TIP / width) * 100}%)`;
-  return `polygon(0 0, ${back} 0, 100% 50%, ${back} 100%, 0 100%)`;
-};
-
 /**
- * The shadow each arrow's tip casts on the next one. A bare URL with its parentheses escaped,
- * because `bgImage` wraps a value in `url()` only when it does not look like a CSS function.
+ * One chevron per shop; the tip of each sits in the notch of the next, and the first one starts
+ * flat. A bare URL, because `maskImage` wraps a value that is not a CSS function in `url()`.
  */
-const TIP_SHADOWS = (() => {
-  const width = SHOP_STEPS * 24;
-  const depth = (TIP / 100) * width;
-  const bands = Array.from({ length: SHOP_STEPS - 1 }, (_, index) => {
-    const tip = (index + 1) * 24;
-    const back = tip - depth;
-    return `<polygon points="${back},0 ${tip},6 ${back},12 ${back + 3},12 ${tip + 3},6 ${back + 3},0" fill="url(#s)"/>`;
-  });
-  return `data:image/svg+xml,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} 12" preserveAspectRatio="none"><defs><linearGradient id="s"><stop offset="0" stop-opacity="0.45"/><stop offset="1" stop-opacity="0"/></linearGradient></defs>${bands.join("")}</svg>`,
-  ).replace(/[()]/g, (paren) => (paren === "(" ? "%28" : "%29"))}`;
-})();
+const CHEVRONS = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SHOP_STEPS * 24} 12" preserveAspectRatio="none">${Array.from(
+    { length: SHOP_STEPS },
+    (_, index) => {
+      const x = index * 24;
+      const notch = index === 0 ? 0 : 6;
+      return `<polygon points="${x},0 ${x + 16},0 ${x + 22},6 ${x + 16},12 ${x},12 ${x + notch},6"/>`;
+    },
+  ).join("")}</svg>`,
+)}`;
 
-/**
- * The shops bought from so far as a row of arrows, each one's tip laid over the next, with the
- * next shop's arrow lit faintly.
- */
-function ShopArrows({ count }: { count: number }) {
+/** The shops bought from so far as a row of chevrons, with the next shop's chevron lit faintly. */
+function ShopChevrons({ count }: { count: number }) {
   const step = 100 / SHOP_STEPS;
-  const next = Math.min(count + 1, SHOP_STEPS) * step;
+  const track = "{colors.blackAlpha.400}";
+  const next = "color-mix(in srgb, {colors.primary.contrast} 40%, transparent)";
   return (
     <Progress
       aria-label="買い回り"
@@ -76,30 +63,10 @@ function ShopArrows({ count }: { count: number }) {
       value={count}
       size="lg"
       shape="square"
-      trackColor="blackAlpha.400"
       rangeColor="primary.contrast"
-      clipPath={arrowClip(100)}
-      rangeProps={{
-        position: "relative",
-        clipPath: count === 0 ? undefined : arrowClip(count * step),
-      }}
-      _before={{
-        content: '""',
-        position: "absolute",
-        top: "0",
-        left: "0",
-        h: "full",
-        w: `${next}%`,
-        bg: "primary.contrast/40",
-        clipPath: arrowClip(next),
-      }}
-      _after={{
-        content: '""',
-        position: "absolute",
-        inset: "0",
-        bgImage: TIP_SHADOWS,
-        bgSize: "100% 100%",
-      }}
+      bg={`linear-gradient(to right, ${track} ${count * step}%, ${next} ${count * step}% ${(count + 1) * step}%, ${track} ${(count + 1) * step}%)`}
+      maskImage={CHEVRONS}
+      maskSize="100% 100%"
     />
   );
 }
@@ -208,7 +175,7 @@ export function SummaryCard({
 
         {outlook ? (
           <Flex direction="column" gap="2">
-            <ShopArrows count={Math.min(outlook.shopCount, SHOP_STEPS)} />
+            <ShopChevrons count={Math.min(outlook.shopCount, SHOP_STEPS)} />
             <Flex justify="space-between" fontSize="sm">
               <span>
                 <Text as="b" fontVariantNumeric="tabular-nums">
