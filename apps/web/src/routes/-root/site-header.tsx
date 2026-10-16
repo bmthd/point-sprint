@@ -151,7 +151,7 @@ function SiteMenu() {
         withCloseButton={false}
         restoreFocus
       >
-        <Drawer.Content bg="bg">
+        <Drawer.Content bg="bg" roundedLeft="l2">
           <Drawer.Header justifyContent="space-between">
             <Drawer.Title as="h2">メニュー</Drawer.Title>
             <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>
