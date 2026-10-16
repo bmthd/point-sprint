@@ -8,6 +8,7 @@ export const queryKeys = {
   shops: ["shops"],
   profile: ["profile"],
   storageHealth: ["storage-health"],
+  quarantine: ["quarantine"],
 } as const;
 
 export const defaultProfile = (): Profile => ({
@@ -56,6 +57,12 @@ export const storageHealthQueryAtom = atomWithQuery((get) => {
       wasReset: repository.wasReset(),
     }),
   };
+});
+
+/** The rows set aside because they failed validation, read only while someone looks at them. */
+export const quarantineQueryAtom = atomWithQuery((get) => {
+  const repository = get(repositoryAtom);
+  return { queryKey: queryKeys.quarantine, queryFn: () => repository.quarantine.list() };
 });
 
 const noPlans: Plan[] = [];

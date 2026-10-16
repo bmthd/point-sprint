@@ -14,7 +14,7 @@ import {
 import { createIndexedDb } from "seitu/web/indexed-db";
 import { createIndexedDbTable } from "seitu/web/indexed-db-table";
 import * as v from "valibot";
-import { OutdatedDatabaseError, type Repository } from "./repository";
+import { OutdatedDatabaseError, type QuarantinedRow, type Repository } from "./repository";
 
 const PROFILE_KEY = "profile";
 
@@ -222,6 +222,23 @@ export function createIndexedDbRepository(
       await completion(transaction);
     },
     quarantined: async () => (await settled()).stores.quarantine.count(),
+    quarantine: {
+      // Rows and keys come from one transaction, so they always line up.
+      list: async () => {
+        const database = await (await settled())["~"].getDatabase();
+        const transaction = database.transaction("quarantine", "readonly");
+        const store = transaction.objectStore("quarantine");
+        const rows = store.getAll();
+        const keys = store.getAllKeys();
+        await completion(transaction);
+        return (rows.result as Omit<QuarantinedRow, "key">[]).map((row, index) => ({
+          ...row,
+          key: keys.result[index] as number,
+        }));
+      },
+      delete: async (key) => (await settled()).stores.quarantine.delete(key),
+      clear: async () => (await settled()).stores.quarantine.clear(),
+    },
     wasReset: () => reset,
   };
 }

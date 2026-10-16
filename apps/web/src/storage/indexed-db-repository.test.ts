@@ -186,6 +186,30 @@ test("a valid row written while a bad one is being moved is kept", async () => {
   expect(await repo.quarantined()).toBe(0);
 });
 
+test("quarantined rows can be listed and removed one at a time or all at once", async () => {
+  const name = uniqueName();
+  const repo = createIndexedDbRepository({ name });
+  await repo.quarantined(); // creates the stores
+  await putRaw(name, "plans", { id: "broken-1", name: 1 });
+  await putRaw(name, "plans", { id: "broken-2", name: 2 });
+  await repo.plans.list();
+
+  const rows = await repo.quarantine.list();
+  expect(rows.map((row) => [row.store, row.value])).toEqual([
+    ["plans", { id: "broken-1", name: 1 }],
+    ["plans", { id: "broken-2", name: 2 }],
+  ]);
+  expect(rows[0]?.issues.length).toBeGreaterThan(0);
+
+  await repo.quarantine.delete(rows[0]!.key);
+  expect((await repo.quarantine.list()).map((row) => row.value)).toEqual([
+    { id: "broken-2", name: 2 },
+  ]);
+
+  await repo.quarantine.clear();
+  expect(await repo.quarantined()).toBe(0);
+});
+
 test("clear removes every stored row, including the quarantined ones", async () => {
   const name = uniqueName();
   const repo = createIndexedDbRepository({ name });

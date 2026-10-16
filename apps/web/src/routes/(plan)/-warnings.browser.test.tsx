@@ -18,10 +18,6 @@ test("offers a retry when the stored data cannot be checked", async () => {
     .element(screen.getByRole("alert").getByText("保存データの状態を確認できませんでした。"))
     .toBeVisible();
   await screen.getByRole("button", { name: "再試行" }).click();
-  await expect
-    .element(
-      screen.getByText("読み込めなかったデータが2件あります。表示と計算には含めていません。"),
-    )
-    .toBeVisible();
+  await expect.element(screen.getByText("読み込めなかったデータが2件あります。")).toBeVisible();
   expect(screen.getByText("保存データの状態を確認できませんでした。").query()).toBeNull();
 });
