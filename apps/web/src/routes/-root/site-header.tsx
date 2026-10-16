@@ -1,13 +1,16 @@
+import type { ReactNode } from "react";
 import {
   Box,
   Drawer,
   Flex,
   IconButton,
+  Menu,
   MenuIcon,
+  MonitorSmartphoneIcon,
   MoonIcon,
   SunIcon,
-  Switch,
   Text,
+  type ColorModeWithSystem,
   useColorMode,
   useDisclosure,
 } from "@workspaces/ui";
@@ -55,31 +58,60 @@ function ProfileLink() {
   );
 }
 
-function ColorModeButton() {
-  const { colorMode, toggleColorMode } = useColorMode();
-  const nextColorMode = colorMode === "light" ? "dark" : "light";
-  const colorModeLabel = colorMode === "light" ? "ライト" : "ダーク";
-  const nextColorModeLabel = nextColorMode === "light" ? "ライト" : "ダーク";
+const colorModes = [
+  { value: "system", label: "端末", icon: <MonitorSmartphoneIcon /> },
+  { value: "light", label: "ライト", icon: <SunIcon /> },
+  { value: "dark", label: "ダーク", icon: <MoonIcon /> },
+] as const satisfies readonly { value: ColorModeWithSystem; label: string; icon: ReactNode }[];
+
+/** The color mode: the device's, light or dark, chosen from a menu under an icon of the current choice. */
+function ColorModeMenu() {
+  const { internalColorMode, changeColorMode } = useColorMode();
+  const current = colorModes.find((mode) => mode.value === internalColorMode) ?? colorModes[0];
 
   return (
-    <IconButton
-      aria-label={`現在は${colorModeLabel}モードです。${nextColorModeLabel}モードに切り替える`}
-      onClick={toggleColorMode}
-      size="lg"
-      variant="ghost"
-      color="fg"
-      _hover={{ bg: "bg.muted" }}
-      icon={colorMode === "light" ? <SunIcon /> : <MoonIcon />}
-    />
+    <Menu.Root placement="end-end">
+      <Menu.Trigger>
+        <IconButton
+          aria-label={`カラーモード（${current.label}）`}
+          size="lg"
+          variant="ghost"
+          color="fg"
+          _hover={{ bg: "bg.muted" }}
+          icon={current.icon}
+        />
+      </Menu.Trigger>
+      <Menu.Content minW="40">
+        <Menu.OptionGroup<"radio">
+          type="radio"
+          label="カラーモード"
+          value={internalColorMode}
+          onChange={(value) => changeColorMode(value as ColorModeWithSystem)}
+        >
+          {colorModes.map(({ value, label, icon }) => (
+            // Yamada UI marks the chosen item only by its look: a screen reader needs `aria-checked`.
+            <Menu.OptionItem
+              key={value}
+              value={value}
+              aria-checked={value === internalColorMode}
+              gap="2"
+            >
+              {icon}
+              {label}
+            </Menu.OptionItem>
+          ))}
+        </Menu.OptionGroup>
+      </Menu.Content>
+    </Menu.Root>
   );
 }
 
 /**
  * The header on every page: the site name (to the top) and the profile. The router marks the link
- * to the page being shown with `aria-current="page"`. The color mode switch (#3) goes next to the
- * profile link. The profile link spells out its name: it moves to a page, unlike the icon buttons
- * that act in place. At the `lg` breakpoint and below the site name leaves no room for them: the
- * menu has them, with the sidebar.
+ * to the page being shown with `aria-current="page"`. The color mode menu is on every width, left of
+ * the profile link or the menu. The profile link spells out its name: it moves to a page, unlike
+ * the icon buttons that act in place. At the `lg` breakpoint and below the site name leaves no room
+ * for it: the menu has it, with the sidebar.
  */
 export function SiteHeader() {
   return (
@@ -108,23 +140,24 @@ export function SiteHeader() {
         >
           ポイントスプリント
         </RouterLink>
-        <Flex display={{ base: "flex", lg: "none" }} align="center" gap="1">
-          <ColorModeButton />
-          <ProfileLink />
+        <Flex align="center" gap="1">
+          <ColorModeMenu />
+          <Box display={{ base: "contents", lg: "none" }}>
+            <ProfileLink />
+          </Box>
+          <SiteMenu />
         </Flex>
-        <SiteMenu />
       </Flex>
     </Box>
   );
 }
 
 /**
- * The menu at the `lg` breakpoint and below: the profile, the sidebar, and the color mode. It closes
+ * The menu at the `lg` breakpoint and below: the profile and the sidebar. It closes
  * on a link: one in the site moves to its page, one to a service opens in a new tab.
  */
 function SiteMenu() {
   const { open, onOpen, onClose } = useDisclosure();
-  const { colorMode, toggleColorMode } = useColorMode();
 
   return (
     <>
@@ -161,15 +194,6 @@ function SiteMenu() {
           >
             <ProfileLink />
             <SiteSidebar />
-            <Switch
-              checked={colorMode === "dark"}
-              onChange={toggleColorMode}
-              minH="11"
-              justifyContent="space-between"
-              flexDirection="row-reverse"
-            >
-              ダークモード
-            </Switch>
             <ResetDataButton onDone={onClose} />
           </Drawer.Body>
         </Drawer.Content>

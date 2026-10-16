@@ -16,12 +16,14 @@ export class Header {
   readonly topLink: Locator;
   readonly profileLink: Locator;
   readonly menuButton: Locator;
+  readonly colorModeButton: Locator;
 
   constructor(readonly page: Page) {
     this.root = page.getByRole("banner");
     this.topLink = this.root.getByRole("link", { name: "ポイントスプリント" });
     this.profileLink = this.root.getByRole("link", { name: "プロフィール", exact: true });
     this.menuButton = this.root.getByRole("button", { name: "メニュー" });
+    this.colorModeButton = this.root.getByRole("button", { name: /^カラーモード/ });
   }
 
   async goToTop() {
@@ -36,6 +38,15 @@ export class Header {
     return new ProfilePage(this.page);
   }
 
+  /** Chooses the color mode (端末, ライト or ダーク) from the menu under its icon. */
+  async chooseColorMode(label: "端末" | "ライト" | "ダーク") {
+    await expect(async () => {
+      await this.colorModeButton.click();
+      await expect(this.page.getByRole("menu")).toBeVisible({ timeout: 1000 });
+    }).toPass();
+    await this.page.getByRole("menuitemradio", { name: label }).click();
+  }
+
   /** Opens the menu, on a phone. Retried: a click before the prerendered page hydrates does nothing. */
   async openMenu() {
     const menu = new Menu(this.page);
@@ -47,16 +58,14 @@ export class Header {
   }
 }
 
-/** The header's menu, on a phone: the profile, the color mode and the sidebar. */
+/** The header's menu, on a phone: the profile and the sidebar. */
 export class Menu {
   readonly root: Locator;
-  readonly darkMode: Locator;
   readonly profileLink: Locator;
   readonly shareSite: Locator;
 
   constructor(readonly page: Page) {
     this.root = page.getByRole("dialog", { name: "メニュー" });
-    this.darkMode = this.root.getByRole("switch", { name: "ダークモード" });
     this.profileLink = this.root.getByRole("link", { name: "プロフィール", exact: true });
     this.shareSite = this.root.getByRole("region", { name: "このサイトをシェア" });
   }
@@ -64,11 +73,6 @@ export class Menu {
   /** A notice's headline. */
   headline(title: string) {
     return this.root.getByRole("link", { name: title });
-  }
-
-  /** The switch's input is hidden under its look: a person clicks the label. */
-  async toggleDarkMode() {
-    await this.root.getByText("ダークモード").click();
   }
 
   async goToProfile() {
