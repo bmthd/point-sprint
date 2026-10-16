@@ -18,7 +18,11 @@ export const markdownComponents = {
     </Heading>
   ),
   p: ({ children }) => <Text my="2">{children}</Text>,
-  a: ({ children, href }) => <Link href={href}>{children}</Link>,
+  a: ({ children, href }) => (
+    <Link href={href} color="link">
+      {children}
+    </Link>
+  ),
   ul: ({ children }) => (
     <List.Root styleType="disc" my="2">
       {children}
