@@ -284,6 +284,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   const { draggedRef, focusAfterMoveRef, announce, handleHintId, holdHintId } = useListContext();
   const detailId = useId();
   const handleRef = useRef<HTMLButtonElement>(null);
+  const lineRef = useRef<HTMLDivElement>(null);
   const [dropSide, setDropSide] = useState<"before" | "after" | null>(null);
   const [grabbed, setGrabbed] = useState(false);
 
@@ -352,8 +353,13 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
       }
       draggable={grabbed}
       onDragStart={(event: DragEvent) => {
-        // The opened fields close, so the rows being moved are as short as they look.
+        // The opened fields close, and only the row's line is carried, not the fields under it.
         setOpenOrderId(null);
+        const line = lineRef.current;
+        if (line) {
+          const box = line.getBoundingClientRect();
+          event.dataTransfer.setDragImage(line, event.clientX - box.left, event.clientY - box.top);
+        }
         draggedRef.current = { orderId, index, shopName };
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", shopName);
@@ -369,6 +375,9 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
       onDrop={onDrop}
     >
       <Box
+        ref={lineRef}
+        // Painted, so the line carried in a drag is a row and not loose text.
+        bg="bg.panel"
         display="grid"
         gridTemplateColumns={rowColumns}
         alignItems="center"
