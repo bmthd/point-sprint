@@ -241,7 +241,7 @@ test("says when the events cannot be read, and reads them again", async () => {
   };
   const { screen } = await renderPlanList(createMemoryRepository(), { events });
 
-  await expect.element(screen.getByText("イベントを読み込めませんでした。")).toBeVisible();
+  await expect.element(screen.getByText("イベントを読み込めませんでした")).toBeVisible();
   fail = false;
   await screen.getByRole("button", { name: "再試行" }).click();
   await expect.element(screen.getByText("お買い物マラソン&ジャンル祭")).toBeVisible();
@@ -253,7 +253,7 @@ test("says so when no event is ahead", async () => {
   });
 
   await expect
-    .element(screen.getByText("開催中・開催予定のイベントはまだありません。"))
+    .element(screen.getByText("開催中・開催予定のイベントはまだありません"))
     .toBeVisible();
 });
 
