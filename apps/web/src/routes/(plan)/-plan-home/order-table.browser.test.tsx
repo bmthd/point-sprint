@@ -505,12 +505,55 @@ test("expanded row shows group totals and edits the order", async () => {
   await userEvent.selectOptions(screen.getByRole("combobox", { name: "ショップ" }), "ショップ5");
   await expect.poll(async () => (await stored())?.[0]?.shopId).toBe(shopId(5));
 
-  // コピー and 削除 work from the expanded row.
-  await screen.getByRole("button", { name: "コピー" }).click();
+  // 複製 and 削除 work from the expanded row.
+  await screen.getByRole("button", { name: "複製" }).click();
   await expect.element(rows()).toHaveLength(5);
   await screen.getByRole("button", { name: "削除" }).click();
   await screen.getByRole("button", { name: "削除する" }).click();
   await expect.element(rows()).toHaveLength(4);
+});
+
+test("an opened row puts its order at a new shop", async () => {
+  const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
+  await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
+
+  await userEvent.selectOptions(
+    screen.getByRole("combobox", { name: "ショップ" }).first(),
+    "＋ 新しいショップ",
+  );
+  await screen.getByRole("textbox", { name: "新しいショップの名前" }).fill("はじめての店");
+  await userEvent.keyboard("{Enter}");
+
+  await expect
+    .element(screen.getByRole("button", { name: "はじめての店の注文の詳細と編集" }))
+    .toBeVisible();
+  const created = (await repository().shops.list()).find((shop) => shop.name === "はじめての店");
+  expect((await stored())?.[0]?.shopId).toBe(created?.id);
+  // Saved once: the field now names the shop, and leaving it makes no second one.
+  await userEvent.keyboard("{Tab}");
+  await expect
+    .poll(async () =>
+      (await repository().shops.list()).filter((shop) => shop.name === "はじめての店"),
+    )
+    .toHaveLength(1);
+});
+
+test("the add form and an opened row take turns, and the form keeps what was typed", async () => {
+  const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
+  const add = screen.getByRole("button", { name: /注文を追加/ });
+  const row = screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" });
+
+  await add.click();
+  await screen.getByRole("textbox", { name: "商品名メモ" }).fill("あとで足す");
+  await row.click();
+  await expect.element(row).toHaveAttribute("aria-expanded", "true");
+  await expect.element(add).toHaveAttribute("aria-expanded", "false");
+
+  await add.click();
+  await expect.element(row).toHaveAttribute("aria-expanded", "false");
+  await expect
+    .element(screen.getByRole("textbox", { name: "商品名メモ" }))
+    .toHaveValue("あとで足す");
 });
 
 test("a row of several items does not edit their tax and shop rates inline", async () => {

@@ -307,7 +307,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                   size="lg"
                   onClick={() => save(copyOrder({ planId, orderId }))}
                 >
-                  コピー
+                  複製
                 </Button>
                 <Button
                   variant="outline"
