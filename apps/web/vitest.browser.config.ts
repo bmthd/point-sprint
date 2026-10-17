@@ -15,6 +15,7 @@ export default defineConfig({
       "jotai-tanstack-query",
       "jotai-tanstack-query/react",
       "ky",
+      "motion/react",
       "seitu/web/indexed-db",
       "seitu/web/indexed-db-table",
     ],
