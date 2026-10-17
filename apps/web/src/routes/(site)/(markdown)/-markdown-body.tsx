@@ -4,13 +4,16 @@ import { Card, Heading, Link, List, NativeAccordion, Text, Timeline } from "@wor
 import type { ReactNode } from "react";
 import type { FileRoutesById } from "../../../routeTree.gen";
 import { markdownExtensions } from "./-markdown-extensions";
+import { ColumnHead } from "../../../ui/column-head";
 
 /** The Markdown's tags, drawn with Yamada UI to match the other pages. */
 export const markdownComponents = {
   h1: ({ children, id }) => (
-    <Heading as="h1" id={id} fontSize="lg" mb="4">
-      {children}
-    </Heading>
+    <ColumnHead mb="2.5">
+      <Heading as="h1" id={id} fontSize="lg">
+        {children}
+      </Heading>
+    </ColumnHead>
   ),
   h2: ({ children, id }) => (
     <Heading as="h2" id={id} fontSize="md" mt="8" mb="2">

@@ -15,6 +15,7 @@ import {
 import { useAtomValue } from "jotai";
 import { monthDayWithWeekday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";
+import { ColumnHead } from "../../../ui/column-head";
 
 /** The most a shop-around benefit adds, and the cap on what it pays. */
 function shopAroundSummary(event: OfficialEvent): string {
@@ -141,9 +142,11 @@ export function EventSection({
 }: EventSectionProps) {
   return (
     <VStack as="section" gap="2.5" alignItems="stretch">
-      <Heading as="h2" fontSize="md">
-        開催中・開催予定のイベント
-      </Heading>
+      <ColumnHead>
+        <Heading as="h2" fontSize="md">
+          開催中・開催予定のイベント
+        </Heading>
+      </ColumnHead>
       <ClientOnly fallback={<EventListSkeleton />}>
         <EventList today={today} disabled={disabled} onCreate={onCreate} />
       </ClientOnly>
