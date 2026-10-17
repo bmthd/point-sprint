@@ -513,6 +513,22 @@ test("expanded row shows group totals and edits the order", async () => {
   await expect.element(rows()).toHaveLength(4);
 });
 
+test("leaving a field of an opened row unchanged saves nothing", async () => {
+  const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
+  let saves = 0;
+  const put = repository().plans.put.bind(repository().plans);
+  repository().plans.put = (plan) => {
+    saves += 1;
+    return put(plan);
+  };
+  await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
+
+  await screen.getByRole("textbox", { name: "金額（税込）" }).click();
+  await userEvent.keyboard("{Tab}{Tab}");
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  expect(saves).toBe(0);
+});
+
 test("an opened row puts its order at a new shop", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
   await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();

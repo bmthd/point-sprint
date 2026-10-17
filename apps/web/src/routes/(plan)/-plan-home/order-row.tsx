@@ -120,6 +120,14 @@ const editsItemInPlace = (order: Order) => {
   return item !== undefined && rest.length === 0 && item.quantity === 1 && !item.discount;
 };
 
+/** The form's input as text, its keys sorted: the form and `inputOf` list them in different orders. */
+const inputKey = (input: unknown): string =>
+  JSON.stringify(input, (_key, value: unknown) =>
+    value && typeof value === "object" && !Array.isArray(value)
+      ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => (a < b ? -1 : 1)))
+      : value,
+  );
+
 /** The fields of a saved order, the amount with its thousands separated as it is typed. */
 function editInputOf(order: Order, shops: Shop[]): OrderFormInput {
   const input = inputOf(order, shops);
@@ -152,11 +160,11 @@ function OrderEditor({
   const save = useSaveOrderChange();
   const form = useForm({ schema: OrderFormSchema, initialInput: editInputOf(order, shops) });
   /** The input last saved, or being saved: the same input is not saved twice. */
-  const saved = useRef(JSON.stringify(getInput(form)));
+  const saved = useRef(inputKey(getInput(form)));
 
   const commit = async () => {
     const input = getInput(form);
-    const json = JSON.stringify(input);
+    const json = inputKey(input);
     if (json === saved.current) return;
     // A new shop is saved once it has a name.
     if (input.shop === NEW_SHOP && !input.newShopName?.trim() && !input.shopCode) return;
@@ -198,7 +206,7 @@ function OrderEditor({
   // A change saved elsewhere (in 「商品を編集」, or to the shop) comes into the fields.
   useEffect(() => {
     const next = editInputOf(order, shops);
-    const json = JSON.stringify(next);
+    const json = inputKey(next);
     if (json === saved.current) return;
     saved.current = json;
     reset(form, { initialInput: next });
