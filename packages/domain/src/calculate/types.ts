@@ -20,6 +20,13 @@ export type CalculationResult = {
   breakdown: BreakdownRow[];
   benefitTotals: BenefitTotal[];
   shopCount: number;
+  /**
+   * The +N倍 each enabled benefit gives, keyed by benefit ID: a shop-around's at the shop count, a
+   * spend-tiers' at its total.
+   */
+  rates: Record<Id, number>;
+  /** Tax-included total over its days of each enabled spend-tiers benefit, keyed by benefit ID. */
+  spendTotals: Record<Id, number>;
   total: number;
   warnings: CalculationWarning[];
   /** Breakdown rows summed by point group. The values sum to `total`. */
@@ -56,6 +63,6 @@ export type HeldEstimate = {
   points: number;
   /** The order's own breakdown rows once it is counted, with every other order as it is. */
   rows: BreakdownRow[];
-  /** The plan's shop count once the order is counted, for the rates behind `rows`. */
-  shopCount: number;
+  /** The plan's `rates` once the order is counted, for the rates behind `rows`. */
+  rates: Record<Id, number>;
 };

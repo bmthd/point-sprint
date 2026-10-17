@@ -7,6 +7,7 @@ import { saveProfileAtom } from "../../../state/mutations";
 import { profileAtom, profileQueryAtom, storageHealthQueryAtom } from "../../../state/queries";
 import { BackIcon } from "../../../ui/icons";
 import { RouterIconButton } from "../../../ui/router-link";
+import { QuarantineNotice } from "../-quarantine-notice";
 import { StorageHealthFailure, storageMessages } from "../-warnings";
 import { SpuCard } from "../-plan-settings/spu-tiles";
 import { ResetDataButton } from "../../-reset-data";
@@ -19,6 +20,7 @@ function StorageNotice() {
   return (
     <VStack gap="2" alignItems="stretch" _empty={{ display: "none" }}>
       <StorageHealthFailure />
+      <QuarantineNotice />
       {messages.map((message) => (
         <Alert.Root key={message} status="warning" role="status">
           <Alert.Icon />

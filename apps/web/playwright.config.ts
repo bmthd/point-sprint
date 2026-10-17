@@ -18,10 +18,12 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `pnpm exec vite preview --port ${PORT} --strictPort`,
+      // The event master starts from the migrations each run, apart from the dev server's data.
+      command: `node scripts/migrate-events-db.ts --local && pnpm exec vite preview --port ${PORT} --strictPort`,
       url: `http://localhost:${PORT}`,
       reuseExistingServer: false,
       env: {
+        LOCAL_STATE_DIR: ".cloudflare/e2e-state",
         // Empty, so the inquiry stops at its config and never reaches Turnstile or Email Routing.
         TURNSTILE_SECRET_KEY: "",
         INQUIRY_TO_ADDRESS: "",

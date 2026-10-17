@@ -5,6 +5,7 @@ import { defineConfig, loadEnv } from "vite";
 import { ogFonts } from "./og-fonts-plugin.ts";
 import { parseGoogleTagsEnv } from "./src/google-tags/env.ts";
 import { prerenderedPages, robotsTxt } from "./src/prerender-pages.ts";
+import { localStateDir } from "./scripts/local-state-dir.ts";
 import { readRakutenConfig } from "./src/rakuten/config.ts";
 import { tokyoToday } from "./src/ui/dates.ts";
 
@@ -26,7 +27,12 @@ export default defineConfig(({ command, mode, isPreview }) => {
   const googleTagIds = command === "build" ? parseGoogleTagsEnv(publicEnv) : undefined;
   return {
     plugins: [
-      cloudflare({ viteEnvironment: { name: "ssr" } }),
+      cloudflare({
+        viteEnvironment: { name: "ssr" },
+        // The local bindings' data: the event master's D1 among them. The E2E tests keep theirs
+        // apart, made afresh each run (playwright.config.ts).
+        persistState: { path: localStateDir(process.env) },
+      }),
       tanstackStart({
         router: { routeFileIgnorePattern: "\\.test\\." },
         // Only the listed pages: `/share` is rendered on each request, for the figures in its query.
@@ -44,7 +50,7 @@ export default defineConfig(({ command, mode, isPreview }) => {
       },
     ],
     define: {
-      // The HTML rendered ahead of time lists the events of this day, as the page does once running.
+      // Today in the HTML rendered ahead of time, which the page starts from while it hydrates.
       "import.meta.env.BUILD_DATE": JSON.stringify(tokyoToday(new Date())),
       "import.meta.env.RAKUTEN_AFFILIATE_ID": JSON.stringify(
         publicEnv.RAKUTEN_AFFILIATE_ID?.trim() || null,

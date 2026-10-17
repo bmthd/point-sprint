@@ -8,5 +8,11 @@ export interface BenefitKindDef<K extends string, P extends { cap?: number }> {
   paramsSchema: v.GenericSchema<unknown, P>;
   defaultParams: P;
   onlyReceivingChannels: boolean;
-  rawPoints(input: { params: P; items: EligibleItem[]; shopCount: number }): Map<string, number>;
+  rawPoints(input: {
+    params: P;
+    items: EligibleItem[];
+    shopCount: number;
+    /** Tax-included total of the benefit's orders over its days. */
+    spendTotal: number;
+  }): Map<string, number>;
 }

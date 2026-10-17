@@ -1,17 +1,19 @@
-import { type Benefit, type Plan, officialEvents } from "@workspaces/domain";
+import type { Benefit, Plan } from "@workspaces/domain";
 import { Box, Flex, Button, Card, Text } from "@workspaces/ui";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
 import * as v from "valibot";
 import { updateBenefitAtom } from "../../../state/order-ops";
 import { ChevronIcon } from "../../../ui/icons";
 import { CommitField } from "../../../form/commit-field";
+import { CommitDatePicker } from "../-date-picker-field";
 import {
   END_BEFORE_START,
   START_AFTER_END,
   dateSchema,
   pointsSchema,
 } from "../../../form/field-schemas";
+import { officialEventsAtom } from "../../-official-events";
 import { rateText } from "../-order-shared";
 import { isAddedCampaign } from "./campaign-toggles";
 import { useDeleteCampaign } from "./delete-campaign";
@@ -90,8 +92,9 @@ function ShopAroundEditor({
   const panelId = useId();
   const added = isAddedCampaign(plan, benefit);
 
-  const name =
-    officialEvents.find((event) => event.id === plan.officialEventId)?.name ?? benefit.label;
+  const events = useAtomValue(officialEventsAtom);
+  // The benefit's own label until the events load, or when the event is no longer served.
+  const name = events.find((event) => event.id === plan.officialEventId)?.name ?? benefit.label;
   const rule = benefit.conditions.dateRule;
   const period = rule?.type === "range" ? { start: rule.start, end: rule.end } : plan.period;
   const change = (next: (current: ShopAroundBenefit) => ShopAroundBenefit) => {
@@ -167,7 +170,7 @@ function ShopAroundEditor({
             alignItems="start"
             gap="2"
           >
-            <CommitField
+            <CommitDatePicker
               key={`start:${period.start}:${period.end}`}
               label="開始日"
               initial={period.start}
@@ -175,9 +178,10 @@ function ShopAroundEditor({
                 dateSchema("開始日"),
                 v.check((start) => start <= period.end, START_AFTER_END),
               )}
+              period={plan.period}
               onCommit={(start) => withPeriod({ start })}
             />
-            <CommitField
+            <CommitDatePicker
               key={`end:${period.start}:${period.end}`}
               label="終了日"
               initial={period.end}
@@ -185,6 +189,7 @@ function ShopAroundEditor({
                 dateSchema("終了日"),
                 v.check((end) => end >= period.start, END_BEFORE_START),
               )}
+              period={plan.period}
               onCommit={(end) => withPeriod({ end })}
             />
           </Box>

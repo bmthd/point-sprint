@@ -173,14 +173,37 @@ test("shows a notice when data was quarantined", async () => {
     quarantined: async () => 2,
     wasReset: () => true,
   });
-  await expect
-    .element(
-      screen.getByText("読み込めなかったデータが2件あります。表示と計算には含めていません。"),
-    )
-    .toBeVisible();
+  await expect.element(screen.getByText("読み込めなかったデータが2件あります。")).toBeVisible();
   await expect
     .element(screen.getByText("保存されたデータを開けなかったため、空の状態からやり直しています。"))
     .toBeVisible();
+});
+
+test("shows the quarantined rows as JSON and removes them", async () => {
+  const issues = [{ message: "Invalid type", path: ["name"] }];
+  const repository = createMemoryRepository({
+    shops,
+    quarantine: [
+      { store: "plans", value: { id: "broken", name: 1 }, issues },
+      { store: "shops", value: { id: "shop", name: 2 }, issues },
+    ],
+  });
+  const screen = await renderProfile(repository);
+  await screen.getByRole("button", { name: "確認する" }).click();
+
+  const dialog = screen.getByRole("dialog");
+  const plan = dialog.getByRole("region", { name: "プランのデータ" });
+  await expect.element(plan).toBeVisible();
+  await expect.element(plan.getByText(/"name": 1/)).toBeVisible();
+  await expect.element(plan.getByText("name: Invalid type")).toBeVisible();
+
+  await plan.getByRole("button", { name: "削除" }).click();
+  await expect.element(screen.getByText("読み込めなかったデータが1件あります。")).toBeVisible();
+  expect(await repository.quarantine.list()).toHaveLength(1);
+
+  await dialog.getByRole("button", { name: "すべて削除" }).click();
+  await expect.poll(() => repository.quarantined()).toBe(0);
+  await expect.element(screen.getByText(/読み込めなかったデータが/)).not.toBeInTheDocument();
 });
 
 test("shows no notice when the data is healthy", async () => {
@@ -207,11 +230,7 @@ test("shows a notice when the stored profile is invalid", async () => {
       },
     },
   });
-  await expect
-    .element(
-      screen.getByText("読み込めなかったデータが1件あります。表示と計算には含めていません。"),
-    )
-    .toBeVisible();
+  await expect.element(screen.getByText("読み込めなかったデータが1件あります。")).toBeVisible();
 });
 
 test("offers a retry when the stored data cannot be checked", async () => {
@@ -228,11 +247,7 @@ test("offers a retry when the stored data cannot be checked", async () => {
     .element(screen.getByRole("alert").getByText("保存データの状態を確認できませんでした。"))
     .toBeVisible();
   await screen.getByRole("button", { name: "再試行" }).click();
-  await expect
-    .element(
-      screen.getByText("読み込めなかったデータが3件あります。表示と計算には含めていません。"),
-    )
-    .toBeVisible();
+  await expect.element(screen.getByText("読み込めなかったデータが3件あります。")).toBeVisible();
   expect(screen.getByText("保存データの状態を確認できませんでした。").query()).toBeNull();
 });
 

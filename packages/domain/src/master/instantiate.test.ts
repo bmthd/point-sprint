@@ -182,6 +182,14 @@ describe("user templates", () => {
     expect(t.benefit.params.cap).toBe(7000);
   });
 
+  test("manual spend-tiers template runs over its period and can be added repeatedly", () => {
+    const t = template("spend-tiers-manual");
+    const b = instantiateCampaign(t, { id: NEW_ID, period: PERIOD });
+    expect(b).toMatchObject({ kind: "spend-tiers", enabled: true, params: { cap: 1000 } });
+    expect(b.conditions.dateRule).toEqual({ type: "range", ...PERIOD });
+    expect(hasCampaignOccurrence(emptyPlan([b]), t, { period: PERIOD })).toBe(false);
+  });
+
   test("instantiate overrides cap, minOrderAmount and label", () => {
     const t = template("39shop");
     const b = instantiateCampaign(t, {

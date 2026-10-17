@@ -127,7 +127,7 @@ describe("held orders", () => {
         points: unheld.total - held.total,
         // What order B itself earns once counted: the rows it has in the unheld result.
         rows: unheld.breakdown.filter((row) => row.lineItemId === ITEM_B),
-        shopCount: unheld.shopCount,
+        rates: unheld.rates,
       },
     ]);
     expect(held.heldEstimates[0]?.points).toBe(30);

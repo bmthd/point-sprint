@@ -10,8 +10,9 @@ export * from "./amounts/target-amount";
 export * from "./allocation/largest-remainder";
 export * from "./channels";
 export * from "./conditions/matches";
-export { benefitKinds, pointsFor, rateBonus, shopAround } from "./benefit-kinds";
+export { benefitKinds, pointsFor, rateBonus, shopAround, spendTiers } from "./benefit-kinds";
 export { tierRate, type ShopAroundTier } from "./benefit-kinds/shop-around";
+export { spendTierRate, type SpendTier } from "./benefit-kinds/spend-tiers";
 export type { BenefitKindDef, EligibleItem, RoundingUnit } from "./benefit-kinds";
 export * from "./calculate/shop-count";
 export { calculate, calculateAll } from "./calculate/calculate";
@@ -35,7 +36,6 @@ export type {
 } from "./calculate/types";
 export * from "./migrations";
 export { BOOKS_SPU_ID, KOBO_SPU_ID, spuPurchaseRules, standardSpu } from "./master/spu";
-export { officialEvents } from "./master/events";
 export { campaignTemplates } from "./master/campaigns";
 export {
   type CampaignInput,

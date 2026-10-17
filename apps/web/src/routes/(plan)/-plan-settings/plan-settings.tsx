@@ -9,6 +9,7 @@ import { AccountPicker } from "./account-picker";
 import { CampaignToggles } from "./campaign-toggles";
 import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared";
 import { ShopAroundSettings, shopAroundOf } from "./shop-around-settings";
+import { SpendTiersSettings } from "./spend-tiers-settings";
 import { SpuTiles, spuRate } from "./spu-tiles";
 
 /** 「保存して計算に反映」, in the drawer's footer and in the page's bottom bar. */
@@ -38,6 +39,7 @@ function SettingsBody({ plan }: { plan: Plan }) {
       <SpuTiles plan={plan} result={result} />
       <CampaignToggles plan={plan} />
       <ShopAroundSettings plan={plan} />
+      <SpendTiersSettings plan={plan} />
     </VStack>
   );
 }
@@ -84,7 +86,7 @@ export function SettingsPanelButton({
         withCloseButton={false}
         restoreFocus
       >
-        <Drawer.Content>
+        <Drawer.Content roundedLeft="l2">
           <Drawer.Header justifyContent="space-between">
             <Drawer.Title as="h2">プランの設定</Drawer.Title>
             <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>

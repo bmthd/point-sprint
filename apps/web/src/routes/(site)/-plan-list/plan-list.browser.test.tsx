@@ -7,7 +7,7 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { type Plan, type Shop, defaultAccount } from "@workspaces/domain";
+import { type OfficialEvent, type Plan, type Shop, defaultAccount } from "@workspaces/domain";
 import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
@@ -20,6 +20,7 @@ import { repositoryAtom } from "../../../state/repository";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
 import { TestColorMode } from "../../../test-color-mode";
+import { officialEventsSourceAtom } from "../../-official-events";
 import { useToday } from "../../-use-today";
 import { PlanList } from "./plan-list";
 
@@ -64,18 +65,96 @@ const plan = (id: string, name: string, updatedAt: string, orderCount: number): 
 const PLAN_A = "f0000000-0000-4000-8000-00000000000a";
 const PLAN_B = "f0000000-0000-4000-8000-00000000000b";
 
-/** The same providers as `AppProviders`, with a repository the test holds on to. */
-function TestProviders({ repository, children }: { repository: Repository; children: ReactNode }) {
-  const client = new QueryClient();
+const marathon = (input: {
+  id: string;
+  name: string;
+  start: string;
+  end: string;
+  cap?: number;
+}): OfficialEvent => ({
+  id: input.id,
+  name: input.name,
+  period: { start: input.start, end: input.end },
+  benefits: [
+    {
+      id: crypto.randomUUID(),
+      kind: "shop-around",
+      category: "campaign",
+      label: "ショップ買いまわり",
+      enabled: true,
+      amountBasis: "tax-excluded",
+      capScope: "campaign",
+      sharedKey: input.id,
+      conditions: { dateRule: { type: "range", start: input.start, end: input.end } },
+      params: {
+        tiers: Array.from({ length: 9 }, (_, index) => ({ minShops: index + 2, rate: index + 1 })),
+        ...(input.cap === undefined ? {} : { cap: input.cap }),
+        roundingUnit: "item",
+      },
+    },
+  ],
+});
+
+/** What the Worker serves on the test's day: one round ended, one running and one to come. */
+const servedEvents = [
+  marathon({
+    id: "marathon-2026-09-19",
+    name: "お買い物マラソン",
+    start: "2026-09-19",
+    end: "2026-09-24",
+    cap: 7000,
+  }),
+  marathon({
+    id: "marathon-2026-10",
+    name: "お買い物マラソン&ジャンル祭",
+    start: "2026-10-04",
+    end: "2026-10-09",
+    cap: 7000,
+  }),
+  marathon({
+    id: "marathon-2026-10-14",
+    name: "お買い物マラソン第二弾",
+    start: "2026-10-14",
+    end: "2026-10-17",
+  }),
+];
+
+type EventSource = { load: () => Promise<OfficialEvent[]> };
+
+/** The same providers as `AppProviders`, with a repository and events the test holds on to. */
+function TestProviders({
+  repository,
+  events,
+  children,
+}: {
+  repository: Repository;
+  events: EventSource;
+  children: ReactNode;
+}) {
+  // Not retried, so a failing load shows at once.
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientAtomProvider client={client}>
-      <Hydrate repository={repository}>{children}</Hydrate>
+      <Hydrate repository={repository} events={events}>
+        {children}
+      </Hydrate>
     </QueryClientAtomProvider>
   );
 }
 
-function Hydrate({ repository, children }: { repository: Repository; children: ReactNode }) {
-  useHydrateAtoms([[repositoryAtom, repository]]);
+function Hydrate({
+  repository,
+  events,
+  children,
+}: {
+  repository: Repository;
+  events: EventSource;
+  children: ReactNode;
+}) {
+  useHydrateAtoms([
+    [repositoryAtom, repository],
+    [officialEventsSourceAtom, events],
+  ]);
   return children;
 }
 
@@ -85,7 +164,7 @@ function Hydrate({ repository, children }: { repository: Repository; children: R
  */
 async function renderPlanList(
   repository: Repository,
-  options: { colorMode?: "light" | "dark" } = {},
+  options: { colorMode?: "light" | "dark"; events?: EventSource } = {},
 ) {
   await cleanup();
   const root = createRootRoute({ component: Outlet });
@@ -111,7 +190,10 @@ async function renderPlanList(
   const screen = await render(
     <UIProvider theme={theme} config={config}>
       <TestColorMode value={options.colorMode ?? "light"} />
-      <TestProviders repository={repository}>
+      <TestProviders
+        repository={repository}
+        events={options.events ?? { load: async () => servedEvents }}
+      >
         <RouterProvider router={router} />
       </TestProviders>
     </UIProvider>,
@@ -139,6 +221,40 @@ test("creates a plan from an official event and navigates to it", async () => {
   expect(created?.officialEventId).toBe("marathon-2026-10");
   expect(created?.period).toEqual({ start: "2026-10-04", end: "2026-10-09" });
   expect(router.state.location.search).toEqual({ id: created?.id });
+});
+
+test("lists only the events that have not ended, and a round whose cap is not out yet", async () => {
+  const { screen } = await renderPlanList(createMemoryRepository());
+
+  const next = screen.getByRole("listitem").filter({ hasText: "お買い物マラソン第二弾" });
+  await expect.element(next.getByText("・上限は未発表", { exact: false })).toBeVisible();
+  expect(screen.getByRole("listitem").elements()).toHaveLength(2);
+});
+
+test("says when the events cannot be read, and reads them again", async () => {
+  let fail = true;
+  const events = {
+    load: async () => {
+      if (fail) throw new Error("offline");
+      return servedEvents;
+    },
+  };
+  const { screen } = await renderPlanList(createMemoryRepository(), { events });
+
+  await expect.element(screen.getByText("イベントを読み込めませんでした。")).toBeVisible();
+  fail = false;
+  await screen.getByRole("button", { name: "再試行" }).click();
+  await expect.element(screen.getByText("お買い物マラソン&ジャンル祭")).toBeVisible();
+});
+
+test("says so when no event is ahead", async () => {
+  const { screen } = await renderPlanList(createMemoryRepository(), {
+    events: { load: async () => servedEvents.slice(0, 1) },
+  });
+
+  await expect
+    .element(screen.getByText("開催中・開催予定のイベントはまだありません。"))
+    .toBeVisible();
 });
 
 test("creates a plan without an event", async () => {

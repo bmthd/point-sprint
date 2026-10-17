@@ -34,7 +34,6 @@ import {
   useRef,
   useState,
 } from "react";
-import * as v from "valibot";
 import { orderAtom, planAtom } from "../../../state/derived";
 import { changeShop, saveShopAtom } from "../../../state/mutations";
 import {
@@ -65,7 +64,7 @@ import {
   taxRateValue,
   useSortedShops,
 } from "../-order-fields";
-import { FieldDatePicker, isoDate, parseIsoDate } from "../-date-picker-field";
+import { CommitDatePicker } from "../-date-picker-field";
 import {
   CampaignChip,
   OrderBadge,
@@ -157,7 +156,6 @@ function OrderEditor({
   const shop: Shop | undefined = shops.find((other) => other.id === order.shopId);
   const [item] = order.lineItems;
   const single = order.lineItems.length === 1 && item ? item : undefined;
-  const [dateError, setDateError] = useState<string>();
   const shopTagHintId = useId();
 
   const saveOrder = (next: Order) => {
@@ -190,21 +188,14 @@ function OrderEditor({
             ))}
           </NativeSelect.Root>
         </Field>
-        <Field label="注文日" error={dateError}>
-          <FieldDatePicker
-            size="lg"
-            period={period}
-            defaultValue={parseIsoDate(order.date)}
-            key={order.date}
-            onChange={(date) => {
-              const parsed = v.safeParse(OrderDateSchema, date ? isoDate(date) : "");
-              setDateError(parsed.success ? undefined : parsed.issues[0].message);
-              if (parsed.success && parsed.output !== order.date) {
-                saveOrder({ ...order, date: parsed.output });
-              }
-            }}
-          />
-        </Field>
+        <CommitDatePicker
+          key={order.date}
+          label="注文日"
+          initial={order.date}
+          schema={OrderDateSchema}
+          period={period}
+          onCommit={(date) => saveOrder({ ...order, date })}
+        />
         {single ? (
           <>
             <CommitField
