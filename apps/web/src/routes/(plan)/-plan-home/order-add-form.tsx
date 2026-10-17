@@ -2,18 +2,18 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import { Field as FormField, focus, reset, setInput, useField, useForm } from "@formisch/react";
-import { type Plan, calculateAll, channels } from "@workspaces/domain";
-import { Box, Flex, Button, Field, Input, List, NativeSelect, Text } from "@workspaces/ui";
-import { useAtomValue, useSetAtom } from "jotai";
+import { focus, reset, useForm } from "@formisch/react";
+import { type Plan, calculateAll } from "@workspaces/domain";
+import { Collapse, Flex, Button, List, Text } from "@workspaces/ui";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { type KeyboardEvent, useDeferredValue, useId, useMemo, useState } from "react";
-import { Form, bind, errorsOf } from "../../../form/form";
+import { Form } from "../../../form/form";
 import { calculationAtom } from "../../../state/derived";
 import { saveShopAtom } from "../../../state/mutations";
 import { addOrderAtom } from "../../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../../state/queries";
+import { openOrderIdAtom } from "../../../state/ui";
 import { useSingleFlight } from "../../../use-single-flight";
-import { AutofillStatus } from "../-item-autofill";
 import {
   OrderFormSchema,
   type OrderFormOutput,
@@ -21,25 +21,10 @@ import {
   draftOfInput,
   emptyInput,
 } from "../-order-editor/order-form";
-import {
-  AMOUNT_PATH,
-  type OrderForm,
-  applyShop,
-  autofillUrlHandlers,
-  useFormInput,
-  useOrderAutofill,
-} from "../-order-editor/order-form-store";
+import { type OrderForm, useFormInput, useOrderAutofill } from "../-order-editor/order-form-store";
 import { PlusIcon } from "../../../ui/icons";
-import {
-  NEW_SHOP,
-  TaxRateOptions,
-  CampaignCheck,
-  fieldGrid,
-  shopFromUrl,
-  useSortedShops,
-} from "../-order-fields";
 import { orderSaveFailedAtom, pointsText } from "../-order-shared";
-import { FormDatePicker } from "../-date-picker-field";
+import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
 import { CapFlows } from "../-cap-flows";
 
 const sumOfTotals = (results: Map<string, { total: number }>) =>
@@ -78,8 +63,8 @@ function Preview({ plan, form }: { plan: Plan; form: OrderForm }) {
       minW="200px"
       fontSize="sm"
       fontVariantNumeric="tabular-nums"
-      aria-live="polite"
-      data-preview
+      role="status"
+      aria-label="ポイントの目安"
     >
       {preview ? (
         <>
@@ -97,177 +82,6 @@ function Preview({ plan, form }: { plan: Plan; form: OrderForm }) {
   );
 }
 
-type Autofill = ReturnType<typeof useOrderAutofill>;
-
-function UrlField({ form, autofill }: { form: OrderForm; autofill: Autofill }) {
-  const shops = useAtomValue(shopsAtom);
-  const url = useField(form, { path: ["url"] });
-  const text = typeof url.input === "string" ? url.input.trim() : "";
-  // Not an error: the order can still be added with a URL no shop is chosen from.
-  const unknown = url.errors === null && text !== "" && shopFromUrl(text, shops) === null;
-
-  return (
-    <Field.Root
-      label="商品のURL（貼るとショップを選びます）"
-      {...errorsOf(url)}
-      helperMessage={unknown ? "このURLからはショップを選べません" : undefined}
-      minW="0"
-    >
-      <Input
-        size="lg"
-        type="url"
-        placeholder="https://item.rakuten.co.jp/…"
-        {...bind(url)}
-        // The shop of the URL is chosen at once, and stays when the item cannot be looked up.
-        {...autofillUrlHandlers(
-          autofill,
-          (value) => {
-            url.onChange(value);
-            const found = shopFromUrl(value, shops);
-            if (found) applyShop(form, found);
-          },
-          url.props.onBlur,
-        )}
-      />
-      <AutofillStatus autofill={autofill} />
-    </Field.Root>
-  );
-}
-
-function ShopField({ form }: { form: OrderForm }) {
-  const shops = useAtomValue(shopsAtom);
-  const sortedShops = useSortedShops(shops);
-  const shop = useField(form, { path: ["shop"] });
-
-  return (
-    <>
-      <Field.Root label="ショップ" {...errorsOf(shop)} minW="0">
-        <NativeSelect.Root
-          size="lg"
-          {...bind(shop)}
-          onChange={(event) => {
-            const value = event.currentTarget.value;
-            shop.onChange(value);
-            const chosen = shops.find((other) => other.id === value);
-            setInput(form, { path: ["is39"], input: chosen?.tags.includes("39shop") ?? false });
-          }}
-        >
-          <option value="">未入力</option>
-          {sortedShops.map((other) => (
-            <option key={other.id} value={other.id}>
-              {other.name}
-            </option>
-          ))}
-          <option value={NEW_SHOP}>＋ 新しいショップ</option>
-        </NativeSelect.Root>
-      </Field.Root>
-      {shop.input === NEW_SHOP ? (
-        <FormField of={form} path={["newShopName"]}>
-          {(field) => (
-            <Field.Root label="新しいショップの名前" {...errorsOf(field)} minW="0">
-              <Input size="lg" {...bind(field)} />
-            </Field.Root>
-          )}
-        </FormField>
-      ) : null}
-      {shop.input === "" || shop.input === NEW_SHOP ? (
-        <FormField of={form} path={["channel"]}>
-          {(field) => (
-            <Field.Root label="購入先" {...errorsOf(field)} minW="0">
-              <NativeSelect.Root size="lg" {...bind(field)}>
-                {Object.values(channels).map((channel) => (
-                  <option key={channel.id} value={channel.id}>
-                    {channel.label}
-                  </option>
-                ))}
-              </NativeSelect.Root>
-            </Field.Root>
-          )}
-        </FormField>
-      ) : null}
-    </>
-  );
-}
-
-function ItemFields({ form, plan }: { form: OrderForm; plan: Plan }) {
-  return (
-    <>
-      <FormField of={form} path={["date"]}>
-        {(field) => (
-          <Field.Root label="注文日" {...errorsOf(field)} minW="0">
-            <FormDatePicker size="lg" field={field} period={plan.period} />
-          </Field.Root>
-        )}
-      </FormField>
-      <FormField of={form} path={["items", 0, "name"]}>
-        {(field) => (
-          <Field.Root label="商品名メモ" {...errorsOf(field)} minW="0">
-            <Input size="lg" placeholder="例：洗濯洗剤" {...bind(field)} />
-          </Field.Root>
-        )}
-      </FormField>
-      <FormField of={form} path={AMOUNT_PATH}>
-        {(field) => (
-          <Field.Root label="金額（税込）" {...errorsOf(field)} minW="0">
-            <Input
-              size="lg"
-              inputMode="numeric"
-              placeholder="¥"
-              fontVariantNumeric="tabular-nums"
-              {...bind(field)}
-            />
-          </Field.Root>
-        )}
-      </FormField>
-      <FormField of={form} path={["items", 0, "taxRate"]}>
-        {(field) => (
-          <Field.Root label="税率" {...errorsOf(field)} minW="0">
-            <NativeSelect.Root size="lg" {...bind(field)}>
-              <TaxRateOptions />
-            </NativeSelect.Root>
-          </Field.Root>
-        )}
-      </FormField>
-      <FormField of={form} path={["items", 0, "shopPointRate"]}>
-        {(field) => (
-          <Field.Root label="ショップ独自倍率" {...errorsOf(field)} minW="0">
-            <Input
-              size="lg"
-              inputMode="decimal"
-              placeholder="1"
-              fontVariantNumeric="tabular-nums"
-              {...bind(field)}
-            />
-          </Field.Root>
-        )}
-      </FormField>
-    </>
-  );
-}
-
-function TagChips({ form }: { form: OrderForm }) {
-  const is39 = useField(form, { path: ["is39"] });
-  const repeat = useField(form, { path: ["repeat"] });
-  return (
-    <>
-      <CampaignCheck
-        campaign="39shop"
-        checked={is39.input === true}
-        onChange={() => is39.onChange(!is39.input)}
-      >
-        39ショップ
-      </CampaignCheck>
-      <CampaignCheck
-        campaign="repeat"
-        checked={repeat.input === true}
-        onChange={() => repeat.onChange(!repeat.input)}
-      >
-        リピート購入
-      </CampaignCheck>
-    </>
-  );
-}
-
 /**
  * 「＋ 注文を追加」 at the end of the desktop list. Enter in any field adds the order when it is
  * valid, then empties the form and puts the focus back on its first field.
@@ -279,6 +93,9 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
   const setFailed = useSetAtom(orderSaveFailedAtom);
   const run = useSingleFlight();
   const [open, setOpen] = useState(plan.orders.length === 0);
+  // The form and an opened row take turns: opening one closes the other.
+  const [openOrderId, setOpenOrderId] = useAtom(openOrderIdAtom);
+  if (open && openOrderId !== null) setOpen(false);
   const form = useForm({ schema: OrderFormSchema, initialInput: emptyInput(plan.period) });
   const autofill = useOrderAutofill(form);
   const formId = useId();
@@ -316,7 +133,10 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
         size="xl"
         aria-expanded={open}
         aria-controls={formId}
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (!open) setOpenOrderId(null);
+          setOpen(!open);
+        }}
         w="full"
         justifyContent="flex-start"
         startIcon={<PlusIcon />}
@@ -326,23 +146,21 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
           （Enter で追加して次の注文へ）
         </Text>
       </Button>
-      <Form of={form} id={formId} hidden={!open} onKeyDown={onKeyDown} onSubmit={add}>
-        <Flex direction="column" gap="3" borderTopWidth="1px" pt="3.5" pb="4" px="4">
-          <UrlField form={form} autofill={autofill} />
-          <Box {...fieldGrid}>
-            <ShopField form={form} />
-            <ItemFields form={form} plan={plan} />
-          </Box>
-          <Flex wrap="wrap" align="center" gap="2">
-            <TagChips form={form} />
-            <Preview plan={plan} form={form} />
-            <Button type="submit" colorScheme="primary" size="lg">
-              追加する
-            </Button>
+      {/* Shut, the fields are taken out; what was typed stays in the form. */}
+      <Collapse open={open} unmountOnExit>
+        <Form of={form} id={formId} onKeyDown={onKeyDown} onSubmit={add}>
+          <Flex direction="column" gap="3" borderTopWidth="1px" pt="3.5" pb="4" px="4">
+            <OrderFormFields form={form} plan={plan} autofill={autofill} />
+            <Flex wrap="wrap" align="center" gap="2">
+              <Preview plan={plan} form={form} />
+              <Button type="submit" colorScheme="primary" size="lg" minW={ACTION_BUTTON_WIDTH}>
+                追加する
+              </Button>
+            </Flex>
+            <CapFlows plan={plan} form={form} />
           </Flex>
-          <CapFlows plan={plan} form={form} />
-        </Flex>
-      </Form>
+        </Form>
+      </Collapse>
     </List.Item>
   );
 }

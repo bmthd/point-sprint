@@ -11,6 +11,7 @@ import { config, theme } from "@workspaces/ui/theme";
 import { expect, test } from "vitest";
 import { page } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
+import { expectTexts } from "../../../test-texts";
 import { NoticeHeadlines } from "../../-notices/notice-headlines";
 import type { Notice } from "../../-notices/notices";
 import { NoticesPage } from "./notices-page";
@@ -59,17 +60,12 @@ test("the headlines are the latest three, newest first, each a link to its notic
   );
 
   const links = headlines().getByRole("listitem").getByRole("link");
-  await expect.element(links.first()).toHaveTextContent("お知らせ 2026-10-05");
-  expect(links.elements().map((link) => link.textContent)).toEqual([
-    "お知らせ 2026-10-05",
-    "お知らせ 2026-10-04",
-    "お知らせ 2026-10-03",
-  ]);
+  await expectTexts(links, ["お知らせ 2026-10-05", "お知らせ 2026-10-04", "お知らせ 2026-10-03"]);
   await expect.element(links.first()).toHaveAttribute("href", "/notices#notice-2026-10-05");
-  expect(headlines().getByText("本文", { exact: false }).elements()).toEqual([]);
-  const time = headlines().element().querySelector("time");
-  expect(time?.textContent).toBe("2026年10月5日");
-  expect(time?.getAttribute("datetime")).toBe("2026-10-05");
+  await expect.element(headlines().getByText("本文", { exact: false })).not.toBeInTheDocument();
+  const time = headlines().getByRole("time").first();
+  await expect.element(time).toHaveTextContent("2026年10月5日");
+  await expect.element(time).toHaveAttribute("datetime", "2026-10-05");
 
   await headlines().getByRole("link", { name: "すべてのお知らせ" }).click();
   await expect.poll(() => router.state.location.pathname).toBe("/notices");
@@ -78,7 +74,7 @@ test("the headlines are the latest three, newest first, each a link to its notic
 test("the headlines say so when there is no notice", async () => {
   await renderAt("/", []);
   await expect.element(headlines().getByText("お知らせはありません。")).toBeVisible();
-  expect(headlines().getByRole("link").elements()).toEqual([]);
+  await expect.element(headlines().getByRole("link")).not.toBeInTheDocument();
 });
 
 test("/notices shows every notice in full, newest first, without the headlines", async () => {
@@ -90,8 +86,7 @@ test("/notices shows every notice in full, newest first, without the headlines",
   );
 
   const titles = page.getByRole("main").getByRole("heading", { level: 2 });
-  await expect.element(titles.first()).toHaveTextContent("お知らせ 2026-10-05");
-  expect(titles.elements().map((title) => title.textContent)).toEqual([
+  await expectTexts(titles, [
     "お知らせ 2026-10-05",
     "お知らせ 2026-10-04",
     "お知らせ 2026-10-03",
@@ -102,10 +97,10 @@ test("/notices shows every notice in full, newest first, without the headlines",
   await expect.element(oldest).toHaveAttribute("id", "notice-2026-10-01");
   await expect.element(oldest.getByText("お知らせ 2026-10-01の本文です。")).toBeVisible();
   await expect.element(oldest.getByText("2段落目です。")).toBeVisible();
-  // Read from the document: at a phone's width the sidebar is in the header's menu, hidden here.
-  const sidebar = document.querySelector('aside[aria-label="サイドバー"]');
-  expect(sidebar).not.toBeNull();
-  expect(sidebar?.textContent).not.toContain("お知らせ");
+  // At a phone's width the sidebar is in the header's menu, hidden here.
+  const sidebar = page.getByRole("complementary", { name: "サイドバー", includeHidden: true });
+  await expect.element(sidebar).toBeInTheDocument();
+  await expect.element(sidebar).not.toMatchTextContent("お知らせ");
 });
 
 test("/notices says so when there is no notice", async () => {

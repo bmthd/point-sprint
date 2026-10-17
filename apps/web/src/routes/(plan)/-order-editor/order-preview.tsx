@@ -106,8 +106,8 @@ export function OrderPreviewBox({
 
   return (
     <Flex
-      aria-live="polite"
-      data-preview
+      role="status"
+      aria-label="ポイントの目安"
       rounded="md"
       bg="primary.subtle"
       p="3"

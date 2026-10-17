@@ -219,19 +219,11 @@ export function CampaignChip({ children }: { children: ReactNode }) {
 /** An order's position among the counted orders, or 「保留」 for a held order. */
 export function OrderBadge({ badge }: { badge: number | null }) {
   return badge === null ? (
-    <Badge
-      data-badge="order"
-      variant="outline"
-      colorScheme="gray"
-      fullRounded
-      flex="none"
-      justifySelf="center"
-    >
+    <Badge variant="outline" colorScheme="gray" fullRounded flex="none" justifySelf="center">
       保留
     </Badge>
   ) : (
     <Badge
-      data-badge="order"
       colorScheme="mono"
       variant="solid"
       fullRounded

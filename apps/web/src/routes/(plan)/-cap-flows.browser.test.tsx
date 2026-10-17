@@ -1,5 +1,5 @@
 import type { Benefit, Plan } from "@workspaces/domain";
-import { beforeEach, expect, test, vi } from "vitest";
+import { beforeEach, expect, test } from "vitest";
 import { page } from "vitest/browser";
 import { createMemoryRepository } from "../../storage/memory-repository";
 import { PLAN, baseBenefit, order, renderPlanHome, shops } from "./-test-fixtures";
@@ -40,28 +40,27 @@ async function addForm(withPlan = plan, shop = "ショップ0") {
   return form;
 }
 
-const flows = () =>
-  document.querySelector<HTMLElement>('ul[aria-label="上限への入り方"]')?.textContent ?? "";
+const flows = () => page.getByRole("list", { name: "上限への入り方" });
 
 test("the amount typed shows where its points go, and a button fills the cap", async () => {
   const form = await addForm();
   const amount = form.getByRole("textbox", { name: "金額（税込）" });
   // ¥11,000 at 10% → ¥10,000 before tax → 100P, 30P more than the 70P cap.
   await amount.fill("11000");
-  await expect.poll(flows).toContain("エントリーキャンペーン（このプラン） +70P・30P はみ出す");
+  await expect
+    .element(flows())
+    .toMatchTextContent("エントリーキャンペーン（このプラン） +70P・30P はみ出す");
   await form.getByRole("button", { name: "¥7,699 で使い切る" }).click();
   await expect.element(amount).toHaveValue("7699");
   // The flows lag the field (useDeferredValue), and "+70P" is already there before the click.
-  await vi.waitFor(() => {
-    expect(flows()).toContain("+70P");
-    expect(flows()).not.toContain("はみ出す");
-  });
+  await expect.element(flows()).not.toMatchTextContent("はみ出す");
+  await expect.element(flows()).toMatchTextContent("+70P");
 });
 
 test("nothing is shown until an amount is typed", async () => {
   await addForm();
-  await expect.poll(() => document.querySelector("[data-preview]")).not.toBeNull();
-  expect(document.querySelector('ul[aria-label="上限への入り方"]')).toBeNull();
+  await expect.element(page.getByRole("status", { name: "ポイントの目安" })).toBeInTheDocument();
+  await expect.element(flows()).not.toBeInTheDocument();
 });
 
 test("an order from a new shop is priced at the rate that shop gives", async () => {
@@ -94,6 +93,6 @@ test("an order from a new shop is priced at the rate that shop gives", async () 
   const form = await addForm(withOrder, "ショップ1");
   await form.getByRole("textbox", { name: "金額（税込）" }).fill("11000");
   // At +2倍 the first order earns 200P, which leaves 100P: ¥5,000 before tax, ¥5,499 at 10%.
-  await expect.poll(flows).toContain("買いまわり（このプラン） +100P・100P はみ出す");
+  await expect.element(flows()).toMatchTextContent("買いまわり（このプラン） +100P・100P はみ出す");
   await expect.element(form.getByRole("button", { name: "¥5,499 で使い切る" })).toBeVisible();
 });
