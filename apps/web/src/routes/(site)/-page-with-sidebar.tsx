@@ -44,8 +44,11 @@ export function PageWithSidebar({
       {...(paper ? {} : ends)}
     >
       {paper ? (
-        <Box as="main" minW="0" alignSelf="stretch" bg="bg.panel" px="md" {...ends}>
-          <Box maxW={maxW}>{children}</Box>
+        // The sheet holds the space above `main`, so `main` starts on the sidebar's line.
+        <Box minW="0" alignSelf="stretch" bg="bg.panel" px="md" {...ends}>
+          <Box as="main" maxW={maxW}>
+            {children}
+          </Box>
         </Box>
       ) : (
         <Box as="main" minW="0" maxW={maxW}>
