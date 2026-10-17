@@ -309,6 +309,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
     const step = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
     if (step === 0) return;
     event.preventDefault();
+    setOpenOrderId(null);
     const toIndex = index + step;
     if (toIndex < 0 || toIndex >= count) return;
     focusAfterMoveRef.current = orderId;
@@ -351,6 +352,8 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
       }
       draggable={grabbed}
       onDragStart={(event: DragEvent) => {
+        // The opened fields close, so the rows being moved are as short as they look.
+        setOpenOrderId(null);
         draggedRef.current = { orderId, index, shopName };
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", shopName);

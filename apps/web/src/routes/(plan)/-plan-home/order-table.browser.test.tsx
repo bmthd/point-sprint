@@ -377,6 +377,19 @@ test("keyboard reorder with the handle", async () => {
   await expectShopsInOrder(rows(), ["ショップ1", "ショップ0", "ショップ2", "ショップ3"]);
 });
 
+test("moving an order with its handle closes the opened one", async () => {
+  const screen = await renderWith();
+  const opened = screen.getByRole("button", { name: "ショップ2の注文の詳細と編集" });
+  await opened.click();
+  await expect.element(opened).toHaveAttribute("aria-expanded", "true");
+
+  // Locators have no focus().
+  screen.getByRole("button", { name: "ショップ0の注文を並べ替え" }).element().focus();
+  await userEvent.keyboard("{ArrowDown}");
+
+  await expect.element(opened).toHaveAttribute("aria-expanded", "false");
+});
+
 test("drag the handle onto another row to reorder", async () => {
   const screen = await renderWith();
 
