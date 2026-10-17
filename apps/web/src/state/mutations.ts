@@ -160,3 +160,17 @@ export const clearDataAtom = atomWithMutation<void, void>((get) => {
     onSettled: () => client.resetQueries(),
   };
 });
+
+/** Removes one row set aside, or all of them when no key is given. */
+export const deleteQuarantinedAtom = atomWithMutation<void, number | undefined>((get) => {
+  const repository = get(repositoryAtom);
+  const client = get(queryClientAtom);
+  return {
+    mutationFn: (key) =>
+      key === undefined ? repository.quarantine.clear() : repository.quarantine.delete(key),
+    onSettled: async () => {
+      await client.invalidateQueries({ queryKey: queryKeys.quarantine });
+      await client.invalidateQueries({ queryKey: queryKeys.storageHealth });
+    },
+  };
+});

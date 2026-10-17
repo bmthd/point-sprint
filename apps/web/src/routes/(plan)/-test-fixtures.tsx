@@ -7,7 +7,7 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { type Benefit, type Order, type Plan, type Shop, officialEvents } from "@workspaces/domain";
+import type { Benefit, Order, Plan, Shop } from "@workspaces/domain";
 import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
@@ -64,8 +64,25 @@ export const campaignBenefit: Benefit = {
   params: { rate: 1, roundingUnit: "item" },
 };
 
-/** The October marathon: +3倍 at 4 shops, up to +9倍 at 10 shops. */
-export const marathon = officialEvents[0]?.benefits ?? [];
+/** The October marathon: +3倍 at 4 shops, up to +9倍 at 10 shops, capped at 7,000P. */
+export const marathon: Benefit[] = [
+  {
+    id: "b31ed383-3fb7-425f-9391-70ecc965aa0e",
+    kind: "shop-around",
+    category: "campaign",
+    label: "ショップ買いまわり",
+    enabled: true,
+    amountBasis: "tax-excluded",
+    capScope: "campaign",
+    sharedKey: "marathon-2026-10",
+    conditions: { dateRule: { type: "range", start: "2026-10-04", end: "2026-10-09" } },
+    params: {
+      tiers: Array.from({ length: 9 }, (_, index) => ({ minShops: index + 2, rate: index + 1 })),
+      cap: 7000,
+      roundingUnit: "item",
+    },
+  },
+];
 
 export const orderId = (index: number) =>
   `0${String(index).padStart(2, "0")}00000-0000-4000-8000-000000000000`;

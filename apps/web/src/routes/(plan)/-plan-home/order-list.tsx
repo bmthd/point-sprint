@@ -6,6 +6,7 @@ import { reorderModeAtom } from "../../../state/ui";
 import { PlusIcon } from "../../../ui/icons";
 import { OrderCard } from "./order-card";
 import { HeaderButton, OrdersHeading, SaveFailedAlert, useOrderConfirm } from "../-order-shared";
+import { ColumnHead } from "../../../ui/column-head";
 
 /**
  * The plan's orders as cards (the phone layout). Counted orders are numbered in list order; held
@@ -30,7 +31,7 @@ export function OrderList({
 
   return (
     <Flex direction="column" gap="2.5">
-      <Flex align="center" justify="space-between">
+      <ColumnHead>
         <OrdersHeading orders={orders} headingRef={heading} />
         <Flex>
           <HeaderButton
@@ -44,7 +45,7 @@ export function OrderList({
             リセット
           </HeaderButton>
         </Flex>
-      </Flex>
+      </ColumnHead>
       <SaveFailedAlert />
       {orders.length === 0 ? (
         <Text fontSize="sm" color="fg.muted">

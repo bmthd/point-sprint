@@ -49,7 +49,7 @@
 | `warning` | `orange`（既定） | 期間外の注文などの警告 |
 | `success`・`info` | 既定 | 保存の完了、お知らせ |
 
-`primary` を `brand` にすると、`primary.solid`（ライト 500 / ダーク 600）、`primary.contrast`（白）、`primary.fg`（700 / 100）、`primary.subtle`（50 / 950）、`primary.muted`、`primary.emphasized`、`primary.outline`、`primary.ghost` が自動で決まる。`danger` と `primary` はどちらも赤系だが、削除などの危険な操作は必ず文言と確認の手順を伴わせ、色だけで区別しない。
+`primary` を `brand` にすると、`primary.solid`（ライト 500 / ダーク 600）、`primary.contrast`（白）、`primary.fg`（700 / 100）、`primary.subtle`（50 / 950）、`primary.muted`、`primary.emphasized`、`primary.outline`、`primary.ghost` が自動で決まる。ただし赤の文字に使う `brand.base`（`color="link"`）と `primary.outline`（ゴースト・アウトラインのボタンの文字）は、ダークでは 400 にする。500 と 600 は暗い地に対して 4.5:1 に届かないため。塗りの `primary.solid` は白い文字を載せるので濃いままにする。リンクは Yamada UI の既定だと `colorScheme.solid` で塗りと同じ濃さになるため、必ず `color="link"` を付ける。`danger` と `primary` はどちらも赤系だが、削除などの危険な操作は必ず文言と確認の手順を伴わせ、色だけで区別しない。
 
 ## 画面全体のトークン
 
@@ -61,11 +61,15 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | --- | --- | --- | --- |
 | `bg.base` | `#f5f5f5` | `#121212` | ページの地を薄い灰にして、白いカード（`bg.panel`）を浮かせる |
 | `bg.panel` | `#ffffff` | `#1e1e1e` | カード、表、シートの面 |
-| `border.emphasized` | `#8f8f8f` | `#6e6e6e` | 入力欄とボタンの枠。`bg.panel` の上で 3:1 以上にするため既定より濃くする |
+| `border.emphasized` | `#8f8f8f` | `#8a8a8a` | 入力欄、ボタン、チェックボックスの枠。細い線でも地に溶けないよう、`bg.panel` の上で 4.5:1 前後にする |
+| `fg.base` | `#171717` | `#fafafa` | 本文。ダークでは白に近づけ、暗い地でもくっきり読めるようにする |
+| `fg.emphasized` | `gray.600` | `gray.100` | 本文に次ぐ文字 |
+| `fg.muted` | `gray.500` | `gray.200` | 補足、単位。ダークの既定（`gray.400`）は `bg.panel` の上で 4.8:1 しかなく沈むため、7:1 以上にする |
+| `fg.subtle` | `gray.400` | `gray.300` | いちばん控えめな文字。ダークでも `bg.panel` の上で 4.5:1 以上にする |
 
 ### 既定のまま使うもの
 
-`bg.muted`（セグメントの溝、保留中の注文の地）、`bg.subtle`、`bg.overlay`（シートの背後）、`fg.base`（本文）、`fg.muted`（補足、単位）、`fg.subtle`、`border.base`（カードの枠、区切り線）、`border.muted`。
+`bg.muted`（セグメントの溝、保留中の注文の地）、`bg.subtle`、`bg.overlay`（シートの背後）、`border.base`（カードの枠、区切り線）、`border.muted`。
 
 ### 追加するもの: `point.*`（ポイントの内訳の4区分）
 

@@ -72,6 +72,10 @@
     "adsbygoogle",
     "googletagmanager",
     "googlesyndication",
-    "pagead"
+    "pagead",
+    "strftime",
+    "autoincrement",
+    "khtml",
+    "miniflare"
   ]
 }

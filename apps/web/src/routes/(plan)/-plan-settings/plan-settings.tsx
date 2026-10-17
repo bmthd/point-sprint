@@ -86,7 +86,7 @@ export function SettingsPanelButton({
         withCloseButton={false}
         restoreFocus
       >
-        <Drawer.Content>
+        <Drawer.Content roundedLeft="l2">
           <Drawer.Header justifyContent="space-between">
             <Drawer.Title as="h2">プランの設定</Drawer.Title>
             <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>

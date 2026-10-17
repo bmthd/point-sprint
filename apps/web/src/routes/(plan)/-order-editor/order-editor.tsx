@@ -659,7 +659,9 @@ export function OrderEditor({
       initialFocusRef={amountRef}
       restoreFocus
     >
-      <Drawer.Content maxH="calc(100dvh - 24px)">{content}</Drawer.Content>
+      <Drawer.Content maxH="calc(100dvh - 24px)" roundedTop="l2">
+        {content}
+      </Drawer.Content>
     </Drawer.Root>
   ) : (
     <Modal.Root

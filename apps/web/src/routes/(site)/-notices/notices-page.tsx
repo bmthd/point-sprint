@@ -1,6 +1,7 @@
 import { Flex, Heading, Separator, Text, VStack } from "@workspaces/ui";
 import { PageWithSidebar } from "../-page-with-sidebar";
 import { NoticeDate } from "../../-notices/notice-date";
+import { ColumnHead } from "../../../ui/column-head";
 import {
   type Notice,
   newestFirst,
@@ -32,9 +33,11 @@ export function NoticesPage({ notices = allNotices }: { notices?: readonly Notic
   const sorted = newestFirst(notices);
   return (
     <PageWithSidebar maxW="640px" noticeHeadlines={false}>
-      <Heading as="h1" fontSize="lg" mb="4">
-        お知らせ
-      </Heading>
+      <ColumnHead mb="2.5">
+        <Heading as="h1" fontSize="lg">
+          お知らせ
+        </Heading>
+      </ColumnHead>
       {sorted.length === 0 ? (
         <Text color="fg.muted">お知らせはありません。</Text>
       ) : (

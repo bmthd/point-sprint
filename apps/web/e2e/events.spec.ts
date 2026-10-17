@@ -1,20 +1,14 @@
 import { expect, test } from "./fixtures";
 import { TopPage } from "./pages";
 
-// The top page lists the events that have not ended. The HTML rendered at build time lists them as
-// of the day of the build, so that the list does not change once the page runs.
+// The top page reads the events from the Worker, which serves them from the event master in D1.
+// The E2E tests start it from the migrations (playwright.config.ts).
 
-test("the HTML rendered at build time lists the events the running page shows", async ({
-  browser,
-  page,
-}) => {
-  const html = await TopPage.open(await browser.newPage({ javaScriptEnabled: false }));
-  const ahead = await html.events.allInnerTexts();
-  await html.page.close();
-  expect(ahead.length).toBeGreaterThan(0);
-
+test("the top page lists the events in the master that have not ended", async ({ page }) => {
+  await page.clock.setFixedTime(new Date("2026-10-12T12:00:00+09:00"));
   const top = await TopPage.open(page);
-  // Enabled once the page runs and has read the profile.
-  await expect(top.createPlanWithoutEventButton).toBeEnabled();
-  expect(await top.events.allInnerTexts()).toEqual(ahead);
+  await expect(top.events).toHaveCount(2);
+  await expect(top.events.nth(0)).toContainText("お買い物マラソン第二弾");
+  await expect(top.events.nth(0)).toContainText("開催予定");
+  await expect(top.events.nth(1)).toContainText("お買い物マラソン第三弾");
 });
