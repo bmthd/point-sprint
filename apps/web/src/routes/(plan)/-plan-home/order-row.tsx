@@ -97,7 +97,7 @@ const useListContext = () => {
 };
 
 /** The columns of a closed row. Only the middle one (shop, item, campaigns) grows and shrinks. */
-export const rowColumns = "44px 56px 36px minmax(0, 1fr) auto auto 44px";
+export const rowColumns = "24px 56px 36px minmax(0, 1fr) auto auto 44px";
 
 const VARIES = "商品ごとに異なります";
 
@@ -386,11 +386,28 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
         minH="16"
         css={{ "&:has(> button[aria-expanded]:hover)": { bg: "bg.subtle" } }}
       >
+        {/* Drawn as tall as its dots, but pressed in a 44px square that reaches past its column. */}
         <IconButton
           ref={handleRef}
           variant="ghost"
           size="lg"
           colorScheme="gray"
+          w="6"
+          minW="6"
+          h="9"
+          minH="9"
+          px="0"
+          justifySelf="center"
+          position="relative"
+          overflow="visible"
+          zIndex="1"
+          // From inside its 1px border: 10px and 4px past the 24px by 36px button make 44px.
+          _before={{
+            content: '""',
+            position: "absolute",
+            insetBlock: "-5px",
+            insetInline: "-11px",
+          }}
           cursor="grab"
           aria-label={`${shopName}の注文を並べ替え`}
           aria-describedby={handleHintId}
