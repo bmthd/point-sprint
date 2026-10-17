@@ -12,7 +12,7 @@ import {
   useDisclosure,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { accountIdOf } from "../../../state/accounts";
 import { accountSettingsAtom, planResultAtom } from "../../../state/derived";
 import { deletePlanAtom } from "../../../state/mutations";
@@ -86,12 +86,13 @@ export function PlanSection() {
   const [target, setTarget] = useState<Plan>();
   const finalFocus = useRef<HTMLElement | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const headingId = useId();
 
   const sorted = [...plans].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
 
   return (
-    <VStack as="section" gap="2.5" alignItems="stretch">
-      <Heading as="h2" fontSize="md" ref={heading} tabIndex={-1}>
+    <VStack as="section" aria-labelledby={headingId} gap="2.5" alignItems="stretch">
+      <Heading as="h2" id={headingId} fontSize="md" ref={heading} tabIndex={-1}>
         プラン
       </Heading>
       {isSuccess && sorted.length === 0 ? (

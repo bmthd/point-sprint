@@ -2,7 +2,7 @@ import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { afterEach, expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
-import { userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 import { ShareButton } from "./share-button";
 import { siteUrl } from "../../site-url";
 
@@ -119,9 +119,10 @@ test("every button and link is at least 44px tall and works from the keyboard", 
   await userEvent.tab();
   await expect.element(screen.getByRole("link", { name: "X でシェア" })).toHaveFocus();
 
-  const controls = [...document.querySelectorAll<HTMLElement>("button, a")].map(
-    (element) => element.getBoundingClientRect().height,
-  );
-  expect(controls).toHaveLength(5);
-  for (const height of controls) expect(height).toBeGreaterThanOrEqual(44);
+  const controls = page.getByRole("button").or(page.getByRole("link"));
+  await expect.element(controls).toHaveLength(5);
+  // Sizes are read from the elements: no matcher measures them.
+  for (const control of controls.elements()) {
+    expect(control.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+  }
 });

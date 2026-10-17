@@ -78,8 +78,8 @@ function Preview({ plan, form }: { plan: Plan; form: OrderForm }) {
       minW="200px"
       fontSize="sm"
       fontVariantNumeric="tabular-nums"
-      aria-live="polite"
-      data-preview
+      role="status"
+      aria-label="ポイントの目安"
     >
       {preview ? (
         <>

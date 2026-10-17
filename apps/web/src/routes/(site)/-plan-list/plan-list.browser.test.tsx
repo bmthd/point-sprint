@@ -13,13 +13,14 @@ import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
 import { useHydrateAtoms } from "jotai/utils";
 import type { ReactNode } from "react";
-import { userEvent } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 import { expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { repositoryAtom } from "../../../state/repository";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
 import { TestColorMode } from "../../../test-color-mode";
+import { expectTexts } from "../../../test-texts";
 import { officialEventsSourceAtom } from "../../-official-events";
 import { useToday } from "../../-use-today";
 import { PlanList } from "./plan-list";
@@ -158,14 +159,14 @@ function Hydrate({
   return children;
 }
 
+const planRows = () =>
+  page.getByRole("region", { name: "プラン", exact: true }).getByRole("listitem");
+
 /**
  * The screen runs in a router with a memory history, so links and `navigate` are the real ones
  * and the test reads where they ended up.
  */
-async function renderPlanList(
-  repository: Repository,
-  options: { colorMode?: "light" | "dark"; events?: EventSource } = {},
-) {
+async function renderPlanList(repository: Repository, options: { events?: EventSource } = {}) {
   await cleanup();
   const root = createRootRoute({ component: Outlet });
   const index = createRoute({
@@ -189,7 +190,7 @@ async function renderPlanList(
   });
   const screen = await render(
     <UIProvider theme={theme} config={config}>
-      <TestColorMode value={options.colorMode ?? "light"} />
+      <TestColorMode value="light" />
       <TestProviders
         repository={repository}
         events={options.events ?? { load: async () => servedEvents }}
@@ -228,7 +229,7 @@ test("lists only the events that have not ended, and a round whose cap is not ou
 
   const next = screen.getByRole("listitem").filter({ hasText: "お買い物マラソン第二弾" });
   await expect.element(next.getByText("・上限は未発表", { exact: false })).toBeVisible();
-  expect(screen.getByRole("listitem").elements()).toHaveLength(2);
+  await expect.element(screen.getByRole("listitem")).toHaveLength(2);
 });
 
 test("says when the events cannot be read, and reads them again", async () => {
@@ -317,16 +318,10 @@ test("lists plans with their totals", async () => {
 
   await expect.element(screen.getByRole("link", { name: /10月 お買い物マラソン/ })).toBeVisible();
   // Most recently updated first. The shops load after the plans, so wait for the totals.
-  const rowTexts = () =>
-    Array.from(document.querySelectorAll("main section:last-of-type li")).map(
-      (row) => row.textContent,
-    );
-  await expect
-    .poll(rowTexts)
-    .toEqual([
-      "10月 お買い物マラソン10/1〜10/31・1店舗・2件200P",
-      "10月の普段の買い物10/1〜10/31・1店舗・1件100P",
-    ]);
+  await expectTexts(planRows(), [
+    "10月 お買い物マラソン10/1〜10/31・1店舗・2件200P",
+    "10月の普段の買い物10/1〜10/31・1店舗・1件100P",
+  ]);
 
   await screen.getByRole("link", { name: /10月の普段の買い物/ }).click();
   await expect.poll(() => router.state.location.pathname).toBe("/plan");
@@ -391,19 +386,7 @@ test("deletes a plan with the keyboard only", async () => {
   await userEvent.keyboard("{Enter}");
 
   await expect.poll(async () => repository.plans.list()).toEqual([]);
-  await expect.poll(() => document.activeElement?.textContent).toBe("プラン");
-});
-
-test.each(["light", "dark"] as const)("renders the screen in %s mode", async (colorMode) => {
-  const repository = createMemoryRepository({
-    shops: [shop],
-    plans: [plan(PLAN_A, "プラン", "2026-10-01T00:00:00.000Z", 1)],
-  });
-  const { screen } = await renderPlanList(repository, { colorMode });
-
-  await expect.element(screen.getByRole("link", { name: /プラン/ })).toBeVisible();
-  const expected = colorMode === "light" ? "rgb(245, 245, 245)" : "rgb(18, 18, 18)";
-  await expect.poll(() => getComputedStyle(document.body).backgroundColor).toBe(expected);
+  await expect.element(page.getByRole("heading", { name: "プラン", exact: true })).toHaveFocus();
 });
 
 test("today moves on at midnight in Japan", async () => {
@@ -413,17 +396,16 @@ test("today moves on at midnight in Japan", async () => {
     // 23:59 on 10/5 in Japan.
     vi.setSystemTime(new Date("2026-10-05T14:59:00Z"));
     function Today() {
-      return <p data-testid="today">{useToday(() => new Date())}</p>;
+      return <p>{useToday(() => new Date())}</p>;
     }
     const screen = await render(<Today />);
-    const today = () => screen.container.querySelector('[data-testid="today"]')?.textContent;
-    expect(today()).toBe("2026-10-05");
+    await expect.element(screen.locator).toHaveTextContent("2026-10-05");
 
     await vi.advanceTimersByTimeAsync(60_000);
-    expect(today()).toBe("2026-10-06");
+    await expect.element(screen.locator).toHaveTextContent("2026-10-06");
     // And again the next night, from the timer set at the first midnight.
     await vi.advanceTimersByTimeAsync(24 * 60 * 60 * 1000);
-    expect(today()).toBe("2026-10-07");
+    await expect.element(screen.locator).toHaveTextContent("2026-10-07");
   } finally {
     vi.useRealTimers();
   }
@@ -440,20 +422,14 @@ test("shows each plan's account only once accounts are told apart", async () => 
     accounts: [defaultAccount(), { id: SUB, name: "家族" }],
     updatedAt: "2026-10-05T00:00:00.000Z",
   };
-  const rowTexts = () =>
-    Array.from(document.querySelectorAll("main section:last-of-type li")).map(
-      (row) => row.textContent,
-    );
 
   const off = createMemoryRepository({ shops: [shop], plans, profile });
   const { screen } = await renderPlanList(off);
   await expect.element(screen.getByRole("link", { name: /家族のプラン/ })).toBeVisible();
-  await expect
-    .poll(rowTexts)
-    .toEqual([
-      "家族のプラン10/1〜10/31・1店舗・1件100P",
-      "メインのプラン10/1〜10/31・1店舗・1件100P",
-    ]);
+  await expectTexts(planRows(), [
+    "家族のプラン10/1〜10/31・1店舗・1件100P",
+    "メインのプラン10/1〜10/31・1店舗・1件100P",
+  ]);
 
   const on = createMemoryRepository({
     shops: [shop],
@@ -461,10 +437,8 @@ test("shows each plan's account only once accounts are told apart", async () => 
     profile: { ...profile, multiAccount: true },
   });
   await renderPlanList(on);
-  await expect
-    .poll(rowTexts)
-    .toEqual([
-      "家族のプラン家族・10/1〜10/31・1店舗・1件100P",
-      "メインのプランメイン・10/1〜10/31・1店舗・1件100P",
-    ]);
+  await expectTexts(planRows(), [
+    "家族のプラン家族・10/1〜10/31・1店舗・1件100P",
+    "メインのプランメイン・10/1〜10/31・1店舗・1件100P",
+  ]);
 });

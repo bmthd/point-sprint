@@ -13,6 +13,7 @@ import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
 import { useHydrateAtoms } from "jotai/utils";
 import type { ReactNode } from "react";
+import { expect } from "vitest";
 import { type Locator, page } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import type { ItemLookup } from "../../rakuten/item-lookup";
@@ -183,12 +184,20 @@ export async function renderPlanHome(
   return Object.assign(screen, { router });
 }
 
-export const summaryText = () =>
-  document.querySelector('section[aria-label="サマリー"]')?.textContent;
+export const summary = () => page.getByRole("region", { name: "サマリー" });
+
+/** Expects one item per shop, in this order, each holding its shop's name. */
+export async function expectShopsInOrder(items: Locator, shops: string[]) {
+  await expect.element(items).toHaveLength(shops.length);
+  for (const [index, shop] of shops.entries()) {
+    await expect.element(items.nth(index)).toMatchTextContent(shop);
+  }
+}
 
 /**
  * Taps a checkbox card (an SPU tile, a campaign, 39ショップ). Its checkbox is visually hidden under the card, so
- * the card (its label) is tapped.
+ * the card (its label) is tapped. Locators cannot reach an element's parent, so the label is found from the
+ * checkbox.
  */
 export const tapCard = (tile: Locator) => {
   const label = tile.element().closest("label");

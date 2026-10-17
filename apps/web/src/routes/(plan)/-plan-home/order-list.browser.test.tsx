@@ -46,9 +46,10 @@ vi.mock("./order-card", async (importOriginal) => {
 });
 
 const cardOf = (shop: string) =>
-  Array.from(document.querySelectorAll('ul[aria-label="注文"] > li')).find((card) =>
-    card.textContent?.includes(shop),
-  );
+  page
+    .getByRole("list", { name: "注文", exact: true })
+    .getByRole("listitem")
+    .filter({ hasText: shop });
 
 test("editing one order does not re-render the other cards of the list", async () => {
   await page.viewport(390, 844);
@@ -76,15 +77,15 @@ test("editing one order does not re-render the other cards of the list", async (
     </Providers>,
   );
 
-  await expect.poll(() => cardOf("ショップ0")?.textContent).toContain("400P");
-  await expect.poll(() => cardOf("ショップ1")?.textContent).toContain("400P");
+  await expect.element(cardOf("ショップ0")).toMatchTextContent("400P");
+  await expect.element(cardOf("ショップ1")).toMatchTextContent("400P");
   const before = cardRenders.get(orderId(1));
 
   const edited = order(0);
   edited.lineItems = edited.lineItems.map((item) => ({ ...item, unitPrice: 22000 }));
   await updateOrder?.(edited);
 
-  await expect.poll(() => cardOf("ショップ0")?.textContent).toContain("800P");
+  await expect.element(cardOf("ショップ0")).toMatchTextContent("800P");
   // Wait for the refetch that follows the save to settle as well.
   await new Promise((resolve) => setTimeout(resolve, 100));
   expect(cardRenders.get(orderId(0))).toBeGreaterThan(1);
