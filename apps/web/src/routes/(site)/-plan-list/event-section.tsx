@@ -1,18 +1,20 @@
 import { ClientOnly } from "@tanstack/react-router";
 import type { OfficialEvent } from "@workspaces/domain";
 import {
-  Alert,
   Badge,
   Button,
+  CalendarXIcon,
   Card,
   Flex,
   Heading,
   List,
   Skeleton,
   Text,
+  TriangleAlertIcon,
   VStack,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
+import type { ReactNode } from "react";
 import { monthDayWithWeekday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";
 import { ColumnHead } from "../../../ui/column-head";
@@ -79,27 +81,74 @@ type EventListProps = {
   onCreate: (event: OfficialEvent) => void;
 };
 
+/**
+ * What takes the list's place when there is no list, set as an event's card is: the line in bold,
+ * what to do under it, and the button.
+ */
+function EventListNotice({
+  icon,
+  title,
+  description,
+  action,
+  tone,
+}: {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  action?: ReactNode;
+  tone?: "danger";
+}) {
+  return (
+    <Card.Root role={tone === "danger" ? "alert" : undefined}>
+      <Card.Body>
+        <Flex align="center" gap="2" color={tone === "danger" ? "danger.fg" : undefined}>
+          {icon}
+          <Text fontSize="md" fontWeight="bold">
+            {title}
+          </Text>
+        </Flex>
+        <Text fontSize="sm" color="fg.muted">
+          {description}
+        </Text>
+        {action}
+      </Card.Body>
+    </Card.Root>
+  );
+}
+
 /** The events that have not ended, read from the Worker once the page runs. */
 function EventList({ today, disabled, onCreate }: EventListProps) {
   const { data, isPending, isError, refetch } = useAtomValue(officialEventsQueryAtom);
   if (isPending) return <EventListSkeleton />;
   if (isError) {
     return (
-      <Alert.Root status="error" role="alert" alignItems="center">
-        <Alert.Icon />
-        <Alert.Description flex="1">イベントを読み込めませんでした。</Alert.Description>
-        <Button variant="outline" bg="bg.panel" size="lg" onClick={() => void refetch()}>
-          再試行
-        </Button>
-      </Alert.Root>
+      <EventListNotice
+        tone="danger"
+        icon={<TriangleAlertIcon />}
+        title="イベントを読み込めませんでした"
+        description="通信状況をご確認の上再度お試しください。"
+        action={
+          <Button
+            variant="outline"
+            bg="bg.panel"
+            size="lg"
+            alignSelf="flex-start"
+            onClick={() => void refetch()}
+          >
+            再試行
+          </Button>
+        }
+      />
     );
   }
   const events = today ? data.filter((event) => event.period.end >= today) : data;
   if (events.length === 0) {
     return (
-      <Text fontSize="sm" color="fg.muted">
-        開催中・開催予定のイベントはまだありません。
-      </Text>
+      <EventListNotice
+        icon={<CalendarXIcon color="fg.muted" />}
+        title="開催中・開催予定のイベントはまだありません"
+        description="新しいイベントが告知されると、ここに出ます。"
+      />
     );
   }
   return (
@@ -117,9 +166,28 @@ function EventList({ today, disabled, onCreate }: EventListProps) {
   );
 }
 
-/** Where the list goes while the events load: about one card's height. */
+/**
+ * Where the list goes while the events load: an event's card with its lines grayed, so the card
+ * that comes after it, an event's or the error's, is as tall.
+ */
 function EventListSkeleton() {
-  return <Skeleton h="36" />;
+  return (
+    <Card.Root aria-hidden>
+      <Card.Body>
+        <Skeleton>
+          <Text fontSize="md" fontWeight="bold">
+            お買い物マラソン
+          </Text>
+        </Skeleton>
+        <Skeleton>
+          <Text fontSize="sm">10/14（水） 〜 10/17（土）・買いまわり最大 +9倍</Text>
+        </Skeleton>
+        <Skeleton>
+          <Button size="lg">このイベントでプランを作る</Button>
+        </Skeleton>
+      </Card.Body>
+    </Card.Root>
+  );
 }
 
 type EventSectionProps = {
