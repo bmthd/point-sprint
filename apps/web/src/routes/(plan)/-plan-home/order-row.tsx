@@ -23,7 +23,6 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
-  type DragEvent,
   type KeyboardEvent,
   type RefObject,
   createContext,
@@ -33,7 +32,6 @@ import {
   useId,
   useMemo,
   useRef,
-  useState,
 } from "react";
 import { orderAtom, planAtom } from "../../../state/derived";
 import { saveShopAtom } from "../../../state/mutations";
@@ -73,11 +71,12 @@ import {
 } from "../-order-shared";
 import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
 import { PointBreakdown } from "./point-breakdown";
+import type { DragStart } from "./use-order-drag";
 
 /** What the list shares with its rows without re-rendering them: refs and stable callbacks. */
 export type OrderListContext = {
-  /** The order being dragged by its handle, if any. */
-  draggedRef: RefObject<{ orderId: string; index: number; shopName: string } | null>;
+  /** Starts dragging a row by its handle. */
+  startDrag: DragStart;
   /** The order whose handle gets the focus back once it has moved. */
   focusAfterMoveRef: RefObject<string | null>;
   /** Says where an order moved, through the list's live region. */
@@ -281,20 +280,9 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   const moveOrder = useSetAtom(moveOrderAtom);
   const save = useSaveOrderChange();
   const shopName = useShopName(order);
-  const { draggedRef, focusAfterMoveRef, announce, handleHintId, holdHintId } = useListContext();
+  const { startDrag, focusAfterMoveRef, announce, handleHintId, holdHintId } = useListContext();
   const detailId = useId();
   const handleRef = useRef<HTMLButtonElement>(null);
-  const lineRef = useRef<HTMLDivElement>(null);
-  const [dropSide, setDropSide] = useState<"before" | "after" | null>(null);
-  const [grabbed, setGrabbed] = useState(false);
-
-  // A press on the handle that ends without a drag disarms the row again.
-  useEffect(() => {
-    if (!grabbed) return;
-    const release = () => setGrabbed(false);
-    document.addEventListener("pointerup", release);
-    return () => document.removeEventListener("pointerup", release);
-  }, [grabbed]);
 
   // Moving an order can take its row out of the document for a moment, which drops the focus.
   useEffect(() => {
@@ -306,78 +294,31 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   if (!order) return null;
   const held = order.onHold;
 
+  const moveTo = (toIndex: number) => {
+    focusAfterMoveRef.current = orderId;
+    const moved = moveOrder({ planId, orderId, toIndex });
+    save(moved);
+    announce(`${shopName}の注文を${toIndex + 1}番目に移動しました`);
+    return moved;
+  };
+
   const onHandleKeyDown = (event: KeyboardEvent) => {
     const step = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
     if (step === 0) return;
     event.preventDefault();
     setOpenOrderId(null);
     const toIndex = index + step;
-    if (toIndex < 0 || toIndex >= count) return;
-    focusAfterMoveRef.current = orderId;
-    save(moveOrder({ planId, orderId, toIndex }));
-    announce(`${shopName}の注文を${toIndex + 1}番目に移動しました`);
-  };
-
-  const onDragOver = (event: DragEvent) => {
-    const dragged = draggedRef.current;
-    if (!dragged || dragged.orderId === orderId) return;
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-    setDropSide(dragged.index < index ? "after" : "before");
-  };
-
-  const onDrop = (event: DragEvent) => {
-    const dragged = draggedRef.current;
-    setDropSide(null);
-    if (!dragged || dragged.orderId === orderId) return;
-    event.preventDefault();
-    draggedRef.current = null;
-    save(moveOrder({ planId, orderId: dragged.orderId, toIndex: index }));
-    announce(`${dragged.shopName}の注文を${index + 1}番目に移動しました`);
+    if (toIndex >= 0 && toIndex < count) void moveTo(toIndex);
   };
 
   const base = order.lineItems.reduce((sum, item) => sum + taxExcludedTarget(item), 0);
   const amount = order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0);
 
   return (
-    <List.Item
-      data-order-id={orderId}
-      borderTopWidth={index === 0 ? undefined : "1px"}
-      draggable={grabbed}
-      onDragStart={(event: DragEvent) => {
-        // The opened fields close, and only the row's line is carried, not the fields under it.
-        setOpenOrderId(null);
-        const line = lineRef.current;
-        if (line) {
-          const box = line.getBoundingClientRect();
-          event.dataTransfer.setDragImage(line, event.clientX - box.left, event.clientY - box.top);
-        }
-        draggedRef.current = { orderId, index, shopName };
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", shopName);
-      }}
-      onDragEnd={() => {
-        draggedRef.current = null;
-        setGrabbed(false);
-      }}
-      onDragOver={onDragOver}
-      onDragLeave={(event: DragEvent) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropSide(null);
-      }}
-      onDrop={onDrop}
-    >
+    <List.Item data-order-id={orderId} borderTopWidth={index === 0 ? undefined : "1px"}>
       <Box
-        ref={lineRef}
-        // Painted, so the line carried in a drag is a row and not loose text. The mark of where a
-        // dragged order will land is on it too, where the paint does not cover it.
+        // Painted, so a dragged row covers the rows it passes.
         bg="bg.panel"
-        boxShadow={
-          dropSide === "before"
-            ? "inset 0 2px 0 0 {colors.primary.solid}"
-            : dropSide === "after"
-              ? "inset 0 -2px 0 0 {colors.primary.solid}"
-              : undefined
-        }
         display="grid"
         gridTemplateColumns={rowColumns}
         alignItems="center"
@@ -409,15 +350,18 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
             insetInline: "-11px",
           }}
           cursor="grab"
+          // A drag on the handle moves the row, not the page.
+          touchAction="none"
           aria-label={`${shopName}の注文を並べ替え`}
           aria-describedby={handleHintId}
           onKeyDown={onHandleKeyDown}
-          // The row is dragged, but only when the drag starts on its handle.
-          onPointerDown={() => setGrabbed(true)}
-          // Browsers cancel the pointer when a drag starts; only a cancel outside a drag disarms.
-          onPointerCancel={() => {
-            if (!draggedRef.current) setGrabbed(false);
-          }}
+          onPointerDown={(event) =>
+            startDrag(event, {
+              from: index,
+              onStart: () => setOpenOrderId(null),
+              onDrop: moveTo,
+            })
+          }
         >
           <GripIcon />
         </IconButton>

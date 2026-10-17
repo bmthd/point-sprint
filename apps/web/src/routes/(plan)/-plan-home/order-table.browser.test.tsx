@@ -410,13 +410,6 @@ test("drag the handle onto another row to reorder", async () => {
   const screen = await renderWith();
 
   await expect.element(rows()).toHaveLength(4);
-  // The drag's own events are listened for on the list's element: no matcher sees them.
-  const events: string[] = [];
-  for (const type of ["pointercancel", "dragstart", "drop", "dragend"]) {
-    list()
-      .element()
-      .addEventListener(type, () => events.push(type));
-  }
   await userEvent.dragAndDrop(
     screen.getByRole("button", { name: "ショップ0の注文を並べ替え" }),
     screen.getByRole("button", { name: "ショップ2の注文の詳細と編集" }),
@@ -426,10 +419,24 @@ test("drag the handle onto another row to reorder", async () => {
   await expect
     .poll(async () => (await stored())?.map((o) => o.shopId))
     .toEqual([shopId(1), shopId(2), shopId(0), shopId(3)]);
-  // The move went through the browser's own drag and drop, started from the handle.
-  expect(events).toContain("dragstart");
-  expect(events).toContain("drop");
-  expect(events.at(-1)).toBe("dragend");
+  await expect
+    .element(screen.getByText("ショップ0の注文を3番目に移動しました"))
+    .toBeInTheDocument();
+});
+
+test("dragging an order up closes the opened one", async () => {
+  const screen = await renderWith();
+  const opened = screen.getByRole("button", { name: "ショップ1の注文の詳細と編集" });
+  await opened.click();
+  await expect.element(opened).toHaveAttribute("aria-expanded", "true");
+
+  await userEvent.dragAndDrop(
+    screen.getByRole("button", { name: "ショップ3の注文を並べ替え" }),
+    screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }),
+  );
+
+  await expect.element(opened).toHaveAttribute("aria-expanded", "false");
+  await expectShopsInOrder(rows(), ["ショップ3", "ショップ0", "ショップ1", "ショップ2"]);
 });
 
 test("購入決定 switch toggles hold", async () => {
