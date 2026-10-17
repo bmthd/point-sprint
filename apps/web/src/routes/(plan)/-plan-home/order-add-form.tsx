@@ -22,7 +22,7 @@ import {
   emptyInput,
 } from "../-order-editor/order-form";
 import { type OrderForm, useFormInput, useOrderAutofill } from "../-order-editor/order-form-store";
-import { PlusIcon } from "../../../ui/icons";
+import { ChevronIcon, PlusIcon } from "../../../ui/icons";
 import { orderSaveFailedAtom, pointsText } from "../-order-shared";
 import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
 import { CapFlows } from "../-cap-flows";
@@ -131,6 +131,8 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
         variant="ghost"
         colorScheme="primary"
         size="xl"
+        // As tall as an order's row above it.
+        minH="16"
         aria-expanded={open}
         aria-controls={formId}
         onClick={() => {
@@ -139,12 +141,17 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
         }}
         w="full"
         justifyContent="flex-start"
+        pe="3"
         startIcon={<PlusIcon />}
       >
         注文を追加
         <Text as="span" fontWeight="normal" fontSize="xs" color="fg.muted">
           （Enter で追加して次の注文へ）
         </Text>
+        {/* Where an order's row has its chevron. */}
+        <Flex as="span" boxSize="11" ml="auto" align="center" justify="center" color="fg.muted">
+          <ChevronIcon open={open} />
+        </Flex>
       </Button>
       {/* Shut, the fields are taken out; what was typed stays in the form. */}
       <Collapse open={open} unmountOnExit>

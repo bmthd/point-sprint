@@ -150,6 +150,20 @@ test("fits 1024px without horizontal scroll", async () => {
   );
 
   await expect.element(rows()).toHaveLength(2);
+  // Measured while the page is short enough to be on screen. The handle is drawn narrow and pressed in a 44px square around it: points 21px out hit it.
+  const handle = screen.getByRole("button", { name: `${long}の注文を並べ替え` }).element();
+  const box = handle.getBoundingClientRect();
+  const [x, y] = [box.left + box.width / 2, box.top + box.height / 2];
+  for (const [dx, dy] of [
+    [-21, 0],
+    [21, 0],
+    [0, -21],
+    [0, 21],
+  ] as const) {
+    expect(document.elementFromPoint(x + dx, y + dy)?.closest("button"), `${dx},${dy}`).toBe(
+      handle,
+    );
+  }
   await screen.getByRole("button", { name: `${long}の注文の詳細と編集` }).click();
   await openAddForm(screen);
   // The add form comes after the open row, so its shop field is the last one.
@@ -161,7 +175,6 @@ test("fits 1024px without horizontal scroll", async () => {
   // Every control is at least 44px both ways (the switch through its label). Sizes are read from
   // the elements: no matcher measures them.
   const controls = [
-    screen.getByRole("button", { name: `${long}の注文を並べ替え` }).element(),
     screen
       .getByRole("switch", { name: `${long}の注文を購入決定` })
       .element()
@@ -171,6 +184,9 @@ test("fits 1024px without horizontal scroll", async () => {
     ...Array.from(
       list().element().querySelectorAll("input:not([type=checkbox]), select, button"),
       (control) => control.closest(DATE_PICKER_FIELD) ?? control,
+    ).filter(
+      // Every handle is pressed like the one measured above.
+      (control) => !control.getAttribute("aria-label")?.endsWith("の注文を並べ替え"),
     ),
   ];
   for (const control of controls) {
@@ -375,6 +391,19 @@ test("keyboard reorder with the handle", async () => {
   await userEvent.keyboard("{ArrowUp}");
   await new Promise((resolve) => setTimeout(resolve, 50));
   await expectShopsInOrder(rows(), ["ショップ1", "ショップ0", "ショップ2", "ショップ3"]);
+});
+
+test("moving an order with its handle closes the opened one", async () => {
+  const screen = await renderWith();
+  const opened = screen.getByRole("button", { name: "ショップ2の注文の詳細と編集" });
+  await opened.click();
+  await expect.element(opened).toHaveAttribute("aria-expanded", "true");
+
+  // Locators have no focus().
+  screen.getByRole("button", { name: "ショップ0の注文を並べ替え" }).element().focus();
+  await userEvent.keyboard("{ArrowDown}");
+
+  await expect.element(opened).toHaveAttribute("aria-expanded", "false");
 });
 
 test("drag the handle onto another row to reorder", async () => {
