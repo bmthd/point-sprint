@@ -1,6 +1,20 @@
-import { type OfficialEvent, officialEvents } from "@workspaces/domain";
-import { Badge, Button, Card, Flex, Heading, List, Text, VStack } from "@workspaces/ui";
+import { ClientOnly } from "@tanstack/react-router";
+import type { OfficialEvent } from "@workspaces/domain";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Flex,
+  Heading,
+  List,
+  Skeleton,
+  Text,
+  VStack,
+} from "@workspaces/ui";
+import { useAtomValue } from "jotai";
 import { monthDayWithWeekday } from "../../../ui/dates";
+import { officialEventsQueryAtom } from "../../-official-events";
 
 /** The most a shop-around benefit adds, and the cap on what it pays. */
 function shopAroundSummary(event: OfficialEvent): string {
@@ -8,7 +22,8 @@ function shopAroundSummary(event: OfficialEvent): string {
   if (benefit?.kind !== "shop-around") return "";
   const { tiers, cap } = benefit.params;
   const maxRate = Math.max(...tiers.map((tier) => tier.rate));
-  const capText = cap === undefined ? "" : `・上限 ${cap.toLocaleString("ja-JP")}P`;
+  // A round is listed from the schedule page before its own page tells the cap.
+  const capText = cap === undefined ? "・上限は未発表" : `・上限 ${cap.toLocaleString("ja-JP")}P`;
   return `・買いまわり最大 +${maxRate}倍${capText}`;
 }
 
@@ -56,40 +71,82 @@ function EventCard({ event, status, disabled, onCreate }: EventCardProps) {
   );
 }
 
+type EventListProps = {
+  /** Today in Japan as `YYYY-MM-DD`; `undefined` where nothing sets it, as in some tests. */
+  today: string | undefined;
+  disabled: boolean;
+  onCreate: (event: OfficialEvent) => void;
+};
+
+/** The events that have not ended, read from the Worker once the page runs. */
+function EventList({ today, disabled, onCreate }: EventListProps) {
+  const { data, isPending, isError, refetch } = useAtomValue(officialEventsQueryAtom);
+  if (isPending) return <EventListSkeleton />;
+  if (isError) {
+    return (
+      <Alert.Root status="error" role="alert" alignItems="center">
+        <Alert.Icon />
+        <Alert.Description flex="1">イベントを読み込めませんでした。</Alert.Description>
+        <Button variant="outline" bg="bg.panel" size="lg" onClick={() => void refetch()}>
+          再試行
+        </Button>
+      </Alert.Root>
+    );
+  }
+  const events = today ? data.filter((event) => event.period.end >= today) : data;
+  if (events.length === 0) {
+    return (
+      <Text fontSize="sm" color="fg.muted">
+        開催中・開催予定のイベントはまだありません。
+      </Text>
+    );
+  }
+  return (
+    <List.Root gap="2.5">
+      {events.map((event) => (
+        <EventCard
+          key={event.id}
+          event={event}
+          status={today ? (event.period.start <= today ? "active" : "upcoming") : undefined}
+          disabled={disabled}
+          onCreate={onCreate}
+        />
+      ))}
+    </List.Root>
+  );
+}
+
+/** Where the list goes while the events load: about one card's height. */
+function EventListSkeleton() {
+  return <Skeleton h="36" />;
+}
+
 type EventSectionProps = {
-  /** Today in Japan as `YYYY-MM-DD`, the day of the build in the HTML rendered ahead of time. */
+  /** Today in Japan as `YYYY-MM-DD`. */
   today: string | undefined;
   disabled: boolean;
   onCreate: (event: OfficialEvent) => void;
   onCreateWithoutEvent: () => void;
 };
 
-/** Official events carry no device data, so this section is part of the HTML rendered at build time. */
+/**
+ * The events come from the Worker, so the HTML rendered ahead of time has only the heading and the
+ * button that needs no event.
+ */
 export function EventSection({
   today,
   disabled,
   onCreate,
   onCreateWithoutEvent,
 }: EventSectionProps) {
-  const events = today
-    ? officialEvents.filter((event) => event.period.end >= today)
-    : officialEvents;
   return (
     <VStack as="section" gap="2.5" alignItems="stretch">
       <Heading as="h2" fontSize="md">
         開催中・開催予定のイベント
       </Heading>
-      <List.Root gap="2.5">
-        {events.map((event) => (
-          <EventCard
-            key={event.id}
-            event={event}
-            status={today ? (event.period.start <= today ? "active" : "upcoming") : undefined}
-            disabled={disabled}
-            onCreate={onCreate}
-          />
-        ))}
-      </List.Root>
+      <ClientOnly fallback={<EventListSkeleton />}>
+        <EventList today={today} disabled={disabled} onCreate={onCreate} />
+      </ClientOnly>
       <Button
         variant="ghost"
         colorScheme="link"

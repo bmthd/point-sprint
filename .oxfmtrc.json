@@ -19,6 +19,7 @@
     "packages/ui/src/**/registry.json",
     "packages/ui/src/components/**",
     "packages/ui/src/hooks/**",
-    "packages/ui/src/providers/**"
+    "packages/ui/src/providers/**",
+    "apps/web/src/server/event-pages/*.html"
   ]
 }

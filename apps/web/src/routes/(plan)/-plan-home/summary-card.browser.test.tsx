@@ -7,7 +7,7 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { type Benefit, type Order, type Plan, type Shop, officialEvents } from "@workspaces/domain";
+import type { Benefit, Order, Plan, Shop } from "@workspaces/domain";
 import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
@@ -19,6 +19,7 @@ import { repositoryAtom } from "../../../state/repository";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
 import { TestColorMode } from "../../../test-color-mode";
+import { marathon } from "../-test-fixtures";
 import { PlanHome } from "./plan-home";
 
 const PLAN = "f0000000-0000-4000-8000-00000000000a";
@@ -54,9 +55,6 @@ const spuBenefit: Benefit = {
   label: "SPU",
   params: { rate: 2, roundingUnit: "item" },
 };
-
-/** The October marathon: +3倍 at 4 shops, up to +9倍 at 10 shops, capped at 7,000P. */
-const marathon = officialEvents[0]?.benefits ?? [];
 
 const order = (
   index: number,

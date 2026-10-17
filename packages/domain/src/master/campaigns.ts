@@ -94,7 +94,7 @@ export const campaignTemplates: CampaignTemplate[] = [
     },
   },
   {
-    // プリセット（officialEvents）のない回のお買い物マラソンや楽天スーパーSALE に使う。
+    // 公式イベントのマスタ（D1）にない回のお買い物マラソンや楽天スーパーSALE に使う。
     id: "shop-around-manual",
     name: "買いまわり（手動）",
     occurrence: "user-period",
@@ -109,7 +109,7 @@ export const campaignTemplates: CampaignTemplate[] = [
       sharedKey: "shop-around",
       conditions: {},
       params: {
-        // 2〜10ショップで+1〜+9倍、獲得上限7,000ポイント（officialEvents のマラソンと同じ値）。
+        // 2〜10ショップで+1〜+9倍、獲得上限7,000ポイント（2026年10月のマラソンと同じ値）。
         tiers: [
           { minShops: 2, rate: 1 },
           { minShops: 3, rate: 2 },
