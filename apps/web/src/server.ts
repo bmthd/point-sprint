@@ -2,6 +2,7 @@ import { createStartHandler, defaultStreamHandler } from "@tanstack/react-start/
 import { createServerEntry } from "@tanstack/react-start/server-entry";
 import { type ExecutionContext, type ScheduledController, env } from "cloudflare:workers";
 import { collectEvents } from "./server/collect-events";
+import { devMigrated } from "./server/dev-migrations";
 import { d1EventStore } from "./server/event-store";
 
 // The Worker's entry (`entrypoint` in cloudflare.config.ts): Start's default handler, the cron that
@@ -13,6 +14,8 @@ export { RakutenRateGate } from "./server/rakuten-rate-gate";
 export default {
   ...createServerEntry({ fetch: createStartHandler(defaultStreamHandler) }),
   scheduled(_controller: ScheduledController, _env: unknown, ctx: ExecutionContext) {
-    ctx.waitUntil(collectEvents({ store: d1EventStore(env.EVENTS_DB) }));
+    ctx.waitUntil(
+      devMigrated(env.EVENTS_DB).then((db) => collectEvents({ store: d1EventStore(db) })),
+    );
   },
 };

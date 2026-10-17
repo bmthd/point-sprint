@@ -1,12 +1,13 @@
 // Applies migrations/ to the event master's D1: production's, or a Preview's with `--preview`,
 // through `cf`. With `--local`, makes the local one the dev server and `vite preview` use afresh
-// and runs every migration on it through Miniflare: `cf` 1.0.0-beta.12 often hangs on a local
-// database. Run by Node, which strips the types.
+// and runs every migration on it through Miniflare (src/server/migrations.ts): `cf` 1.0.0-beta.12
+// often hangs on a local database. Run by Node, which strips the types.
 import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { EVENTS_DB, PREVIEW_EVENTS_DB } from "../cloudflare.config.ts";
+import { applyMigrations } from "../src/server/migrations.ts";
 import { localStateDir } from "./local-state-dir.ts";
 
 const args = new Set(process.argv.slice(2));
@@ -27,20 +28,14 @@ if (args.has("--local")) {
   );
   try {
     const db = await miniflare.getD1Database("EVENTS_DB");
-    const files = readdirSync("migrations")
-      .filter((file) => file.endsWith(".sql"))
-      .toSorted();
-    for (const file of files) {
-      // `exec` takes one statement a line, so each is joined onto one line.
-      const sql = readFileSync(join("migrations", file), "utf8")
-        .split("\n")
-        .filter((line) => !line.trimStart().startsWith("--"))
-        .join(" ");
-      for (const statement of sql.split(/;\s*(?=\S|$)/).filter((s) => s.trim())) {
-        await db.prepare(statement).run();
-      }
-      console.log(`Applied ${file} to the local event master.`);
-    }
+    const files = readdirSync("migrations").filter((file) => file.endsWith(".sql"));
+    const applied = await applyMigrations(
+      db,
+      Object.fromEntries(
+        files.map((file) => [file, readFileSync(join("migrations", file), "utf8")]),
+      ),
+    );
+    for (const file of applied) console.log(`Applied ${file} to the local event master.`);
   } finally {
     await miniflare.dispose();
   }
