@@ -242,17 +242,15 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 </Text>
               </Flex>
               {/* A held order's lines are the ones it would have once counted, faded and struck. */}
-              <Flex
-                direction="column"
+              <List.Root
                 gap="1.5"
                 fontSize="sm"
                 color={held ? "fg.muted" : undefined}
-                aria-label={held ? "購入決定にしたときの内訳" : undefined}
+                aria-label={held ? "購入決定にしたときの内訳" : "ポイントの内訳"}
               >
                 {points.rows.map((row) => (
-                  <Box
+                  <List.Item
                     key={row.key}
-                    data-row="benefit"
                     display="grid"
                     gridTemplateColumns="14px 1fr 56px 56px"
                     alignItems="center"
@@ -282,9 +280,9 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                     >
                       {pointsText(row.points)}
                     </Text>
-                  </Box>
+                  </List.Item>
                 ))}
-              </Flex>
+              </List.Root>
               <Flex direction="column" gap="1">
                 <Switch
                   checked={!held}

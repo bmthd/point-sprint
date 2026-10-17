@@ -53,7 +53,7 @@ async function openAdd(screen: Screen) {
 }
 
 const amountOf = (sheet: ReturnType<Screen["getByRole"]>) => sheet.getByLabelText("金額（税込）");
-const previewOf = () => document.querySelector("[data-preview]")?.textContent ?? "";
+const preview = () => page.getByRole("status", { name: "ポイントの目安" });
 
 async function fillOrder(
   sheet: ReturnType<Screen["getByRole"]>,
@@ -184,7 +184,7 @@ test("tax-exempt item uses the same base amount", async () => {
   const sheet = await openAdd(screen);
   await fillOrder(sheet, { shop: "ショップ4", amount: "2980" });
   // 10% tax: ¥2,980 − floor(2,980 × 10 / 110) = ¥2,710 before tax.
-  await expect.poll(previewOf).toContain("税抜 ¥2,710");
+  await expect.element(preview()).toMatchTextContent("税抜 ¥2,710");
 
   const exempt = sheet.getByRole("button", { name: "非課税" });
   await exempt.click();
@@ -192,7 +192,7 @@ test("tax-exempt item uses the same base amount", async () => {
   await expect
     .element(sheet.getByRole("button", { name: "10%" }))
     .toHaveAttribute("aria-pressed", "false");
-  await expect.poll(previewOf).toContain("税抜 ¥2,980");
+  await expect.element(preview()).toMatchTextContent("税抜 ¥2,980");
 
   await sheet.getByRole("button", { name: "追加する" }).click();
   await expect.poll(async () => (await stored()).at(-1)?.lineItems[0]?.taxRate).toBe(0);
@@ -212,13 +212,13 @@ test("repeat chip sets the order tag", async () => {
   const screen = await renderWith(makePlan([baseBenefit, repeatBenefit], []));
   const sheet = await openAdd(screen);
   await fillOrder(sheet, { shop: "ショップ4", amount: "11000" });
-  await expect.poll(previewOf).toContain("× 1% → 100P");
+  await expect.element(preview()).toMatchTextContent("× 1% → 100P");
 
   const chip = sheet.getByRole("checkbox", { name: /^リピート購入/ });
   await expect.element(chip).toHaveAccessibleName("リピート購入 +1");
   await tapCard(chip);
   await expect.element(chip).toBeChecked();
-  await expect.poll(previewOf).toContain("× 2% → 200P");
+  await expect.element(preview()).toMatchTextContent("× 2% → 200P");
 
   await sheet.getByRole("button", { name: "追加する" }).click();
   await expect.poll(async () => (await stored()).at(-1)?.tags).toEqual(["repeat"]);
@@ -244,16 +244,16 @@ test("preview shows the next shop count and points", async () => {
   await fillOrder(sheet, { shop: "ショップ4", amount: "11,000" });
 
   // ¥10,000 before tax at 通常 1 + SPU 2 + marathon 4 (5 shops) = 7%.
-  await expect.poll(previewOf).toContain("この注文で（5店舗目としてカウント）");
-  expect(previewOf()).toContain("税抜 ¥10,000 × 7% → 700P");
+  await expect.element(preview()).toMatchTextContent("この注文で（5店舗目としてカウント）");
+  await expect.element(preview()).toMatchTextContent("税抜 ¥10,000 × 7% → 700P");
   // The four other orders of ¥10,000 each go from +3倍 to +4倍.
-  expect(previewOf()).toContain("買い回りが +1倍 になり、ほかの注文も +400P");
+  await expect.element(preview()).toMatchTextContent("買い回りが +1倍 になり、ほかの注文も +400P");
 
   // A shop that already counts adds no shop.
   await sheet.getByLabelText("ショップ", { exact: true }).selectOptions("ショップ0");
-  await expect.poll(previewOf).toContain("税抜 ¥10,000 × 6% → 600P");
-  expect(previewOf()).not.toContain("店舗目");
-  expect(previewOf()).not.toContain("買い回り");
+  await expect.element(preview()).toMatchTextContent("税抜 ¥10,000 × 6% → 600P");
+  await expect.element(preview()).not.toMatchTextContent("店舗目");
+  await expect.element(preview()).not.toMatchTextContent("買い回り");
 });
 
 test("pasting an Ichiba URL selects the matching shop", async () => {
@@ -448,7 +448,7 @@ test("editing an order from its card saves the changes", async () => {
   await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue(shopId(1));
   await expect.element(sheet.getByRole("button", { name: "続けて追加" })).not.toBeInTheDocument();
   // Editing the order does not add a shop: the order's own figures only.
-  await expect.poll(previewOf).toContain("税抜 ¥10,000 × 6% → 600P");
+  await expect.element(preview()).toMatchTextContent("税抜 ¥10,000 × 6% → 600P");
 
   await amountOf(sheet).fill("5,500");
   await sheet.getByRole("button", { name: "保存する" }).click();

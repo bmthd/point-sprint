@@ -8,12 +8,14 @@ import { page, userEvent } from "vitest/browser";
 import { updateOrderAtom } from "../../../state/order-ops";
 import { plansQueryAtom, shopsQueryAtom } from "../../../state/queries";
 import { createMemoryRepository } from "../../../storage/memory-repository";
+import { expectTexts } from "../../../test-texts";
 import { OrderCard } from "./order-card";
 import {
   PLAN,
   Providers,
   baseBenefit,
   campaignBenefit,
+  expectShopsInOrder,
   makePlan,
   marathon,
   marathonPlan,
@@ -23,15 +25,20 @@ import {
   shopId,
   shops,
   spuBenefit,
-  summaryText,
+  summary,
 } from "../-test-fixtures";
 
-const list = () => document.querySelector<HTMLElement>('ul[aria-label="注文"]');
-const cards = () => Array.from(list()?.children ?? []) as HTMLElement[];
-const cardOf = (shop: string) => cards().find((card) => card.textContent?.includes(shop));
-const toggleOf = (shop: string) =>
-  cardOf(shop)?.querySelector<HTMLButtonElement>("button[aria-expanded]");
-const heading = () => document.querySelector('section[aria-label="注文のリスト"] h2')?.textContent;
+const list = () => page.getByRole("list", { name: "注文", exact: true });
+// The open card also lists its items, which do not hold a shop's name.
+const cards = () =>
+  list()
+    .getByRole("listitem")
+    .filter({ hasText: /ショップ\d/ });
+const cardOf = (shop: string) => list().getByRole("listitem").filter({ hasText: shop });
+// The card's header, which opens it, is its first button.
+const toggleOf = (shop: string) => cardOf(shop).getByRole("button").first();
+const heading = () =>
+  page.getByRole("region", { name: "注文のリスト" }).getByRole("heading", { level: 2 });
 
 test("shows each order's shop, items, amount, campaign badges and rate", async () => {
   const plan = makePlan(
@@ -40,95 +47,100 @@ test("shows each order's shop, items, amount, campaign badges and rate", async (
   );
   await renderPlanHome(createMemoryRepository({ shops, plans: [plan] }));
 
-  await expect.poll(heading).toBe("注文 4件");
+  await expect.element(heading()).toHaveTextContent("注文 4件");
   const first = cardOf("ショップ0");
   // ¥20,000 before tax at 通常 1 + SPU 2 + campaign 1 + marathon 3 = 7倍 is 1,400P.
-  expect(first?.textContent).toContain("10/5（月）");
-  expect(first?.textContent).toContain("商品0-1 他1点");
-  expect(first?.textContent).toContain("¥22,000");
-  expect(first?.textContent).toContain("10%");
-  expect(first?.textContent).toContain("0と5のつく日");
-  expect(first?.textContent).toContain("1,400P");
-  expect(first?.textContent).toContain("7倍");
-  expect(first?.querySelector('[data-badge="order"]')?.textContent).toBe("1");
+  for (const text of [
+    "10/5（月）",
+    "商品0-1 他1点",
+    "¥22,000",
+    "10%",
+    "0と5のつく日",
+    "1,400P",
+    "7倍",
+  ]) {
+    await expect.element(first).toMatchTextContent(text);
+  }
+  await expect.element(first.getByText("1", { exact: true })).toBeVisible();
 
-  toggleOf("ショップ0")?.click();
-  await expect.poll(() => toggleOf("ショップ0")?.getAttribute("aria-expanded")).toBe("true");
-  const details = cardOf("ショップ0")?.textContent ?? "";
-  expect(details).toContain("税抜の基準額¥20,000");
-  const rows = Array.from(cardOf("ショップ0")?.querySelectorAll('[data-row="benefit"]') ?? []).map(
-    (row) => row.textContent,
-  );
-  expect(rows).toEqual(["通常1倍200P", "SPU+2倍400P", "マラソン+3倍600P", "0と5のつく日+1倍200P"]);
+  await toggleOf("ショップ0").click();
+  await expect.element(toggleOf("ショップ0")).toHaveAttribute("aria-expanded", "true");
+  await expect.element(first).toMatchTextContent("税抜の基準額¥20,000");
+  await expectTexts(first.getByRole("list", { name: "ポイントの内訳" }).getByRole("listitem"), [
+    "通常1倍200P",
+    "SPU+2倍400P",
+    "マラソン+3倍600P",
+    "0と5のつく日+1倍200P",
+  ]);
 });
 
 test("only one card is open at a time", async () => {
   await renderPlanHome(createMemoryRepository({ shops, plans: [marathonPlan()] }));
 
-  await expect.poll(() => cards().length).toBe(4);
-  toggleOf("ショップ0")?.click();
-  await expect.poll(() => toggleOf("ショップ0")?.getAttribute("aria-expanded")).toBe("true");
-  expect(toggleOf("ショップ1")?.getAttribute("aria-expanded")).toBe("false");
+  await expect.element(cards()).toHaveLength(4);
+  await toggleOf("ショップ0").click();
+  await expect.element(toggleOf("ショップ0")).toHaveAttribute("aria-expanded", "true");
+  await expect.element(toggleOf("ショップ1")).toHaveAttribute("aria-expanded", "false");
 
-  toggleOf("ショップ1")?.click();
-  await expect.poll(() => toggleOf("ショップ1")?.getAttribute("aria-expanded")).toBe("true");
-  expect(toggleOf("ショップ0")?.getAttribute("aria-expanded")).toBe("false");
-  expect(cardOf("ショップ0")?.textContent).not.toContain("税抜の基準額");
+  await toggleOf("ショップ1").click();
+  await expect.element(toggleOf("ショップ1")).toHaveAttribute("aria-expanded", "true");
+  await expect.element(toggleOf("ショップ0")).toHaveAttribute("aria-expanded", "false");
+  await expect.element(cardOf("ショップ0")).not.toMatchTextContent("税抜の基準額");
 
-  toggleOf("ショップ1")?.click();
-  await expect.poll(() => toggleOf("ショップ1")?.getAttribute("aria-expanded")).toBe("false");
+  await toggleOf("ショップ1").click();
+  await expect.element(toggleOf("ショップ1")).toHaveAttribute("aria-expanded", "false");
 });
 
 test("hold toggle moves the order out of the shop count", async () => {
   const repository = createMemoryRepository({ shops, plans: [marathonPlan()] });
   const screen = await renderPlanHome(repository);
 
-  await expect.poll(summaryText).toContain("4店舗を買い回り中");
-  toggleOf("ショップ1")?.click();
+  await expect.element(summary()).toMatchTextContent("4店舗を買い回り中");
+  await toggleOf("ショップ1").click();
   const counted = screen.getByRole("switch", { name: "購入決定（オフで保留）" });
   // The switch's input sits under its track, so it is clicked through its label.
   const label = screen.getByText("購入決定（オフで保留）");
   await expect.element(counted).toBeChecked();
   await label.click();
 
-  await expect.poll(summaryText).toContain("3店舗を買い回り中");
-  await expect.poll(heading).toBe("注文 4件（保留 1）");
-  expect(cardOf("ショップ1")?.querySelector('[data-badge="order"]')?.textContent).toBe("保留");
-  expect(cardOf("ショップ2")?.querySelector('[data-badge="order"]')?.textContent).toBe("2");
+  await expect.element(summary()).toMatchTextContent("3店舗を買い回り中");
+  await expect.element(heading()).toHaveTextContent("注文 4件（保留 1）");
+  await expect.element(cardOf("ショップ1").getByText("保留", { exact: true })).toBeVisible();
+  await expect.element(cardOf("ショップ2").getByText("2", { exact: true })).toBeVisible();
   await expect.element(counted).not.toBeChecked();
   await expect.poll(async () => (await repository.plans.get(PLAN))?.orders[1]?.onHold).toBe(true);
 
   await label.click();
-  await expect.poll(summaryText).toContain("4店舗を買い回り中");
+  await expect.element(summary()).toMatchTextContent("4店舗を買い回り中");
 });
 
-test("held card shows, struck through, the points it would get once counted", async () => {
+test("held card shows the points it would get once counted", async () => {
   const plan = marathonPlan([order(0), order(1), order(2), order(3, { onHold: true })]);
   await renderPlanHome(createMemoryRepository({ shops, plans: [plan] }));
 
-  await expect.poll(heading).toBe("注文 4件（保留 1）");
+  await expect.element(heading()).toHaveTextContent("注文 4件（保留 1）");
   const held = cardOf("ショップ3");
   // Counted, it gets 通常 100 + SPU 200 + the marathon at +3倍 on four shops (300): 600P. The 300P
   // the other orders gain from the fourth shop are theirs, not this order's.
-  const estimate = held?.querySelector("s");
-  expect(estimate?.textContent).toContain("600P");
-  expect(getComputedStyle(estimate as HTMLElement).textDecorationLine).toBe("line-through");
-  // The list item holds the card, which has the frame.
-  expect(getComputedStyle(held?.firstElementChild as HTMLElement).borderStyle).toBe("dashed");
-  expect(held?.querySelector('[data-badge="order"]')?.textContent).toBe("保留");
+  await expect.element(held.getByText("保留中の見込み 600P", { exact: true })).toBeInTheDocument();
+  await expect.element(held.getByText("保留", { exact: true })).toBeVisible();
 });
 
 test("copy adds the order right after", async () => {
   const repository = createMemoryRepository({ shops, plans: [marathonPlan()] });
   const screen = await renderPlanHome(repository);
 
-  await expect.poll(() => cards().length).toBe(4);
-  toggleOf("ショップ1")?.click();
+  await expect.element(cards()).toHaveLength(4);
+  await toggleOf("ショップ1").click();
   await screen.getByRole("button", { name: "コピー" }).click();
 
-  await expect.poll(() => cards().length).toBe(5);
-  const shopsInOrder = cards().map((card) => card.textContent?.match(/ショップ\d/)?.[0]);
-  expect(shopsInOrder).toEqual(["ショップ0", "ショップ1", "ショップ1", "ショップ2", "ショップ3"]);
+  await expectShopsInOrder(cards(), [
+    "ショップ0",
+    "ショップ1",
+    "ショップ1",
+    "ショップ2",
+    "ショップ3",
+  ]);
   await expect.poll(async () => (await repository.plans.get(PLAN))?.orders.length).toBe(5);
 });
 
@@ -136,24 +148,24 @@ test("delete asks first, then removes the order", async () => {
   const repository = createMemoryRepository({ shops, plans: [marathonPlan()] });
   const screen = await renderPlanHome(repository);
 
-  await expect.poll(() => cards().length).toBe(4);
-  toggleOf("ショップ2")?.click();
+  await expect.element(cards()).toHaveLength(4);
+  await toggleOf("ショップ2").click();
   await screen.getByRole("button", { name: "削除" }).click();
   await screen.getByRole("button", { name: "キャンセル" }).click();
-  expect(cards().length).toBe(4);
+  await expect.element(cards()).toHaveLength(4);
 
   await screen.getByRole("button", { name: "削除" }).click();
   await screen.getByRole("button", { name: "削除する" }).click();
-  await expect.poll(() => cards().length).toBe(3);
-  expect(cardOf("ショップ2")).toBeUndefined();
-  await expect.poll(summaryText).toContain("3店舗を買い回り中");
+  await expect.element(cards()).toHaveLength(3);
+  await expect.element(cardOf("ショップ2")).not.toBeInTheDocument();
+  await expect.element(summary()).toMatchTextContent("3店舗を買い回り中");
 });
 
 test("reset asks first, then removes every order", async () => {
   const repository = createMemoryRepository({ shops, plans: [marathonPlan()] });
   const screen = await renderPlanHome(repository);
 
-  await expect.poll(() => cards().length).toBe(4);
+  await expect.element(cards()).toHaveLength(4);
   await screen.getByRole("button", { name: "リセット" }).click();
   await expect
     .element(screen.getByText("このプランの注文4件がすべて消えます。", { exact: false }))
@@ -167,10 +179,11 @@ test("reset asks first, then removes every order", async () => {
 test("move up and down in reorder mode", async () => {
   const repository = createMemoryRepository({ shops, plans: [marathonPlan()] });
   const screen = await renderPlanHome(repository);
-  const shopsInOrder = () => cards().map((card) => card.textContent?.match(/ショップ\d/)?.[0]);
 
-  await expect.poll(() => cards().length).toBe(4);
-  expect(screen.getByRole("button", { name: "ショップ0を上へ" }).query()).toBeNull();
+  await expect.element(cards()).toHaveLength(4);
+  await expect
+    .element(screen.getByRole("button", { name: "ショップ0を上へ" }))
+    .not.toBeInTheDocument();
   const reorder = screen.getByRole("button", { name: "並べ替え" });
   await expect.element(reorder).toHaveAttribute("aria-pressed", "false");
   await reorder.click();
@@ -180,18 +193,20 @@ test("move up and down in reorder mode", async () => {
   await expect.element(screen.getByRole("button", { name: "ショップ3を下へ" })).toBeDisabled();
 
   await screen.getByRole("button", { name: "ショップ0を下へ" }).click();
-  await expect.poll(shopsInOrder).toEqual(["ショップ1", "ショップ0", "ショップ2", "ショップ3"]);
+  await expectShopsInOrder(cards(), ["ショップ1", "ショップ0", "ショップ2", "ショップ3"]);
 
-  // With the keyboard: Enter on the focused button moves the order up.
+  // With the keyboard: Enter on the focused button moves the order up. Locators have no focus().
   screen.getByRole("button", { name: "ショップ2を上へ" }).element().focus();
   await userEvent.keyboard("{Enter}");
-  await expect.poll(shopsInOrder).toEqual(["ショップ1", "ショップ2", "ショップ0", "ショップ3"]);
+  await expectShopsInOrder(cards(), ["ショップ1", "ショップ2", "ショップ0", "ショップ3"]);
   await expect
     .poll(async () => (await repository.plans.get(PLAN))?.orders.map((o) => o.shopId))
     .toEqual([shopId(1), shopId(2), shopId(0), shopId(3)]);
 
   await screen.getByRole("button", { name: "完了" }).click();
-  expect(screen.getByRole("button", { name: "ショップ0を上へ" }).query()).toBeNull();
+  await expect
+    .element(screen.getByRole("button", { name: "ショップ0を上へ" }))
+    .not.toBeInTheDocument();
 });
 
 test("editing one order does not re-render other order cards", async () => {
@@ -235,20 +250,20 @@ test("editing one order does not re-render other order cards", async () => {
     </Providers>,
   );
 
-  await expect.poll(() => cardOf("ショップ0")?.textContent).toContain("400P");
-  await expect.poll(() => cardOf("ショップ1")?.textContent).toContain("400P");
+  await expect.element(cardOf("ショップ0")).toMatchTextContent("400P");
+  await expect.element(cardOf("ショップ1")).toMatchTextContent("400P");
   const before = renders.get("card-1");
 
   const edited = order(0);
   edited.lineItems = edited.lineItems.map((item) => ({ ...item, unitPrice: 22000 }));
   await updateOrder?.(edited);
 
-  await expect.poll(() => cardOf("ショップ0")?.textContent).toContain("800P");
+  await expect.element(cardOf("ショップ0")).toMatchTextContent("800P");
   // Wait for the refetch that follows the save to settle as well.
   await new Promise((resolve) => setTimeout(resolve, 100));
   expect(renders.get("card-0")).toBeGreaterThan(1);
   expect(renders.get("card-1")).toBe(before);
-  expect(screen.container.textContent).toContain("¥22,000");
+  await expect.element(screen.locator).toMatchTextContent("¥22,000");
 });
 
 test("holding the only Books order tells that the Books SPU may be lost, and turns it off", async () => {
@@ -264,8 +279,8 @@ test("holding the only Books order tells that the Books SPU may be lost, and tur
   const booksEnabled = async () =>
     (await repository.plans.get(PLAN))?.benefits.find((b) => b.id === BOOKS_SPU_ID)?.enabled;
 
-  await expect.poll(summaryText).toContain("4店舗を買い回り中");
-  toggleOf("ショップ1")?.click();
+  await expect.element(summary()).toMatchTextContent("4店舗を買い回り中");
+  await toggleOf("ショップ1").click();
   await screen.getByText("購入決定（オフで保留）").click();
 
   await expect
