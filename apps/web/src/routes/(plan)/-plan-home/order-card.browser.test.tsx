@@ -132,7 +132,7 @@ test("copy adds the order right after", async () => {
 
   await expect.element(cards()).toHaveLength(4);
   await toggleOf("ショップ1").click();
-  await screen.getByRole("button", { name: "コピー" }).click();
+  await screen.getByRole("button", { name: "複製" }).click();
 
   await expectShopsInOrder(cards(), [
     "ショップ0",

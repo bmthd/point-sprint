@@ -1,21 +1,22 @@
+// Formisch fields read their signals through getters on objects that keep their identity, so
+// React Compiler would memoize what they return and miss every change.
+"use no memo";
+
+import { getInput, reset, useField, useForm, validate } from "@formisch/react";
 import {
   type LineItem,
   type Order,
-  type OrderTag,
   type Shop,
-  hasShop,
-  orderShopContext,
-  withShop,
   taxExcludedTarget,
   taxIncludedTarget,
 } from "@workspaces/domain";
 import {
   Box,
+  Collapse,
   Flex,
   Button,
   IconButton,
   List,
-  NativeSelect,
   Switch,
   Text,
   VisuallyHidden,
@@ -35,7 +36,7 @@ import {
   useState,
 } from "react";
 import { orderAtom, planAtom } from "../../../state/derived";
-import { changeShop, saveShopAtom } from "../../../state/mutations";
+import { saveShopAtom } from "../../../state/mutations";
 import {
   copyOrderAtom,
   moveOrderAtom,
@@ -44,27 +45,17 @@ import {
 } from "../../../state/order-ops";
 import { shopsAtom } from "../../../state/queries";
 import { openOrderIdAtom } from "../../../state/ui";
+import { useLatestRef } from "../../../use-latest-ref";
 import { monthDayWithWeekday } from "../../../ui/dates";
 import { ChevronIcon, GripIcon } from "../../../ui/icons";
-import { CommitField } from "../../../form/commit-field";
 import {
-  AmountSchema,
-  ItemNameSchema,
-  OrderDateSchema,
-  ShopRateSchema,
-} from "../../../form/field-schemas";
-import {
-  Field,
-  ReadOnlyField,
-  TaxRateOptions,
-  type TaxRateValue,
-  CampaignCheck,
-  fieldGrid,
-  withTag,
-  taxRateValue,
-  useSortedShops,
-} from "../-order-fields";
-import { CommitDatePicker } from "../-date-picker-field";
+  OrderFormSchema,
+  type OrderFormInput,
+  draftOf,
+  inputOf,
+} from "../-order-editor/order-form";
+import { useOrderAutofill } from "../-order-editor/order-form-store";
+import { NEW_SHOP } from "../-order-fields";
 import {
   CampaignChip,
   OrderBadge,
@@ -80,6 +71,7 @@ import {
   useShopName,
   yen,
 } from "../-order-shared";
+import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
 import { PointBreakdown } from "./point-breakdown";
 
 /** What the list shares with its rows without re-rendering them: refs and stable callbacks. */
@@ -107,18 +99,6 @@ const useListContext = () => {
 /** The columns of a closed row. Only the middle one (shop, item, campaigns) grows and shrinks. */
 export const rowColumns = "44px 56px 36px minmax(0, 1fr) auto auto 44px";
 
-const withItems = (order: Order, change: (item: LineItem) => LineItem): Order => ({
-  ...order,
-  lineItems: order.lineItems.map(change),
-});
-
-const withShopRate = (order: Order, rate: number | undefined) =>
-  withItems(order, (item) => {
-    const next = { ...item, shopPointRate: rate };
-    if (rate === undefined) delete next.shopPointRate;
-    return next;
-  });
-
 const VARIES = "商品ごとに異なります";
 
 /** The one value all items share, or 「商品ごとに異なります」. */
@@ -131,12 +111,38 @@ const sharedValue = <T,>(
   return values.size === 1 ? label([...values][0] as T) : VARIES;
 };
 
-const toggleTag = <T extends string>(tags: T[], tag: T): T[] =>
-  tags.includes(tag) ? tags.filter((other) => other !== tag) : [...tags, tag];
+/**
+ * Whether the item fields edit the order in place: one item, bought once with no coupon, so its
+ * amount is its price. Any other order edits its items in 「商品を編集」.
+ */
+const editsItemInPlace = (order: Order) => {
+  const [item, ...rest] = order.lineItems;
+  return item !== undefined && rest.length === 0 && item.quantity === 1 && !item.discount;
+};
+
+/** The form's input as text, its keys sorted: the form and `inputOf` list them in different orders. */
+const inputKey = (input: unknown): string =>
+  JSON.stringify(input, (_key, value: unknown) =>
+    value && typeof value === "object" && !Array.isArray(value)
+      ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => (a < b ? -1 : 1)))
+      : value,
+  );
+
+/** The fields of a saved order, the amount with its thousands separated as it is typed. */
+function editInputOf(order: Order, shops: Shop[]): OrderFormInput {
+  const input = inputOf(order, shops);
+  return {
+    ...input,
+    items: input.items.map((item) => ({
+      ...item,
+      unitPrice: Number(item.unitPrice).toLocaleString("ja-JP"),
+    })),
+  };
+}
 
 /**
- * The order's fields, edited in place. Each change is saved on its own, and only when it is
- * valid. The item name and amount are edited here only for an order of one item.
+ * The order's fields, edited in place with the add form's fields. A change is saved once it is
+ * valid: a choice at once, typed text when its field is left or Enter is pressed.
  */
 function OrderEditor({
   planId,
@@ -147,184 +153,103 @@ function OrderEditor({
   order: Order;
   onEdit: (orderId: string) => void;
 }) {
-  const period = useAtomValue(planAtom(planId))?.period;
+  const plan = useAtomValue(planAtom(planId));
   const shops = useAtomValue(shopsAtom);
-  const sortedShops = useSortedShops(shops);
   const saveShop = useAtomValue(saveShopAtom);
   const updateOrder = useSetAtom(updateOrderAtom);
   const save = useSaveOrderChange();
-  const shop: Shop | undefined = shops.find((other) => other.id === order.shopId);
-  const [item] = order.lineItems;
-  const single = order.lineItems.length === 1 && item ? item : undefined;
-  const shopTagHintId = useId();
+  const form = useForm({ schema: OrderFormSchema, initialInput: editInputOf(order, shops) });
+  /** The input last saved, or being saved: the same input is not saved twice. */
+  const saved = useRef(inputKey(getInput(form)));
 
-  const saveOrder = (next: Order) => {
-    const saving = updateOrder({ planId, order: next });
-    save(saving);
-    return saving;
+  const commit = async () => {
+    const input = getInput(form);
+    const json = inputKey(input);
+    if (json === saved.current) return;
+    // A new shop is saved once it has a name.
+    if (input.shop === NEW_SHOP && !input.newShopName?.trim() && !input.shopCode) return;
+    const previous = saved.current;
+    saved.current = json;
+    const result = await validate(form);
+    const draft = result.success ? draftOf(result.output, shops, order) : undefined;
+    if (!draft) {
+      saved.current = previous;
+      return;
+    }
+    save(
+      (async () => {
+        if (draft.shopChange) await saveShop.mutateAsync(draft.shopChange);
+        await updateOrder({ planId, order: draft.order });
+      })().catch((error: unknown) => {
+        // Not saved: the same input can be saved again.
+        saved.current = previous;
+        throw error;
+      }),
+    );
   };
+  const commitRef = useLatestRef(commit);
+  const autofill = useOrderAutofill(form, () => void commitRef.current());
+
+  // A choice is saved as soon as it is made; typed text when its field is left or Enter is pressed.
+  const instantKey = JSON.stringify([
+    useField(form, { path: ["shop"] }).input,
+    useField(form, { path: ["channel"] }).input,
+    useField(form, { path: ["date"] }).input,
+    useField(form, { path: ["items", 0, "taxRate"] }).input,
+    useField(form, { path: ["is39"] }).input,
+    useField(form, { path: ["repeat"] }).input,
+  ]);
+  useEffect(() => {
+    void commitRef.current();
+  }, [instantKey, commitRef]);
+
+  // A change saved elsewhere (in 「商品を編集」, or to the shop) comes into the fields.
+  useEffect(() => {
+    const next = editInputOf(order, shops);
+    const json = inputKey(next);
+    if (json === saved.current) return;
+    saved.current = json;
+    reset(form, { initialInput: next });
+  }, [order, shops, form]);
+
+  if (!plan) return null;
+  const sharedRates = editsItemInPlace(order)
+    ? undefined
+    : {
+        taxRate: sharedValue(order.lineItems, (item) => item.taxRate, taxRateLabel),
+        shopPointRate: sharedValue(
+          order.lineItems,
+          (item) => item.shopPointRate,
+          (rate) => (rate === undefined ? "なし" : `${rate}倍`),
+        ),
+      };
 
   return (
-    <>
-      <Box {...fieldGrid}>
-        <Field label="ショップ">
-          <NativeSelect.Root
-            size="lg"
-            value={order.shopId ?? ""}
-            onChange={(event) => {
-              const shopId = event.currentTarget.value;
-              const context = orderShopContext(order, shop);
-              saveOrder(withShop(order, shopId || undefined, { ...context, shopTags: [] }));
-            }}
-          >
-            <option value="">未入力</option>
-            {shop || order.shopId === undefined ? null : (
-              <option value={order.shopId}>不明なショップ</option>
-            )}
-            {sortedShops.map((other) => (
-              <option key={other.id} value={other.id}>
-                {other.name}
-              </option>
-            ))}
-          </NativeSelect.Root>
-        </Field>
-        <CommitDatePicker
-          key={order.date}
-          label="注文日"
-          initial={order.date}
-          schema={OrderDateSchema}
-          period={period}
-          onCommit={(date) => saveOrder({ ...order, date })}
-        />
-        {single ? (
-          <>
-            <CommitField
-              key={`name:${single.name}`}
-              label="商品名メモ"
-              initial={single.name}
-              schema={ItemNameSchema}
-              onCommit={(name) =>
-                saveOrder(withItems(order, (lineItem) => ({ ...lineItem, name })))
-              }
-            />
-            <CommitField
-              key={`amount:${taxIncludedTarget(single)}`}
-              label="金額（税込）"
-              initial={taxIncludedTarget(single).toLocaleString("ja-JP")}
-              schema={AmountSchema}
-              inputMode="numeric"
-              align="end"
-              onCommit={(amount) =>
-                saveOrder(
-                  withItems(order, (lineItem) => ({
-                    ...lineItem,
-                    unitPrice: amount,
-                    quantity: 1,
-                    discount: 0,
-                  })),
-                )
-              }
-            />
-          </>
-        ) : null}
-        {single ? (
-          <>
-            <Field label="税率">
-              <NativeSelect.Root
-                size="lg"
-                value={taxRateValue(single.taxRate)}
-                onChange={(event) => {
-                  const taxRate = Number(
-                    event.currentTarget.value as TaxRateValue,
-                  ) as LineItem["taxRate"];
-                  saveOrder(withItems(order, (lineItem) => ({ ...lineItem, taxRate })));
-                }}
-              >
-                <TaxRateOptions />
-              </NativeSelect.Root>
-            </Field>
-            <CommitField
-              key={`rate:${single.shopPointRate ?? ""}`}
-              label="ショップ独自倍率"
-              initial={single.shopPointRate === undefined ? "" : String(single.shopPointRate)}
-              schema={ShopRateSchema}
-              inputMode="decimal"
-              align="end"
-              placeholder="1"
-              onCommit={(rate) => saveOrder(withShopRate(order, rate))}
-            />
-          </>
-        ) : (
-          // Each item keeps its own rates; they are changed one item at a time in 「商品を編集」.
-          <>
-            <ReadOnlyField
-              label="税率"
-              value={sharedValue(order.lineItems, (lineItem) => lineItem.taxRate, taxRateLabel)}
-            />
-            <ReadOnlyField
-              label="ショップ独自倍率"
-              value={sharedValue(
-                order.lineItems,
-                (lineItem) => lineItem.shopPointRate,
-                (rate) => (rate === undefined ? "なし" : `${rate}倍`),
-              )}
-            />
-          </>
-        )}
-      </Box>
-      {single ? null : (
+    <Flex
+      direction="column"
+      gap="3"
+      onBlur={(event) => {
+        // Text is saved when its field is left, not when the focus moves within it.
+        if (event.target instanceof HTMLInputElement) void commit();
+      }}
+      onKeyDown={(event: KeyboardEvent) => {
+        if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+        if (!(event.target instanceof HTMLInputElement)) return;
+        void commit();
+      }}
+    >
+      <OrderFormFields form={form} plan={plan} autofill={autofill} sharedRates={sharedRates} />
+      {sharedRates ? (
         <Text fontSize="xs" color="fg.muted">
-          商品が{order.lineItems.length}
-          点あるので、商品名・金額・税率・ショップ独自倍率は「商品を編集」から変えられます。
+          商品名・金額・税率・ショップ独自倍率は「商品を編集」から変えられます。
         </Text>
-      )}
-      <Flex wrap="wrap" gap="2">
-        <CampaignCheck
-          campaign="39shop"
-          checked={shop?.tags.includes("39shop") ?? order.shopTags?.includes("39shop") ?? false}
-          describedBy={shop ? shopTagHintId : undefined}
-          onChange={() => {
-            if (!hasShop(order)) {
-              saveOrder({
-                ...order,
-                shopTags: withTag(order.shopTags, "39shop", !order.shopTags.includes("39shop")),
-              });
-              return;
-            }
-            if (!shop) return;
-            const on = !shop.tags.includes("39shop");
-            save(
-              saveShop.mutateAsync(
-                changeShop(shop.id, (current) => ({
-                  ...current,
-                  tags: withTag(current.tags, "39shop", on),
-                })),
-              ),
-            );
-          }}
-        >
-          39ショップ
-        </CampaignCheck>
-        {shop ? (
-          <Text id={shopTagHintId} alignSelf="center" fontSize="xs" color="fg.muted">
-            このショップの注文すべてに反映されます
-          </Text>
-        ) : null}
-        <CampaignCheck
-          campaign="repeat"
-          checked={order.tags.includes("repeat")}
-          onChange={() => saveOrder({ ...order, tags: toggleTag<OrderTag>(order.tags, "repeat") })}
-        >
-          リピート購入
-        </CampaignCheck>
-        <Box flex="1" />
-        {single ? null : (
-          <Button variant="outline" size="lg" onClick={() => onEdit(order.id)}>
-            商品を編集
-          </Button>
-        )}
-      </Flex>
-    </>
+      ) : null}
+      {sharedRates ? (
+        <Button variant="outline" size="lg" alignSelf="flex-start" onClick={() => onEdit(order.id)}>
+          商品を編集
+        </Button>
+      ) : null}
+    </Flex>
   );
 }
 
@@ -541,47 +466,37 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
           <ChevronIcon open={open} />
         </IconButton>
       </Box>
-      <Box
-        id={detailId}
-        hidden={!open}
-        display={open ? "flex" : "none"}
-        flexDirection="column"
-        gap="3.5"
-        borderTopWidth="1px"
-        pt="3.5"
-        pb="4"
-        pr="4"
-        pl="132px"
-      >
-        {open ? (
-          <>
-            <Flex direction="column" gap="2">
-              <PointBreakdown totals={groupTotalsOf(points.rows)} legend="line" held={held} />
-              <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
-                {`税抜の基準額 ${yen(base)}`}
-              </Text>
-            </Flex>
-            <OrderEditor planId={planId} order={order} onEdit={props.onEdit} />
-            <Flex wrap="wrap" gap="2" justify="flex-end">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => save(copyOrder({ planId, orderId }))}
-              >
-                コピー
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                colorScheme="danger"
-                onClick={() => props.onDelete(orderId)}
-              >
-                削除
-              </Button>
-            </Flex>
-          </>
-        ) : null}
-      </Box>
+      {/* It slides open and shut, so a press shows which order the fields below belong to. */}
+      <Collapse open={open} unmountOnExit id={detailId}>
+        <Flex direction="column" gap="3.5" borderTopWidth="1px" pt="3.5" pb="4" px="4">
+          <Flex direction="column" gap="2">
+            <PointBreakdown totals={groupTotalsOf(points.rows)} legend="line" held={held} />
+            <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
+              {`税抜の基準額 ${yen(base)}`}
+            </Text>
+          </Flex>
+          <OrderEditor planId={planId} order={order} onEdit={props.onEdit} />
+          <Flex wrap="wrap" gap="2" justify="flex-end">
+            <Button
+              variant="outline"
+              size="lg"
+              minW={ACTION_BUTTON_WIDTH}
+              onClick={() => save(copyOrder({ planId, orderId }))}
+            >
+              複製
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              colorScheme="danger"
+              minW={ACTION_BUTTON_WIDTH}
+              onClick={() => props.onDelete(orderId)}
+            >
+              削除
+            </Button>
+          </Flex>
+        </Flex>
+      </Collapse>
     </List.Item>
   );
 });

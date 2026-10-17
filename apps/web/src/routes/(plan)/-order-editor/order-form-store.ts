@@ -38,8 +38,11 @@ export function applyShop(form: OrderForm, found: ShopFromUrl) {
   setInput(form, { path: ["is39"], input: false });
 }
 
-/** Puts a found item's name, price, shop and shop rate in the fields, where they can be edited. */
-export function useOrderAutofill(form: OrderForm) {
+/**
+ * Puts a found item's name, price, shop and shop rate in the fields, where they can be edited.
+ * `onFilled` runs once they are in.
+ */
+export function useOrderAutofill(form: OrderForm, onFilled?: () => void) {
   const shops = useAtomValue(shopsAtom);
   return useItemAutofill((item) => {
     applyShop(form, shopFromItem(item, shops));
@@ -48,6 +51,7 @@ export function useOrderAutofill(form: OrderForm) {
     if (fields.unitPrice !== undefined)
       setInput(form, { path: AMOUNT_PATH, input: fields.unitPrice });
     setInput(form, { path: ["items", 0, "shopPointRate"], input: fields.shopPointRate });
+    onFilled?.();
   });
 }
 
