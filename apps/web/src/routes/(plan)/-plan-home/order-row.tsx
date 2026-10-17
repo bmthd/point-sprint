@@ -371,8 +371,8 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
         alignItems="center"
         gap="2.5"
         px="3"
-        py="2"
         minH="16"
+        css={{ "&:has(> button[aria-expanded]:hover)": { bg: "bg.subtle" } }}
       >
         <IconButton
           ref={handleRef}
@@ -405,66 +405,75 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
           }}
           onChange={() => save(toggleHold({ planId, orderId }))}
         />
-        <OrderBadge badge={props.badge} />
-        <Flex minW="0" direction="column" gap="0.5">
-          <Flex as="span" gap="2" fontSize="xs" color="fg.muted">
-            <Text as="span" lineClamp={1} wordBreak="break-all">
-              {shopName}
-            </Text>
-            <Text as="span" flex="none" fontVariantNumeric="tabular-nums">
-              {monthDayWithWeekday(order.date)}
-            </Text>
-          </Flex>
-          <Text as="span" fontSize="sm" fontWeight="medium" lineClamp={1} wordBreak="break-all">
-            {orderTitle(order) ||
-              (shopName === "ショップ未入力" ? `${monthDayWithWeekday(order.date)}の注文` : "")}
-          </Text>
-          {/* Kept, one chip high, on rows without campaigns so every closed row is as tall. */}
-          <Flex as="span" wrap="wrap" gap="1" minH="5.5">
-            {points.campaigns.map((label) => (
-              <CampaignChip key={label}>{label}</CampaignChip>
-            ))}
-          </Flex>
-        </Flex>
-        <Flex direction="column" align="flex-end" fontSize="sm" fontVariantNumeric="tabular-nums">
-          <span>{yen(amount)}</span>
-          <Text as="span" fontSize="2xs" color="fg.muted">
-            {taxLabel(order.lineItems)}
-          </Text>
-        </Flex>
-        <Flex direction="column" align="flex-end" fontVariantNumeric="tabular-nums">
-          {/* Held or not, two lines, so turning 購入決定 off leaves the row where it is. */}
-          {held ? (
-            <Text as="s" fontWeight="bold" color="fg.muted">
-              <VisuallyHidden>保留中の見込み </VisuallyHidden>
-              {pointsText(points.total)}
-            </Text>
-          ) : (
-            <Text as="span" fontWeight="bold">
-              {pointsText(points.total)}
-            </Text>
-          )}
-          {/* Both labels share one cell, so the column is as wide whichever one shows. */}
-          <Box display="grid" justifyItems="end" fontSize="2xs" color="fg.muted">
-            <Text as="span" gridArea="1 / 1" visibility={held ? "hidden" : undefined}>
-              {rateText(points.rate, false)}
-            </Text>
-            <Text as="span" gridArea="1 / 1" visibility={held ? undefined : "hidden"} aria-hidden>
-              保留中
-            </Text>
-          </Box>
-        </Flex>
-        <IconButton
-          variant="ghost"
-          size="lg"
-          colorScheme="gray"
+        {/* Everything right of the switch opens the row; the row lights up as it is pointed at. */}
+        <Box
+          as="button"
+          type="button"
+          gridColumn="3 / -1"
+          alignSelf="stretch"
+          display="grid"
+          gridTemplateColumns="subgrid"
+          alignItems="center"
+          textAlign="start"
+          cursor="pointer"
           aria-label={`${shopName}の注文の詳細と編集`}
           aria-expanded={open}
           aria-controls={detailId}
           onClick={() => setOpenOrderId(open ? null : orderId)}
         >
-          <ChevronIcon open={open} />
-        </IconButton>
+          <OrderBadge badge={props.badge} />
+          <Flex minW="0" direction="column" gap="0.5">
+            <Flex as="span" gap="2" fontSize="xs" color="fg.muted">
+              <Text as="span" lineClamp={1} wordBreak="break-all">
+                {shopName}
+              </Text>
+              <Text as="span" flex="none" fontVariantNumeric="tabular-nums">
+                {monthDayWithWeekday(order.date)}
+              </Text>
+            </Flex>
+            <Text as="span" fontSize="sm" fontWeight="medium" lineClamp={1} wordBreak="break-all">
+              {orderTitle(order) ||
+                (shopName === "ショップ未入力" ? `${monthDayWithWeekday(order.date)}の注文` : "")}
+            </Text>
+            {/* Kept, one chip high, on rows without campaigns so every closed row is as tall. */}
+            <Flex as="span" wrap="wrap" gap="1" minH="5.5">
+              {points.campaigns.map((label) => (
+                <CampaignChip key={label}>{label}</CampaignChip>
+              ))}
+            </Flex>
+          </Flex>
+          <Flex direction="column" align="flex-end" fontSize="sm" fontVariantNumeric="tabular-nums">
+            <span>{yen(amount)}</span>
+            <Text as="span" fontSize="2xs" color="fg.muted">
+              {taxLabel(order.lineItems)}
+            </Text>
+          </Flex>
+          <Flex direction="column" align="flex-end" fontVariantNumeric="tabular-nums">
+            {/* Held or not, two lines, so turning 購入決定 off leaves the row where it is. */}
+            {held ? (
+              <Text as="s" fontWeight="bold" color="fg.muted">
+                <VisuallyHidden>保留中の見込み </VisuallyHidden>
+                {pointsText(points.total)}
+              </Text>
+            ) : (
+              <Text as="span" fontWeight="bold">
+                {pointsText(points.total)}
+              </Text>
+            )}
+            {/* Both labels share one cell, so the column is as wide whichever one shows. */}
+            <Box display="grid" justifyItems="end" fontSize="2xs" color="fg.muted">
+              <Text as="span" gridArea="1 / 1" visibility={held ? "hidden" : undefined}>
+                {rateText(points.rate, false)}
+              </Text>
+              <Text as="span" gridArea="1 / 1" visibility={held ? undefined : "hidden"} aria-hidden>
+                保留中
+              </Text>
+            </Box>
+          </Flex>
+          <Flex boxSize="11" align="center" justify="center" color="fg.muted">
+            <ChevronIcon open={open} />
+          </Flex>
+        </Box>
       </Box>
       {/* It slides open and shut, so a press shows which order the fields below belong to. */}
       <Collapse open={open} unmountOnExit id={detailId}>
