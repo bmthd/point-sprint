@@ -43,6 +43,9 @@ const CHEVRONS = `data:image/svg+xml,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 12" preserveAspectRatio="none"><polygon points="0,0 16,0 22,6 16,12 0,12 6,6"/></svg>',
 )}`;
 
+/** The bar's width to its height in the summary column on a wide screen, 328px by 16px. */
+const CHEVRONS_RATIO = "41 / 2";
+
 /** The shops bought from so far as a row of chevrons, with the next shop's chevron lit faintly. */
 function ShopChevrons({ count }: { count: number }) {
   const step = 100 / SHOP_STEPS;
@@ -55,6 +58,10 @@ function ShopChevrons({ count }: { count: number }) {
       max={SHOP_STEPS}
       value={count}
       size="lg"
+      // As wide as the summary column, the bar is 16px tall: kept at that shape on a wider screen, so
+      // the chevrons grow instead of stretching.
+      h="auto"
+      aspectRatio={CHEVRONS_RATIO}
       shape="square"
       rangeColor="primary.contrast"
       bg={`linear-gradient(to right, ${track} ${count * step}%, ${next} ${count * step}% ${(count + 1) * step}%, ${track} ${(count + 1) * step}%)`}
