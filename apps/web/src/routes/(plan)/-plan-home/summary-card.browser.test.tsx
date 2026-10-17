@@ -171,8 +171,10 @@ test("shows total and effective rate", async () => {
   expect(summaryText()).toContain(
     "次に上限に届くのはショップ買いまわり あと¥212,667（期間中の枠）",
   );
-  const dots = summary()?.querySelector('[aria-label="買い回り 10店舗中4店舗"]');
-  expect(dots?.children).toHaveLength(10);
+  const progress = summary()?.querySelector('[role="progressbar"][aria-label="買い回り"]');
+  expect(progress?.getAttribute("aria-valuenow")).toBe("4");
+  expect(progress?.getAttribute("aria-valuemax")).toBe("10");
+  expect(progress?.getAttribute("aria-valuetext")).toBe("10店舗中4店舗");
 
   const bar = document.querySelector<HTMLElement>('[aria-label="合計"]');
   expect(bar?.textContent).toContain("¥40,000・4店舗");
