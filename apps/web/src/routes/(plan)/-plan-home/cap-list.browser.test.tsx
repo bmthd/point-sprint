@@ -2,7 +2,15 @@ import type { Benefit, Order, Plan } from "@workspaces/domain";
 import { beforeEach, expect, test } from "vitest";
 import { page } from "vitest/browser";
 import { createMemoryRepository } from "../../../storage/memory-repository";
-import { PLAN, baseBenefit, marathon, renderPlanHome, shopId, shops } from "../-test-fixtures";
+import {
+  PLAN,
+  baseBenefit,
+  marathon,
+  renderPlanHome,
+  shopId,
+  shops,
+  summary,
+} from "../-test-fixtures";
 
 const FIRST = "f0000000-0000-4000-8000-0000000000f1";
 
@@ -54,11 +62,8 @@ const plans = (unitPrice: number, benefits?: Benefit[]) => [
   plan(PLAN, "2回目", "2026-10-20", "2026-10-25", benefits ? { benefits } : {}),
 ];
 
-const caps = () => document.querySelector<HTMLElement>('section[aria-label="上限までの残り"]');
-const cardRow = () =>
-  Array.from(caps()?.querySelectorAll("li") ?? []).find((row) =>
-    row.textContent?.includes("楽天カード特典分"),
-  )?.textContent ?? "";
+const caps = () => page.getByRole("region", { name: "上限までの残り" });
+const cardRow = () => caps().getByRole("listitem").filter({ hasText: "楽天カード特典分" });
 
 beforeEach(async () => {
   await page.viewport(1280, 900);
@@ -67,26 +72,26 @@ beforeEach(async () => {
 test("a cap shows what other plans used and the price that fills it", async () => {
   // 1回目: ¥3,300 → ¥3,000 before tax → 30P of October's 100P.
   const screen = await renderPlanHome(createMemoryRepository({ shops, plans: plans(3300) }));
-  await expect.poll(cardRow).toContain("10月");
-  expect(cardRow()).toContain("1回目と共有");
-  expect(cardRow()).toContain("30 / 100P");
+  await expect.element(cardRow()).toMatchTextContent("10月");
+  await expect.element(cardRow()).toMatchTextContent("1回目と共有");
+  await expect.element(cardRow()).toMatchTextContent("30 / 100P");
   // 70P at +1倍 is ¥7,000 before tax; at 10% the smallest price is ¥7,699.
-  expect(cardRow()).toContain("あと¥7,699");
+  await expect.element(cardRow()).toMatchTextContent("あと¥7,699");
   await screen.getByRole("button", { name: "非課税" }).click();
-  await expect.poll(cardRow).toContain("あと¥7,000");
+  await expect.element(cardRow()).toMatchTextContent("あと¥7,000");
 });
 
 test("a cap that is used up says so", async () => {
   // 1回目: ¥11,000 → 100P, the whole cap.
   await renderPlanHome(createMemoryRepository({ shops, plans: plans(11000) }));
-  await expect.poll(cardRow).toContain("上限");
-  expect(cardRow()).not.toContain("あと¥");
+  await expect.element(cardRow()).toMatchTextContent("上限");
+  await expect.element(cardRow()).not.toMatchTextContent("あと¥");
 });
 
 test("without a capped benefit there is no list", async () => {
   await renderPlanHome(createMemoryRepository({ shops, plans: plans(3300, [baseBenefit]) }));
-  await expect.poll(() => document.querySelector('section[aria-label="サマリー"]')).not.toBeNull();
-  expect(caps()).toBeNull();
+  await expect.element(summary()).toBeInTheDocument();
+  await expect.element(caps()).not.toBeInTheDocument();
 });
 
 test("the summary names the cap that the least money fills", async () => {
@@ -107,6 +112,6 @@ test("the summary names the cap that the least money fills", async () => {
     }),
   );
   await expect
-    .poll(() => document.querySelector('section[aria-label="サマリー"]')?.textContent)
-    .toContain("次に上限に届くのは楽天カード特典分 あと¥7,699（10月の枠・1回目と共有）");
+    .element(summary())
+    .toMatchTextContent("次に上限に届くのは楽天カード特典分 あと¥7,699（10月の枠・1回目と共有）");
 });

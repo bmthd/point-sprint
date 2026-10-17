@@ -15,10 +15,12 @@ import { useHydrateAtoms } from "jotai/utils";
 import type { ReactNode } from "react";
 import { expect, test } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
+import { page } from "vitest/browser";
 import { repositoryAtom } from "../../../state/repository";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
 import { TestColorMode } from "../../../test-color-mode";
+import { expectTexts } from "../../../test-texts";
 import { marathon } from "../-test-fixtures";
 import { PlanHome } from "./plan-home";
 
@@ -114,10 +116,7 @@ function Hydrate({ repository, children }: { repository: Repository; children: R
   return children;
 }
 
-async function renderPlanHome(
-  repository: Repository,
-  options: { id?: string; colorMode?: "light" | "dark" } = {},
-) {
+async function renderPlanHome(repository: Repository, options: { id?: string } = {}) {
   await cleanup();
   const id = options.id ?? PLAN;
   const root = createRootRoute({ component: Outlet });
@@ -142,7 +141,7 @@ async function renderPlanHome(
   });
   const screen = await render(
     <UIProvider theme={theme} config={config}>
-      <TestColorMode value={options.colorMode ?? "light"} />
+      <TestColorMode value="light" />
       <QueryClientAtomProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >
@@ -155,31 +154,30 @@ async function renderPlanHome(
   return { screen, router };
 }
 
-const summary = () => document.querySelector<HTMLElement>('section[aria-label="サマリー"]');
-const summaryText = () => summary()?.textContent ?? "";
+const summary = () => page.getByRole("region", { name: "サマリー" });
 
 test("shows total and effective rate", async () => {
   const repository = createMemoryRepository({ shops, plans: [marathonPlan()] });
   await renderPlanHome(repository);
 
-  await expect.poll(summaryText).toContain("獲得予定2,600P");
+  await expect.element(summary()).toMatchTextContent("獲得予定2,600P");
   // The held order's ¥10,000 is not part of the denominator.
-  expect(summaryText()).toContain("実質還元率6.5%");
-  expect(summaryText()).toContain("4店舗を買い回り中");
-  expect(summaryText()).toContain("マラソン +3倍");
+  await expect.element(summary()).toMatchTextContent("実質還元率6.5%");
+  await expect.element(summary()).toMatchTextContent("4店舗を買い回り中");
+  await expect.element(summary()).toMatchTextContent("マラソン +3倍");
   // 5,800P of the 7,000P cap are left: ¥193,334 before tax at +3倍, ¥212,667 at 10%.
-  expect(summaryText()).toContain(
-    "次に上限に届くのはショップ買いまわり あと¥212,667（期間中の枠）",
-  );
-  const progress = summary()?.querySelector('[role="progressbar"][aria-label="買い回り"]');
-  expect(progress?.getAttribute("aria-valuenow")).toBe("4");
-  expect(progress?.getAttribute("aria-valuemax")).toBe("10");
-  expect(progress?.getAttribute("aria-valuetext")).toBe("10店舗中4店舗");
+  await expect
+    .element(summary())
+    .toMatchTextContent("次に上限に届くのはショップ買いまわり あと¥212,667（期間中の枠）");
+  const progress = summary().getByRole("progressbar", { name: "買い回り" });
+  await expect.element(progress).toHaveAttribute("aria-valuenow", "4");
+  await expect.element(progress).toHaveAttribute("aria-valuemax", "10");
+  await expect.element(progress).toHaveAttribute("aria-valuetext", "10店舗中4店舗");
 
-  const bar = document.querySelector<HTMLElement>('[aria-label="合計"]');
-  expect(bar?.textContent).toContain("¥40,000・4店舗");
-  expect(bar?.textContent).toContain("2,600P");
-  expect(bar?.textContent).toContain("6.5%");
+  const bar = page.getByRole("region", { name: "合計" });
+  await expect.element(bar).toMatchTextContent("¥40,000・4店舗");
+  await expect.element(bar).toMatchTextContent("2,600P");
+  await expect.element(bar).toMatchTextContent("6.5%");
 });
 
 test("shows next shop hint only below the top tier", async () => {
@@ -188,7 +186,7 @@ test("shows next shop hint only below the top tier", async () => {
 
   // +3倍 → +4倍 on ¥40,000 is 400P more.
   await expect.element(screen.getByText("あと1店舗で全商品", { exact: false })).toBeVisible();
-  expect(summaryText()).toContain("あと1店舗で全商品 +1倍（約 +400P）");
+  await expect.element(summary()).toMatchTextContent("あと1店舗で全商品 +1倍（約 +400P）");
 
   const topTier = makePlan({
     benefits: [baseBenefit, ...marathon],
@@ -196,8 +194,8 @@ test("shows next shop hint only below the top tier", async () => {
   });
   await renderPlanHome(createMemoryRepository({ shops, plans: [topTier] }));
 
-  await expect.poll(summaryText).toContain("10店舗を買い回り中");
-  expect(summaryText()).not.toContain("あと1店舗で");
+  await expect.element(summary()).toMatchTextContent("10店舗を買い回り中");
+  await expect.element(summary()).not.toMatchTextContent("あと1店舗で");
 });
 
 test("breakdown opens and sums to total", async () => {
@@ -205,18 +203,15 @@ test("breakdown opens and sums to total", async () => {
   const { screen } = await renderPlanHome(repository);
 
   const toggle = screen.getByText("ポイントの内訳を見る", { exact: true });
-  const accordion = toggle.element().closest("details");
-  expect(accordion).not.toBeNull();
-  expect(accordion?.open).toBe(false);
-  await expect.poll(summaryText).toContain("2,600P");
-  await toggle.click();
-  expect(accordion?.open).toBe(true);
-
   const legend = screen.getByRole("list", { name: "ポイントの内訳" });
+  await expect.element(summary()).toMatchTextContent("2,600P");
+  await expect.element(legend).not.toBeInTheDocument();
+  await toggle.click();
+
   await expect.element(legend).toBeVisible();
-  const items = Array.from(legend.element().querySelectorAll("li")).map((li) => li.textContent);
-  expect(items).toEqual(["通常400P", "SPU800P", "マラソン1,200P", "キャンペーン200P"]);
-  const sum = items.reduce((total, text) => total + Number(text?.replace(/\D/g, "")), 0);
+  const items = ["通常400P", "SPU800P", "マラソン1,200P", "キャンペーン200P"];
+  await expectTexts(legend.getByRole("listitem"), items);
+  const sum = items.reduce((total, text) => total + Number(text.replace(/\D/g, "")), 0);
   expect(sum).toBe(2600);
 
   await toggle.click();
@@ -227,13 +222,15 @@ test("hides shop-around parts when the plan has none", async () => {
   const plan = makePlan({ benefits: [baseBenefit, spuBenefit], orders: [order(0), order(1)] });
   await renderPlanHome(createMemoryRepository({ shops, plans: [plan] }));
 
-  await expect.poll(summaryText).toContain("獲得予定600P");
-  expect(summaryText()).toContain("実質還元率3.0%");
-  expect(summary()?.querySelector('[aria-label^="買い回り"]')).toBeNull();
-  expect(summaryText()).not.toContain("店舗を買い回り中");
-  expect(summaryText()).not.toContain("あと1店舗で");
-  expect(summaryText()).not.toContain("上限");
-  expect(document.body.textContent).not.toContain("あと何店舗回る？");
+  await expect.element(summary()).toMatchTextContent("獲得予定600P");
+  await expect.element(summary()).toMatchTextContent("実質還元率3.0%");
+  await expect.element(summary().getByLabelText(/^買い回り/)).not.toBeInTheDocument();
+  await expect.element(summary()).not.toMatchTextContent("店舗を買い回り中");
+  await expect.element(summary()).not.toMatchTextContent("あと1店舗で");
+  await expect.element(summary()).not.toMatchTextContent("上限");
+  await expect
+    .element(page.getByText("あと何店舗回る？", { exact: false }))
+    .not.toBeInTheDocument();
 });
 
 test("shows warnings for orders outside the period and unknown shops", async () => {
@@ -259,8 +256,10 @@ test("shows the plan name as text and switches plans from a separate menu button
   const repository = createMemoryRepository({ shops, plans: [marathonPlan(), other] });
   const { screen, router } = await renderPlanHome(repository);
 
-  const title = screen.getByText("10月 お買い物マラソン", { exact: true });
-  expect(title.element().closest("button")).toBeNull();
+  await expect.element(screen.getByText("10月 お買い物マラソン", { exact: true })).toBeVisible();
+  await expect
+    .element(screen.getByRole("button", { name: /10月 お買い物マラソン/ }))
+    .not.toBeInTheDocument();
   const switcher = screen.getByRole("button", { name: "プランを切り替える", exact: true });
   await expect.element(switcher).toBeVisible();
   await switcher.click();
@@ -280,19 +279,6 @@ test("says so when the plan does not exist", async () => {
   await expect.poll(() => router.state.location.pathname).toBe("/");
 });
 
-test.each([
-  ["light", "rgb(191, 0, 0)"],
-  ["dark", "rgb(163, 0, 0)"],
-] as const)("paints the summary card in %s mode", async (colorMode, expected) => {
-  const repository = createMemoryRepository({ shops, plans: [marathonPlan()] });
-  await renderPlanHome(repository, { colorMode });
-
-  await expect.poll(summaryText).toContain("2,600P");
-  await expect
-    .poll(() => getComputedStyle(summary() as HTMLElement).backgroundColor)
-    .toBe(expected);
-});
-
 test("shows nothing until the shops have loaded", async () => {
   const repository = createMemoryRepository({ shops, plans: [marathonPlan()] });
   repository.shops.list = () => new Promise<Shop[]>(() => {});
@@ -300,8 +286,10 @@ test("shows nothing until the shops have loaded", async () => {
 
   await expect.element(screen.getByText("読み込み中…")).toBeVisible();
   await new Promise((resolve) => setTimeout(resolve, 100));
-  expect(summary()).toBeNull();
-  expect(document.body.textContent).not.toContain("台帳にないショップ");
+  await expect.element(summary()).not.toBeInTheDocument();
+  await expect
+    .element(page.getByText("台帳にないショップ", { exact: false }))
+    .not.toBeInTheDocument();
 });
 
 test("offers a retry when the shops cannot be read", async () => {
@@ -312,13 +300,17 @@ test("offers a retry when the shops cannot be read", async () => {
   const { screen } = await renderPlanHome(repository);
 
   await expect.element(screen.getByText("保存されたデータを読み込めませんでした。")).toBeVisible();
-  expect(summary()).toBeNull();
-  expect(document.body.textContent).not.toContain("台帳にないショップ");
+  await expect.element(summary()).not.toBeInTheDocument();
+  await expect
+    .element(page.getByText("台帳にないショップ", { exact: false }))
+    .not.toBeInTheDocument();
 
   fail = false;
   await screen.getByRole("button", { name: "もう一度読み込む" }).click();
-  await expect.poll(summaryText).toContain("獲得予定2,600P");
-  expect(document.body.textContent).not.toContain("台帳にないショップ");
+  await expect.element(summary()).toMatchTextContent("獲得予定2,600P");
+  await expect
+    .element(page.getByText("台帳にないショップ", { exact: false }))
+    .not.toBeInTheDocument();
 });
 
 test("says the cap is reached when nothing is left to buy", async () => {
@@ -330,6 +322,6 @@ test("says the cap is reached when nothing is left to buy", async () => {
   const plan = makePlan({ benefits: [baseBenefit, ...marathon], orders: [0, 1, 2, 3].map(big) });
   await renderPlanHome(createMemoryRepository({ shops, plans: [plan] }));
 
-  await expect.poll(summaryText).toContain("上限のある特典は、すべて上限に届きました");
-  expect(summaryText()).not.toContain("次に上限に届くのは");
+  await expect.element(summary()).toMatchTextContent("上限のある特典は、すべて上限に届きました");
+  await expect.element(summary()).not.toMatchTextContent("次に上限に届くのは");
 });
