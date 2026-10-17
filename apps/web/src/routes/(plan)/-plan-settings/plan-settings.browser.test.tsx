@@ -443,6 +443,65 @@ test("overrides the shop-around cap", async () => {
   expect((await storedPlan()).period).toEqual({ start: "2026-10-04", end: "2026-10-09" });
 });
 
+test("adds a campaign of tiers by the total, and changes its tiers and cap", async () => {
+  const screen = await renderSettings(makePlan([], [order(0)]));
+  await screen.getByRole("button", { name: "合計額で倍率（手動）を追加" }).click();
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
+
+  const card = screen.getByRole("region", { name: "合計額で倍率" });
+  const row = card.getByRole("button", { name: /合計額で倍率/ });
+  await expect.element(row.getByText("10/4〜10/9・最大 +1倍・上限 1,000P")).toBeVisible();
+  await row.click();
+  // The order of ¥11,000 reaches the only tier, from ¥5,000.
+  await expect.element(card.getByText("いまの合計 ¥11,000（税込）で +1倍。")).toBeVisible();
+
+  await card.getByRole("button", { name: "段階を足す" }).click();
+  await expect
+    .poll(async () => (await storedBenefit("合計額で倍率"))?.params)
+    .toMatchObject({
+      tiers: [
+        { minAmount: 5000, rate: 1 },
+        { minAmount: 10000, rate: 2 },
+      ],
+    });
+  await expect.element(card.getByText("いまの合計 ¥11,000（税込）で +2倍。")).toBeVisible();
+
+  const second = card.getByLabelText("2段目の合計額（円以上）");
+  await second.fill("5,000");
+  await second.element().blur();
+  await expect.element(second).toHaveAccessibleDescription("同じ合計額の段階がもうあります");
+  await second.fill("２０，０００");
+  enter(second.element());
+  await expect
+    .poll(async () => (await storedBenefit("合計額で倍率"))?.params)
+    .toMatchObject({
+      tiers: [
+        { minAmount: 5000, rate: 1 },
+        { minAmount: 20000, rate: 2 },
+      ],
+    });
+  await expect
+    .element(card.getByText("いまの合計 ¥11,000（税込）で +1倍。あと ¥9,000 で +2倍。"))
+    .toBeVisible();
+
+  const rate = card.getByLabelText("2段目の倍率（+N倍）");
+  await rate.fill("3");
+  enter(rate.element());
+  await expect.element(row.getByText("10/4〜10/9・最大 +3倍・上限 1,000P")).toBeVisible();
+
+  const cap = card.getByLabelText("獲得上限（P）");
+  await cap.fill("5,000");
+  enter(cap.element());
+  await expect.element(row.getByText("10/4〜10/9・最大 +3倍・上限 5,000P")).toBeVisible();
+
+  await card.getByRole("button", { name: "1段目を削除" }).click();
+  await expect
+    .poll(async () => (await storedBenefit("合計額で倍率"))?.params)
+    .toMatchObject({ tiers: [{ minAmount: 20000, rate: 3 }] });
+  // The last tier stays.
+  await expect.element(card.getByRole("button", { name: "1段目を削除" })).not.toBeInTheDocument();
+});
+
 /** Types into a field without moving the focus, so nothing is committed on blur. */
 function typeInto(element: HTMLInputElement, value: string) {
   Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(element, value);

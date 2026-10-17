@@ -71,4 +71,4 @@ pnpm exec cf d1 query <ID> --sql "UPDATE official_events SET benefits_json = jso
 
 ## 表の形を変えるとき
 
-`apps/web/migrations/` に SQL を足す。本番には Deploy のワークフローが、Preview には Preview のワークフローがデプロイの前に当てる。手元の開発サーバーと E2E は、起動のたびにローカルの D1 を作り直して当てる（`pnpm --filter web db:migrate --local`）。
+`apps/web/migrations/` に SQL を足す。本番には Deploy のワークフローが、Preview には Preview のワークフローがデプロイの前に当てる。手元の開発サーバーと E2E は、起動のたびにローカルの D1 を作り直して当てる（`pnpm --filter web db:migrate --local`）。開発サーバーは、起動したまま足されたマイグレーションも、次に D1 を読むときに当てる（`apps/web/src/server/dev-migrations.ts`）。

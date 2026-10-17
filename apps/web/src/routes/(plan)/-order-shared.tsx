@@ -7,7 +7,6 @@ import {
   type Plan,
   type PointGroup,
   pointGroupOf,
-  tierRate,
 } from "@workspaces/domain";
 import { Badge, Button, Heading, Modal, Tag, Text, useDisclosure } from "@workspaces/ui";
 import { atom, useAtomValue, useSetAtom } from "jotai";
@@ -65,18 +64,15 @@ const groupLabels: Record<Exclude<PointGroup, "campaign">, string> = {
   marathon: "マラソン",
 };
 
-const benefitRate = (benefit: Benefit, shopCount: number) =>
-  benefit.kind === "shop-around" ? tierRate(benefit.params.tiers, shopCount) : benefit.params.rate;
-
 /**
  * Groups an order's breakdown rows into the lines shown on its card. A row's rate is the sum of the
- * nominal rates of the benefits behind it: the shop-around tier at the plan's shop count, and the
- * highest shop rate among the order's items for the shop's own points.
+ * nominal rates of the benefits behind it, as the calculation gave them (`rates`), and the highest
+ * shop rate among the order's items for the shop's own points.
  */
 export function orderPointRows(
   rows: BreakdownRow[],
   benefits: Benefit[],
-  shopCount: number,
+  rates: Record<string, number>,
   lineItems: LineItem[],
 ): Pick<OrderCardPoints, "rows" | "rate" | "campaigns"> {
   const benefitsById = new Map(benefits.map((benefit) => [benefit.id, benefit]));
@@ -95,7 +91,7 @@ export function orderPointRows(
       rates: new Map<string, number>(),
     };
     const rate = benefit
-      ? benefitRate(benefit, shopCount)
+      ? (rates[benefit.id] ?? 0)
       : (items.get(row.lineItemId)?.shopPointRate ?? 1) - 1;
     line.points += row.points;
     line.rates.set(row.source, Math.max(line.rates.get(row.source) ?? 0, rate));
@@ -125,8 +121,9 @@ const noBenefits: Benefit[] = [];
 const benefitsAtom = atomFamily((planId: string) =>
   selectAtom(planAtom(planId), (plan) => plan?.benefits ?? noBenefits, deepEqual),
 );
-const shopCountAtom = atomFamily((planId: string) =>
-  selectAtom(planResultAtom(planId), (result) => result?.shopCount ?? 0),
+const noRates: Record<string, number> = {};
+const ratesAtom = atomFamily((planId: string) =>
+  selectAtom(planResultAtom(planId), (result) => result?.rates ?? noRates, deepEqual),
 );
 const heldEstimateAtom = atomFamily(
   ({ planId, orderId }: OrderKey) =>
@@ -153,7 +150,7 @@ export const orderCardPointsAtom = atomFamily(
           ...orderPointRows(
             rows,
             get(benefitsAtom(key.planId)),
-            estimate?.shopCount ?? get(shopCountAtom(key.planId)),
+            estimate?.rates ?? get(ratesAtom(key.planId)),
             get(orderAtom(key))?.lineItems ?? [],
           ),
           total: rows.reduce((sum, row) => sum + row.points, 0),

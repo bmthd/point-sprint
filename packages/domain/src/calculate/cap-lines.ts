@@ -1,4 +1,3 @@
-import { tierRate } from "../benefit-kinds/shop-around";
 import type { Benefit } from "../model/benefit";
 import { type Plan, planAccountId } from "../model/plan";
 import { capGroupKey } from "./cap-groups";
@@ -26,7 +25,7 @@ export type CapLine = {
   raw: number;
   /** Points the cap can still give: the cap minus the raw points of every member. */
   remaining: number;
-  /** +N倍 one more yen earns; a shop-around benefit's rate at the plan's shop count. */
+  /** +N倍 one more yen earns: the benefit's rate in the calculation (`CalculationResult.rates`). */
   rate: number;
 };
 
@@ -74,22 +73,13 @@ function firstDayOf(benefit: Benefit): string | null {
   }
 }
 
-function rateOf(benefit: Benefit, shopCount: number): number {
-  switch (benefit.kind) {
-    case "rate-bonus":
-      return benefit.params.rate;
-    case "shop-around":
-      return tierRate(benefit.params.tiers, shopCount);
-  }
-}
-
 /**
  * The caps of the plan's enabled benefits that have one, with how much of each is used. Month caps
  * have a line for each month of the period. `plan` must have the account it was calculated with.
  */
 export function capLines(
   plan: Plan,
-  result: Pick<CalculationResult, "capUsage" | "shopCount">,
+  result: Pick<CalculationResult, "capUsage" | "rates">,
 ): CapLine[] {
   const owner = { id: plan.id, accountId: planAccountId(plan) };
   return plan.benefits
@@ -115,7 +105,7 @@ export function capLines(
             sharedWith: others.map(([id]) => id),
             raw: usage?.raw ?? 0,
             remaining: Math.max(0, cap - (usage?.raw ?? 0)),
-            rate: rateOf(benefit, result.shopCount),
+            rate: result.rates[benefit.id] ?? 0,
           },
         ];
       }),
