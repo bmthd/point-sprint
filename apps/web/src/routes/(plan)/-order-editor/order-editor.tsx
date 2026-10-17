@@ -32,7 +32,16 @@ import {
   Text,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
-import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } from "react";
+import { useDragControls } from "motion/react";
+import {
+  type PointerEvent,
+  type RefObject,
+  useDeferredValue,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { type FieldState, Form, bind, errorsOf } from "../../../form/form";
 import { saveShopAtom } from "../../../state/mutations";
 import { addOrderAtom, updateOrderAtom } from "../../../state/order-ops";
@@ -511,11 +520,13 @@ type EditorProps = {
   original: Order | undefined;
   layout: "sheet" | "dialog";
   amountRef: RefObject<HTMLInputElement | null>;
+  /** Starts dragging the sheet down from its header. */
+  onDragStart: (event: PointerEvent) => void;
   onClose: () => void;
 };
 
 /** The header, fields and buttons inside the sheet or the dialog. */
-function EditorContent({ plan, original, layout, amountRef, onClose }: EditorProps) {
+function EditorContent({ plan, original, layout, amountRef, onDragStart, onClose }: EditorProps) {
   const shops = useAtomValue(shopsAtom);
   const saveShop = useAtomValue(saveShopAtom);
   const addOrder = useSetAtom(addOrderAtom);
@@ -548,7 +559,8 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
         else await addOrder({ planId: plan.id, order: draft.order });
         if (keepOpen) {
           reset(form, { initialInput: emptyInput(plan.period) });
-          focus(form, { path: AMOUNT_PATH });
+          // On a phone the focus would only bring up the keyboard over the sheet.
+          if (layout === "dialog") focus(form, { path: AMOUNT_PATH });
           // After the focus moves: leaving the URL field would look up the URL it still shows.
           autofill.reset();
         } else {
@@ -563,7 +575,12 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
 
   return (
     <>
-      <parts.Header display="flex" alignItems="center" justifyContent="space-between">
+      <parts.Header
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        {...(layout === "sheet" ? { touchAction: "none", onPointerDown: onDragStart } : {})}
+      >
         <parts.Title as="h2">{title}</parts.Title>
         <IconButton aria-label="閉じる" onClick={onClose} icon={<CloseIcon />} variant="ghost" />
       </parts.Header>
@@ -633,6 +650,9 @@ export function OrderEditor({
   onClose: () => void;
 }) {
   const amountRef = useRef<HTMLInputElement | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  const dragControls = useDragControls();
+  const onDragStart = (event: PointerEvent) => dragControls.start(event);
   const original =
     target === undefined || target === NEW_ORDER
       ? undefined
@@ -645,6 +665,7 @@ export function OrderEditor({
       original={original}
       layout={layout}
       amountRef={amountRef}
+      onDragStart={onDragStart}
       onClose={onClose}
     />
   ) : null;
@@ -656,10 +677,23 @@ export function OrderEditor({
       placement="block-end"
       closeOnDrag
       withCloseButton={false}
-      initialFocusRef={amountRef}
+      // On a phone a focused field would only bring up the keyboard over the sheet. The sheet
+      // itself takes the focus, so Escape and Tab stay inside it.
+      autoFocus={false}
+      initialFocusRef={sheetRef}
       restoreFocus
     >
-      <Drawer.Content maxH="calc(100dvh - 24px)" roundedTop="l2">
+      {/* Only the header drags the sheet: from the body, scrolling the fields would close it. */}
+      <Drawer.Content
+        ref={sheetRef}
+        tabIndex={-1}
+        outline="none"
+        maxH="calc(100dvh - 24px)"
+        roundedTop="l2"
+        dragControls={dragControls}
+        dragListener={false}
+      >
+        <Drawer.DragBar touchAction="none" onPointerDown={onDragStart} />
         {content}
       </Drawer.Content>
     </Drawer.Root>

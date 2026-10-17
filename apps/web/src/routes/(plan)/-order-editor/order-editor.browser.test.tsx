@@ -117,7 +117,8 @@ test("clearing a registered shop clears its 39shop mark", async () => {
 test("adds an order and closes", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
-  await expect.element(amountOf(sheet)).toHaveFocus();
+  // On a phone the keyboard would cover the sheet.
+  await expect.element(amountOf(sheet)).not.toHaveFocus();
   expect(sheet.getByLabelText("注文日").element()).toHaveProperty("value", "2026/10/09");
 
   await fillOrder(sheet, { shop: "ショップ4", amount: "3,300", name: "洗濯洗剤" });
@@ -144,7 +145,7 @@ test("continue adding keeps the sheet open and clears the inputs", async () => {
   await expect.poll(async () => (await stored()).length).toBe(5);
   await expect.element(sheet).toBeVisible();
   await expect.element(amountOf(sheet)).toHaveValue("");
-  await expect.element(amountOf(sheet)).toHaveFocus();
+  await expect.element(amountOf(sheet)).not.toHaveFocus();
   await expect.element(sheet.getByLabelText("商品名メモ（任意）")).toHaveValue("");
   await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue("");
 
@@ -444,7 +445,7 @@ test("editing an order from its card saves the changes", async () => {
   const sheet = screen.getByRole("dialog", { name: "注文を編集" });
   await expect.element(sheet).toBeVisible();
   await expect.element(amountOf(sheet)).toHaveValue("11000");
-  await expect.element(amountOf(sheet)).toHaveFocus();
+  await expect.element(amountOf(sheet)).not.toHaveFocus();
   await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue(shopId(1));
   await expect.element(sheet.getByRole("button", { name: "続けて追加" })).not.toBeInTheDocument();
   // Editing the order does not add a shop: the order's own figures only.
@@ -459,6 +460,22 @@ test("editing an order from its card saves the changes", async () => {
   expect(saved?.id).toBe(orderId(1));
   expect(saved?.lineItems[0]?.id).toBe(order(1).lineItems[0]?.id);
   expect(await stored()).toHaveLength(4);
+});
+
+test("dragging the fields scrolls the sheet, and only the header drags it closed", async () => {
+  const screen = await renderWith();
+  const sheet = await openAdd(screen);
+  await userEvent.dragAndDrop(
+    sheet.getByRole("group", { name: "税率" }),
+    sheet.getByRole("button", { name: "追加する" }),
+  );
+  await expect.element(sheet).toBeVisible();
+
+  await userEvent.dragAndDrop(
+    sheet.getByRole("heading", { name: "注文を追加" }),
+    sheet.getByRole("button", { name: "追加する" }),
+  );
+  await expect.element(sheet).not.toBeInTheDocument();
 });
 
 test("closing the sheet saves nothing", async () => {
@@ -486,6 +503,7 @@ test("on a desktop a multi-item order is edited in a dialog", async () => {
 
   const dialog = screen.getByRole("dialog", { name: "注文を編集" });
   await expect.element(dialog).toBeVisible();
+  await expect.element(amountOf(dialog).first()).toHaveFocus();
   const second = dialog.getByRole("group", { name: "商品2" });
   await expect.element(second.getByLabelText("金額（税込）")).toHaveValue("11000");
   await second.getByLabelText("金額（税込）").fill("2200");
