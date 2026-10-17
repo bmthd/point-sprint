@@ -9,6 +9,7 @@ import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { expect, test } from "vitest";
 import { render } from "vitest-browser-react";
+import { page } from "vitest/browser";
 import { ErrorPage } from "./error-page";
 
 test("shows the error page without the error, and reloads the page", async () => {
@@ -41,7 +42,7 @@ test("shows the error page without the error, and reloads the page", async () =>
   await expect
     .element(screen.getByRole("link", { name: "トップに戻る" }))
     .toHaveAttribute("href", "/");
-  expect(document.body.textContent).not.toContain("秘密の詳細");
+  await expect.element(page.getByText("秘密の詳細", { exact: false })).not.toBeInTheDocument();
 
   fail = false;
   await screen.getByRole("button", { name: "再読み込み" }).click();

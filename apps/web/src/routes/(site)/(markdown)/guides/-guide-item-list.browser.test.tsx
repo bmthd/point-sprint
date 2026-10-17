@@ -58,5 +58,5 @@ test.each([
   { case: "no items found", list: [] },
 ])("shows nothing for $case", async ({ list }) => {
   const screen = await renderList(list);
-  expect(screen.container.textContent).toBe("");
+  await expect.element(screen.locator).toHaveTextContent("");
 });
