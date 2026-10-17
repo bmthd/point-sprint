@@ -14,6 +14,7 @@ export const SPECS: Record<string, FormSpec> = {
   "39shop": { period: true },
   repeat: { period: true, minOrderAmount: true, cap: "required" },
   "shop-around-manual": { period: true, cap: "required" },
+  "spend-tiers-manual": { period: true, cap: "required" },
   "custom-rate": { label: true, period: true, rate: true, cap: "optional" },
 };
 

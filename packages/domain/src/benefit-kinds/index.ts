@@ -2,14 +2,20 @@ import * as v from "valibot";
 import { ConditionsSchema, IdSchema } from "../model/common";
 import { rateBonus } from "./rate-bonus";
 import { shopAround } from "./shop-around";
+import { spendTiers } from "./spend-tiers";
 import type { BenefitKindDef } from "./types";
 
 export { pointsFor } from "./points";
 export { rateBonus } from "./rate-bonus";
 export { shopAround } from "./shop-around";
+export { spendTiers } from "./spend-tiers";
 export type { BenefitKindDef, EligibleItem, RoundingUnit } from "./types";
 
-export const benefitKinds = { "rate-bonus": rateBonus, "shop-around": shopAround } as const;
+export const benefitKinds = {
+  "rate-bonus": rateBonus,
+  "shop-around": shopAround,
+  "spend-tiers": spendTiers,
+} as const;
 
 function benefitEntry<K extends string, P extends { cap?: number }>(def: BenefitKindDef<K, P>) {
   return v.object({
@@ -32,6 +38,7 @@ function benefitEntry<K extends string, P extends { cap?: number }>(def: Benefit
 export const BenefitSchema = v.variant("kind", [
   benefitEntry(benefitKinds["rate-bonus"]),
   benefitEntry(benefitKinds["shop-around"]),
+  benefitEntry(benefitKinds["spend-tiers"]),
 ]);
 export type Benefit = v.InferOutput<typeof BenefitSchema>;
 

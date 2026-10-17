@@ -187,7 +187,7 @@ export function draftOfInput(
 }
 
 export const rateOf = (benefit: Benefit) =>
-  benefit.kind === "shop-around" ? 0 : benefit.params.rate;
+  benefit.kind === "rate-bonus" ? benefit.params.rate : 0;
 
 /** The sum of the rates of the plan's campaigns that need a shop or order tag (「+1」). */
 export function tagBonus(benefits: Benefit[], tag: { shop?: "39shop"; order?: "repeat" }) {

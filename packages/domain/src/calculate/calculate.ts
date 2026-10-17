@@ -1,6 +1,8 @@
 import { largestRemainder } from "../allocation/largest-remainder";
 import { taxExcludedTarget, taxIncludedTarget } from "../amounts/target-amount";
 import { benefitKinds, pointsFor, type EligibleItem } from "../benefit-kinds";
+import { tierRate } from "../benefit-kinds/shop-around";
+import { spendTierRate } from "../benefit-kinds/spend-tiers";
 import { channels } from "../channels";
 import { matchesConditions } from "../conditions/matches";
 import type { Benefit } from "../model/benefit";
@@ -43,7 +45,13 @@ type BenefitItem = {
   points: number;
 };
 
-type BenefitEntry = { benefit: Benefit; items: BenefitItem[]; receivingBase: number };
+type BenefitEntry = {
+  benefit: Benefit;
+  items: BenefitItem[];
+  receivingBase: number;
+  /** Tax-included total of the benefit's orders over its days. */
+  spendTotal: number;
+};
 
 type PlanPhase = {
   plan: Plan;
@@ -70,13 +78,27 @@ const byPlanThenLineItem = (a: BenefitItem, b: BenefitItem) =>
 function rawPointsOf(
   benefit: Benefit,
   items: EligibleItem[],
-  shopCount: number,
+  counts: { shopCount: number; spendTotal: number },
 ): Map<string, number> {
   switch (benefit.kind) {
     case "rate-bonus":
-      return benefitKinds["rate-bonus"].rawPoints({ params: benefit.params, items, shopCount });
+      return benefitKinds["rate-bonus"].rawPoints({ params: benefit.params, items, ...counts });
     case "shop-around":
-      return benefitKinds["shop-around"].rawPoints({ params: benefit.params, items, shopCount });
+      return benefitKinds["shop-around"].rawPoints({ params: benefit.params, items, ...counts });
+    case "spend-tiers":
+      return benefitKinds["spend-tiers"].rawPoints({ params: benefit.params, items, ...counts });
+  }
+}
+
+/** The +N倍 a benefit gives: a shop-around at the shop count, a spend-tiers at its total. */
+function rateOf(benefit: Benefit, counts: { shopCount: number; spendTotal: number }): number {
+  switch (benefit.kind) {
+    case "rate-bonus":
+      return benefit.params.rate;
+    case "shop-around":
+      return tierRate(benefit.params.tiers, counts.shopCount);
+    case "spend-tiers":
+      return spendTierRate(benefit.params.tiers, counts.spendTotal);
   }
 }
 
@@ -84,12 +106,11 @@ function targetAmount(benefit: Benefit, item: LineItem): number {
   return benefit.amountBasis === "tax-included" ? taxIncludedTarget(item) : taxExcludedTarget(item);
 }
 
-function eligibleItems(
-  benefit: Benefit,
-  orders: OrderContext[],
-): (EligibleItem & { orderDate: string })[] {
+type BenefitLineItem = EligibleItem & { orderDate: string; taxIncluded: number };
+
+function eligibleItems(benefit: Benefit, orders: OrderContext[]): BenefitLineItem[] {
   const onlyReceiving = benefitKinds[benefit.kind].onlyReceivingChannels;
-  const items: (EligibleItem & { orderDate: string })[] = [];
+  const items: BenefitLineItem[] = [];
   for (const order of orders) {
     if (onlyReceiving && (order.channel === null || !channels[order.channel].receivesShopAround)) {
       continue;
@@ -101,10 +122,22 @@ function eligibleItems(
         orderId: order.orderId,
         amount: targetAmount(benefit, item),
         orderDate: order.date,
+        taxIncluded: taxIncludedTarget(item),
       });
     }
   }
   return items.sort(byLineItemId);
+}
+
+/**
+ * Tax-included total of a benefit's items over its days: its date rule's, or the plan's period
+ * when it has none. Its items already follow the date rule.
+ */
+function spendTotalOf(benefit: Benefit, items: BenefitLineItem[], period: Plan["period"]) {
+  const inDays = benefit.conditions.dateRule
+    ? items
+    : items.filter((item) => item.orderDate >= period.start && item.orderDate <= period.end);
+  return inDays.reduce((sum, item) => sum + item.taxIncluded, 0);
 }
 
 /** Contexts of the orders that are not held. Held orders are left out of the whole calculation. */
@@ -137,14 +170,15 @@ function planPhase(plan: Plan, shops: Shop[], shopsById: Map<string, Shop>): Pla
     .filter((benefit) => benefit.enabled)
     .map((benefit): BenefitEntry => {
       const eligible = eligibleItems(benefit, orders);
-      const raw = rawPointsOf(benefit, eligible, shopCount);
+      const spendTotal = spendTotalOf(benefit, eligible, plan.period);
+      const raw = rawPointsOf(benefit, eligible, { shopCount, spendTotal });
       const items = eligible.map(({ lineItemId, orderDate }) => {
         const points = raw.get(lineItemId) ?? 0;
         const groupKey = capGroupKey(groupOwner, benefit, orderDate);
         return { planId: plan.id, lineItemId, date: orderDate, groupKey, raw: points, points };
       });
       const receivingBase = eligible.reduce((sum, item) => sum + item.amount, 0);
-      return { benefit, items, receivingBase };
+      return { benefit, items, receivingBase, spendTotal };
     });
   return { plan, orders, shopCount, warnings, entries };
 }
@@ -319,6 +353,13 @@ function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
   breakdown.push(...shopRate);
   for (const row of shopRate) groupTotals[pointGroupOf("shop-rate")] += row.points;
 
+  const rates: Record<string, number> = {};
+  const spendTotals: Record<string, number> = {};
+  for (const { benefit, spendTotal } of phase.entries) {
+    rates[benefit.id] = rateOf(benefit, { shopCount: phase.shopCount, spendTotal });
+    if (benefit.kind === "spend-tiers") spendTotals[benefit.id] = spendTotal;
+  }
+
   const nonZero = breakdown.filter((row) => row.points !== 0);
   const mismatchWarnings = [...mismatchKeys].map((groupKey): CalculationWarning => ({
     type: "shared-cap-mismatch",
@@ -328,6 +369,8 @@ function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
     breakdown: nonZero,
     benefitTotals,
     shopCount: phase.shopCount,
+    rates,
+    spendTotals,
     total: nonZero.reduce((sum, row) => sum + row.points, 0),
     warnings: [...phase.warnings, ...mismatchWarnings],
     groupTotals,
@@ -378,7 +421,7 @@ function heldEstimate(
     orderId,
     points: sumOfTotals(results) - before,
     rows: (result?.breakdown ?? []).filter((row) => lineItemIds.has(row.lineItemId)),
-    shopCount: result?.shopCount ?? 0,
+    rates: result?.rates ?? {},
   };
 }
 
