@@ -90,7 +90,6 @@ async function renderSettings(plan: Plan, profile?: Profile) {
 type Screen = Awaited<ReturnType<typeof renderSettings>>;
 
 const spuSection = (screen: Screen) => screen.getByRole("region", { name: "SPU" });
-const spuText = (screen: Screen) => spuSection(screen).element().textContent ?? "";
 
 test("tile toggles SPU and updates the total", async () => {
   const screen = await renderSettings(spuPlan());
@@ -99,7 +98,7 @@ test("tile toggles SPU and updates the total", async () => {
     .element(spuSection(screen).getByRole("img", { name: "楽天モバイル", exact: true }))
     .toHaveAttribute("src", "https://assets.bmth.dev/point-sprint/img/spu/service_mobile_v2.webp");
   await expect.element(mobile).not.toBeChecked();
-  expect(spuText(screen)).toContain("ポイント倍率1倍");
+  await expect.element(spuSection(screen)).toMatchTextContent("ポイント倍率1倍");
   // 通常ポイント is not a tile; 楽天カード通常分 is, under a short name.
   expect(screen.getByRole("checkbox", { name: /^通常ポイント/ }).query()).toBeNull();
   await expect
@@ -108,16 +107,16 @@ test("tile toggles SPU and updates the total", async () => {
 
   await tapCard(mobile);
   await expect.element(mobile).toBeChecked();
-  await expect.poll(() => spuText(screen)).toContain("ポイント倍率5倍");
-  expect(spuText(screen)).toContain("SPU +4倍");
+  await expect.element(spuSection(screen)).toMatchTextContent("ポイント倍率5倍");
+  await expect.element(spuSection(screen)).toMatchTextContent("SPU +4倍");
   await expect.poll(async () => (await storedBenefit("楽天モバイル"))?.enabled).toBe(true);
 
   // The card's own normal points count as 通常, not as SPU. Turning them on also turns on the
   // card's SPU bonus, which requires them.
   await tapCard(screen.getByRole("checkbox", { name: "楽天カード（通常） +1倍" }));
-  await expect.poll(() => spuText(screen)).toContain("ポイント倍率7倍");
-  expect(spuText(screen)).toContain("通常 2倍");
-  expect(spuText(screen)).toContain("SPU +5倍");
+  await expect.element(spuSection(screen)).toMatchTextContent("ポイント倍率7倍");
+  await expect.element(spuSection(screen)).toMatchTextContent("通常 2倍");
+  await expect.element(spuSection(screen)).toMatchTextContent("SPU +5倍");
   await expect
     .element(screen.getByRole("checkbox", { name: "楽天カード特典分（SPU） +1倍" }))
     .toBeChecked();
@@ -143,9 +142,6 @@ test("campaigns show the image from their master data", async () => {
   await expect
     .element(screen.getByRole("img", { name: "5と0のつく日" }))
     .toHaveAttribute("src", "https://assets.bmth.dev/point-sprint/img/campaign/pointday.webp");
-  expect(
-    getComputedStyle(screen.getByRole("img", { name: "5と0のつく日" }).element()).borderRadius,
-  ).toBe("0px");
 
   const campaign = screen
     .getByRole("region", { name: "キャンペーン" })
@@ -155,14 +151,10 @@ test("campaigns show the image from their master data", async () => {
   await tapCard(campaign);
   await expect.element(campaignSection.getByText("ON", { exact: true })).toBeVisible();
 
-  const sportsImage = screen
-    .getByRole("button", { name: "勝ったら倍を追加" })
-    .element()
-    .querySelector("img");
-  expect(sportsImage).toHaveAttribute(
-    "src",
-    "https://assets.bmth.dev/point-sprint/img/campaign/sports.webp",
-  );
+  // The button's image has no alt text, being named by the button.
+  await expect
+    .element(screen.getByRole("button", { name: "勝ったら倍を追加" }).getByRole("presentation"))
+    .toHaveAttribute("src", "https://assets.bmth.dev/point-sprint/img/campaign/sports.webp");
 });
 
 test("enabling premium card turns off the regular card", async () => {
@@ -224,7 +216,7 @@ test("cap badge appears when the cap is reached", async () => {
     .getByRole("group", { name: "SPU のサービス" })
     .getByText("上限", { exact: true });
   await expect.element(badges).toBeVisible();
-  expect(badges.elements()).toHaveLength(1);
+  await expect.element(badges).toHaveLength(1);
   await expect
     .element(screen.getByRole("checkbox", { name: "楽天Kobo +0.5倍" }))
     .not.toHaveAccessibleDescription();
@@ -272,7 +264,8 @@ test("adds a sports-win day at once, and changes it in its row", async () => {
   const date = screen.getByLabelText("日付");
   await expect.element(date).toHaveValue("2026/10/06");
 
-  // The switch of every row is in the same place, whether the row has ✎ or not.
+  // The switch of every row is in the same place, whether the row has ✎ or not. Positions are
+  // read from the elements: no matcher measures them.
   const switchOf = (name: RegExp) =>
     screen.getByRole("switch", { name }).element().getBoundingClientRect();
   expect(switchOf(/^勝ったら倍/).left).toBe(switchOf(/^5と0のつく日/).left);

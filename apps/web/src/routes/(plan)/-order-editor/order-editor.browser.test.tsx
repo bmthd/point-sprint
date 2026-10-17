@@ -118,7 +118,7 @@ test("adds an order and closes", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
   await expect.element(amountOf(sheet)).toHaveFocus();
-  expect(sheet.getByLabelText("注文日").element()).toHaveProperty("value", "2026/10/09");
+  await expect.element(sheet.getByLabelText("注文日")).toHaveValue("2026/10/09");
 
   await fillOrder(sheet, { shop: "ショップ4", amount: "3,300", name: "洗濯洗剤" });
   await sheet.getByRole("button", { name: "追加する" }).click();
@@ -333,12 +333,12 @@ test("an error in the closed details opens them and takes the focus", async () =
   const quantity = sheet.getByLabelText("数量");
   await quantity.fill("0");
   await details.click();
-  expect(document.querySelector("details")?.open).toBe(false);
+  await expect.element(quantity).not.toBeVisible();
   await sheet.getByRole("button", { name: "追加する" }).click();
 
   await expect.element(quantity).toHaveAccessibleDescription("数量は1以上の整数で入れてください");
   await expect.element(quantity).toHaveFocus();
-  expect(quantity.element().closest("details")?.open).toBe(true);
+  await expect.element(quantity).toBeVisible();
   expect(await stored()).toHaveLength(4);
 });
 
@@ -372,7 +372,8 @@ test("details set quantity, coupon, shop rate, hold and another item", async () 
   await sheet.getByLabelText("クーポン値引額（税込）").fill("300");
   await sheet.getByLabelText("ショップ独自倍率").fill("2");
   const hold = sheet.getByRole("switch", { name: "保留（計算から外す）" });
-  // The whole row is the switch's label, so the tap target is the row's height.
+  // The whole row is the switch's label, so the tap target is the row's height. Sizes are read
+  // from the elements: no matcher measures them.
   const row = hold.element().closest("label");
   expect(row?.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
   await sheet.getByText("保留（計算から外す）").click();
@@ -502,7 +503,7 @@ test("an edit= for an order that does not exist is dropped from the URL", async 
   const screen = await renderPlanHome(currentRepository, `/plan?id=${PLAN}&edit=${orderId(9)}`);
   await expect.poll(() => screen.router.state.location.search).toEqual({ id: PLAN });
   expect(screen.router.history.length).toBe(1);
-  expect(document.querySelector("[role=dialog]")).toBeNull();
+  await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
 });
 
 const storedBenefit = async (id: string) =>
