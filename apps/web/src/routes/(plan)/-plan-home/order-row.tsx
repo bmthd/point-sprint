@@ -343,14 +343,6 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
     <List.Item
       data-order-id={orderId}
       borderTopWidth={index === 0 ? undefined : "1px"}
-      // Shows where a dragged order will land.
-      boxShadow={
-        dropSide === "before"
-          ? "inset 0 2px 0 0 {colors.primary.solid}"
-          : dropSide === "after"
-            ? "inset 0 -2px 0 0 {colors.primary.solid}"
-            : undefined
-      }
       draggable={grabbed}
       onDragStart={(event: DragEvent) => {
         // The opened fields close, and only the row's line is carried, not the fields under it.
@@ -376,8 +368,16 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
     >
       <Box
         ref={lineRef}
-        // Painted, so the line carried in a drag is a row and not loose text.
+        // Painted, so the line carried in a drag is a row and not loose text. The mark of where a
+        // dragged order will land is on it too, where the paint does not cover it.
         bg="bg.panel"
+        boxShadow={
+          dropSide === "before"
+            ? "inset 0 2px 0 0 {colors.primary.solid}"
+            : dropSide === "after"
+              ? "inset 0 -2px 0 0 {colors.primary.solid}"
+              : undefined
+        }
         display="grid"
         gridTemplateColumns={rowColumns}
         alignItems="center"
