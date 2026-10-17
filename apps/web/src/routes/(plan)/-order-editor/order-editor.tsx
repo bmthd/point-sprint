@@ -520,7 +520,7 @@ type EditorProps = {
   original: Order | undefined;
   layout: "sheet" | "dialog";
   amountRef: RefObject<HTMLInputElement | null>;
-  /** Starts dragging the sheet down from its header. */
+  /** Starts dragging the sheet down from its header. WORKAROUND(yamada-drawer-drag) */
   onDragStart: (event: PointerEvent) => void;
   onClose: () => void;
 };
@@ -579,6 +579,7 @@ function EditorContent({ plan, original, layout, amountRef, onDragStart, onClose
         display="flex"
         alignItems="center"
         justifyContent="space-between"
+        // WORKAROUND(yamada-drawer-drag): the header is a handle of the sheet's drag.
         {...(layout === "sheet" ? { touchAction: "none", onPointerDown: onDragStart } : {})}
       >
         <parts.Title as="h2">{title}</parts.Title>
@@ -651,6 +652,7 @@ export function OrderEditor({
 }) {
   const amountRef = useRef<HTMLInputElement | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);
+  // WORKAROUND(yamada-drawer-drag): see the sheet's Drawer.Content below.
   const dragControls = useDragControls();
   const onDragStart = (event: PointerEvent) => dragControls.start(event);
   const original =
@@ -683,7 +685,13 @@ export function OrderEditor({
       initialFocusRef={sheetRef}
       restoreFocus
     >
-      {/* Only the header drags the sheet: from the body, scrolling the fields would close it. */}
+      {/*
+        WORKAROUND(yamada-drawer-drag): Drawer's closeOnDrag makes the whole content draggable and
+        gives it `touch-action: pan-x`, so a swipe in the scrolling body drags the sheet instead:
+        up it only stretches, down it closes. Drawer has no prop to drag from a handle only, so
+        motion's own props are passed through, and the header and the drag bar start the drag.
+        Drop this when Drawer can scroll its body and close on drag together.
+      */}
       <Drawer.Content
         ref={sheetRef}
         tabIndex={-1}
