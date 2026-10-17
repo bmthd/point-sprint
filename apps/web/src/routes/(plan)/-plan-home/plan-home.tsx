@@ -12,11 +12,12 @@ import {
   useMediaQuery,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
 import { planResultAtom } from "../../../state/derived";
 import { plansAtom } from "../../../state/queries";
 import { NEW_ORDER, OrderEditor } from "../-order-editor/order-editor";
 import { SettingsPanelButton } from "../-plan-settings/plan-settings";
+import { ColumnHead } from "../../../ui/column-head";
 import { RouterIconButton } from "../../../ui/router-link";
 import { ShareButton } from "../../-share/share-button";
 import { planFigures } from "../../-share/result-card";
@@ -184,6 +185,7 @@ function Home({ plan }: { plan: Plan }) {
   const today = useToday(now);
   const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
   const lines = useCapLines(plan);
+  const resultHeadingId = useId();
   if (!result) return null;
   const outlook = result.shopAroundOutlook;
   const capList =
@@ -219,36 +221,47 @@ function Home({ plan }: { plan: Plan }) {
       >
         <VStack
           as="aside"
-          aria-label="結果"
-          gap="4"
+          aria-label={wide ? undefined : "結果"}
+          aria-labelledby={wide ? resultHeadingId : undefined}
+          gap="2.5"
           alignItems="stretch"
           gridColumn={{ base: "2", lg: "1" }}
           gridRow="1"
         >
-          <SummaryCard
-            plan={plan}
-            result={result}
-            compact={!wide}
-            lines={lines}
-            today={today}
-            taxRate={taxRate}
-          />
-          <Warnings plan={plan} warnings={result.warnings} hasShopAround={outlook !== null} />
-          {wide ? capList : null}
+          {/* As the orders do, the column starts with its heading, so the two columns' cards start on one line. */}
           {wide ? (
-            <Panel label="ポイントの内訳">
-              <Heading as="h3" fontSize="sm">
-                ポイントの内訳
+            <ColumnHead>
+              <Heading as="h2" id={resultHeadingId} fontSize="md">
+                結果
               </Heading>
-              <PointBreakdown totals={result.groupTotals} />
-            </Panel>
+            </ColumnHead>
           ) : null}
-          {wide && outlook ? (
-            <Panel label="あと何店舗回る？">
-              <ShopLadder outlook={outlook} />
-            </Panel>
-          ) : null}
-          {wide ? shareResult : null}
+          <VStack gap="4" alignItems="stretch">
+            <SummaryCard
+              plan={plan}
+              result={result}
+              compact={!wide}
+              lines={lines}
+              today={today}
+              taxRate={taxRate}
+            />
+            <Warnings plan={plan} warnings={result.warnings} hasShopAround={outlook !== null} />
+            {wide ? capList : null}
+            {wide ? (
+              <Panel label="ポイントの内訳">
+                <Heading as="h3" fontSize="sm">
+                  ポイントの内訳
+                </Heading>
+                <PointBreakdown totals={result.groupTotals} />
+              </Panel>
+            ) : null}
+            {wide && outlook ? (
+              <Panel label="あと何店舗回る？">
+                <ShopLadder outlook={outlook} />
+              </Panel>
+            ) : null}
+            {wide ? shareResult : null}
+          </VStack>
         </VStack>
         <Box
           as="section"

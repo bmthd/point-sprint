@@ -4,6 +4,7 @@ import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { OrderAddForm } from "./order-add-form";
 import { OrderListContext, OrderRow, rowColumns } from "./order-row";
 import { HeaderButton, OrdersHeading, SaveFailedAlert, useOrderConfirm } from "../-order-shared";
+import { ColumnHead } from "../../../ui/column-head";
 
 /**
  * The plan's orders on a wide screen: one row per order that opens into its breakdown and edit
@@ -34,12 +35,12 @@ export function OrderTable({ plan, onEdit }: { plan: Plan; onEdit: (orderId: str
 
   return (
     <Flex direction="column" gap="2.5">
-      <Flex align="center" justify="space-between">
+      <ColumnHead>
         <OrdersHeading orders={orders} headingRef={heading} id={headingId} />
         <HeaderButton disabled={orders.length === 0} onClick={askReset}>
           リセット
         </HeaderButton>
-      </Flex>
+      </ColumnHead>
       <SaveFailedAlert />
       <VisuallyHidden id={handleHintId}>
         ドラッグするか、上下の矢印キーで順番を変えられます。

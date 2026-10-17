@@ -9,7 +9,7 @@ const SIDEBAR_WIDTH = "320px";
  * A page with the sidebar: on a wide screen the sidebar is a column to the right of `main`; at the
  * `lg` breakpoint and below (a phone or a tablet) it is in the header's menu instead. `maxW` is
  * the width of the page's own content, which stays the same with or without the sidebar.
- * `/notices`, which has the notices in full, leaves their headlines out with `noticeHeadlines`.
+ * The sidebar stays on the screen as the page scrolls. `/notices`, which has the notices in full, leaves their headlines out with `noticeHeadlines`.
  */
 export function PageWithSidebar({
   maxW,
@@ -37,7 +37,13 @@ export function PageWithSidebar({
       <Box as="main" minW="0">
         {children}
       </Box>
-      <SiteSidebar noticeHeadlines={noticeHeadlines} display={{ base: "flex", lg: "none" }} />
+      {/* It follows the scroll, so a long page has no empty column beside it. */}
+      <SiteSidebar
+        noticeHeadlines={noticeHeadlines}
+        display={{ base: "flex", lg: "none" }}
+        position="sticky"
+        top="md"
+      />
     </Grid>
   );
 }
