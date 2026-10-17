@@ -5,6 +5,7 @@ import { OrderAddForm } from "./order-add-form";
 import { OrderListContext, OrderRow, rowColumns } from "./order-row";
 import { HeaderButton, OrdersHeading, SaveFailedAlert, useOrderConfirm } from "../-order-shared";
 import { ColumnHead } from "../../../ui/column-head";
+import { useOrderDrag } from "./use-order-drag";
 
 /**
  * The plan's orders on a wide screen: one row per order that opens into its breakdown and edit
@@ -22,15 +23,16 @@ export function OrderTable({ plan, onEdit }: { plan: Plan; onEdit: (orderId: str
   const holdHintId = useId();
   const { askDelete, askReset, dialog } = useOrderConfirm(plan, heading);
   const [announcement, setAnnouncement] = useState("");
-  const draggedRef = useRef<{ orderId: string; index: number; shopName: string } | null>(null);
+  const listRef = useRef<HTMLOListElement>(null);
+  const orders = plan.orders;
+  const startDrag = useOrderDrag({ listRef, orders });
   const focusAfterMoveRef = useRef<string | null>(null);
   const announce = useCallback((message: string) => setAnnouncement(message), []);
   const context = useMemo(
-    () => ({ draggedRef, focusAfterMoveRef, announce, handleHintId, holdHintId }),
-    [announce, handleHintId, holdHintId],
+    () => ({ startDrag, focusAfterMoveRef, announce, handleHintId, holdHintId }),
+    [startDrag, announce, handleHintId, holdHintId],
   );
 
-  const orders = plan.orders;
   let counted = 0;
 
   return (
@@ -75,7 +77,24 @@ export function OrderTable({ plan, onEdit }: { plan: Plan; onEdit: (orderId: str
             </Text>
           </Box>
         ) : null}
-        <List.Root as="ol" aria-labelledby={headingId} gap="0">
+        <List.Root
+          ref={listRef}
+          as="ol"
+          aria-labelledby={headingId}
+          gap="0"
+          // The rows are laid out from the list's top, where a dragged row is measured from.
+          position="relative"
+          css={{
+            // While a row is dragged, the others slide aside to leave room for it.
+            "&[data-dragging] > li": {
+              transitionProperty: "transform",
+              transitionDuration: "moderate",
+              transitionTimingFunction: "ease",
+              _mediaReduceMotion: { transitionProperty: "none" },
+            },
+            "& > li[data-dragged]": { zIndex: "1", boxShadow: "md", transitionProperty: "none" },
+          }}
+        >
           <OrderListContext value={context}>
             {orders.map((order, index) => (
               <OrderRow
