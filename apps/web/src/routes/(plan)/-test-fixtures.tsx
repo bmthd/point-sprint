@@ -204,3 +204,19 @@ export const tapCard = (tile: Locator) => {
   if (!label) throw new Error("no card label");
   return page.elementLocator(label).click();
 };
+
+/** The order's shop field: typed to find a saved shop, or to name a new one. */
+export const shopField = (scope: Pick<Locator, "getByRole">) =>
+  scope.getByRole("textbox", { name: /^ショップ/ });
+
+/**
+ * Puts a shop on the order being entered: a saved shop by its name, a new shop of a name no
+ * saved shop has, or none with "".
+ */
+export const enterShop = (scope: Pick<Locator, "getByRole">, name: string) =>
+  shopField(scope).fill(name);
+
+/** Chooses the item's tax rate by its label (「10%」, 「8%（食品）」 or 「非課税」), as a tap does. */
+export const chooseTaxRate = (scope: Pick<Locator, "getByRole">, label: string) =>
+  // The choice's radio is hidden under its label: the label is what is pressed.
+  scope.getByRole("radiogroup").getByText(label, { exact: true }).click();

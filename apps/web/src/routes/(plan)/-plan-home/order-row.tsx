@@ -195,12 +195,15 @@ function OrderEditor({
     useField(form, { path: ["channel"] }).input,
     useField(form, { path: ["date"] }).input,
     useField(form, { path: ["items", 0, "taxRate"] }).input,
+    useField(form, { path: ["items", 0, "shopPointRate"] }).input,
     useField(form, { path: ["is39"] }).input,
     useField(form, { path: ["repeat"] }).input,
   ]);
   useEffect(() => {
+    // A new shop's name is typed in the shop field: it is saved when the field is left.
+    if (getInput(form).shop === NEW_SHOP) return;
     void commitRef.current();
-  }, [instantKey, commitRef]);
+  }, [instantKey, commitRef, form]);
 
   // A change saved elsewhere (in 「商品を編集」, or to the shop) comes into the fields.
   useEffect(() => {

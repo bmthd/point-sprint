@@ -9,16 +9,14 @@ import {
   insert,
   remove,
   reset,
-  setInput,
   useField,
   useForm,
 } from "@formisch/react";
-import { type Order, type Plan, channels } from "@workspaces/domain";
+import type { Order, Plan } from "@workspaces/domain";
 import {
   Box,
   Flex,
   Button,
-  ButtonGroup,
   Drawer,
   Field,
   Fieldset,
@@ -28,6 +26,7 @@ import {
   Modal,
   NativeAccordion,
   NativeSelect,
+  Separator,
   Switch,
   Text,
 } from "@workspaces/ui";
@@ -50,13 +49,17 @@ import { useSingleFlight } from "../../../use-single-flight";
 import { CloseIcon } from "../../../ui/icons";
 import { AutofillStatus, type ItemAutofill } from "../-item-autofill";
 import {
-  NEW_SHOP,
-  TAX_RATES,
-  TaxRateOptions,
   CampaignCheck,
+  ChannelField,
+  OrderPart,
+  ShopRateInput,
+  TaxRateButtons,
+  TaxRateOptions,
+  UrlLabel,
+  optionalMark,
   shopFromUrl,
-  useSortedShops,
 } from "../-order-fields";
+import { ShopAutocomplete } from "../-shop-autocomplete";
 import { CampaignChip } from "../-order-shared";
 import { FormDatePicker } from "../-date-picker-field";
 import {
@@ -86,12 +89,6 @@ import { CapFlows } from "../-cap-flows";
 
 /** The editor's target in the URL (`edit=`): a new order, or the id of the order to edit. */
 export const NEW_ORDER = "new";
-
-const taxLabels: Record<(typeof TAX_RATES)[number], string> = {
-  "0.1": "10%",
-  "0.08": "8%（食品）",
-  "0": "非課税",
-};
 
 /** A label on the left and a short field on the right (the details rows), the error under both. */
 function InlineField({
@@ -128,7 +125,16 @@ function InlineField({
 }
 
 /** Quantity, coupon and the shop's own rate of one item. */
-function ItemDetailFields({ form, index }: { form: OrderForm; index: number }) {
+function ItemDetailFields({
+  form,
+  index,
+  withRate = true,
+}: {
+  form: OrderForm;
+  index: number;
+  /** The first item's rate is next to its amount, so it is left out here. */
+  withRate?: boolean;
+}) {
   return (
     <>
       <FormField of={form} path={["items", index, "quantity"]}>
@@ -144,11 +150,18 @@ function ItemDetailFields({ form, index }: { form: OrderForm; index: number }) {
           />
         )}
       </FormField>
-      <FormField of={form} path={["items", index, "shopPointRate"]}>
-        {(field) => (
-          <InlineField label="ショップ独自倍率" field={field} inputMode="decimal" placeholder="1" />
-        )}
-      </FormField>
+      {withRate ? (
+        <FormField of={form} path={["items", index, "shopPointRate"]}>
+          {(field) => (
+            <InlineField
+              label="ショップ独自倍率"
+              field={field}
+              inputMode="decimal"
+              placeholder="1"
+            />
+          )}
+        </FormField>
+      ) : null}
     </>
   );
 }
@@ -227,7 +240,7 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
   const plus = (rate: number) => (rate > 0 ? `+${rate}` : "");
   const byDate = dateCampaigns(plan.benefits, typeof date.input === "string" ? date.input : "");
   return (
-    <Fieldset.Root legend="キャンペーン">
+    <OrderPart legend="キャンペーン">
       {/* Two cards of one width, so their checks line up. */}
       <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
         <CampaignCheck
@@ -258,7 +271,7 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
           ))}
         </Flex>
       ) : null}
-    </Fieldset.Root>
+    </OrderPart>
   );
 }
 
@@ -274,9 +287,7 @@ function ShopFields({
   autofill: ItemAutofill;
 }) {
   const shops = useAtomValue(shopsAtom);
-  const sortedShops = useSortedShops(shops);
   const url = useField(form, { path: ["url"] });
-  const shop = useField(form, { path: ["shop"] });
 
   // The shop of the URL is chosen at once, and stays when the item cannot be looked up.
   const onUrl = (text: string) => {
@@ -305,7 +316,8 @@ function ShopFields({
     <>
       <Field.Root
         id={urlId}
-        label="商品のURL（貼るとショップを選びます）"
+        label={<UrlLabel />}
+        optionalIndicator={optionalMark}
         {...errorsOf(url)}
         helperMessage={urlUnknown ? "このURLからはショップを選べません" : undefined}
         helperMessageProps={{ id: hintId }}
@@ -330,66 +342,24 @@ function ShopFields({
         </Flex>
         <AutofillStatus autofill={autofill} />
       </Field.Root>
-      <Box display="grid" gridTemplateColumns="minmax(0, 1fr) 150px" alignItems="start" gap="2">
-        <Field.Root label="ショップ" {...errorsOf(shop)}>
-          <NativeSelect.Root
-            {...bind(shop)}
-            onChange={(event) => {
-              const value = event.currentTarget.value;
-              shop.onChange(value);
-              const chosen = shops.find((other) => other.id === value);
-              setInput(form, { path: ["is39"], input: chosen?.tags.includes("39shop") ?? false });
-            }}
-          >
-            <option value="">未入力</option>
-            {sortedShops.map((other) => (
-              <option key={other.id} value={other.id}>
-                {other.name}
-                {other.tags.includes("39shop") ? "（39）" : ""}
-              </option>
-            ))}
-            <option value={NEW_SHOP}>＋ 新しいショップ</option>
-          </NativeSelect.Root>
-        </Field.Root>
-        <FormField of={form} path={["date"]}>
-          {(field) => (
-            <Field.Root label="注文日" {...errorsOf(field)}>
-              <FormDatePicker field={field} period={plan.period} />
-            </Field.Root>
-          )}
-        </FormField>
-      </Box>
-      {shop.input === NEW_SHOP || shop.input === "" ? (
+      <OrderPart legend="購入">
+        <ShopAutocomplete form={form} />
         <Box
           display="grid"
-          gridTemplateColumns={shop.input === NEW_SHOP ? "minmax(0, 1fr) 150px" : "minmax(0, 1fr)"}
+          gridTemplateColumns="repeat(2, minmax(0, 1fr))"
           alignItems="start"
           gap="2"
         >
-          {shop.input === NEW_SHOP ? (
-            <FormField of={form} path={["newShopName"]}>
-              {(field) => (
-                <Field.Root label="新しいショップの名前" {...errorsOf(field)}>
-                  <Input {...bind(field)} />
-                </Field.Root>
-              )}
-            </FormField>
-          ) : null}
-          <FormField of={form} path={["channel"]}>
+          <ChannelField form={form} />
+          <FormField of={form} path={["date"]}>
             {(field) => (
-              <Field.Root label="購入先" invalid={field.errors !== null}>
-                <NativeSelect.Root {...bind(field)}>
-                  {Object.values(channels).map((channel) => (
-                    <option key={channel.id} value={channel.id}>
-                      {channel.label}
-                    </option>
-                  ))}
-                </NativeSelect.Root>
+              <Field.Root label="注文日" {...errorsOf(field)}>
+                <FormDatePicker field={field} period={plan.period} />
               </Field.Root>
             )}
           </FormField>
         </Box>
-      ) : null}
+      </OrderPart>
     </>
   );
 }
@@ -402,59 +372,43 @@ function MainItemFields({
   amountRef: RefObject<HTMLInputElement | null>;
 }) {
   return (
-    <>
-      <FormField of={form} path={AMOUNT_PATH}>
-        {(field) => (
-          <Field.Root label="金額（税込）" {...errorsOf(field)}>
-            <InputGroup.Root size="xl">
-              <InputGroup.Addon aria-hidden="true">¥</InputGroup.Addon>
-              <Input
-                {...bind(field)}
-                ref={(element: HTMLInputElement | null) => {
-                  field.props.ref(element);
-                  amountRef.current = element;
-                }}
-                inputMode="numeric"
-                placeholder="0"
-                textAlign="end"
-                fontVariantNumeric="tabular-nums"
-              />
-            </InputGroup.Root>
-          </Field.Root>
-        )}
-      </FormField>
+    <OrderPart legend="商品">
       <FormField of={form} path={["items", 0, "name"]}>
         {(field) => (
-          <Field.Root label="商品名メモ（任意）" {...errorsOf(field)}>
+          <Field.Root label="商品名メモ" optionalIndicator={optionalMark} {...errorsOf(field)}>
             <Input placeholder="例：洗濯洗剤 詰め替え" {...bind(field)} />
           </Field.Root>
         )}
       </FormField>
+      <Box display="grid" gridTemplateColumns="minmax(0, 1fr) 150px" alignItems="start" gap="2">
+        <FormField of={form} path={AMOUNT_PATH}>
+          {(field) => (
+            <Field.Root label="金額（税込）" {...errorsOf(field)}>
+              <InputGroup.Root>
+                <InputGroup.Addon aria-hidden="true">¥</InputGroup.Addon>
+                <Input
+                  {...bind(field)}
+                  ref={(element: HTMLInputElement | null) => {
+                    field.props.ref(element);
+                    amountRef.current = element;
+                  }}
+                  inputMode="numeric"
+                  placeholder="0"
+                  textAlign="end"
+                  fontVariantNumeric="tabular-nums"
+                />
+              </InputGroup.Root>
+            </Field.Root>
+          )}
+        </FormField>
+        <FormField of={form} path={["items", 0, "shopPointRate"]}>
+          {(field) => <ShopRateInput field={field} />}
+        </FormField>
+      </Box>
       <FormField of={form} path={["items", 0, "taxRate"]}>
-        {(field) => (
-          <Fieldset.Root legend="税率">
-            <ButtonGroup.Root attached>
-              {TAX_RATES.map((rate) => {
-                const selected = field.input === rate;
-                return (
-                  <ButtonGroup.Item
-                    key={rate}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => field.onChange(rate)}
-                    variant={selected ? "solid" : "outline"}
-                    colorScheme={selected ? "primary" : undefined}
-                    flex="1"
-                  >
-                    {taxLabels[rate]}
-                  </ButtonGroup.Item>
-                );
-              })}
-            </ButtonGroup.Root>
-          </Fieldset.Root>
-        )}
+        {(field) => <TaxRateButtons field={field} fill />}
       </FormField>
-    </>
+    </OrderPart>
   );
 }
 
@@ -465,11 +419,11 @@ function Details({ form, defaultOpen }: { form: OrderForm; defaultOpen: boolean 
     <NativeAccordion.Root animate={false}>
       <NativeAccordion.Item open={defaultOpen}>
         <NativeAccordion.Button>
-          詳細設定（数量・クーポン・ショップ倍率・保留・商品を追加）
+          詳細設定（数量・クーポン・保留・商品を追加）
         </NativeAccordion.Button>
         <NativeAccordion.Panel>
           <Flex direction="column" gap="2">
-            <ItemDetailFields form={form} index={0} />
+            <ItemDetailFields form={form} index={0} withRate={false} />
             <FormField of={form} path={["onHold"]}>
               {(field) => (
                 <Switch
@@ -595,7 +549,9 @@ function EditorContent({ plan, original, layout, amountRef, onDragStart, onClose
         >
           <Flex direction="column" gap="3.5">
             <ShopFields form={form} plan={plan} urlId={urlId} autofill={autofill} />
+            <Separator />
             <MainItemFields form={form} amountRef={amountRef} />
+            <Separator />
             <Campaigns form={form} plan={plan} />
             <Preview form={form} plan={plan} original={original} />
             {original ? null : <CapFlows plan={plan} form={form} />}

@@ -13,16 +13,19 @@ import { createMemoryRepository } from "../../../storage/memory-repository";
 import {
   PLAN,
   baseBenefit,
+  enterShop,
   makePlan,
   marathon,
   marathonPlan,
   order,
   orderId,
   renderPlanHome,
+  shopField,
   shopId,
   shops,
   spuBenefit,
   tapCard,
+  chooseTaxRate,
 } from "../-test-fixtures";
 
 beforeEach(async () => {
@@ -59,11 +62,10 @@ async function fillOrder(
   sheet: ReturnType<Screen["getByRole"]>,
   values: { shop?: string; amount: string; name?: string },
 ) {
-  if (values.shop)
-    await sheet.getByLabelText("ショップ", { exact: true }).selectOptions(values.shop);
+  if (values.shop) await enterShop(sheet, values.shop);
   await sheet.getByLabelText("注文日").fill("2026/10/05");
   await amountOf(sheet).fill(values.amount);
-  if (values.name) await sheet.getByLabelText("商品名メモ（任意）").fill(values.name);
+  if (values.name) await sheet.getByRole("textbox", { name: /^商品名メモ/ }).fill(values.name);
 }
 
 test("adds unnamed orders without adding shop choices", async () => {
@@ -76,7 +78,7 @@ test("adds unnamed orders without adding shop choices", async () => {
   if (!first) throw new Error("missing order");
   expect(first.shopId).toBeUndefined();
   expect(await repository().shops.list()).toHaveLength(shops.length);
-  await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue("");
+  await expect.element(shopField(sheet)).toHaveValue("");
   await fillOrder(sheet, { amount: "1500", name: "コーヒー豆" });
   await sheet.getByRole("button", { name: "追加する" }).click();
   await expect.poll(async () => (await stored()).length).toBe(6);
@@ -104,9 +106,9 @@ test("clearing a registered shop clears its 39shop mark", async () => {
   );
   const screen = await renderWith(marathonPlan(), marked);
   const sheet = await openAdd(screen);
-  await sheet.getByLabelText("ショップ", { exact: true }).selectOptions(shopId(0));
+  await enterShop(sheet, "ショップ0");
   await expect.element(sheet.getByRole("checkbox", { name: "39ショップ" })).toBeChecked();
-  await sheet.getByLabelText("ショップ", { exact: true }).selectOptions("");
+  await enterShop(sheet, "");
   await expect.element(sheet.getByRole("checkbox", { name: "39ショップ" })).not.toBeChecked();
   await fillOrder(sheet, { amount: "1500" });
   await sheet.getByRole("button", { name: "追加する" }).click();
@@ -146,8 +148,8 @@ test("continue adding keeps the sheet open and clears the inputs", async () => {
   await expect.element(sheet).toBeVisible();
   await expect.element(amountOf(sheet)).toHaveValue("");
   await expect.element(amountOf(sheet)).not.toHaveFocus();
-  await expect.element(sheet.getByLabelText("商品名メモ（任意）")).toHaveValue("");
-  await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue("");
+  await expect.element(sheet.getByRole("textbox", { name: /^商品名メモ/ })).toHaveValue("");
+  await expect.element(shopField(sheet)).toHaveValue("");
 
   await fillOrder(sheet, { shop: "ショップ5", amount: "1200" });
   await sheet.getByRole("button", { name: "追加する" }).click();
@@ -171,7 +173,7 @@ test("invalid price is not saved", async () => {
   await expect.element(amountOf(sheet)).toHaveFocus();
   await expect.element(sheet).toBeVisible();
 
-  await sheet.getByLabelText("ショップ", { exact: true }).selectOptions("未入力");
+  await enterShop(sheet, "");
   await amountOf(sheet).fill("");
   await sheet.getByRole("button", { name: "続けて追加" }).click();
   await expect.element(sheet.getByText("金額を入れてください")).toBeVisible();
@@ -187,12 +189,10 @@ test("tax-exempt item uses the same base amount", async () => {
   // 10% tax: ¥2,980 − floor(2,980 × 10 / 110) = ¥2,710 before tax.
   await expect.element(preview()).toMatchTextContent("税抜 ¥2,710");
 
-  const exempt = sheet.getByRole("button", { name: "非課税" });
-  await exempt.click();
-  await expect.element(exempt).toHaveAttribute("aria-pressed", "true");
-  await expect
-    .element(sheet.getByRole("button", { name: "10%" }))
-    .toHaveAttribute("aria-pressed", "false");
+  const exempt = sheet.getByRole("radio", { name: "非課税" });
+  await chooseTaxRate(sheet, "非課税");
+  await expect.element(exempt).toBeChecked();
+  await expect.element(sheet.getByRole("radio", { name: "10%" })).not.toBeChecked();
   await expect.element(preview()).toMatchTextContent("税抜 ¥2,980");
 
   await sheet.getByRole("button", { name: "追加する" }).click();
@@ -251,7 +251,7 @@ test("preview shows the next shop count and points", async () => {
   await expect.element(preview()).toMatchTextContent("買い回りが +1倍 になり、ほかの注文も +400P");
 
   // A shop that already counts adds no shop.
-  await sheet.getByLabelText("ショップ", { exact: true }).selectOptions("ショップ0");
+  await enterShop(sheet, "ショップ0");
   await expect.element(preview()).toMatchTextContent("税抜 ¥10,000 × 6% → 600P");
   await expect.element(preview()).not.toMatchTextContent("店舗目");
   await expect.element(preview()).not.toMatchTextContent("買い回り");
@@ -272,16 +272,16 @@ test("pasting an Ichiba URL selects the matching shop", async () => {
 
   await sheet.getByRole("button", { name: "貼り付け" }).click();
   await expect
-    .element(sheet.getByLabelText(/^商品のURL/))
+    .element(sheet.getByLabelText(/^URLから自動入力/))
     .toHaveValue("https://item.rakuten.co.jp/shop-four/item-1/");
-  await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue(shopId(4));
+  await expect.element(shopField(sheet)).toHaveValue("ショップ4");
   await expect.element(sheet.getByRole("checkbox", { name: /^39ショップ/ })).toBeChecked();
   readText.mockRestore();
 
   // A code that is not in the registry starts a new shop with that code.
-  await sheet.getByLabelText(/^商品のURL/).fill("https://item.rakuten.co.jp/coffee-beans/x/");
-  await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue("new");
-  await expect.element(sheet.getByLabelText("新しいショップの名前")).toHaveValue("coffee-beans");
+  await sheet.getByLabelText(/^URLから自動入力/).fill("https://item.rakuten.co.jp/coffee-beans/x/");
+  // A shop no one has saved: its name is in the shop field, to be kept or changed.
+  await expect.element(shopField(sheet)).toHaveValue("coffee-beans");
   await expect.element(sheet.getByLabelText("購入先")).toHaveValue("rakuten-ichiba");
   await sheet.getByLabelText("注文日").fill("2026/10/05");
   await amountOf(sheet).fill("1000");
@@ -299,7 +299,7 @@ test("pasting an Ichiba URL selects the matching shop", async () => {
 test("a URL that names no shop is described and does not mark the field invalid", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
-  const url = sheet.getByLabelText(/^商品のURL/);
+  const url = sheet.getByLabelText(/^URLから自動入力/);
   await url.fill("https://example.com/item");
   await expect.element(url).toHaveAccessibleDescription("このURLからはショップを選べません");
   await expect.element(url).not.toHaveAttribute("aria-invalid");
@@ -309,7 +309,7 @@ test("a URL that is not a web address is an error, and nothing is saved", async 
   const screen = await renderWith();
   const sheet = await openAdd(screen);
   await fillOrder(sheet, { shop: "ショップ4", amount: "1000" });
-  const url = sheet.getByLabelText(/^商品のURL/);
+  const url = sheet.getByLabelText(/^URLから自動入力/);
   await url.fill("item.rakuten.co.jp/shop/item/");
   await sheet.getByRole("button", { name: "追加する" }).click();
 
@@ -355,7 +355,7 @@ test("editing an order shows its stored URL and keeps it", async () => {
   await card.getByRole("button", { name: "編集" }).click();
 
   const sheet = screen.getByRole("dialog", { name: "注文を編集" });
-  await expect.element(sheet.getByLabelText(/^商品のURL/)).toHaveValue(url);
+  await expect.element(sheet.getByLabelText(/^URLから自動入力/)).toHaveValue(url);
   await amountOf(sheet).fill("5500");
   await sheet.getByRole("button", { name: "保存する" }).click();
   await expect.poll(async () => (await stored())[1]?.lineItems[0]?.unitPrice).toBe(5500);
@@ -371,7 +371,7 @@ test("details set quantity, coupon, shop rate, hold and another item", async () 
   await details.click();
   await sheet.getByLabelText("数量").fill("3");
   await sheet.getByLabelText("クーポン値引額（税込）").fill("300");
-  await sheet.getByLabelText("ショップ独自倍率").fill("2");
+  await sheet.getByRole("spinbutton", { name: /^独自倍率/ }).fill("2");
   const hold = sheet.getByRole("switch", { name: "保留（計算から外す）" });
   // The whole row is the switch's label, so the tap target is the row's height. Sizes are read
   // from the elements: no matcher measures them.
@@ -447,7 +447,7 @@ test("editing an order from its card saves the changes", async () => {
   await expect.element(sheet).toBeVisible();
   await expect.element(amountOf(sheet)).toHaveValue("11000");
   await expect.element(amountOf(sheet)).not.toHaveFocus();
-  await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue(shopId(1));
+  await expect.element(shopField(sheet)).toHaveValue("ショップ1");
   await expect.element(sheet.getByRole("button", { name: "続けて追加" })).not.toBeInTheDocument();
   // Editing the order does not add a shop: the order's own figures only.
   await expect.element(preview()).toMatchTextContent("税抜 ¥10,000 × 6% → 600P");

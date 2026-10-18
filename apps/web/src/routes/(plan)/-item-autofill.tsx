@@ -182,8 +182,8 @@ export function AutofillStatus({ autofill }: { autofill: ItemAutofill }) {
   );
 
   return (
-    // Two lines of text and a row of buttons: the tallest state on a phone.
-    <Box role="status" mt="1" h="5.5rem" overflow="hidden">
+    // As tall as what it says: nothing while there is nothing to say.
+    <Box role="status" mt={state.kind === "idle" ? undefined : "1"}>
       {state.kind === "loading" ? message("商品情報を取得しています…") : null}
       {state.kind === "busy" ? (
         <VStack gap="0" alignItems="flex-start">

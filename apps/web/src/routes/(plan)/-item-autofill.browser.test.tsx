@@ -9,7 +9,7 @@ import {
   order,
   orderId,
   renderPlanHome,
-  shopId,
+  shopField,
   shops,
 } from "./-test-fixtures";
 
@@ -88,9 +88,9 @@ describe("the phone sheet", () => {
     const screen = await renderWith(lookup);
     const sheet = await openSheet(screen);
 
-    await paste(sheet.getByLabelText(/^商品のURL/), RAKUTEN_SHARE);
+    await paste(sheet.getByLabelText(/^URLから自動入力/), RAKUTEN_SHARE);
     await expect
-      .element(sheet.getByLabelText("商品名メモ（任意）"))
+      .element(sheet.getByRole("textbox", { name: /^商品名メモ/ }))
       .toHaveValue("ブレンドコーヒー豆 500g");
     expect(askedFor(lookup)).toEqual([["blend-500g", 5000]]);
     expect(lookup.mock.calls[0]?.[0]).toEqual({
@@ -98,15 +98,11 @@ describe("the phone sheet", () => {
       itemManageNumber: "blend-500g",
     });
     await expect.element(sheet.getByLabelText("金額（税込）")).toHaveValue("2160");
-    await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue("new");
-    await expect
-      .element(sheet.getByLabelText("新しいショップの名前"))
-      .toHaveValue("コーヒー豆の店");
+    await expect.element(shopField(sheet)).toHaveValue("コーヒー豆の店");
     await expect.element(sheet.getByText(LOADING)).not.toBeInTheDocument();
     expect(sheet.getByText(FAILED).query()).toBeNull();
 
-    await sheet.getByText(/^詳細設定/).click();
-    await expect.element(sheet.getByLabelText("ショップ独自倍率")).toHaveValue("5");
+    await expect.element(sheet.getByRole("spinbutton", { name: /^独自倍率/ })).toHaveValue("5");
     await sheet.getByLabelText("金額（税込）").fill("2000");
     await sheet.getByLabelText("注文日").fill("2026/10/05");
     await sheet.getByRole("button", { name: "追加する", exact: true }).click();
@@ -133,11 +129,11 @@ describe("the phone sheet", () => {
     const lookup = answering({ ok: true, item: item() });
     const screen = await renderWith(lookup);
     const sheet = await openSheet(screen);
-    const url = sheet.getByLabelText(/^商品のURL/);
+    const url = sheet.getByLabelText(/^URLから自動入力/);
 
     await url.fill(ITEM_URL);
     // The shop is chosen while typing; the item waits for the field to be left.
-    await expect.element(sheet.getByLabelText("新しいショップの名前")).toHaveValue("coffee-beans");
+    await expect.element(shopField(sheet)).toHaveValue("coffee-beans");
     await new Promise((resolve) => setTimeout(resolve, 300));
     expect(lookup).not.toHaveBeenCalled();
 
@@ -158,7 +154,7 @@ describe("the phone sheet", () => {
     const lookup = answering({ ok: true, item: item() });
     const screen = await renderWith(lookup);
     const sheet = await openSheet(screen);
-    const url = sheet.getByLabelText(/^商品のURL/);
+    const url = sheet.getByLabelText(/^URLから自動入力/);
 
     await url.fill(ITEM_URL);
     await userEvent.keyboard("{Enter}");
@@ -176,11 +172,14 @@ describe("the phone sheet", () => {
     const screen = await renderWith(lookup);
     const sheet = await openSheet(screen);
 
-    await paste(sheet.getByLabelText(/^商品のURL/), "https://item.rakuten.co.jp/shop-four/x/");
+    await paste(
+      sheet.getByLabelText(/^URLから自動入力/),
+      "https://item.rakuten.co.jp/shop-four/x/",
+    );
     await expect.element(sheet.getByLabelText("金額（税込）")).toHaveValue("2160");
-    await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue(shopId(4));
+    await expect.element(shopField(sheet)).toHaveValue("ショップ4");
     await sheet.getByText(/^詳細設定/).click();
-    await expect.element(sheet.getByLabelText("ショップ独自倍率")).toHaveValue("");
+    await expect.element(sheet.getByRole("spinbutton", { name: /^独自倍率/ })).toHaveValue("");
   });
 
   test.each<[string, ItemLookupFailure]>([
@@ -192,12 +191,11 @@ describe("the phone sheet", () => {
     const screen = await renderWith(failing(error));
     const sheet = await openSheet(screen);
 
-    await paste(sheet.getByLabelText(/^商品のURL/), ITEM_URL);
+    await paste(sheet.getByLabelText(/^URLから自動入力/), ITEM_URL);
     await expect.element(sheet.getByText(FAILED)).toBeVisible();
-    await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue("new");
-    await expect.element(sheet.getByLabelText("新しいショップの名前")).toHaveValue("coffee-beans");
+    await expect.element(shopField(sheet)).toHaveValue("coffee-beans");
     await expect.element(sheet.getByLabelText("金額（税込）")).toHaveValue("");
-    await expect.element(sheet.getByLabelText("商品名メモ（任意）")).toHaveValue("");
+    await expect.element(sheet.getByRole("textbox", { name: /^商品名メモ/ })).toHaveValue("");
 
     // The order can still be typed and added.
     await sheet.getByLabelText("金額（税込）").fill("1500");
@@ -216,7 +214,7 @@ describe("the phone sheet", () => {
     const screen = await renderWith(lookup);
     const sheet = await openSheet(screen);
 
-    await paste(sheet.getByLabelText(/^商品のURL/), ITEM_URL);
+    await paste(sheet.getByLabelText(/^URLから自動入力/), ITEM_URL);
     await expect.element(sheet.getByText(BUSY)).toBeVisible();
     await sheet.getByRole("button", { name: "待って取得する" }).click();
     await expect
@@ -244,7 +242,7 @@ describe("the phone sheet", () => {
     const screen = await renderWith(lookup);
     const sheet = await openSheet(screen);
 
-    await paste(sheet.getByLabelText(/^商品のURL/), ITEM_URL);
+    await paste(sheet.getByLabelText(/^URLから自動入力/), ITEM_URL);
     await sheet.getByRole("button", { name: "待って取得する" }).click();
     // Not waiting yet: back without a call.
     await sheet.getByRole("button", { name: "やめる" }).click();
@@ -269,7 +267,7 @@ describe("the phone sheet", () => {
       .mockResolvedValueOnce({ ok: false, error: { reason: "busy", waitMs: 31_000 } });
     const screen = await renderWith(lookup);
     const sheet = await openSheet(screen);
-    const url = sheet.getByLabelText(/^商品のURL/);
+    const url = sheet.getByLabelText(/^URLから自動入力/);
 
     await paste(url, ITEM_URL);
     await expect.element(sheet.getByText(TOO_BUSY)).toBeVisible();
@@ -285,14 +283,14 @@ describe("the phone sheet", () => {
     const lookup = answering({ ok: true, item: item() });
     const screen = await renderWith(lookup);
     const sheet = await openSheet(screen);
-    const url = sheet.getByLabelText(/^商品のURL/);
+    const url = sheet.getByLabelText(/^URLから自動入力/);
 
     await paste(url, "https://books.rakuten.co.jp/rb/12345/");
-    await expect.element(sheet.getByLabelText("新しいショップの名前")).toHaveValue("楽天ブックス");
+    await expect.element(shopField(sheet)).toHaveValue("楽天ブックス");
     await paste(url, "https://books.rakuten.co.jp/rk/0a1b2c3d4e5f3a7b8c9d0e1f2a3b4c5d/");
-    await expect.element(sheet.getByLabelText("新しいショップの名前")).toHaveValue("楽天Kobo");
+    await expect.element(shopField(sheet)).toHaveValue("楽天Kobo");
     await paste(url, "https://www.rakuten.co.jp/coffee-beans/");
-    await expect.element(sheet.getByLabelText("新しいショップの名前")).toHaveValue("coffee-beans");
+    await expect.element(shopField(sheet)).toHaveValue("coffee-beans");
     await userEvent.keyboard("{Enter}");
 
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -309,7 +307,7 @@ describe("the phone sheet", () => {
       .mockResolvedValue({ ok: false, error: { reason: "not-found" } });
     const screen = await renderWith(lookup);
     const sheet = await openSheet(screen);
-    const url = sheet.getByLabelText(/^商品のURL/);
+    const url = sheet.getByLabelText(/^URLから自動入力/);
 
     await paste(url, ITEM_URL);
     await expect.element(sheet.getByText(LOADING)).toBeVisible();
@@ -320,14 +318,14 @@ describe("the phone sheet", () => {
 
     answer({ ok: true, item: item() });
     await new Promise((resolve) => setTimeout(resolve, 50));
-    await expect.element(sheet.getByLabelText("商品名メモ（任意）")).toHaveValue("");
-    await expect.element(sheet.getByLabelText("ショップ", { exact: true })).toHaveValue(shopId(4));
+    await expect.element(sheet.getByRole("textbox", { name: /^商品名メモ/ })).toHaveValue("");
+    await expect.element(shopField(sheet)).toHaveValue("ショップ4");
   });
 
   test("typing another URL clears what the status said about the last one", async () => {
     const screen = await renderWith(failing({ reason: "not-found" }));
     const sheet = await openSheet(screen);
-    const url = sheet.getByLabelText(/^商品のURL/);
+    const url = sheet.getByLabelText(/^URLから自動入力/);
 
     await paste(url, ITEM_URL);
     await expect.element(sheet.getByText(FAILED)).toBeVisible();
@@ -347,19 +345,15 @@ describe("the desktop", () => {
       .mockResolvedValueOnce({ ok: true, item: item() })
       .mockResolvedValue({ ok: false, error: { reason: "rate-limited" } });
     const screen = await renderWith(lookup, `/plan?id=${PLAN}`, marathonPlan([]));
-    const url = screen.getByRole("textbox", { name: /^商品のURL/ });
+    const url = screen.getByRole("textbox", { name: /^URLから自動入力/ });
 
     await paste(url, ITEM_URL);
     await expect
-      .element(screen.getByRole("textbox", { name: "商品名メモ" }))
+      .element(screen.getByRole("textbox", { name: /^商品名メモ/ }))
       .toHaveValue("ブレンドコーヒー豆 500g");
     await expect.element(screen.getByRole("textbox", { name: "金額（税込）" })).toHaveValue("2160");
-    await expect
-      .element(screen.getByRole("textbox", { name: "新しいショップの名前" }))
-      .toHaveValue("コーヒー豆の店");
-    await expect
-      .element(screen.getByRole("textbox", { name: "ショップ独自倍率" }))
-      .toHaveValue("5");
+    await expect.element(shopField(screen)).toHaveValue("コーヒー豆の店");
+    await expect.element(screen.getByRole("spinbutton", { name: /^独自倍率/ })).toHaveValue("5");
     await screen.getByRole("button", { name: "追加する" }).click();
 
     await expect.poll(async () => (await stored()).length).toBe(1);
@@ -375,7 +369,7 @@ describe("the desktop", () => {
     await url.fill("https://item.rakuten.co.jp/shop-four/x/");
     await userEvent.keyboard("{Enter}");
     await expect.element(screen.getByText(FAILED)).toBeVisible();
-    await expect.element(screen.getByRole("combobox", { name: "ショップ" })).toHaveValue(shopId(4));
+    await expect.element(shopField(screen)).toHaveValue("ショップ4");
     await expect.element(screen.getByRole("textbox", { name: "金額（税込）" })).toHaveValue("");
     expect(await stored()).toHaveLength(1);
   });
@@ -387,9 +381,9 @@ describe("the desktop", () => {
     await expect.element(dialog).toBeVisible();
     expect(lookup).not.toHaveBeenCalled();
 
-    await paste(dialog.getByLabelText(/^商品のURL/), ITEM_URL);
+    await paste(dialog.getByLabelText(/^URLから自動入力/), ITEM_URL);
     await expect
-      .element(dialog.getByLabelText("商品名メモ（任意）"))
+      .element(dialog.getByRole("textbox", { name: /^商品名メモ/ }))
       .toHaveValue("ブレンドコーヒー豆 500g");
     // A price listed without tax is not put in the amount.
     await expect.element(dialog.getByLabelText("金額（税込）")).toHaveValue("11000");

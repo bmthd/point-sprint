@@ -2,7 +2,7 @@ import type { Benefit, Plan } from "@workspaces/domain";
 import { beforeEach, expect, test } from "vitest";
 import { page } from "vitest/browser";
 import { createMemoryRepository } from "../../storage/memory-repository";
-import { PLAN, baseBenefit, order, renderPlanHome, shops } from "./-test-fixtures";
+import { PLAN, baseBenefit, enterShop, order, renderPlanHome, shops } from "./-test-fixtures";
 
 /** +1倍, at most 70P in the plan. */
 const campaign: Benefit = {
@@ -36,7 +36,7 @@ async function addForm(withPlan = plan, shop = "ショップ0") {
   if (withPlan.orders.length > 0) await screen.getByRole("button", { name: /注文を追加/ }).click();
   // The editor is closed, so the only order fields on the page are the add form's.
   const form = screen.getByRole("region", { name: "注文のリスト" });
-  await form.getByRole("combobox", { name: "ショップ", exact: true }).selectOptions(shop);
+  await enterShop(form, shop);
   return form;
 }
 
