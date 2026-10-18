@@ -5,6 +5,7 @@ import { tierRate } from "../benefit-kinds/shop-around";
 import { spendTierRate } from "../benefit-kinds/spend-tiers";
 import { channels } from "../channels";
 import { matchesConditions } from "../conditions/matches";
+import { isTwoShopCampaign } from "../master/campaigns";
 import type { Benefit } from "../model/benefit";
 import type { ChannelId, OrderTag, ShopTag } from "../model/common";
 import { type LineItem, hasShop, orderShopContext } from "../model/order";
@@ -51,6 +52,8 @@ type BenefitEntry = {
   receivingBase: number;
   /** Tax-included total of the benefit's orders over its days. */
   spendTotal: number;
+  /** Shops over the benefit's days: its date rule's, or the plan's period when it has none. */
+  shopCount: number;
 };
 
 type PlanPhase = {
@@ -171,14 +174,19 @@ function planPhase(plan: Plan, shops: Shop[], shopsById: Map<string, Shop>): Pla
     .map((benefit): BenefitEntry => {
       const eligible = eligibleItems(benefit, orders);
       const spendTotal = spendTotalOf(benefit, eligible, plan.period);
-      const raw = rawPointsOf(benefit, eligible, { shopCount, spendTotal });
+      const { dateRule } = benefit.conditions;
+      const benefitShopCount =
+        benefit.kind === "shop-around" && dateRule
+          ? countShops(plan.orders, shops, plan.period, dateRule)
+          : shopCount;
+      const raw = rawPointsOf(benefit, eligible, { shopCount: benefitShopCount, spendTotal });
       const items = eligible.map(({ lineItemId, orderDate }) => {
         const points = raw.get(lineItemId) ?? 0;
         const groupKey = capGroupKey(groupOwner, benefit, orderDate);
         return { planId: plan.id, lineItemId, date: orderDate, groupKey, raw: points, points };
       });
       const receivingBase = eligible.reduce((sum, item) => sum + item.amount, 0);
-      return { benefit, items, receivingBase, spendTotal };
+      return { benefit, items, receivingBase, spendTotal, shopCount: benefitShopCount };
     });
   return { plan, orders, shopCount, warnings, entries };
 }
@@ -287,14 +295,16 @@ function remainingGroupCap(
 }
 
 function outlookOf(phase: PlanPhase, groups: Map<string, CapGroup>): ShopAroundOutlook | null {
-  const entry = phase.entries.find(({ benefit }) => benefit.kind === "shop-around");
+  const entry = phase.entries.find(
+    ({ benefit }) => benefit.kind === "shop-around" && !isTwoShopCampaign(benefit),
+  );
   if (!entry || entry.benefit.kind !== "shop-around") return null;
   return shopAroundOutlook({
     benefitId: entry.benefit.id,
     tiers: entry.benefit.params.tiers,
     cap: remainingGroupCap(phase, entry, groups),
     amountBasis: entry.benefit.amountBasis,
-    shopCount: phase.shopCount,
+    shopCount: entry.shopCount,
     receivingBase: entry.receivingBase,
   });
 }
@@ -355,8 +365,8 @@ function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
 
   const rates: Record<string, number> = {};
   const spendTotals: Record<string, number> = {};
-  for (const { benefit, spendTotal } of phase.entries) {
-    rates[benefit.id] = rateOf(benefit, { shopCount: phase.shopCount, spendTotal });
+  for (const { benefit, spendTotal, shopCount } of phase.entries) {
+    rates[benefit.id] = rateOf(benefit, { shopCount, spendTotal });
     if (benefit.kind === "spend-tiers") spendTotals[benefit.id] = spendTotal;
   }
 

@@ -145,6 +145,7 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
   const is39 = useField(form, { path: ["is39"] });
   const repeat = useField(form, { path: ["repeat"] });
   const brandDay = useField(form, { path: ["brandDay"] });
+  const is24h = useField(form, { path: ["is24h"] });
   const hintId = useId();
   // The mark belongs to the shop, so a shop that is saved already gets it on every order.
   const saved = shops.some((other) => other.id === shop.input);
@@ -180,6 +181,13 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
           ブランドデー対象
         </CampaignCheck>
       ) : null}
+      <CampaignCheck
+        campaign="24h"
+        checked={is24h.input === true}
+        onChange={() => is24h.onChange(!is24h.input)}
+      >
+        24時間限定
+      </CampaignCheck>
     </Flex>
   );
 }
