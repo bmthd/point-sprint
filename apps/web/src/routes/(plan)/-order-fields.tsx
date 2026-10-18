@@ -33,7 +33,7 @@ import { type FieldState, bind, errorsOf } from "../../form/form";
 import { type ShopChange, changeShop, replaceShop } from "../../state/mutations";
 import { shopsAtom } from "../../state/queries";
 import type { RakutenItem } from "../../rakuten/item-search";
-import { imageUrl, taxRateLabel } from "./-order-shared";
+import { imageUrl, taxRateLabel, taxRateSegmentsStyle } from "./-order-shared";
 import type { OrderForm } from "./-order-editor/order-form-store";
 
 // Fields shared by the desktop list's edit grid, its add form and the order editor.
@@ -193,19 +193,7 @@ export function TaxRateButtons({
         items={TAX_RATES.map((rate) => ({ label: TAX_LABELS[rate], value: rate }))}
         value={typeof field.input === "string" ? (field.input as TaxRateValue) : undefined}
         onChange={(value) => field.onChange(value as TaxRateValue)}
-        // As a chosen campaign card: white with the primary frame. Yamada UI paints the chosen
-        // one `bg`, the page's gray, which on a white panel cannot be told from the track.
-        indicatorProps={{ bg: "bg.panel", borderWidth: "1px", borderColor: "primary.outline" }}
-        css={{
-          "& :has(> input:checked)": { color: "primary.fg" },
-          // Each choice is drawn 36px tall in the track and pressed 44px.
-          "& label::before": {
-            content: '""',
-            position: "absolute",
-            insetInline: "0",
-            insetBlock: "min(0px, calc((100% - 44px) / 2))",
-          },
-        }}
+        {...taxRateSegmentsStyle}
       />
     </Fieldset.Root>
   );

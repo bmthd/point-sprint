@@ -77,7 +77,11 @@ test("a cap shows what other plans used and the price that fills it", async () =
   await expect.element(cardRow()).toMatchTextContent("30 / 100P");
   // 70P at +1倍 is ¥7,000 before tax; at 10% the smallest price is ¥7,699.
   await expect.element(cardRow()).toMatchTextContent("あと¥7,699");
-  await screen.getByRole("button", { name: "非課税" }).click();
+  // The choice's radio is hidden under its label: the label is what is pressed.
+  await screen
+    .getByRole("radiogroup", { name: "買う商品の税率" })
+    .getByText("非課税", { exact: true })
+    .click();
   await expect.element(cardRow()).toMatchTextContent("あと¥7,000");
 });
 
