@@ -190,6 +190,39 @@ export const rateText = (rate: number, plus = true) =>
 export const taxRateLabel = (rate: number) =>
   rate === 0 ? "非課税" : `${Math.round(rate * 100)}%`;
 
+/**
+ * How a tax rate's choices look, wherever they are: framed white as an input is, the chosen one
+ * tinted as the current row of 「あと何店舗回る？」. Yamada UI's gray track and raised white choice
+ * stand apart from the inputs beside them.
+ */
+export const taxRateSegmentsStyle = {
+  bg: "bg.panel",
+  borderWidth: "1px",
+  borderColor: "border.emphasized",
+  rounded: "md",
+  p: "0.5",
+  indicatorProps: {
+    bg: "primary.subtle",
+    borderWidth: "1px",
+    borderColor: "primary.outline",
+    rounded: "sm",
+    boxShadow: "none",
+    // Yamada UI 2.2.8 gives the indicator `layoutDependency: false`, with which motion never
+    // measures it, and the chosen one jumps instead of sliding. Drop this once it slides without.
+    layoutDependency: undefined,
+  },
+  css: {
+    "& :has(> input:checked)": { color: "primary.fg" },
+    // Each choice is drawn shorter than 44px in the frame and pressed 44px.
+    "& label::before": {
+      content: '""',
+      position: "absolute",
+      insetInline: "0",
+      insetBlock: "min(0px, calc((100% - 44px) / 2))",
+    },
+  },
+} as const;
+
 export const taxLabel = (items: LineItem[]) =>
   [...new Set(items.map((item) => item.taxRate))].map(taxRateLabel).join("・");
 
