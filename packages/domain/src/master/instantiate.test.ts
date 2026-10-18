@@ -332,3 +332,60 @@ describe("editCampaign", () => {
     expect(editCampaign(t, both, { rate: 1 }).imagePath).toBe("/img/campaign/sports.webp");
   });
 });
+
+describe("ご愛顧感謝デー", () => {
+  const t = template("thanks-day");
+  const shop: Shop = {
+    id: SHOP,
+    channel: "rakuten-ichiba",
+    name: "shop",
+    tags: [],
+    updatedAt: "2026-10-04T00:00:00Z",
+  };
+  // 11,000 yen incl. 10% tax = 10,000 yen excl. tax.
+  const order = (n: number, date: string) => ({
+    id: ORDER(n),
+    shopId: SHOP,
+    date,
+    lineItems: [
+      {
+        id: ITEM(n),
+        name: "item",
+        unitPrice: 11000,
+        quantity: 1,
+        taxRate: 0.1 as const,
+        discount: 0,
+      },
+    ],
+    onHold: false,
+    tags: [],
+  });
+  const pointsOf = (benefit: Benefit) => {
+    const plan: Plan = {
+      ...emptyPlan([benefit]),
+      orders: [order(1, "2026-10-18"), order(2, "2026-10-19")],
+    };
+    return calculateAll([plan], [shop]).get(PLAN_1)?.breakdown;
+  };
+
+  test("the rank the user chose sets the rate, on the 18th only", () => {
+    // プラチナ: +2.
+    const added = instantiateCampaign(t, { id: NEW_ID, rate: 2 });
+    expect(added).toMatchObject({ enabled: true, sharedKey: "thanks-day", params: { rate: 2 } });
+    expect(pointsOf(added)).toEqual([{ lineItemId: ITEM(1), source: NEW_ID, points: 200 }]);
+    // ダイヤモンド: +3.
+    const diamond = editCampaign(t, added, { rate: 3 });
+    expect(diamond.conditions.dateRule).toEqual({ type: "daysOfMonth", days: [18] });
+    expect(pointsOf(diamond)).toEqual([{ lineItemId: ITEM(1), source: NEW_ID, points: 300 }]);
+  });
+
+  test("is added once, and can be changed and deleted as the user's own", () => {
+    expect(t.addedByUser).toBe(true);
+    const b = { ...instantiateCampaign(t, { id: NEW_ID }), enabled: false };
+    expect(b.kind === "rate-bonus" && b.params.rate).toBe(1);
+    expect(hasCampaignOccurrence(emptyPlan([]), t, {})).toBe(false);
+    expect(hasCampaignOccurrence(emptyPlan([b]), t, {})).toBe(true);
+    expect(templateOfCampaign(b)?.id).toBe("thanks-day");
+    expect(editCampaign(t, b, { rate: 3 })).toMatchObject({ enabled: false, params: { rate: 3 } });
+  });
+});

@@ -307,6 +307,38 @@ test("adds sports-win again for the next day it does not have", async () => {
   ]);
 });
 
+test("adds ご愛顧感謝デー once, with the rate of the rank chosen in its row", async () => {
+  const screen = await renderSettings(makePlan([pointDay()], []));
+  await screen.getByRole("button", { name: "ご愛顧感謝デーを追加" }).click();
+
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(2);
+  expect((await storedPlan()).benefits[1]).toMatchObject({
+    label: "ご愛顧感謝デー",
+    enabled: true,
+    sharedKey: "thanks-day",
+    conditions: { dateRule: { type: "daysOfMonth", days: [18] } },
+    params: { rate: 1, cap: 1000 },
+  });
+  await expect
+    .element(screen.getByRole("button", { name: "ご愛顧感謝デー（追加済み）" }))
+    .toBeDisabled();
+  await expect
+    .element(screen.getByRole("button", { name: "ご愛顧感謝デーを編集" }))
+    .toHaveAttribute("aria-expanded", "true");
+
+  await screen.getByText("ダイヤモンド会員").click();
+  await expect
+    .poll(async () => (await storedBenefit("ご愛顧感謝デー"))?.params)
+    .toMatchObject({
+      rate: 3,
+    });
+  await expect.element(screen.getByRole("switch", { name: /^ご愛顧感謝デー \+3倍/ })).toBeChecked();
+
+  await screen.getByRole("button", { name: "ご愛顧感謝デーを削除" }).click();
+  await screen.getByRole("button", { name: "削除する" }).click();
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
+});
+
 test("adds 39shop for the plan's period once, and refuses a period it already has", async () => {
   const screen = await renderSettings(makePlan([], []));
   await screen.getByRole("button", { name: "39ショップを追加" }).click();

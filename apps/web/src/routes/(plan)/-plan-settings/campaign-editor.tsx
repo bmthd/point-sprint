@@ -33,6 +33,13 @@ const SPORTS_CHOICES = [
   { rate: 2, imagePath: "/img/campaign/sports-w.webp", when: "両方のチームが勝った日" },
 ] as const;
 
+/** ご愛顧感謝デー's rate by the member's rank. シルバー and レギュラー do not get it. */
+const RANK_CHOICES = [
+  { rate: 1, when: "ゴールド会員" },
+  { rate: 2, when: "プラチナ会員" },
+  { rate: 3, when: "ダイヤモンド会員" },
+] as const;
+
 const grouped = (value: number | undefined) =>
   value === undefined ? "" : value.toLocaleString("ja-JP");
 
@@ -42,6 +49,49 @@ const twoColumns = {
   alignItems: "start",
   gap: "2",
 } as const;
+
+/** A card for each rate the campaign can have, with when it has it. */
+function RateChoices({
+  choices,
+  rate,
+  onChange,
+}: {
+  choices: readonly { rate: number; imagePath?: string; when: string }[];
+  rate: number;
+  onChange: (rate: number) => void;
+}) {
+  return (
+    <RadioCardGroup.Root
+      aria-label="倍率"
+      value={String(rate)}
+      onChange={(value) => onChange(Number(value))}
+      colorScheme="primary"
+      size="sm"
+      withIndicator={false}
+      display="grid"
+      gridTemplateColumns={`repeat(${choices.length}, minmax(0, 1fr))`}
+      alignItems="start"
+      gap="2"
+    >
+      {choices.map((option) => (
+        <RadioCard.Root
+          key={option.rate}
+          value={String(option.rate)}
+          flexDirection="column"
+          alignItems="center"
+          textAlign="center"
+          gap="1"
+        >
+          {option.imagePath ? (
+            <Image src={imageUrl(option.imagePath)} alt="" boxSize="12" objectFit="contain" />
+          ) : null}
+          <RadioCard.Label fontVariantNumeric="tabular-nums">+{option.rate}倍</RadioCard.Label>
+          <RadioCard.Description>{option.when}</RadioCard.Description>
+        </RadioCard.Root>
+      ))}
+    </RadioCardGroup.Root>
+  );
+}
 
 /**
  * A campaign's values under its row, each saved on Enter or when it loses the focus, and the button
@@ -111,33 +161,19 @@ export function CampaignEditor({
             period={plan.period}
             onCommit={(day) => set({ dates: [day] })}
           />
-          <RadioCardGroup.Root
-            aria-label="倍率"
-            value={String(rate)}
-            onChange={(value) => void set({ rate: Number(value) })}
-            colorScheme="primary"
-            size="sm"
-            withIndicator={false}
-            {...twoColumns}
-          >
-            {SPORTS_CHOICES.map((option) => (
-              <RadioCard.Root
-                key={option.rate}
-                value={String(option.rate)}
-                flexDirection="column"
-                alignItems="center"
-                textAlign="center"
-                gap="1"
-              >
-                <Image src={imageUrl(option.imagePath)} alt="" boxSize="12" objectFit="contain" />
-                <RadioCard.Label fontVariantNumeric="tabular-nums">
-                  +{option.rate}倍
-                </RadioCard.Label>
-                <RadioCard.Description>{option.when}</RadioCard.Description>
-              </RadioCard.Root>
-            ))}
-          </RadioCardGroup.Root>
+          <RateChoices
+            choices={SPORTS_CHOICES}
+            rate={rate}
+            onChange={(value) => void set({ rate: value })}
+          />
         </>
+      ) : null}
+      {spec.rank ? (
+        <RateChoices
+          choices={RANK_CHOICES}
+          rate={rate}
+          onChange={(value) => void set({ rate: value })}
+        />
       ) : null}
       {spec.period ? (
         <Box {...twoColumns}>
