@@ -190,6 +190,28 @@ describe("user templates", () => {
     expect(hasCampaignOccurrence(emptyPlan([b]), t, { period: PERIOD })).toBe(false);
   });
 
+  test("pointback template is added once per round, with the cap shared by the round's plans", () => {
+    const t = template("pointback");
+    const round = { start: "2026-05-19", end: "2026-05-20" };
+    const b = instantiateCampaign(t, { id: NEW_ID, period: round });
+    expect(b).toMatchObject({
+      kind: "spend-tiers",
+      enabled: true,
+      capScope: "campaign",
+      sharedKey: "pointback:2026-05-19",
+      params: { cap: 5000 },
+    });
+    expect(b.conditions.dateRule).toEqual({ type: "range", ...round });
+    expect(hasCampaignOccurrence(emptyPlan([b]), t, { period: round })).toBe(true);
+    expect(
+      hasCampaignOccurrence(emptyPlan([b]), t, {
+        period: { start: "2026-12-13", end: "2026-12-15" },
+      }),
+    ).toBe(false);
+    // A round the user added, so it can be renamed or removed.
+    expect(templateOfCampaign(b)?.id).toBe("pointback");
+  });
+
   test("instantiate overrides cap, minOrderAmount and label", () => {
     const t = template("39shop");
     const b = instantiateCampaign(t, {

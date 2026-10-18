@@ -639,6 +639,30 @@ test("a row of several items does not edit their tax and shop rates inline", asy
   ]);
 });
 
+test("an opened row of a plan with brand day saves the order's brand day tag", async () => {
+  const screen = await renderWith(
+    makePlan(
+      [
+        baseBenefit,
+        {
+          ...baseBenefit,
+          kind: "spend-tiers",
+          id: "b0000000-0000-4000-8000-000000000011",
+          category: "campaign",
+          label: "ブランドデー",
+          conditions: { orderTags: ["brand-day"] },
+          params: { tiers: [{ minAmount: 0, rate: 2 }], cap: 4000, roundingUnit: "item" },
+        },
+      ],
+      [order(0), order(1)],
+    ),
+  );
+
+  await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
+  await tapCard(screen.getByRole("checkbox", { name: "ブランドデー対象" }));
+  await expect.poll(async () => (await stored())?.[0]?.tags).toEqual(["brand-day"]);
+});
+
 test("editing one order does not re-render the other rows", async () => {
   await cleanup();
   const plan = makePlan([baseBenefit, spuBenefit, campaignBenefit], [order(0), order(1)]);

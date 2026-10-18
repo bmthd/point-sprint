@@ -225,6 +225,46 @@ test("repeat chip sets the order tag", async () => {
   await expect.poll(async () => (await stored()).at(-1)?.tags).toEqual(["repeat"]);
 });
 
+const brandDayBenefit: Benefit = {
+  ...baseBenefit,
+  kind: "spend-tiers",
+  id: "b0000000-0000-4000-8000-000000000011",
+  category: "campaign",
+  label: "ブランドデー",
+  conditions: { orderTags: ["brand-day"] },
+  params: {
+    tiers: [
+      { minAmount: 0, rate: 2 },
+      { minAmount: 30000, rate: 4 },
+    ],
+    cap: 4000,
+    roundingUnit: "item",
+  },
+};
+
+test("brand day is asked only in a plan that has it, and its tag is kept beside the repeat one", async () => {
+  const without = await renderWith(makePlan([baseBenefit, repeatBenefit], []));
+  const plain = await openAdd(without);
+  await expect.element(plain.getByRole("checkbox", { name: /^リピート購入/ })).toBeVisible();
+  await expect
+    .element(plain.getByRole("checkbox", { name: /^ブランドデー対象/ }))
+    .not.toBeInTheDocument();
+
+  const screen = await renderWith(makePlan([baseBenefit, repeatBenefit, brandDayBenefit], []));
+  const sheet = await openAdd(screen);
+  await fillOrder(sheet, { shop: "ショップ4", amount: "11000" });
+  await expect.element(preview()).toMatchTextContent("× 1% → 100P");
+  await tapCard(sheet.getByRole("checkbox", { name: /^リピート購入/ }));
+  const chip = sheet.getByRole("checkbox", { name: /^ブランドデー対象/ });
+  await tapCard(chip);
+  await expect.element(chip).toBeChecked();
+  // ¥11,000 is under ¥30,000, so +2倍; with +1倍 for リピート購入 that is 4%.
+  await expect.element(preview()).toMatchTextContent("× 4% → 400P");
+
+  await sheet.getByRole("button", { name: "追加する" }).click();
+  await expect.poll(async () => (await stored()).at(-1)?.tags).toEqual(["repeat", "brand-day"]);
+});
+
 test("39shop chip marks the shop", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);

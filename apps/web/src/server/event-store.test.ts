@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import type { D1Database, D1PreparedStatement } from "cloudflare:workers";
 import { expect, test } from "vitest";
@@ -11,7 +11,10 @@ const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf
 /** D1 over SQLite in memory, with the migrations applied: the part of its API the store uses. */
 function memoryD1(): { db: D1Database; sqlite: DatabaseSync } {
   const sqlite = new DatabaseSync(":memory:");
-  sqlite.exec(read("../../migrations/0001_official_events.sql"));
+  const migrations = new URL("../../migrations/", import.meta.url);
+  for (const file of readdirSync(migrations).toSorted()) {
+    if (file.endsWith(".sql")) sqlite.exec(readFileSync(new URL(file, migrations), "utf8"));
+  }
   const statement = (query: string, values: unknown[] = []): D1PreparedStatement => ({
     bind: (...next) => statement(query, next),
     all: async <T>() => ({ results: sqlite.prepare(query).all(...(values as never[])) as T[] }),
@@ -40,12 +43,13 @@ const fetchPages = (async (url: string) =>
 const runs = (sqlite: DatabaseSync) =>
   sqlite.prepare("SELECT outcome, message FROM collection_runs ORDER BY id").all();
 
-test("serves the events moved from the Git master, the earliest first", async () => {
+test("serves the events the migrations put in, the earliest first", async () => {
   const { db } = memoryD1();
   const events = await publishedEvents(db);
   expect(events.map((event) => event.id)).toEqual([
     "marathon-2026-10",
     "marathon-2026-10-14",
+    "brand-day-2026-10-20",
     "marathon-2026-10-24",
   ]);
   expect(events[0]?.name).toBe("お買い物マラソン&ジャンル祭");
@@ -106,7 +110,7 @@ test("serves no row that is not published or not an event", async () => {
   sqlite.exec(`UPDATE official_events SET status = 'rejected' WHERE id = 'marathon-2026-10'`);
   sqlite.exec(`UPDATE official_events SET benefits_json = '[' WHERE id = 'marathon-2026-10-24'`);
   const events = await publishedEvents(db);
-  expect(events.map((event) => event.id)).toEqual(["marathon-2026-10-14"]);
+  expect(events.map((event) => event.id)).toEqual(["marathon-2026-10-14", "brand-day-2026-10-20"]);
 });
 
 test("logs a failed run without writing when the schedule page cannot be fetched", async () => {

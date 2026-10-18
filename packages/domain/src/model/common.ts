@@ -15,7 +15,9 @@ export type ChannelId = v.InferOutput<typeof ChannelIdSchema>;
 export const ShopTagSchema = v.picklist(["39shop"]);
 export type ShopTag = v.InferOutput<typeof ShopTagSchema>;
 
-export const OrderTagSchema = v.picklist(["repeat"]);
+// `brand-day`: an order of 楽天ブランドデー items. Hundreds of shops take part, some with only a few of
+// their items, so the user marks the order rather than the shop.
+export const OrderTagSchema = v.picklist(["repeat", "brand-day"]);
 export type OrderTag = v.InferOutput<typeof OrderTagSchema>;
 
 export const PeriodSchema = v.object({ start: IsoDateSchema, end: IsoDateSchema });
