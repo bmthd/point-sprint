@@ -7,7 +7,9 @@ export const DATE_PICKER_FIELD = "[role='combobox']:has(> input)";
  * input down.
  */
 export function misalignedFields(root: Element): string[] {
-  const fields = [...root.querySelectorAll<HTMLElement>("input:not([type=checkbox]), select")]
+  const fields = [
+    ...root.querySelectorAll<HTMLElement>("input:not([type=checkbox], [type=radio]), select"),
+  ]
     .filter((element) => element.offsetParent !== null)
     .map((element) => ({
       name: element.getAttribute("aria-label") ?? element.id,
@@ -29,4 +31,27 @@ export function misalignedFields(root: Element): string[] {
     }
   }
   return misaligned;
+}
+
+/**
+ * How wide and tall `element` can be pressed: its box, with what an absolutely placed `::before`
+ * adds past it. Its insets are from inside the border, so a border is taken off what they reach.
+ */
+export function tapArea(element: Element): { width: number; height: number } {
+  const box = element.getBoundingClientRect();
+  const own = getComputedStyle(element);
+  const before = getComputedStyle(element, "::before");
+  if (before.position !== "absolute" || before.content === "none") {
+    return { width: box.width, height: box.height };
+  }
+  const past = (inset: string, border: string) =>
+    Math.max(0, -(Number.parseFloat(inset) || 0) - (Number.parseFloat(border) || 0));
+  return {
+    width:
+      box.width + past(before.left, own.borderLeftWidth) + past(before.right, own.borderRightWidth),
+    height:
+      box.height +
+      past(before.top, own.borderTopWidth) +
+      past(before.bottom, own.borderBottomWidth),
+  };
 }

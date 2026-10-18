@@ -1,3 +1,8 @@
+// Formisch fields read their signals through getters on objects that keep their identity, so
+// React Compiler would memoize what they return and miss every change.
+"use no memo";
+
+import { Field as FormField, useField } from "@formisch/react";
 import {
   type ChannelId,
   type Shop,
@@ -6,11 +11,30 @@ import {
   channels,
   parseUrl,
 } from "@workspaces/domain";
-import { CheckboxCard, Flex, Image, Text, Field as UIField } from "@workspaces/ui";
+import {
+  Badge,
+  CheckboxCard,
+  CircleQuestionMarkIcon,
+  Fieldset,
+  Flex,
+  IconButton,
+  Image,
+  InputGroup,
+  NativeSelect,
+  NumberInput,
+  SegmentedControl,
+  Text,
+  Tooltip,
+  Field as UIField,
+} from "@workspaces/ui";
+import { useAtomValue } from "jotai";
 import { type ReactNode, useId, useMemo } from "react";
+import { type FieldState, bind, errorsOf } from "../../form/form";
 import { type ShopChange, changeShop, replaceShop } from "../../state/mutations";
+import { shopsAtom } from "../../state/queries";
 import type { RakutenItem } from "../../rakuten/item-search";
 import { imageUrl, taxRateLabel } from "./-order-shared";
+import type { OrderForm } from "./-order-editor/order-form-store";
 
 // Fields shared by the desktop list's edit grid, its add form and the order editor.
 
@@ -91,6 +115,158 @@ export function ReadOnlyField({ label, value }: { label: string; value: string }
 
 export function useSortedShops(shops: Shop[]) {
   return useMemo(() => [...shops].sort((a, b) => a.name.localeCompare(b.name, "ja")), [shops]);
+}
+
+const TAX_LABELS: Record<TaxRateValue, string> = {
+  "0.1": "10%",
+  "0.08": "8%（食品）",
+  "0": "非課税",
+};
+
+/** Where the order was bought: the shop's own when a saved shop is chosen, else the order's. */
+export function ChannelField({ form, size }: { form: OrderForm; size?: "lg" }) {
+  const shops = useAtomValue(shopsAtom);
+  const shop = useField(form, { path: ["shop"] });
+  const saved = shops.find((other) => other.id === shop.input);
+  return (
+    <FormField of={form} path={["channel"]}>
+      {(field) => (
+        <UIField.Root label="購入先" {...errorsOf(field)} minW="0">
+          <NativeSelect.Root
+            size={size}
+            {...bind(field)}
+            // A saved shop is on one channel, so the field shows it and stays as it is.
+            {...(saved ? { value: saved.channel, disabled: true } : {})}
+          >
+            {Object.values(channels).map((channel) => (
+              <option key={channel.id} value={channel.id}>
+                {channel.label}
+              </option>
+            ))}
+          </NativeSelect.Root>
+        </UIField.Root>
+      )}
+    </FormField>
+  );
+}
+
+/** One part of the order's fields under its small heading. */
+export function OrderPart({ legend, children }: { legend: string; children: ReactNode }) {
+  return (
+    <Fieldset.Root legend={legend} size="sm" minW="0" gap="2" legendProps={{ color: "fg.muted" }}>
+      {children}
+    </Fieldset.Root>
+  );
+}
+
+/** A Formisch field that is set by a value, not by an input's event. */
+type ValueField<T = string> = FieldState & { onChange: (value: T) => void };
+
+/**
+ * Pressed in a 44px square around a control drawn smaller, or taller where it is wider: a
+ * pseudo-element from inside its border reaches the rest. Percentages here are of the control's
+ * own box, so any size gets 44px.
+ */
+const TAP_44 = {
+  position: "relative",
+  overflow: "visible",
+  _before: { content: '""', position: "absolute", inset: "min(0px, calc((100% - 44px) / 2))" },
+} as const;
+
+/** The item's tax rate: three choices of one width on a gray track, the chosen one raised. */
+export function TaxRateButtons({
+  field,
+  size,
+  fill = false,
+}: {
+  field: ValueField<TaxRateValue>;
+  size?: "lg";
+  /** Whether the choices share the row's width, or keep the width of the longest label. */
+  fill?: boolean;
+}) {
+  return (
+    // Its legend sits above the choices as a field's label does above its input.
+    <Fieldset.Root legend="税率" minW="0" gap="1" legendProps={{ fontSize: "sm" }}>
+      <SegmentedControl.Root
+        size={size}
+        w={fill ? "full" : "xs"}
+        items={TAX_RATES.map((rate) => ({ label: TAX_LABELS[rate], value: rate }))}
+        value={typeof field.input === "string" ? (field.input as TaxRateValue) : undefined}
+        onChange={(value) => field.onChange(value as TaxRateValue)}
+        // As a chosen campaign card: white with the primary frame. Yamada UI paints the chosen
+        // one `bg`, the page's gray, which on a white panel cannot be told from the track.
+        indicatorProps={{ bg: "bg.panel", borderWidth: "1px", borderColor: "primary.outline" }}
+        css={{
+          "& :has(> input:checked)": { color: "primary.fg" },
+          // Each choice is drawn 36px tall in the track and pressed 44px.
+          "& label::before": {
+            content: '""',
+            position: "absolute",
+            insetInline: "0",
+            insetBlock: "min(0px, calc((100% - 44px) / 2))",
+          },
+        }}
+      />
+    </Fieldset.Root>
+  );
+}
+
+/** Beside the label of a field the order can be saved without. */
+export const optionalMark = (
+  <Badge variant="outline" colorScheme="gray" size="sm" fontWeight="normal" ms="1.5">
+    任意
+  </Badge>
+);
+
+/** What the URL field does, shown when its ? is pointed at or pressed. */
+const URL_HELP =
+  "URLで楽天のAPIに問い合わせて商品情報を自動入力します。入力項目は、ショップ・商品名・金額・ショップ独自倍率です。楽天ブックス・楽天KoboのURLは、問い合わせずにショップだけ選びます。";
+
+/** The URL field's label, with its ? that explains what it fills in. */
+export function UrlLabel() {
+  return (
+    <>
+      URLから自動入力
+      <Tooltip content={URL_HELP}>
+        <IconButton
+          variant="ghost"
+          size="xs"
+          colorScheme="gray"
+          ms="0.5"
+          {...TAP_44}
+          aria-label="詳しく"
+          icon={<CircleQuestionMarkIcon />}
+        />
+      </Tooltip>
+    </>
+  );
+}
+
+/** The item's shop rate, stepped up and down by 1 with the buttons or the arrow keys. */
+export function ShopRateInput({ field, size }: { field: ValueField; size?: "lg" }) {
+  const { name, ref, onBlur } = field.props;
+  return (
+    <UIField.Root label="独自倍率" optionalIndicator={optionalMark} {...errorsOf(field)} minW="0">
+      {/* The rate is on the price before tax, as Rakuten's shop rates are: 倍, not %. */}
+      <InputGroup.Root size={size}>
+        <NumberInput
+          rootProps={{ flex: "1", minW: "0" }}
+          min={0}
+          step={1}
+          placeholder="1"
+          inputMode="decimal"
+          textAlign="end"
+          fontVariantNumeric="tabular-nums"
+          name={name}
+          ref={ref}
+          onBlur={onBlur}
+          value={typeof field.input === "string" ? field.input : ""}
+          onChange={(value) => field.onChange(value)}
+        />
+        <InputGroup.Addon aria-hidden="true">倍</InputGroup.Addon>
+      </InputGroup.Root>
+    </UIField.Root>
+  );
 }
 
 export function TaxRateOptions() {

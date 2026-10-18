@@ -2,9 +2,9 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import { Field as FormField, setInput, useField } from "@formisch/react";
-import { type Plan, channels } from "@workspaces/domain";
-import { Box, Field, Flex, Input, NativeSelect, Text } from "@workspaces/ui";
+import { Field as FormField, useField } from "@formisch/react";
+import type { Plan } from "@workspaces/domain";
+import { Box, Field, Flex, Input, InputGroup, Separator, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId } from "react";
 import { bind, errorsOf } from "../../../form/form";
@@ -18,14 +18,17 @@ import {
   type useOrderAutofill,
 } from "../-order-editor/order-form-store";
 import {
-  NEW_SHOP,
   CampaignCheck,
+  ChannelField,
+  OrderPart,
   ReadOnlyField,
-  TaxRateOptions,
-  fieldGrid,
+  ShopRateInput,
+  TaxRateButtons,
+  UrlLabel,
+  optionalMark,
   shopFromUrl,
-  useSortedShops,
 } from "../-order-fields";
+import { ShopAutocomplete } from "../-shop-autocomplete";
 import { FormDatePicker } from "../-date-picker-field";
 
 // The fields of an order in the desktop list, the same in 「＋ 注文を追加」 and in an opened row.
@@ -41,7 +44,8 @@ function UrlField({ form, autofill }: { form: OrderForm; autofill: Autofill }) {
 
   return (
     <Field.Root
-      label="商品のURL（貼るとショップを選びます）"
+      label={<UrlLabel />}
+      optionalIndicator={optionalMark}
       {...errorsOf(url)}
       helperMessage={unknown ? "このURLからはショップを選べません" : undefined}
       minW="0"
@@ -67,137 +71,70 @@ function UrlField({ form, autofill }: { form: OrderForm; autofill: Autofill }) {
   );
 }
 
-function ShopField({ form }: { form: OrderForm }) {
-  const shops = useAtomValue(shopsAtom);
-  const sortedShops = useSortedShops(shops);
-  const shop = useField(form, { path: ["shop"] });
-  const known =
-    shop.input === "" || shop.input === NEW_SHOP || shops.some((other) => other.id === shop.input);
-
-  return (
-    <>
-      <Field.Root label="ショップ" {...errorsOf(shop)} minW="0">
-        <NativeSelect.Root
-          size="lg"
-          {...bind(shop)}
-          onChange={(event) => {
-            const value = event.currentTarget.value;
-            shop.onChange(value);
-            const chosen = shops.find((other) => other.id === value);
-            setInput(form, { path: ["is39"], input: chosen?.tags.includes("39shop") ?? false });
-          }}
-        >
-          <option value="">未入力</option>
-          {known ? null : <option value={String(shop.input)}>不明なショップ</option>}
-          {sortedShops.map((other) => (
-            <option key={other.id} value={other.id}>
-              {other.name}
-            </option>
-          ))}
-          <option value={NEW_SHOP}>＋ 新しいショップ</option>
-        </NativeSelect.Root>
-      </Field.Root>
-      {shop.input === NEW_SHOP ? (
-        <FormField of={form} path={["newShopName"]}>
-          {(field) => (
-            <Field.Root label="新しいショップの名前" {...errorsOf(field)} minW="0">
-              <Input size="lg" {...bind(field)} />
-            </Field.Root>
-          )}
-        </FormField>
-      ) : null}
-      {shop.input === "" || shop.input === NEW_SHOP ? (
-        <FormField of={form} path={["channel"]}>
-          {(field) => (
-            <Field.Root label="購入先" {...errorsOf(field)} minW="0">
-              <NativeSelect.Root size="lg" {...bind(field)}>
-                {Object.values(channels).map((channel) => (
-                  <option key={channel.id} value={channel.id}>
-                    {channel.label}
-                  </option>
-                ))}
-              </NativeSelect.Root>
-            </Field.Root>
-          )}
-        </FormField>
-      ) : null}
-    </>
-  );
-}
-
 /** What an order of several items shows in place of its item fields: each item has its own. */
 export type SharedRates = { taxRate: string; shopPointRate: string };
 
 function ItemFields({
   form,
-  plan,
   sharedRates,
 }: {
   form: OrderForm;
-  plan: Plan;
   sharedRates: SharedRates | undefined;
 }) {
+  if (sharedRates) {
+    return (
+      <Flex wrap="wrap" gap="2.5" align="flex-start">
+        <ReadOnlyField label="税率" value={sharedRates.taxRate} />
+        <ReadOnlyField label="独自倍率" value={sharedRates.shopPointRate} />
+      </Flex>
+    );
+  }
   return (
-    <>
-      <FormField of={form} path={["date"]}>
-        {(field) => (
-          <Field.Root label="注文日" {...errorsOf(field)} minW="0">
-            <FormDatePicker size="lg" field={field} period={plan.period} />
-          </Field.Root>
-        )}
-      </FormField>
-      {sharedRates ? (
-        <>
-          <ReadOnlyField label="税率" value={sharedRates.taxRate} />
-          <ReadOnlyField label="ショップ独自倍率" value={sharedRates.shopPointRate} />
-        </>
-      ) : (
-        <>
-          <FormField of={form} path={["items", 0, "name"]}>
-            {(field) => (
-              <Field.Root label="商品名メモ" {...errorsOf(field)} minW="0">
-                <Input size="lg" placeholder="例：洗濯洗剤" {...bind(field)} />
-              </Field.Root>
-            )}
-          </FormField>
-          <FormField of={form} path={AMOUNT_PATH}>
-            {(field) => (
-              <Field.Root label="金額（税込）" {...errorsOf(field)} minW="0">
+    <Flex wrap="wrap" gap="2.5" align="flex-start">
+      <Box flex="1 1 13rem" minW="0">
+        <FormField of={form} path={["items", 0, "name"]}>
+          {(field) => (
+            <Field.Root
+              label="商品名メモ"
+              optionalIndicator={optionalMark}
+              {...errorsOf(field)}
+              minW="0"
+            >
+              <Input size="lg" placeholder="例：洗濯洗剤" {...bind(field)} />
+            </Field.Root>
+          )}
+        </FormField>
+      </Box>
+      <Box w="48" flex="none">
+        <FormField of={form} path={AMOUNT_PATH}>
+          {(field) => (
+            <Field.Root label="金額（税込）" {...errorsOf(field)} minW="0">
+              <InputGroup.Root size="lg">
+                <InputGroup.Addon aria-hidden="true">¥</InputGroup.Addon>
                 <Input
-                  size="lg"
                   inputMode="numeric"
-                  placeholder="¥"
+                  placeholder="0"
+                  textAlign="end"
                   fontVariantNumeric="tabular-nums"
                   {...bind(field)}
                 />
-              </Field.Root>
-            )}
-          </FormField>
-          <FormField of={form} path={["items", 0, "taxRate"]}>
-            {(field) => (
-              <Field.Root label="税率" {...errorsOf(field)} minW="0">
-                <NativeSelect.Root size="lg" {...bind(field)}>
-                  <TaxRateOptions />
-                </NativeSelect.Root>
-              </Field.Root>
-            )}
-          </FormField>
+              </InputGroup.Root>
+            </Field.Root>
+          )}
+        </FormField>
+      </Box>
+      {/* The rates go to the next line together, so neither is left there alone. */}
+      <Flex gap="2.5" align="flex-start" flex="none">
+        <FormField of={form} path={["items", 0, "taxRate"]}>
+          {(field) => <TaxRateButtons field={field} size="lg" />}
+        </FormField>
+        <Box w="40" flex="none">
           <FormField of={form} path={["items", 0, "shopPointRate"]}>
-            {(field) => (
-              <Field.Root label="ショップ独自倍率" {...errorsOf(field)} minW="0">
-                <Input
-                  size="lg"
-                  inputMode="decimal"
-                  placeholder="1"
-                  fontVariantNumeric="tabular-nums"
-                  {...bind(field)}
-                />
-              </Field.Root>
-            )}
+            {(field) => <ShopRateInput field={field} size="lg" />}
           </FormField>
-        </>
-      )}
-    </>
+        </Box>
+      </Flex>
+    </Flex>
   );
 }
 
@@ -236,8 +173,9 @@ function TagChips({ form }: { form: OrderForm }) {
 }
 
 /**
- * The URL, the shop and the item, then the campaigns. An order of several items edits its items in
- * 「商品を編集」, so it shows `sharedRates` in place of their fields.
+ * The URL, then the order in three parts: where it was bought, what was bought, and its
+ * campaigns. An order of several items edits its items in 「商品を編集」, so it shows
+ * `sharedRates` in place of their fields.
  */
 export function OrderFormFields({
   form,
@@ -253,11 +191,33 @@ export function OrderFormFields({
   return (
     <>
       <UrlField form={form} autofill={autofill} />
-      <Box {...fieldGrid}>
-        <ShopField form={form} />
-        <ItemFields form={form} plan={plan} sharedRates={sharedRates} />
-      </Box>
-      <TagChips form={form} />
+      <OrderPart legend="購入">
+        <Flex wrap="wrap" gap="2.5" align="flex-start">
+          <Box flex="1 1 13rem" minW="0">
+            <ShopAutocomplete form={form} size="lg" />
+          </Box>
+          <Box w="40" flex="none">
+            <ChannelField form={form} size="lg" />
+          </Box>
+          <Box w="44" flex="none">
+            <FormField of={form} path={["date"]}>
+              {(field) => (
+                <Field.Root label="注文日" {...errorsOf(field)} minW="0">
+                  <FormDatePicker size="lg" field={field} period={plan.period} />
+                </Field.Root>
+              )}
+            </FormField>
+          </Box>
+        </Flex>
+      </OrderPart>
+      <Separator />
+      <OrderPart legend="商品">
+        <ItemFields form={form} sharedRates={sharedRates} />
+      </OrderPart>
+      <Separator />
+      <OrderPart legend="キャンペーン">
+        <TagChips form={form} />
+      </OrderPart>
     </>
   );
 }

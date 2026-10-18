@@ -5,7 +5,6 @@ import { Footer, Header } from "./site-page";
 export class AddOrderForm {
   readonly root: Locator;
   readonly shop: Locator;
-  readonly newShopName: Locator;
   readonly itemUrl: Locator;
   readonly itemName: Locator;
   readonly price: Locator;
@@ -17,19 +16,18 @@ export class AddOrderForm {
     orders: Locator,
   ) {
     this.root = orders.locator("form");
-    this.shop = this.root.getByRole("combobox", { name: "ショップ", exact: true });
-    this.newShopName = this.root.getByRole("textbox", { name: "新しいショップの名前" });
-    this.itemUrl = this.root.getByRole("textbox", { name: /^商品のURL/ });
-    this.itemName = this.root.getByRole("textbox", { name: "商品名メモ" });
+    // Typed to find a saved shop, or to name a new one.
+    this.shop = this.root.getByRole("textbox", { name: /^ショップ/ });
+    this.itemUrl = this.root.getByRole("textbox", { name: /^URLから自動入力/ });
+    this.itemName = this.root.getByRole("textbox", { name: /^商品名メモ/ });
     this.price = this.root.getByRole("textbox", { name: "金額（税込）" });
-    this.shopRate = this.root.getByRole("textbox", { name: "ショップ独自倍率" });
+    this.shopRate = this.root.getByRole("spinbutton", { name: /^独自倍率/ });
     this.submit = this.root.getByRole("button", { name: "追加する" });
   }
 
-  /** Chooses a new shop and names it. */
+  /** Names a new shop: a name no saved shop has makes one. */
   async newShop(name: string) {
-    await this.shop.selectOption({ label: "＋ 新しいショップ" });
-    await this.newShopName.fill(name);
+    await this.shop.fill(name);
   }
 
   /** Pastes `url` into the item's URL field from the clipboard. */
