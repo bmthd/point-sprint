@@ -104,7 +104,7 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 文中の追加ボタン（同じショップの商品を追加） | `Button variant="ghost" colorScheme="primary"` |
 | 削除ボタン | `Button variant="outline" colorScheme="danger"`。プラン画面の注文の削除は `size="lg"` で、実行前に確認を挟む。注文の編集の「商品Nを削除」は既定の size。プラン一覧では `IconButton variant="ghost" colorScheme="danger" size="lg"`、プラン設定の並びでは `IconButton variant="ghost"` を使う |
 | 画像で選ぶ選択肢（勝ったら倍の +1倍／+2倍） | `RadioCardGroup.Root colorScheme="primary" size="sm" withIndicator={false}` を2列に並べ、各 `RadioCard.Root` に画像、倍率（`RadioCard.Label`）、どんな日か（`RadioCard.Description`）を縦に置く |
-| セグメントコントロール | 注文の編集の税率は `ButtonGroup.Root attached` の `Button`（選択中は `variant="solid" colorScheme="primary"`、ほかは `variant="outline"`、`aria-pressed`） |
+| セグメントコントロール | 税率（注文の入力欄と「上限までの残り」）は `SegmentedControl.Root` に `taxRateSegmentsStyle`。入力欄と同じく地 `bg.panel`・枠 `border.emphasized`、選んだものは地 `primary.subtle`・枠 `primary.outline`・文字 `primary.fg`。Yamada UI の既定（灰の溝に白い札）は周りの入力欄から浮くため使わない |
 | 選べるチップ | `Button colorScheme="mono" size="lg" aria-pressed`。未選択は `variant="outline"`、選択中は `variant="solid"` とチェックの印 |
 | SPU のタイル | `CheckboxCard colorScheme="primary" size="sm" withIndicator={false}`（既定の surface）。名前は `Button variant="ghost" size="xs"` で、上限と条件のダイアログを開く |
 | キャンペーンの ON / OFF | `CheckboxCard colorScheme="primary" size="sm"`（既定の surface とチェックの印） |
@@ -114,7 +114,7 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 保留中の注文 | カードは点線の枠（`borderStyle="dashed"`）、ポイントは `fg.muted` で取り消し線、バッジは「保留」の `Badge variant="outline" colorScheme="gray"` |
 | プレビュー（この注文で何ポイント） | 強調の数値 `primary.fg` |
 | 「あと何店舗回る？」の現在の行 | 地 `primary.subtle`、枠 `primary.outline`。上限までの満たし具合の棒は `Progress`（上限に届く行は `colorScheme="success"`、現在の行は `"primary"`、ほかは `"gray"`） |
-| 上限までの残り | 行は `List`。枠の単位は `Badge variant="outline" colorScheme="gray" fullRounded`。ゲージは 2 色に分けるため `Progress` ではなく帯を組む（ほかのプランの分 `gray.solid`、このプランの分 `primary.solid`、溝 `bg.muted`）。税率の切り替えは、注文の編集の税率と同じ `ButtonGroup` |
+| 上限までの残り | 行は `List`。枠の単位は `Badge variant="outline" colorScheme="gray" fullRounded`。ゲージは 2 色に分けるため `Progress` ではなく帯を組む（ほかのプランの分 `gray.solid`、このプランの分 `primary.solid`、溝 `bg.muted`）。税率の切り替えは、注文の入力欄の税率と同じ `SegmentedControl`（`size="sm"`） |
 | 警告 | `Alert.Root status="warning"`（既定の見た目） |
 | サイドバー（右カラム） | 読むページ（トップ、Markdown のページ、お問い合わせ、お知らせ）に置く（`PageWithSidebar`）。プランとプロフィールのような作業するページには置かない。PC は本文の右に幅 320px、`lg` 以下は本文の下。各区画は `SidebarSection`（`Card.Root` の既定の panel と `h2` の見出し） |
 | お知らせ | 本文は `/notices` に新しい順にすべて並べる（幅 640px）。サイドバーには最新3件の日付と題名だけを置き、題名は `/notices#<id>` へのリンクにする。`/notices` 自身のサイドバーには出さない。日付は `fg.muted` の `xs` |
