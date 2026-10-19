@@ -32,6 +32,32 @@ export const campaignTemplates: CampaignTemplate[] = [
     },
   },
   {
+    id: "thanks-day",
+    name: "ご愛顧感謝デー",
+    occurrence: "fixed",
+    // 対象はゴールド以上の会員だけで、倍率はランクで決まる。ランクはプロフィールに持たず、
+    // 利用者が足すときに選ぶ（ゴールド +1倍、プラチナ +2倍、ダイヤモンド +3倍）。
+    addedByUser: true,
+    benefit: {
+      id: "c5e0a7d2-3b14-4f86-9a2e-71d8b6f40c93",
+      kind: "rate-bonus",
+      category: "campaign",
+      label: "ご愛顧感謝デー",
+      imagePath: "/img/campaign/thanks-day.webp",
+      enabled: false,
+      amountBasis: "tax-excluded",
+      // 上限は開催ごとに 1,000 ポイント。毎月 1 回なので月ごとと同じ。条件金額はない。
+      // 出典: https://event.rakuten.co.jp/campaign/rank/point/ （確認日 2026-10-17）
+      capScope: "month",
+      sharedKey: "thanks-day",
+      conditions: {
+        channels: ["rakuten-ichiba", "rakuten-books", "rakuten-kobo"],
+        dateRule: { type: "daysOfMonth", days: [18] },
+      },
+      params: { rate: 1, cap: 1000, roundingUnit: "item" },
+    },
+  },
+  {
     id: "sports-win",
     name: "勝ったら倍",
     occurrence: "user-dates",

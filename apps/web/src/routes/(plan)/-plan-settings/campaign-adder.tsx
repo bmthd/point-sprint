@@ -4,6 +4,7 @@ import {
   type CampaignTemplate,
   type Plan,
   campaignTemplates,
+  comesWithPlan,
   hasCampaignOccurrence,
   instantiateCampaign,
 } from "@workspaces/domain";
@@ -19,7 +20,7 @@ import { useSaveSettingsChange } from "./settings-shared";
 
 /** The templates the user adds with dates or a period of their own, in the master's order. */
 export const addableTemplates = campaignTemplates.filter(
-  (template) => template.occurrence !== "fixed" && SPECS[template.id] !== undefined,
+  (template) => !comesWithPlan(template) && SPECS[template.id] !== undefined,
 );
 
 /** Every day of `period`, from its start. */
@@ -50,6 +51,9 @@ export function defaultInput(
   const cap =
     template.benefit.params.cap ?? (spec.cap === "required" ? PLACEHOLDER_CAP : undefined);
   const base = cap === undefined ? {} : { cap };
+  if (template.occurrence === "fixed") {
+    return hasCampaignOccurrence(plan, template, {}) ? undefined : base;
+  }
   if (template.occurrence === "user-dates") {
     const days = daysOf(plan.period);
     const from = today >= plan.period.start && today <= plan.period.end ? today : plan.period.start;
