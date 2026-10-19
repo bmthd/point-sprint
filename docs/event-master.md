@@ -2,7 +2,7 @@
 
 公式イベント（お買い物マラソンなど）のマスタは、D1 のデータベース `point-sprint-events` の表 `official_events` にある。Worker の Cron Triggers が楽天の告知ページから収集し、検査を通った回だけを公開する。トップページは、Worker が返す `/events.json` を開いたときに読み、終了日が今日以降のイベントだけを出す。デプロイしなくても、収集した回はトップページに出る。
 
-スーパーSALE はまだ収集しない。読み取る処理は別に作る。
+スーパーSALE はまだ収集しない。読み取る処理は別に作る。大型の期間イベント（ブランドデーなど）も収集しない。回が告知されたら、運営者が「大型の期間イベント」の手順で行を足す。
 
 ## 収集のしくみ
 
@@ -68,6 +68,31 @@ pnpm exec cf d1 query <ID> --sql "UPDATE official_events SET benefits_json = jso
 - `benefits_json` は `OfficialEventSchema` の `benefits` の形にする。形に合わない行は配信しない。
 - 特典の `id` は UUID にする（`uuidgen | tr A-Z a-z`）。
 - 終わったイベントは消さない。そのイベントから作ったプランが、名前の表示などに使っている。
+
+## 大型の期間イベント
+
+期間中の合計額（税込）で倍率が決まる 2〜3 日のイベント。特典は `spend-tiers` で表し、`params.tiers` に「合計額の下限（円）→ 上乗せの倍率」を並べる。倍率は公式の「ポイント N 倍」から通常の 1 倍を引いた値にする。上限は開催ごとなので、`capScope` は `"campaign"`、`sharedKey` は行の `id` にする（マラソンと同じ）。
+
+| イベント | 出典にするページ | `id` | 回ごとに確かめること |
+|---|---|---|---|
+| 楽天ブランドデー | https://event.rakuten.co.jp/brand/campaign/ | `brand-day-<開始日>` | 期間、段階（2026-10 は 30,000 円未満で +2 倍、以上で +4 倍）、上限（4,000）。対象は対象アイテムだけなので、`conditions.orderTags` を `["brand-day"]` にする |
+| 楽天イーグルス感謝祭 | https://event.rakuten.co.jp/campaign/eagles/thanks/ | `eagles-thanks-<開始日>` | 期間、段階。最上段の金額が回ごとに違う（2024 は 50,000 円、2025 は 45,000 円で +4 倍）。上限（5,000） |
+| 新春ポイントアップ祭 | https://event.rakuten.co.jp/newyear/campaign/pointup/ | `newyear-pointup-<開始日>` | 期間（1 月 1〜3 日）、段階（2026 は 5,000・10,000・30,000・45,000 円で +1・+2・+4・+6 倍）、上限（5,000） |
+| 超ポイントバック祭 | https://event.rakuten.co.jp/campaign/pointback/ | `pointback-<開始日>` | 期間、段階。回ごとに違う（2026-05 は 5 段で最大 +5 倍、2025-12 は 4 段で最大 +4 倍）。上限（5,000） |
+
+- 段階は毎回、公式ページの「キャンペーン詳細」の「特典内容」から写す。前の回の値を使い回さない。
+- ブランドデーは、ページ上部と「キャンペーン詳細」で条件金額が食い違ったことがある（上部に「期間中のお買い物金額合計10,000円(税込)以上」とあった）。「キャンペーン詳細」の「特典内容」に従う。2026-10 の回は、上部の行が HTML のコメントになっていて、特典内容に下限がないので、最初の段を 0 円にした。この回は `apps/web/migrations/0002_brand_day_2026_10.sql` で入れた。
+- 期間は「ポイントアップ期間」。エントリー期間ではない。
+- 超ポイントバック祭は告知なしで始まり、マスタに入るまでに開催の一部が過ぎる。その間は、プランの設定のキャンペーン「超ポイントバック祭」（直近の回の段階が入ったテンプレート）を足し、段階を直してもらう。
+- バナーは `.webp` にして R2 の `/img/campaign/` に置き、特典の `imagePath` に書く。
+
+行は次の形で足す。特典の `id` は UUID にする。
+
+```sh
+pnpm exec cf d1 query <ID> --sql "INSERT INTO official_events (id, name, period_start, period_end, benefits_json, source_url, locked, status) VALUES ('pointback-2026-05-19', '超ポイントバック祭', '2026-05-19', '2026-05-20', '[{\"id\":\"<UUID>\",\"kind\":\"spend-tiers\",\"category\":\"campaign\",\"label\":\"超ポイントバック祭\",\"enabled\":true,\"amountBasis\":\"tax-excluded\",\"capScope\":\"campaign\",\"sharedKey\":\"pointback-2026-05-19\",\"conditions\":{\"dateRule\":{\"type\":\"range\",\"start\":\"2026-05-19\",\"end\":\"2026-05-20\"}},\"params\":{\"tiers\":[{\"minAmount\":5000,\"rate\":1},{\"minAmount\":10000,\"rate\":2},{\"minAmount\":20000,\"rate\":3},{\"minAmount\":40000,\"rate\":4},{\"minAmount\":60000,\"rate\":5}],\"cap\":5000,\"roundingUnit\":\"item\"}}]', 'https://event.rakuten.co.jp/campaign/pointback/', 1, 'published')"
+```
+
+`benefits_json` に新しい `orderTags` の値を使う行は、その値を読めるアプリをデプロイしてから足す。前の版の Worker は、読めない行を配信しない。
 
 ## 表の形を変えるとき
 

@@ -67,6 +67,7 @@ import {
   OrderFormSchema,
   type OrderFormOutput,
   dateCampaigns,
+  hasOrderTagCampaign,
   draftOf,
   draftOfInput,
   emptyInput,
@@ -236,6 +237,7 @@ function Preview({ form, plan, original }: { form: OrderForm; plan: Plan; origin
 function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
   const is39 = useField(form, { path: ["is39"] });
   const repeat = useField(form, { path: ["repeat"] });
+  const brandDay = useField(form, { path: ["brandDay"] });
   const date = useField(form, { path: ["date"] });
   const plus = (rate: number) => (rate > 0 ? `+${rate}` : "");
   const byDate = dateCampaigns(plan.benefits, typeof date.input === "string" ? date.input : "");
@@ -259,6 +261,16 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
         >
           リピート購入
         </CampaignCheck>
+        {/* Asked only when the plan has a brand day, or the order is marked already. */}
+        {hasOrderTagCampaign(plan.benefits, "brand-day") || brandDay.input === true ? (
+          <CampaignCheck
+            campaign="brand-day"
+            checked={brandDay.input === true}
+            onChange={() => brandDay.onChange(!brandDay.input)}
+          >
+            ブランドデー対象
+          </CampaignCheck>
+        ) : null}
       </Box>
       {byDate.length > 0 ? (
         <Flex wrap="wrap" align="center" gap="1.5" fontSize="xs" color="fg.muted">
