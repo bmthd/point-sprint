@@ -16,10 +16,12 @@ export function GuideArticle({ guide: { article, lists, fetchedAt } }: { guide: 
   };
   return (
     <Box as="article">
-      <Heading as="h1" fontSize="lg" mb="1">
-        {article.title}
-      </Heading>
-      <ArticleDates article={article} />
+      <Box as="header" mb={{ base: "xl", md: "lg" }}>
+        <Heading as="h1" fontSize={{ base: "4xl", md: "2xl" }} mb="1">
+          {article.title}
+        </Heading>
+        <ArticleDates article={article} />
+      </Box>
       <Markdown components={components} extensions={guideExtensions} headingIds={headingIds}>
         {article.body}
       </Markdown>
