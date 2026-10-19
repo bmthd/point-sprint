@@ -7,6 +7,7 @@ import {
   comesWithPlan,
   hasCampaignOccurrence,
   instantiateCampaign,
+  isTwoShopCampaign,
 } from "@workspaces/domain";
 import { Button, Flex, Image, List, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
@@ -47,7 +48,13 @@ export function defaultInput(
   today: string,
 ): CampaignInput | undefined {
   const spec = SPECS[template.id] ?? {};
-  if (template.benefit.kind === "shop-around" && plan.benefits.some(isShopAround)) return undefined;
+  if (
+    template.benefit.kind === "shop-around" &&
+    template.id !== "2shop" &&
+    plan.benefits.some(isShopAround)
+  ) {
+    return undefined;
+  }
   const cap =
     template.benefit.params.cap ?? (spec.cap === "required" ? PLACEHOLDER_CAP : undefined);
   const base = cap === undefined ? {} : { cap };
@@ -70,7 +77,9 @@ export function defaultInput(
 const defaultInputToday = (plan: Plan, template: CampaignTemplate) =>
   defaultInput(plan, template, tokyoToday(new Date()));
 
-const isShopAround = (benefit: Benefit) => benefit.kind === "shop-around";
+/** The plan's own shop-around. A 2ショップ購入 beside it is a campaign of its own days. */
+const isShopAround = (benefit: Benefit) =>
+  benefit.kind === "shop-around" && !isTwoShopCampaign(benefit);
 
 /**
  * A button for each template that adds it at once with `defaultInput`. What it was added with is

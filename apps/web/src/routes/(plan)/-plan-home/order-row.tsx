@@ -199,6 +199,7 @@ function OrderEditor({
     useField(form, { path: ["is39"] }).input,
     useField(form, { path: ["repeat"] }).input,
     useField(form, { path: ["brandDay"] }).input,
+    useField(form, { path: ["is24h"] }).input,
   ]);
   useEffect(() => {
     // A new shop's name is typed in the shop field: it is saved when the field is left.

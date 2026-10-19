@@ -90,8 +90,9 @@ test("createPlan adds fixed campaigns disabled", () => {
   );
 });
 
-test("createPlan leaves out ご愛顧感謝デー, which the user adds with their rank", () => {
+test("createPlan leaves out ご愛顧感謝デー and ワンダフルデー, which the user adds", () => {
   const plan = createPlan({ id: planId, name: "plan", profile, now, newId: idSequence() });
   expect(plan.benefits.some((b) => b.sharedKey === "pointday")).toBe(true);
   expect(plan.benefits.some((b) => b.sharedKey === "thanks-day")).toBe(false);
+  expect(plan.benefits.some((b) => b.sharedKey === "wonderfulday")).toBe(false);
 });

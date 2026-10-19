@@ -161,11 +161,13 @@ export function CampaignEditor({
             period={plan.period}
             onCommit={(day) => set({ dates: [day] })}
           />
-          <RateChoices
-            choices={SPORTS_CHOICES}
-            rate={rate}
-            onChange={(value) => void set({ rate: value })}
-          />
+          {spec.winChoice ? (
+            <RateChoices
+              choices={SPORTS_CHOICES}
+              rate={rate}
+              onChange={(value) => void set({ rate: value })}
+            />
+          ) : null}
         </>
       ) : null}
       {spec.rank ? (

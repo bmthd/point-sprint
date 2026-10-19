@@ -339,6 +339,28 @@ test("adds ご愛顧感謝デー once, with the rate of the rank chosen in its r
   await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
 });
 
+test("adds ワンダフルデー once, on, among the campaigns, and deletes it", async () => {
+  const screen = await renderSettings(makePlan([pointDay()], []));
+  await screen.getByRole("button", { name: "ワンダフルデーを追加" }).click();
+
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(2);
+  expect((await storedPlan()).benefits[1]).toMatchObject({
+    label: "ワンダフルデー",
+    enabled: true,
+    sharedKey: "wonderfulday",
+    conditions: { dateRule: { type: "daysOfMonth", days: [1] } },
+  });
+  await expect
+    .element(screen.getByRole("button", { name: "ワンダフルデー（追加済み）" }))
+    .toBeDisabled();
+  await expect.element(screen.getByRole("switch", { name: /^ワンダフルデー \+2倍/ })).toBeChecked();
+  await expect.element(screen.getByText("ゴールド会員")).not.toBeInTheDocument();
+
+  await screen.getByRole("button", { name: "ワンダフルデーを削除" }).click();
+  await screen.getByRole("button", { name: "削除する" }).click();
+  await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(1);
+});
+
 test("adds 39shop for the plan's period once, and refuses a period it already has", async () => {
   const screen = await renderSettings(makePlan([], []));
   await screen.getByRole("button", { name: "39ショップを追加" }).click();
@@ -466,6 +488,21 @@ test("overrides the shop-around cap", async () => {
     .toEqual({ type: "range", start: "2026-10-04", end: "2026-10-10" });
   // The plan's own period stays as it was.
   expect((await storedPlan()).period).toEqual({ start: "2026-10-04", end: "2026-10-09" });
+});
+
+test("adds a two-shop beside the plan's shop-around, as a campaign of its own", async () => {
+  const screen = await renderSettings(makePlan(structuredClone(marathon), [order(0)]));
+  await expect
+    .element(screen.getByRole("button", { name: "買いまわり（手動）（追加済み）" }))
+    .toBeDisabled();
+  await screen.getByRole("button", { name: "2ショップ購入を追加" }).click();
+  await expect
+    .element(screen.getByRole("switch", { name: /^2ショップ購入 \+2倍/ }))
+    .toHaveAccessibleName(/10\/4〜10\/9$/);
+  await expect.element(screen.getByRole("button", { name: /ショップ買いまわり/ })).toBeVisible();
+  await expect
+    .poll(async () => (await storedBenefit("2ショップ購入"))?.sharedKey)
+    .toBe("2shop:2026-10-04");
 });
 
 test("adds a campaign of tiers by the total, and changes its tiers and cap", async () => {
