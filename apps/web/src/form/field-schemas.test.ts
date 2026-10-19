@@ -185,7 +185,7 @@ describe("text", () => {
       error: "ショップの名前は100文字以内で入れてください",
     });
     expect(parse(ItemNameSchema, "あ".repeat(201))).toEqual({
-      error: "商品名メモは200文字以内で入れてください",
+      error: "商品名は200文字以内で入れてください",
     });
   });
 });

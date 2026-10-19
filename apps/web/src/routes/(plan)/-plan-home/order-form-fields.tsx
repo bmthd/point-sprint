@@ -96,7 +96,7 @@ function ItemFields({
         <FormField of={form} path={["items", 0, "name"]}>
           {(field) => (
             <Field.Root
-              label="商品名メモ"
+              label="商品名"
               optionalIndicator={optionalMark}
               {...errorsOf(field)}
               minW="0"
