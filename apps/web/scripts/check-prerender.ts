@@ -42,8 +42,9 @@ if (problems.length > 0) {
 }
 writeFileSync(join(clientDir, "sitemap.xml"), sitemapXml(indexed));
 
-// A failed search leaves its list out without failing the build. None in any guide also happens
-// when the server function stops telling the prerendering apart (`guide-on-server.ts`).
+// A failed search leaves its list out without failing the build, unless the API kept answering 429
+// (`guide-items.ts`). None in any guide also happens when the server function stops telling the
+// prerendering apart (`guide-on-server.ts`).
 if (guideItemLists === 0 && readRakutenConfig(process.env) && !process.env.GUIDE_ITEMS_ENDPOINT) {
   console.warn("The guides have no lists of items: see the warnings of the prerendering above.");
 }

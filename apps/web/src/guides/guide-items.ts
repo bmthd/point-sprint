@@ -43,6 +43,12 @@ const shownItems = (items: RakutenItem[]) =>
 type Options = {
   /** The least time between two calls: the API answers 429 above about one call a second. */
   intervalMs?: number;
+  /**
+   * The waits before calling a query again while the API answers 429, one call after each. Other
+   * builds may be calling with the same application id at the same time, so the interval alone
+   * does not keep the calls under the limit.
+   */
+  retryWaitsMs?: number[];
   wait?: (ms: number) => Promise<void>;
   warn?: (message: string) => void;
 };
@@ -51,12 +57,19 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 
 /**
  * `search` for the guides' lists. The build prerenders the guides side by side, so the calls of
- * every guide are queued one after another, `intervalMs` apart, and a query is called once. A
- * failed call is not retried: its list is left out, and the build goes on.
+ * every guide are queued one after another, `intervalMs` apart, and a query is called once. A call
+ * the API answers 429 is called again after each of `retryWaitsMs`; when it is still answered 429,
+ * the query rejects, failing the build rather than publishing the guide without the list. Any
+ * other failed call is not retried: its list is left out, and the build goes on.
  */
 export function guideItemSearch(
   search: ItemSearch,
-  { intervalMs = 1100, wait = sleep, warn = console.warn }: Options = {},
+  {
+    intervalMs = 1100,
+    retryWaitsMs = [2000, 4000, 8000],
+    wait = sleep,
+    warn = console.warn,
+  }: Options = {},
 ): GuideItemSearch {
   const found = new Map<string, Promise<GuideItem[] | undefined>>();
   let queue: Promise<unknown> = Promise.resolve();
@@ -65,11 +78,25 @@ export function guideItemSearch(
   const call = async (query: ItemQuery) => {
     if (called) await wait(intervalMs);
     called = true;
+    const key = itemQueryKey(query);
     const params = Object.entries(query).filter(([, value]) => value !== undefined);
     // Only items with an image: a list without pictures does not help choose.
-    const result = await search({ ...Object.fromEntries(params), imageFlag: 1 });
+    const searchQuery = () => search({ ...Object.fromEntries(params), imageFlag: 1 });
+    let result = await searchQuery();
+    for (const retryWait of retryWaitsMs) {
+      if (result.ok || result.error.reason !== "rate-limited") break;
+      warn(`The items for ${key} were rate-limited: searching again in ${retryWait}ms.`);
+      await wait(retryWait);
+      result = await searchQuery();
+    }
     if (result.ok) return shownItems(result.items);
-    warn(`The items for ${itemQueryKey(query)} were not found (${JSON.stringify(result.error)}).`);
+    if (result.error.reason === "rate-limited") {
+      const message = `The items for ${key} were still rate-limited after ${retryWaitsMs.length} retries.`;
+      // The prerendering reports only that the page failed: this says why.
+      warn(message);
+      throw new Error(message);
+    }
+    warn(`The items for ${key} were not found (${JSON.stringify(result.error)}).`);
     return undefined;
   };
 
@@ -78,7 +105,9 @@ export function guideItemSearch(
     const kept = found.get(key);
     if (kept) return kept;
     const items = queue.then(() => call(query));
-    queue = items;
+    // A rejected query fails only itself: the next is still called, and it is searched again
+    // when asked again.
+    queue = items.catch(() => found.delete(key));
     found.set(key, items);
     return items;
   };
