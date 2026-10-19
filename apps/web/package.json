@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/migrate-events-db.ts --local && dotenvx run -q -f ../../.env.development -- vite dev",
-    "build": "dotenvx run -q -f ../../.env.production -- vite build && node scripts/check-prerender.ts",
+    "build": "dotenvx run -q -f ../../.env.development -- vite build && node scripts/check-prerender.ts",
     "db:migrate": "node scripts/migrate-events-db.ts"
   },
   "dependencies": {
