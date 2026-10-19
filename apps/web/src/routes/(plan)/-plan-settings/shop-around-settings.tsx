@@ -1,4 +1,4 @@
-import type { Benefit, Plan } from "@workspaces/domain";
+import { type Benefit, type Plan, isTwoShopCampaign } from "@workspaces/domain";
 import { Box, Flex, Button, Card, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
@@ -21,9 +21,15 @@ import { useSaveSettingsChange, whenText } from "./settings-shared";
 
 type ShopAroundBenefit = Extract<Benefit, { kind: "shop-around" }>;
 
-/** The plan's first shop-around benefit, the one the calculation's outlook follows. */
+/**
+ * The plan's first shop-around benefit, the one the calculation's outlook follows. A 2ショップ購入
+ * is a campaign of its own days, among the campaigns.
+ */
 export const shopAroundOf = (plan: Plan) =>
-  plan.benefits.find((benefit): benefit is ShopAroundBenefit => benefit.kind === "shop-around");
+  plan.benefits.find(
+    (benefit): benefit is ShopAroundBenefit =>
+      benefit.kind === "shop-around" && !isTwoShopCampaign(benefit),
+  );
 
 const CapSchema = pointsSchema("獲得上限");
 

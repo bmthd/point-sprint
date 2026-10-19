@@ -270,7 +270,7 @@ const campaignImage = (id: "39shop" | OrderTag) =>
   campaignTemplates.find((template) => template.id === id)?.benefit.imagePath;
 
 /**
- * 39ショップ, リピート購入 or ブランドデー on the order: a card with the campaign's image, checked when the order
+ * 39ショップ, リピート購入, ブランドデー or 24時間限定 on the order: a card with the campaign's image, checked when the order
  * gets it. Checking it changes the card's colors only, never its size. `rate` (「+1」) goes on a
  * line of its own, so a narrow card does not break the name.
  */

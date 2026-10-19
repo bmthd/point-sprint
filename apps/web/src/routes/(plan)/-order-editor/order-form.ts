@@ -69,6 +69,7 @@ export const OrderFormSchema = v.pipe(
     is39: v.boolean(),
     repeat: v.boolean(),
     brandDay: v.boolean(),
+    is24h: v.boolean(),
     onHold: v.boolean(),
   }),
   v.forward(
@@ -105,6 +106,7 @@ const emptyInputForDate = (date: string): OrderFormInput => ({
   is39: false,
   repeat: false,
   brandDay: false,
+  is24h: false,
   onHold: false,
   items: [emptyItem()],
 });
@@ -126,6 +128,7 @@ export function inputOf(order: Order, shops: Shop[]): OrderFormInput {
     is39: context.shopTags?.includes("39shop") ?? false,
     repeat: order.tags.includes("repeat"),
     brandDay: order.tags.includes("brand-day"),
+    is24h: order.tags.includes("24h"),
     onHold: order.onHold,
     items: order.lineItems.map((item) => ({
       id: item.id,
@@ -165,6 +168,7 @@ export function draftOf(
     tags: [
       ...(output.repeat ? (["repeat"] as const) : []),
       ...(output.brandDay ? (["brand-day"] as const) : []),
+      ...(output.is24h ? (["24h"] as const) : []),
     ],
     lineItems: output.items.map(({ id, shopPointRate, ...item }, index) => {
       const { shopPointRate: _rate, url: keptUrl, ...kept } = items.get(id) ?? {};

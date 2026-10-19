@@ -2,6 +2,7 @@
 // ユーザーが instantiateCampaign で自分のプランに取り込む。
 // 出典: 設計書 3節「計算が従う楽天の規則」に書いた値と出典 URL を使う（各テンプレートのコメントに要点を再掲する）。
 // 確認日: 2026-10-04
+import type { Benefit } from "../model/benefit";
 import type { CampaignTemplate } from "../model/campaign-template";
 import type { ChannelId } from "../model/common";
 
@@ -55,6 +56,31 @@ export const campaignTemplates: CampaignTemplate[] = [
         dateRule: { type: "daysOfMonth", days: [18] },
       },
       params: { rate: 1, cap: 1000, roundingUnit: "item" },
+    },
+  },
+  {
+    id: "wonderfulday",
+    name: "ワンダフルデー",
+    occurrence: "fixed",
+    // 毎月 1 日に決まっているが、エントリーした人だけが対象なので、利用者が足す。
+    addedByUser: true,
+    benefit: {
+      id: "ae29a970-14d6-44cc-adcc-071d424fe1f5",
+      kind: "spend-tiers",
+      category: "campaign",
+      label: "ワンダフルデー",
+      imagePath: "/img/campaign/wonderfulday.webp",
+      enabled: false,
+      amountBasis: "tax-excluded",
+      // 毎月 1 日。その日の合計 3,000 円（税込）以上で +2 倍、上限は開催ごと（月に 1 回）に 1,000 ポイント。
+      // 出典: https://event.rakuten.co.jp/campaign/point-up/wonderfulday/ （確認日 2026-10-17）
+      capScope: "month",
+      sharedKey: "wonderfulday",
+      conditions: {
+        channels: ["rakuten-ichiba", "rakuten-books", "rakuten-kobo"],
+        dateRule: { type: "daysOfMonth", days: [1] },
+      },
+      params: { tiers: [{ minAmount: 3000, rate: 2 }], cap: 1000, roundingUnit: "item" },
     },
   },
   {
@@ -117,6 +143,47 @@ export const campaignTemplates: CampaignTemplate[] = [
       // そのため上限は持たず、利用者が開催ごとに instantiateCampaign の cap などで入れる。
       conditions: { minOrderAmount: 3980, orderTags: ["repeat"] },
       params: { rate: 1, roundingUnit: "item" },
+    },
+  },
+  {
+    // 告知なしで 1 日だけ開かれる。対象ショップは回ごとに違うので、対象の注文に利用者がタグを付ける。
+    // 単価 100 円（税抜）未満の商品は対象外だが扱わない。
+    // 出典: https://event.rakuten.co.jp/incentive/ichiba/henbai/24h/2026101010x/ （確認日 2026-10-17）
+    id: "24h",
+    name: "24時間限定",
+    occurrence: "user-dates",
+    benefit: {
+      id: "c1762f56-4b79-4833-b17e-fc0008ac99e7",
+      kind: "rate-bonus",
+      category: "campaign",
+      label: "24時間限定",
+      imagePath: "/img/campaign/24h.webp",
+      enabled: false,
+      amountBasis: "tax-excluded",
+      capScope: "occurrence",
+      sharedKey: "24h",
+      conditions: { channels: ["rakuten-ichiba"], orderTags: ["24h"] },
+      params: { rate: 9, cap: 10000, roundingUnit: "item" },
+    },
+  },
+  {
+    // 告知なしで 2 日間ほど開かれる。1 ショップでの期間中の合計 1,000 円（税込）以上を、マラソンと同じく数える。
+    // 出典: https://event.rakuten.co.jp/campaign/point-up/2shop3/ （確認日 2026-10-17）
+    id: "2shop",
+    name: "2ショップ購入",
+    occurrence: "user-period",
+    benefit: {
+      id: "fa1aa38b-efbb-40a2-a937-b11f71e87873",
+      kind: "shop-around",
+      category: "campaign",
+      label: "2ショップ購入",
+      imagePath: "/img/campaign/2shop.webp",
+      enabled: false,
+      amountBasis: "tax-excluded",
+      capScope: "occurrence",
+      sharedKey: "2shop",
+      conditions: {},
+      params: { tiers: [{ minShops: 2, rate: 2 }], cap: 3000, roundingUnit: "item" },
     },
   },
   {
@@ -219,3 +286,10 @@ export const campaignTemplates: CampaignTemplate[] = [
     },
   },
 ];
+
+/**
+ * Whether the benefit is a 2ショップ購入 the user added: a campaign of its own days beside the plan's
+ * shop-around (お買い物マラソン and the like), which the shop-around's outlook does not follow.
+ */
+export const isTwoShopCampaign = (benefit: Benefit) =>
+  benefit.kind === "shop-around" && benefit.sharedKey?.startsWith("2shop:") === true;

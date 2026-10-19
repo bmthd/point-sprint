@@ -265,6 +265,27 @@ test("brand day is asked only in a plan that has it, and its tag is kept beside 
   await expect.poll(async () => (await stored()).at(-1)?.tags).toEqual(["repeat", "brand-day"]);
 });
 
+test("24-hour chip sets the order tag", async () => {
+  const benefit: Benefit = {
+    ...repeatBenefit,
+    id: "b0000000-0000-4000-8000-000000000011",
+    label: "24時間限定",
+    conditions: { orderTags: ["24h"] },
+    params: { rate: 9, roundingUnit: "item" },
+  };
+  const screen = await renderWith(makePlan([baseBenefit, benefit], []));
+  const sheet = await openAdd(screen);
+  await fillOrder(sheet, { shop: "ショップ4", amount: "11000" });
+
+  const chip = sheet.getByRole("checkbox", { name: /^24時間限定/ });
+  await expect.element(chip).toHaveAccessibleName("24時間限定 +9");
+  await tapCard(chip);
+  await expect.element(preview()).toMatchTextContent("× 10% → 1,000P");
+
+  await sheet.getByRole("button", { name: "追加する" }).click();
+  await expect.poll(async () => (await stored()).at(-1)?.tags).toEqual(["24h"]);
+});
+
 test("39shop chip marks the shop", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);

@@ -238,12 +238,13 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
   const is39 = useField(form, { path: ["is39"] });
   const repeat = useField(form, { path: ["repeat"] });
   const brandDay = useField(form, { path: ["brandDay"] });
+  const is24h = useField(form, { path: ["is24h"] });
   const date = useField(form, { path: ["date"] });
   const plus = (rate: number) => (rate > 0 ? `+${rate}` : "");
   const byDate = dateCampaigns(plan.benefits, typeof date.input === "string" ? date.input : "");
   return (
     <OrderPart legend="キャンペーン">
-      {/* Two cards of one width, so their checks line up. */}
+      {/* Cards of one width, two to a row, so their checks line up. */}
       <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
         <CampaignCheck
           campaign="39shop"
@@ -271,6 +272,14 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
             ブランドデー対象
           </CampaignCheck>
         ) : null}
+        <CampaignCheck
+          campaign="24h"
+          checked={is24h.input === true}
+          onChange={() => is24h.onChange(!is24h.input)}
+          rate={plus(tagBonus(plan.benefits, { order: "24h" }))}
+        >
+          24時間限定
+        </CampaignCheck>
       </Box>
       {byDate.length > 0 ? (
         <Flex wrap="wrap" align="center" gap="1.5" fontSize="xs" color="fg.muted">

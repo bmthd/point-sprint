@@ -19,14 +19,18 @@ import { updateBenefitAtom } from "../../../state/order-ops";
 import { ChevronIcon, CloseIcon, PlusIcon } from "../../../ui/icons";
 import { CommitDatePicker } from "../-date-picker-field";
 import { rateText, yen } from "../-order-shared";
-import { isAddedCampaign } from "./campaign-toggles";
+import { isAddedCampaign, isFixedCampaign } from "./campaign-toggles";
 import { useDeleteCampaign } from "./delete-campaign";
 import { useSaveSettingsChange, whenText } from "./settings-shared";
 
 type SpendTiersBenefit = Extract<Benefit, { kind: "spend-tiers" }>;
 
+/** A fixed one (ワンダフルデー) is among the campaigns, since its days and tiers never change. */
 const spendTiersOf = (plan: Plan) =>
-  plan.benefits.filter((benefit): benefit is SpendTiersBenefit => benefit.kind === "spend-tiers");
+  plan.benefits.filter(
+    (benefit): benefit is SpendTiersBenefit =>
+      benefit.kind === "spend-tiers" && !isFixedCampaign(benefit),
+  );
 
 const grouped = (value: number) => value.toLocaleString("ja-JP");
 

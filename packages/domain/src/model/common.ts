@@ -17,7 +17,8 @@ export type ShopTag = v.InferOutput<typeof ShopTagSchema>;
 
 // `brand-day`: an order of 楽天ブランドデー items. Hundreds of shops take part, some with only a few of
 // their items, so the user marks the order rather than the shop.
-export const OrderTagSchema = v.picklist(["repeat", "brand-day"]);
+/** `repeat`: リピート購入. `24h`: 24時間限定 対象ショップポイント10倍, whose shops change every time. */
+export const OrderTagSchema = v.picklist(["repeat", "brand-day", "24h"]);
 export type OrderTag = v.InferOutput<typeof OrderTagSchema>;
 
 export const PeriodSchema = v.object({ start: IsoDateSchema, end: IsoDateSchema });
