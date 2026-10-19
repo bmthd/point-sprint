@@ -31,14 +31,14 @@ test("a guide is prerendered as an article", async ({ request }) => {
   expect(html).toContain(`<h1`);
   expect(html).toContain(TITLE);
   expect(html).toContain('<meta property="og:type" content="article"/>');
-  expect(html).toContain('<meta property="article:modified_time" content="2026-10-08"/>');
+  expect(html).toContain('<meta property="article:modified_time" content="2026-10-19"/>');
 });
 
 test("the sitemap lists the guide list and every guide", async ({ request }) => {
   const sitemap = await (await request.get("/sitemap.xml")).text();
   expect(sitemap).toContain(`<loc>${siteUrl}/guides</loc>`);
   expect(sitemap).toContain(
-    `<loc>${siteUrl}/guides/1000yen-items</loc><lastmod>2026-10-08</lastmod>`,
+    `<loc>${siteUrl}/guides/1000yen-items</loc><lastmod>2026-10-19</lastmod>`,
   );
   expect(sitemap).toContain(`<loc>${siteUrl}/help</loc>`);
   expect(sitemap).not.toContain("/plan");
