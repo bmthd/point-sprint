@@ -17,6 +17,8 @@ permissions:
 jobs:
   preview:
     runs-on: ubuntu-latest
+    # Holds the Rakuten keys of an application made for the previews alone, never production's.
+    environment: preview
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # Takes the pnpm version from packageManager in package.json.
@@ -26,9 +28,16 @@ jobs:
           cache: true
       - run: pnpm install --frozen-lockfile
       # cf builds the preview itself, so this only runs the prerender check.
+      # This job runs the PR's code, so it gets no key to .env.production. The guides' items are
+      # listed with the keys of a Rakuten application made for the previews alone, which the PR's
+      # code can read: a leaked key costs only making that application's keys anew, and a fork's PR
+      # gets none.
       - run: pnpm build
-      # The Worker's secrets are not given, so cf warns they are missing and the inquiry stops at
-      # `config`. This job runs the PR's code, so it gets no key to .env.production.
+        env:
+          RAKUTEN_APPLICATION_ID: ${{ secrets.RAKUTEN_APPLICATION_ID }}
+          RAKUTEN_ACCESS_KEY: ${{ secrets.RAKUTEN_ACCESS_KEY }}
+      # The Worker's other secrets are not given, so cf warns they are missing and the inquiry stops
+      # at `config`.
       # Previews share a database of their own, never production's (cloudflare.config.ts).
       - name: Migrate the preview's event master
         working-directory: apps/web
@@ -48,6 +57,9 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          # cf builds with `vite build`, not `pnpm build`, so the keys reach Vite without dotenvx.
+          RAKUTEN_APPLICATION_ID: ${{ secrets.RAKUTEN_APPLICATION_ID }}
+          RAKUTEN_ACCESS_KEY: ${{ secrets.RAKUTEN_ACCESS_KEY }}
       - name: Comment the preview URL
         run: |
           gh pr comment "$PR_NUMBER" --edit-last --create-if-none \
