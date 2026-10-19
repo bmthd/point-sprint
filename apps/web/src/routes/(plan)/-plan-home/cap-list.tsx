@@ -1,9 +1,9 @@
 import { type CapLine, type Plan, type TaxRate, priceToFill } from "@workspaces/domain";
-import { Badge, Box, ButtonGroup, Flex, Heading, List, Text } from "@workspaces/ui";
+import { Badge, Box, Flex, Heading, List, SegmentedControl, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { plansAtom } from "../../../state/queries";
 import { CAP_TAX_RATES, scopeText, sharedText } from "../-cap-lines";
-import { taxRateLabel, yen } from "../-order-shared";
+import { taxRateLabel, taxRateSegmentsStyle, yen } from "../-order-shared";
 
 const num = (value: number) => value.toLocaleString("ja-JP");
 
@@ -93,23 +93,15 @@ export function CapList({
         <Heading as="h3" fontSize="sm">
           上限までの残り
         </Heading>
-        <ButtonGroup.Root attached size="sm" aria-label="買う商品の税率">
-          {CAP_TAX_RATES.map((rate) => {
-            const selected = rate === taxRate;
-            return (
-              <ButtonGroup.Item
-                key={rate}
-                type="button"
-                aria-pressed={selected}
-                onClick={() => onTaxRate(rate)}
-                variant={selected ? "solid" : "outline"}
-                colorScheme={selected ? "primary" : undefined}
-              >
-                {taxRateLabel(rate)}
-              </ButtonGroup.Item>
-            );
-          })}
-        </ButtonGroup.Root>
+        <SegmentedControl.Root
+          size="sm"
+          minW="0"
+          aria-label="買う商品の税率"
+          items={CAP_TAX_RATES.map((rate) => ({ label: taxRateLabel(rate), value: String(rate) }))}
+          value={String(taxRate)}
+          onChange={(value) => onTaxRate(Number(value) as TaxRate)}
+          {...taxRateSegmentsStyle}
+        />
       </Flex>
       <List.Root gap="0">
         {lines.map((line) => (
