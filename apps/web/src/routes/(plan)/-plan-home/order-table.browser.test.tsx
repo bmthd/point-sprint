@@ -225,7 +225,7 @@ test("enter in the add form adds an order and refocuses the first field", async 
   await openAddForm(screen);
   const url = screen.getByRole("textbox", { name: /^URLから自動入力/ });
   await enterShop(screen, "ショップ4");
-  await screen.getByRole("textbox", { name: /^商品名メモ/ }).fill("フェイスタオル");
+  await screen.getByRole("textbox", { name: /^商品名/ }).fill("フェイスタオル");
   await screen.getByRole("textbox", { name: "金額（税込）" }).fill("11,000");
   // ¥10,000 before tax at 通常 1倍, at a second shop.
   await expect
@@ -242,7 +242,7 @@ test("enter in the add form adds an order and refocuses the first field", async 
     .element(screen.getByRole("button", { name: /注文を追加/ }))
     .toHaveAttribute("aria-expanded", "true");
   await expect.element(shopField(screen)).toHaveValue("");
-  await expect.element(screen.getByRole("textbox", { name: /^商品名メモ/ })).toHaveValue("");
+  await expect.element(screen.getByRole("textbox", { name: /^商品名/ })).toHaveValue("");
   await expect.element(screen.getByRole("textbox", { name: "金額（税込）" })).toHaveValue("");
 
   await expect.poll(async () => (await stored())?.length).toBe(2);
@@ -516,7 +516,7 @@ test("expanded row shows group totals and edits the order", async () => {
   await expect.element(rowOf("ショップ0")).toMatchTextContent("¥22,000");
   await new Promise((resolve) => setTimeout(resolve, 50));
   expect(saves).toBe(1);
-  await screen.getByRole("textbox", { name: /^商品名メモ/ }).fill("バスタオル");
+  await screen.getByRole("textbox", { name: /^商品名/ }).fill("バスタオル");
   await userEvent.keyboard("{Enter}");
   await expect.element(rowOf("ショップ0")).toMatchTextContent("バスタオル");
   await chooseTaxRate(screen, "8%（食品）");
@@ -598,16 +598,14 @@ test("the add form and an opened row take turns, and the form keeps what was typ
   const row = screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" });
 
   await add.click();
-  await screen.getByRole("textbox", { name: /^商品名メモ/ }).fill("あとで足す");
+  await screen.getByRole("textbox", { name: /^商品名/ }).fill("あとで足す");
   await row.click();
   await expect.element(row).toHaveAttribute("aria-expanded", "true");
   await expect.element(add).toHaveAttribute("aria-expanded", "false");
 
   await add.click();
   await expect.element(row).toHaveAttribute("aria-expanded", "false");
-  await expect
-    .element(screen.getByRole("textbox", { name: /^商品名メモ/ }))
-    .toHaveValue("あとで足す");
+  await expect.element(screen.getByRole("textbox", { name: /^商品名/ })).toHaveValue("あとで足す");
 });
 
 test("a row of several items does not edit their tax and shop rates inline", async () => {

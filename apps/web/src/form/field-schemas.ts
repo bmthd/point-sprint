@@ -120,7 +120,7 @@ export const ShopRateSchema = optionalNumber("rate", rate("ショップ独自倍
 
 export const OrderDateSchema = dateSchema("注文日");
 
-export const ItemNameSchema = textSchema("商品名メモ", 200);
+export const ItemNameSchema = textSchema("商品名", 200);
 
 export const ItemUrlSchema = optionalUrlSchema("商品のURL");
 

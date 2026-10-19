@@ -65,7 +65,7 @@ async function fillOrder(
   if (values.shop) await enterShop(sheet, values.shop);
   await sheet.getByLabelText("注文日").fill("2026/10/05");
   await amountOf(sheet).fill(values.amount);
-  if (values.name) await sheet.getByRole("textbox", { name: /^商品名メモ/ }).fill(values.name);
+  if (values.name) await sheet.getByRole("textbox", { name: /^商品名/ }).fill(values.name);
 }
 
 test("adds unnamed orders without adding shop choices", async () => {
@@ -148,7 +148,7 @@ test("continue adding keeps the sheet open and clears the inputs", async () => {
   await expect.element(sheet).toBeVisible();
   await expect.element(amountOf(sheet)).toHaveValue("");
   await expect.element(amountOf(sheet)).not.toHaveFocus();
-  await expect.element(sheet.getByRole("textbox", { name: /^商品名メモ/ })).toHaveValue("");
+  await expect.element(sheet.getByRole("textbox", { name: /^商品名/ })).toHaveValue("");
   await expect.element(shopField(sheet)).toHaveValue("");
 
   await fillOrder(sheet, { shop: "ショップ5", amount: "1200" });
@@ -449,7 +449,7 @@ test("details set quantity, coupon, shop rate, hold and another item", async () 
 
   const second = sheet.getByRole("group", { name: "商品2" });
   await expect.element(second).toBeVisible();
-  await second.getByLabelText("商品名メモ").fill("柔軟剤");
+  await second.getByLabelText("商品名").fill("柔軟剤");
   await second.getByLabelText("金額（税込）").fill("550");
   await second.getByRole("combobox", { name: "税率" }).selectOptions("8%");
   await sheet.getByRole("button", { name: "追加する" }).click();
