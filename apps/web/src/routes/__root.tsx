@@ -21,12 +21,15 @@ export const Route = createRootRoute({
       { title: defaultTitle },
       { name: "description", content: defaultDescription },
       { property: "og:type", content: "website" },
-      { property: "og:site_name", content: defaultTitle },
+      { property: "og:site_name", content: siteName },
       { property: "og:locale", content: "ja_JP" },
       { property: "og:image", content: `${siteUrl}/opengraph-image.png` },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
-      { property: "og:image:alt", content: `${siteName}の計算画面` },
+      {
+        property: "og:image:alt",
+        content: `${siteName}：楽天市場のポイント、ぜんぶ入りで計算。買いまわり、SPU、キャンペーン、獲得上限`,
+      },
       { name: "twitter:card", content: "summary_large_image" },
       // No route matched: the router marks the root as the boundary of the not-found page, which has
       // no route of its own to give it a head. The last title wins.
@@ -36,7 +39,7 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "icon", href: "/favicon.ico", sizes: "any" },
-      { rel: "icon", href: "/icon-32.png", type: "image/png", sizes: "32x32" },
+      { rel: "icon", href: "/icon.svg", type: "image/svg+xml" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/manifest.json" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
