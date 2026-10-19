@@ -29,6 +29,9 @@ export default defineConfig(({ isPreview }) => ({
     // Start's default entry and the cron's handler, with the Durable Object classes exported next to
     // it.
     entrypoint: "./src/server.ts",
+    // A prerendered page is `<path>/index.html`, which is served at `<path>` like the sitemap and
+    // the canonical URLs name it; `<path>/` redirects there.
+    assets: { htmlHandling: "drop-trailing-slash" },
     // Collects the official events from Rakuten's pages (src/server/collect-events.ts) four times a
     // day: 10:05, 16:05, 22:05 and 04:05 in Japan. A round's page goes up around 10:00. A Preview
     // cannot have triggers, so it serves what its database holds.
