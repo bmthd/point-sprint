@@ -5,6 +5,7 @@
 import { Field as FormField, useField } from "@formisch/react";
 import {
   type ChannelId,
+  type OrderTag,
   type Shop,
   type ShopTag,
   campaignTemplates,
@@ -265,11 +266,11 @@ export function TaxRateOptions() {
   ));
 }
 
-const campaignImage = (id: "39shop" | "repeat") =>
+const campaignImage = (id: "39shop" | OrderTag) =>
   campaignTemplates.find((template) => template.id === id)?.benefit.imagePath;
 
 /**
- * 39ショップ or リピート購入 on the order: a card with the campaign's image, checked when the order
+ * 39ショップ, リピート購入 or ブランドデー on the order: a card with the campaign's image, checked when the order
  * gets it. Checking it changes the card's colors only, never its size. `rate` (「+1」) goes on a
  * line of its own, so a narrow card does not break the name.
  */
@@ -281,7 +282,7 @@ export function CampaignCheck({
   rate,
   children,
 }: {
-  campaign: "39shop" | "repeat";
+  campaign: "39shop" | OrderTag;
   rate?: string;
   checked: boolean;
   onChange: () => void;

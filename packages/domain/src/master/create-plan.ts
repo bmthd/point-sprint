@@ -1,3 +1,4 @@
+import { comesWithPlan } from "../model/campaign-template";
 import type { Id } from "../model/common";
 import type { OfficialEvent } from "../model/official-event";
 import type { Plan, Profile } from "../model/plan";
@@ -23,7 +24,7 @@ export function createPlan(input: {
   // Fixed campaigns (days ending in 5 or 0) are judged by their date rule, so every plan gets them.
   // They stay disabled until the user says they entered.
   const fixedCampaigns = campaignTemplates
-    .filter((template) => template.occurrence === "fixed")
+    .filter(comesWithPlan)
     .map((template) => instantiateCampaign(template, { id: newId() }));
   const today = tokyoDate.format(new Date(now));
   return {

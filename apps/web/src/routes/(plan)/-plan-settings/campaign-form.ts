@@ -2,6 +2,8 @@
 export type FormSpec = {
   /** One date and a +1 / +2 choice (a team that won, or both). */
   date?: boolean;
+  /** A +1 / +2 / +3 choice by the member's rank (ゴールド, プラチナ, ダイヤモンド). */
+  rank?: boolean;
   period?: boolean;
   rate?: boolean;
   cap?: "optional" | "required";
@@ -10,10 +12,12 @@ export type FormSpec = {
 };
 
 export const SPECS: Record<string, FormSpec> = {
+  "thanks-day": { rank: true },
   "sports-win": { date: true },
   "39shop": { period: true },
   repeat: { period: true, minOrderAmount: true, cap: "required" },
   "shop-around-manual": { period: true, cap: "required" },
+  pointback: { period: true },
   "spend-tiers-manual": { period: true, cap: "required" },
   "custom-rate": { label: true, period: true, rate: true, cap: "optional" },
 };

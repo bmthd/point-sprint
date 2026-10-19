@@ -32,6 +32,32 @@ export const campaignTemplates: CampaignTemplate[] = [
     },
   },
   {
+    id: "thanks-day",
+    name: "ご愛顧感謝デー",
+    occurrence: "fixed",
+    // 対象はゴールド以上の会員だけで、倍率はランクで決まる。ランクはプロフィールに持たず、
+    // 利用者が足すときに選ぶ（ゴールド +1倍、プラチナ +2倍、ダイヤモンド +3倍）。
+    addedByUser: true,
+    benefit: {
+      id: "c5e0a7d2-3b14-4f86-9a2e-71d8b6f40c93",
+      kind: "rate-bonus",
+      category: "campaign",
+      label: "ご愛顧感謝デー",
+      imagePath: "/img/campaign/thanks-day.webp",
+      enabled: false,
+      amountBasis: "tax-excluded",
+      // 上限は開催ごとに 1,000 ポイント。毎月 1 回なので月ごとと同じ。条件金額はない。
+      // 出典: https://event.rakuten.co.jp/campaign/rank/point/ （確認日 2026-10-17）
+      capScope: "month",
+      sharedKey: "thanks-day",
+      conditions: {
+        channels: ["rakuten-ichiba", "rakuten-books", "rakuten-kobo"],
+        dateRule: { type: "daysOfMonth", days: [18] },
+      },
+      params: { rate: 1, cap: 1000, roundingUnit: "item" },
+    },
+  },
+  {
     id: "sports-win",
     name: "勝ったら倍",
     occurrence: "user-dates",
@@ -122,6 +148,37 @@ export const campaignTemplates: CampaignTemplate[] = [
           { minShops: 10, rate: 9 },
         ],
         cap: 7000,
+        roundingUnit: "item",
+      },
+    },
+  },
+  {
+    // 超ポイントバック祭。告知なしで始まり 2〜3 日で終わるので、公式イベントのマスタ（D1）に入る前の回を
+    // 利用者が自分で足せるようにする。段階は回ごとに違うので、直近の回の値で足し、利用者が直す。
+    // 出典: https://event.rakuten.co.jp/campaign/pointback/ （確認日 2026-10-17、2026-05-19〜20 の回）
+    // 上限 5,000 ポイントは開催ごと。期間中の合計（税込、送料別、クーポン適用後）で段階が決まる。
+    id: "pointback",
+    name: "超ポイントバック祭",
+    occurrence: "user-period",
+    benefit: {
+      id: "e069b199-a269-45da-9681-cea01a90f0ad",
+      kind: "spend-tiers",
+      category: "campaign",
+      label: "超ポイントバック祭",
+      enabled: false,
+      amountBasis: "tax-excluded",
+      capScope: "campaign",
+      sharedKey: "pointback",
+      conditions: {},
+      params: {
+        tiers: [
+          { minAmount: 5000, rate: 1 },
+          { minAmount: 10000, rate: 2 },
+          { minAmount: 20000, rate: 3 },
+          { minAmount: 40000, rate: 4 },
+          { minAmount: 60000, rate: 5 },
+        ],
+        cap: 5000,
         roundingUnit: "item",
       },
     },

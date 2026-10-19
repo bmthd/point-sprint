@@ -1,4 +1,10 @@
-import { type Benefit, type Plan, campaignTemplates, templateOfCampaign } from "@workspaces/domain";
+import {
+  type Benefit,
+  type Plan,
+  campaignTemplates,
+  comesWithPlan,
+  templateOfCampaign,
+} from "@workspaces/domain";
 import { Box, Card, Flex, Heading, IconButton, Image, List, Switch, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
@@ -13,9 +19,7 @@ import { useSaveSettingsChange, whenText } from "./settings-shared";
 type RateBenefit = Extract<Benefit, { kind: "rate-bonus" }>;
 
 const fixedKeys = new Set(
-  campaignTemplates
-    .filter((template) => template.occurrence === "fixed")
-    .map((template) => template.benefit.sharedKey),
+  campaignTemplates.filter(comesWithPlan).map((template) => template.benefit.sharedKey),
 );
 
 /**

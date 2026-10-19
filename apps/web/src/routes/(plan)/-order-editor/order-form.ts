@@ -3,6 +3,7 @@ import {
   ChannelIdSchema,
   type Order,
   OrderSchema,
+  type OrderTag,
   type Period,
   type Shop,
   DEFAULT_ORDER_CHANNEL,
@@ -67,6 +68,7 @@ export const OrderFormSchema = v.pipe(
     items: v.pipe(v.array(ItemSchema), v.minLength(1, "商品を1つ以上入れてください")),
     is39: v.boolean(),
     repeat: v.boolean(),
+    brandDay: v.boolean(),
     onHold: v.boolean(),
   }),
   v.forward(
@@ -102,6 +104,7 @@ const emptyInputForDate = (date: string): OrderFormInput => ({
   date,
   is39: false,
   repeat: false,
+  brandDay: false,
   onHold: false,
   items: [emptyItem()],
 });
@@ -122,6 +125,7 @@ export function inputOf(order: Order, shops: Shop[]): OrderFormInput {
     channel: context.channel ?? DEFAULT_ORDER_CHANNEL,
     is39: context.shopTags?.includes("39shop") ?? false,
     repeat: order.tags.includes("repeat"),
+    brandDay: order.tags.includes("brand-day"),
     onHold: order.onHold,
     items: order.lineItems.map((item) => ({
       id: item.id,
@@ -158,7 +162,10 @@ export function draftOf(
     ...orderPurchase(shopId, { channel: output.channel, shopTags: output.is39 ? ["39shop"] : [] }),
     date: output.date,
     onHold: output.onHold,
-    tags: output.repeat ? ["repeat"] : [],
+    tags: [
+      ...(output.repeat ? (["repeat"] as const) : []),
+      ...(output.brandDay ? (["brand-day"] as const) : []),
+    ],
     lineItems: output.items.map(({ id, shopPointRate, ...item }, index) => {
       const { shopPointRate: _rate, url: keptUrl, ...kept } = items.get(id) ?? {};
       // The URL field belongs to the first item; the others keep the URL they had.
@@ -190,7 +197,7 @@ export const rateOf = (benefit: Benefit) =>
   benefit.kind === "rate-bonus" ? benefit.params.rate : 0;
 
 /** The sum of the rates of the plan's campaigns that need a shop or order tag (「+1」). */
-export function tagBonus(benefits: Benefit[], tag: { shop?: "39shop"; order?: "repeat" }) {
+export function tagBonus(benefits: Benefit[], tag: { shop?: "39shop"; order?: OrderTag }) {
   return benefits
     .filter(
       (benefit) =>
@@ -200,6 +207,10 @@ export function tagBonus(benefits: Benefit[], tag: { shop?: "39shop"; order?: "r
     )
     .reduce((sum, benefit) => sum + rateOf(benefit), 0);
 }
+
+/** Whether the plan has a campaign for orders with `tag`; only then is the order asked for it. */
+export const hasOrderTagCampaign = (benefits: Benefit[], tag: OrderTag) =>
+  benefits.some((benefit) => benefit.conditions.orderTags?.includes(tag));
 
 /** The plan's campaigns that apply by the order date alone (「日付で自動」). */
 export function dateCampaigns(benefits: Benefit[], date: string) {
