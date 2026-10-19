@@ -79,6 +79,23 @@ describe("countShops", () => {
   test("unknown shop is ignored", () => {
     expect(countShops([order(SHOP_X, item({ unitPrice: 5000 }))], [shop(SHOP_A)])).toBe(0);
   });
+  test("with a date rule, only the orders of its days count, even inside the period", () => {
+    const on = (date: string, shopId: string) => ({
+      ...order(shopId, item({ unitPrice: 1000 })),
+      date,
+    });
+    const orders = [on("2026-10-01", SHOP_A), on("2026-10-02", SHOP_B), on("2026-10-03", SHOP_B)];
+    const shops = [shop(SHOP_A), shop(SHOP_B)];
+    expect(countShopsIn(orders, shops, PERIOD)).toBe(2);
+    expect(
+      countShopsIn(orders, shops, PERIOD, {
+        type: "range",
+        start: "2026-10-02",
+        end: "2026-10-03",
+      }),
+    ).toBe(1);
+    expect(countShopsIn(orders, shops, PERIOD, { type: "daysOfMonth", days: [1, 2] })).toBe(2);
+  });
   test("order outside the period is not counted", () => {
     const outside = { ...order(SHOP_A, item({ unitPrice: 1000 })), date: "2026-09-30" };
     expect(countShops([outside], [shop(SHOP_A)])).toBe(0);

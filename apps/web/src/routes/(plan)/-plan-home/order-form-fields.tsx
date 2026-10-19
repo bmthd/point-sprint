@@ -17,6 +17,7 @@ import {
   autofillUrlHandlers,
   type useOrderAutofill,
 } from "../-order-editor/order-form-store";
+import { hasOrderTagCampaign } from "../-order-editor/order-form";
 import {
   CampaignCheck,
   ChannelField,
@@ -138,11 +139,13 @@ function ItemFields({
   );
 }
 
-function TagChips({ form }: { form: OrderForm }) {
+function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
   const shops = useAtomValue(shopsAtom);
   const shop = useField(form, { path: ["shop"] });
   const is39 = useField(form, { path: ["is39"] });
   const repeat = useField(form, { path: ["repeat"] });
+  const brandDay = useField(form, { path: ["brandDay"] });
+  const is24h = useField(form, { path: ["is24h"] });
   const hintId = useId();
   // The mark belongs to the shop, so a shop that is saved already gets it on every order.
   const saved = shops.some((other) => other.id === shop.input);
@@ -167,6 +170,23 @@ function TagChips({ form }: { form: OrderForm }) {
         onChange={() => repeat.onChange(!repeat.input)}
       >
         リピート購入
+      </CampaignCheck>
+      {/* Asked only when the plan has a brand day, or the order is marked already. */}
+      {hasOrderTagCampaign(plan.benefits, "brand-day") || brandDay.input === true ? (
+        <CampaignCheck
+          campaign="brand-day"
+          checked={brandDay.input === true}
+          onChange={() => brandDay.onChange(!brandDay.input)}
+        >
+          ブランドデー対象
+        </CampaignCheck>
+      ) : null}
+      <CampaignCheck
+        campaign="24h"
+        checked={is24h.input === true}
+        onChange={() => is24h.onChange(!is24h.input)}
+      >
+        24時間限定
       </CampaignCheck>
     </Flex>
   );
@@ -216,7 +236,7 @@ export function OrderFormFields({
       </OrderPart>
       <Separator />
       <OrderPart legend="キャンペーン">
-        <TagChips form={form} />
+        <TagChips form={form} plan={plan} />
       </OrderPart>
     </>
   );

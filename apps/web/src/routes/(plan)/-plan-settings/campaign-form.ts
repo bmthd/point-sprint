@@ -1,7 +1,11 @@
 /** Which of a campaign's values the user sets, beside its days. */
 export type FormSpec = {
-  /** One date and a +1 / +2 choice (a team that won, or both). */
+  /** One date. */
   date?: boolean;
+  /** A +1 / +2 / +3 choice by the member's rank (ゴールド, プラチナ, ダイヤモンド). */
+  rank?: boolean;
+  /** A +1 / +2 choice (a team that won, or both). */
+  winChoice?: boolean;
   period?: boolean;
   rate?: boolean;
   cap?: "optional" | "required";
@@ -10,10 +14,15 @@ export type FormSpec = {
 };
 
 export const SPECS: Record<string, FormSpec> = {
-  "sports-win": { date: true },
+  "thanks-day": { rank: true },
+  wonderfulday: {},
+  "sports-win": { date: true, winChoice: true },
   "39shop": { period: true },
   repeat: { period: true, minOrderAmount: true, cap: "required" },
+  "24h": { date: true },
+  "2shop": { period: true },
   "shop-around-manual": { period: true, cap: "required" },
+  pointback: { period: true },
   "spend-tiers-manual": { period: true, cap: "required" },
   "custom-rate": { label: true, period: true, rate: true, cap: "optional" },
 };

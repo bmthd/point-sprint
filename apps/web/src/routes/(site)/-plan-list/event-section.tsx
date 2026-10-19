@@ -19,15 +19,23 @@ import { monthDayWithWeekday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";
 import { ColumnHead } from "../../../ui/column-head";
 
-/** The most a shop-around benefit adds, and the cap on what it pays. */
-function shopAroundSummary(event: OfficialEvent): string {
-  const benefit = event.benefits.find((candidate) => candidate.kind === "shop-around");
-  if (benefit?.kind !== "shop-around") return "";
-  const { tiers, cap } = benefit.params;
-  const maxRate = Math.max(...tiers.map((tier) => tier.rate));
-  // A round is listed from the schedule page before its own page tells the cap.
-  const capText = cap === undefined ? "・上限は未発表" : `・上限 ${cap.toLocaleString("ja-JP")}P`;
-  return `・買いまわり最大 +${maxRate}倍${capText}`;
+/**
+ * The highest rate and the cap of each shop-around and spend-tiers benefit,
+ * e.g. 「・買いまわり最大 +9倍・上限 7,000P」 or 「・合計額で最大 +4倍・上限 4,000P」.
+ */
+function tiersSummary(event: OfficialEvent): string {
+  return event.benefits
+    .map((benefit) => {
+      if (benefit.kind !== "shop-around" && benefit.kind !== "spend-tiers") return "";
+      const { tiers, cap } = benefit.params;
+      const maxRate = Math.max(...tiers.map((tier) => tier.rate));
+      // A round is listed from the schedule page before its own page tells the cap.
+      const capText =
+        cap === undefined ? "・上限は未発表" : `・上限 ${cap.toLocaleString("ja-JP")}P`;
+      const what = benefit.kind === "shop-around" ? "買いまわり" : "合計額で";
+      return `・${what}最大 +${maxRate}倍${capText}`;
+    })
+    .join("");
 }
 
 type EventCardProps = {
@@ -58,7 +66,7 @@ function EventCard({ event, status, disabled, onCreate }: EventCardProps) {
           </Flex>
           <Text fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
             {monthDayWithWeekday(event.period.start)} 〜 {monthDayWithWeekday(event.period.end)}
-            {shopAroundSummary(event)}
+            {tiersSummary(event)}
           </Text>
           <Button
             colorScheme="primary"

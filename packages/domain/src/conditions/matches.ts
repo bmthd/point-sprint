@@ -1,4 +1,4 @@
-import type { ChannelId, Conditions, OrderTag, ShopTag } from "../model/common";
+import type { ChannelId, Conditions, DateRule, OrderTag, ShopTag } from "../model/common";
 
 export interface ConditionContext {
   /** `null` when the order's shop is not in the shop registry. */
@@ -21,17 +21,20 @@ export function matchesConditions(conditions: Conditions, ctx: ConditionContext)
   ) {
     return false;
   }
-  if (dateRule) {
-    if (dateRule.type === "daysOfMonth") {
-      const day = Number(ctx.date.slice(8, 10));
-      if (!dateRule.days.includes(day)) return false;
-    } else if (dateRule.type === "dates") {
-      if (!dateRule.dates.includes(ctx.date)) return false;
-    } else if (ctx.date < dateRule.start || ctx.date > dateRule.end) {
-      return false;
-    }
-  }
+  if (dateRule && !inDateRule(dateRule, ctx.date)) return false;
   if (minOrderAmount !== undefined && ctx.orderTaxIncluded < minOrderAmount) return false;
   if (orderTags && !orderTags.every((tag) => ctx.orderTags.includes(tag))) return false;
   return true;
+}
+
+/** Whether `date` is one of the days of `rule`. */
+export function inDateRule(rule: DateRule, date: string): boolean {
+  switch (rule.type) {
+    case "daysOfMonth":
+      return rule.days.includes(Number(date.slice(8, 10)));
+    case "dates":
+      return rule.dates.includes(date);
+    case "range":
+      return date >= rule.start && date <= rule.end;
+  }
 }

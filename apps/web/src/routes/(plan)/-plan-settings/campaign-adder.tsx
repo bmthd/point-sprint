@@ -4,8 +4,10 @@ import {
   type CampaignTemplate,
   type Plan,
   campaignTemplates,
+  comesWithPlan,
   hasCampaignOccurrence,
   instantiateCampaign,
+  isTwoShopCampaign,
 } from "@workspaces/domain";
 import { Button, Flex, Image, List, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
@@ -19,7 +21,7 @@ import { useSaveSettingsChange } from "./settings-shared";
 
 /** The templates the user adds with dates or a period of their own, in the master's order. */
 export const addableTemplates = campaignTemplates.filter(
-  (template) => template.occurrence !== "fixed" && SPECS[template.id] !== undefined,
+  (template) => !comesWithPlan(template) && SPECS[template.id] !== undefined,
 );
 
 /** Every day of `period`, from its start. */
@@ -46,10 +48,19 @@ export function defaultInput(
   today: string,
 ): CampaignInput | undefined {
   const spec = SPECS[template.id] ?? {};
-  if (template.benefit.kind === "shop-around" && plan.benefits.some(isShopAround)) return undefined;
+  if (
+    template.benefit.kind === "shop-around" &&
+    template.id !== "2shop" &&
+    plan.benefits.some(isShopAround)
+  ) {
+    return undefined;
+  }
   const cap =
     template.benefit.params.cap ?? (spec.cap === "required" ? PLACEHOLDER_CAP : undefined);
   const base = cap === undefined ? {} : { cap };
+  if (template.occurrence === "fixed") {
+    return hasCampaignOccurrence(plan, template, {}) ? undefined : base;
+  }
   if (template.occurrence === "user-dates") {
     const days = daysOf(plan.period);
     const from = today >= plan.period.start && today <= plan.period.end ? today : plan.period.start;
@@ -66,7 +77,9 @@ export function defaultInput(
 const defaultInputToday = (plan: Plan, template: CampaignTemplate) =>
   defaultInput(plan, template, tokyoToday(new Date()));
 
-const isShopAround = (benefit: Benefit) => benefit.kind === "shop-around";
+/** The plan's own shop-around. A 2ショップ購入 beside it is a campaign of its own days. */
+const isShopAround = (benefit: Benefit) =>
+  benefit.kind === "shop-around" && !isTwoShopCampaign(benefit);
 
 /**
  * A button for each template that adds it at once with `defaultInput`. What it was added with is
