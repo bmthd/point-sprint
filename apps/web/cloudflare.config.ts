@@ -18,6 +18,13 @@ export default defineConfig(({ isPreview }) => ({
   worker: {
     name: WORKER_NAME,
     compatibilityDate: "2026-10-01",
+    // The domain of src/site-url.ts, written out like INQUIRY_FROM below. A deploy from CI replaces
+    // a DNS record that points the domain elsewhere. workers.dev is off so that every request passes
+    // the zone's WAF; previewUrls keeps the pull requests' Preview aliases, which follow workersDev
+    // when unset.
+    ...(isPreview
+      ? {}
+      : { domains: ["point-sprint.bmth.dev"], workersDev: false, previewUrls: true }),
     observability: { enabled: true },
     // Start's default entry and the cron's handler, with the Durable Object classes exported next to
     // it.
