@@ -91,7 +91,7 @@ test("keeps what a list shows: the price with tax, and the affiliate link", asyn
   ]);
 });
 
-test("a failed call gives no items for its query only, and the next is still called", async () => {
+test("a failed call rejects its query only, says why, and the next is still called", async () => {
   const failed: SearchResult = { ok: false, error: { reason: "network" } };
   const search = vi
     .fn<ItemSearch>()
@@ -99,9 +99,10 @@ test("a failed call gives no items for its query only, and the next is still cal
     .mockResolvedValue({ ok: true, items: [item()] });
   const opts = options();
   const searchFor = guideItemSearch(search, opts);
-  expect(await searchFor(detergent)).toBeUndefined();
-  expect(await searchFor(food)).toHaveLength(1);
-  expect(opts.warn).toHaveBeenCalledOnce();
+  const [first, next] = await Promise.allSettled([searchFor(detergent), searchFor(food)]);
+  expect(first).toMatchObject({ status: "rejected", reason: expect.any(Error) });
+  expect(next).toMatchObject({ status: "fulfilled", value: [expect.anything()] });
+  expect(opts.warn).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('"network"'));
 });
 
 const rateLimited: SearchResult = { ok: false, error: { reason: "rate-limited" } };
@@ -118,22 +119,12 @@ test("a call answered 429 is called again after a wait, until it is answered", a
   expect(opts.wait.mock.calls).toEqual([[2000], [4000]]);
 });
 
-test("a query still answered 429 after the retries rejects, and the next is still called", async () => {
-  const search = vi
-    .fn<ItemSearch>()
-    .mockResolvedValueOnce(rateLimited)
-    .mockResolvedValueOnce(rateLimited)
-    .mockResolvedValueOnce(rateLimited)
-    .mockResolvedValueOnce(rateLimited)
-    .mockResolvedValue({ ok: true, items: [item()] });
+test("a query still answered 429 after the retries rejects", async () => {
+  const search = vi.fn<ItemSearch>().mockResolvedValue(rateLimited);
   const opts = options();
-  const searchFor = guideItemSearch(search, opts);
-  const [failed, next] = await Promise.allSettled([searchFor(detergent), searchFor(food)]);
-  expect(failed?.status).toBe("rejected");
-  expect(next).toMatchObject({ status: "fulfilled", value: [expect.anything()] });
-  expect(search).toHaveBeenCalledTimes(5);
-  expect(opts.wait.mock.calls).toEqual([[2000], [4000], [8000], [1100]]);
-  expect(opts.warn).toHaveBeenLastCalledWith(expect.stringContaining("still rate-limited"));
+  await expect(guideItemSearch(search, opts)(detergent)).rejects.toThrow("rate-limited");
+  expect(search).toHaveBeenCalledTimes(4);
+  expect(opts.wait.mock.calls).toEqual([[2000], [4000], [8000]]);
 });
 
 test("a query that rejected is searched again when asked again", async () => {
@@ -149,7 +140,7 @@ test("a query that rejected is searched again when asked again", async () => {
 test("a failure other than 429 is not retried", async () => {
   const search = vi
     .fn<ItemSearch>()
-    .mockResolvedValue({ ok: false, error: { reason: "http", status: 500 } });
-  expect(await guideItemSearch(search, options())(detergent)).toBeUndefined();
+    .mockResolvedValue({ ok: false, error: { reason: "http", status: 400 } });
+  await expect(guideItemSearch(search, options())(detergent)).rejects.toThrow("400");
   expect(search).toHaveBeenCalledOnce();
 });

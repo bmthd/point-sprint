@@ -19,8 +19,8 @@ export type GuideItem = {
 /** A call to the item search API, with the build's settings. */
 export type ItemSearch = (params: Record<string, string | number>) => Promise<SearchResult>;
 
-/** The items of a query, or `undefined` when they could not be searched. */
-export type GuideItemSearch = (query: ItemQuery) => Promise<GuideItem[] | undefined>;
+/** The items of a query. It rejects when they could not be searched. */
+export type GuideItemSearch = (query: ItemQuery) => Promise<GuideItem[]>;
 
 /** The API's 128px image, asked at a size that stays sharp in a list on a high density screen. */
 const largerImage = (url: string) => url.replace(/([?&]_ex=)128x128\b/, "$1256x256");
@@ -58,9 +58,8 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 /**
  * `search` for the guides' lists. The build prerenders the guides side by side, so the calls of
  * every guide are queued one after another, `intervalMs` apart, and a query is called once. A call
- * the API answers 429 is called again after each of `retryWaitsMs`; when it is still answered 429,
- * the query rejects, failing the build rather than publishing the guide without the list. Any
- * other failed call is not retried: its list is left out, and the build goes on.
+ * the API answers 429 is called again after each of `retryWaitsMs`. A query whose call still
+ * fails rejects, failing the build rather than publishing the guide without the list.
  */
 export function guideItemSearch(
   search: ItemSearch,
@@ -71,7 +70,7 @@ export function guideItemSearch(
     warn = console.warn,
   }: Options = {},
 ): GuideItemSearch {
-  const found = new Map<string, Promise<GuideItem[] | undefined>>();
+  const found = new Map<string, Promise<GuideItem[]>>();
   let queue: Promise<unknown> = Promise.resolve();
   let called = false;
 
@@ -90,14 +89,10 @@ export function guideItemSearch(
       result = await searchQuery();
     }
     if (result.ok) return shownItems(result.items);
-    if (result.error.reason === "rate-limited") {
-      const message = `The items for ${key} were still rate-limited after ${retryWaitsMs.length} retries.`;
-      // The prerendering reports only that the page failed: this says why.
-      warn(message);
-      throw new Error(message);
-    }
-    warn(`The items for ${key} were not found (${JSON.stringify(result.error)}).`);
-    return undefined;
+    const message = `The items for ${key} were not found (${JSON.stringify(result.error)}).`;
+    // The prerendering reports only that the page failed: this says why.
+    warn(message);
+    throw new Error(message);
   };
 
   return (query) => {
