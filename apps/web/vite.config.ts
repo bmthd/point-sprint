@@ -15,7 +15,8 @@ export default defineConfig(({ command, mode, isPreview }) => {
   // not go through `pnpm build`. So is the Rakuten affiliate id, which only the Worker reads.
   const publicEnv = loadEnv(mode, "../..", ["PUBLIC_", "RAKUTEN_AFFILIATE_ID"]);
   // The Rakuten keys are the Worker's secrets, which dotenvx decrypts into the environment
-  // (cloudflare.config.ts). Without them, no item lookup, and the guides show no items.
+  // (cloudflare.config.ts). A Preview's build is given the keys of an application of its own
+  // instead (preview.yml). Without them, no item lookup, and the guides show no items.
   // `vite preview` is given its secrets by whoever runs it.
   if (!readRakutenConfig(process.env) && !isPreview) {
     console.warn(
