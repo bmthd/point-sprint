@@ -26,9 +26,11 @@ jobs:
           runtime: node@26
           cache: true
       - run: pnpm install --frozen-lockfile
-      # dotenvx decrypts the secrets in .env.production, which the prerendering of the guides uses.
-      # The public values are plain text and are built in without the key.
-      - run: pnpm build
+      # dotenvx decrypts the Rakuten keys in .env.production, which the prerendering of the guides
+      # uses. `pnpm build` alone takes the Previews' keys from .env.development, which do not
+      # override these, so that builds elsewhere never share the production application's rate. The
+      # public values are plain text and are built in without the key.
+      - run: pnpm exec dotenvx run -q -f .env.production -- pnpm build
         env:
           DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}
       # The event master's new tables go in before the version that reads them (docs/event-master.md).

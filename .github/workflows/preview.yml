@@ -17,6 +17,11 @@ permissions:
 jobs:
   preview:
     runs-on: ubuntu-latest
+    # The previews of every pull request search the guides' items with the same keys, which the API
+    # allows one call a second: they take turns, so that their builds never call it at once.
+    concurrency:
+      group: preview-rakuten-keys
+      queue: max
     # Holds the Rakuten keys of an application made for the previews alone, never production's.
     environment: preview
     steps:
@@ -31,7 +36,7 @@ jobs:
       # This job runs the PR's code, so it gets no key to .env.production. The guides' items are
       # listed with the keys of a Rakuten application made for the previews alone, which the PR's
       # code can read: a leaked key costs only making that application's keys anew, and a fork's PR
-      # gets none.
+      # gets none. They are also in .env.development, for `pnpm dev` and local builds.
       - run: pnpm build
         env:
           RAKUTEN_APPLICATION_ID: ${{ secrets.RAKUTEN_APPLICATION_ID }}

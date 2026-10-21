@@ -1,8 +1,10 @@
 // A stand-in for the Rakuten item search API, which the E2E build's Worker calls instead
-// (`ITEM_LOOKUP_ENDPOINT` in `pnpm build:e2e`). Run by Node, which strips the types.
+// (`ITEM_LOOKUP_ENDPOINT` in `pnpm build:e2e`), and so do the build's guides
+// (`scripts/build-e2e.ts`). Run by Node, which strips the types.
 //
 // - `GET /search`: the item `blend-500g` of `coffee-beans` is found; the manage number
-//   `rate-limited` is answered with 429; anything else finds nothing.
+//   `rate-limited` is answered with 429; a search without a shop, as a guide's list makes, finds
+//   `GUIDE_ITEM_NAME`; anything else finds nothing.
 // - `GET /calls`: every search so far, with its parameters and its `Origin`.
 import { createServer } from "node:http";
 
@@ -22,11 +24,23 @@ const item = {
   pointRate: 3,
 };
 
+export const GUIDE_ITEM_NAME = "ドリップコーヒー 10袋";
+
+const guideItem = {
+  ...item,
+  itemName: GUIDE_ITEM_NAME,
+  itemCode: "coffee-beans:10000456",
+  itemPrice: 1000,
+  mediumImageUrls: [
+    { imageUrl: "https://thumbnail.image.rakuten.co.jp/@0_mall/coffee-beans/drip.jpg?_ex=128x128" },
+  ],
+};
+
 export type FakeCall = { params: Record<string, string>; origin: string | undefined };
 
 const calls: FakeCall[] = [];
 
-if (process.argv[1] === import.meta.filename) {
+export const fakeRakutenApi = () =>
   createServer((request, response) => {
     const url = new URL(request.url ?? "/", "http://localhost");
     const send = (status: number, body: unknown) => {
@@ -40,7 +54,11 @@ if (process.argv[1] === import.meta.filename) {
     if (params.keyword === "rate-limited") {
       return send(429, { error: "too_many_requests", error_description: "Rate limit is exceeded" });
     }
+    if (params.shopCode === undefined) return send(200, { count: 1, Items: [{ Item: guideItem }] });
     const found = params.shopCode === "coffee-beans" && params.keyword === "blend-500g";
     return send(200, { count: found ? 1 : 0, Items: found ? [{ Item: item }] : [] });
-  }).listen(FAKE_RAKUTEN_API_PORT, "127.0.0.1");
+  });
+
+if (process.argv[1] === import.meta.filename) {
+  fakeRakutenApi().listen(FAKE_RAKUTEN_API_PORT, "127.0.0.1");
 }

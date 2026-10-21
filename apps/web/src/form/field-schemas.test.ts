@@ -84,8 +84,10 @@ describe("quantity", () => {
 });
 
 describe("shop rate", () => {
-  test("is undefined when empty, and takes a number from 1", () => {
+  test("is undefined when empty or 0, and takes a number from 1", () => {
     expect(parse(ShopRateSchema, "")).toEqual({ value: undefined });
+    expect(parse(ShopRateSchema, "0")).toEqual({ value: undefined });
+    expect(parse(ShopRateSchema, "０倍")).toEqual({ value: undefined });
     expect(parse(ShopRateSchema, "1")).toEqual({ value: 1 });
     expect(parse(ShopRateSchema, "２．５")).toEqual({ value: 2.5 });
     expect(parse(ShopRateSchema, "10倍")).toEqual({ value: 10 });
@@ -185,7 +187,7 @@ describe("text", () => {
       error: "ショップの名前は100文字以内で入れてください",
     });
     expect(parse(ItemNameSchema, "あ".repeat(201))).toEqual({
-      error: "商品名メモは200文字以内で入れてください",
+      error: "商品名は200文字以内で入れてください",
     });
   });
 });
