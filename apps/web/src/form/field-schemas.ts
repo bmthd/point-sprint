@@ -115,8 +115,12 @@ export const DiscountSchema = v.pipe(
 
 export const QuantitySchema = requiredNumber("quantity", "数量", whole("数量", 1, MAX_QUANTITY));
 
-/** Empty for no rate of its own, or a rate of 1 or more. */
-export const ShopRateSchema = optionalNumber("rate", rate("ショップ独自倍率", 1));
+/** Empty or 0 for no rate of its own, or a rate of 1 or more. */
+export const ShopRateSchema = v.pipe(
+  toNumber("rate"),
+  v.transform((value) => (value === 0 ? undefined : value)),
+  v.optional(rate("ショップ独自倍率", 1)),
+);
 
 export const OrderDateSchema = dateSchema("注文日");
 
