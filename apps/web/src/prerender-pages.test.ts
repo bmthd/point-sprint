@@ -79,6 +79,17 @@ test("an article is in the sitemap with the day it was last changed", () => {
   });
 });
 
+test("an article never changed is in the sitemap with the day it was published", () => {
+  const article = fullHead.replace(
+    "</head>",
+    '<meta property="article:published_time" content="2026-10-08"/></head>',
+  );
+  expect(sitemapEntry(article)).toEqual({
+    url: `${siteUrl}/profile`,
+    lastModified: "2026-10-08",
+  });
+});
+
 test("writes a sitemap of the entries", () => {
   expect(
     sitemapXml([
