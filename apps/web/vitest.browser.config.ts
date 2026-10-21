@@ -8,6 +8,7 @@ export default defineConfig({
   // tests, which then fail to import.
   optimizeDeps: {
     include: [
+      "@tanstack/markdown/react",
       "@tanstack/react-query",
       "jotai",
       "jotai/utils",
