@@ -1,6 +1,6 @@
 import { Markdown, type MarkdownComponents } from "@tanstack/markdown/react";
 import { useRouteContext } from "@tanstack/react-router";
-import { Card, Heading, Link, List, NativeAccordion, Text, Timeline } from "@workspaces/ui";
+import { Card, Heading, Image, Link, List, NativeAccordion, Text, Timeline } from "@workspaces/ui";
 import type { ReactNode } from "react";
 import type { FileRoutesById } from "../../../routeTree.gen";
 import { markdownExtensions } from "./-markdown-extensions";
@@ -41,6 +41,22 @@ export const markdownComponents = {
     </List.Root>
   ),
   li: ({ children }) => <List.Item>{children}</List.Item>,
+  // A screenshot fits the column, framed like a card, and loads only near the viewport.
+  img: ({ src, alt, title }) => (
+    <Image
+      src={src}
+      alt={alt}
+      title={title}
+      loading="lazy"
+      decoding="async"
+      display="block"
+      maxW="full"
+      h="auto"
+      rounded="xl"
+      borderWidth="1px"
+      borderColor="border"
+    />
+  ),
   "md-details": ({ summary, children }: { summary: string; children?: ReactNode }) => (
     <NativeAccordion.Root borderBottomWidth="1px" borderColor="border">
       <NativeAccordion.Item>
