@@ -14,17 +14,16 @@ const item: GuideItem = {
 const now = () => new Date("2026-10-08T00:00:00Z");
 
 test("searches each list of the guide, and keeps the items by its query", async () => {
-  // The food list fails; the others find an item.
-  const search = vi.fn<GuideItemSearch>(async (query) =>
-    query.genreId === 100227 ? undefined : [item],
-  );
+  // The food list finds nothing; the others find an item.
+  const search = vi.fn<GuideItemSearch>(async (query) => (query.genreId === 100227 ? [] : [item]));
   const guide = await loadGuide("1000yen-items", search, now);
 
   expect(guide?.article.title).toBe("1000円ポッキリで買えるもの");
   expect(search).toHaveBeenCalledTimes(3);
-  expect(Object.keys(guide?.lists ?? {})).toEqual([
-    expect.stringContaining('"genreId":215783'),
-    expect.stringContaining('"genreId":100939'),
+  expect(Object.entries(guide?.lists ?? {})).toEqual([
+    [expect.stringContaining('"genreId":100227'), []],
+    [expect.stringContaining('"genreId":215783'), [item]],
+    [expect.stringContaining('"genreId":100939'), [item]],
   ]);
   expect(guide?.fetchedAt).toBe("2026-10-08T00:00:00.000Z");
 });

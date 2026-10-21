@@ -114,7 +114,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                   {monthDayWithWeekday(order.date)}
                 </Text>
               </Flex>
-              {/* Without a memo the line still shows, so every card is as tall as the others. */}
+              {/* Without an item name the line still shows, so every card is as tall as the others. */}
               {title ? (
                 <Text as="span" fontSize="sm" fontWeight="medium" lineClamp={1}>
                   {title}
@@ -123,7 +123,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 <Text as="span" fontSize="sm" color="fg.muted">
                   {shopName === "ショップ未入力"
                     ? `${monthDayWithWeekday(order.date)}の注文`
-                    : "メモなし"}
+                    : "商品名なし"}
                 </Text>
               )}
               {/* One chip high with or without campaigns, so every card is as tall. */}

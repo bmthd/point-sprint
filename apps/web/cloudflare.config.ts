@@ -18,10 +18,20 @@ export default defineConfig(({ isPreview }) => ({
   worker: {
     name: WORKER_NAME,
     compatibilityDate: "2026-10-01",
+    // The domain of src/site-url.ts, written out like INQUIRY_FROM below. A deploy from CI replaces
+    // a DNS record that points the domain elsewhere. workers.dev is off so that every request passes
+    // the zone's WAF; previewUrls keeps the workers.dev URLs of the pull requests' Previews (preview.yml),
+    // which follow workersDev when unset.
+    ...(isPreview
+      ? {}
+      : { domains: ["point-sprint.bmth.dev"], workersDev: false, previewUrls: true }),
     observability: { enabled: true },
     // Start's default entry and the cron's handler, with the Durable Object classes exported next to
     // it.
     entrypoint: "./src/server.ts",
+    // A prerendered page is `<path>/index.html`, which is served at `<path>` like the sitemap and
+    // the canonical URLs name it; `<path>/` redirects there.
+    assets: { htmlHandling: "drop-trailing-slash" },
     // Collects the official events from Rakuten's pages (src/server/collect-events.ts) four times a
     // day: 10:05, 16:05, 22:05 and 04:05 in Japan. A round's page goes up around 10:00. A Preview
     // cannot have triggers, so it serves what its database holds.

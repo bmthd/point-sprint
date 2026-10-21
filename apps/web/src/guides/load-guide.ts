@@ -5,7 +5,7 @@ import { itemQueriesIn, itemQueryKey } from "./item-query";
 
 export type Guide = {
   article: Article;
-  /** The items of each list, by `itemQueryKey`. A list whose search failed has none. */
+  /** The items of each list, by `itemQueryKey`. */
   lists: Record<string, GuideItem[]>;
   /** When the items were searched (ISO 8601): the prices shown are the ones at that time. */
   fetchedAt: string;
@@ -25,8 +25,7 @@ export async function loadGuide(
   const lists: Record<string, GuideItem[]> = {};
   if (search) {
     for (const query of itemQueriesIn(article.body)) {
-      const items = await search(query);
-      if (items) lists[itemQueryKey(query)] = items;
+      lists[itemQueryKey(query)] = await search(query);
     }
   }
   return { article, lists, fetchedAt: now().toISOString() };

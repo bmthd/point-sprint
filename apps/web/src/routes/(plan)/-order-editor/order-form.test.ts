@@ -134,7 +134,7 @@ test("each item's fields are checked on the item", () => {
     }),
   ).toEqual({
     "items.1.unitPrice": "金額は0以上の整数で入れてください",
-    "items.1.name": "商品名メモは200文字以内で入れてください",
+    "items.1.name": "商品名は200文字以内で入れてください",
     "items.1.quantity": "数量は1以上の整数で入れてください",
     "items.1.discount": "クーポン値引額は0以上の整数で入れてください",
     "items.1.shopPointRate": "ショップ独自倍率は1以上の数で入れてください",

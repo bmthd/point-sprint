@@ -174,7 +174,7 @@ function ExtraItem({ form, index }: { form: OrderForm; index: number }) {
     <Fieldset.Root legend={label} variant="outline" size="sm">
       <FormField of={form} path={["items", index, "name"]}>
         {(field) => (
-          <Field.Root label="商品名メモ" {...errorsOf(field)}>
+          <Field.Root label="商品名" {...errorsOf(field)}>
             <Input {...bind(field)} />
           </Field.Root>
         )}
@@ -396,7 +396,7 @@ function MainItemFields({
     <OrderPart legend="商品">
       <FormField of={form} path={["items", 0, "name"]}>
         {(field) => (
-          <Field.Root label="商品名メモ" optionalIndicator={optionalMark} {...errorsOf(field)}>
+          <Field.Root label="商品名" optionalIndicator={optionalMark} {...errorsOf(field)}>
             <Input placeholder="例：洗濯洗剤 詰め替え" {...bind(field)} />
           </Field.Root>
         )}
