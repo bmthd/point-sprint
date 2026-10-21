@@ -1,12 +1,90 @@
 import { Markdown, type MarkdownComponents } from "@tanstack/markdown/react";
 import { useRouteContext } from "@tanstack/react-router";
-import { Card, Heading, Image, Link, List, NativeAccordion, Text, Timeline } from "@workspaces/ui";
+import {
+  Alert,
+  type AlertRootProps,
+  Box,
+  Button,
+  Card,
+  Center,
+  Heading,
+  Image,
+  Link,
+  List,
+  Mark,
+  Modal,
+  NativeAccordion,
+  NativeTable,
+  Text,
+  Timeline,
+  useDisclosure,
+} from "@workspaces/ui";
 import type { ReactNode } from "react";
 import type { FileRoutesById } from "../../../routeTree.gen";
 import { markdownExtensions } from "./-markdown-extensions";
 import { ColumnHead } from "../../../ui/column-head";
 
 /** The Markdown's tags, drawn with Yamada UI to match the other pages. */
+/**
+ * A screenshot that fits the column and a set height, centered and framed like a card, and loads
+ * only near the viewport. Pressed, it opens over the page at the size the window allows.
+ */
+function ScreenshotImage({ src, alt, title }: { src?: string; alt?: string; title?: string }) {
+  const { open, onOpen, onClose } = useDisclosure();
+  return (
+    <>
+      <Box
+        as="button"
+        type="button"
+        aria-label={`${alt ?? "画像"}を拡大する`}
+        onClick={onOpen}
+        display="block"
+        mx="auto"
+        cursor="zoom-in"
+      >
+        <Image
+          src={src}
+          alt={alt}
+          title={title}
+          loading="lazy"
+          decoding="async"
+          display="block"
+          maxW="full"
+          maxH="480px"
+          w="auto"
+          h="auto"
+          rounded="xl"
+          borderWidth="1px"
+          borderColor="border"
+        />
+      </Box>
+      <Modal.Root open={open} onClose={onClose} size="cover">
+        {/* The content covers the window, so pressing anywhere on it, image or not, closes it. */}
+        <Modal.Content
+          bg="transparent"
+          borderWidth="0"
+          boxShadow="none"
+          cursor="zoom-out"
+          onClick={onClose}
+        >
+          <Modal.CloseButton />
+          <Modal.Body p="0" display="flex" justifyContent="center" alignItems="center">
+            <Image
+              src={src}
+              alt={alt}
+              maxW="full"
+              maxH="calc(100dvh - 6rem)"
+              w="auto"
+              h="auto"
+              rounded="xl"
+            />
+          </Modal.Body>
+        </Modal.Content>
+      </Modal.Root>
+    </>
+  );
+}
+
 export const markdownComponents = {
   h1: ({ children, id }) => (
     <ColumnHead mb="2.5">
@@ -41,22 +119,24 @@ export const markdownComponents = {
     </List.Root>
   ),
   li: ({ children }) => <List.Item>{children}</List.Item>,
-  // A screenshot fits the column, framed like a card, and loads only near the viewport.
-  img: ({ src, alt, title }) => (
-    <Image
-      src={src}
-      alt={alt}
-      title={title}
-      loading="lazy"
-      decoding="async"
-      display="block"
-      maxW="full"
-      h="auto"
-      rounded="xl"
-      borderWidth="1px"
-      borderColor="border"
-    />
+  // A table's numbers line up by digit; a column's alignment comes from the Markdown (`--:`).
+  table: ({ children }) => (
+    <NativeTable.Root my="lg" fontVariantNumeric="tabular-nums">
+      {children}
+    </NativeTable.Root>
   ),
+  thead: ({ children }) => <NativeTable.Thead>{children}</NativeTable.Thead>,
+  tbody: ({ children }) => <NativeTable.Tbody>{children}</NativeTable.Tbody>,
+  tr: ({ children }) => <NativeTable.Tr>{children}</NativeTable.Tr>,
+  th: ({ children, style }) => <NativeTable.Th style={style}>{children}</NativeTable.Th>,
+  td: ({ children, style }) => <NativeTable.Td style={style}>{children}</NativeTable.Td>,
+  // What the text wants read is marked like a highlighter, not bolded; a long one still wraps.
+  strong: ({ children }) => (
+    <Mark as="strong" colorScheme="warning" whiteSpace="normal">
+      {children}
+    </Mark>
+  ),
+  img: ({ src, alt, title }) => <ScreenshotImage src={src} alt={alt} title={title} />,
   "md-details": ({ summary, children }: { summary: string; children?: ReactNode }) => (
     <NativeAccordion.Root borderBottomWidth="1px" borderColor="border">
       <NativeAccordion.Item>
@@ -64,6 +144,25 @@ export const markdownComponents = {
         <NativeAccordion.Panel>{children}</NativeAccordion.Panel>
       </NativeAccordion.Item>
     </NativeAccordion.Root>
+  ),
+  "md-alert": ({
+    status,
+    variant,
+    children,
+  }: Pick<AlertRootProps, "status" | "variant"> & { children?: ReactNode }) => (
+    <Alert.Root status={status} variant={variant} my="lg" alignItems="flex-start" py="4">
+      <Alert.Icon boxSize="7" />
+      <Alert.Description css={{ "& > :first-child": { mt: 0 }, "& > :last-child": { mb: 0 } }}>
+        {children}
+      </Alert.Description>
+    </Alert.Root>
+  ),
+  "md-button": ({ href, label }: { href: string; label: string }) => (
+    <Center my="lg">
+      <Button as="a" href={href} colorScheme="primary" size="lg">
+        {label}
+      </Button>
+    </Center>
   ),
   "md-timeline": ({ children }: { children?: ReactNode }) => (
     <Card.Root my="4">
