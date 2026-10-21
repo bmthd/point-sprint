@@ -20,19 +20,23 @@ export const markdownComponents = {
       {children}
     </Heading>
   ),
-  p: ({ children }) => <Text my="2">{children}</Text>,
+  p: ({ children }) => (
+    <Text my="lg" lineHeight="1.9">
+      {children}
+    </Text>
+  ),
   a: ({ children, href }) => (
     <Link href={href} color="link">
       {children}
     </Link>
   ),
   ul: ({ children }) => (
-    <List.Root styleType="disc" my="2">
+    <List.Root styleType="disc" my="lg" lineHeight="1.9">
       {children}
     </List.Root>
   ),
   ol: ({ children }) => (
-    <List.Root styleType="decimal" my="2">
+    <List.Root styleType="decimal" my="lg" lineHeight="1.9">
       {children}
     </List.Root>
   ),

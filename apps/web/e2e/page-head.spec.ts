@@ -37,10 +37,11 @@ test("a plan's pages show the plan's name in the title", async ({ page }) => {
 test("the files the head links to are served", async ({ request }) => {
   for (const path of [
     "/favicon.ico",
-    "/icon-32.png",
+    "/icon.svg",
     "/apple-touch-icon.png",
     "/icon-192.png",
     "/icon-512.png",
+    "/icon-maskable-512.png",
     "/opengraph-image.png",
     "/manifest.json",
     "/robots.txt",

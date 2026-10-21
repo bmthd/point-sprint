@@ -13,18 +13,20 @@ const MAIN_WIDTH = "768px";
  * are as wide on every page; `maxW` is the width of the page's own content, from the left of its
  * column, which stays the same with or without the sidebar. The sidebar stays on the screen as
  * the page scrolls. `/notices`, which has the notices in full, leaves their headlines out with
- * `noticeHeadlines`. With `paper`, `main` is on white, like a sheet of paper, from the header
+ * `noticeHeadlines`. `sidebarTop` goes at the top of the sidebar, above its own sections. With `paper`, `main` is on white, like a sheet of paper, from the header
  * down to the footer; the sidebar stays on the page's gray, as on the other pages.
  */
 export function PageWithSidebar({
   maxW,
   noticeHeadlines = true,
   paper = false,
+  sidebarTop,
   children,
 }: {
   maxW: string;
   noticeHeadlines?: boolean;
   paper?: boolean;
+  sidebarTop?: ReactNode;
   children: ReactNode;
 }) {
   // On paper the sheet reaches the header and the footer, so the space above and below goes in it.
@@ -62,7 +64,9 @@ export function PageWithSidebar({
         position="sticky"
         top="md"
         mt={paper ? ends.pt : undefined}
-      />
+      >
+        {sidebarTop}
+      </SiteSidebar>
     </Grid>
   );
 }

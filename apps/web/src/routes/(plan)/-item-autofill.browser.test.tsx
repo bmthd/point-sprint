@@ -90,7 +90,7 @@ describe("the phone sheet", () => {
 
     await paste(sheet.getByLabelText(/^URLから自動入力/), RAKUTEN_SHARE);
     await expect
-      .element(sheet.getByRole("textbox", { name: /^商品名メモ/ }))
+      .element(sheet.getByRole("textbox", { name: /^商品名/ }))
       .toHaveValue("ブレンドコーヒー豆 500g");
     expect(askedFor(lookup)).toEqual([["blend-500g", 5000]]);
     expect(lookup.mock.calls[0]?.[0]).toEqual({
@@ -195,7 +195,7 @@ describe("the phone sheet", () => {
     await expect.element(sheet.getByText(FAILED)).toBeVisible();
     await expect.element(shopField(sheet)).toHaveValue("coffee-beans");
     await expect.element(sheet.getByLabelText("金額（税込）")).toHaveValue("");
-    await expect.element(sheet.getByRole("textbox", { name: /^商品名メモ/ })).toHaveValue("");
+    await expect.element(sheet.getByRole("textbox", { name: /^商品名/ })).toHaveValue("");
 
     // The order can still be typed and added.
     await sheet.getByLabelText("金額（税込）").fill("1500");
@@ -318,7 +318,7 @@ describe("the phone sheet", () => {
 
     answer({ ok: true, item: item() });
     await new Promise((resolve) => setTimeout(resolve, 50));
-    await expect.element(sheet.getByRole("textbox", { name: /^商品名メモ/ })).toHaveValue("");
+    await expect.element(sheet.getByRole("textbox", { name: /^商品名/ })).toHaveValue("");
     await expect.element(shopField(sheet)).toHaveValue("ショップ4");
   });
 
@@ -349,7 +349,7 @@ describe("the desktop", () => {
 
     await paste(url, ITEM_URL);
     await expect
-      .element(screen.getByRole("textbox", { name: /^商品名メモ/ }))
+      .element(screen.getByRole("textbox", { name: /^商品名/ }))
       .toHaveValue("ブレンドコーヒー豆 500g");
     await expect.element(screen.getByRole("textbox", { name: "金額（税込）" })).toHaveValue("2160");
     await expect.element(shopField(screen)).toHaveValue("コーヒー豆の店");
@@ -383,7 +383,7 @@ describe("the desktop", () => {
 
     await paste(dialog.getByLabelText(/^URLから自動入力/), ITEM_URL);
     await expect
-      .element(dialog.getByRole("textbox", { name: /^商品名メモ/ }))
+      .element(dialog.getByRole("textbox", { name: /^商品名/ }))
       .toHaveValue("ブレンドコーヒー豆 500g");
     // A price listed without tax is not put in the amount.
     await expect.element(dialog.getByLabelText("金額（税込）")).toHaveValue("11000");

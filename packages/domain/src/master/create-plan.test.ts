@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
+import { comesWithPlan } from "../model/campaign-template";
 import type { OfficialEvent } from "../model/official-event";
 import { PlanSchema, type Profile } from "../model/plan";
 import { campaignTemplates } from "./campaigns";
@@ -28,7 +29,7 @@ const event: OfficialEvent = {
   ],
 };
 const planId = "0f1e2d3c-4b5a-4968-8776-655443322110";
-const fixedTemplates = campaignTemplates.filter((t) => t.occurrence === "fixed");
+const fixedTemplates = campaignTemplates.filter(comesWithPlan);
 
 function idSequence() {
   let next = 0;
@@ -87,4 +88,11 @@ test("createPlan adds fixed campaigns disabled", () => {
       (_, index) => `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
     ),
   );
+});
+
+test("createPlan leaves out ご愛顧感謝デー and ワンダフルデー, which the user adds", () => {
+  const plan = createPlan({ id: planId, name: "plan", profile, now, newId: idSequence() });
+  expect(plan.benefits.some((b) => b.sharedKey === "pointday")).toBe(true);
+  expect(plan.benefits.some((b) => b.sharedKey === "thanks-day")).toBe(false);
+  expect(plan.benefits.some((b) => b.sharedKey === "wonderfulday")).toBe(false);
 });

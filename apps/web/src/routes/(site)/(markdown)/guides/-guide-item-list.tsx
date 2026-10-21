@@ -34,7 +34,7 @@ function ItemCard({ item }: { item: GuideItem }) {
 }
 
 type GuideItemListProps = {
-  /** The items the build found, or `undefined` when its call failed. */
+  /** The items the build found, or `undefined` when the build had no Rakuten settings. */
   items: GuideItem[] | undefined;
   /** When the build fetched them (ISO 8601). */
   fetchedAt: string;

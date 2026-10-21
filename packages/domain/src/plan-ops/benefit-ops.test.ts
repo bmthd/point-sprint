@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { standardSpu } from "../master/spu";
+import {
+  BANK_CARD_ID as BANK_CARD,
+  BANK_SALARY_ID as BANK_SALARY,
+  standardSpu,
+} from "../master/spu";
 import type { Plan } from "../model/plan";
 import { toggleBenefit, toggleBenefits } from "./benefit-ops";
 
@@ -42,6 +46,14 @@ describe("toggleBenefit", () => {
     const off = toggleBenefit(toggleBenefit(makePlan(), PREMIUM), PREMIUM);
     expect(enabledOf(off, PREMIUM)).toBe(false);
     expect(enabledOf(off, REGULAR)).toBe(false);
+  });
+
+  test("the two 楽天銀行 tiers are on one at a time", () => {
+    const card = toggleBenefit(makePlan(), BANK_CARD);
+    expect([enabledOf(card, BANK_CARD), enabledOf(card, BANK_SALARY)]).toEqual([true, false]);
+    const salary = toggleBenefit(card, BANK_SALARY);
+    expect([enabledOf(salary, BANK_CARD), enabledOf(salary, BANK_SALARY)]).toEqual([false, true]);
+    expect(enabledOf(salary, MOBILE)).toBe(true);
   });
 
   test("toggle does not mutate the plan", () => {

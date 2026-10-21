@@ -190,6 +190,28 @@ describe("user templates", () => {
     expect(hasCampaignOccurrence(emptyPlan([b]), t, { period: PERIOD })).toBe(false);
   });
 
+  test("pointback template is added once per round, with the cap shared by the round's plans", () => {
+    const t = template("pointback");
+    const round = { start: "2026-05-19", end: "2026-05-20" };
+    const b = instantiateCampaign(t, { id: NEW_ID, period: round });
+    expect(b).toMatchObject({
+      kind: "spend-tiers",
+      enabled: true,
+      capScope: "campaign",
+      sharedKey: "pointback:2026-05-19",
+      params: { cap: 5000 },
+    });
+    expect(b.conditions.dateRule).toEqual({ type: "range", ...round });
+    expect(hasCampaignOccurrence(emptyPlan([b]), t, { period: round })).toBe(true);
+    expect(
+      hasCampaignOccurrence(emptyPlan([b]), t, {
+        period: { start: "2026-12-13", end: "2026-12-15" },
+      }),
+    ).toBe(false);
+    // A round the user added, so it can be renamed or removed.
+    expect(templateOfCampaign(b)?.id).toBe("pointback");
+  });
+
   test("instantiate overrides cap, minOrderAmount and label", () => {
     const t = template("39shop");
     const b = instantiateCampaign(t, {
@@ -263,10 +285,128 @@ describe("hasCampaignOccurrence", () => {
   });
 });
 
+describe("wonderful day, 24-hour and two-shop templates", () => {
+  const SHOPS = [1, 2, 3].map((n): Shop => ({
+    id: `a0000000-0000-4000-8000-00000000001${n}`,
+    channel: "rakuten-ichiba",
+    name: "shop",
+    tags: [],
+    updatedAt: "2026-10-04T00:00:00Z",
+  }));
+  const order = (
+    n: number,
+    shop: number,
+    date: string,
+    unitPrice: number,
+    tags: OrderTag[] = [],
+  ) => ({
+    id: ORDER(n),
+    shopId: SHOPS[shop - 1]!.id,
+    date,
+    lineItems: [
+      { id: ITEM(n), name: "item", unitPrice, quantity: 1, taxRate: 0.1 as const, discount: 0 },
+    ],
+    onHold: false,
+    tags,
+  });
+  const resultOf = (benefits: Benefit[], orders: Plan["orders"]) => {
+    const result = calculateAll([{ ...emptyPlan(benefits), orders }], SHOPS).get(PLAN_1);
+    if (!result) throw new Error("no result");
+    return result;
+  };
+  const pointsOf = (result: ReturnType<typeof resultOf>, source: string) =>
+    result.breakdown.filter((row) => row.source === source);
+
+  test("wonderful day is added once, on, and can be deleted as the user's own", () => {
+    const t = template("wonderfulday");
+    expect(t.addedByUser).toBe(true);
+    const b = instantiateCampaign(t, { id: NEW_ID });
+    expect(b).toMatchObject({ enabled: true, sharedKey: "wonderfulday" });
+    expect(b.conditions.dateRule).toEqual({ type: "daysOfMonth", days: [1] });
+    expect(hasCampaignOccurrence(emptyPlan([]), t, {})).toBe(false);
+    expect(hasCampaignOccurrence(emptyPlan([b]), t, {})).toBe(true);
+    expect(templateOfCampaign(b)?.id).toBe("wonderfulday");
+  });
+
+  test("wonderful day gives +2 to the orders of the 1st when they total 3,000 yen incl. tax", () => {
+    const benefit = instantiateCampaign(template("wonderfulday"), { id: NEW_ID });
+    const reached = resultOf(
+      [benefit],
+      [
+        order(1, 1, "2026-10-01", 2000),
+        order(2, 2, "2026-10-01", 1000),
+        order(3, 1, "2026-10-02", 5000),
+      ],
+    );
+    expect(reached.rates[NEW_ID]).toBe(2);
+    expect(reached.spendTotals[NEW_ID]).toBe(3000);
+    expect(pointsOf(reached, NEW_ID).map((row) => row.lineItemId)).toEqual([ITEM(1), ITEM(2)]);
+    const short = resultOf(
+      [benefit],
+      [order(1, 1, "2026-10-01", 2999), order(3, 1, "2026-10-02", 5000)],
+    );
+    expect(short.rates[NEW_ID]).toBe(0);
+    expect(pointsOf(short, NEW_ID)).toEqual([]);
+  });
+
+  test("24-hour gives +9 only to the orders of its day tagged 24h", () => {
+    const benefit = instantiateCampaign(template("24h"), { id: NEW_ID, dates: ["2026-10-10"] });
+    const result = resultOf(
+      [benefit],
+      [
+        order(1, 1, "2026-10-10", 11000, ["24h"]),
+        order(2, 2, "2026-10-10", 11000),
+        order(3, 1, "2026-10-11", 11000, ["24h"]),
+      ],
+    );
+    // 11,000 yen incl. tax = 10,000 yen excl. tax → 900 points at +9.
+    expect(pointsOf(result, NEW_ID)).toEqual([
+      { lineItemId: ITEM(1), source: NEW_ID, points: 900 },
+    ]);
+  });
+
+  test("two-shop counts the shops of its own days only, in a longer plan", () => {
+    const twoShop = instantiateCampaign(template("2shop"), {
+      id: NEW_ID,
+      period: { start: "2026-10-05", end: "2026-10-06" },
+    });
+    const outside = [order(1, 1, "2026-10-04", 1000), order(2, 2, "2026-10-05", 1000)];
+    const one = resultOf([twoShop], outside);
+    expect(one.shopCount).toBe(2);
+    expect(one.rates[NEW_ID]).toBe(0);
+    expect(pointsOf(one, NEW_ID)).toEqual([]);
+    const two = resultOf([twoShop], [...outside, order(3, 3, "2026-10-06", 1000)]);
+    expect(two.rates[NEW_ID]).toBe(2);
+    expect(pointsOf(two, NEW_ID).map((row) => row.lineItemId)).toEqual([ITEM(2), ITEM(3)]);
+  });
+
+  test("the shop-around outlook keeps following the plan's shop-around, not a two-shop", () => {
+    const marathon = instantiateCampaign(template("shop-around-manual"), {
+      id: "88888888-8888-4888-8888-888888888888",
+      period: PERIOD,
+    });
+    const twoShop = instantiateCampaign(template("2shop"), {
+      id: NEW_ID,
+      period: { start: "2026-10-05", end: "2026-10-06" },
+    });
+    const orders = [order(1, 1, "2026-10-04", 1000), order(2, 2, "2026-10-05", 1000)];
+    expect(resultOf([twoShop, marathon], orders).shopAroundOutlook?.benefitId).toBe(marathon.id);
+    expect(resultOf([twoShop], orders).shopAroundOutlook).toBeNull();
+  });
+});
+
 describe("editCampaign", () => {
   test("finds the template a campaign was made from", () => {
     const period = { start: "2026-10-04", end: "2026-10-09" };
-    for (const id of ["sports-win", "39shop", "repeat", "shop-around-manual", "custom-rate"]) {
+    for (const id of [
+      "sports-win",
+      "39shop",
+      "repeat",
+      "24h",
+      "2shop",
+      "shop-around-manual",
+      "custom-rate",
+    ]) {
       const b = instantiateCampaign(template(id), {
         id: NEW_ID,
         dates: ["2026-10-05"],
@@ -308,5 +448,62 @@ describe("editCampaign", () => {
     const both = editCampaign(t, b, { rate: 2 });
     expect(both.imagePath).toBe("/img/campaign/sports-w.webp");
     expect(editCampaign(t, both, { rate: 1 }).imagePath).toBe("/img/campaign/sports.webp");
+  });
+});
+
+describe("ご愛顧感謝デー", () => {
+  const t = template("thanks-day");
+  const shop: Shop = {
+    id: SHOP,
+    channel: "rakuten-ichiba",
+    name: "shop",
+    tags: [],
+    updatedAt: "2026-10-04T00:00:00Z",
+  };
+  // 11,000 yen incl. 10% tax = 10,000 yen excl. tax.
+  const order = (n: number, date: string) => ({
+    id: ORDER(n),
+    shopId: SHOP,
+    date,
+    lineItems: [
+      {
+        id: ITEM(n),
+        name: "item",
+        unitPrice: 11000,
+        quantity: 1,
+        taxRate: 0.1 as const,
+        discount: 0,
+      },
+    ],
+    onHold: false,
+    tags: [],
+  });
+  const pointsOf = (benefit: Benefit) => {
+    const plan: Plan = {
+      ...emptyPlan([benefit]),
+      orders: [order(1, "2026-10-18"), order(2, "2026-10-19")],
+    };
+    return calculateAll([plan], [shop]).get(PLAN_1)?.breakdown;
+  };
+
+  test("the rank the user chose sets the rate, on the 18th only", () => {
+    // プラチナ: +2.
+    const added = instantiateCampaign(t, { id: NEW_ID, rate: 2 });
+    expect(added).toMatchObject({ enabled: true, sharedKey: "thanks-day", params: { rate: 2 } });
+    expect(pointsOf(added)).toEqual([{ lineItemId: ITEM(1), source: NEW_ID, points: 200 }]);
+    // ダイヤモンド: +3.
+    const diamond = editCampaign(t, added, { rate: 3 });
+    expect(diamond.conditions.dateRule).toEqual({ type: "daysOfMonth", days: [18] });
+    expect(pointsOf(diamond)).toEqual([{ lineItemId: ITEM(1), source: NEW_ID, points: 300 }]);
+  });
+
+  test("is added once, and can be changed and deleted as the user's own", () => {
+    expect(t.addedByUser).toBe(true);
+    const b = { ...instantiateCampaign(t, { id: NEW_ID }), enabled: false };
+    expect(b.kind === "rate-bonus" && b.params.rate).toBe(1);
+    expect(hasCampaignOccurrence(emptyPlan([]), t, {})).toBe(false);
+    expect(hasCampaignOccurrence(emptyPlan([b]), t, {})).toBe(true);
+    expect(templateOfCampaign(b)?.id).toBe("thanks-day");
+    expect(editCampaign(t, b, { rate: 3 })).toMatchObject({ enabled: false, params: { rate: 3 } });
   });
 });

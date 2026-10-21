@@ -232,6 +232,46 @@ test("lists only the events that have not ended, and a round whose cap is not ou
   await expect.element(screen.getByRole("listitem")).toHaveLength(2);
 });
 
+test("sums up an event whose rate the total sets by its highest rate and its cap", async () => {
+  const brandDay: OfficialEvent = {
+    id: "brand-day-2026-10-20",
+    name: "楽天ブランドデー",
+    period: { start: "2026-10-20", end: "2026-10-21" },
+    benefits: [
+      {
+        id: crypto.randomUUID(),
+        kind: "spend-tiers",
+        category: "campaign",
+        label: "ブランドデー",
+        enabled: true,
+        amountBasis: "tax-excluded",
+        capScope: "campaign",
+        sharedKey: "brand-day-2026-10-20",
+        conditions: {
+          dateRule: { type: "range", start: "2026-10-20", end: "2026-10-21" },
+          orderTags: ["brand-day"],
+        },
+        params: {
+          tiers: [
+            { minAmount: 0, rate: 2 },
+            { minAmount: 30000, rate: 4 },
+          ],
+          cap: 4000,
+          roundingUnit: "item",
+        },
+      },
+    ],
+  };
+  const { screen } = await renderPlanList(createMemoryRepository(), {
+    events: { load: async () => [brandDay] },
+  });
+
+  const card = screen.getByRole("listitem").filter({ hasText: "楽天ブランドデー" });
+  await expect
+    .element(card.getByText("・合計額で最大 +4倍・上限 4,000P", { exact: false }))
+    .toBeVisible();
+});
+
 test("says when the events cannot be read, and reads them again", async () => {
   let fail = true;
   const events = {
