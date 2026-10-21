@@ -6,7 +6,7 @@ export function ArticleDates({ article }: { article: Article }) {
   return (
     <Text fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
       公開日 <time dateTime={article.published}>{japaneseDate(article.published)}</time>
-      {article.updated !== article.published && (
+      {article.updated !== undefined && (
         <>
           {"・"}
           更新日 <time dateTime={article.updated}>{japaneseDate(article.updated)}</time>

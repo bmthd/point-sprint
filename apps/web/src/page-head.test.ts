@@ -42,3 +42,8 @@ test("an article's OGP type is article, with the days it was published and chang
     expect.objectContaining({ property: "og:type" }),
   );
 });
+
+test("an article never changed has no modified time", () => {
+  const { meta } = pageHead({ path: "/a", title: "記事", article: { published: "2026-10-08" } });
+  expect(meta).not.toContainEqual(expect.objectContaining({ property: "article:modified_time" }));
+});
