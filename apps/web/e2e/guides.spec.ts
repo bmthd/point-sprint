@@ -1,10 +1,10 @@
 import { expect, test } from "./fixtures";
+import { GUIDE_ITEM_NAME } from "./fake-rakuten-api";
 import { GuidePage, GuidesPage } from "./pages";
 import { siteUrl } from "../src/site-url";
 
-// The E2E build sends the guides' item searches nowhere (`GUIDE_ITEMS_ENDPOINT`), so that no test
-// calls the Rakuten API: every search fails, and the guides read on without their lists. That the
-// lists hold the items found is tested by `load-guide.test.ts` and `guide-item-list.browser.test`.
+// The E2E build searches the guides' items in the stand-in for the Rakuten API
+// (`scripts/build-e2e.ts`), which finds the same item for every list.
 
 const GUIDE = "/guides/1000yen-items";
 const TITLE = "1000円ポッキリで買えるもの";
@@ -16,14 +16,15 @@ test("the guide list leads to each guide", async ({ page }) => {
   await expect(guide.heading(1, TITLE)).toBeVisible();
 });
 
-test("a guide whose searches failed shows its text and dates without lists", async ({ page }) => {
+test("a guide shows its text and dates, with the items of each list", async ({ page }) => {
   const guide = await GuidePage.open(page, GUIDE);
   await expect(page).toHaveTitle(`${TITLE} | ポイントスプリント`);
   await expect(page.getByText(/公開日 2026年10月8日/)).toBeVisible();
   await expect(guide.heading(2, "食品")).toBeVisible();
   await expect(page.getByText(/日持ちのする食品を選ぶと/)).toBeVisible();
   await expect(guide.heading(2, "美容")).toBeVisible();
-  await expect(guide.itemLists).toHaveCount(0);
+  await expect(guide.itemLists).toHaveCount(3);
+  await expect(guide.itemLists.first().getByRole("link", { name: GUIDE_ITEM_NAME })).toBeVisible();
 });
 
 test("a guide is prerendered as an article", async ({ request }) => {

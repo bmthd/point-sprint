@@ -19,7 +19,7 @@ export class AddOrderForm {
     // Typed to find a saved shop, or to name a new one.
     this.shop = this.root.getByRole("textbox", { name: /^ショップ/ });
     this.itemUrl = this.root.getByRole("textbox", { name: /^URLから自動入力/ });
-    this.itemName = this.root.getByRole("textbox", { name: /^商品名メモ/ });
+    this.itemName = this.root.getByRole("textbox", { name: /^商品名/ });
     this.price = this.root.getByRole("textbox", { name: "金額（税込）" });
     this.shopRate = this.root.getByRole("spinbutton", { name: /^独自倍率/ });
     this.submit = this.root.getByRole("button", { name: "追加する" });

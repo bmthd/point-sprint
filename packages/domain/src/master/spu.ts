@@ -60,6 +60,12 @@ export const CARD_NORMAL_ID = "9527dde1-c708-44fa-b2cf-5b7b35e0f3d1";
 export const CARD_BONUS_ID = "864f3f89-dacc-4313-a528-dac222c383cc";
 export const PREMIUM_CARD_BONUS_ID = "b3acca83-be7b-4c8a-9637-7706296679d4";
 
+/**
+ * 楽天銀行の2つの段階。+0.5倍の id は、段階を分ける前の楽天銀行の項目（+0.5倍）の id をそのまま使う。
+ */
+export const BANK_CARD_ID = "1933c19c-0aa3-4052-8d5e-c0d07859a0a9";
+export const BANK_SALARY_ID = "3a7c47bd-3404-4dcb-9569-54989e63f077";
+
 export const BOOKS_SPU_ID = "c6a1511e-c5e8-4c68-958a-4b1d5dd3ea42";
 export const KOBO_SPU_ID = "e86e12fd-173a-48a4-995d-2408c4b1d4c2";
 
@@ -160,17 +166,21 @@ export const standardSpu: Benefit[] = [
     cap: 500,
   }),
   // 「特典8 楽天銀行で楽天カードの引落をするとポイント最大+0.5倍」「1,000ポイント」。
-  // 条件1〜3で+0.3倍、条件1〜5（給与・賞与・年金の受取とハッピープログラムのエントリーを含む）で+0.5倍。
-  // ここでは最大の+0.5倍を置く。付与対象は楽天カードでの購入分だが、支払方法は conditions で表せない。
-  spu(
-    "3a7c47bd-3404-4dcb-9569-54989e63f077",
-    "楽天銀行（楽天カード引落）",
-    "/img/spu/service_bank.webp",
-    {
-      rate: 0.5,
-      cap: 1000,
-    },
-  ),
+  // 確認日: 2026-10-19。条件1〜3（楽天カードの利用代金を楽天銀行口座から引き落とす）で+0.3倍、
+  // 条件1〜5（さらに前月に給与・賞与・年金を楽天銀行で受け取り、ハッピープログラムにエントリーする）
+  // で合計+0.5倍。上限はどちらも同じなので、2つの項目を同じ exclusiveGroup にし、どちらか一方だけ
+  // 有効にできるようにする（旧サイトと同じ）。付与対象は楽天カードでの購入分だが、支払方法は
+  // conditions で表せない。
+  spu(BANK_CARD_ID, "楽天銀行（楽天カード引落）", "/img/spu/service_bank.webp", {
+    rate: 0.3,
+    cap: 1000,
+    exclusiveGroup: "rakuten-bank",
+  }),
+  spu(BANK_SALARY_ID, "楽天銀行（給与受取）", "/img/spu/service_bank.webp", {
+    rate: 0.5,
+    cap: 1000,
+    exclusiveGroup: "rakuten-bank",
+  }),
   // 「9-1 当月合計30,000円以上のポイント投資（投資信託）でポイント+0.5倍」「2,000ポイント」。
   spu(
     "783251db-1b47-4c78-aa29-20038fb53dac",

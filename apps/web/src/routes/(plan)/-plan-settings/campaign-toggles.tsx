@@ -1,4 +1,11 @@
-import { type Benefit, type Plan, campaignTemplates, templateOfCampaign } from "@workspaces/domain";
+import {
+  type Benefit,
+  type Plan,
+  campaignTemplates,
+  comesWithPlan,
+  isTwoShopCampaign,
+  templateOfCampaign,
+} from "@workspaces/domain";
 import { Box, Card, Flex, Heading, IconButton, Image, List, Switch, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
@@ -10,13 +17,19 @@ import { CampaignEditor } from "./campaign-editor";
 import { useDeleteCampaign } from "./delete-campaign";
 import { useSaveSettingsChange, whenText } from "./settings-shared";
 
-type RateBenefit = Extract<Benefit, { kind: "rate-bonus" }>;
-
 const fixedKeys = new Set(
+  campaignTemplates.filter(comesWithPlan).map((template) => template.benefit.sharedKey),
+);
+
+const fixedDayKeys = new Set(
   campaignTemplates
     .filter((template) => template.occurrence === "fixed")
     .map((template) => template.benefit.sharedKey),
 );
+
+/** Whether the campaign's days are set by its date rule (5と0のつく日, ワンダフルデー). */
+export const isFixedCampaign = (benefit: Benefit) =>
+  benefit.sharedKey !== undefined && fixedDayKeys.has(benefit.sharedKey);
 
 /**
  * Whether the user added this campaign themselves, so it can be deleted. Fixed campaigns (days
@@ -28,12 +41,25 @@ export function isAddedCampaign(plan: Plan, benefit: Benefit) {
   return benefit.sharedKey !== plan.officialEventId && !fixedKeys.has(benefit.sharedKey);
 }
 
-/** The plan's campaigns that are toggled here: every campaign but the shop-around. */
+/**
+ * The plan's campaigns that are toggled here: every campaign of one rate, a 2ショップ購入, and a
+ * fixed campaign set by its total (ワンダフルデー). The shop-around and the other campaigns set by
+ * their total have their own cards.
+ */
 const campaignsOf = (plan: Plan) =>
   plan.benefits.filter(
-    (benefit): benefit is RateBenefit =>
-      benefit.category === "campaign" && benefit.kind === "rate-bonus",
+    (benefit) =>
+      benefit.category === "campaign" &&
+      (benefit.kind === "rate-bonus" ||
+        isTwoShopCampaign(benefit) ||
+        (benefit.kind === "spend-tiers" && isFixedCampaign(benefit))),
   );
+
+/** The +N倍 a campaign's row shows: its rate, or the highest of its tiers. */
+const rateOf = (benefit: Benefit) =>
+  benefit.kind === "rate-bonus"
+    ? benefit.params.rate
+    : Math.max(...benefit.params.tiers.map((tier) => tier.rate));
 
 /**
  * One campaign: its image, name, rate and days, then ✎ for one the user added, then whether it
@@ -48,14 +74,14 @@ function CampaignRow({
   onDelete,
 }: {
   plan: Plan;
-  benefit: RateBenefit;
+  benefit: Benefit;
   editing: boolean;
   onEdit: () => void;
   onToggle: () => void;
   onDelete: () => void;
 }) {
   const when = whenText(benefit.conditions.dateRule);
-  const name = `${benefit.label} ${rateText(benefit.params.rate)} ${when}`;
+  const name = `${benefit.label} ${rateText(rateOf(benefit))} ${when}`;
   const template = isAddedCampaign(plan, benefit) ? templateOfCampaign(benefit) : undefined;
   const editorId = useId();
   return (
@@ -77,7 +103,7 @@ function CampaignRow({
             <Text as="span" fontWeight="medium">
               {benefit.label}{" "}
               <Text as="span" fontVariantNumeric="tabular-nums">
-                {rateText(benefit.params.rate)}
+                {rateText(rateOf(benefit))}
               </Text>
             </Text>
             <Text as="span" fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">

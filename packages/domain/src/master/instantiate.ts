@@ -1,5 +1,5 @@
 import type { Benefit } from "../model/benefit";
-import type { CampaignTemplate } from "../model/campaign-template";
+import { type CampaignTemplate, comesWithPlan } from "../model/campaign-template";
 import type { Id, IsoDate, Period } from "../model/common";
 import type { Plan } from "../model/plan";
 import { campaignTemplates } from "./campaigns";
@@ -46,6 +46,13 @@ export function instantiateCampaign(template: CampaignTemplate, input: Input): B
     if (sharedKey === undefined) delete benefit.sharedKey;
     else benefit.sharedKey = sharedKey;
     // The user entered the period they took part in, so the benefit starts enabled.
+    benefit.enabled = true;
+  } else if (template.addedByUser) {
+    // A fixed campaign the user adds keeps its days, and takes the rate of the user's choice.
+    if (input.rate !== undefined && benefit.kind === "rate-bonus") {
+      benefit.params.rate = input.rate;
+    }
+    // The user added it because they take part, so the benefit starts enabled.
     benefit.enabled = true;
   }
   if (input.cap !== undefined) benefit.params.cap = input.cap;
@@ -107,7 +114,7 @@ export function templateOfCampaign(benefit: Benefit): CampaignTemplate | undefin
   return campaignTemplates.find((template) => {
     const templateKey = template.benefit.sharedKey;
     return (
-      template.occurrence !== "fixed" &&
+      !comesWithPlan(template) &&
       templateKey !== undefined &&
       (key === templateKey || key.startsWith(`${templateKey}:`))
     );
