@@ -7,6 +7,7 @@ import {
   Card,
   Flex,
   Heading,
+  Link,
   List,
   Skeleton,
   Text,
@@ -18,6 +19,7 @@ import type { ReactNode } from "react";
 import { monthDayWithWeekday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";
 import { ColumnHead } from "../../../ui/column-head";
+import { ExternalIcon } from "../../../ui/icons";
 
 /**
  * The highest rate and the cap of each shop-around and spend-tiers benefit,
@@ -68,6 +70,20 @@ function EventCard({ event, status, disabled, onCreate }: EventCardProps) {
             {monthDayWithWeekday(event.period.start)} 〜 {monthDayWithWeekday(event.period.end)}
             {tiersSummary(event)}
           </Text>
+          {event.url ? (
+            <Link
+              href={event.url}
+              color="link"
+              fontSize="sm"
+              target="_blank"
+              rel="noreferrer"
+              alignSelf="flex-start"
+              gap="1.5"
+            >
+              楽天の公式ページ
+              <ExternalIcon />
+            </Link>
+          ) : null}
           <Button
             colorScheme="primary"
             size="lg"
