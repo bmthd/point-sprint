@@ -76,6 +76,7 @@ const marathon = (input: {
   id: input.id,
   name: input.name,
   period: { start: input.start, end: input.end },
+  url: "https://event.rakuten.co.jp/campaign/point-up/marathon/",
   benefits: [
     {
       id: crypto.randomUUID(),
@@ -230,6 +231,15 @@ test("lists only the events that have not ended, and a round whose cap is not ou
   const next = screen.getByRole("listitem").filter({ hasText: "お買い物マラソン第二弾" });
   await expect.element(next.getByText("・上限は未発表", { exact: false })).toBeVisible();
   await expect.element(screen.getByRole("listitem")).toHaveLength(2);
+});
+
+test("links each event's name to Rakuten's page in a new tab", async () => {
+  const { screen } = await renderPlanList(createMemoryRepository());
+  const link = screen.getByRole("link", { name: "お買い物マラソン第二弾" });
+  await expect
+    .element(link)
+    .toHaveAttribute("href", "https://event.rakuten.co.jp/campaign/point-up/marathon/");
+  await expect.element(link).toHaveAttribute("target", "_blank");
 });
 
 test("sums up an event whose rate the total sets by its highest rate and its cap", async () => {

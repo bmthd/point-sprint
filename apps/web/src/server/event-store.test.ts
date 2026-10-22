@@ -111,6 +111,10 @@ test("serves no row that is not published or not an event", async () => {
   sqlite.exec(`UPDATE official_events SET benefits_json = '[' WHERE id = 'marathon-2026-10-24'`);
   const events = await publishedEvents(db);
   expect(events.map((event) => event.id)).toEqual(["marathon-2026-10-14", "brand-day-2026-10-20"]);
+  expect(events.map((event) => event.url)).toEqual([
+    "https://event.rakuten.co.jp/campaign/point-up/marathon/schedule/",
+    "https://event.rakuten.co.jp/brand/campaign/",
+  ]);
 });
 
 test("logs a failed run without writing when the schedule page cannot be fetched", async () => {
