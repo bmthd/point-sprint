@@ -19,7 +19,6 @@ import type { ReactNode } from "react";
 import { monthDayWithWeekday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";
 import { ColumnHead } from "../../../ui/column-head";
-import { ExternalIcon } from "../../../ui/icons";
 
 /**
  * The highest rate and the cap of each shop-around and spend-tiers benefit,
@@ -62,28 +61,31 @@ function EventCard({ event, status, disabled, onCreate }: EventCardProps) {
                 {status === "active" ? "開催中" : "開催予定"}
               </Badge>
             ) : null}
-            <Text fontSize="md" fontWeight="bold">
-              {event.name}
-            </Text>
+            {event.url ? (
+              // The name is the link, underlined rather than given an icon: a row of the link's own,
+              // or an icon beside the name, would make the card taller than its skeleton on a phone.
+              <Link
+                href={event.url}
+                color="fg"
+                fontSize="md"
+                fontWeight="bold"
+                textDecoration="underline"
+                textUnderlineOffset="0.2em"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {event.name}
+              </Link>
+            ) : (
+              <Text fontSize="md" fontWeight="bold">
+                {event.name}
+              </Text>
+            )}
           </Flex>
           <Text fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
             {monthDayWithWeekday(event.period.start)} 〜 {monthDayWithWeekday(event.period.end)}
             {tiersSummary(event)}
           </Text>
-          {event.url ? (
-            <Link
-              href={event.url}
-              color="link"
-              fontSize="sm"
-              target="_blank"
-              rel="noreferrer"
-              alignSelf="flex-start"
-              gap="1.5"
-            >
-              楽天の公式ページ
-              <ExternalIcon />
-            </Link>
-          ) : null}
           <Button
             colorScheme="primary"
             size="lg"

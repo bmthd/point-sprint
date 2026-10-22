@@ -233,10 +233,9 @@ test("lists only the events that have not ended, and a round whose cap is not ou
   await expect.element(screen.getByRole("listitem")).toHaveLength(2);
 });
 
-test("links each event to Rakuten's page in a new tab", async () => {
+test("links each event's name to Rakuten's page in a new tab", async () => {
   const { screen } = await renderPlanList(createMemoryRepository());
-  const next = screen.getByRole("listitem").filter({ hasText: "お買い物マラソン第二弾" });
-  const link = next.getByRole("link", { name: "楽天の公式ページ" });
+  const link = screen.getByRole("link", { name: "お買い物マラソン第二弾" });
   await expect
     .element(link)
     .toHaveAttribute("href", "https://event.rakuten.co.jp/campaign/point-up/marathon/");
