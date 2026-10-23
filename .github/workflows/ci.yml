@@ -1,9 +1,18 @@
 name: CI
 
+# Docs, the Markdown at the root and .github are never read by the site, its tests or its build.
+# A push to main of only those runs nothing. A pull request still runs every job, since the
+# ruleset requires them, and its jobs skip their steps by what the "changes" job finds.
 on:
   pull_request:
   push:
     branches: [main]
+    paths:
+      - "**"
+      - "!docs/**"
+      - "!*.md"
+      - "!.github/**"
+      - ".github/workflows/ci.yml"
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -13,8 +22,35 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      app: ${{ steps.files.outputs.app }}
+    steps:
+      # The same paths as on.push.paths above. A push got here only through them, and a list that
+      # cannot be read (a diff too large) counts as touching the app.
+      - id: files
+        run: |
+          app=true
+          if [ "$EVENT" = pull_request ] && files=$(gh pr diff "$PR_NUMBER" --name-only) &&
+            ! grep -qvE '^(docs/|\.github/|[^/]+\.md$)' <<< "$files" &&
+            ! grep -qx '.github/workflows/ci.yml' <<< "$files"; then
+            app=false
+          fi
+          echo "app=$app" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+
   quality:
     name: Quality
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -25,21 +61,29 @@ jobs:
           cache: true
       - run: pnpm install --frozen-lockfile
       - parallel:
+          # Only formatting and spelling read the Markdown at the root and .github.
           - name: Lint
+            if: needs.changes.outputs.app == 'true'
             run: pnpm lint
           - name: Check formatting
             run: pnpm fmt:check
           - name: Check types
+            if: needs.changes.outputs.app == 'true'
             run: pnpm type:check
           - name: Check spelling
             run: pnpm spell:check
           - name: Audit production dependencies
+            if: needs.changes.outputs.app == 'true'
             run: pnpm audit --prod
           - name: Build
+            if: needs.changes.outputs.app == 'true'
             run: pnpm build
 
+  # A skipped job passes the ruleset's required check.
   test:
     name: Tests
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -67,6 +111,7 @@ jobs:
 
   e2e:
     name: E2E (${{ matrix.shard }})
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -77,14 +122,20 @@ jobs:
             artifact_suffix: shard-1-of-2
           - shard: "2/2"
             artifact_suffix: shard-2-of-2
+    # A matrix job skipped as a whole never expands its name, so the required "E2E (1/2)" would
+    # wait forever. Its steps are skipped instead.
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
+      - if: needs.changes.outputs.app == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - if: needs.changes.outputs.app == 'true'
+        uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
         with:
           runtime: node@26
           cache: true
-      - run: pnpm install --frozen-lockfile
+      - if: needs.changes.outputs.app == 'true'
+        run: pnpm install --frozen-lockfile
       - name: Restore Playwright Chromium
+        if: needs.changes.outputs.app == 'true'
         id: playwright
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
@@ -92,11 +143,13 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
       - parallel:
           - name: Install Chromium
-            if: steps.playwright.outputs.cache-hit != 'true'
+            if: needs.changes.outputs.app == 'true' && steps.playwright.outputs.cache-hit != 'true'
             run: pnpm --filter web exec playwright install --with-deps chromium
           - name: Build
+            if: needs.changes.outputs.app == 'true'
             run: pnpm build:e2e
       - name: Run E2E tests
+        if: needs.changes.outputs.app == 'true'
         run: pnpm --filter web exec playwright test --shard=${{ matrix.shard }}
       - name: Upload Playwright failure artifacts
         if: ${{ failure() }}
