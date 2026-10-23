@@ -79,6 +79,8 @@
     "strftime",
     "autoincrement",
     "khtml",
-    "miniflare"
+    "miniflare",
+    "jactionlint",
+    "shellcheck"
   ]
 }

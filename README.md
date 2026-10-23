@@ -32,6 +32,10 @@ pnpm --filter web exec playwright install chromium
 | `pnpm fmt`       | oxfmt で整形します                                                                                                                                                          |
 | `pnpm build`     | ビルドし、プリレンダーしたページを確かめます。楽天のキーは `.env.development` のものを使います                                                                              |
 
+### ワークフローの検査
+
+`.github` のワークフローは、CI の Quality が [jactionlint](https://github.com/jdx/jactionlint) で確かめます。npm にはないので、`pnpm check:all` には入れていません。手元で確かめるときは、`uvx jactionlint` か mise（`mise x github:jdx/jactionlint -- jactionlint`）で、リポジトリのルートで実行します。`run:` のスクリプトは、shellcheck が入っていれば一緒に確かめます。
+
 ### E2E のポート
 
 E2E は、ビルドしたものを `vite preview` でポート 4173 に配信し、楽天 API の代わりのサーバーをポート 4174 に立てます（`apps/web/playwright.config.ts`）。どちらもポートを固定していて、すでに使われていると起動しません。worktree を並べて E2E を走らせると、ポートを取り合います。使われていたら、止めずに空くのを待ちます。
@@ -57,6 +61,6 @@ flowchart LR
   Merge[main にマージ] --> Deploy[本番にデプロイ]
 ```
 
-- **PR ごと**: CI（`.github/workflows/ci.yml`）が lint、整形、型、スペル、依存の監査、ビルド、テスト、E2E を確かめます。Preview（`.github/workflows/preview.yml`）が PR のコードを Worker の Preview として配り、URL を PR にコメントします。URL は `https://pr-<PR番号>-point-sprint.jougennotuki67.workers.dev` です。PR の本文の「レビュー観点」の節にある `[ページ名](/path)` のリンクは、Preview の URL に書き換わります。Preview は本番とは別のデータベースを使います
+- **PR ごと**: CI（`.github/workflows/ci.yml`）が lint、整形、型、スペル、ワークフロー、依存の監査、ビルド、テスト、E2E を確かめます。Preview（`.github/workflows/preview.yml`）が PR のコードを Worker の Preview として配り、URL を PR にコメントします。URL は `https://pr-<PR番号>-point-sprint.jougennotuki67.workers.dev` です。PR の本文の「レビュー観点」の節にある `[ページ名](/path)` のリンクは、Preview の URL に書き換わります。Preview は本番とは別のデータベースを使います
 - **main へのマージ**: Deploy（`.github/workflows/deploy.yml`）が本番の設定でビルドし、公式イベントのマスタのマイグレーションを流してから、Cloudflare Workers にデプロイします
 - **毎日**: Event master（`.github/workflows/event-master.yml`）が、本番が 1 週間後に開催中の公式イベントを返すかを確かめます。返さなければ Issue を立てます（`docs/event-master.md`）

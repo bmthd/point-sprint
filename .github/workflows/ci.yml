@@ -55,6 +55,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
         with:
           runtime: node@26
@@ -78,6 +80,10 @@ jobs:
           - name: Build
             if: needs.changes.outputs.app == 'true'
             run: pnpm build
+      # Checks the workflows with shellcheck, which the runner has, even when a step above failed.
+      - name: Check workflows
+        if: ${{ !cancelled() }}
+        uses: jdx/jactionlint@a65ab044e916760429068fe5794b8306abdfcbb9 # v2.3.0
 
   # A skipped job passes the ruleset's required check.
   test:
@@ -88,6 +94,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
         with:
           runtime: node@26
@@ -127,6 +135,8 @@ jobs:
     steps:
       - if: needs.changes.outputs.app == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - if: needs.changes.outputs.app == 'true'
         uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
         with:
