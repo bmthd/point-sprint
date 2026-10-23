@@ -2,8 +2,17 @@
 # Production is untouched: a preview only uploads a version and points a URL at it.
 name: Preview
 
+# Docs, the Markdown at the root and .github are never read by the site, so a pull request of only
+# those gets no preview. Any other change, apps/web's Markdown among them, builds one. Nothing
+# requires this check, so the whole workflow can be skipped.
 on:
   pull_request:
+    paths:
+      - "**"
+      - "!docs/**"
+      - "!*.md"
+      - "!.github/**"
+      - ".github/workflows/preview.yml"
 
 # A newer push to the same pull request supersedes a preview still in progress.
 concurrency:
