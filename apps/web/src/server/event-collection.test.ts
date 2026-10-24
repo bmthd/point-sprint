@@ -15,8 +15,16 @@ const idSequence = () => {
 /** The shop-around's id in the row already stored. */
 const KEPT = "b0000000-0000-4000-8000-0000000000aa";
 
-const second = { title: "第二弾", period: { start: "2026-10-14", end: "2026-10-17" } };
-const third = { title: "第三弾", period: { start: "2026-10-24", end: "2026-10-27" } };
+const second = {
+  title: "第二弾",
+  period: { start: "2026-10-14", end: "2026-10-17" },
+  times: { start: "20:00", end: "09:59" },
+};
+const third = {
+  title: "第三弾",
+  period: { start: "2026-10-24", end: "2026-10-27" },
+  times: { start: "20:00", end: "09:59" },
+};
 
 const published = (event: StoredEvent["event"]): StoredEvent => ({
   event,
@@ -71,6 +79,7 @@ test("a round is an event whose shop-around pays +1〜+9倍 at 2〜10 shops over
   expect(event.id).toBe("marathon-2026-10-14");
   expect(event.name).toBe("お買い物マラソン第二弾");
   expect(event.period).toEqual(second.period);
+  expect(event.times).toEqual({ start: "20:00", end: "09:59" });
   const [benefit] = event.benefits;
   expect(benefit?.sharedKey).toBe(event.id);
   expect(benefit?.conditions.dateRule).toEqual({ type: "range", ...second.period });

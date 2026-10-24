@@ -6,6 +6,9 @@ export type Id = v.InferOutput<typeof IdSchema>;
 export const IsoDateSchema = v.pipe(v.string(), v.isoDate());
 export type IsoDate = v.InferOutput<typeof IsoDateSchema>;
 
+/** `20:00`. */
+export const IsoTimeSchema = v.pipe(v.string(), v.isoTime());
+
 export const TimestampSchema = v.pipe(v.string(), v.isoTimestamp());
 export type Timestamp = v.InferOutput<typeof TimestampSchema>;
 

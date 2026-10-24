@@ -1,4 +1,4 @@
-import type { Period } from "@workspaces/domain";
+import type { OfficialEvent, Period } from "@workspaces/domain";
 
 // Reads Rakuten's marathon pages, which its CMS writes. Each reader looks for the few labels and
 // class names the facts sit under, and gives `undefined` for what it cannot find: the pages change
@@ -8,7 +8,7 @@ export const SCHEDULE_URL = "https://event.rakuten.co.jp/campaign/point-up/marat
 export const MARATHON_URL = "https://event.rakuten.co.jp/campaign/point-up/marathon/";
 
 /** A round on the schedule page, as 「第二弾」 and its period. */
-export type ScheduledRound = { title: string; period: Period };
+export type ScheduledRound = { title: string; period: Period; times?: OfficialEvent["times"] };
 
 /** The round the marathon page shows from its entry until its end. */
 export type CurrentRound = {
@@ -29,16 +29,24 @@ const withoutComments = (html: string) => html.replace(/<!--[\s\S]*?-->/g, "");
 const pad = (value: string) => value.padStart(2, "0");
 
 /**
- * The days of 「2026年10月14日(水)20:00～2026年10月17日(土)09:59」. The master holds days only, so
- * the times are dropped (#69).
+ * The days of 「2026年10月14日(水)20:00～2026年10月17日(土)09:59」, and their times when it has
+ * both.
  */
-export function periodOf(text: string): Period | undefined {
-  const days = [...text.matchAll(/(\d{4})年(\d{1,2})月(\d{1,2})日/g)].map(
-    ([, year = "", month = "", day = ""]) => `${year}-${pad(month)}-${pad(day)}`,
-  );
-  const [start, end] = days;
-  if (days.length !== 2 || !start || !end) return undefined;
-  return { start, end };
+export function periodOf(
+  text: string,
+): { period: Period; times?: OfficialEvent["times"] } | undefined {
+  const ends = [
+    ...text.matchAll(/(\d{4})年(\d{1,2})月(\d{1,2})日(?:\([^)]*\))?\s*(?:(\d{1,2}):(\d{2}))?/g),
+  ].map(([, year = "", month = "", day = "", hour, minute]) => ({
+    date: `${year}-${pad(month)}-${pad(day)}`,
+    time: hour && minute ? `${pad(hour)}:${minute}` : undefined,
+  }));
+  const [start, end] = ends;
+  if (ends.length !== 2 || !start || !end) return undefined;
+  const period = { start: start.date, end: end.date };
+  return start.time && end.time
+    ? { period, times: { start: start.time, end: end.time } }
+    : { period };
 }
 
 /** The rounds of the month on the schedule page, in the order it lists them. */
@@ -47,10 +55,10 @@ export function readSchedule(html: string): ScheduledRound[] {
   const pattern =
     /class="marathonCalender-title">\s*<span>([^<]*)<\/span>[\s\S]*?class="marathonCalender-lead">([^<]*)<\/p>/g;
   for (const [, title = "", lead = ""] of withoutComments(html).matchAll(pattern)) {
-    const period = periodOf(lead);
+    const read = periodOf(lead);
     // 「第二弾!」 is shown as 「第二弾」.
     const name = title.trim().replace(/[!！]+$/, "");
-    if (period && name) rounds.push({ title: name, period });
+    if (read && name) rounds.push({ title: name, ...read });
   }
   return rounds;
 }
@@ -81,7 +89,7 @@ export function readCurrentRound(html: string): CurrentRound | undefined {
   const periodGroup = detailGroup(page, "ポイントアップ期間");
   const benefitGroup = detailGroup(page, "キャンペーン特典");
   if (!campaignName || !periodGroup || !benefitGroup) return undefined;
-  const period = periodOf(textOf(periodGroup));
+  const period = periodOf(textOf(periodGroup))?.period;
   // 「購入ショップ数に応じ、ポイント倍率が2倍、3倍と最大10倍まで増加」
   const maxRate = toNumber(/ポイント倍率が2倍、3倍と最大(\d+)倍まで増加/.exec(benefitGroup)?.[1]);
   // 「獲得上限ポイント数」 and, in the paragraph after it, 「7,000ポイント(期間限定)」.

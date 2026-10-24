@@ -11,6 +11,8 @@ type Row = {
   name: string;
   period_start: string;
   period_end: string;
+  period_start_time: string | null;
+  period_end_time: string | null;
   benefits_json: string;
   source_url: string;
   status: EventStatus;
@@ -29,6 +31,9 @@ function eventOf(row: Row): OfficialEvent | undefined {
     id: row.id,
     name: row.name,
     period: { start: row.period_start, end: row.period_end },
+    ...(row.period_start_time && row.period_end_time
+      ? { times: { start: row.period_start_time, end: row.period_end_time } }
+      : {}),
     benefits,
   });
   if (parsed.success) return parsed.output;
@@ -67,12 +72,15 @@ export function d1EventStore(db: D1Database): EventStore {
       // `locked` is checked again here, in case the operator locked the row during the run.
       const upsert = db.prepare(`
         INSERT INTO official_events
-          (id, name, period_start, period_end, benefits_json, source_url, fetched_at, status, updated_at)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?7)
+          (id, name, period_start, period_end, period_start_time, period_end_time, benefits_json,
+           source_url, fetched_at, status, updated_at)
+        VALUES (?1, ?2, ?3, ?4, ?9, ?10, ?5, ?6, ?7, ?8, ?7)
         ON CONFLICT (id) DO UPDATE SET
           name = excluded.name,
           period_start = excluded.period_start,
           period_end = excluded.period_end,
+          period_start_time = excluded.period_start_time,
+          period_end_time = excluded.period_end_time,
           benefits_json = excluded.benefits_json,
           source_url = excluded.source_url,
           fetched_at = excluded.fetched_at,
@@ -90,6 +98,8 @@ export function d1EventStore(db: D1Database): EventStore {
             sourceUrl,
             fetchedAt,
             status,
+            event.times?.start ?? null,
+            event.times?.end ?? null,
           ),
         ),
       );

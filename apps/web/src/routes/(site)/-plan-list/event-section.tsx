@@ -83,7 +83,9 @@ function EventCard({ event, status, disabled, onCreate }: EventCardProps) {
             )}
           </Flex>
           <Text fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
-            {monthDayWithWeekday(event.period.start)} 〜 {monthDayWithWeekday(event.period.end)}
+            {monthDayWithWeekday(event.period.start)}
+            {event.times?.start} 〜 {monthDayWithWeekday(event.period.end)}
+            {event.times?.end}
             {tiersSummary(event)}
           </Text>
           <Button

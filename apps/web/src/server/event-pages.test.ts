@@ -11,9 +11,21 @@ const marathon = fixture("marathon-2026-10-14.html");
 
 test("reads the rounds of the month from the schedule page", () => {
   expect(readSchedule(schedule)).toEqual([
-    { title: "第一弾", period: { start: "2026-10-04", end: "2026-10-09" } },
-    { title: "第二弾", period: { start: "2026-10-14", end: "2026-10-17" } },
-    { title: "第三弾", period: { start: "2026-10-24", end: "2026-10-27" } },
+    {
+      title: "第一弾",
+      period: { start: "2026-10-04", end: "2026-10-09" },
+      times: { start: "20:00", end: "01:59" },
+    },
+    {
+      title: "第二弾",
+      period: { start: "2026-10-14", end: "2026-10-17" },
+      times: { start: "20:00", end: "09:59" },
+    },
+    {
+      title: "第三弾",
+      period: { start: "2026-10-24", end: "2026-10-27" },
+      times: { start: "20:00", end: "09:59" },
+    },
   ]);
 });
 
@@ -48,10 +60,13 @@ test("reads no round when a fact it needs has changed its form", () => {
   ).toBeUndefined();
 });
 
-test("reads the days of a period and drops the times", () => {
-  expect(periodOf("2026年12月4日(木)20:00～2026年12月11日(木)01:59")).toEqual({
-    start: "2026-12-04",
-    end: "2026-12-11",
+test("reads the days of a period and their times", () => {
+  expect(periodOf("2026年12月4日(木)20:00～2026年12月11日(木)1:59")).toEqual({
+    period: { start: "2026-12-04", end: "2026-12-11" },
+    times: { start: "20:00", end: "01:59" },
+  });
+  expect(periodOf("2026年12月4日(木)～2026年12月11日(木)01:59")).toEqual({
+    period: { start: "2026-12-04", end: "2026-12-11" },
   });
   expect(periodOf("2026年12月4日(木)20:00～")).toBeUndefined();
 });
