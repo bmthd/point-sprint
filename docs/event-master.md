@@ -16,7 +16,7 @@ Worker（`apps/web/src/server/collect-events.ts`）が、日本時間の 10:05�
 - 終了日が今日以降の回を、`marathon-<開始日>` の `id` で書き込む。一度公開した `id` は変えない。保存されたプランが `officialEventId` で参照している。
 - マラソンのページにまだ出ていない回は、スケジュールのページの期間と、ガイドの倍率（10ショップで最大10倍）で公開し、上限は空にする。トップページには「上限は未発表」と出る。マラソンのページに出たら、そのページの倍率と上限で上書きする。
 - スケジュールのページには、各回の上限の行がコメントアウトされて残っている。この行は実際と違うことがある（2026年10月の第一弾は「10,000ポイント」とあったが、開催中のページでは 7,000 ポイントだった）ので、読まない。
-- 時刻は持てないので、期間は日付だけにする（#69）。
+- 期間の初日の開始時刻と最終日の終了時刻（「20:00」「01:59」）は、`period_start_time` と `period_end_time` に入れる。トップページに出し、プランでは初日・最終日の注文に「この時刻の外の注文は対象外」と注意を出す。プランの計算は日付だけで判定する（#69）。
 - 楽天のショッピング規約の第7条（禁止事項）は、自動化された手段での商品の購入（「商品ページ上の情報取得等を含む」）と、サーバーへの過度の負担を禁じている。告知ページを読むこと自体を禁じる条文はない（2026-10-17 に確認）。商品ページは読まない。
 
 ## 公開してよいかの検査
@@ -82,14 +82,14 @@ pnpm exec cf d1 query <ID> --sql "UPDATE official_events SET benefits_json = jso
 
 - 段階は毎回、公式ページの「キャンペーン詳細」の「特典内容」から写す。前の回の値を使い回さない。
 - ブランドデーは、ページ上部と「キャンペーン詳細」で条件金額が食い違ったことがある（上部に「期間中のお買い物金額合計10,000円(税込)以上」とあった）。「キャンペーン詳細」の「特典内容」に従う。2026-10 の回は、上部の行が HTML のコメントになっていて、特典内容に下限がないので、最初の段を 0 円にした。この回は `apps/web/migrations/0002_brand_day_2026_10.sql` で入れた。
-- 期間は「ポイントアップ期間」。エントリー期間ではない。
+- 期間は「ポイントアップ期間」。エントリー期間ではない。時刻もこの期間のものを `period_start_time` と `period_end_time` に入れる。分からなければ空にする。プランには「時刻によっては対象外」と出る。
 - 超ポイントバック祭は告知なしで始まり、マスタに入るまでに開催の一部が過ぎる。その間は、プランの設定のキャンペーン「超ポイントバック祭」（直近の回の段階が入ったテンプレート）を足し、段階を直してもらう。
 - バナーは `.webp` にして R2 の `/img/campaign/` に置き、特典の `imagePath` に書く。
 
 行は次の形で足す。特典の `id` は UUID にする。
 
 ```sh
-pnpm exec cf d1 query <ID> --sql "INSERT INTO official_events (id, name, period_start, period_end, benefits_json, source_url, locked, status) VALUES ('pointback-2026-05-19', '超ポイントバック祭', '2026-05-19', '2026-05-20', '[{\"id\":\"<UUID>\",\"kind\":\"spend-tiers\",\"category\":\"campaign\",\"label\":\"超ポイントバック祭\",\"enabled\":true,\"amountBasis\":\"tax-excluded\",\"capScope\":\"campaign\",\"sharedKey\":\"pointback-2026-05-19\",\"conditions\":{\"dateRule\":{\"type\":\"range\",\"start\":\"2026-05-19\",\"end\":\"2026-05-20\"}},\"params\":{\"tiers\":[{\"minAmount\":5000,\"rate\":1},{\"minAmount\":10000,\"rate\":2},{\"minAmount\":20000,\"rate\":3},{\"minAmount\":40000,\"rate\":4},{\"minAmount\":60000,\"rate\":5}],\"cap\":5000,\"roundingUnit\":\"item\"}}]', 'https://event.rakuten.co.jp/campaign/pointback/', 1, 'published')"
+pnpm exec cf d1 query <ID> --sql "INSERT INTO official_events (id, name, period_start, period_end, period_start_time, period_end_time, benefits_json, source_url, locked, status) VALUES ('pointback-2026-05-19', '超ポイントバック祭', '2026-05-19', '2026-05-20', NULL, NULL, '[{\"id\":\"<UUID>\",\"kind\":\"spend-tiers\",\"category\":\"campaign\",\"label\":\"超ポイントバック祭\",\"enabled\":true,\"amountBasis\":\"tax-excluded\",\"capScope\":\"campaign\",\"sharedKey\":\"pointback-2026-05-19\",\"conditions\":{\"dateRule\":{\"type\":\"range\",\"start\":\"2026-05-19\",\"end\":\"2026-05-20\"}},\"params\":{\"tiers\":[{\"minAmount\":5000,\"rate\":1},{\"minAmount\":10000,\"rate\":2},{\"minAmount\":20000,\"rate\":3},{\"minAmount\":40000,\"rate\":4},{\"minAmount\":60000,\"rate\":5}],\"cap\":5000,\"roundingUnit\":\"item\"}}]', 'https://event.rakuten.co.jp/campaign/pointback/', 1, 'published')"
 ```
 
 `benefits_json` に新しい `orderTags` の値を使う行は、その値を読めるアプリをデプロイしてから足す。前の版の Worker は、読めない行を配信しない。

@@ -151,6 +151,10 @@ function orderContexts(plan: Plan, shops: Map<string, Shop>, warnings: Calculati
     if (hasShop(order) && !shop) warnings.push({ type: "unknown-shop", orderId: order.id });
     if (order.date < plan.period.start || order.date > plan.period.end) {
       warnings.push({ type: "order-outside-period", orderId: order.id });
+    } else if (plan.officialEventId && order.date === plan.period.start) {
+      warnings.push({ type: "order-on-period-edge", orderId: order.id, edge: "start" });
+    } else if (plan.officialEventId && order.date === plan.period.end) {
+      warnings.push({ type: "order-on-period-edge", orderId: order.id, edge: "end" });
     }
     return {
       orderId: order.id,

@@ -53,6 +53,8 @@ test("serves the events the migrations put in, the earliest first", async () => 
     "marathon-2026-10-24",
   ]);
   expect(events[0]?.name).toBe("お買い物マラソン&ジャンル祭");
+  expect(events[0]?.times).toEqual({ start: "20:00", end: "01:59" });
+  expect(events[2]?.times).toBeUndefined();
 });
 
 test("a run confirms the round on the marathon page and logs what it did", async () => {

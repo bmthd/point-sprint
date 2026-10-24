@@ -301,6 +301,36 @@ describe("calculate", () => {
     expect(result.total).toBe(30);
     expectBreakdownSumsToTotal(result);
   });
+
+  test("orders on the first and last days of an official event count, with a warning", () => {
+    const result = calculate(
+      {
+        ...plan([
+          order(ORDER_1, SHOP_A, [item(ITEM_1, 1100)], "2026-10-04"),
+          order(ORDER_2, SHOP_B, [item(ITEM_2, 1100)], "2026-10-11"),
+          order(ORDER_3, SHOP_C, [item(ITEM_3, 1100)], "2026-10-05"),
+        ]),
+        officialEventId: "marathon-2026-10",
+      },
+      shops,
+    );
+    expect(result.shopCount).toBe(3);
+    expect(result.warnings).toEqual([
+      { type: "order-on-period-edge", orderId: ORDER_1, edge: "start" },
+      { type: "order-on-period-edge", orderId: ORDER_2, edge: "end" },
+    ]);
+  });
+
+  test("orders on the first and last days of a plan of the user's own days get no warning", () => {
+    const result = calculate(
+      plan([
+        order(ORDER_1, SHOP_A, [item(ITEM_1, 1100)], "2026-10-04"),
+        order(ORDER_2, SHOP_B, [item(ITEM_2, 1100)], "2026-10-11"),
+      ]),
+      shops,
+    );
+    expect(result.warnings).toEqual([]);
+  });
 });
 
 describe("spend-tiers", () => {

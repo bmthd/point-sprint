@@ -103,6 +103,7 @@ export function marathonEvent(input: {
     id,
     name: `お買い物マラソン${round.title}`,
     period: { ...round.period },
+    ...(round.times ? { times: { ...round.times } } : {}),
     benefits: [shopAround],
   };
 }
