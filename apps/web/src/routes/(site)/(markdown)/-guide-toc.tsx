@@ -56,15 +56,19 @@ export function GuideToc({
         {sections.map((section) => {
           const reading = section === current;
           return (
-            <Box as="li" key={section}>
+            // The line is on the row, not the link, so the link's rounded corners leave it straight.
+            <Box
+              as="li"
+              key={section}
+              ps="3"
+              borderLeftWidth="2px"
+              borderColor={reading ? "primary.solid" : "border"}
+            >
               <Link
                 href={`#${section}`}
                 colorScheme="mono"
                 display="block"
                 py="1.5"
-                ps="3"
-                borderLeftWidth="2px"
-                borderColor={reading ? "primary.solid" : "border"}
                 color={!markReading || reading ? "fg" : "fg.muted"}
                 fontWeight={reading ? "bold" : "normal"}
                 aria-current={reading ? "location" : undefined}
