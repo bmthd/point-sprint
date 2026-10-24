@@ -145,7 +145,8 @@ export const orderCardPointsAtom = atomFamily(
       atom((get): OrderCardPoints => {
         const counted = get(orderPointsAtom(key));
         const estimate = get(heldEstimateAtom(key));
-        const rows = estimate?.rows ?? counted.rows;
+        // Only the preview shows rows fully cut by a cap. Cards and the table omit their rates too.
+        const rows = (estimate?.rows ?? counted.rows).filter((row) => row.points !== 0);
         return {
           ...orderPointRows(
             rows,

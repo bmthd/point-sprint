@@ -2,7 +2,13 @@ import type { Id } from "../model/common";
 import type { ShopAroundOutlook } from "./outlook";
 import type { PointGroup } from "./point-group";
 
-export type BreakdownRow = { lineItemId: string; source: Id | "shop-rate"; points: number };
+export type BreakdownRow = {
+  lineItemId: string;
+  source: Id | "shop-rate";
+  points: number;
+  /** Points before caps, when a cap reduced this row. Otherwise equal to `points`. */
+  rawPoints?: number;
+};
 
 export type BenefitTotal = {
   benefitId: Id;
