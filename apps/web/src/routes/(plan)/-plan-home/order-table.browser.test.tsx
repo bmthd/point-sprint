@@ -141,6 +141,29 @@ test("each row shows the order's shop, items, amount, points and rate", async ()
   }
 });
 
+for (const onHold of [false, true]) {
+  test(`fully capped ${onHold ? "held" : "counted"} row omits the marathon contribution`, async () => {
+    const capped = structuredClone(marathon);
+    for (const benefit of capped) benefit.params.cap = 0;
+    await renderWith(
+      makePlan(
+        [baseBenefit, spuBenefit, ...capped],
+        [order(0), order(1), order(2), order(3, { onHold })],
+      ),
+    );
+
+    const row = rowOf("ショップ3");
+    if (onHold) {
+      await expect
+        .element(row.getByText("保留中の見込み 300P", { exact: true }))
+        .toBeInTheDocument();
+    } else {
+      await expect.element(row.getByText("3倍", { exact: true })).toBeVisible();
+      await expect.element(row).toMatchTextContent("300P");
+    }
+  });
+}
+
 test("fits 1024px without horizontal scroll", async () => {
   await page.viewport(1024, 900);
   const long = "とても長い名前のショップ".repeat(6);

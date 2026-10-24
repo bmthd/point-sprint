@@ -74,6 +74,36 @@ test("shows each order's shop, items, amount, campaign badges and rate", async (
   ]);
 });
 
+for (const onHold of [false, true]) {
+  test(`fully capped ${onHold ? "held" : "counted"} card omits the marathon contribution`, async () => {
+    const capped = structuredClone(marathon);
+    for (const benefit of capped) benefit.params.cap = 0;
+    const plan = makePlan(
+      [baseBenefit, spuBenefit, ...capped],
+      [order(0), order(1), order(2), order(3, { onHold })],
+    );
+    await renderPlanHome(createMemoryRepository({ shops, plans: [plan] }));
+
+    const card = cardOf("ショップ3");
+    if (onHold) {
+      await expect
+        .element(card.getByText("保留中の見込み 300P", { exact: true }))
+        .toBeInTheDocument();
+    } else {
+      await expect.element(card.getByText("3倍", { exact: true })).toBeVisible();
+    }
+    await toggleOf("ショップ3").click();
+    await expectTexts(
+      card
+        .getByRole("list", {
+          name: onHold ? "購入決定にしたときの内訳" : "ポイントの内訳",
+        })
+        .getByRole("listitem"),
+      ["通常1倍100P", "SPU+2倍200P"],
+    );
+  });
+}
+
 test("only one card is open at a time", async () => {
   await renderPlanHome(createMemoryRepository({ shops, plans: [marathonPlan()] }));
 
