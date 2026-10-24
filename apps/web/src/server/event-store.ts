@@ -12,6 +12,7 @@ type Row = {
   period_start: string;
   period_end: string;
   benefits_json: string;
+  source_url: string;
   status: EventStatus;
   locked: number;
 };
@@ -40,7 +41,11 @@ export async function publishedEvents(db: D1Database): Promise<OfficialEvent[]> 
   const { results } = await db
     .prepare("SELECT * FROM official_events WHERE status = 'published' ORDER BY period_start, id")
     .all<Row>();
-  return results.map(eventOf).filter((event) => event !== undefined);
+  // Only served: collection compares the stored events with the ones it builds, which have no page.
+  return results.flatMap((row) => {
+    const event = eventOf(row);
+    return event ? [{ ...event, url: row.source_url }] : [];
+  });
 }
 
 export function d1EventStore(db: D1Database): EventStore {
