@@ -3,7 +3,11 @@ import {
   type CalculationResult,
   type Plan,
   channels,
+  monthsOf,
+  spuBenefitsOf,
+  spuIdsIn,
   spuPurchaseRules,
+  toggleSpu,
 } from "@workspaces/domain";
 import {
   Alert,
@@ -19,16 +23,21 @@ import {
   Link,
   type LinkProps,
   Modal,
+  SegmentedControl,
   SimpleGrid,
   Text,
   useDisclosure,
   VStack,
 } from "@workspaces/ui";
-import { useSetAtom } from "jotai";
-import { useId, useState } from "react";
-import { toggleBenefitAtom } from "../../../state/order-ops";
+import { useAtomValue } from "jotai";
+import { type ReactNode, useId, useState } from "react";
+import { accountIdOf } from "../../../state/accounts";
+import { accountSettingsAtom } from "../../../state/derived";
+import { saveSpuMonthAtom } from "../../../state/mutations";
+import { spuMonthsAtom } from "../../../state/queries";
 import { ExternalIcon } from "../../../ui/icons";
-import { useSpuOffMessages } from "../-warnings";
+import { useToday } from "../../-use-today";
+import { monthText, useSpuOffMessages } from "../-warnings";
 import { imageUrl, pointsText, rateText } from "../-order-shared";
 import { SPU_PAGE_URL, useSaveSettingsChange } from "./settings-shared";
 
@@ -59,7 +68,34 @@ const enabledRate = (benefits: Benefit[], category: Benefit["category"]) =>
   );
 
 /** The sum of the rates of the SPU (category `spu`) that are on. */
-export const spuRate = (plan: Plan) => enabledRate(plan.benefits, "spu");
+export const spuRate = (benefits: Benefit[]) => enabledRate(benefits, "spu");
+
+const now = () => new Date();
+
+/**
+ * The SPU the plan's settings show: the account's for one month of the plan's period. `chosen` is
+ * the month the user picked; the month of today when the period has it, or the first one, until
+ * they pick one.
+ */
+export function usePlanSpu(plan: Plan, chosen?: string) {
+  const settings = useAtomValue(accountSettingsAtom);
+  const stored = useAtomValue(spuMonthsAtom);
+  const today = useToday(now)?.slice(0, 7);
+  const months = monthsOf(plan.period);
+  const fallback = today !== undefined && months.includes(today) ? today : months[0];
+  const month = chosen !== undefined && months.includes(chosen) ? chosen : (fallback ?? "");
+  const accountId = accountIdOf(plan, settings);
+  const account = settings.enabled
+    ? settings.accounts.find((candidate) => candidate.id === accountId)
+    : undefined;
+  return {
+    months,
+    month,
+    accountId,
+    account,
+    benefits: spuBenefitsOf(spuIdsIn(stored, accountId, month)),
+  };
+}
 
 /** The card's normal points are shown under a short name. */
 export const tileName = (benefit: Benefit) =>
@@ -234,10 +270,7 @@ function DetailBody({
   );
 }
 
-/**
- * The SPU tiles with the detail dialog behind each name. Works on any list of benefits: a plan's,
- * or the profile's defaults. `capped` holds the ids that reached their cap (none for a profile).
- */
+/** The SPU tiles with the detail dialog behind each name. `capped` holds the ids that reached their cap. */
 function SpuTileGrid({
   benefits,
   capped,
@@ -296,13 +329,11 @@ function SpuTileGrid({
   );
 }
 
-/**
- * The SPU card: the total rate, the tiles and their legend. The plan's settings and the profile's
- * defaults show the same card, so the two read alike.
- */
+/** The SPU card: the total rate, the tiles and their legend. */
 export function SpuCard({
   title,
   note,
+  picker,
   benefits,
   capped,
   warnings = [],
@@ -311,6 +342,8 @@ export function SpuCard({
   title: string;
   /** A line under the rate, for what the card's changes apply to. */
   note?: string;
+  /** Above the note: what picks the SPU the card shows. */
+  picker?: ReactNode;
   benefits: Benefit[];
   /** The ids that reached their cap. `undefined` when there is no plan to reach them in. */
   capped?: ReadonlySet<string>;
@@ -358,6 +391,7 @@ export function SpuCard({
             <SpuLink fontSize="xs" alignSelf="auto" />
           </Flex>
         </VStack>
+        {picker}
         {note ? (
           <Text fontSize="xs" color="fg.muted">
             {note}
@@ -404,21 +438,45 @@ export function SpuCard({
   );
 }
 
-/** The plan's SPU card. */
+/** `2026-10` → `2026年10月`. */
+const yearMonthText = (month: string) => `${month.slice(0, 4)}年${monthText(month)}`;
+
+/**
+ * The plan's SPU card. The SPU is the account's for each month, so a change applies to every plan
+ * of the account and month; a period of several months picks the month first.
+ */
 export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResult }) {
-  const toggle = useSetAtom(toggleBenefitAtom);
+  const [chosen, setChosen] = useState<string>();
+  const { months, month, accountId, account, benefits } = usePlanSpu(plan, chosen);
+  const { mutateAsync: saveMonth } = useAtomValue(saveSpuMonthAtom);
   const save = useSaveSettingsChange(plan.id);
   const warnings = useSpuOffMessages(plan);
   const capped = new Set(
     result.benefitTotals.filter((total) => total.capReached).map((total) => total.benefitId),
   );
+  const whose = account ? `${account.name}の` : "";
+  const shared = account ? "同じアカウント・同じ月" : "同じ月";
   return (
     <SpuCard
       title="SPU"
-      benefits={plan.benefits}
+      note={`${whose}${yearMonthText(month)}の SPU です。${shared}のプランすべてに反映されます。`}
+      picker={
+        months.length > 1 ? (
+          <SegmentedControl.Root
+            size="sm"
+            aria-label="SPU の月"
+            items={months.map((value) => ({ label: monthText(value), value }))}
+            value={month}
+            onChange={setChosen}
+          />
+        ) : undefined
+      }
+      benefits={benefits}
       capped={capped}
       warnings={warnings}
-      onToggle={(benefitId) => save(toggle({ planId: plan.id, benefitId }))}
+      onToggle={(benefitId) =>
+        save(saveMonth({ accountId, month, change: (ids) => toggleSpu(ids, benefitId) }))
+      }
     />
   );
 }

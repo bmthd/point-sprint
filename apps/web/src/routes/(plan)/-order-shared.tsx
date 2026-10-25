@@ -17,7 +17,7 @@ import {
   deepEqual,
   orderAtom,
   orderPointsAtom,
-  planAtom,
+  calculatedPlanAtom,
   planResultAtom,
 } from "../../state/derived";
 import { clearOrdersAtom, removeOrderAtom } from "../../state/order-ops";
@@ -119,7 +119,7 @@ export const groupTotalsOf = (rows: OrderPointRow[]): Record<PointGroup, number>
 
 const noBenefits: Benefit[] = [];
 const benefitsAtom = atomFamily((planId: string) =>
-  selectAtom(planAtom(planId), (plan) => plan?.benefits ?? noBenefits, deepEqual),
+  selectAtom(calculatedPlanAtom(planId), (plan) => plan?.benefits ?? noBenefits, deepEqual),
 );
 const noRates: Record<string, number> = {};
 const ratesAtom = atomFamily((planId: string) =>

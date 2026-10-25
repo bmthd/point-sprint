@@ -10,8 +10,7 @@ import {
 import { Flex, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
-import { withEffectiveAccount } from "../../../state/accounts";
-import { accountSettingsAtom, calculationAtom } from "../../../state/derived";
+import { asCalculatedAtom, calculationAtom } from "../../../state/derived";
 import { addOrder, updateOrder } from "../../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../../state/queries";
 import { orderPointRows, pointsText, rateText, yen } from "../-order-shared";
@@ -48,22 +47,26 @@ const pointsOf = (result: CalculationResult | undefined, order: Order | undefine
  */
 export function previewOf(input: {
   plans: Plan[];
+  /** Turns plans into the plans as they are calculated (`asCalculatedAtom`). */
+  asCalculated: (plans: Plan[]) => Plan[];
   shops: Shop[];
   before: Map<string, CalculationResult>;
   planId: string;
   draft: OrderDraft;
   original: Order | undefined;
 }): OrderPreview {
-  const { plans, before, planId, draft, original } = input;
+  const { plans, asCalculated, before, planId, draft, original } = input;
   const shops = draft.shop
     ? [...input.shops.filter((shop) => shop.id !== draft.shop?.id), draft.shop]
     : input.shops;
-  const withDraft = plans.map((plan) =>
-    plan.id !== planId
-      ? plan
-      : original
-        ? updateOrder(plan, draft.order)
-        : addOrder(plan, draft.order),
+  const withDraft = asCalculated(
+    plans.map((plan) =>
+      plan.id !== planId
+        ? plan
+        : original
+          ? updateOrder(plan, draft.order)
+          : addOrder(plan, draft.order),
+    ),
   );
   const after = calculateAll(withDraft, shops);
   const planBefore = before.get(planId);
@@ -113,12 +116,13 @@ export function OrderPreviewBox({
   const plans = useAtomValue(plansAtom);
   const shops = useAtomValue(shopsAtom);
   const before = useAtomValue(calculationAtom);
-  const settings = useAtomValue(accountSettingsAtom);
+  const asCalculated = useAtomValue(asCalculatedAtom);
   const preview = useMemo(
     () =>
       draft
         ? previewOf({
-            plans: plans.map((plan) => withEffectiveAccount(plan, settings)),
+            plans,
+            asCalculated,
             shops,
             before,
             planId,
@@ -126,7 +130,7 @@ export function OrderPreviewBox({
             original,
           })
         : undefined,
-    [plans, shops, before, settings, planId, draft, original],
+    [plans, shops, before, asCalculated, planId, draft, original],
   );
 
   return (

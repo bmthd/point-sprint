@@ -8,7 +8,7 @@ import { Collapse, Flex, Button, List, Text } from "@workspaces/ui";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { type KeyboardEvent, useDeferredValue, useId, useMemo, useState } from "react";
 import { Form } from "../../../form/form";
-import { calculationAtom } from "../../../state/derived";
+import { asCalculatedAtom, calculationAtom } from "../../../state/derived";
 import { saveShopAtom } from "../../../state/mutations";
 import { addOrderAtom } from "../../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../../state/queries";
@@ -35,6 +35,7 @@ function Preview({ plan, form }: { plan: Plan; form: OrderForm }) {
   const plans = useAtomValue(plansAtom);
   const shops = useAtomValue(shopsAtom);
   const before = useAtomValue(calculationAtom);
+  const asCalculated = useAtomValue(asCalculatedAtom);
   const key = JSON.stringify(useFormInput(form));
   // Calculating every plan again is the heavy part, so it may lag a keystroke behind.
   const deferred = useDeferredValue(key);
@@ -47,14 +48,14 @@ function Preview({ plan, form }: { plan: Plan; form: OrderForm }) {
     const withOrder = plans.map((other) =>
       other.id === plan.id ? { ...other, orders: [...other.orders, draft.order] } : other,
     );
-    const after = calculateAll(withOrder, withShop);
+    const after = calculateAll(asCalculated(withOrder), withShop);
     const shopCountBefore = before.get(plan.id)?.shopCount ?? 0;
     const shopCountAfter = after.get(plan.id)?.shopCount ?? 0;
     return {
       points: sumOfTotals(after) - sumOfTotals(before),
       shop: shopCountAfter > shopCountBefore ? shopCountAfter : undefined,
     };
-  }, [deferred, plans, shops, before, plan.id]);
+  }, [deferred, plans, shops, before, asCalculated, plan.id]);
 
   return (
     <Text

@@ -5,29 +5,38 @@ import {
   type OfficialEvent,
   type Plan,
   spuPurchaseRules,
+  standardSpu,
 } from "@workspaces/domain";
 import { Alert, Button, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { QuarantineNotice } from "./-quarantine-notice";
 import { officialEventsAtom } from "../-official-events";
-import { shopsAtom, storageHealthQueryAtom } from "../../state/queries";
+import { withEffectiveAccount } from "../../state/accounts";
+import { accountSettingsAtom } from "../../state/derived";
+import { shopsAtom, spuMonthsAtom, storageHealthQueryAtom } from "../../state/queries";
 
 /** `2026-10-11` → `10/11`. */
 const monthDay = (date: string) => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
 
+/** `2026-10` → `10月`. */
+export const monthText = (month: string) => `${Number(month.slice(5, 7))}月`;
+
 /**
- * The SPU that the plan's orders achieve but the user turned off: 「楽天ブックスで 3,000円以上の注文
- * がありますが、SPU の楽天ブックスが OFF です。」
+ * The SPU that the plan's orders achieve but the user turned off for the month: 「楽天ブックスで
+ * 3,000円以上の注文がありますが、10月の SPU の楽天ブックスが OFF です。」
  */
 export function useSpuOffMessages(plan: Plan): string[] {
   const shops = useAtomValue(shopsAtom);
-  return disabledAchievedSpu(plan, shops).flatMap((benefitId) => {
+  const months = useAtomValue(spuMonthsAtom);
+  const settings = useAtomValue(accountSettingsAtom);
+  const achievements = disabledAchievedSpu(withEffectiveAccount(plan, settings), shops, months);
+  return achievements.flatMap(({ month, benefitId }) => {
     const rule = spuPurchaseRules.find((candidate) => candidate.benefitId === benefitId);
-    const benefit = plan.benefits.find((candidate) => candidate.id === benefitId);
+    const benefit = standardSpu.find((candidate) => candidate.id === benefitId);
     if (!rule || !benefit) return [];
     const amount = rule.minOrderAmount.toLocaleString("ja-JP");
     return [
-      `${channels[rule.channel].label}で ${amount}円以上の注文がありますが、SPU の${benefit.label}が OFF です。`,
+      `${channels[rule.channel].label}で ${amount}円以上の注文がありますが、${monthText(month)}の SPU の${benefit.label}が OFF です。`,
     ];
   });
 }

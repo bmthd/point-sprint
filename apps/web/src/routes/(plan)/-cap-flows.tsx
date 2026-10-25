@@ -7,8 +7,7 @@ import { type Plan, capFlows } from "@workspaces/domain";
 import { Button, List, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useDeferredValue, useMemo } from "react";
-import { withEffectiveAccount } from "../../state/accounts";
-import { accountSettingsAtom } from "../../state/derived";
+import { asCalculatedAtom } from "../../state/derived";
 import { plansAtom, shopsAtom } from "../../state/queries";
 import { scopeText } from "./-cap-lines";
 import { draftOfInput } from "./-order-editor/order-form";
@@ -25,7 +24,7 @@ const num = (value: number) => value.toLocaleString("ja-JP");
 export function CapFlows({ plan, form }: { plan: Plan; form: OrderForm }) {
   const plans = useAtomValue(plansAtom);
   const shops = useAtomValue(shopsAtom);
-  const settings = useAtomValue(accountSettingsAtom);
+  const asCalculated = useAtomValue(asCalculatedAtom);
   const key = JSON.stringify(useFormInput(form));
   // Like the preview, this may lag a keystroke behind.
   const deferred = useDeferredValue(key);
@@ -36,14 +35,15 @@ export function CapFlows({ plan, form }: { plan: Plan; form: OrderForm }) {
   const flows = useMemo(() => {
     if (!draft || draft.order.onHold) return [];
     return capFlows({
-      plans: plans.map((other) => withEffectiveAccount(other, settings)),
+      plans,
+      asCalculated,
       shops: draft.shop
         ? [...shops.filter((shop) => shop.id !== draft.shop?.id), draft.shop]
         : shops,
       planId: plan.id,
       order: draft.order,
     });
-  }, [draft, plans, shops, settings, plan.id]);
+  }, [draft, plans, shops, asCalculated, plan.id]);
   if (flows.length === 0) return null;
   return (
     <List.Root as="ul" aria-label="上限への入り方" w="full" fontSize="xs" gap="1">

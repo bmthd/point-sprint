@@ -7,7 +7,14 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import type { Benefit, OfficialEvent, Order, Plan, Shop } from "@workspaces/domain";
+import {
+  type Benefit,
+  NORMAL_POINT_ID,
+  type OfficialEvent,
+  type Order,
+  type Plan,
+  type Shop,
+} from "@workspaces/domain";
 import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
@@ -38,8 +45,9 @@ export const shops: Shop[] = Array.from({ length: 6 }, (_, index) => ({
   updatedAt: "2026-10-05T00:00:00.000Z",
 }));
 
+/** 通常ポイント, under its own id so that the plan's SPU does not add it again. */
 export const baseBenefit: Benefit = {
-  id: "b0000000-0000-4000-8000-000000000001",
+  id: NORMAL_POINT_ID,
   kind: "rate-bonus",
   category: "base",
   label: "通常ポイント",
