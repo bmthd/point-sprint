@@ -4,6 +4,7 @@ import { Box, Flex, ColorModeScript, UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import type { ReactNode } from "react";
 import { AppProviders } from "../app-providers";
+import { syncServer } from "./-sync-server";
 import { SiteFooter } from "./-root/site-footer";
 import { SiteHeader } from "./-root/site-header";
 import { ViewportMeta } from "./-root/viewport-meta";
@@ -99,7 +100,7 @@ function RootDocument({ children }: { children: ReactNode }) {
         <ColorModeScript defaultValue={config.defaultColorMode} />
         <UIProvider theme={theme} config={config} storage={colorModeStorage}>
           <FormControlDefaults>
-            <AppProviders>{children}</AppProviders>
+            <AppProviders syncServer={syncServer}>{children}</AppProviders>
           </FormControlDefaults>
         </UIProvider>
         <Scripts />
