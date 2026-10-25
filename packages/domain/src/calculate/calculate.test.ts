@@ -187,8 +187,26 @@ describe("calculate", () => {
       capReached: true,
     });
     expect(rowsOf(result, SHOP_AROUND_ID)).toEqual([
-      { lineItemId: ITEM_1, source: SHOP_AROUND_ID, points: 8 },
-      { lineItemId: ITEM_2, source: SHOP_AROUND_ID, points: 7 },
+      { lineItemId: ITEM_1, source: SHOP_AROUND_ID, points: 8, rawPoints: 10 },
+      { lineItemId: ITEM_2, source: SHOP_AROUND_ID, points: 7, rawPoints: 10 },
+    ]);
+    expectBreakdownSumsToTotal(result);
+  });
+
+  test("a fully capped row retains its points before the cap", () => {
+    const result = calculate(
+      plan(
+        [
+          order(ORDER_1, SHOP_A, [item(ITEM_1, 1100)]),
+          order(ORDER_2, SHOP_B, [item(ITEM_2, 1100)]),
+        ],
+        [spuBase, shopAround(0)],
+      ),
+      shops,
+    );
+    expect(rowsOf(result, SHOP_AROUND_ID)).toEqual([
+      { lineItemId: ITEM_1, source: SHOP_AROUND_ID, points: 0, rawPoints: 10 },
+      { lineItemId: ITEM_2, source: SHOP_AROUND_ID, points: 0, rawPoints: 10 },
     ]);
     expectBreakdownSumsToTotal(result);
   });

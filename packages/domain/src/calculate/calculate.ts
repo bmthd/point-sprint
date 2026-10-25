@@ -358,7 +358,12 @@ function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
       cappedPoints += item.points;
       capReached ||= group?.capReached ?? false;
       if (group?.mismatch) mismatchKeys.add(item.groupKey);
-      breakdown.push({ lineItemId: item.lineItemId, source: benefit.id, points: item.points });
+      breakdown.push({
+        lineItemId: item.lineItemId,
+        source: benefit.id,
+        points: item.points,
+        ...(item.raw !== item.points ? { rawPoints: item.raw } : {}),
+      });
       groupTotals[pointGroup] += item.points;
     }
     benefitTotals.push({ benefitId: benefit.id, rawPoints, cappedPoints, capReached });
@@ -374,7 +379,7 @@ function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
     if (benefit.kind === "spend-tiers") spendTotals[benefit.id] = spendTotal;
   }
 
-  const nonZero = breakdown.filter((row) => row.points !== 0);
+  const nonZero = breakdown.filter((row) => (row.rawPoints ?? row.points) !== 0);
   const mismatchWarnings = [...mismatchKeys].map((groupKey): CalculationWarning => ({
     type: "shared-cap-mismatch",
     groupKey,
