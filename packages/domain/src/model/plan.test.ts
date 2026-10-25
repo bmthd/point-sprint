@@ -42,14 +42,14 @@ describe("accounts", () => {
   });
 
   test("a profile saved before accounts existed has the default account alone", () => {
-    const profile = v.parse(ProfileSchema, { spuBenefits: [], updatedAt: saved.updatedAt });
+    const profile = v.parse(ProfileSchema, { updatedAt: saved.updatedAt });
     expect(profile.multiAccount).toBeUndefined();
     expect(accountsOf(profile)).toEqual([{ id: DEFAULT_ACCOUNT_ID, name: "メイン" }]);
   });
 
   test("the default account comes first unless the profile holds it", () => {
     const second = { id: ACCOUNT_2, name: "サブ" };
-    const base = { spuBenefits: [], updatedAt: saved.updatedAt };
+    const base = { updatedAt: saved.updatedAt };
     expect(accountsOf({ ...base, accounts: [second] }).map((a) => a.id)).toEqual([
       DEFAULT_ACCOUNT_ID,
       ACCOUNT_2,
@@ -60,7 +60,6 @@ describe("accounts", () => {
 
   test("rejects an account with an empty name", () => {
     const profile = {
-      spuBenefits: [],
       updatedAt: saved.updatedAt,
       accounts: [{ id: ACCOUNT_2, name: "" }],
     };
