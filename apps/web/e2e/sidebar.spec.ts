@@ -45,8 +45,31 @@ test("on a wide screen the sidebar is a column to the right of the content", asy
     const mainBox = (await main.boundingBox())!;
     const aside = (await sidebar.root.boundingBox())!;
     expect(aside.x, path).toBeGreaterThanOrEqual(mainBox.x + mainBox.width);
-    expect(Math.abs(aside.y - mainBox.y), path).toBeLessThan(1);
+    if (["/", "/inquiry", "/guides"].includes(path)) {
+      expect(Math.abs(aside.y - mainBox.y), path).toBeLessThan(1);
+    }
     expect(aside.width, path).toBe(320);
+  }
+});
+
+test("the reading card starts at the same height as the first sidebar card", async ({ page }) => {
+  for (const path of [
+    "/help",
+    "/terms",
+    "/privacy",
+    "/inquiry",
+    "/notices",
+    "/guides/1000yen-items",
+    "/guides/how-much-to-buy",
+  ]) {
+    const { sidebar } = await SitePage.open(page, path);
+    const mainCard = page.locator("main.ui-card__root, main .ui-card__root").first();
+    const sidebarCard = sidebar.root.locator(".ui-card__root").first();
+    await expect(mainCard).toBeVisible();
+    await expect(sidebarCard).toBeVisible();
+    const mainBox = (await mainCard.boundingBox())!;
+    const asideBox = (await sidebarCard.boundingBox())!;
+    expect(Math.abs(asideBox.y - mainBox.y), path).toBeLessThan(1);
   }
 });
 
