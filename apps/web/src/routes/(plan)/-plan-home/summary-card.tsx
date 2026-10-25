@@ -146,7 +146,13 @@ export function SummaryCard({
   const amount = countedAmount(plan);
 
   return (
-    <Card.Root as="section" aria-label="サマリー" variant="solid" colorScheme="primary">
+    <Card.Root
+      as="section"
+      aria-label="サマリー"
+      variant="solid"
+      colorScheme="primary"
+      rounded="l4"
+    >
       <Card.Body alignItems="stretch">
         <Flex align="flex-end" justify="space-between">
           <Box>
