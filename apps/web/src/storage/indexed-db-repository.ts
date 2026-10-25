@@ -77,6 +77,7 @@ const isCryptoKey = (value: unknown): value is CryptoKey =>
   typeof value === "object" && value !== null && "algorithm" in value && "usages" in value;
 const SyncMetaSchema = v.object({
   accountId: v.string(),
+  credentialId: v.optional(v.string()),
   cursor: v.number(),
   encryptionKey: v.custom<CryptoKey>(isCryptoKey),
   idKey: v.custom<CryptoKey>(isCryptoKey),
