@@ -1,6 +1,6 @@
 import { CURRENT_SCHEMA_VERSION } from "@workspaces/domain";
 import { atom, useAtomValue, useSetAtom } from "jotai";
-import { queryClientAtom } from "jotai-tanstack-query";
+import { atomWithQuery, queryClientAtom } from "jotai-tanstack-query";
 import { useEffect } from "react";
 import { type SyncOutcome, createSyncRunner, syncOnce } from "../storage/sync-engine";
 import type { SyncServer } from "../storage/sync-passkey";
@@ -17,6 +17,17 @@ export type SyncStatus =
   | { state: "failed"; lastSyncedAt: Date | undefined };
 
 export const syncStatusAtom = atom<SyncStatus>({ state: "off" });
+
+export const syncEnabledQueryKey = ["sync-enabled"] as const;
+
+/** Whether this device syncs: it keeps the keys. */
+export const syncEnabledQueryAtom = atomWithQuery((get) => {
+  const repository = get(repositoryAtom);
+  return {
+    queryKey: syncEnabledQueryKey,
+    queryFn: async () => (await repository.sync.meta.get()) !== undefined,
+  };
+});
 
 const lastSyncedAt = (status: SyncStatus) =>
   "lastSyncedAt" in status ? status.lastSyncedAt : undefined;

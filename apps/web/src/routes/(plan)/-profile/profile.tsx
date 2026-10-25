@@ -10,6 +10,8 @@ import { StorageHealthFailure, storageMessages } from "../-warnings";
 import { ResetDataButton } from "../../-reset-data";
 import { AccountSettings } from "./account-settings";
 import { ShopRegistry } from "./shop-registry";
+import { SyncSettings } from "./sync-settings";
+import type { SyncServer } from "../../../storage/sync-passkey";
 
 function StorageNotice() {
   const { data } = useAtomValue(storageHealthQueryAtom);
@@ -28,7 +30,7 @@ function StorageNotice() {
   );
 }
 
-function ProfileContent() {
+function ProfileContent({ syncServer }: { syncServer: SyncServer | undefined }) {
   const [failed, setFailed] = useState(false);
   return (
     <VStack gap="5" alignItems="stretch">
@@ -37,6 +39,12 @@ function ProfileContent() {
         <Text role="alert" fontSize="sm" color="danger.fg">
           変更を保存できませんでした。もう一度お試しください。
         </Text>
+      ) : null}
+      {syncServer ? (
+        <SyncSettings
+          server={syncServer}
+          siteKey={import.meta.env.TURNSTILE_SITE_KEY ?? undefined}
+        />
       ) : null}
       <ShopRegistry onFailed={setFailed} />
       <AccountSettings onFailed={setFailed} />
@@ -66,10 +74,11 @@ function BackLink() {
 }
 
 /**
- * The profile at `/profile`: the shop registry and advanced settings.
+ * The profile at `/profile`: the sync with other devices, the shop registry and advanced settings.
+ * Without `syncServer`, as in the tests, no sync.
  * Its title bar is the plan settings page's: a page that goes back where it was opened from.
  */
-export function Profile() {
+export function Profile({ syncServer }: { syncServer?: SyncServer } = {}) {
   return (
     <>
       <Flex maxW="640px" mx="auto" h="14" align="center" gap="1" px="2">
@@ -80,7 +89,7 @@ export function Profile() {
       </Flex>
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="16">
         <ClientOnly>
-          <ProfileContent />
+          <ProfileContent syncServer={syncServer} />
         </ClientOnly>
       </Box>
     </>
