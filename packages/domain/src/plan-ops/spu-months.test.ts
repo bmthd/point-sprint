@@ -100,7 +100,6 @@ const order = (id: string, date: string): Order => ({
 });
 
 describe("planWithSpu", () => {
-
   test("each order gets the SPU of its own month", () => {
     const months = [
       month(ACCOUNT, "2026-10", [BOOKS_SPU_ID]),

@@ -92,6 +92,14 @@ export function BackIcon() {
   );
 }
 
+export function ForwardIcon() {
+  return (
+    <Icon size={22}>
+      <path d="m9 18 6-6-6-6" />
+    </Icon>
+  );
+}
+
 export function PencilIcon() {
   return (
     <Icon size={16}>

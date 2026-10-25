@@ -17,18 +17,21 @@ test("orders, plan settings, profile and shops survive a reload", async ({ page 
   await expect.poll(() => plan.orderShops()).toEqual(["店B", "店A"]);
 
   // An SPU tile, which is the month's, and a plan's campaign toggle.
+  const spu = await plan.openSpu("10月");
+  const tile = spu.spuTile("楽天モバイル +4倍");
+  await expect(tile).not.toBeChecked();
+  await spu.tap(tile);
+  await expect(tile).toBeChecked();
+  await spu.close();
+  await expect(plan.spuRate("10月")).toHaveText("5倍");
   const settings = await plan.openSettings();
-  const tile = settings.spuTile("楽天モバイル +4倍");
   const campaign = settings.campaign("5と0のつく日");
-  const tileWas = await tile.isChecked();
   const campaignWas = await campaign.isChecked();
-  await settings.tap(tile);
-  await expect(tile).toBeChecked({ checked: !tileWas });
   await settings.tap(campaign);
   await expect(campaign).toBeChecked({ checked: !campaignWas });
   plan = await plan.reload();
+  await expect(plan.spuRate("10月")).toHaveText("5倍");
   await plan.openSettings();
-  await expect(tile).toBeChecked({ checked: !tileWas });
   await expect(campaign).toBeChecked({ checked: !campaignWas });
 
   // A shop's name and its 39ショップ mark.

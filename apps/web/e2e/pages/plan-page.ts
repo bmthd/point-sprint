@@ -57,11 +57,6 @@ export class PlanSettingsDialog {
     this.root = page.getByRole("dialog", { name: "プランの設定" });
   }
 
-  /** An SPU tile, such as `楽天モバイル +4倍`. */
-  spuTile(name: string) {
-    return this.root.getByRole("checkbox", { name });
-  }
-
   /** A campaign's switch, by the start of its name. */
   campaign(name: string) {
     return this.root
@@ -69,9 +64,36 @@ export class PlanSettingsDialog {
       .getByRole("switch", { name: new RegExp(`^${name}`) });
   }
 
-  /** Taps a card (an SPU tile, a campaign) on its label: its input is visually hidden. */
+  /** Taps a card (a campaign) on its label: its input is visually hidden. */
   async tap(card: Locator) {
     await card.locator("xpath=ancestor::label[1]").click();
+  }
+}
+
+/** A month's SPU, in a side panel over the plan's page. */
+export class SpuPanel {
+  readonly root: Locator;
+
+  constructor(
+    readonly page: Page,
+    month: string,
+  ) {
+    this.root = page.getByRole("dialog", { name: `${month}の SPU` });
+  }
+
+  /** An SPU tile, such as `楽天モバイル +4倍`. */
+  spuTile(name: string) {
+    return this.root.getByRole("checkbox", { name });
+  }
+
+  /** Taps a tile on its label: its input is visually hidden. */
+  async tap(tile: Locator) {
+    await tile.locator("xpath=ancestor::label[1]").click();
+  }
+
+  async close() {
+    await this.root.getByRole("button", { name: "計算に反映して閉じる" }).click();
+    await expect(this.root).toBeHidden();
   }
 }
 
@@ -150,8 +172,24 @@ export class PlanPage {
     await this.counted(shop).locator("xpath=ancestor::label[1]").click();
   }
 
+  /** The ポイント倍率 of the SPU of the plan's one month (`10月`), in 「SPU の設定」. */
+  spuRate(month: string) {
+    return this.page
+      .getByRole("region", { name: "SPU の設定" })
+      .getByText(new RegExp(`^SPU（${month}）`))
+      .locator("xpath=following-sibling::*[1]");
+  }
+
+  /** Opens the SPU of `month` (`10月`) from 「SPU の設定」. */
+  async openSpu(month: string) {
+    await this.page.getByRole("button", { name: `${month}の SPU を変更` }).click();
+    const spu = new SpuPanel(this.page, month);
+    await expect(spu.root).toBeVisible();
+    return spu;
+  }
+
   async openSettings() {
-    await this.page.getByRole("button", { name: /^プランの設定/ }).click();
+    await this.page.getByRole("button", { name: "プランの設定", exact: true }).click();
     const settings = new PlanSettingsDialog(this.page);
     await expect(settings.root).toBeVisible();
     return settings;
