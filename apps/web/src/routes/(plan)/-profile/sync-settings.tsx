@@ -100,6 +100,8 @@ export function SyncSettings({
   const deps = { passkeys, server, repository };
 
   const [error, setError] = useState<string>();
+  /** What happened that is not a failure. */
+  const [notice, setNotice] = useState<string>();
   const [pending, setPending] = useState(false);
   const [starting, setStarting] = useState(false);
   const [token, setToken] = useState<string>();
@@ -115,6 +117,7 @@ export function SyncSettings({
   };
   const run = async (action: () => Promise<void>) => {
     setError(undefined);
+    setNotice(undefined);
     setPending(true);
     try {
       await action();
@@ -233,6 +236,12 @@ export function SyncSettings({
           ほかの端末と同期
         </Heading>
         {body}
+        {notice ? (
+          <Alert.Root status="info" role="status">
+            <Alert.Icon />
+            <Alert.Description>{notice}</Alert.Description>
+          </Alert.Root>
+        ) : null}
         {error ? (
           <Alert.Root status="error" role="alert">
             <Alert.Icon />
@@ -294,8 +303,13 @@ export function SyncSettings({
           onSuccess={() =>
             void run(async () => {
               try {
-                await stopSync(deps);
+                const { removed } = await stopSync(deps);
                 await client.invalidateQueries({ queryKey: syncEnabledQueryKey });
+                if (!removed) {
+                  setNotice(
+                    "この端末の同期をやめました。ログインが切れていたため、サーバーのデータは消していません。ほかの端末ですでに同期をやめていれば、消えています。",
+                  );
+                }
               } finally {
                 stopping.onClose();
               }

@@ -106,6 +106,20 @@ describe("the recovery code without a passkey", () => {
 });
 
 describe("stopping", () => {
+  test("a device logged out because another stopped can still stop, and keeps its data", async () => {
+    const { device } = setUp();
+    const phone = device(samePrf);
+    await startSync(phone, "token");
+    const pc = device(samePrf);
+    await signIn(pc);
+    await pc.repository.profile.put({ updatedAt: "2026-10-25T00:00:00.000Z" });
+    await stopSync(phone);
+
+    expect(await stopSync(pc)).toEqual({ removed: false });
+    expect(await pc.repository.sync.meta.get()).toBeUndefined();
+    expect(await pc.repository.profile.get()).toBeDefined();
+  });
+
   test("removes the account, so the passkey no longer logs in, and keeps the data here", async () => {
     const { device } = setUp();
     const phone = device(samePrf);

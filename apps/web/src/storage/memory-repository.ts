@@ -9,13 +9,13 @@ import {
   type SpuMonth,
   type SyncKind,
   type SyncRow,
-  isNewer,
   joinPlan,
   orderRowId,
   splitPlan,
   syncKey,
   syncSchemas,
   syncStores,
+  wins,
 } from "@workspaces/domain";
 import * as v from "valibot";
 import type { QuarantinedRow, Repository, SyncMeta } from "./repository";
@@ -62,6 +62,13 @@ export function createMemoryRepository(
   const ordersOf = (planId: string) =>
     [...rows.order.values()].filter((row) => (row as OrderRow).planId === planId) as OrderRow[];
 
+  const planOf = (row: PlanRow) => structuredClone(joinPlan(row, ordersOf(row.id)));
+  const updatePlan = (id: string, change: (plan: Plan | undefined) => Plan) => {
+    const row = rows.plan.get(id) as PlanRow | undefined;
+    const before = row && planOf(row);
+    const after = putPlan(change(before));
+    return { before, after };
+  };
   const putPlan = (plan: Plan) => {
     const parsed = v.parse(PlanSchema, structuredClone(plan));
     const split = splitPlan(parsed, {
@@ -73,6 +80,7 @@ export function createMemoryRepository(
     for (const id of split.removedOrderIds) {
       removeRow("order", orderRowId(parsed.id, id), parsed.updatedAt);
     }
+    return parsed;
   };
   const putRow = <T extends Row>(kind: Exclude<SyncKind, "plan" | "order">, id: string, row: T) =>
     writeRow(kind, id, v.parse(syncSchemas[kind], structuredClone(row)) as T);
@@ -85,8 +93,6 @@ export function createMemoryRepository(
   if (initial.profile) putRow("profile", PROFILE_ID, initial.profile);
   initial.quarantine?.forEach((row, key) => quarantine.set(key + 1, { ...row, key: key + 1 }));
 
-  const planOf = (row: PlanRow) => structuredClone(joinPlan(row, ordersOf(row.id)));
-
   return {
     plans: {
       list: async () => list<PlanRow>("plan").map(planOf),
@@ -94,7 +100,10 @@ export function createMemoryRepository(
         const row = rows.plan.get(id) as PlanRow | undefined;
         return row && planOf(row);
       },
-      put: async (plan) => putPlan(plan),
+      put: async (plan) => {
+        putPlan(plan);
+      },
+      update: async (id, change) => updatePlan(id, change),
       delete: async (id) => {
         const removedAt = now().toISOString();
         for (const order of ordersOf(id)) removeRow("order", orderRowId(id, order.id), removedAt);
@@ -137,11 +146,23 @@ export function createMemoryRepository(
           if (outbox.get(key)?.updatedAt === updatedAt) outbox.delete(key);
         }
       },
-      apply: async (received) => {
+      apply: async (received, accountId) => {
+        if (meta?.accountId !== accountId) return false;
         let written = false;
         for (const row of received) {
           const key = syncKey(row.kind, row.id);
-          if (!isNewer(row, rows[row.kind].get(row.id) ?? tombstones.get(key))) continue;
+          const tombstone = tombstones.get(key);
+          const value = rows[row.kind].get(row.id);
+          const here: SyncRow | undefined = tombstone
+            ? { ...tombstone, deleted: true }
+            : value && {
+                kind: row.kind,
+                id: row.id,
+                updatedAt: value.updatedAt,
+                deleted: false,
+                value,
+              };
+          if (!wins(row, here)) continue;
           if (row.deleted) {
             removeRow(row.kind, row.id, row.updatedAt);
           } else {

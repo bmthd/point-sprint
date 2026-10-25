@@ -87,16 +87,20 @@ export async function push(
   if (account.bytes + growth > LIMITS.account) return { ok: false, reason: "quota" };
 
   const writes: D1PreparedStatement[] = records.map((record) =>
-    // The row is replaced only by a later one, in the same statement, so two pushes at once
-    // cannot both win. A batch is one transaction, so the sequence numbers are given in order.
+    // In the same statement, so that two pushes at once cannot both get through:
+    // - a row of an older data version than the account's is not written;
+    // - a row is replaced only by one as late or later. Of two rows of the same time, the last
+    //   written stays, and the devices take it (`wins` in the domain).
+    // A batch is one transaction, so the sequence numbers are given in order.
     db
       .prepare(
         `INSERT INTO records (account_id, record_id, seq, updated_at, schema_version, deleted, body)
-         VALUES (?, ?, (SELECT coalesce(max(seq), 0) + 1 FROM records WHERE account_id = ?), ?, ?, ?, ?)
+         SELECT ?, ?, (SELECT coalesce(max(seq), 0) + 1 FROM records WHERE account_id = ?), ?, ?, ?, ?
+         WHERE ? >= (SELECT schema_version FROM accounts WHERE id = ?)
          ON CONFLICT (account_id, record_id) DO UPDATE SET
            seq = excluded.seq, updated_at = excluded.updated_at,
            schema_version = excluded.schema_version, deleted = excluded.deleted, body = excluded.body
-         WHERE excluded.updated_at > records.updated_at`,
+         WHERE excluded.updated_at >= records.updated_at`,
       )
       .bind(
         accountId,
@@ -106,6 +110,8 @@ export async function push(
         record.version,
         record.deleted ? 1 : 0,
         record.body,
+        record.version,
+        accountId,
       ),
   );
   const newest = Math.max(...records.map((record) => record.version));
@@ -123,6 +129,12 @@ export async function push(
       .bind(accountId, hour, records.length),
     db.prepare("DELETE FROM usage WHERE account_id = ? AND hour < ?").bind(accountId, hour),
   ]);
+  // A newer app wrote between the check above and the batch: its rows were kept, these were not.
+  const after = await db
+    .prepare("SELECT schema_version FROM accounts WHERE id = ?")
+    .bind(accountId)
+    .first<{ schema_version: number }>();
+  if ((after?.schema_version ?? 0) > newest) return { ok: false, reason: "outdated" };
   return { ok: true };
 }
 

@@ -317,7 +317,7 @@ test("an error under one field leaves the other fields of its row in place", asy
 test("a failed save keeps the add form's input", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
   await expect.element(rows()).toHaveLength(1);
-  repository().plans.put = async () => {
+  repository().plans.update = async () => {
     throw new Error("disk full");
   };
 
@@ -338,14 +338,14 @@ test("a failed save keeps the add form's input", async () => {
 test("an edit whose save failed can be saved again", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
   await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
-  const put = repository().plans.put.bind(repository().plans);
+  const update = repository().plans.update.bind(repository().plans);
   let failNext = true;
-  repository().plans.put = (plan) => {
+  repository().plans.update = (id, change) => {
     if (failNext) {
       failNext = false;
       return Promise.reject(new Error("disk full"));
     }
-    return put(plan);
+    return update(id, change);
   };
 
   const amount = () => screen.getByRole("textbox", { name: "金額（税込）" });
@@ -520,10 +520,10 @@ test("expanded row shows group totals and edits the order", async () => {
   await expect.element(row).toMatchTextContent("税抜の基準額 ¥10,000");
 
   let saves = 0;
-  const put = repository().plans.put.bind(repository().plans);
-  repository().plans.put = (plan) => {
+  const update = repository().plans.update.bind(repository().plans);
+  repository().plans.update = (id, change) => {
     saves += 1;
-    return put(plan);
+    return update(id, change);
   };
 
   // Text fields save on Enter, and only when valid.
@@ -581,10 +581,10 @@ test("expanded row shows group totals and edits the order", async () => {
 test("leaving a field of an opened row unchanged saves nothing", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
   let saves = 0;
-  const put = repository().plans.put.bind(repository().plans);
-  repository().plans.put = (plan) => {
+  const update = repository().plans.update.bind(repository().plans);
+  repository().plans.update = (id, change) => {
     saves += 1;
-    return put(plan);
+    return update(id, change);
   };
   await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
 

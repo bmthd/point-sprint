@@ -6,6 +6,7 @@ import {
   type OrderRow,
   OrderRowSchema,
   PROFILE_ID,
+  type Plan,
   type PlanRow,
   PlanRowSchema,
   PlanSchema,
@@ -19,18 +20,23 @@ import {
   type StoreName,
   type SyncKind,
   type SyncRow,
-  isNewer,
   joinPlan,
   orderRowId,
   splitPlan,
   syncKey,
   syncSchemas,
   syncStores,
+  wins,
 } from "@workspaces/domain";
 import { createIndexedDb } from "seitu/web/indexed-db";
 import { createIndexedDbTable } from "seitu/web/indexed-db-table";
 import * as v from "valibot";
-import { OutdatedDatabaseError, type QuarantinedRow, type Repository } from "./repository";
+import {
+  OutdatedDatabaseError,
+  type QuarantinedRow,
+  type Repository,
+  type SyncMeta,
+} from "./repository";
 
 const PROFILE_KEY = "profile";
 const SYNC_META_KEY = "meta";
@@ -355,6 +361,39 @@ export function createIndexedDbRepository(
     await done;
   };
 
+  // The plan's row and the orders that changed are written with their marks to send in the
+  // transaction they were read in, so a change is never saved without being sent later, and a row
+  // received meanwhile is never taken for one the change removed.
+  const update = async (id: string, change: (plan: Plan | undefined) => Plan) => {
+    const { transaction: tx, done } = await transaction(
+      ["plans", "orders", "outbox", "tombstones"],
+      "readwrite",
+    );
+    const [row, orders] = await Promise.all([
+      request<PlanRow | undefined>(tx.objectStore("plans").get(id)),
+      request<OrderRow[]>(tx.objectStore("orders").index("planId").getAll(id)),
+    ]);
+    const before = row && joinPlan(row, orders);
+    let after: Plan;
+    try {
+      after = v.parse(PlanSchema, structuredClone(change(before)));
+    } catch (error) {
+      tx.abort();
+      await done.catch(() => {});
+      throw error;
+    }
+    const split = splitPlan(after, { row, orders });
+    if (split.row) writeRow(tx, "plan", after.id, split.row);
+    for (const order of split.orders) {
+      writeRow(tx, "order", orderRowId(after.id, order.id), order);
+    }
+    for (const removed of split.removedOrderIds) {
+      removeRow(tx, "order", orderRowId(after.id, removed), after.updatedAt);
+    }
+    await done;
+    return { before, after };
+  };
+
   return {
     plans: {
       list: async () => {
@@ -370,28 +409,10 @@ export function createIndexedDbRepository(
         const row = await db.stores.plans.get(id);
         return row && joinPlan(row, await db.stores.orders.index("planId").getAll(id));
       },
-      // The plan's row and the orders that changed are written with their marks to send in one
-      // transaction, so a change is never saved without being sent later.
       put: async (plan) => {
-        const parsed = v.parse(PlanSchema, structuredClone(plan));
-        const { transaction: tx, done } = await transaction(
-          ["plans", "orders", "outbox", "tombstones"],
-          "readwrite",
-        );
-        const [row, orders] = await Promise.all([
-          request<PlanRow | undefined>(tx.objectStore("plans").get(parsed.id)),
-          request<OrderRow[]>(tx.objectStore("orders").index("planId").getAll(parsed.id)),
-        ]);
-        const split = splitPlan(parsed, { row, orders });
-        if (split.row) writeRow(tx, "plan", parsed.id, split.row);
-        for (const order of split.orders) {
-          writeRow(tx, "order", orderRowId(parsed.id, order.id), order);
-        }
-        for (const id of split.removedOrderIds) {
-          removeRow(tx, "order", orderRowId(parsed.id, id), parsed.updatedAt);
-        }
-        await done;
+        await update(plan.id, () => plan);
       },
+      update: (id, change) => update(id, change),
       delete: async (id) => {
         const removedAt = now();
         const { transaction: tx, done } = await transaction(
@@ -452,11 +473,20 @@ export function createIndexedDbRepository(
         );
         await done;
       },
-      apply: async (rows) => {
+      apply: async (rows, accountId) => {
         const { transaction: tx, done } = await transaction(
-          [...ROW_STORES, "outbox", "tombstones", "quarantine"],
+          [...ROW_STORES, "outbox", "tombstones", "quarantine", "syncMeta"],
           "readwrite",
         );
+        // Checked in the transaction the rows are written in: a device that stopped syncing, or
+        // was reset, while the rows were on their way keeps none of them.
+        const meta = await request<SyncMeta | undefined>(
+          tx.objectStore("syncMeta").get(SYNC_META_KEY),
+        );
+        if (meta?.accountId !== accountId) {
+          await done;
+          return false;
+        }
         const written = await Promise.all(
           rows.map(async (row) => {
             const key = syncKey(row.kind, row.id);
@@ -466,7 +496,16 @@ export function createIndexedDbRepository(
                 tx.objectStore(syncStores[row.kind]).get(rowKey(row.kind, row.id)),
               ),
             ]);
-            if (!isNewer(row, current ?? tombstone)) return false;
+            const here: SyncRow | undefined = tombstone
+              ? { ...tombstone, deleted: true }
+              : current && {
+                  kind: row.kind,
+                  id: row.id,
+                  updatedAt: current.updatedAt,
+                  deleted: false,
+                  value: current,
+                };
+            if (!wins(row, here)) return false;
             if (row.deleted) {
               removeRow(tx, row.kind, row.id, row.updatedAt);
               tx.objectStore("outbox").delete(key);

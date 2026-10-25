@@ -53,7 +53,7 @@ export async function syncOnce({ repository, server, version }: SyncDeps): Promi
       if (opened.version > version) return { status: "outdated" };
       rows.push(opened.version < version ? migrated(opened.row, opened.version) : opened.row);
     }
-    if (await repository.sync.apply(rows)) received = true;
+    if (await repository.sync.apply(rows, meta.accountId)) received = true;
     cursor = pulled.seq;
     // Stopped meanwhile: keep nothing.
     const current = await repository.sync.meta.get();

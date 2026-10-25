@@ -65,6 +65,33 @@ describe("push and pull", () => {
     });
   });
 
+  test("a newer app that writes just before an older one keeps the older one out", async () => {
+    const { deps, sqlite } = setUp();
+    await push(deps, ACCOUNT, [record("a", "2026-10-24T00:00:00.000Z", "v11", 11)]);
+    // The newer app's push commits after the older one checked the version.
+    const batch = deps.db.batch.bind(deps.db);
+    deps.db.batch = async (statements) => {
+      sqlite.prepare("UPDATE accounts SET schema_version = 12").run();
+      sqlite
+        .prepare(
+          "UPDATE records SET body = 'v12', schema_version = 12, updated_at = ? WHERE record_id = 'a'",
+        )
+        .run("2026-10-24T06:00:00.000Z");
+      return batch(statements);
+    };
+    expect(
+      await push(deps, ACCOUNT, [record("a", "2026-10-24T12:00:00.000Z", "old app", 11)]),
+    ).toEqual({ ok: false, reason: "outdated" });
+    expect((await pull(deps, ACCOUNT, 0)).records.map((r) => r.body)).toEqual(["v12"]);
+  });
+
+  test("of two rows of the same time, the last written stays", async () => {
+    const { deps } = setUp();
+    await push(deps, ACCOUNT, [record("a", "2026-10-24T00:00:00.000Z", "first")]);
+    await push(deps, ACCOUNT, [record("a", "2026-10-24T00:00:00.000Z", "second")]);
+    expect((await pull(deps, ACCOUNT, 0)).records.map((r) => r.body)).toEqual(["second"]);
+  });
+
   test("a row dated more than a day ahead is refused", async () => {
     const { deps } = setUp();
     expect(await push(deps, ACCOUNT, [record("a", "2026-10-26T00:00:01.000Z")])).toEqual({

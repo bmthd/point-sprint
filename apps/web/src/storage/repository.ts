@@ -39,10 +39,11 @@ export interface SyncRepository {
   /** Clears the mark of each row sent, unless the row changed since (another `updatedAt`). */
   acknowledge(rows: readonly { kind: SyncKind; id: string; updatedAt: string }[]): Promise<void>;
   /**
-   * Writes the rows received that are newer than the ones here, without marking them to send.
-   * A row that fails validation is set aside. Resolves to whether anything was written.
+   * Writes the rows received that win over the ones here (`wins`), without marking them to send.
+   * A row that fails validation is set aside. Nothing is written unless this device still syncs
+   * with `accountId`. Resolves to whether anything was written.
    */
-  apply(rows: readonly SyncRow[]): Promise<boolean>;
+  apply(rows: readonly SyncRow[], accountId: string): Promise<boolean>;
   /** Marks every row and every removal to send. */
   markAllPending(): Promise<void>;
   meta: { get(): Promise<SyncMeta | undefined>; put(meta: SyncMeta | undefined): Promise<void> };
@@ -54,6 +55,14 @@ export interface Repository {
     list(): Promise<Plan[]>;
     get(id: string): Promise<Plan | undefined>;
     put(plan: Plan): Promise<void>;
+    /**
+     * Changes the plan as it is stored, reading and writing in one transaction: a row received
+     * from another device meanwhile is part of what `change` gets, never taken for removed.
+     */
+    update(
+      id: string,
+      change: (plan: Plan | undefined) => Plan,
+    ): Promise<{ before: Plan | undefined; after: Plan }>;
     delete(id: string): Promise<void>;
   };
   shops: { list(): Promise<Shop[]>; put(shop: Shop): Promise<void> };

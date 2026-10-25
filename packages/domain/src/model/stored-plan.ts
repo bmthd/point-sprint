@@ -30,7 +30,7 @@ export const OrderRowSchema = v.union(
 export type OrderRow = v.InferOutput<typeof OrderRowSchema>;
 
 /** JSON with the keys of every object sorted, so that equal values compare equal. */
-function stableJson(value: unknown): string {
+export function stableJson(value: unknown): string {
   return JSON.stringify(value, (_key, inner: unknown) =>
     typeof inner === "object" && inner !== null && !Array.isArray(inner)
       ? Object.fromEntries(Object.entries(inner).toSorted(([a], [b]) => (a < b ? -1 : 1)))

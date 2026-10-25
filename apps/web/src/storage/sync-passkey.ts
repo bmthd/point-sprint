@@ -334,12 +334,15 @@ export async function recoverWithCode(
 /**
  * Removes the account and its data from the server and stops syncing here; this device's data
  * stays. Asks the password manager to drop the passkey, where the browser can.
+ *
+ * A device that is logged out, as when another device stopped the sync and removed the account,
+ * still stops here: resolves to `{ removed: false }`, the server's rows left as they are.
  */
-export async function stopSync({ server, repository }: PasskeyDeps): Promise<void> {
+export async function stopSync({ server, repository }: PasskeyDeps): Promise<{ removed: boolean }> {
   const result = await server.stop();
-  if (isSignedOut(result)) throw new SyncError("signed-out");
   const meta = await repository.sync.meta.get();
   await repository.sync.meta.put(undefined);
+  if (isSignedOut(result)) return { removed: false };
   const credentials = globalThis.PublicKeyCredential as
     | {
         signalUnknownCredential?: (options: {
@@ -358,4 +361,5 @@ export async function stopSync({ server, repository }: PasskeyDeps): Promise<voi
       });
     } catch {}
   }
+  return { removed: true };
 }

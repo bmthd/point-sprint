@@ -4,6 +4,7 @@ import { ShopSchema } from "../model/shop";
 import { SpuMonthSchema } from "../model/spu-month";
 import { OrderRowSchema, PlanRowSchema } from "../model/stored-plan";
 import type { StoreName } from "../migrations/runner";
+import { stableJson } from "../model/stored-plan";
 
 // What two devices send each other: one row of a store, or the mark that it was removed. The later
 // `updatedAt` wins row by row.
@@ -61,10 +62,13 @@ export const orderRowId = (planId: string, orderId: string) => `${planId}:${orde
 export const syncKey = (kind: SyncKind, id: string) => `${kind}:${id}`;
 
 /**
- * Whether a row from another device replaces the one here. Only a later `updatedAt` does: on a tie
- * both devices keep what they have, which is the same row when they made it from the same change.
+ * Whether a row from the server replaces the one here: a later `updatedAt` does. On the same
+ * `updatedAt`, a different row does too: the server keeps the last of two rows of the same time
+ * (`sync-records.ts`), and taking what it sends makes every device end on that one.
  */
-export const isNewer = (
-  incoming: { updatedAt: string },
-  current: { updatedAt: string } | undefined,
-): boolean => current === undefined || incoming.updatedAt > current.updatedAt;
+export function wins(incoming: SyncRow, current: SyncRow | undefined): boolean {
+  if (current === undefined || incoming.updatedAt > current.updatedAt) return true;
+  if (incoming.updatedAt < current.updatedAt) return false;
+  const content = (row: SyncRow) => stableJson(row.deleted ? null : row.value);
+  return content(incoming) !== content(current);
+}
