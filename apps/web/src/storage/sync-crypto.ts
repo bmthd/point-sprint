@@ -197,6 +197,7 @@ export async function decryptRecord(
 }
 
 // Crockford's Base32: no I, L, O or U, so that the code reads aloud and copies by hand.
+// cspell:disable-next-line
 const ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 const CODE_BYTES = 16;
 const CODE_LENGTH = Math.ceil((CODE_BYTES * 8) / 5);

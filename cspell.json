@@ -19,6 +19,9 @@
     "packages/ui/src/theme/tokens/z-indices.ts"
   ],
   "words": [
+    "simplewebauthn",
+    "RPID",
+    "Crockford",
     "nosniff",
     "spinbutton",
     "bmthd",

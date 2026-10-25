@@ -78,6 +78,7 @@ describe("records", () => {
 
 describe("recovery code", () => {
   test("is 26 characters in groups of 4", () => {
+    // cspell:disable-next-line
     expect(generateRecoveryCode()).toMatch(/^([0-9A-HJKMNP-TV-Z]{4}-){6}[0-9A-HJKMNP-TV-Z]{2}$/);
   });
 
