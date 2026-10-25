@@ -58,7 +58,7 @@ export function SiteFooter() {
           </Flex>
         ) : null}
         <Text fontSize="xs" color="fg.muted" textAlign="center">
-          入力した内容はこのブラウザの中にだけ保存されます。ブラウザのデータを消すと、プランも消えます。
+          入力した内容はこのブラウザの中に保存されます。ほかの端末と同期すると、運営者にも読めない暗号にしてから送ります。
         </Text>
         <Box
           display="flex"
