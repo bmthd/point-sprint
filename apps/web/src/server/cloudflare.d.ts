@@ -13,17 +13,20 @@ declare module "cloudflare:workers" {
     RAKUTEN_RATE_GATE?: DurableObjectNamespace<import("./rakuten-rate-gate").RakutenRateGate>;
     /** The official event master (src/server/event-store.ts). */
     EVENTS_DB: D1Database;
+    /** The sealed rows of the users who sync (src/server/sync-store.ts). */
+    SYNC_DB: D1Database;
   };
 
   export interface D1PreparedStatement {
     bind(...values: unknown[]): D1PreparedStatement;
     all<T>(): Promise<{ results: T[] }>;
-    run(): Promise<unknown>;
+    first<T>(): Promise<T | null>;
+    run(): Promise<{ meta: { changes: number } }>;
   }
 
   export interface D1Database {
     prepare(query: string): D1PreparedStatement;
-    batch(statements: D1PreparedStatement[]): Promise<unknown>;
+    batch(statements: D1PreparedStatement[]): Promise<{ meta: { changes: number } }[]>;
   }
 
   /** What the runtime passes to the `scheduled` handler. */

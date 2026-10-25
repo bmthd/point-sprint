@@ -19,7 +19,7 @@ export default defineConfig({
   webServer: [
     {
       // The event master starts from the migrations each run, apart from the dev server's data.
-      command: `node scripts/migrate-events-db.ts --local && pnpm exec vite preview --port ${PORT} --strictPort`,
+      command: `node scripts/migrate-db.ts --local && pnpm exec vite preview --port ${PORT} --strictPort`,
       url: `http://localhost:${PORT}`,
       reuseExistingServer: false,
       env: {
