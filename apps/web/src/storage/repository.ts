@@ -1,4 +1,4 @@
-import type { Plan, Profile, Shop, StoreName } from "@workspaces/domain";
+import type { Plan, Profile, Shop, SpuMonth, StoreName } from "@workspaces/domain";
 
 /** A stored row that failed validation on read, as it was stored, with why it failed. */
 export type QuarantinedRow = {
@@ -18,6 +18,8 @@ export interface Repository {
   };
   shops: { list(): Promise<Shop[]>; put(shop: Shop): Promise<void> };
   profile: { get(): Promise<Profile | undefined>; put(profile: Profile): Promise<void> };
+  /** The SPU of each account and month that the user has set. */
+  spuMonths: { list(): Promise<SpuMonth[]>; put(month: SpuMonth): Promise<void> };
   /** Number of stored rows that failed validation on read and were moved aside. */
   quarantined(): Promise<number>;
   /** The rows set aside, oldest first, and a way to remove them for good. */
