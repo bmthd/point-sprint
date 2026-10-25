@@ -110,7 +110,7 @@ test("/notices says so when there is no notice", async () => {
 
 test("/notices shows the version of a notice that raises it, and whether the calculation changed", async () => {
   await renderAt("/notices", [
-    { ...notice("2026-10-01", "版のないお知らせ") },
+    { ...notice("2026-10-01", "バージョンのないお知らせ") },
     {
       ...notice("2026-10-02", "機能の更新"),
       release: { version: "1.0", changesCalculation: false },
@@ -128,6 +128,6 @@ test("/notices shows the version of a notice that raises it, and whether the cal
   await expect.element(article("計算の直し").getByText("Ver.2.0")).toBeVisible();
   await expect.element(article("計算の直し").getByText("計算が変わります")).toBeVisible();
   await expect
-    .element(article("版のないお知らせ").getByText("Ver.", { exact: false }))
+    .element(article("バージョンのないお知らせ").getByText("Ver.", { exact: false }))
     .not.toBeInTheDocument();
 });

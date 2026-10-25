@@ -61,11 +61,11 @@ test("nextVersion starts at 1.0, then raises the major number only when the calc
 test("latestRelease is the highest version, skipping notices without one", () => {
   const list = [
     release("2026-10-01", "1.9"),
-    notice("2026-12-01", "版のないお知らせ"),
+    notice("2026-12-01", "バージョンのないお知らせ"),
     release("2026-11-01", "1.10"),
   ];
   expect(latestRelease(list)?.release.version).toBe("1.10");
-  expect(latestRelease([notice("2026-10-01", "版のないお知らせ")])).toBeUndefined();
+  expect(latestRelease([notice("2026-10-01", "バージョンのないお知らせ")])).toBeUndefined();
 });
 
 test("a release stays fresh for 30 days", () => {

@@ -1,10 +1,10 @@
-# 計算方法のページと版つきの変更履歴 Implementation Plan
+# 計算方法のページとバージョンつきの変更履歴 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 初めて来た人が信用できるか判断できるよう、計算方法のページ（`/calculation`）と、版つきのお知らせ、ヘッダーの版の表示を作る。
+**Goal:** 初めて来た人が信用できるか判断できるよう、計算方法のページ（`/calculation`）と、バージョンつきのお知らせ、ヘッダーのバージョンの表示を作る。
 
-**Architecture:** 出典と確認日は `packages/domain` のマスタの横に、特典の id から引く表として持つ（保存するデータの形は変えない）。お知らせに `release`（版と、計算が変わるか）を足し、ヘッダーは最新の版のお知らせへリンクする。計算方法のページは既存の Markdown のページに載せ、倍率の表と具体例は、マスタと `calculate` から作った Markdown を本文に差し込む。
+**Architecture:** 出典と確認日は `packages/domain` のマスタの横に、特典の id から引く表として持つ（保存するデータの形は変えない）。お知らせに `release`（バージョンと、計算が変わるか）を足し、ヘッダーは最新のバージョンのお知らせへリンクする。計算方法のページは既存の Markdown のページに載せ、倍率の表と具体例は、マスタと `calculate` から作った Markdown を本文に差し込む。
 
 **Tech Stack:** TypeScript、TanStack Start / Router、Yamada UI v2（`@workspaces/ui`）、Vitest（単体とブラウザ）
 
@@ -15,15 +15,15 @@
 - 部品は `@workspaces/ui` から選ぶ。色はテーマのトークンで指定する（`docs/design-system.md`）
 - 保存するデータの形（`packages/domain/src/model`）は変えない。`CURRENT_SCHEMA_VERSION` は上げない
 - 1 ルートだけが使うものはルートの隣に `-` で始まる名前で置く（AGENTS.md）
-- 版の上げ方: 計算の結果が変わる（`changesCalculation: true`）なら大きい番号（1.4 → 2.0）、ほかは小さい番号（1.4 → 1.5）。最初の版は `1.0`
-- ヘッダーの点: 最新の版のお知らせの日から 30 日以内なら緑、過ぎたら灰
+- バージョンの上げ方: 計算の結果が変わる（`changesCalculation: true`）なら大きい番号（1.4 → 2.0）、ほかは小さい番号（1.4 → 1.5）。最初のバージョンは `1.0`
+- ヘッダーの点: 最新のバージョンのお知らせの日から 30 日以内なら緑、過ぎたら灰
 - 見た目はテストしない。テストは自分たちの振る舞いだけ
 
 ## Review Focus
 
 - ビルドの日（プリレンダー）と開いた日が違う: ヘッダーの点は開いた日で決まる（`useToday`）。プリレンダーの HTML はビルドの日のまま → `isFreshRelease` の境目のテストで押さえる
-- 版を持つお知らせがない: ヘッダーに何も出さない → `latestRelease` が `undefined` を返すテスト
-- 同じ日に 2 件の版: 一覧の並び（`newestFirst`）と同じく、並べた順で後の方が新しい版、とはしない。版の比較は番号で行う → `latestRelease` のテスト
+- バージョンを持つお知らせがない: ヘッダーに何も出さない → `latestRelease` が `undefined` を返すテスト
+- 同じ日に 2 件のバージョン: 一覧の並び（`newestFirst`）と同じく、並べた順で後の方が新しいバージョン、とはしない。バージョンの比較は番号で行う → `latestRelease` のテスト
 - マスタに項目を足して出典を書き忘れる → `sources.test.ts`
 - 具体例の数字が計算とずれる → 具体例の Markdown を `calculate` の結果から作り、合計が一致するテスト
 
@@ -64,7 +64,7 @@
 - [ ] **Step 4: 通るのを確かめる** — 同じコマンドで PASS
 - [ ] **Step 5: Commit**
 
-### Task 2: お知らせの版
+### Task 2: お知らせのバージョン
 
 **Files:**
 - Modify: `apps/web/src/routes/-notices/notices.ts`、`notices.test.ts`
@@ -77,7 +77,7 @@
   export type Notice = { id; date; title; body; release?: Release };
   export type ReleaseNotice = Notice & { release: Release };
   export const nextVersion: (previous: string | undefined, changesCalculation: boolean) => string;
-  export const releasesOldestFirst: (list: readonly Notice[]) => ReleaseNotice[]; // 版の番号の順
+  export const releasesOldestFirst: (list: readonly Notice[]) => ReleaseNotice[]; // バージョンの番号の順
   export const latestRelease: (list: readonly Notice[]) => ReleaseNotice | undefined;
   export const isFreshRelease: (release: ReleaseNotice, today: string) => boolean; // 30 日以内
   export const FRESH_DAYS = 30;
@@ -85,18 +85,18 @@
 
 - [ ] **Step 1: テストを書く** — `notices.test.ts` に足す
   - `nextVersion(undefined, false)` と `nextVersion(undefined, true)` は `"1.0"`。`nextVersion("1.4", false)` は `"1.5"`、`nextVersion("1.4", true)` は `"2.0"`。`nextVersion("1.9", false)` は `"1.10"`
-  - `latestRelease`: 版のないお知らせを飛ばし、番号の最も大きいものを返す（`"1.10"` は `"1.9"` より新しい）。版が 1 件もなければ `undefined`
-  - `isFreshRelease`: 日付 `2026-10-25` の版は、`2026-11-24` で `true`、`2026-11-25` で `false`
-  - 実データ: 版を持つお知らせを日付の古い順に並べると、各版が `nextVersion(前の版, changesCalculation)` と一致する
+  - `latestRelease`: バージョンのないお知らせを飛ばし、番号の最も大きいものを返す（`"1.10"` は `"1.9"` より新しい）。バージョンが 1 件もなければ `undefined`
+  - `isFreshRelease`: 日付 `2026-10-25` のバージョンは、`2026-11-24` で `true`、`2026-11-25` で `false`
+  - 実データ: バージョンを持つお知らせを日付の古い順に並べると、各バージョンが `nextVersion(前のバージョン, changesCalculation)` と一致する
 - [ ] **Step 2: 落ちるのを確かめる** — `pnpm --filter web exec vitest run src/routes/-notices/notices.test.ts` → FAIL
 - [ ] **Step 3: 型と関数を足し、公開のお知らせを足す**
-  - `id: "calculation-page"`、`date: "2026-10-25"`、`title: "計算方法のページと変更履歴を始めました"`、`release: { version: "1.0", changesCalculation: false }`。本文は、計算方法のページで倍率と出典を確かめられること、これからは変更をお知らせに版つきで載せること、ヘッダーの版から最新のお知らせへ移れること
+  - `id: "calculation-page"`、`date: "2026-10-25"`、`title: "計算方法のページと変更履歴を始めました"`、`release: { version: "1.0", changesCalculation: false }`。本文は、計算方法のページで倍率と出典を確かめられること、これからは変更をお知らせにバージョンつきで載せること、ヘッダーのバージョンから最新のお知らせへ移れること
   - 「作り直しました」は変えない
-- [ ] **Step 4: `/notices` で、版を持つお知らせの日付の横に `Badge variant="outline" colorScheme="gray"` の「Ver.1.0」を出し、`changesCalculation` なら `Badge colorScheme="warning" variant="subtle"` の「計算が変わります」を添える**。ブラウザテスト: 版のあるお知らせに「Ver.1.0」が出て、ないお知らせに出ない。`changesCalculation` のお知らせにだけ「計算が変わります」が出る
+- [ ] **Step 4: `/notices` で、バージョンを持つお知らせの日付の横に `Badge variant="outline" colorScheme="gray"` の「Ver.1.0」を出し、`changesCalculation` なら `Badge colorScheme="warning" variant="subtle"` の「計算が変わります」を添える**。ブラウザテスト: バージョンのあるお知らせに「Ver.1.0」が出て、ないお知らせに出ない。`changesCalculation` のお知らせにだけ「計算が変わります」が出る
 - [ ] **Step 5: 通るのを確かめる** — `pnpm --filter web exec vitest run src/routes/-notices src/routes/\(site\)/-notices` → PASS
 - [ ] **Step 6: Commit**
 
-### Task 3: ヘッダーの版の表示
+### Task 3: ヘッダーのバージョンの表示
 
 **Files:**
 - Create: `apps/web/src/routes/-root/release-link.tsx`、`release-link.browser.test.tsx`
@@ -110,11 +110,11 @@
 - `RouterLink to="/notices" hash={release.id}`、`minH="11"`、`aria-label={`Ver.${version}、${M}月${D}日に更新。更新のお知らせを見る`}`
 - 中に `Status as="span" size="sm"`。新しければ `value="success"`、古ければ `colorScheme="gray"`。ラベルは「Ver.1.0」。`today` が `undefined`（テストとプリレンダー前）のときは `import.meta.env.BUILD_DATE` と同じ扱いの `useToday` に任せ、それも `undefined` なら新しいとみなす
 - 日付「10/25 更新」は `fg.muted` の `xs`、`lg` 以下は `display="none"`
-- 版のお知らせがなければ何も描かない
+- バージョンのお知らせがなければ何も描かない
 
 - [ ] **Step 1: ブラウザテストを書く** — `release-link.browser.test.tsx`
-  - 版を持つお知らせのうち番号の大きい方へリンクする（`href` が `/notices#<id>`）。名前は「Ver.1.1、10月25日に更新。更新のお知らせを見る」
-  - 版のお知らせがなければ、リンクがない
+  - バージョンを持つお知らせのうち番号の大きい方へリンクする（`href` が `/notices#<id>`）。名前は「Ver.1.1、10月25日に更新。更新のお知らせを見る」
+  - バージョンのお知らせがなければ、リンクがない
 - [ ] **Step 2: 落ちるのを確かめる** → FAIL
 - [ ] **Step 3: `ReleaseLink` を書き、ヘッダーに置く**
 - [ ] **Step 4: 通るのを確かめる** → PASS
@@ -146,7 +146,7 @@
 2. `## 計算の流れ` — 設計書 3 節「計算が従う楽天の規則」の各項目を、楽天の FAQ・ガイドへのリンクつきで箇条書きにする。続けて `{{example}}`
 3. `## 使っている倍率と上限` — `### SPU` `{{spu-table}}`、`### キャンペーン` `{{campaign-table}}`、`### お買い物マラソン`（ショップ数の数え方、回ごとの倍率と上限は楽天の告知ページから自動で集め、トップページのイベントで確かめられること。https://event.rakuten.co.jp/campaign/point-up/marathon/guide/ ）。自分で倍率を入れるキャンペーン（買いまわり（手動）、合計額で倍率（手動）、自由な倍率）は表に載せず一言触れる
 4. `## 計算に入れていないもの` — help.md の注意事項（誤差、送料、回ごとの違い）に、支払方法、会員ランク、エントリーの有無は利用者が ON / OFF で切り替えることを足す
-5. `## この計算方法の版` — `{{release}}`（「Ver.1.0（2026年10月25日）」とそのお知らせへのリンク、`/notices` へのリンク）
+5. `## この計算方法のバージョン` — `{{release}}`（「Ver.1.0（2026年10月25日）」とそのお知らせへのリンク、`/notices` へのリンク）
 
 具体例: 楽天市場の 1 ショップ、2026-10-05（5と0のつく日）、税込 5,500 円（税率 10%）の商品 1 つ。通常ポイント、楽天カード通常分、楽天カード特典分、5と0のつく日を ON。表は「特典 | 対象額 | 倍率 | ポイント」で、行は `calculate` の `benefitTotals` から、合計は `total`。
 
@@ -164,8 +164,8 @@
 ### Task 5: 運用の決まりと仕上げ
 
 **Files:**
-- Create: `docs/notices.md`（お知らせの書き方: 版を上げるとき、`changesCalculation` の付け方、マスタの倍率を変えたら `sources.ts` の確認日を直すこと）
-- Modify: `AGENTS.md`（計算の結果が変わる変更では、版を上げるお知らせを足す、の 1 節）
+- Create: `docs/notices.md`（お知らせの書き方: バージョンを上げるとき、`changesCalculation` の付け方、マスタの倍率を変えたら `sources.ts` の確認日を直すこと）
+- Modify: `AGENTS.md`（計算の結果が変わる変更では、バージョンを上げるお知らせを足す、の 1 節）
 
 - [ ] **Step 1: 書く**
 - [ ] **Step 2: `pnpm check:all` と `pnpm test:e2e` が通る**
