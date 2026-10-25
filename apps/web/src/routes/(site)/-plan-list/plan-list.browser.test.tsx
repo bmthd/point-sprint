@@ -531,7 +531,6 @@ test("shows each plan's account only once accounts are told apart", async () => 
     { ...plan(PLAN_B, "家族のプラン", "2026-10-05T00:00:00.000Z", 1), accountId: SUB },
   ];
   const profile = {
-    spuBenefits: [],
     accounts: [defaultAccount(), { id: SUB, name: "家族" }],
     updatedAt: "2026-10-05T00:00:00.000Z",
   };

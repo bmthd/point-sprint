@@ -175,7 +175,7 @@ test("shows a notice when the stored profile is invalid", async () => {
   const name = `profile-health-${Date.now()}`;
   const stored = createIndexedDbRepository({ name });
   await stored.quarantined(); // creates the stores
-  await putRawProfile(name, { spuBenefits: "broken", updatedAt: "not a timestamp" });
+  await putRawProfile(name, { updatedAt: "not a timestamp" });
 
   // The profile is read well after the plans and shops, so the notice has to be checked again
   // once the profile has been read.
