@@ -7,8 +7,6 @@ CREATE TABLE accounts (
   created_at TEXT NOT NULL,
   -- The newest data version written: older apps may no longer write.
   schema_version INTEGER NOT NULL,
-  -- The last sequence number given to a written record.
-  seq INTEGER NOT NULL DEFAULT 0,
   -- The size of every record's body, against the quota.
   bytes INTEGER NOT NULL DEFAULT 0,
   -- A hash of a key made from the recovery code, to log in with the code.
