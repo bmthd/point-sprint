@@ -257,7 +257,11 @@ function openDatabase(name: string, migrations: readonly Migration[], state: Ope
       quarantine: createIndexedDbTable({ autoIncrement: true, schema: QuarantineSchema }),
       outbox: createIndexedDbTable({ schema: SyncMarkSchema }),
       tombstones: createIndexedDbTable({ schema: SyncMarkSchema }),
-      syncMeta: createIndexedDbTable({ schema: SyncMetaSchema }),
+      // A device that does not sync has no row: absence, not bad data.
+      syncMeta: createIndexedDbTable({
+        schema: SyncMetaSchema,
+        onValidationError: () => undefined,
+      }),
     },
     onUpgrade: ({ oldVersion, migrate, transaction }) => {
       // A new database (oldVersion 0) has no rows; an index-only bump has no migrations to apply.
