@@ -1,7 +1,6 @@
 // 定例キャンペーンと、利用者が自分で作るキャンペーン（買いまわり（手動）、自由な倍率）のテンプレート。
 // ユーザーが instantiateCampaign で自分のプランに取り込む。
-// 出典: 設計書 3節「計算が従う楽天の規則」に書いた値と出典 URL を使う（各テンプレートのコメントに要点を再掲する）。
-// 確認日: 2026-10-04
+// 出典と確認日は sources.ts の campaignSources に持つ。値を直したら、そちらの確認日も直す。
 import type { Benefit } from "../model/benefit";
 import type { CampaignTemplate } from "../model/campaign-template";
 import type { ChannelId } from "../model/common";
@@ -48,7 +47,6 @@ export const campaignTemplates: CampaignTemplate[] = [
       enabled: false,
       amountBasis: "tax-excluded",
       // 上限は開催ごとに 1,000 ポイント。毎月 1 回なので月ごとと同じ。条件金額はない。
-      // 出典: https://event.rakuten.co.jp/campaign/rank/point/ （確認日 2026-10-17）
       capScope: "month",
       sharedKey: "thanks-day",
       conditions: {
@@ -73,7 +71,6 @@ export const campaignTemplates: CampaignTemplate[] = [
       enabled: false,
       amountBasis: "tax-excluded",
       // 毎月 1 日。その日の合計 3,000 円（税込）以上で +2 倍、上限は開催ごと（月に 1 回）に 1,000 ポイント。
-      // 出典: https://event.rakuten.co.jp/campaign/point-up/wonderfulday/ （確認日 2026-10-17）
       capScope: "month",
       sharedKey: "wonderfulday",
       conditions: {
@@ -96,7 +93,6 @@ export const campaignTemplates: CampaignTemplate[] = [
       enabled: false,
       amountBasis: "tax-excluded",
       // 上限は「キャンペーン開催ごとに 1,000 ポイント」。開催 1 回ごとに特典を 1 件作る。
-      // 出典: https://event.rakuten.co.jp/campaign/sports/ （確認日 2026-10-11）
       capScope: "occurrence",
       sharedKey: "sports-win",
       // 既定は片方のチームの勝利（+1倍）。両チームが勝った日は rate: 2 で作る。日付はユーザーが入れる。
@@ -138,7 +134,6 @@ export const campaignTemplates: CampaignTemplate[] = [
       amountBasis: "tax-excluded",
       capScope: "campaign",
       sharedKey: "repeat",
-      // 出典: https://appllio.com/rakuten-repeat-purchase
       // 不定期のキャンペーンで、倍率・上限・条件金額は開催ごとに違う。
       // そのため上限は持たず、利用者が開催ごとに instantiateCampaign の cap などで入れる。
       conditions: { minOrderAmount: 3980, orderTags: ["repeat"] },
@@ -148,7 +143,6 @@ export const campaignTemplates: CampaignTemplate[] = [
   {
     // 告知なしで 1 日だけ開かれる。対象ショップは回ごとに違うので、対象の注文に利用者がタグを付ける。
     // 単価 100 円（税抜）未満の商品は対象外だが扱わない。
-    // 出典: https://event.rakuten.co.jp/incentive/ichiba/henbai/24h/2026101010x/ （確認日 2026-10-17）
     id: "24h",
     name: "24時間限定",
     occurrence: "user-dates",
@@ -168,7 +162,6 @@ export const campaignTemplates: CampaignTemplate[] = [
   },
   {
     // 告知なしで 2 日間ほど開かれる。1 ショップでの期間中の合計 1,000 円（税込）以上を、マラソンと同じく数える。
-    // 出典: https://event.rakuten.co.jp/campaign/point-up/2shop3/ （確認日 2026-10-17）
     id: "2shop",
     name: "2ショップ購入",
     occurrence: "user-period",
@@ -222,7 +215,6 @@ export const campaignTemplates: CampaignTemplate[] = [
   {
     // 超ポイントバック祭。告知なしで始まり 2〜3 日で終わるので、公式イベントのマスタ（D1）に入る前の回を
     // 利用者が自分で足せるようにする。段階は回ごとに違うので、直近の回の値で足し、利用者が直す。
-    // 出典: https://event.rakuten.co.jp/campaign/pointback/ （確認日 2026-10-17、2026-05-19〜20 の回）
     // 上限 5,000 ポイントは開催ごと。期間中の合計（税込、送料別、クーポン適用後）で段階が決まる。
     id: "pointback",
     name: "超ポイントバック祭",

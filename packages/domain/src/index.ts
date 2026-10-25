@@ -37,6 +37,7 @@ export type {
 export * from "./migrations";
 export { BOOKS_SPU_ID, KOBO_SPU_ID, spuPurchaseRules, standardSpu } from "./master/spu";
 export { campaignTemplates, isTwoShopCampaign } from "./master/campaigns";
+export { type BenefitSource, campaignSources, spuSource } from "./master/sources";
 export {
   type CampaignInput,
   campaignInputOf,
