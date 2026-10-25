@@ -36,6 +36,10 @@ jobs:
       queue: max
     # Holds the Rakuten keys of an application made for the previews alone, never production's.
     environment: preview
+    # Builds without Google Analytics (vite.config.ts), so that the previews' visits stay out of
+    # production's figures.
+    env:
+      PULL_REQUEST_PREVIEW: "true"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

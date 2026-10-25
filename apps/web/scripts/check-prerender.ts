@@ -4,6 +4,7 @@
 // Rakuten settings. Run by Node, which strips the types.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { isPullRequestPreview } from "../src/google-tags/env.ts";
 import { missingGoogleTagScripts } from "../src/google-tags/scripts.ts";
 import {
   guideItemListCount,
@@ -29,7 +30,7 @@ for (const { path, file } of prerenderedPages) {
   const html = readFileSync(join(clientDir, file), "utf8");
   const tags = missingHeadTags(html);
   if (tags.length > 0) problems.push(`${path} lacks ${tags.join(", ")}`);
-  const scripts = missingGoogleTagScripts(html);
+  const scripts = missingGoogleTagScripts(html, { analytics: !isPullRequestPreview(process.env) });
   if (scripts.length > 0) problems.push(`${path} does not load ${scripts.join(" or ")}`);
   const entry = sitemapEntry(html);
   if (entry !== undefined) indexed.push(entry);
