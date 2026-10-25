@@ -18,7 +18,6 @@ export const PlanSchema = v.object({
 export type Plan = v.InferOutput<typeof PlanSchema>;
 
 export const ProfileSchema = v.object({
-  spuBenefits: v.array(BenefitSchema),
   /** Whether the user tells accounts apart. Until they do, every plan is the default account's. */
   multiAccount: v.optional(v.boolean()),
   /** Every account, the default one included; absent for the default account alone. */

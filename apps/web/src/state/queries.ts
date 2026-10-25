@@ -1,4 +1,4 @@
-import { type Plan, type Profile, type Shop, standardSpu } from "@workspaces/domain";
+import type { Plan, Profile, Shop, SpuMonth } from "@workspaces/domain";
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 import { repositoryAtom } from "./repository";
@@ -7,14 +7,12 @@ export const queryKeys = {
   plans: ["plans"],
   shops: ["shops"],
   profile: ["profile"],
+  spuMonths: ["spuMonths"],
   storageHealth: ["storage-health"],
   quarantine: ["quarantine"],
 } as const;
 
-export const defaultProfile = (): Profile => ({
-  spuBenefits: structuredClone(standardSpu),
-  updatedAt: new Date().toISOString(),
-});
+export const defaultProfile = (): Profile => ({ updatedAt: new Date().toISOString() });
 
 export const plansQueryAtom = atomWithQuery((get) => {
   const repository = get(repositoryAtom);
@@ -34,24 +32,31 @@ export const profileQueryAtom = atomWithQuery((get) => {
   };
 });
 
+export const spuMonthsQueryAtom = atomWithQuery((get) => {
+  const repository = get(repositoryAtom);
+  return { queryKey: queryKeys.spuMonths, queryFn: () => repository.spuMonths.list() };
+});
+
 /**
  * What went wrong while reading the stored data: rows set aside because they failed validation,
  * or a database recreated empty. Rows are set aside as they are read, so this asks again after
- * the plans, shops and profile have been read.
+ * the plans, shops, profile and SPU months have been read.
  */
 export const storageHealthQueryAtom = atomWithQuery((get) => {
   const repository = get(repositoryAtom);
   const plans = get(plansQueryAtom);
   const shops = get(shopsQueryAtom);
   const profile = get(profileQueryAtom);
+  const spuMonths = get(spuMonthsQueryAtom);
   return {
     queryKey: [
       ...queryKeys.storageHealth,
       plans.dataUpdatedAt,
       shops.dataUpdatedAt,
       profile.dataUpdatedAt,
+      spuMonths.dataUpdatedAt,
     ],
-    enabled: plans.isSuccess && shops.isSuccess && profile.isSuccess,
+    enabled: plans.isSuccess && shops.isSuccess && profile.isSuccess && spuMonths.isSuccess,
     queryFn: async () => ({
       quarantined: await repository.quarantined(),
       wasReset: repository.wasReset(),
@@ -67,8 +72,10 @@ export const quarantineQueryAtom = atomWithQuery((get) => {
 
 const noPlans: Plan[] = [];
 const noShops: Shop[] = [];
+const noSpuMonths: SpuMonth[] = [];
 const fallbackProfile = defaultProfile();
 
 export const plansAtom = atom((get) => get(plansQueryAtom).data ?? noPlans);
 export const shopsAtom = atom((get) => get(shopsQueryAtom).data ?? noShops);
 export const profileAtom = atom((get) => get(profileQueryAtom).data ?? fallbackProfile);
+export const spuMonthsAtom = atom((get) => get(spuMonthsQueryAtom).data ?? noSpuMonths);

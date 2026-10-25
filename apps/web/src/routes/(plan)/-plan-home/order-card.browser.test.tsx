@@ -1,4 +1,10 @@
-import { BOOKS_SPU_ID, type Order, standardSpu } from "@workspaces/domain";
+import {
+  BOOKS_SPU_ID,
+  DEFAULT_ACCOUNT_ID,
+  type Order,
+  spuIdsIn,
+  spuMonthId,
+} from "@workspaces/domain";
 import { List } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { Profiler, type ReactNode, useEffect } from "react";
@@ -296,31 +302,39 @@ test("editing one order does not re-render other order cards", async () => {
   await expect.element(screen.locator).toMatchTextContent("¥22,000");
 });
 
-test("holding the only Books order tells that the Books SPU may be lost, and turns it off", async () => {
+test("holding the only Books order tells that the month's Books SPU may be lost, and turns it off", async () => {
   const withBooks = shops.map((shop, index) =>
     index === 1 ? { ...shop, channel: "rakuten-books" as const } : shop,
   );
-  const spu = structuredClone(standardSpu).map((benefit) =>
-    benefit.id === BOOKS_SPU_ID ? { ...benefit, enabled: true } : benefit,
-  );
-  const plan = makePlan([...spu, ...marathon], [order(0), order(1), order(2), order(3)]);
-  const repository = createMemoryRepository({ shops: withBooks, plans: [plan] });
+  const plan = makePlan([...marathon], [order(0), order(1), order(2), order(3)]);
+  const october = {
+    id: spuMonthId(DEFAULT_ACCOUNT_ID, "2026-10"),
+    accountId: DEFAULT_ACCOUNT_ID,
+    month: "2026-10",
+    enabledIds: [BOOKS_SPU_ID],
+    updatedAt: plan.updatedAt,
+  };
+  const repository = createMemoryRepository({
+    shops: withBooks,
+    plans: [plan],
+    spuMonths: [october],
+  });
   const screen = await renderPlanHome(repository);
   const booksEnabled = async () =>
-    (await repository.plans.get(PLAN))?.benefits.find((b) => b.id === BOOKS_SPU_ID)?.enabled;
+    spuIdsIn(await repository.spuMonths.list(), DEFAULT_ACCOUNT_ID, "2026-10").has(BOOKS_SPU_ID);
 
   await expect.element(summary()).toMatchTextContent("4店舗を買い回り中");
   await toggleOf("ショップ1").click();
   await screen.getByText("購入決定（オフで保留）").click();
 
   await expect
-    .element(page.getByText("SPU の楽天ブックスの対象外になるかもしれません"))
+    .element(page.getByText("10月の SPU の楽天ブックスの対象外になるかもしれません"))
     .toBeVisible();
   // The SPU stays on until the user turns it off from the notice.
   expect(await booksEnabled()).toBe(true);
   await page.getByRole("button", { name: "楽天ブックスを OFF にする" }).click();
   await expect.poll(booksEnabled).toBe(false);
   await expect
-    .element(page.getByText("SPU の楽天ブックスの対象外になるかもしれません"))
+    .element(page.getByText("10月の SPU の楽天ブックスの対象外になるかもしれません"))
     .not.toBeInTheDocument();
 });

@@ -6,6 +6,7 @@ export * from "./model/official-event";
 export * from "./model/order";
 export * from "./model/plan";
 export * from "./model/shop";
+export * from "./model/spu-month";
 export * from "./amounts/target-amount";
 export * from "./allocation/largest-remainder";
 export * from "./channels";
@@ -35,7 +36,13 @@ export type {
   HeldEstimate,
 } from "./calculate/types";
 export * from "./migrations";
-export { BOOKS_SPU_ID, KOBO_SPU_ID, spuPurchaseRules, standardSpu } from "./master/spu";
+export {
+  BOOKS_SPU_ID,
+  KOBO_SPU_ID,
+  NORMAL_POINT_ID,
+  spuPurchaseRules,
+  standardSpu,
+} from "./master/spu";
 export { campaignTemplates, isTwoShopCampaign } from "./master/campaigns";
 export {
   type CampaignInput,
@@ -49,8 +56,17 @@ export { createPlan } from "./master/create-plan";
 export { copyOrder, moveOrder } from "./plan-ops/order-ops";
 export { toggleBenefit, toggleBenefits } from "./plan-ops/benefit-ops";
 export {
-  achievedSpuPurchases,
   disabledAchievedSpu,
-  enableAchievedSpu,
   lostSpuPurchases,
+  newlyAchievedSpu,
+  spuAchievements,
+  type SpuAchievement,
 } from "./plan-ops/spu-purchases";
+export {
+  enableSpu,
+  planWithSpu,
+  spuBenefitsOf,
+  spuIdsIn,
+  spuMonthsOfPlan,
+  toggleSpu,
+} from "./plan-ops/spu-months";

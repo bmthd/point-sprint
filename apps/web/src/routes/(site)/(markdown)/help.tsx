@@ -10,7 +10,7 @@ export const Route = createFileRoute("/(site)/(markdown)/help")({
       path: "/help",
       title: "使い方・注意事項",
       description:
-        "ポイントスプリントの使い方と注意事項です。プラン、注文、保留、SPU の初期値の考え方と、データの保存先を説明します。",
+        "ポイントスプリントの使い方と注意事項です。プラン、注文、保留、月ごとの SPU の考え方と、データの保存先を説明します。",
     }),
   component: MarkdownBody,
 });

@@ -4,7 +4,7 @@ import { Button, Heading, Modal, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { replacePlan, savePlanAtom } from "../../../state/mutations";
-import { plansAtom, profileAtom, profileQueryAtom } from "../../../state/queries";
+import { plansAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
 import { PageWithSidebar } from "../-page-with-sidebar";
 import { monthOf, tokyoToday } from "../../../ui/dates";
@@ -16,8 +16,6 @@ import { PlanSection } from "./plan-section";
 export function PlanList({ now = () => new Date() }: { now?: () => Date }) {
   const navigate = useNavigate();
   const today = useToday(now);
-  const profile = useAtomValue(profileAtom);
-  const { isSuccess: profileLoaded } = useAtomValue(profileQueryAtom);
   const { mutateAsync: savePlan } = useAtomValue(savePlanAtom);
   const [creating, setCreating] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -51,7 +49,6 @@ export function PlanList({ now = () => new Date() }: { now?: () => Date }) {
               id,
               name,
               event,
-              profile,
               now: date.toISOString(),
               newId: () => crypto.randomUUID(),
             }),
@@ -70,7 +67,7 @@ export function PlanList({ now = () => new Date() }: { now?: () => Date }) {
       <VStack alignItems="stretch" gap="6">
         <EventSection
           today={today}
-          disabled={!profileLoaded || creating}
+          disabled={creating}
           onCreate={request}
           onCreateWithoutEvent={() => request()}
         />

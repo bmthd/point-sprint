@@ -429,10 +429,11 @@ test("lists plans with their totals", async () => {
   const { screen, router } = await renderPlanList(repository);
 
   await expect.element(screen.getByRole("link", { name: /10月 お買い物マラソン/ })).toBeVisible();
-  // Most recently updated first. The shops load after the plans, so wait for the totals.
+  // Most recently updated first. The shops load after the plans, so wait for the totals. Each
+  // order earns the shop's +1倍 and 通常ポイント, 100P each.
   await expectTexts(planRows(), [
-    "10月 お買い物マラソン10/1〜10/31・1店舗・2件200P",
-    "10月の普段の買い物10/1〜10/31・1店舗・1件100P",
+    "10月 お買い物マラソン10/1〜10/31・1店舗・2件400P",
+    "10月の普段の買い物10/1〜10/31・1店舗・1件200P",
   ]);
 
   await screen.getByRole("link", { name: /10月の普段の買い物/ }).click();
@@ -530,7 +531,6 @@ test("shows each plan's account only once accounts are told apart", async () => 
     { ...plan(PLAN_B, "家族のプラン", "2026-10-05T00:00:00.000Z", 1), accountId: SUB },
   ];
   const profile = {
-    spuBenefits: [],
     accounts: [defaultAccount(), { id: SUB, name: "家族" }],
     updatedAt: "2026-10-05T00:00:00.000Z",
   };
@@ -539,8 +539,8 @@ test("shows each plan's account only once accounts are told apart", async () => 
   const { screen } = await renderPlanList(off);
   await expect.element(screen.getByRole("link", { name: /家族のプラン/ })).toBeVisible();
   await expectTexts(planRows(), [
-    "家族のプラン10/1〜10/31・1店舗・1件100P",
-    "メインのプラン10/1〜10/31・1店舗・1件100P",
+    "家族のプラン10/1〜10/31・1店舗・1件200P",
+    "メインのプラン10/1〜10/31・1店舗・1件200P",
   ]);
 
   const on = createMemoryRepository({
@@ -550,7 +550,7 @@ test("shows each plan's account only once accounts are told apart", async () => 
   });
   await renderPlanList(on);
   await expectTexts(planRows(), [
-    "家族のプラン家族・10/1〜10/31・1店舗・1件100P",
-    "メインのプランメイン・10/1〜10/31・1店舗・1件100P",
+    "家族のプラン家族・10/1〜10/31・1店舗・1件200P",
+    "メインのプランメイン・10/1〜10/31・1店舗・1件200P",
   ]);
 });

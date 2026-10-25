@@ -5,8 +5,10 @@ import {
   type Plan,
   type Profile,
   type Shop,
-  standardSpu,
-  toggleBenefits,
+  BOOKS_SPU_ID,
+  DEFAULT_ACCOUNT_ID,
+  spuIdsIn,
+  toggleSpu,
 } from "@workspaces/domain";
 import { QueryClient } from "@tanstack/query-core";
 import { createStore } from "jotai";
@@ -15,9 +17,16 @@ import { afterEach, expect, test, vi } from "vitest";
 import { createMemoryRepository } from "../storage/memory-repository";
 import type { Repository } from "../storage/repository";
 import { calculationAtom, orderAtom, orderPointsAtom } from "./derived";
-import { changeShop, replacePlan, saveProfileAtom, savePlanAtom, saveShopAtom } from "./mutations";
-import { copyOrderAtom, updateOrderAtom } from "./order-ops";
-import { plansAtom, profileAtom, queryKeys, shopsAtom } from "./queries";
+import {
+  changeShop,
+  replacePlan,
+  saveProfileAtom,
+  savePlanAtom,
+  saveShopAtom,
+  saveSpuMonthAtom,
+} from "./mutations";
+import { addOrderAtom, copyOrderAtom, updateOrderAtom } from "./order-ops";
+import { plansAtom, profileAtom, queryKeys, shopsAtom, spuMonthsAtom } from "./queries";
 import { repositoryAtom } from "./repository";
 
 const now = "2026-10-05T00:00:00.000Z";
@@ -208,10 +217,11 @@ test("order atom keeps identity when another order changes", async () => {
 test("calculation reflects saved orders", async () => {
   const store = setup();
   await loaded(store);
-  await vi.waitFor(() => expect(store.get(calculationAtom).get(PLAN)?.total).toBe(10));
+  // The shop's +1倍 and 通常ポイント, which every plan has.
+  await vi.waitFor(() => expect(store.get(calculationAtom).get(PLAN)?.total).toBe(20));
 
   await store.set(updateOrderAtom, { planId: PLAN, order: order(ORDER_A, 3000) });
-  await vi.waitFor(() => expect(store.get(calculationAtom).get(PLAN)?.total).toBe(30));
+  await vi.waitFor(() => expect(store.get(calculationAtom).get(PLAN)?.total).toBe(60));
 });
 
 test("order points atom keeps identity when another order changes", async () => {
@@ -229,13 +239,13 @@ test("order points atom keeps identity when another order changes", async () => 
     store.sub(pointsA, () => {}),
     store.sub(pointsB, () => {}),
   );
-  await vi.waitFor(() => expect(store.get(pointsB).total).toBe(20));
+  await vi.waitFor(() => expect(store.get(pointsB).total).toBe(40));
   const before = store.get(pointsA);
-  expect(before.total).toBe(10);
-  expect(before.rows).toHaveLength(1);
+  expect(before.total).toBe(20);
+  expect(before.rows).toHaveLength(2);
 
   await store.set(updateOrderAtom, { planId: PLAN, order: order(ORDER_B, 5000) });
-  await vi.waitFor(() => expect(store.get(pointsB).total).toBe(50));
+  await vi.waitFor(() => expect(store.get(pointsB).total).toBe(100));
   expect(store.get(pointsA)).toBe(before);
 });
 
@@ -298,13 +308,8 @@ test("a failed shop change is left out while an overlapping one is kept", async 
 });
 
 test("a failed profile change is left out while an overlapping one is kept", async () => {
-  const [a, b] = standardSpu
-    .filter((benefit) => benefit.exclusiveGroup === undefined)
-    .map((benefit) => benefit.id);
-  if (!a || !b) throw new Error("standardSpu needs two benefits");
-  const profile: Profile = { spuBenefits: structuredClone(standardSpu), updatedAt: now };
-  const enabled = (p: Profile | undefined, id: string) =>
-    p?.spuBenefits.find((benefit) => benefit.id === id)?.enabled;
+  const profile: Profile = { updatedAt: now };
+  const renamed = [{ ...defaultAccount(), name: "自分" }];
   const base = createMemoryRepository({ plans: [plan], shops: [shop], profile });
   const { held, pending } = heldPuts(base.profile.put);
   const store = setup({ ...base, profile: { ...base.profile, put: held } });
@@ -312,16 +317,10 @@ test("a failed profile change is left out while an overlapping one is kept", asy
   await vi.waitFor(() => expect(store.get(profileAtom).updatedAt).toBe(now));
 
   const save = store.get(saveProfileAtom).mutateAsync;
-  const toggle = (id: string) => ({
-    change: (current: Profile) => ({
-      ...current,
-      spuBenefits: toggleBenefits(current.spuBenefits, id),
-    }),
-  });
-  const first = save(toggle(a));
-  const second = save(toggle(b));
-  await vi.waitFor(() => expect(enabled(store.get(profileAtom), b)).toBe(!enabled(profile, b)));
-  expect(enabled(store.get(profileAtom), a)).toBe(!enabled(profile, a));
+  const first = save({ change: (current) => ({ ...current, multiAccount: true }) });
+  const second = save({ change: (current) => ({ ...current, accounts: renamed }) });
+  await vi.waitFor(() => expect(store.get(profileAtom).accounts).toEqual(renamed));
+  expect(store.get(profileAtom).multiAccount).toBe(true);
 
   pending[0]?.reject(new Error("disk full"));
   await expect(first).rejects.toThrow("disk full");
@@ -329,10 +328,10 @@ test("a failed profile change is left out while an overlapping one is kept", asy
   pending[1]?.resolve();
   await second;
   const stored = await base.profile.get();
-  expect(enabled(stored, a)).toBe(enabled(profile, a));
-  expect(enabled(stored, b)).toBe(!enabled(profile, b));
-  await vi.waitFor(() => expect(enabled(store.get(profileAtom), a)).toBe(enabled(profile, a)));
-  expect(enabled(store.get(profileAtom), b)).toBe(!enabled(profile, b));
+  expect(stored?.multiAccount).toBeUndefined();
+  expect(stored?.accounts).toEqual(renamed);
+  await vi.waitFor(() => expect(store.get(profileAtom).multiAccount).toBeUndefined());
+  expect(store.get(profileAtom).accounts).toEqual(renamed);
 });
 
 test("caps are shared per account once accounts are told apart", async () => {
@@ -385,4 +384,84 @@ test("caps are shared per account once accounts are told apart", async () => {
     change: (current) => ({ ...current, accounts: [defaultAccount()] }),
   });
   await vi.waitFor(() => expect(sum()).toBe(15));
+});
+
+const OTHER_PLAN = "f0000000-0000-4000-8000-000000000002";
+const booksOrder = (id: string): Order => ({
+  id,
+  channel: "rakuten-books",
+  shopTags: [],
+  date: "2026-10-06",
+  lineItems: [
+    {
+      id: `${id.slice(0, 2)}000000-0000-4000-8000-000000000002`,
+      name: "本",
+      unitPrice: 3300,
+      quantity: 1,
+      taxRate: 0.1,
+      discount: 0,
+    },
+  ],
+  onHold: false,
+  tags: [],
+});
+const booksPoints = (store: Store, planId: string) =>
+  store
+    .get(calculationAtom)
+    .get(planId)
+    ?.benefitTotals.find((total) => total.benefitId === BOOKS_SPU_ID)?.cappedPoints;
+
+test("the month's SPU is shared by every plan of the month", async () => {
+  const other: Plan = { ...plan, id: OTHER_PLAN, orders: [booksOrder(ORDER_B)] };
+  const first: Plan = { ...plan, orders: [booksOrder(ORDER_A)] };
+  const store = setup(createMemoryRepository({ plans: [first, other], shops: [shop] }));
+  unsubscribes.push(store.sub(spuMonthsAtom, () => {}));
+  await vi.waitFor(() => expect(store.get(plansAtom)).toHaveLength(2));
+  expect(booksPoints(store, PLAN)).toBeUndefined();
+
+  await store.get(saveSpuMonthAtom).mutateAsync({
+    accountId: DEFAULT_ACCOUNT_ID,
+    month: "2026-10",
+    change: (ids) => toggleSpu(ids, BOOKS_SPU_ID),
+  });
+
+  await vi.waitFor(() => expect(booksPoints(store, PLAN)).toBe(15));
+  expect(booksPoints(store, OTHER_PLAN)).toBe(15);
+});
+
+test("an order that achieves an SPU turns it on for its account's month", async () => {
+  const other: Plan = { ...plan, id: OTHER_PLAN, orders: [] };
+  const repository = createMemoryRepository({ plans: [plan, other], shops: [shop] });
+  const store = setup(repository);
+  unsubscribes.push(store.sub(spuMonthsAtom, () => {}));
+  await vi.waitFor(() => expect(store.get(plansAtom)).toHaveLength(2));
+
+  await store.set(addOrderAtom, { planId: OTHER_PLAN, order: booksOrder(ORDER_B) });
+
+  const months = await repository.spuMonths.list();
+  expect(spuIdsIn(months, DEFAULT_ACCOUNT_ID, "2026-10").has(BOOKS_SPU_ID)).toBe(true);
+  await vi.waitFor(() => expect(booksPoints(store, OTHER_PLAN)).toBe(15));
+});
+
+test("an SPU is achieved by what is saved, not by an earlier operation that failed", async () => {
+  const other: Plan = { ...plan, id: OTHER_PLAN, orders: [] };
+  const { repository, pending } = controlled(
+    createMemoryRepository({ plans: [plan, other], shops: [shop] }),
+  );
+  const store = setup(repository);
+  unsubscribes.push(store.sub(spuMonthsAtom, () => {}));
+  await vi.waitFor(() => expect(store.get(plansAtom)).toHaveLength(2));
+
+  const first = store.set(addOrderAtom, { planId: OTHER_PLAN, order: booksOrder(ORDER_A) });
+  await vi.waitFor(() => expect(pending).toHaveLength(1));
+  const second = store.set(addOrderAtom, { planId: OTHER_PLAN, order: booksOrder(ORDER_B) });
+  pending[0]?.reject(new Error("disk full"));
+  await expect(first).rejects.toThrow("disk full");
+  await vi.waitFor(() => expect(pending).toHaveLength(2));
+  pending[1]?.resolve();
+  await second;
+
+  expect((await repository.plans.get(OTHER_PLAN))?.orders.map((o) => o.id)).toEqual([ORDER_B]);
+  const months = await repository.spuMonths.list();
+  expect(spuIdsIn(months, DEFAULT_ACCOUNT_ID, "2026-10").has(BOOKS_SPU_ID)).toBe(true);
 });

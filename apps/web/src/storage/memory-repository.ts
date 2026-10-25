@@ -5,6 +5,8 @@ import {
   ProfileSchema,
   type Shop,
   ShopSchema,
+  type SpuMonth,
+  SpuMonthSchema,
 } from "@workspaces/domain";
 import * as v from "valibot";
 import type { QuarantinedRow, Repository } from "./repository";
@@ -17,12 +19,14 @@ export function createMemoryRepository(
     plans?: Plan[];
     shops?: Shop[];
     profile?: Profile;
+    spuMonths?: SpuMonth[];
     quarantine?: Omit<QuarantinedRow, "key">[];
   } = {},
 ): Repository {
   const plans = new Map<string, Plan>();
   const shops = new Map<string, Shop>();
   let profile: Profile | undefined;
+  const spuMonths = new Map<string, SpuMonth>();
   const quarantine = new Map<number, QuarantinedRow>();
 
   const putPlan = (plan: Plan) => {
@@ -37,7 +41,13 @@ export function createMemoryRepository(
     profile = v.parse(ProfileSchema, structuredClone(next));
   };
 
+  const putSpuMonth = (month: SpuMonth) => {
+    const parsed = v.parse(SpuMonthSchema, structuredClone(month));
+    spuMonths.set(parsed.id, parsed);
+  };
+
   initial.plans?.forEach(putPlan);
+  initial.spuMonths?.forEach(putSpuMonth);
   initial.shops?.forEach(putShop);
   if (initial.profile) putProfile(initial.profile);
   initial.quarantine?.forEach((row, key) => quarantine.set(key + 1, { ...row, key: key + 1 }));
@@ -59,10 +69,15 @@ export function createMemoryRepository(
       get: async () => structuredClone(profile),
       put: async (next) => putProfile(next),
     },
+    spuMonths: {
+      list: async () => structuredClone([...spuMonths.values()].sort(byId)),
+      put: async (month) => putSpuMonth(month),
+    },
     clear: async () => {
       plans.clear();
       shops.clear();
       profile = undefined;
+      spuMonths.clear();
       quarantine.clear();
     },
     quarantined: async () => quarantine.size,

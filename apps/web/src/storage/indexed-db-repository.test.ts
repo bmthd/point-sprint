@@ -1,5 +1,13 @@
 import "fake-indexeddb/auto";
-import { CURRENT_SCHEMA_VERSION, type Plan, type Profile, type Shop } from "@workspaces/domain";
+import {
+  BOOKS_SPU_ID,
+  CURRENT_SCHEMA_VERSION,
+  DEFAULT_ACCOUNT_ID,
+  type Plan,
+  type Profile,
+  type Shop,
+  standardSpu,
+} from "@workspaces/domain";
 import { expect, test, vi } from "vitest";
 import { createIndexedDbRepository } from "./indexed-db-repository";
 import { OutdatedDatabaseError } from "./repository";
@@ -20,7 +28,7 @@ const shop: Shop = {
   tags: [],
   updatedAt: now,
 };
-const profile: Profile = { spuBenefits: [], updatedAt: now };
+const profile: Profile = { updatedAt: now };
 
 let counter = 0;
 const uniqueName = () => `test-${Date.now()}-${counter++}`;
@@ -216,11 +224,19 @@ test("clear removes every stored row, including the quarantined ones", async () 
   await repo.plans.put(plan);
   await repo.shops.put(shop);
   await repo.profile.put(profile);
+  await repo.spuMonths.put({
+    id: `${DEFAULT_ACCOUNT_ID}:2026-10`,
+    accountId: DEFAULT_ACCOUNT_ID,
+    month: "2026-10",
+    enabledIds: [],
+    updatedAt: now,
+  });
   await putRaw(name, "plans", { id: "broken", name: 1 });
   await repo.plans.list();
 
   await repo.clear();
 
+  expect(await repo.spuMonths.list()).toEqual([]);
   expect(await repo.plans.list()).toEqual([]);
   expect(await repo.shops.list()).toEqual([]);
   expect(await repo.profile.get()).toBeUndefined();
@@ -251,4 +267,47 @@ test("an open app stops once a newer app upgrades the database", async () => {
   await newerApp(name).plans.list();
 
   await expect(older.plans.list()).rejects.toBeInstanceOf(OutdatedDatabaseError);
+});
+
+test("opening a version 9 database moves each plan's SPU to the month's SPU", async () => {
+  const name = uniqueName();
+  const raw = await new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open(name, 9);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      db.createObjectStore("plans", { keyPath: "id" });
+      db.createObjectStore("shops", { keyPath: "id" });
+      db.createObjectStore("profile");
+      db.createObjectStore("quarantine", { autoIncrement: true });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  await new Promise<void>((resolve, reject) => {
+    const tx = raw.transaction(["plans", "profile"], "readwrite");
+    const spu = standardSpu.map((benefit) => ({
+      ...benefit,
+      enabled: benefit.id === BOOKS_SPU_ID,
+    }));
+    tx.objectStore("plans").put({ ...plan, benefits: spu });
+    tx.objectStore("profile").put({ spuBenefits: spu, updatedAt: now }, "profile");
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  raw.close();
+
+  const repo = createIndexedDbRepository({ name });
+
+  expect(await repo.plans.list()).toEqual([plan]);
+  expect(await repo.profile.get()).toEqual(profile);
+  expect(await repo.spuMonths.list()).toEqual([
+    {
+      id: `${DEFAULT_ACCOUNT_ID}:2026-10`,
+      accountId: DEFAULT_ACCOUNT_ID,
+      month: "2026-10",
+      enabledIds: [BOOKS_SPU_ID],
+      updatedAt: now,
+    },
+  ]);
+  expect(repo.wasReset()).toBe(false);
 });

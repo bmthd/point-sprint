@@ -10,7 +10,7 @@ import { CampaignToggles } from "./campaign-toggles";
 import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared";
 import { ShopAroundSettings, shopAroundOf } from "./shop-around-settings";
 import { SpendTiersSettings } from "./spend-tiers-settings";
-import { SpuTiles, spuRate } from "./spu-tiles";
+import { SpuTiles, spuRate, usePlanSpu } from "./spu-tiles";
 
 /** 「保存して計算に反映」, in the drawer's footer and in the page's bottom bar. */
 const primaryButton = { colorScheme: "primary", size: "lg", w: "full" } as const;
@@ -46,10 +46,11 @@ function SettingsBody({ plan }: { plan: Plan }) {
 
 const num = (value: number) => Number(value.toFixed(2)).toLocaleString("ja-JP");
 
-/** 「SPU +4.5倍・上限 7,000P」, the desktop header button's text. */
-export function settingsSummary(plan: Plan) {
+/** 「SPU +4.5倍・上限 7,000P」, the desktop header button's text: the SPU of the month shown first. */
+function useSettingsSummary(plan: Plan) {
+  const { benefits } = usePlanSpu(plan);
   const cap = shopAroundOf(plan)?.params.cap;
-  return `SPU +${num(spuRate(plan))}倍${cap === undefined ? "" : `・上限 ${num(cap)}P`}`;
+  return `SPU +${num(spuRate(benefits))}倍${cap === undefined ? "" : `・上限 ${num(cap)}P`}`;
 }
 
 /** The desktop's header button and the side panel it opens with the same settings. */
@@ -64,7 +65,7 @@ export function SettingsPanelButton({
   onOpen: () => void;
   onClose: () => void;
 }) {
-  const summary = settingsSummary(plan);
+  const summary = useSettingsSummary(plan);
   return (
     <>
       <Button

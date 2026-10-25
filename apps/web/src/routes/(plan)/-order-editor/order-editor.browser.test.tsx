@@ -5,7 +5,8 @@ import {
   type Order,
   type Plan,
   type Shop,
-  standardSpu,
+  DEFAULT_ACCOUNT_ID,
+  spuIdsIn,
 } from "@workspaces/domain";
 import { beforeEach, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
@@ -585,27 +586,28 @@ test("an edit= for an order that does not exist is dropped from the URL", async 
   await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
 });
 
-const storedBenefit = async (id: string) =>
-  (await repository().plans.get(PLAN))?.benefits.find((benefit) => benefit.id === id);
+/** The SPU of the plan's account in October as stored. */
+const storedSpu = async () =>
+  spuIdsIn(await repository().spuMonths.list(), DEFAULT_ACCOUNT_ID, "2026-10");
 
-test("a Books order of 3,000円 or more turns the Books SPU on", async () => {
-  const screen = await renderWith(makePlan([...structuredClone(standardSpu), ...marathon], []));
+test("a Books order of 3,000円 or more turns the Books SPU on for the month", async () => {
+  const screen = await renderWith(makePlan([...marathon], []));
   const sheet = await openAdd(screen);
   await sheet.getByLabelText("購入先", { exact: true }).selectOptions("rakuten-books");
   await fillOrder(sheet, { amount: "3000" });
   await sheet.getByRole("button", { name: "追加する" }).click();
-  await expect.poll(async () => (await storedBenefit(BOOKS_SPU_ID))?.enabled).toBe(true);
-  expect((await storedBenefit(KOBO_SPU_ID))?.enabled).toBe(false);
+  await expect.poll(async () => (await storedSpu()).has(BOOKS_SPU_ID)).toBe(true);
+  expect((await storedSpu()).has(KOBO_SPU_ID)).toBe(false);
 });
 
 test("an achieved SPU that is off is warned about", async () => {
   const { shopId: _shopId, ...common } = order(0);
   const unnamed: Order = { ...common, channel: "rakuten-books", shopTags: [] };
-  await renderWith(makePlan([...structuredClone(standardSpu), ...marathon], [unnamed]));
+  await renderWith(makePlan([...marathon], [unnamed]));
   await expect
     .element(
       page.getByText(
-        "楽天ブックスで 3,000円以上の注文がありますが、SPU の楽天ブックスが OFF です。",
+        "楽天ブックスで 3,000円以上の注文がありますが、10月の SPU の楽天ブックスが OFF です。",
       ),
     )
     .toBeVisible();
@@ -680,7 +682,7 @@ for (const multiAccount of [false, true]) {
     currentRepository = createMemoryRepository({
       shops,
       plans: [plan, other],
-      profile: { multiAccount, spuBenefits: [], updatedAt: plan.updatedAt },
+      profile: { multiAccount, updatedAt: plan.updatedAt },
     });
     const screen = await renderPlanHome(currentRepository);
     const sheet = await openAdd(screen);

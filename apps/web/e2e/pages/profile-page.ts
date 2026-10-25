@@ -1,7 +1,7 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 import { type NavigationOptions, SitePage, endsWithPath } from "./site-page";
 
-/** The profile: the SPU defaults and the shops. */
+/** The profile: the shops and the advanced settings. */
 export class ProfilePage {
   readonly heading: Locator;
   readonly backLink: Locator;
@@ -14,16 +14,6 @@ export class ProfilePage {
   static async open(page: Page) {
     await page.goto("/profile");
     return new ProfilePage(page);
-  }
-
-  /** An SPU tile, such as `楽天モバイル +4倍`. */
-  spuTile(name: string) {
-    return this.page.getByRole("checkbox", { name });
-  }
-
-  /** Taps an SPU tile on its label: its checkbox is visually hidden. */
-  async toggleSpuTile(name: string) {
-    await this.spuTile(name).locator("xpath=ancestor::label[1]").click();
   }
 
   /** The field with a shop's name. */

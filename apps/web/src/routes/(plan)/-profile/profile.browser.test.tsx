@@ -6,14 +6,13 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { standardSpu } from "@workspaces/domain";
 import { beforeEach, expect, test } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import { createIndexedDbRepository } from "../../../storage/indexed-db-repository";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
-import { Providers, shops, tapCard } from "../-test-fixtures";
+import { Providers, shops } from "../-test-fixtures";
 import { Profile } from "./profile";
 
 beforeEach(async () => {
@@ -73,50 +72,10 @@ test("戻る goes to the top when the profile was opened directly", async () => 
   await expect.element(screen.getByText("一覧")).toBeVisible();
 });
 
-test("SPU defaults are saved to the profile", async () => {
-  const repository = createMemoryRepository({ shops });
-  const screen = await renderProfile(repository);
-  await expect
-    .element(
-      screen.getByText(
-        "ここでの変更は、これから作るプランの初期値になります。作成済みのプランは変わりません。",
-      ),
-    )
-    .toBeVisible();
-  expect(screen.getByRole("checkbox", { name: /^通常ポイント/ }).query()).toBeNull();
-
-  const mobile = screen.getByRole("checkbox", { name: "楽天モバイル +4倍" });
-  await expect.element(mobile).not.toBeChecked();
-  await tapCard(mobile);
-  await expect.element(mobile).toBeChecked();
-  await expect
-    .poll(
-      async () =>
-        (await storedProfile(repository)).spuBenefits.find((b) => b.label === "楽天モバイル")
-          ?.enabled,
-    )
-    .toBe(true);
-
-  // The exclusive group and the card's normal points follow the same rules as in a plan.
-  const card = screen.getByRole("checkbox", { name: "楽天カード特典分（SPU） +1倍" });
-  const premium = screen.getByRole("checkbox", { name: "楽天プレミアムカード（特典分） +1倍" });
-  await tapCard(card);
-  await expect.element(card).toBeChecked();
-  await tapCard(premium);
-  await expect.element(card).not.toBeChecked();
-  await expect
-    .poll(async () => (await storedProfile(repository)).spuBenefits.map((b) => b.enabled))
-    .toEqual(
-      standardSpu.map((b) =>
-        [
-          "楽天モバイル",
-          "楽天プレミアムカード（特典分）",
-          "楽天カード通常分（カード本体の還元）",
-        ].includes(b.label)
-          ? true
-          : b.enabled,
-      ),
-    );
+test("the profile has no SPU card: the SPU is set in each plan's settings", async () => {
+  const screen = await renderProfile(createMemoryRepository({ shops }));
+  await expect.element(screen.getByRole("heading", { name: "ショップ台帳" })).toBeVisible();
+  expect(screen.getByRole("group", { name: "SPU のサービス" }).query()).toBeNull();
 });
 
 test("marks a shop as 39shop", async () => {
@@ -216,7 +175,7 @@ test("shows a notice when the stored profile is invalid", async () => {
   const name = `profile-health-${Date.now()}`;
   const stored = createIndexedDbRepository({ name });
   await stored.quarantined(); // creates the stores
-  await putRawProfile(name, { spuBenefits: "broken", updatedAt: "not a timestamp" });
+  await putRawProfile(name, { updatedAt: "not a timestamp" });
 
   // The profile is read well after the plans and shops, so the notice has to be checked again
   // once the profile has been read.
@@ -309,7 +268,7 @@ test("accounts stay hidden until they are turned on in the advanced settings", a
 test("データを初期化 removes every stored row and goes to the top", async () => {
   const repository = createMemoryRepository({
     shops,
-    profile: { spuBenefits: [], updatedAt: "2026-10-05T00:00:00.000Z" },
+    profile: { updatedAt: "2026-10-05T00:00:00.000Z" },
   });
   const screen = await renderProfile(repository);
 

@@ -8,7 +8,7 @@ export const Route = createFileRoute("/(plan)/profile")({
       path: "/profile",
       title: "プロフィール",
       description:
-        "SPU（スーパーポイントアッププログラム）の達成状況と、よく買うショップを登録します。新しく作るプランの初期値になります。",
+        "よく買うショップを登録します。楽天アカウントを使い分けるときは、アカウントもここで登録します。",
     }),
   component: () => <Profile />,
 });

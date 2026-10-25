@@ -7,8 +7,10 @@ import {
   PlanSchema,
   type Profile,
   ProfileSchema,
+  seedRows,
   type Shop,
   ShopSchema,
+  SpuMonthSchema,
   type StoreName,
 } from "@workspaces/domain";
 import { createIndexedDb } from "seitu/web/indexed-db";
@@ -19,7 +21,7 @@ import { OutdatedDatabaseError, type QuarantinedRow, type Repository } from "./r
 const PROFILE_KEY = "profile";
 
 const QuarantineSchema = v.object({
-  store: v.picklist(["plans", "shops", "profile"]),
+  store: v.picklist(["plans", "shops", "profile", "spuMonths"]),
   value: v.unknown(),
   issues: v.array(v.object({ message: v.string(), path: v.array(v.string()) })),
 });
@@ -40,8 +42,13 @@ const plainIssues = (issues: readonly Issue[]) =>
 
 type Rejected = { store: StoreName; key: IDBValidKey; issues: readonly Issue[] };
 
-const schemas = { plans: PlanSchema, shops: ShopSchema, profile: ProfileSchema };
-const STORES = ["plans", "shops", "profile", "quarantine"] as const;
+const schemas = {
+  plans: PlanSchema,
+  shops: ShopSchema,
+  profile: ProfileSchema,
+  spuMonths: SpuMonthSchema,
+};
+const STORES = ["plans", "shops", "profile", "spuMonths", "quarantine"] as const;
 
 function completion(transaction: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -115,6 +122,25 @@ function openDatabase(name: string, migrations: readonly Migration[], state: Ope
       }
     };
 
+  // Reads the plans and the profile as they are before `migrate` rewrites them (requests run in
+  // the order they are made), and writes the rows the migrations' seeds make from them.
+  const seed = (transaction: IDBTransaction, oldVersion: number) => {
+    const plans = transaction.objectStore("plans").getAll();
+    const profile = transaction.objectStore("profile").get(PROFILE_KEY);
+    profile.onsuccess = () => {
+      let rows: ReturnType<typeof seedRows>;
+      try {
+        rows = seedRows({ plans: plans.result, profile: profile.result }, oldVersion, migrations);
+      } catch (error) {
+        state.migrationFailed = true;
+        throw error;
+      }
+      for (const [store, values] of Object.entries(rows)) {
+        for (const value of values) transaction.objectStore(store).put(value);
+      }
+    };
+  };
+
   const db = createIndexedDb({
     name,
     version,
@@ -133,11 +159,17 @@ function openDatabase(name: string, migrations: readonly Migration[], state: Ope
         schema: ProfileSchema,
         onValidationError: quarantine("profile", () => PROFILE_KEY),
       }),
+      spuMonths: createIndexedDbTable({
+        keyPath: "id",
+        schema: SpuMonthSchema,
+        onValidationError: quarantine("spuMonths", idOf),
+      }),
       quarantine: createIndexedDbTable({ autoIncrement: true, schema: QuarantineSchema }),
     },
-    onUpgrade: ({ oldVersion, migrate }) => {
+    onUpgrade: ({ oldVersion, migrate, transaction }) => {
       // A new database (oldVersion 0) has no rows; an index-only bump has no migrations to apply.
       if (oldVersion === 0 || !migrations.some((m) => m.to > oldVersion)) return;
+      if (migrations.some((m) => m.to > oldVersion && m.seed)) seed(transaction, oldVersion);
       migrate("plans", migrateWith<Plan>("plans", oldVersion));
       migrate("shops", migrateWith<Shop>("shops", oldVersion));
       migrate("profile", migrateWith<Profile>("profile", oldVersion));
@@ -214,6 +246,10 @@ export function createIndexedDbRepository(
     profile: {
       get: async () => (await settled()).stores.profile.get(PROFILE_KEY),
       put: async (profile) => (await settled()).stores.profile.put(profile, PROFILE_KEY),
+    },
+    spuMonths: {
+      list: async () => (await settled()).stores.spuMonths.getAll(),
+      put: async (month) => (await settled()).stores.spuMonths.put(month),
     },
     clear: async () => {
       const database = await (await settled())["~"].getDatabase();

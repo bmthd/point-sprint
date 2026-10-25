@@ -1,4 +1,11 @@
-import type { Plan, Profile, Shop } from "@workspaces/domain";
+import {
+  type Plan,
+  type Profile,
+  type Shop,
+  type SpuMonth,
+  spuIdsIn,
+  spuMonthId,
+} from "@workspaces/domain";
 import type { QueryClient } from "@tanstack/query-core";
 import { atomWithMutation, queryClientAtom } from "jotai-tanstack-query";
 import { defaultProfile, queryKeys } from "./queries";
@@ -26,7 +33,7 @@ type Snapshot = { previous: unknown };
  */
 function optimistic<TData, TVariables>(
   client: QueryClient,
-  queryKey: readonly ["plans"] | readonly ["shops"] | readonly ["profile"],
+  queryKey: readonly ["plans"] | readonly ["shops"] | readonly ["profile"] | readonly ["spuMonths"],
   apply: (current: TData | undefined, variables: TVariables) => TData | undefined,
 ) {
   const isOnlyPending = () => client.isMutating({ mutationKey: queryKey }) === 1;
@@ -63,12 +70,20 @@ export type PlanChange = { planId: string; change: (plan: Plan | undefined) => P
 /** A change that replaces the whole plan, for creating or saving a plan as it is. */
 export const replacePlan = (plan: Plan): PlanChange => ({ planId: plan.id, change: () => plan });
 
-export const savePlanAtom = atomWithMutation<void, PlanChange, Error, Snapshot>((get) => {
+/** The plans in the repository right before and right after a saved plan change. */
+export type SavedPlans = { before: Plan[]; after: Plan[] };
+
+export const savePlanAtom = atomWithMutation<SavedPlans, PlanChange, Error, Snapshot>((get) => {
   const repository = get(repositoryAtom);
   return {
     mutationFn: async (variables) => {
-      const stored = await repository.plans.get(variables.planId);
-      await repository.plans.put(stamp(variables.change(stored), variables));
+      const before = await repository.plans.list();
+      const saved = stamp(
+        variables.change(before.find((plan) => plan.id === variables.planId)),
+        variables,
+      );
+      await repository.plans.put(saved);
+      return { before, after: upsert(before, saved) };
     },
     ...optimistic(
       get(queryClientAtom),
@@ -147,6 +162,45 @@ export const saveProfileAtom = atomWithMutation<void, ProfileChange, Error, Snap
       queryKeys.profile,
       (current: Profile | undefined, variables: ProfileChange) =>
         stamp(variables.change(current ?? defaultProfile()), variables),
+    ),
+  };
+});
+
+/**
+ * A change to the SPU of one account and month. `change` gets the ids that are on as they are at
+ * that point, a month not stored yet as it starts (`spuIdsIn`), like a plan change.
+ */
+export type SpuMonthChange = {
+  accountId: string;
+  month: string;
+  change: (ids: ReadonlySet<string>) => string[];
+};
+
+const changedMonth = (months: SpuMonth[], variables: SpuMonthChange): SpuMonth => {
+  const { accountId, month, change } = variables;
+  return stamp(
+    {
+      id: spuMonthId(accountId, month),
+      accountId,
+      month,
+      enabledIds: change(spuIdsIn(months, accountId, month)),
+      updatedAt: "",
+    },
+    variables,
+  );
+};
+
+export const saveSpuMonthAtom = atomWithMutation<void, SpuMonthChange, Error, Snapshot>((get) => {
+  const repository = get(repositoryAtom);
+  return {
+    mutationFn: async (variables) => {
+      await repository.spuMonths.put(changedMonth(await repository.spuMonths.list(), variables));
+    },
+    ...optimistic(
+      get(queryClientAtom),
+      queryKeys.spuMonths,
+      (months: SpuMonth[] | undefined, variables: SpuMonthChange) =>
+        upsert(months, changedMonth(months ?? [], variables)),
     ),
   };
 });
