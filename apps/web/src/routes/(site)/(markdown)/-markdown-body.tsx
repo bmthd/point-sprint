@@ -98,6 +98,11 @@ export const markdownComponents = {
       {children}
     </Heading>
   ),
+  h3: ({ children, id }) => (
+    <Heading as="h3" id={id} fontSize="sm" mt="6" mb="2">
+      {children}
+    </Heading>
+  ),
   p: ({ children }) => (
     <Text my="lg" lineHeight="1.9">
       {children}

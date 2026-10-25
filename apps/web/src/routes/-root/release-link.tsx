@@ -49,7 +49,7 @@ export function ReleaseLink({
       <Status
         as="span"
         size="sm"
-        {...(fresh ? { value: "success" as const } : { colorScheme: "gray" })}
+        colorScheme={fresh ? "green" : "gray"}
         fontVariantNumeric="tabular-nums"
       >
         Ver.{version}

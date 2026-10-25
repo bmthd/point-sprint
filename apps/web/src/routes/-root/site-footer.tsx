@@ -6,6 +6,7 @@ import { RouterLink } from "../../ui/router-link";
 export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [
   { to: "/notices", label: "お知らせ" },
   { to: "/help", label: "使い方・注意事項" },
+  { to: "/calculation", label: "計算方法" },
   { to: "/terms", label: "利用規約" },
   { to: "/privacy", label: "プライバシーポリシー" },
   { to: "/inquiry", label: "お問い合わせ" },

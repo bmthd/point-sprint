@@ -8,9 +8,6 @@ import {
   useState,
 } from "react";
 
-/** Rakuten's page where users check their own SPU. */
-export const SPU_PAGE_URL = "https://event.rakuten.co.jp/campaign/point-up/everyday/point/";
-
 /** `2026-10-06` → `10/6`. */
 export const monthDay = (date: string) => {
   const [, month, day] = date.split("-");

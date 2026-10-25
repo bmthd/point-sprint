@@ -2,6 +2,7 @@ import {
   type Benefit,
   type CalculationResult,
   type Plan,
+  SPU_PAGE,
   channels,
   spuPurchaseRules,
 } from "@workspaces/domain";
@@ -30,7 +31,7 @@ import { toggleBenefitAtom } from "../../../state/order-ops";
 import { ExternalIcon } from "../../../ui/icons";
 import { useSpuOffMessages } from "../-warnings";
 import { imageUrl, pointsText, rateText } from "../-order-shared";
-import { SPU_PAGE_URL, useSaveSettingsChange } from "./settings-shared";
+import { useSaveSettingsChange } from "./settings-shared";
 
 type RateBenefit = Extract<Benefit, { kind: "rate-bonus" }>;
 
@@ -166,7 +167,7 @@ function CapBadge(props: BadgeProps) {
 function SpuLink(props: LinkProps) {
   return (
     <Link
-      href={SPU_PAGE_URL}
+      href={SPU_PAGE.url}
       color="link"
       target="_blank"
       rel="noreferrer"

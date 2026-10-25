@@ -11,21 +11,26 @@ export type BenefitSource =
   /** 倍率や上限を利用者が入れるので、写した元がない。 */
   | { kind: "user-entered" };
 
-const official = (title: string, url: string, checkedOn: string): BenefitSource => ({
+export type OfficialSource = Extract<BenefitSource, { kind: "official" }>;
+
+const official = (title: string, url: string, checkedOn: string): OfficialSource => ({
   kind: "official",
   title,
   url,
   checkedOn,
 });
 
-const SPU_TITLE = "楽天市場 SPU（スーパーポイントアッププログラム）";
-const SPU_URL = "https://event.rakuten.co.jp/campaign/point-up/everyday/point/";
+/** The page every SPU item is copied from. */
+export const SPU_PAGE = {
+  title: "楽天市場 SPU（スーパーポイントアッププログラム）",
+  url: "https://event.rakuten.co.jp/campaign/point-up/everyday/point/",
+} as const;
 
 /** SPU の項目の出典。どれも SPU のページで、楽天銀行の 2 つだけ後から確かめ直した。 */
-export const spuSource = (benefit: Benefit): BenefitSource =>
+export const spuSource = (benefit: Benefit): OfficialSource =>
   official(
-    SPU_TITLE,
-    SPU_URL,
+    SPU_PAGE.title,
+    SPU_PAGE.url,
     benefit.id === BANK_CARD_ID || benefit.id === BANK_SALARY_ID ? "2026-10-19" : "2026-10-04",
   );
 

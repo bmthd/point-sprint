@@ -16,7 +16,12 @@ function NoticeArticle({ notice }: { notice: Notice }) {
         <NoticeDate date={notice.date} />
         {notice.release ? (
           <>
-            <Badge variant="outline" colorScheme="gray" fontVariantNumeric="tabular-nums">
+            <Badge
+              variant="outline"
+              colorScheme="gray"
+              textTransform="none"
+              fontVariantNumeric="tabular-nums"
+            >
               Ver.{notice.release.version}
             </Badge>
             {notice.release.changesCalculation ? (

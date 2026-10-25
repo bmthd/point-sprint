@@ -11,6 +11,7 @@ export const prerenderedPages = [
   "/plan/settings",
   "/profile",
   "/help",
+  "/calculation",
   "/terms",
   "/privacy",
   "/inquiry",
