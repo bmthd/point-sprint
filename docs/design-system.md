@@ -117,7 +117,7 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 上限までの残り | 行は `List`。枠の単位は `Badge variant="outline" colorScheme="gray" fullRounded`。ゲージは 2 色に分けるため `Progress` ではなく帯を組む（ほかのプランの分 `gray.solid`、このプランの分 `primary.solid`、溝 `bg.muted`）。税率の切り替えは、注文の入力欄の税率と同じ `SegmentedControl`（`size="sm"`） |
 | 警告 | `Alert.Root status="warning"`（既定の見た目） |
 | サイドバー（右カラム） | 読むページ（トップ、Markdown のページ、お問い合わせ、お知らせ）に置く（`PageWithSidebar`）。プランとプロフィールのような作業するページには置かない。PC は本文の右に幅 320px、`lg` 以下は本文の下。各区画は `SidebarSection`（`Card.Root` の既定の panel と `h2` の見出し） |
-| トップのイベント欄 | `Tabs.Root`（既定の `variant="line"`）で「開催中・開催予定」と「終了」に分ける。開催中・開催予定がないときは「終了」を開いて出す。状態のバッジは開催中 `Badge colorScheme="primary" variant="solid"`、開催予定 `colorScheme="mono" variant="outline"`、終了 `colorScheme="gray" variant="subtle"`。終わって 30 日を過ぎたイベントは「もっと見る」の `Drawer`（スマホは `block-end`、PC は `inline-end`）に、月ごとの `Card` の行で並べ、行のボタンは `Button variant="outline"` |
+| トップのイベント欄 | `Tabs.Root size="sm"`（既定の `variant="line"`）で「開催中・開催予定」と「終了」に分ける。タブは見出し「イベント」の行（`ColumnHead`）の右に置き、カードの上端をサイドバーのカードにそろえる。開催中・開催予定がないときは「終了」を開いて出す。状態のバッジは開催中 `Badge colorScheme="primary" variant="solid"`、開催予定 `colorScheme="mono" variant="outline"`、終了 `colorScheme="gray" variant="subtle"`。終わって 30 日を過ぎたイベントは「もっと見る」の `Drawer`（スマホは `block-end`、PC は `inline-end`）に、月ごとの `Card` の行で並べ、行のボタンは `Button variant="outline"` |
 | お知らせ | 本文は `/notices` に新しい順にすべて並べる（幅 640px）。サイドバーには最新3件の日付と題名だけを置き、題名は `/notices#<id>` へのリンクにする。`/notices` 自身のサイドバーには出さない。日付は `fg.muted` の `xs` |
 | リンク | `Link`（既定の `colorScheme="link"`、`variant="plain"`）。アプリ内の移動は `RouterLink`（`Link` を TanStack Router の `createLink` で包んだもの）。行がまるごとリンクのときは `colorScheme="mono"` |
 | オン・オフの切り替え（39ショップ） | `Switch colorScheme="primary"`（既定の `variant="thick"`）。ラベルを前に置くときは `reverse` |
