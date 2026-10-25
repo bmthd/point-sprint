@@ -1,4 +1,12 @@
-import type { BlockNode, ComponentNode, MarkdownExtension } from "@tanstack/markdown";
+import type {
+  BlockNode,
+  ComponentNode,
+  InlineNode,
+  MarkdownExtension,
+  TableCellNode,
+} from "@tanstack/markdown";
+
+type BlockContext = Parameters<NonNullable<MarkdownExtension["parseBlock"]>>[0];
 
 /**
  * The `:::name argument` block starting at `index`, up to its closing `:::`. An opening without a
@@ -126,5 +134,137 @@ const button: MarkdownExtension = {
   },
 };
 
+/** A cell's text without its marks: `**5,000円**` is `5,000円`. */
+function textOf(nodes: InlineNode[]): string {
+  return nodes
+    .map((node) =>
+      "value" in node && typeof node.value === "string"
+        ? node.value
+        : "children" in node
+          ? textOf(node.children as InlineNode[])
+          : "",
+    )
+    .join("");
+}
+
+/** The number in a text, its commas dropped: `税込 5,500円` is 5500. */
+export const amountIn = (text: string) => Number(text.replace(/[^\d.]/g, "")) || 0;
+
+/** The one table of a `:::name` block, or an error naming what the block should hold. */
+function tableIn(context: BlockContext, name: string) {
+  const block = container(context.lines, context.index, name);
+  if (!block) return undefined;
+  const [table, ...rest] = context.parseBlocks(block.body);
+  if (table?.type !== "table" || rest.length > 0)
+    throw new Error(`:::${name} holds one table and nothing else`);
+  context.consume(block.length);
+  return { table, argument: block.argument, labels: table.header.map((c) => textOf(c.children)) };
+}
+
+/** A table cell as a block of its own, named by its column's heading. */
+const cell = (cell: TableCellNode, label: string): ComponentNode => ({
+  type: "component",
+  name: "cell",
+  tagName: "md-cell",
+  attributes: {},
+  properties: { label, ...(textOf(cell.children).trim() === "" && { empty: "true" }) },
+  children: [{ type: "paragraph", children: cell.children }],
+});
+
+/**
+ * `:::name argument` with one table inside, each row of which becomes a `md-name-row` of cells.
+ * The block carries the first column's texts (`names`) and the numbers of the last (`amounts`),
+ * for the figures that draw the rows to scale.
+ */
+function tableFigure(name: string): MarkdownExtension {
+  return {
+    name,
+    parseBlock(context) {
+      const found = tableIn(context, name);
+      if (!found) return undefined;
+      const { table, argument, labels } = found;
+      return {
+        type: "component",
+        name,
+        tagName: `md-${name}`,
+        attributes: {},
+        properties: {
+          argument,
+          names: JSON.stringify(table.rows.map((row) => textOf(row[0]?.children ?? []))),
+          amounts: JSON.stringify(
+            table.rows.map((row) => amountIn(textOf(row.at(-1)?.children ?? []))),
+          ),
+        },
+        children: table.rows.map((row, index) => ({
+          type: "component",
+          name: `${name}-row`,
+          tagName: `md-${name}-row`,
+          attributes: {},
+          properties: { index: String(index) },
+          children: row.map((c, column) => cell(c, labels[column] ?? "")),
+        })),
+      };
+    },
+  };
+}
+
+/** `:::flow` with a table of 段階 | 値 | 説明: numbered steps, side by side on a wide screen. */
+const flow = tableFigure("flow");
+
+/**
+ * `:::breakdown 合計 205P` with a table of 名前 | 計算 | 値: the values as one bar split to scale,
+ * each row under it, and the argument as the total.
+ */
+const breakdown = tableFigure("breakdown");
+
+/**
+ * `:::meter 上限 1,000P` with a table of 名前 | 値: the values filling a bar up to the argument's
+ * number, so what is left shows as the empty part.
+ */
+const meter = tableFigure("meter");
+
+/** `:::cards` with a table of 名前 | 強調 | ほかの列…: each row a card, the second column large. */
+const cards = tableFigure("cards");
+
+/**
+ * `:::compare` with a table whose heading names the things compared and whose first column names
+ * what is compared: each thing a card of its own, the last row large.
+ */
+const compare: MarkdownExtension = {
+  name: "compare",
+  parseBlock(context) {
+    const found = tableIn(context, "compare");
+    if (!found) return undefined;
+    const { table, labels } = found;
+    return {
+      type: "component",
+      name: "compare",
+      tagName: "md-compare",
+      attributes: {},
+      children: labels.slice(1).map((title, index) => ({
+        type: "component",
+        name: "compare-item",
+        tagName: "md-compare-item",
+        attributes: {},
+        properties: { title },
+        children: table.rows.flatMap((row) => {
+          const value = row[index + 1];
+          return value ? [cell(value, textOf(row[0]?.children ?? []))] : [];
+        }),
+      })),
+    };
+  },
+};
+
 /** The syntax the Markdown pages may use beyond plain Markdown. */
-export const markdownExtensions = [details, timeline, alert, button];
+export const markdownExtensions = [
+  details,
+  timeline,
+  alert,
+  button,
+  flow,
+  breakdown,
+  meter,
+  cards,
+  compare,
+];

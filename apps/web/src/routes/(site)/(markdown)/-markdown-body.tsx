@@ -22,6 +22,7 @@ import {
 import type { ReactNode } from "react";
 import type { FileRoutesById } from "../../../routeTree.gen";
 import { markdownExtensions } from "./-markdown-extensions";
+import { figureComponents } from "./-markdown-figures";
 import { ColumnHead } from "../../../ui/column-head";
 
 /** The Markdown's tags, drawn with Yamada UI to match the other pages. */
@@ -178,6 +179,7 @@ export const markdownComponents = {
       </Card.Body>
     </Card.Root>
   ),
+  ...figureComponents,
   "md-timeline-step": ({ step, children }: { step: string; children?: ReactNode }) => (
     <Timeline.Item>
       <Timeline.Connector>
