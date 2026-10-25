@@ -462,7 +462,7 @@ test("deletes a plan after confirmation", async () => {
 
 test("shows an error and stays put when the plan cannot be saved", async () => {
   const repository = createMemoryRepository();
-  repository.plans.put = () => Promise.reject(new Error("quota"));
+  repository.plans.update = () => Promise.reject(new Error("quota"));
   const { screen, router } = await renderPlanList(repository);
 
   await screen.getByRole("button", { name: "イベントを選ばずにプランを作る" }).click();

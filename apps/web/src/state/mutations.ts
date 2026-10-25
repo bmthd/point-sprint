@@ -77,13 +77,11 @@ export const savePlanAtom = atomWithMutation<SavedPlans, PlanChange, Error, Snap
   const repository = get(repositoryAtom);
   return {
     mutationFn: async (variables) => {
-      const before = await repository.plans.list();
-      const saved = stamp(
-        variables.change(before.find((plan) => plan.id === variables.planId)),
-        variables,
+      const others = (await repository.plans.list()).filter((plan) => plan.id !== variables.planId);
+      const { before, after } = await repository.plans.update(variables.planId, (plan) =>
+        stamp(variables.change(plan), variables),
       );
-      await repository.plans.put(saved);
-      return { before, after: upsert(before, saved) };
+      return { before: before ? upsert(others, before) : others, after: upsert(others, after) };
     },
     ...optimistic(
       get(queryClientAtom),

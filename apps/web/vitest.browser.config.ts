@@ -8,6 +8,7 @@ export default defineConfig({
   // tests, which then fail to import.
   optimizeDeps: {
     include: [
+      "@simplewebauthn/browser",
       "@tanstack/markdown/react",
       "@tanstack/react-query",
       "jotai",

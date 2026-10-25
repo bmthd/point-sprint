@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import type { InquiryResult } from "../../../server/inquiry";
 import { InquiryForm, type SendInquiry } from "./inquiry-form";
-import type { TurnstileWidgetProps } from "./turnstile-widget";
+import type { TurnstileWidgetProps } from "../../-turnstile-widget";
 
 // Turnstile's script is not loaded and nothing is sent: the widget and the server function are
 // stood in for.

@@ -92,7 +92,7 @@ type Store = ReturnType<typeof setup>;
 const loaded = (store: Store) => vi.waitFor(() => expect(store.get(plansAtom)).toHaveLength(1));
 
 /**
- * Wraps the memory repository so that `plans.put` waits for the test to settle it, and so that
+ * Wraps the memory repository so that `plans.update` waits for the test to settle it, and so that
  * `plans.list` can be made to never answer, which keeps a fetch after a save from changing the cache.
  */
 function controlled(base: Repository) {
@@ -103,10 +103,10 @@ function controlled(base: Repository) {
     plans: {
       ...base.plans,
       list: () => (listsHang ? new Promise<Plan[]>(() => {}) : base.plans.list()),
-      put: (next) =>
-        new Promise<void>((resolve, reject) => {
+      update: (id, change) =>
+        new Promise((resolve, reject) => {
           pending.push({
-            resolve: () => base.plans.put(next).then(resolve, reject),
+            resolve: () => base.plans.update(id, change).then(resolve, reject),
             reject,
           });
         }),

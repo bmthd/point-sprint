@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Profile } from "./-profile/profile";
 import { pageHead } from "../../page-head";
+import { syncServer } from "../-sync-server";
 
 export const Route = createFileRoute("/(plan)/profile")({
   head: () =>
@@ -8,7 +9,7 @@ export const Route = createFileRoute("/(plan)/profile")({
       path: "/profile",
       title: "プロフィール",
       description:
-        "よく買うショップを登録します。楽天アカウントを使い分けるときは、アカウントもここで登録します。",
+        "ほかの端末との同期と、よく買うショップの登録をします。楽天アカウントを使い分けるときは、アカウントもここで登録します。",
     }),
-  component: () => <Profile />,
+  component: () => <Profile syncServer={syncServer} />,
 });

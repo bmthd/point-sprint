@@ -1,35 +1,12 @@
-import { readFileSync, readdirSync } from "node:fs";
-import { DatabaseSync } from "node:sqlite";
-import type { D1Database, D1PreparedStatement } from "cloudflare:workers";
+import { readFileSync } from "node:fs";
+import type { DatabaseSync } from "node:sqlite";
 import { expect, test } from "vitest";
 import { collectEvents } from "./collect-events";
 import { MARATHON_URL, SCHEDULE_URL } from "./event-pages";
 import { d1EventStore, publishedEvents } from "./event-store";
+import { memoryD1 } from "./memory-d1";
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
-
-/** D1 over SQLite in memory, with the migrations applied: the part of its API the store uses. */
-function memoryD1(): { db: D1Database; sqlite: DatabaseSync } {
-  const sqlite = new DatabaseSync(":memory:");
-  const migrations = new URL("../../migrations/", import.meta.url);
-  for (const file of readdirSync(migrations).toSorted()) {
-    if (file.endsWith(".sql")) sqlite.exec(readFileSync(new URL(file, migrations), "utf8"));
-  }
-  const statement = (query: string, values: unknown[] = []): D1PreparedStatement => ({
-    bind: (...next) => statement(query, next),
-    all: async <T>() => ({ results: sqlite.prepare(query).all(...(values as never[])) as T[] }),
-    run: async () => sqlite.prepare(query).run(...(values as never[])),
-  });
-  return {
-    sqlite,
-    db: {
-      prepare: (query) => statement(query),
-      batch: async (statements) => {
-        for (const each of statements) await each.run();
-      },
-    },
-  };
-}
 
 const pages: Record<string, string> = {
   [SCHEDULE_URL]: read("event-pages/schedule-2026-10.html"),

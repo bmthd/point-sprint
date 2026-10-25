@@ -17,6 +17,7 @@ import { quarantineQueryAtom, storageHealthQueryAtom } from "../../state/queries
 
 const storeLabels: Record<StoreName, string> = {
   plans: "プラン",
+  orders: "注文",
   shops: "ショップ台帳",
   profile: "プロフィール",
   spuMonths: "月の SPU",

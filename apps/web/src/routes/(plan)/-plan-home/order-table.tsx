@@ -113,7 +113,7 @@ export function OrderTable({ plan, onEdit }: { plan: Plan; onEdit: (orderId: str
         </List.Root>
       </Card.Root>
       <Text fontSize="xs" color="fg.muted">
-        表示は目安です。実際の付与ポイントとは誤差が出ることがあります。入力した内容はこのブラウザの中にだけ保存されます。
+        表示は目安です。実際の付与ポイントとは誤差が出ることがあります。入力した内容はこのブラウザの中に保存されます。
       </Text>
       {dialog}
     </Flex>

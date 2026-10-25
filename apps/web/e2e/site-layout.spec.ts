@@ -113,7 +113,7 @@ for (const { name } of pages("")) {
     const id = await createPlan(page);
     const path = pages(id).find((p) => p.name === name)?.path ?? "";
     const { footer } = await openReady(page, path);
-    await expect(footer.root).toContainText("このブラウザの中にだけ保存されます");
+    await expect(footer.root).toContainText("このブラウザの中に保存されます");
     // No link to an anchor that is not on the page, or to a page that does not exist yet.
     await expect(footer.root.locator('a[href^="#"]')).toHaveCount(0);
 
@@ -150,7 +150,7 @@ test("a bar fixed to the bottom of a phone screen does not hide the footer", asy
   for (const path of [`/plan?id=${id}`, `/plan/settings?id=${id}`]) {
     const site = await openReady(page, path);
     await expect(site.bottomBar).toBeVisible();
-    const text = site.footer.root.getByText("このブラウザの中にだけ保存されます");
+    const text = site.footer.root.getByText("このブラウザの中に保存されます");
     // Retried: the page can still be laying out and put the scroll back to the top.
     await expect(async () => {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
