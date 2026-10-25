@@ -170,6 +170,16 @@ describe("the PRF's wrap", () => {
 });
 
 describe("sessions", () => {
+  test("a session in use is extended once past half its time", async () => {
+    const d = deps();
+    const session = await start(d);
+    clock = new Date(clock.getTime() + 300 * 24 * 60 * 60 * 1000);
+    expect(await sessionAccount(d, session.sessionToken)).toBe(session.accountId);
+    clock = new Date(clock.getTime() + 300 * 24 * 60 * 60 * 1000);
+    expect(await sessionAccount(d, session.sessionToken)).toBe(session.accountId);
+    clock = new Date("2026-10-25T00:00:00.000Z");
+  });
+
   test("an unknown or expired token is logged out", async () => {
     const d = deps();
     const session = await start(d);

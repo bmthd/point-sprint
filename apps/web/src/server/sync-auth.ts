@@ -319,7 +319,10 @@ export async function setPrfWrap(
   return meta.changes > 0;
 }
 
-/** The account a session token is logged in to, which stays logged in for another 400 days. */
+/**
+ * The account a session token is logged in to. A session past half its 400 days is extended, so
+ * that a device in use stays logged in without a write on every request.
+ */
 export async function sessionAccount(
   deps: SyncAuthDeps,
   token: string | undefined,
@@ -328,14 +331,16 @@ export async function sessionAccount(
   const hash = await sha256(token);
   const now = timeOf(deps);
   const row = await deps.db
-    .prepare("SELECT account_id FROM sessions WHERE token_hash = ? AND expires_at > ?")
+    .prepare("SELECT account_id, expires_at FROM sessions WHERE token_hash = ? AND expires_at > ?")
     .bind(hash, iso(now))
-    .first<{ account_id: string }>();
+    .first<{ account_id: string; expires_at: string }>();
   if (!row) return undefined;
-  await deps.db
-    .prepare("UPDATE sessions SET expires_at = ? WHERE token_hash = ?")
-    .bind(iso(now + SESSION_MS), hash)
-    .run();
+  if (row.expires_at < iso(now + SESSION_MS / 2)) {
+    await deps.db
+      .prepare("UPDATE sessions SET expires_at = ? WHERE token_hash = ?")
+      .bind(iso(now + SESSION_MS), hash)
+      .run();
+  }
   return row.account_id;
 }
 
