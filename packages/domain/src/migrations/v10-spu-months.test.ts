@@ -12,7 +12,9 @@ import {
 import { DEFAULT_ACCOUNT_ID } from "../model/account";
 import { ProfileSchema } from "../model/plan";
 import { SpuMonthSchema } from "../model/spu-month";
-import { migrateRow, seedRows } from "./index";
+import { migrateRow, migrations, seedRows } from "./index";
+
+const throughSpuMonths = migrations.filter((migration) => migration.to <= 10);
 
 const ACCOUNT_2 = "acc00000-0000-4000-8000-000000000002";
 const EVENT_BENEFIT = { id: "e0000000-0000-4000-8000-000000000001" };
@@ -42,6 +44,7 @@ describe("plans and profile", () => {
       "plans",
       plan({ benefits: [...spu([BOOKS_SPU_ID]), EVENT_BENEFIT] }),
       9,
+      throughSpuMonths,
     );
     expect(migrated).toEqual(plan({ benefits: [EVENT_BENEFIT] }));
   });

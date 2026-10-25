@@ -1,4 +1,4 @@
-export type StoreName = "plans" | "shops" | "profile" | "spuMonths";
+export type StoreName = "plans" | "orders" | "shops" | "profile" | "spuMonths";
 
 /** The rows a migration's `seed` is made from: every plan and the profile (`undefined` if none). */
 export type SeedSource = { plans: unknown[]; profile: unknown };

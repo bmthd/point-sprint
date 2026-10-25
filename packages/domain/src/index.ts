@@ -7,6 +7,7 @@ export * from "./model/order";
 export * from "./model/plan";
 export * from "./model/shop";
 export * from "./model/spu-month";
+export * from "./model/stored-plan";
 export * from "./amounts/target-amount";
 export * from "./allocation/largest-remainder";
 export * from "./channels";
@@ -54,6 +55,7 @@ export {
 } from "./master/instantiate";
 export { createPlan } from "./master/create-plan";
 export { copyOrder, moveOrder } from "./plan-ops/order-ops";
+export { orderPositions } from "./plan-ops/order-positions";
 export { toggleBenefit, toggleBenefits } from "./plan-ops/benefit-ops";
 export {
   disabledAchievedSpu,
