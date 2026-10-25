@@ -44,7 +44,8 @@
     | { kind: "official"; title: string; url: string; checkedOn: string } // checkedOn は YYYY-MM-DD
     | { kind: "unofficial"; title: string; url: string; checkedOn: string }
     | { kind: "user-entered" };
-  export const benefitSources: Readonly<Record<string, BenefitSource>>; // 特典の id → 出典
+  export const spuSource: (benefit: Benefit) => OfficialSource; // SPU はどれも SPU のページ
+  export const campaignSources: Readonly<Record<string, BenefitSource>>; // テンプレートの id → 出典
   ```
 
 値（コメントと設計書 3 節から写す）:
@@ -137,7 +138,7 @@
   export function calculationMarkdown(template: string): string; // 差し込み済みの Markdown
   export function exampleMarkdown(): { markdown: string; total: number; expectedTotal: number };
   export function spuTableMarkdown(): string;
-  export function campaignTableMarkdown(): string;
+  export function campaignListMarkdown(): string; // スマホで読めるよう表でなく箇条書き
   ```
 
 文章（`calculation.md`）の節:
