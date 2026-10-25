@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   Heading,
+  Link,
   Modal,
   Status,
   Text,
@@ -209,17 +210,19 @@ export function SyncSettings({
       <Button variant="outline" alignSelf="start" loading={pending && !starting} onClick={logIn}>
         ほかの端末で始めた同期にログイン
       </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        alignSelf="start"
-        onClick={() => {
-          setError(undefined);
-          setRecovering(true);
-        }}
-      >
-        パスキーをなくしたときは、復元用のコードで戻す
-      </Button>
+      <Text fontSize="sm" color="fg.muted">
+        パスキーをなくしたときは、
+        <Link
+          as="button"
+          color="link"
+          onClick={() => {
+            setError(undefined);
+            setRecovering(true);
+          }}
+        >
+          復元用のコードで戻す
+        </Link>
+      </Text>
     </>
   );
 
