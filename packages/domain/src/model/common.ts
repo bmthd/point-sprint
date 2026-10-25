@@ -48,6 +48,12 @@ export function monthsOf(period: Period): string[] {
   }
 }
 
+/** The month `count` months after `month` (`YYYY-MM`); before it when `count` is negative. */
+export function addMonths(month: string, count: number): string {
+  const index = Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1 + count;
+  return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
+}
+
 /** The date in `period` nearest to `date`. */
 export function closestDateInPeriod({ date, period }: { date: string; period: Period }): string {
   if (date < period.start) return period.start;

@@ -12,7 +12,14 @@ import { capLines } from "../calculate/cap-lines";
 import type { Order } from "../model/order";
 import type { Plan } from "../model/plan";
 import { type SpuMonth, spuMonthId } from "../model/spu-month";
-import { enableSpu, planWithSpu, spuBenefitsOf, spuIdsIn, toggleSpu } from "./spu-months";
+import {
+  enableSpu,
+  planWithSpu,
+  plansUsingSpuMonth,
+  spuBenefitsOf,
+  spuIdsIn,
+  toggleSpu,
+} from "./spu-months";
 
 const ACCOUNT = "acc00000-0000-4000-8000-000000000000";
 const OTHER = "acc00000-0000-4000-8000-000000000001";
@@ -73,25 +80,26 @@ test("spuBenefitsOf turns on exactly the given items", () => {
   expect(on).toEqual([BOOKS_SPU_ID]);
 });
 
+const plan = (over: Partial<Plan> = {}): Plan => ({
+  id: "f0000000-0000-4000-8000-000000000001",
+  name: "plan",
+  period: { start: "2026-10-25", end: "2026-11-02" },
+  benefits: [],
+  orders: [],
+  updatedAt: "2026-10-05T00:00:00.000Z",
+  ...over,
+});
+const order = (id: string, date: string): Order => ({
+  id,
+  date,
+  channel: "rakuten-ichiba",
+  shopTags: [],
+  lineItems: [{ id, name: "x", unitPrice: 11000, quantity: 1, taxRate: 0.1, discount: 0 }],
+  onHold: false,
+  tags: [],
+});
+
 describe("planWithSpu", () => {
-  const plan = (over: Partial<Plan> = {}): Plan => ({
-    id: "f0000000-0000-4000-8000-000000000001",
-    name: "plan",
-    period: { start: "2026-10-25", end: "2026-11-02" },
-    benefits: [],
-    orders: [],
-    updatedAt: "2026-10-05T00:00:00.000Z",
-    ...over,
-  });
-  const order = (id: string, date: string): Order => ({
-    id,
-    date,
-    channel: "rakuten-ichiba",
-    shopTags: [],
-    lineItems: [{ id, name: "x", unitPrice: 11000, quantity: 1, taxRate: 0.1, discount: 0 }],
-    onHold: false,
-    tags: [],
-  });
 
   test("each order gets the SPU of its own month", () => {
     const months = [
@@ -133,5 +141,46 @@ describe("planWithSpu", () => {
     expect(
       lines.filter((line) => line.benefit.id === BOOKS_SPU_ID).map((line) => line.period),
     ).toEqual(["2026-10"]);
+  });
+});
+
+describe("plansUsingSpuMonth", () => {
+  const crossing = plan({
+    id: "f0000000-0000-4000-8000-000000000002",
+    orders: [
+      order("00000000-0000-4000-8000-000000000011", "2026-10-30"),
+      order("00000000-0000-4000-8000-000000000012", "2026-11-01"),
+      order("00000000-0000-4000-8000-000000000013", "2026-11-05"),
+    ],
+  });
+  const octoberOnly = plan({
+    id: "f0000000-0000-4000-8000-000000000003",
+    period: { start: "2026-10-14", end: "2026-10-17" },
+  });
+  const empty = plan({
+    id: "f0000000-0000-4000-8000-000000000004",
+    period: { start: "2026-11-20", end: "2026-11-27" },
+  });
+  const otherAccount = plan({ id: "f0000000-0000-4000-8000-000000000005", accountId: OTHER });
+
+  test("the plans of the account whose period or orders touch the month, with that month's orders", () => {
+    expect(
+      plansUsingSpuMonth([crossing, octoberOnly, empty, otherAccount], ACCOUNT, "2026-11").map(
+        ({ plan, orders }) => [plan.id, orders],
+      ),
+    ).toEqual([
+      [crossing.id, 2],
+      [empty.id, 0],
+    ]);
+  });
+
+  test("an order outside the period brings its month in", () => {
+    const outside = plan({
+      period: { start: "2026-10-25", end: "2026-10-31" },
+      orders: [order("00000000-0000-4000-8000-000000000014", "2026-12-01")],
+    });
+    expect(plansUsingSpuMonth([outside], ACCOUNT, "2026-12").map(({ orders }) => orders)).toEqual([
+      1,
+    ]);
   });
 });

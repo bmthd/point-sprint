@@ -39,6 +39,7 @@ export type {
 export * from "./migrations";
 export {
   BOOKS_SPU_ID,
+  CARRIED_SPU_IDS,
   KOBO_SPU_ID,
   NORMAL_POINT_ID,
   spuPurchaseRules,
@@ -67,6 +68,7 @@ export {
 export {
   enableSpu,
   planWithSpu,
+  plansUsingSpuMonth,
   spuBenefitsOf,
   spuIdsIn,
   spuMonthsOfPlan,
