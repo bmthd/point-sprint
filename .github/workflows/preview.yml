@@ -60,7 +60,7 @@ jobs:
           RAKUTEN_APPLICATION_ID: ${{ secrets.RAKUTEN_APPLICATION_ID }}
           RAKUTEN_ACCESS_KEY: ${{ secrets.RAKUTEN_ACCESS_KEY }}
       # The Worker's other secrets are not given, so cf warns they are missing and the inquiry stops
-      # at `config`.
+      # at `config`. Turnstile's are its public test keys (cloudflare.config.ts), for the sync.
       # Previews share a database of their own, never production's (cloudflare.config.ts).
       - name: Migrate the preview's event master
         working-directory: apps/web
@@ -83,6 +83,8 @@ jobs:
           # cf builds with `vite build`, not `pnpm build`, so the keys reach Vite without dotenvx.
           RAKUTEN_APPLICATION_ID: ${{ secrets.RAKUTEN_APPLICATION_ID }}
           RAKUTEN_ACCESS_KEY: ${{ secrets.RAKUTEN_ACCESS_KEY }}
+          # Turnstile's test site key, which passes on any host, over the one in .env.production.
+          PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA"
       - name: Comment the preview URL
         run: |
           gh pr comment "$PR_NUMBER" --edit-last --create-if-none \

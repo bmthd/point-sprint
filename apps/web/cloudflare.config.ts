@@ -71,7 +71,11 @@ export default defineConfig(({ isPreview }) => ({
       // prerendering (`.env.development` and `.env.production` through dotenvx). A build does not
       // carry them: deploy.yml uploads them with each version, so a secret added here must be added
       // to its list too.
-      TURNSTILE_SECRET_KEY: bindings.secret(),
+      // A Preview gets Turnstile's public test secret, which lets every token through, so that
+      // starting to sync can be tried there; its build gets the test site key (preview.yml).
+      TURNSTILE_SECRET_KEY: isPreview
+        ? bindings.text("1x0000000000000000000000000000000AA")
+        : bindings.secret(),
       INQUIRY_TO_ADDRESS: bindings.secret(),
       RAKUTEN_APPLICATION_ID: bindings.secret(),
       RAKUTEN_ACCESS_KEY: bindings.secret(),
