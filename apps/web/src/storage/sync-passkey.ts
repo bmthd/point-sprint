@@ -340,17 +340,22 @@ export async function stopSync({ server, repository }: PasskeyDeps): Promise<voi
   if (isSignedOut(result)) throw new SyncError("signed-out");
   const meta = await repository.sync.meta.get();
   await repository.sync.meta.put(undefined);
-  const signal = (
-    globalThis.PublicKeyCredential as
-      | {
-          signalUnknownCredential?: (options: {
-            rpId: string;
-            credentialId: string;
-          }) => Promise<void>;
-        }
-      | undefined
-  )?.signalUnknownCredential;
-  if (meta?.credentialId && signal) {
-    await signal({ rpId: location.hostname, credentialId: meta.credentialId }).catch(() => {});
+  const credentials = globalThis.PublicKeyCredential as
+    | {
+        signalUnknownCredential?: (options: {
+          rpId: string;
+          credentialId: string;
+        }) => Promise<void>;
+      }
+    | undefined;
+  if (meta?.credentialId && credentials?.signalUnknownCredential) {
+    // Called on `PublicKeyCredential` itself: detached, it throws. Only a hint to the password
+    // manager, so a failure is left alone.
+    try {
+      await credentials.signalUnknownCredential({
+        rpId: location.hostname,
+        credentialId: meta.credentialId,
+      });
+    } catch {}
   }
 }

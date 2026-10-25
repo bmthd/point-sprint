@@ -37,6 +37,18 @@ export class SyncSection {
     await this.codeDialog.getByRole("button", { name: "開く" }).click();
   }
 
+  async stop() {
+    await this.root.getByRole("button", { name: "同期をやめる" }).click();
+    await this.page
+      .getByRole("dialog", { name: "同期をやめますか？" })
+      .getByRole("button", { name: "同期をやめる" })
+      .click();
+  }
+
+  get startButton() {
+    return this.root.getByRole("button", { name: "パスキーで同期を始める" });
+  }
+
   async waitSynced() {
     await expect(this.status).toContainText("同期しました");
   }

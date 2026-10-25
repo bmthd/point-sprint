@@ -137,3 +137,31 @@ test("the passkey that started the sync opens the data again without the code", 
   const restored = await PlanPage.open(page, planId);
   await expect.poll(() => restored.orderShops()).toEqual(["店A"]);
 });
+
+test("stopping removes the account and the passkey, and the device's data stays", async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  const keys = await authenticator(page, { prf: true });
+  const plan = await (await TopPage.open(page)).createPlan();
+  await plan.addOrder("店A", "3300");
+  const planId = plan.id;
+  await ProfilePage.open(page);
+  const sync = new SyncSection(page);
+  await sync.start();
+  await sync.stop();
+  await expect(sync.startButton).toBeVisible();
+  await expect(sync.root.getByRole("alert")).toBeHidden();
+
+  // The browser is told the passkey is unknown, and its password manager drops it.
+  await expect
+    .poll(async () => {
+      const { credentials } = await keys.cdp.send("WebAuthn.getCredentials", {
+        authenticatorId: keys.authenticatorId,
+      });
+      return credentials.length;
+    })
+    .toBe(0);
+  const kept = await PlanPage.open(page, planId);
+  await expect.poll(() => kept.orderShops()).toEqual(["店A"]);
+});
