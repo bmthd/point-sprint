@@ -53,6 +53,8 @@ test("serves the events the migrations put in, the earliest first", async () => 
     "marathon-2026-10-24",
   ]);
   expect(events[0]?.name).toBe("お買い物マラソン&ジャンル祭");
+  expect(events[0]?.times).toEqual({ start: "20:00", end: "01:59" });
+  expect(events[2]?.times).toBeUndefined();
 });
 
 test("a run confirms the round on the marathon page and logs what it did", async () => {
@@ -111,6 +113,10 @@ test("serves no row that is not published or not an event", async () => {
   sqlite.exec(`UPDATE official_events SET benefits_json = '[' WHERE id = 'marathon-2026-10-24'`);
   const events = await publishedEvents(db);
   expect(events.map((event) => event.id)).toEqual(["marathon-2026-10-14", "brand-day-2026-10-20"]);
+  expect(events.map((event) => event.url)).toEqual([
+    "https://event.rakuten.co.jp/campaign/point-up/marathon/schedule/",
+    "https://event.rakuten.co.jp/brand/campaign/",
+  ]);
 });
 
 test("logs a failed run without writing when the schedule page cannot be fetched", async () => {

@@ -69,14 +69,17 @@ type SitemapEntry = { url: string; lastModified?: string };
 
 /**
  * A page's entry in the sitemap: its canonical URL, and for an article the day it was last
- * changed. `undefined` when the page asks search engines not to index it.
+ * changed, or published when it never was. `undefined` when the page asks search engines not to index it.
  */
 export const sitemapEntry = (html: string): SitemapEntry | undefined => {
   const meta = headTags(html, "meta");
   if (meta.some((m) => m.name === "robots" && m.content?.includes("noindex"))) return undefined;
   const url = headTags(html, "link").find((l) => l.rel === "canonical")?.href;
   if (url === undefined) return undefined;
-  const lastModified = meta.find((m) => m.property === "article:modified_time")?.content;
+  const lastModified = (
+    meta.find((m) => m.property === "article:modified_time") ??
+    meta.find((m) => m.property === "article:published_time")
+  )?.content;
   return lastModified ? { url, lastModified } : { url };
 };
 

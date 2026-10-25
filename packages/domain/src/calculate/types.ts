@@ -20,6 +20,11 @@ export type BenefitTotal = {
 export type CalculationWarning =
   | { type: "unknown-shop"; orderId: string }
   | { type: "order-outside-period"; orderId: string }
+  /**
+   * An order on the first or last day of an official event's plan. The event may start or end
+   * partway through the day, but it is counted all the same.
+   */
+  | { type: "order-on-period-edge"; orderId: string; edge: "start" | "end" }
   | { type: "shared-cap-mismatch"; groupKey: string };
 
 export type CalculationResult = {

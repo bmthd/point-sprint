@@ -76,6 +76,7 @@ const marathon = (input: {
   id: input.id,
   name: input.name,
   period: { start: input.start, end: input.end },
+  url: "https://event.rakuten.co.jp/campaign/point-up/marathon/",
   benefits: [
     {
       id: crypto.randomUUID(),
@@ -232,6 +233,15 @@ test("lists only the events that have not ended, and a round whose cap is not ou
   await expect.element(screen.getByRole("listitem")).toHaveLength(2);
 });
 
+test("links each event's name to Rakuten's page in a new tab", async () => {
+  const { screen } = await renderPlanList(createMemoryRepository());
+  const link = screen.getByRole("link", { name: "お買い物マラソン第二弾" });
+  await expect
+    .element(link)
+    .toHaveAttribute("href", "https://event.rakuten.co.jp/campaign/point-up/marathon/");
+  await expect.element(link).toHaveAttribute("target", "_blank");
+});
+
 test("sums up an event whose rate the total sets by its highest rate and its cap", async () => {
   const brandDay: OfficialEvent = {
     id: "brand-day-2026-10-20",
@@ -282,20 +292,82 @@ test("says when the events cannot be read, and reads them again", async () => {
   };
   const { screen } = await renderPlanList(createMemoryRepository(), { events });
 
-  await expect.element(screen.getByText("イベントを読み込めませんでした")).toBeVisible();
+  await expect
+    .element(screen.getByRole("tabpanel").getByText("イベントを読み込めませんでした"))
+    .toBeVisible();
   fail = false;
   await screen.getByRole("button", { name: "再試行" }).click();
   await expect.element(screen.getByText("お買い物マラソン&ジャンル祭")).toBeVisible();
 });
 
-test("says so when no event is ahead", async () => {
+test("opens the ended events when no event is ahead, and says so on the other tab", async () => {
   const { screen } = await renderPlanList(createMemoryRepository(), {
     events: { load: async () => servedEvents.slice(0, 1) },
   });
 
   await expect
+    .element(screen.getByRole("tab", { name: "終了" }))
+    .toHaveAttribute("aria-selected", "true");
+  await expect.element(screen.getByText("お買い物マラソン", { exact: true })).toBeVisible();
+  await screen.getByRole("tab", { name: "開催中・開催予定" }).click();
+  await expect
     .element(screen.getByText("開催中・開催予定のイベントはまだありません"))
     .toBeVisible();
+});
+
+test("creates a plan from an event that ended, the latest first", async () => {
+  const repository = createMemoryRepository();
+  const earlier = marathon({
+    id: "marathon-2026-09-04",
+    name: "お買い物マラソン第一弾",
+    start: "2026-09-04",
+    end: "2026-09-09",
+    cap: 7000,
+  });
+  const { screen, router } = await renderPlanList(repository, {
+    events: { load: async () => [earlier, ...servedEvents] },
+  });
+
+  await screen.getByRole("tab", { name: "終了" }).click();
+  const cards = screen.getByRole("tabpanel").getByRole("listitem");
+  await expect.element(cards).toHaveLength(2);
+  await expect
+    .element(cards.first().getByRole("link", { name: "お買い物マラソン", exact: true }))
+    .toBeVisible();
+  await expect.element(cards.first().getByText("終了", { exact: true })).toBeVisible();
+  await cards.first().getByRole("button", { name: "このイベントでプランを作る" }).click();
+
+  await expect.poll(() => router.state.location.pathname).toBe("/plan");
+  const [created] = await repository.plans.list();
+  expect(created?.name).toBe("9月 お買い物マラソン");
+  expect(created?.officialEventId).toBe("marathon-2026-09-19");
+  expect(created?.period).toEqual({ start: "2026-09-19", end: "2026-09-24" });
+});
+
+test("keeps the events that ended over 30 days ago behind 「もっと見る」", async () => {
+  const repository = createMemoryRepository();
+  const old = marathon({
+    id: "marathon-2026-08-24",
+    name: "お買い物マラソン8月",
+    start: "2026-08-24",
+    end: "2026-08-29",
+    cap: 7000,
+  });
+  const { screen, router } = await renderPlanList(repository, {
+    events: { load: async () => [old, ...servedEvents] },
+  });
+
+  await screen.getByRole("tab", { name: "終了" }).click();
+  await expect.element(screen.getByRole("tabpanel").getByRole("listitem")).toHaveLength(1);
+  await screen.getByRole("button", { name: "もっと見る" }).click();
+  const drawer = screen.getByRole("dialog", { name: "それより前のイベント" });
+  await expect.element(drawer.getByRole("heading", { name: "2026年8月" })).toBeVisible();
+  await drawer.getByRole("button", { name: "プランを作る" }).click();
+
+  await expect.poll(() => router.state.location.pathname).toBe("/plan");
+  const [created] = await repository.plans.list();
+  expect(created?.officialEventId).toBe("marathon-2026-08-24");
+  expect(created?.period).toEqual({ start: "2026-08-24", end: "2026-08-29" });
 });
 
 test("creates a plan without an event", async () => {

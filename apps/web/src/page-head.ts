@@ -21,10 +21,11 @@ type PageHeadOptions = {
   /** Keeps search engines away from a page that shows only what this device has saved. */
   noindex?: boolean;
   /**
-   * The days an article was published and last changed (`YYYY-MM-DD`): its OGP type becomes
-   * `article`, and the sitemap takes the second as the page's last change.
+   * The days an article was published and last changed (`YYYY-MM-DD`), the latter only once it
+   * has been changed: its OGP type becomes `article`, and the sitemap takes the later day as the
+   * page's last change.
    */
-  article?: { published: string; updated: string };
+  article?: { published: string; updated?: string };
 };
 
 /**
@@ -53,7 +54,9 @@ export const pageHead = ({
         ? [
             { property: "og:type", content: "article" },
             { property: "article:published_time", content: article.published },
-            { property: "article:modified_time", content: article.updated },
+            ...(article.updated === undefined
+              ? []
+              : [{ property: "article:modified_time", content: article.updated }]),
           ]
         : []),
     ],

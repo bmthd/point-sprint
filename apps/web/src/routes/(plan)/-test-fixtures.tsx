@@ -7,7 +7,7 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import type { Benefit, Order, Plan, Shop } from "@workspaces/domain";
+import type { Benefit, OfficialEvent, Order, Plan, Shop } from "@workspaces/domain";
 import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
@@ -17,6 +17,7 @@ import { expect } from "vitest";
 import { type Locator, page } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import type { ItemLookup } from "../../rakuten/item-lookup";
+import { officialEventsSourceAtom } from "../-official-events";
 import { repositoryAtom } from "../../state/repository";
 import { itemLookupAtom } from "./-item-autofill";
 import type { Repository } from "../../storage/repository";
@@ -124,27 +125,35 @@ export const marathonPlan = (orders = [order(0), order(1), order(2), order(3)]) 
 function Hydrate({
   repository,
   itemLookup,
+  events,
   children,
 }: {
   repository: Repository;
   itemLookup: ItemLookup | undefined;
+  events: OfficialEvent[] | undefined;
   children: ReactNode;
 }) {
   useHydrateAtoms([
     [repositoryAtom, repository],
     [itemLookupAtom, { lookup: itemLookup }],
+    ...(events ? [[officialEventsSourceAtom, { load: async () => events }] as const] : []),
   ]);
   return children;
 }
 
-/** The app's providers; the item lookup is `itemLookup`, and off without one. */
+/**
+ * The app's providers; the item lookup is `itemLookup`, and off without one. The official events
+ * are `events`, or the Worker's without them.
+ */
 export function Providers({
   repository,
   itemLookup,
+  events,
   children,
 }: {
   repository: Repository;
   itemLookup?: ItemLookup;
+  events?: OfficialEvent[];
   children: ReactNode;
 }) {
   return (
@@ -152,7 +161,7 @@ export function Providers({
       <QueryClientAtomProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >
-        <Hydrate repository={repository} itemLookup={itemLookup}>
+        <Hydrate repository={repository} itemLookup={itemLookup} events={events}>
           {children}
         </Hydrate>
       </QueryClientAtomProvider>
@@ -164,6 +173,7 @@ export async function renderPlanHome(
   repository: Repository,
   path = `/plan?id=${PLAN}`,
   itemLookup?: ItemLookup,
+  events?: OfficialEvent[],
 ) {
   await cleanup();
   const root = createRootRoute({ component: Outlet });
@@ -177,7 +187,7 @@ export async function renderPlanHome(
     history: createMemoryHistory({ initialEntries: [path] }),
   });
   const screen = await render(
-    <Providers repository={repository} itemLookup={itemLookup}>
+    <Providers repository={repository} itemLookup={itemLookup} events={events}>
       <RouterProvider router={router} />
     </Providers>,
   );
