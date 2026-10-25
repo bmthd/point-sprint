@@ -351,3 +351,16 @@ export async function endSession(deps: SyncAuthDeps, token: string): Promise<voi
     .bind(await sha256(token))
     .run();
 }
+
+/** Both recovery values change in one statement; sessions and passkeys remain valid. */
+export async function reissueRecovery(
+  deps: SyncAuthDeps,
+  accountId: string,
+  recovery: { verifier: string; wrap: string },
+): Promise<boolean> {
+  const { meta } = await deps.db
+    .prepare("UPDATE accounts SET recovery_verifier = ?, recovery_wrap = ? WHERE id = ?")
+    .bind(recovery.verifier, recovery.wrap, accountId)
+    .run();
+  return meta.changes === 1;
+}

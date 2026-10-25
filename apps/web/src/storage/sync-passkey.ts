@@ -15,6 +15,8 @@ import {
   generateMasterSecret,
   generateRecoveryCode,
   parseRecoveryCode,
+  openMaster,
+  sealMaster,
   recoveryVerifier,
   toBase64Url,
   unwrapSecret,
@@ -108,6 +110,7 @@ export type SyncServer = {
     recoveryWrap: string;
   }>;
   recoveryLogin(data: { verifier: string }): Maybe<{ accountId: string; recoveryWrap: string }>;
+  reissueRecovery(data: { accountId: string; verifier: string; wrap: string }): Promise<boolean>;
   setPrfWrap(data: { credentialId: string; prfWrap: string }): Promise<boolean>;
   stop(): Promise<{ ok: true } | SignedOut>;
   push(data: { records: RemoteRecord[] }): Promise<PushResult | SignedOut>;
@@ -117,6 +120,8 @@ export type SyncServer = {
 export type PasskeyDeps = { passkeys: Passkeys; server: SyncServer; repository: Repository };
 
 export type SyncErrorReason =
+  /** An older device did not keep the root and its passkey cannot open it. */
+  | "master-unavailable"
   /** Turnstile did not let the request through. */
   | "turnstile"
   /** The user closed the passkey's dialog, or the device has no passkey for the site. */
@@ -157,11 +162,13 @@ async function unlock(
   accountId: string,
   credentialId: string | undefined,
 ) {
+  const keys = await deriveKeys(master);
   await repository.sync.meta.put({
     accountId,
+    masterWrap: await sealMaster(keys.encryptionKey, master),
     cursor: 0,
     ...(credentialId ? { credentialId } : {}),
-    ...(await deriveKeys(master)),
+    ...keys,
   });
   await repository.sync.markAllPending();
 }
@@ -253,6 +260,12 @@ export async function signIn(
   const login = await server.login({ challengeId, response: asserted.response });
   if (!login) throw new SyncError("refused");
 
+  const local = await repository.sync.meta.get();
+  if (local?.accountId === login.accountId && local.masterWrap) {
+    await openMaster(local.encryptionKey, local.masterWrap);
+    return { status: "unlocked" };
+  }
+
   const master =
     login.prfWrap && asserted.prf
       ? await unwrapSecret(login.prfWrap, asserted.prf, "prf")
@@ -284,7 +297,10 @@ export async function unlockWithRecoveryCode(
   code: string,
 ): Promise<boolean> {
   const bytes = parseRecoveryCode(code);
-  const master = bytes && (await unwrapSecret(locked.recoveryWrap, bytes, "recovery"));
+  const current =
+    bytes && (await deps.server.recoveryLogin({ verifier: await recoveryVerifier(bytes) }));
+  if (!current || current.accountId !== locked.accountId) return false;
+  const master = bytes && (await unwrapSecret(current.recoveryWrap, bytes, "recovery"));
   if (!master) return false;
   if (locked.prf && !locked.hasPrfWrap) {
     await deps.server.setPrfWrap({
@@ -362,4 +378,36 @@ export async function stopSync({ server, repository }: PasskeyDeps): Promise<{ r
     } catch {}
   }
   return { removed: true };
+}
+
+/** Rewraps the same root, leaving records, passkeys and other devices' keys intact. */
+export async function reissueRecoveryCode(deps: PasskeyDeps): Promise<string> {
+  const meta = await deps.repository.sync.meta.get();
+  if (!meta) throw new SyncError("signed-out");
+  let master: Uint8Array | undefined;
+  if (meta.masterWrap) {
+    master = await openMaster(meta.encryptionKey, meta.masterWrap);
+  } else {
+    const { challengeId, options } = await deps.server.loginOptions();
+    const asserted = await passkey(deps.passkeys.get(options));
+    const login = await deps.server.login({ challengeId, response: asserted.response });
+    if (!login || login.accountId !== meta.accountId) throw new SyncError("refused");
+    if (login.prfWrap && asserted.prf)
+      master = await unwrapSecret(login.prfWrap, asserted.prf, "prf");
+    if (!master) throw new SyncError("master-unavailable");
+    // Check that this really is the root for the data already open here.
+    const wrapped = await sealMaster((await deriveKeys(master)).encryptionKey, master);
+    await openMaster(meta.encryptionKey, wrapped);
+    await deps.repository.sync.meta.put({ ...meta, masterWrap: wrapped });
+  }
+  const code = generateRecoveryCode();
+  const bytes = parseRecoveryCode(code);
+  if (!bytes) throw new Error("the recovery code does not read back");
+  const updated = await deps.server.reissueRecovery({
+    accountId: meta.accountId,
+    verifier: await recoveryVerifier(bytes),
+    wrap: await wrapSecret(master, bytes, "recovery"),
+  });
+  if (!updated) throw new SyncError("signed-out");
+  return code;
 }

@@ -165,3 +165,41 @@ test("stopping removes the account and the passkey, and the device's data stays"
   const kept = await PlanPage.open(page, planId);
   await expect.poll(() => kept.orderShops()).toEqual(["店A"]);
 });
+
+test("reissuing rejects a code in an already-open login dialog and keeps syncing", async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  const phoneKeys = await authenticator(page, { prf: true });
+  const plan = await (await TopPage.open(page)).createPlan();
+  await plan.addOrder("店A", "3300");
+  const planId = plan.id;
+  await ProfilePage.open(page);
+  const phoneSync = new SyncSection(page);
+  const oldCode = await phoneSync.start();
+  const pc = await secondDevice(page);
+  await copyPasskeys(phoneKeys, await authenticator(pc, { prf: false }));
+  await ProfilePage.open(pc);
+  const pcSync = new SyncSection(pc);
+  await pcSync.logIn();
+  await expect(pcSync.codeDialog).toBeVisible();
+
+  await phoneSync.root.getByRole("button", { name: "復元用のコードを再発行" }).click();
+  const confirmation = page.getByRole("dialog", { name: "復元用のコードを再発行しますか？" });
+  await expect(confirmation.getByText(/以前のコードは使えなくなります/)).toBeVisible();
+  await confirmation.getByRole("button", { name: "再発行する" }).click();
+  const saving = page.getByRole("dialog", { name: "復元用のコードを控えてください" });
+  const code = await saving.getByText(/^([0-9A-Z]{4}-){6}[0-9A-Z]{2}$/).innerText();
+  expect(code).not.toBe(oldCode);
+  await expect(saving.getByRole("button", { name: "閉じる" })).toBeDisabled();
+  await saving.getByText("控えました").click();
+  await saving.getByRole("button", { name: "閉じる" }).click();
+  await pcSync.enterCode(oldCode);
+  await expect(pcSync.codeDialog.getByText(/コードが違います/)).toBeVisible();
+  await pcSync.enterCode(code);
+  await pcSync.waitSynced();
+  const restored = await PlanPage.open(pc, planId);
+  await expect.poll(() => restored.orderShops()).toEqual(["店A"]);
+  await phoneSync.waitSynced();
+  await pc.context().close();
+});

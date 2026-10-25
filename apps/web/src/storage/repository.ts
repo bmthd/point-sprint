@@ -19,6 +19,8 @@ export type QuarantinedRow = {
 /** What this device keeps to sync: the account, how far it has read, and the keys. */
 export type SyncMeta = {
   accountId: string;
+  /** The master secret sealed by this device’s encryption key; absent on older devices. */
+  masterWrap?: string;
   /** The passkey this device logged in with, if it did with one. */
   credentialId?: string;
   /** The server's sequence number of the last row read. */

@@ -189,3 +189,24 @@ export const syncStop = createServerFn({ method: "POST" }).handler(
     return { ok: true };
   },
 );
+
+export const syncReissueRecovery = createServerFn({ method: "POST" })
+  .validator(
+    parse(
+      v.object({
+        accountId: v.string(),
+        verifier: v.pipe(v.string(), v.regex(/^[A-Za-z0-9_-]{43}$/)),
+        wrap: v.pipe(v.string(), v.regex(/^[A-Za-z0-9_-]{80}$/)),
+      }),
+    ),
+  )
+  .handler(async ({ data }): Promise<boolean> => {
+    const [{ syncDeps, sessionOf }, { reissueRecovery }] = await Promise.all([
+      import("./worker-sync"),
+      import("./sync-auth"),
+    ]);
+    const deps = await syncDeps();
+    const accountId = await sessionOf(deps);
+    if (!accountId || accountId !== data.accountId) return false;
+    return reissueRecovery(deps, accountId, data);
+  });

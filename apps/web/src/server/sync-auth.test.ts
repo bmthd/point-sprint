@@ -15,6 +15,7 @@ import {
   registrationOptions,
   sessionAccount,
   setPrfWrap,
+  reissueRecovery,
 } from "./sync-auth";
 
 // The WebAuthn checks are stood in for: a response passes when it carries the challenge it was
@@ -188,4 +189,28 @@ describe("sessions", () => {
     expect(await sessionAccount(d, session.sessionToken)).toBeUndefined();
     clock = new Date("2026-10-25T00:00:00.000Z");
   });
+});
+
+test("recovery update failure cannot split the verifier and wrapped key", async () => {
+  const d = deps();
+  const first = await start(d);
+  const second = await registrationOptions(d, { turnstileToken: "t", verifyToken: passes });
+  if (!second) throw new Error("no options");
+  await register(d, {
+    challengeId: second.challengeId,
+    response: registration("second", second.options.challenge),
+    recovery: { verifier: "occupied", wrap: "second-wrap" },
+  });
+  await expect(
+    reissueRecovery(d, first.accountId, { verifier: "occupied", wrap: "new-wrap" }),
+  ).rejects.toThrow();
+  expect(await loginWithRecovery(d, "verifier")).toMatchObject({
+    accountId: first.accountId,
+    recoveryWrap: "recovery-wrap",
+  });
+  expect(await logIn(d)).toMatchObject({
+    accountId: first.accountId,
+    recoveryWrap: "recovery-wrap",
+  });
+  expect(await sessionAccount(d, first.sessionToken)).toBe(first.accountId);
 });

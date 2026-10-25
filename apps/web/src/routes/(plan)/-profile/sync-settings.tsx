@@ -28,6 +28,7 @@ import {
   type SyncServer,
   browserPasskeys,
   recoverWithCode,
+  reissueRecoveryCode,
   signIn,
   startSync,
   stopSync,
@@ -42,6 +43,8 @@ function track(event: string) {
 }
 
 const errorMessages: Record<string, string> = {
+  "master-unavailable":
+    "この端末には再発行に必要な鍵が残っていません。ほかの端末で再発行するか、復元用のコードで一度開き直してください。",
   turnstile: "確認できませんでした。もう一度お試しください。",
   cancelled: "パスキーの操作が取り消されました。",
   refused: "パスキーでログインできませんでした。この端末にパスキーがあるか確かめてください。",
@@ -110,6 +113,7 @@ export function SyncSettings({
   const [locked, setLocked] = useState<Locked>();
   const [recovering, setRecovering] = useState(false);
   const stopping = useDisclosure();
+  const reissuing = useDisclosure();
 
   const synced = async () => {
     await client.invalidateQueries({ queryKey: syncEnabledQueryKey });
@@ -165,6 +169,14 @@ export function SyncSettings({
           パスキーでログイン
         </Button>
       ) : null}
+      <Button
+        variant="outline"
+        alignSelf="start"
+        disabled={pending || locked !== undefined || status.state === "signed-out"}
+        onClick={reissuing.onOpen}
+      >
+        復元用のコードを再発行
+      </Button>
       <Text fontSize="xs" color="fg.muted">
         同期をやめると、サーバーにあるデータを消します。この端末のデータは残ります。
       </Text>
@@ -249,6 +261,7 @@ export function SyncSettings({
           </Alert.Root>
         ) : null}
         <RecoveryCodeDialog
+          key={started?.code ?? "closed"}
           code={started?.code}
           withoutPrf={started?.withoutPrf ?? false}
           onClose={() => {
@@ -287,6 +300,32 @@ export function SyncSettings({
             }
             return true;
           }}
+        />
+        <Modal.Root
+          open={reissuing.open}
+          title="復元用のコードを再発行しますか？"
+          body={
+            <Text>
+              再発行すると、以前のコードは使えなくなります。新しいコードを必ず控えてください。既存のパスキーと、ほかの端末の同期は引き続き使えます。
+            </Text>
+          }
+          cancel={{ children: "キャンセル", disabled: pending }}
+          success={{ children: "再発行する", loading: pending }}
+          closeOnEsc={!pending}
+          closeOnOverlay={!pending}
+          withCloseButton={!pending}
+          onClose={reissuing.onClose}
+          onCancel={reissuing.onClose}
+          onSuccess={() =>
+            void run(async () => {
+              try {
+                const code = await reissueRecoveryCode(deps);
+                setStarted({ code, withoutPrf: false });
+              } finally {
+                reissuing.onClose();
+              }
+            })
+          }
         />
         <Modal.Root
           open={stopping.open}

@@ -1,6 +1,7 @@
 import { expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { createMemoryRepository } from "../../../storage/memory-repository";
+import { deriveKeys, generateMasterSecret } from "../../../storage/sync-crypto";
 import type { Repository } from "../../../storage/repository";
 import type { Passkeys, SyncServer } from "../../../storage/sync-passkey";
 import type { TurnstileWidgetProps } from "../../-turnstile-widget";
@@ -61,6 +62,7 @@ const fakeServer = (overrides: Partial<SyncServer> = {}): SyncServer => ({
     prfWrap: null,
     recoveryWrap: "not-a-wrap",
   }),
+  reissueRecovery: async () => false,
   recoveryLogin: async () => undefined,
   setPrfWrap: async () => true,
   stop: async () => ({ ok: true }),
@@ -135,4 +137,43 @@ test("stopping asks first, then removes the data on the server", async () => {
     .element(screen.getByRole("button", { name: "パスキーで同期を始める" }))
     .toBeVisible();
   expect(await repository.sync.meta.get()).toBeUndefined();
+});
+
+test("reissue warns first and asks to keep every new code", async () => {
+  const reissueRecovery = vi.fn<SyncServer["reissueRecovery"]>(async () => true);
+  const screen = await renderSettings(fakeServer({ reissueRecovery }));
+  await screen.getByRole("button", { name: "パスキーで同期を始める" }).click();
+  await screen.getByRole("button", { name: "確認を済ませる" }).click();
+  await screen.getByRole("button", { name: "パスキーを作って始める" }).click();
+  const saving = screen.getByRole("dialog", { name: "復元用のコードを控えてください" });
+  await saving.getByText("控えました").click();
+  await saving.getByRole("button", { name: "閉じる" }).click();
+  await screen.getByRole("button", { name: "復元用のコードを再発行" }).click();
+  const confirm = screen.getByRole("dialog", { name: "復元用のコードを再発行しますか？" });
+  await expect.element(confirm.getByText(/以前のコードは使えなくなります/)).toBeVisible();
+  expect(reissueRecovery).not.toHaveBeenCalled();
+  await confirm.getByRole("button", { name: "再発行する" }).click();
+  await expect.element(saving).toBeVisible();
+  await expect.element(saving.getByRole("button", { name: "閉じる" })).toBeDisabled();
+  expect(reissueRecovery).toHaveBeenCalledTimes(1);
+});
+
+test("a legacy device without the root explains why reissue is unavailable", async () => {
+  const repository = createMemoryRepository();
+  await repository.sync.meta.put({
+    accountId: "account",
+    cursor: 0,
+    ...(await deriveKeys(generateMasterSecret())),
+  });
+  const update = vi.fn<SyncServer["reissueRecovery"]>(async () => true);
+  const screen = await renderSettings(fakeServer({ reissueRecovery: update }), repository);
+  await screen.getByRole("button", { name: "復元用のコードを再発行" }).click();
+  await screen
+    .getByRole("dialog", { name: "復元用のコードを再発行しますか？" })
+    .getByRole("button", { name: "再発行する" })
+    .click();
+  await expect
+    .element(screen.getByRole("alert").getByText(/この端末には再発行に必要な鍵が残っていません/))
+    .toBeVisible();
+  expect(update).not.toHaveBeenCalled();
 });
