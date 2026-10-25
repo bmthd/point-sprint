@@ -1,9 +1,15 @@
-import { type BreakdownRow, calculateAll } from "@workspaces/domain";
+import {
+  type BreakdownRow,
+  type Plan,
+  type SpuMonth,
+  calculateAll,
+  planWithSpu,
+} from "@workspaces/domain";
 import { atom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
-import { accountSettingsOf, withEffectiveAccount } from "./accounts";
-import { plansAtom, profileAtom, shopsAtom } from "./queries";
+import { type AccountSettings, accountSettingsOf, withEffectiveAccount } from "./accounts";
+import { plansAtom, profileAtom, shopsAtom, spuMonthsAtom } from "./queries";
 
 /** Structural equality for the plain data that plans and calculation results are made of. */
 export function deepEqual(a: unknown, b: unknown): boolean {
@@ -24,19 +30,40 @@ export function deepEqual(a: unknown, b: unknown): boolean {
 
 /**
  * Whether the user tells accounts apart, and the accounts. Only the parts of the profile the
- * accounts are made of, so a change to the SPU defaults does not recalculate every plan.
+ * accounts are made of, so saving the profile without changing them does not recalculate every
+ * plan.
  */
 export const accountSettingsAtom = selectAtom(profileAtom, accountSettingsOf, deepEqual);
 
-/** Every plan at once, because caps can be shared between plans of the same account. */
-export const calculationAtom = atom((get) => {
+/** The plan as it is calculated: with the account it is bought with and the SPU of its months. */
+const toCalculated = (plan: Plan, settings: AccountSettings, months: SpuMonth[]) =>
+  planWithSpu(withEffectiveAccount(plan, settings), months);
+
+/**
+ * Turns plans into the plans as they are calculated, for calculating plans with a change not
+ * saved yet. Apply it after the change, so an order of a month the plan did not have gets its SPU.
+ */
+export const asCalculatedAtom = atom((get) => {
   const settings = get(accountSettingsAtom);
-  const plans = get(plansAtom).map((plan) => withEffectiveAccount(plan, settings));
-  return calculateAll(plans, get(shopsAtom));
+  const months = get(spuMonthsAtom);
+  return (plans: Plan[]) => plans.map((plan) => toCalculated(plan, settings, months));
 });
+
+/** Every plan as it is calculated. */
+export const calculatedPlansAtom = atom((get) => get(asCalculatedAtom)(get(plansAtom)));
+
+/** Every plan at once, because caps can be shared between plans of the same account. */
+export const calculationAtom = atom((get) =>
+  calculateAll(get(calculatedPlansAtom), get(shopsAtom)),
+);
 
 export const planAtom = atomFamily((id: string) =>
   selectAtom(plansAtom, (plans) => plans.find((plan) => plan.id === id)),
+);
+
+/** The plan as it is calculated, with the SPU among its benefits. */
+export const calculatedPlanAtom = atomFamily((id: string) =>
+  selectAtom(calculatedPlansAtom, (plans) => plans.find((plan) => plan.id === id), deepEqual),
 );
 
 type OrderKey = { planId: string; orderId: string };

@@ -1,15 +1,19 @@
 import {
   type Benefit,
   copyOrder,
-  enableAchievedSpu,
+  enableSpu,
   moveOrder,
+  newlyAchievedSpu,
   type Order,
   type Plan,
+  type SpuAchievement,
   toggleBenefit,
 } from "@workspaces/domain";
-import { atom } from "jotai";
-import { savePlanAtom } from "./mutations";
-import { shopsAtom } from "./queries";
+import { atom, type Getter } from "jotai";
+import { withEffectiveAccount } from "./accounts";
+import { accountSettingsAtom } from "./derived";
+import { savePlanAtom, saveSpuMonthAtom } from "./mutations";
+import { plansAtom, shopsAtom } from "./queries";
 
 const replaceOrder = (plan: Plan, orderId: string, change: (order: Order) => Order): Plan => {
   if (!plan.orders.some((order) => order.id === orderId)) {
@@ -99,20 +103,47 @@ export const updateBenefit = (
  * runs, not when the atom is set. Operations set one after another therefore compose: each sees the
  * ones before it, and one that fails is left out of the later ones' saves.
  *
- * A change whose orders newly achieve an SPU (楽天ブックス、楽天Kobo) also turns that SPU on.
+ * A change whose orders newly achieve an SPU (楽天ブックス、楽天Kobo) for the plan's account and
+ * the order's month also turns that SPU on for the month, once the plan is saved.
  */
 function planOperationAtom<TArgs>(toChange: (args: TArgs) => (plan: Plan) => Plan) {
-  return atom(null, (get, _set, { planId, ...args }: { planId: string } & TArgs) => {
+  return atom(null, async (get, _set, { planId, ...args }: { planId: string } & TArgs) => {
     const change = toChange(args as unknown as TArgs);
-    const shops = get(shopsAtom);
-    return get(savePlanAtom).mutateAsync({
+    const achieved = newlyAchieved(get, planId, change);
+    await get(savePlanAtom).mutateAsync({
       planId,
       change: (plan) => {
         if (!plan) throw new Error(`plan ${planId} does not exist`);
-        return enableAchievedSpu(plan, change(plan), shops);
+        return change(plan);
       },
     });
+    const saveMonth = get(saveSpuMonthAtom).mutateAsync;
+    await Promise.all(
+      achieved.map(({ accountId, month, benefitId }) =>
+        saveMonth({ accountId, month, change: (ids) => enableSpu(ids, [benefitId]) }),
+      ),
+    );
   });
+}
+
+/** The SPU that `change` to the plan as it is in the cache newly achieves. */
+function newlyAchieved(
+  get: Getter,
+  planId: string,
+  change: (plan: Plan) => Plan,
+): SpuAchievement[] {
+  const settings = get(accountSettingsAtom);
+  const before = get(plansAtom).map((plan) => withEffectiveAccount(plan, settings));
+  let after: Plan[];
+  try {
+    after = before.map((plan) =>
+      plan.id === planId ? withEffectiveAccount(change(plan), settings) : plan,
+    );
+  } catch {
+    // The save fails the same way.
+    return [];
+  }
+  return newlyAchievedSpu(before, after, get(shopsAtom));
 }
 
 export const addOrderAtom = planOperationAtom(
