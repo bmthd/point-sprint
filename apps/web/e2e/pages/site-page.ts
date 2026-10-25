@@ -98,9 +98,10 @@ export class Footer {
     this.root = page.getByRole("contentinfo");
   }
 
-  /** The `href` of every link. */
+  /** The `href` of every link to a page of the site (not the Rakuten credit, which leaves it). */
   linkTargets() {
     return this.root
+      .getByRole("navigation", { name: "サイトの案内" })
       .getByRole("link")
       .evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
   }
