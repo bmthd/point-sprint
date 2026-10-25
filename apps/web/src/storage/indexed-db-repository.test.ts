@@ -311,3 +311,54 @@ test("opening a version 9 database moves each plan's SPU to the month's SPU", as
   ]);
   expect(repo.wasReset()).toBe(false);
 });
+
+test("opening a version 10 database moves each plan's orders to rows of their own", async () => {
+  const name = uniqueName();
+  const raw = await new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open(name, 10);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      db.createObjectStore("plans", { keyPath: "id" });
+      db.createObjectStore("shops", { keyPath: "id" });
+      db.createObjectStore("profile");
+      db.createObjectStore("spuMonths", { keyPath: "id" });
+      db.createObjectStore("quarantine", { autoIncrement: true });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  const order = (id: string) => ({
+    id,
+    date: "2026-10-05",
+    lineItems: [
+      {
+        id: crypto.randomUUID(),
+        name: "item",
+        unitPrice: 1000,
+        quantity: 1,
+        taxRate: 0.1,
+        discount: 0,
+      },
+    ],
+    onHold: false,
+    tags: [],
+    shopId: shop.id,
+  });
+  const orders = [
+    order("00000000-0000-4000-8000-000000000012"),
+    order("00000000-0000-4000-8000-000000000011"),
+  ];
+  await new Promise<void>((resolve, reject) => {
+    const tx = raw.transaction(["plans"], "readwrite");
+    tx.objectStore("plans").put({ ...plan, orders });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  raw.close();
+
+  const repo = createIndexedDbRepository({ name });
+
+  expect(await repo.plans.list()).toEqual([{ ...plan, orders }]);
+  expect(await countRaw(name, "orders")).toBe(2);
+  expect(repo.wasReset()).toBe(false);
+});

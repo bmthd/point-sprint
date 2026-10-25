@@ -3,15 +3,29 @@ import {
   type Migration,
   migrateRow,
   migrations as domainMigrations,
-  type Plan,
+  type OrderRow,
+  OrderRowSchema,
+  PROFILE_ID,
+  type PlanRow,
+  PlanRowSchema,
   PlanSchema,
   type Profile,
   ProfileSchema,
   seedRows,
   type Shop,
   ShopSchema,
+  type SpuMonth,
   SpuMonthSchema,
   type StoreName,
+  type SyncKind,
+  type SyncRow,
+  isNewer,
+  joinPlan,
+  orderRowId,
+  splitPlan,
+  syncKey,
+  syncSchemas,
+  syncStores,
 } from "@workspaces/domain";
 import { createIndexedDb } from "seitu/web/indexed-db";
 import { createIndexedDbTable } from "seitu/web/indexed-db-table";
@@ -19,16 +33,17 @@ import * as v from "valibot";
 import { OutdatedDatabaseError, type QuarantinedRow, type Repository } from "./repository";
 
 const PROFILE_KEY = "profile";
+const SYNC_META_KEY = "meta";
 
 const QuarantineSchema = v.object({
-  store: v.picklist(["plans", "shops", "profile", "spuMonths"]),
+  store: v.picklist(["plans", "orders", "shops", "profile", "spuMonths"]),
   value: v.unknown(),
   issues: v.array(v.object({ message: v.string(), path: v.array(v.string()) })),
 });
 
 type Issue = {
   readonly message: string;
-  readonly path?: ReadonlyArray<PropertyKey | { readonly key: PropertyKey }> | undefined;
+  readonly path?: ReadonlyArray<PropertyKey | { readonly key: unknown }> | undefined;
 };
 
 /** Plain, cloneable copies of the issues: validator issues may hold functions IndexedDB cannot store. */
@@ -43,12 +58,77 @@ const plainIssues = (issues: readonly Issue[]) =>
 type Rejected = { store: StoreName; key: IDBValidKey; issues: readonly Issue[] };
 
 const schemas = {
-  plans: PlanSchema,
+  plans: PlanRowSchema,
+  orders: OrderRowSchema,
   shops: ShopSchema,
   profile: ProfileSchema,
   spuMonths: SpuMonthSchema,
 };
-const STORES = ["plans", "shops", "profile", "spuMonths", "quarantine"] as const;
+
+/** A row marked to send, or the mark that a row was removed, keyed by `syncKey`. */
+const SyncMarkSchema = v.object({
+  kind: v.picklist(["plan", "order", "shop", "profile", "spuMonth"]),
+  id: v.string(),
+  updatedAt: v.string(),
+});
+type SyncMark = v.InferOutput<typeof SyncMarkSchema>;
+
+const isCryptoKey = (value: unknown): value is CryptoKey =>
+  typeof value === "object" && value !== null && "algorithm" in value && "usages" in value;
+const SyncMetaSchema = v.object({
+  accountId: v.string(),
+  cursor: v.number(),
+  encryptionKey: v.custom<CryptoKey>(isCryptoKey),
+  idKey: v.custom<CryptoKey>(isCryptoKey),
+});
+
+const ROW_STORES = ["plans", "orders", "shops", "profile", "spuMonths"] as const;
+const STORES = [...ROW_STORES, "quarantine", "outbox", "tombstones", "syncMeta"] as const;
+
+function request<T>(request: IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/** The key of a row in its store: the profile has one fixed key, an order its plan's and its own id. */
+const rowKey = (kind: SyncKind, id: string): IDBValidKey =>
+  kind === "profile" ? PROFILE_KEY : kind === "order" ? id.split(":") : id;
+
+/** The sync id of a stored row, which `rowKey` turns back into its key. */
+const syncIdOf = (kind: SyncKind, row: { id?: string; planId?: string }) =>
+  kind === "profile"
+    ? PROFILE_ID
+    : kind === "order"
+      ? orderRowId(row.planId ?? "", row.id ?? "")
+      : (row.id ?? "");
+
+/** Writes a row and marks it to send; a row written again is no longer removed. */
+function writeRow(
+  transaction: IDBTransaction,
+  kind: SyncKind,
+  id: string,
+  row: { updatedAt: string },
+) {
+  const store = transaction.objectStore(syncStores[kind]);
+  if (kind === "profile") store.put(row, PROFILE_KEY);
+  else store.put(row);
+  const key = syncKey(kind, id);
+  transaction.objectStore("tombstones").delete(key);
+  transaction
+    .objectStore("outbox")
+    .put({ kind, id, updatedAt: row.updatedAt } satisfies SyncMark, key);
+}
+
+/** Removes a row, keeps the mark that it was removed, and marks the removal to send. */
+function removeRow(transaction: IDBTransaction, kind: SyncKind, id: string, updatedAt: string) {
+  transaction.objectStore(syncStores[kind]).delete(rowKey(kind, id));
+  const key = syncKey(kind, id);
+  const mark: SyncMark = { kind, id, updatedAt };
+  transaction.objectStore("tombstones").put(mark, key);
+  transaction.objectStore("outbox").put(mark, key);
+}
 
 function completion(transaction: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -147,8 +227,17 @@ function openDatabase(name: string, migrations: readonly Migration[], state: Ope
     stores: {
       plans: createIndexedDbTable({
         keyPath: "id",
-        schema: PlanSchema,
+        schema: PlanRowSchema,
         onValidationError: quarantine("plans", idOf),
+      }),
+      orders: createIndexedDbTable({
+        keyPath: ["planId", "id"],
+        schema: OrderRowSchema,
+        indexes: { planId: "planId" },
+        onValidationError: quarantine("orders", (value) => {
+          const { planId, id } = value as { planId: string; id: string };
+          return [planId, id];
+        }),
       }),
       shops: createIndexedDbTable({
         keyPath: "id",
@@ -165,14 +254,19 @@ function openDatabase(name: string, migrations: readonly Migration[], state: Ope
         onValidationError: quarantine("spuMonths", idOf),
       }),
       quarantine: createIndexedDbTable({ autoIncrement: true, schema: QuarantineSchema }),
+      outbox: createIndexedDbTable({ schema: SyncMarkSchema }),
+      tombstones: createIndexedDbTable({ schema: SyncMarkSchema }),
+      syncMeta: createIndexedDbTable({ schema: SyncMetaSchema }),
     },
     onUpgrade: ({ oldVersion, migrate, transaction }) => {
       // A new database (oldVersion 0) has no rows; an index-only bump has no migrations to apply.
       if (oldVersion === 0 || !migrations.some((m) => m.to > oldVersion)) return;
       if (migrations.some((m) => m.to > oldVersion && m.seed)) seed(transaction, oldVersion);
-      migrate("plans", migrateWith<Plan>("plans", oldVersion));
+      migrate("plans", migrateWith<PlanRow>("plans", oldVersion));
+      migrate("orders", migrateWith<OrderRow>("orders", oldVersion));
       migrate("shops", migrateWith<Shop>("shops", oldVersion));
       migrate("profile", migrateWith<Profile>("profile", oldVersion));
+      migrate("spuMonths", migrateWith<SpuMonth>("spuMonths", oldVersion));
     },
   });
   return db;
@@ -191,10 +285,13 @@ export function createIndexedDbRepository(
     name?: string;
     /** Tests only: replaces the domain migrations. */
     migrations?: readonly Migration[];
+    /** When a removal happens, which is when it was made for the other devices. */
+    now?: () => Date;
   } = {},
 ): Repository {
   const name = options.name ?? "point-sprint";
   const migrations = options.migrations ?? domainMigrations;
+  const now = () => (options.now?.() ?? new Date()).toISOString();
   const version = schemaVersion(migrations);
   const state: OpenState = { moves: new Map(), migrationFailed: false };
   let reset = false;
@@ -232,24 +329,195 @@ export function createIndexedDbRepository(
     return db;
   };
 
+  const transaction = async (stores: readonly string[], mode: IDBTransactionMode) => {
+    const database = await (await settled())["~"].getDatabase();
+    const opened = database.transaction(stores, mode);
+    return { transaction: opened, done: completion(opened) };
+  };
+
+  /** Writes one row of a store that holds no plan's parts, with its mark to send. */
+  const putRow = async <T extends { updatedAt: string }>(
+    kind: Exclude<SyncKind, "plan" | "order">,
+    id: (row: T) => string,
+    row: T,
+  ) => {
+    const parsed = v.parse(syncSchemas[kind], structuredClone(row)) as T;
+    const { transaction: tx, done } = await transaction(
+      [syncStores[kind], "outbox", "tombstones"],
+      "readwrite",
+    );
+    writeRow(tx, kind, id(parsed), parsed);
+    await done;
+  };
+
   return {
     plans: {
-      list: async () => (await settled()).stores.plans.getAll(),
-      get: async (id) => (await settled()).stores.plans.get(id),
-      put: async (plan) => (await settled()).stores.plans.put(plan),
-      delete: async (id) => (await settled()).stores.plans.delete(id),
+      list: async () => {
+        const db = await settled();
+        const [rows, orders] = await Promise.all([
+          db.stores.plans.getAll(),
+          db.stores.orders.getAll(),
+        ]);
+        return rows.map((row) => joinPlan(row, orders));
+      },
+      get: async (id) => {
+        const db = await settled();
+        const row = await db.stores.plans.get(id);
+        return row && joinPlan(row, await db.stores.orders.index("planId").getAll(id));
+      },
+      // The plan's row and the orders that changed are written with their marks to send in one
+      // transaction, so a change is never saved without being sent later.
+      put: async (plan) => {
+        const parsed = v.parse(PlanSchema, structuredClone(plan));
+        const { transaction: tx, done } = await transaction(
+          ["plans", "orders", "outbox", "tombstones"],
+          "readwrite",
+        );
+        const [row, orders] = await Promise.all([
+          request<PlanRow | undefined>(tx.objectStore("plans").get(parsed.id)),
+          request<OrderRow[]>(tx.objectStore("orders").index("planId").getAll(parsed.id)),
+        ]);
+        const split = splitPlan(parsed, { row, orders });
+        if (split.row) writeRow(tx, "plan", parsed.id, split.row);
+        for (const order of split.orders) {
+          writeRow(tx, "order", orderRowId(parsed.id, order.id), order);
+        }
+        for (const id of split.removedOrderIds) {
+          removeRow(tx, "order", orderRowId(parsed.id, id), parsed.updatedAt);
+        }
+        await done;
+      },
+      delete: async (id) => {
+        const removedAt = now();
+        const { transaction: tx, done } = await transaction(
+          ["plans", "orders", "outbox", "tombstones"],
+          "readwrite",
+        );
+        const orders = await request<OrderRow[]>(
+          tx.objectStore("orders").index("planId").getAll(id),
+        );
+        removeRow(tx, "plan", id, removedAt);
+        for (const order of orders) removeRow(tx, "order", orderRowId(id, order.id), removedAt);
+        await done;
+      },
     },
     shops: {
       list: async () => (await settled()).stores.shops.getAll(),
-      put: async (shop) => (await settled()).stores.shops.put(shop),
+      put: (shop) => putRow<Shop>("shop", (row) => row.id, shop),
     },
     profile: {
       get: async () => (await settled()).stores.profile.get(PROFILE_KEY),
-      put: async (profile) => (await settled()).stores.profile.put(profile, PROFILE_KEY),
+      put: (profile) => putRow<Profile>("profile", () => PROFILE_ID, profile),
     },
     spuMonths: {
       list: async () => (await settled()).stores.spuMonths.getAll(),
-      put: async (month) => (await settled()).stores.spuMonths.put(month),
+      put: (month) => putRow<SpuMonth>("spuMonth", (row) => row.id, month),
+    },
+    sync: {
+      pending: async () => {
+        const { transaction: tx, done } = await transaction(
+          [...ROW_STORES, "outbox", "tombstones"],
+          "readonly",
+        );
+        const marks = await request<SyncMark[]>(tx.objectStore("outbox").getAll());
+        const rows = await Promise.all(
+          marks.map(async ({ kind, id }): Promise<SyncRow | undefined> => {
+            const [tombstone, value] = await Promise.all([
+              request<SyncMark | undefined>(tx.objectStore("tombstones").get(syncKey(kind, id))),
+              request<{ updatedAt: string } | undefined>(
+                tx.objectStore(syncStores[kind]).get(rowKey(kind, id)),
+              ),
+            ]);
+            if (tombstone) return { kind, id, updatedAt: tombstone.updatedAt, deleted: true };
+            return value && { kind, id, updatedAt: value.updatedAt, deleted: false, value };
+          }),
+        );
+        await done;
+        return rows.filter((row) => row !== undefined);
+      },
+      acknowledge: async (rows) => {
+        const { transaction: tx, done } = await transaction(["outbox"], "readwrite");
+        const outbox = tx.objectStore("outbox");
+        await Promise.all(
+          rows.map(async ({ kind, id, updatedAt }) => {
+            const key = syncKey(kind, id);
+            const mark = await request<SyncMark | undefined>(outbox.get(key));
+            if (mark?.updatedAt === updatedAt) outbox.delete(key);
+          }),
+        );
+        await done;
+      },
+      apply: async (rows) => {
+        const { transaction: tx, done } = await transaction(
+          [...ROW_STORES, "outbox", "tombstones", "quarantine"],
+          "readwrite",
+        );
+        const written = await Promise.all(
+          rows.map(async (row) => {
+            const key = syncKey(row.kind, row.id);
+            const [tombstone, current] = await Promise.all([
+              request<SyncMark | undefined>(tx.objectStore("tombstones").get(key)),
+              request<{ updatedAt: string } | undefined>(
+                tx.objectStore(syncStores[row.kind]).get(rowKey(row.kind, row.id)),
+              ),
+            ]);
+            if (!isNewer(row, current ?? tombstone)) return false;
+            if (row.deleted) {
+              removeRow(tx, row.kind, row.id, row.updatedAt);
+              tx.objectStore("outbox").delete(key);
+              return true;
+            }
+            const parsed = v.safeParse(syncSchemas[row.kind], row.value);
+            if (!parsed.success) {
+              tx.objectStore("quarantine").add({
+                store: syncStores[row.kind],
+                value: row.value,
+                issues: plainIssues(parsed.issues),
+              });
+              return false;
+            }
+            writeRow(tx, row.kind, row.id, parsed.output);
+            tx.objectStore("outbox").delete(key);
+            return true;
+          }),
+        );
+        await done;
+        return written.some(Boolean);
+      },
+      markAllPending: async () => {
+        const { transaction: tx, done } = await transaction(
+          [...ROW_STORES, "outbox", "tombstones"],
+          "readwrite",
+        );
+        const outbox = tx.objectStore("outbox");
+        const kinds = Object.keys(syncStores) as SyncKind[];
+        await Promise.all([
+          ...kinds.map(async (kind) => {
+            const rows = await request<{ id?: string; planId?: string; updatedAt: string }[]>(
+              tx.objectStore(syncStores[kind]).getAll(),
+            );
+            for (const row of rows) {
+              const id = syncIdOf(kind, row);
+              outbox.put(
+                { kind, id, updatedAt: row.updatedAt } satisfies SyncMark,
+                syncKey(kind, id),
+              );
+            }
+          }),
+          request<SyncMark[]>(tx.objectStore("tombstones").getAll()).then((marks) => {
+            for (const mark of marks) outbox.put(mark, syncKey(mark.kind, mark.id));
+          }),
+        ]);
+        await done;
+      },
+      meta: {
+        get: async () => (await settled()).stores.syncMeta.get(SYNC_META_KEY),
+        put: async (meta) => {
+          const db = await settled();
+          if (meta) await db.stores.syncMeta.put(meta, SYNC_META_KEY);
+          else await db.stores.syncMeta.delete(SYNC_META_KEY);
+        },
+      },
     },
     clear: async () => {
       const database = await (await settled())["~"].getDatabase();
