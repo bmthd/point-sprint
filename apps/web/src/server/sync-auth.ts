@@ -102,9 +102,10 @@ async function newSession(deps: SyncAuthDeps, accountId: string) {
   };
 }
 
+/** The options without extensions: the device adds the PRF's, whose salt is binary. */
 export type SyncRegistrationOptions = {
   challengeId: string;
-  options: PublicKeyCredentialCreationOptionsJSON;
+  options: Omit<PublicKeyCredentialCreationOptionsJSON, "extensions">;
 };
 
 /**
@@ -137,11 +138,10 @@ export async function registrationOptions(
     userID: encoder.encode(accountId),
     attestationType: "none",
     authenticatorSelection: { residentKey: "required", userVerification: "required" },
-    // The browser is asked for the PRF on the device, which adds its own salt.
-    extensions: { prf: {} } as AuthenticationExtensionsClientInputs,
   });
   const challengeId = await saveChallenge(deps, options.challenge, purpose, accountId);
-  return { challengeId, options };
+  const { extensions: _, ...rest } = options;
+  return { challengeId, options: rest };
 }
 
 export type SyncSession = { accountId: string; credentialId: string; sessionToken: string };
@@ -204,7 +204,7 @@ export async function register(
 
 export type SyncAuthenticationOptions = {
   challengeId: string;
-  options: PublicKeyCredentialRequestOptionsJSON;
+  options: Omit<PublicKeyCredentialRequestOptionsJSON, "extensions">;
 };
 
 /** The options for logging in with any of the site's passkeys, which the user picks. */
