@@ -59,8 +59,11 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 
 | トークン | ライト | ダーク | 理由 |
 | --- | --- | --- | --- |
-| `bg.base` | `#f5f5f5` | `#121212` | ページの地を薄い灰にして、白いカード（`bg.panel`）を浮かせる |
-| `bg.panel` | `#ffffff` | `#1e1e1e` | カード、表、シートの面 |
+| `bg.base` | `#f4f5f7` | `#212328` | ページの地をわずかに青みのある灰にして、カード（`bg.panel`）を浮かせる。ダークは黒ではなく濃い灰にして、沈んで見えないようにする |
+| `bg.panel` | `#ffffff` | `#2c2f35` | カード、表、シートの面。ダークは地より一段明るくする |
+| `bg.muted` | `black.100` | `#41454e` | ゲージの溝、セグメントの溝、保留中の注文の地。ダークでは `bg.panel` の上で見えるよう一段明るくする |
+| `bg.subtle` | `black.50` | `#363a42` | 棒グラフ（`Progress`）の溝など、面より一段だけ沈める地。ダークでは `bg.panel` と `bg.muted` の間にする |
+| `border.base`・`border.muted` | `black.100` | `#3a3d44` | カードの枠（ダーク）、区切り線。ダークの面 `bg.panel` より一段明るくする |
 | `border.emphasized` | `#8f8f8f` | `#8a8a8a` | 入力欄、ボタン、チェックボックスの枠。細い線でも地に溶けないよう、`bg.panel` の上で 4.5:1 前後にする |
 | `fg.base` | `#171717` | `#fafafa` | 本文。ダークでは白に近づけ、暗い地でもくっきり読めるようにする |
 | `fg.emphasized` | `gray.600` | `gray.100` | 本文に次ぐ文字 |
@@ -69,7 +72,7 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 
 ### 既定のまま使うもの
 
-`bg.muted`（セグメントの溝、保留中の注文の地）、`bg.subtle`、`bg.overlay`（シートの背後）、`border.base`（カードの枠、区切り線）、`border.muted`。
+`bg.overlay`（シートの背後）。ライトの `border.base`（区切り線）と `border.muted`。
 
 ### 追加するもの: `point.*`（ポイントの内訳の4区分）
 
@@ -77,8 +80,8 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 
 | トークン | ライト | ダーク | 区別のしかた |
 | --- | --- | --- | --- |
-| `point.base` | `gray.300` | `gray.700` | 4区分で最も控えめ |
-| `point.spu` | `gray.600` | `gray.400` | 通常と明度で区別する |
+| `point.base` | `gray.300` | `gray.500` | 4区分で最も控えめ |
+| `point.spu` | `gray.600` | `gray.300` | 通常と明度で区別する |
 | `point.marathon` | `brand.500` | `brand.400` | 赤 |
 | `point.campaign` | `amber.400` | `amber.300` | 必ず斜線の模様と組み合わせる（模様の地は `bg.panel`） |
 
@@ -87,8 +90,8 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 部品 | 使うトークン |
 | --- | --- |
 | ページ | 地 `bg.base`、文字 `fg.base` |
-| カード、表、ボトムシート | `Card.Root` の既定の `variant="panel"` と `size="md"`。地 `bg.base` の上に白い面 `bg.panel` を浮かせる。中身は `Card.Body` に置く |
-| サマリーカード | `Card.Root variant="solid" colorScheme="primary"`。次に上限に届く特典の 1 行は地 `blackAlpha.400`、内訳を開くボタンは `Button variant="subtle" colorScheme="mono"`。補足ラベル `primary.contrast/80`、未到達の買いまわりドット `blackAlpha.400`、到達済みのドット `primary.contrast` |
+| カード、表、ボトムシート | `Card.Root` の既定の `variant="panel"` と `size="md"`。地 `bg.base` の上に白い面 `bg.panel` を浮かせる。中身は `Card.Body` に置く。面の見た目はレイヤースタイル `panel` で決める。ライトは枠線の代わりにごく薄い影で浮かせ、ダークは枠線で区切る。角丸は `l4`（12px） |
+| サマリーカード | `Card.Root variant="solid" colorScheme="primary" rounded="l4"`。次に上限に届く特典の 1 行は地 `blackAlpha.400`、内訳を開くボタンは `Button variant="subtle" colorScheme="mono"`。補足ラベル `primary.contrast/80`、未到達の買いまわりドット `blackAlpha.400`、到達済みのドット `primary.contrast` |
 | サマリーカードの中の内訳 | 地 `bg.panel` の小さなパネルを置き、その上に `point.*` |
 | 主要ボタン（追加する、保存） | `Button colorScheme="primary"`（solid）。ボトムバーの「注文を追加」は `size="xl"`、そのほかは `size="lg"`。画面を移るボタンは `RouterButton` |
 | 補助のボタン（編集、コピー、貼り付け、続けて追加、キャンセル） | `Button variant="outline"`。`outline` は面を塗らないので、地 `bg.base` の上に置くときは `bg="bg.panel"` を付ける。プランの画面と注文の編集の「続けて追加」は `size="lg"`、注文の編集の「貼り付け」は既定の size |
