@@ -3,9 +3,9 @@ import {
   type CalculationResult,
   type Plan,
   channels,
-  monthsOf,
   spuBenefitsOf,
   spuIdsIn,
+  spuMonthsOfPlan,
   spuPurchaseRules,
   toggleSpu,
 } from "@workspaces/domain";
@@ -73,15 +73,15 @@ export const spuRate = (benefits: Benefit[]) => enabledRate(benefits, "spu");
 const now = () => new Date();
 
 /**
- * The SPU the plan's settings show: the account's for one month of the plan's period. `chosen` is
- * the month the user picked; the month of today when the period has it, or the first one, until
- * they pick one.
+ * The SPU the plan's settings show: the account's for one month the plan is calculated with, those
+ * of its period and of its orders (`spuMonthsOfPlan`). `chosen` is the month the user picked; the
+ * month of today when the plan has it, or the first one, until they pick one.
  */
 export function usePlanSpu(plan: Plan, chosen?: string) {
   const settings = useAtomValue(accountSettingsAtom);
   const stored = useAtomValue(spuMonthsAtom);
   const today = useToday(now)?.slice(0, 7);
-  const months = monthsOf(plan.period);
+  const months = spuMonthsOfPlan(plan);
   const fallback = today !== undefined && months.includes(today) ? today : months[0];
   const month = chosen !== undefined && months.includes(chosen) ? chosen : (fallback ?? "");
   const accountId = accountIdOf(plan, settings);
@@ -443,7 +443,7 @@ const yearMonthText = (month: string) => `${month.slice(0, 4)}年${monthText(mon
 
 /**
  * The plan's SPU card. The SPU is the account's for each month, so a change applies to every plan
- * of the account and month; a period of several months picks the month first.
+ * of the account and month; a plan of several months picks the month first.
  */
 export function SpuTiles({ plan, result }: { plan: Plan; result: CalculationResult }) {
   const [chosen, setChosen] = useState<string>();

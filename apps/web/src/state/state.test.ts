@@ -442,3 +442,26 @@ test("an order that achieves an SPU turns it on for its account's month", async 
   expect(spuIdsIn(months, DEFAULT_ACCOUNT_ID, "2026-10").has(BOOKS_SPU_ID)).toBe(true);
   await vi.waitFor(() => expect(booksPoints(store, OTHER_PLAN)).toBe(15));
 });
+
+test("an SPU is achieved by what is saved, not by an earlier operation that failed", async () => {
+  const other: Plan = { ...plan, id: OTHER_PLAN, orders: [] };
+  const { repository, pending } = controlled(
+    createMemoryRepository({ plans: [plan, other], shops: [shop] }),
+  );
+  const store = setup(repository);
+  unsubscribes.push(store.sub(spuMonthsAtom, () => {}));
+  await vi.waitFor(() => expect(store.get(plansAtom)).toHaveLength(2));
+
+  const first = store.set(addOrderAtom, { planId: OTHER_PLAN, order: booksOrder(ORDER_A) });
+  await vi.waitFor(() => expect(pending).toHaveLength(1));
+  const second = store.set(addOrderAtom, { planId: OTHER_PLAN, order: booksOrder(ORDER_B) });
+  pending[0]?.reject(new Error("disk full"));
+  await expect(first).rejects.toThrow("disk full");
+  await vi.waitFor(() => expect(pending).toHaveLength(2));
+  pending[1]?.resolve();
+  await second;
+
+  expect((await repository.plans.get(OTHER_PLAN))?.orders.map((o) => o.id)).toEqual([ORDER_B]);
+  const months = await repository.spuMonths.list();
+  expect(spuIdsIn(months, DEFAULT_ACCOUNT_ID, "2026-10").has(BOOKS_SPU_ID)).toBe(true);
+});

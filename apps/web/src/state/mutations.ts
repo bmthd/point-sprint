@@ -70,12 +70,20 @@ export type PlanChange = { planId: string; change: (plan: Plan | undefined) => P
 /** A change that replaces the whole plan, for creating or saving a plan as it is. */
 export const replacePlan = (plan: Plan): PlanChange => ({ planId: plan.id, change: () => plan });
 
-export const savePlanAtom = atomWithMutation<void, PlanChange, Error, Snapshot>((get) => {
+/** The plans in the repository right before and right after a saved plan change. */
+export type SavedPlans = { before: Plan[]; after: Plan[] };
+
+export const savePlanAtom = atomWithMutation<SavedPlans, PlanChange, Error, Snapshot>((get) => {
   const repository = get(repositoryAtom);
   return {
     mutationFn: async (variables) => {
-      const stored = await repository.plans.get(variables.planId);
-      await repository.plans.put(stamp(variables.change(stored), variables));
+      const before = await repository.plans.list();
+      const saved = stamp(
+        variables.change(before.find((plan) => plan.id === variables.planId)),
+        variables,
+      );
+      await repository.plans.put(saved);
+      return { before, after: upsert(before, saved) };
     },
     ...optimistic(
       get(queryClientAtom),

@@ -715,3 +715,14 @@ test("a plan across two months picks the month whose SPU it changes", async () =
   await expect.poll(() => storedOn("楽天モバイル", "2026-11")).toBe(false);
   expect(await storedOn("楽天モバイル", "2026-10")).toBe(true);
 });
+
+test("the month of an order outside the period can be picked too", async () => {
+  const plan = spuPlan([], [order(0), { ...order(1), date: "2026-11-02" }]);
+  const screen = await renderSettings(plan);
+  await screen
+    .getByRole("radiogroup", { name: "SPU の月" })
+    .getByText("11月", { exact: true })
+    .click();
+  await tapCard(screen.getByRole("checkbox", { name: "楽天モバイル +4倍" }));
+  await expect.poll(() => storedOn("楽天モバイル", "2026-11")).toBe(true);
+});
