@@ -82,6 +82,7 @@ type SyncMark = v.InferOutput<typeof SyncMarkSchema>;
 const isCryptoKey = (value: unknown): value is CryptoKey =>
   typeof value === "object" && value !== null && "algorithm" in value && "usages" in value;
 const SyncMetaSchema = v.object({
+  masterWrap: v.optional(v.string()),
   accountId: v.string(),
   credentialId: v.optional(v.string()),
   cursor: v.number(),

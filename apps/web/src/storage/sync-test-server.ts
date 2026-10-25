@@ -51,6 +51,13 @@ export function createTestBackend({ turnstile = true }: { turnstile?: boolean } 
       const account = () => auth.sessionAccount(deps, cookie);
       const signedOut = { ok: false, reason: "signed-out" } as const;
       const server: SyncServer = {
+        reissueRecovery: async (data) => {
+          record(data);
+          const accountId = await account();
+          return accountId === data.accountId && accountId !== undefined
+            ? auth.reissueRecovery(deps, accountId, data)
+            : false;
+        },
         startOptions: async (data) =>
           auth.registrationOptions(deps, {
             turnstileToken: record(data).turnstileToken,

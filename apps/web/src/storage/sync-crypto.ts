@@ -253,3 +253,12 @@ export async function recoveryVerifier(code: Uint8Array): Promise<string> {
   );
   return toBase64Url(new Uint8Array(await crypto.subtle.digest("SHA-256", bits)));
 }
+
+/** Keeps the root available only to a device that already has the data key. */
+export async function sealMaster(key: CryptoKey, master: Uint8Array): Promise<string> {
+  return seal(key, master, encoder.encode("point-sprint local master v1"));
+}
+
+export async function openMaster(key: CryptoKey, wrapped: string): Promise<Uint8Array> {
+  return open(key, wrapped, encoder.encode("point-sprint local master v1"));
+}

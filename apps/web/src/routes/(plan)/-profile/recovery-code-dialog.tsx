@@ -12,7 +12,7 @@ import {
 import { useState } from "react";
 
 /**
- * The recovery code, shown once right after sync starts. It closes only once the user says they
+ * The recovery code, shown once after starting sync or reissuing it. It closes only once the user says they
  * kept it: the server does not have it, and nobody can give it again.
  */
 export function RecoveryCodeDialog({
@@ -37,7 +37,7 @@ export function RecoveryCodeDialog({
       body={
         <VStack gap="3" alignItems="stretch">
           <Text>
-            パスキーで開けない端末や、パスキーをなくしたときに使います。運営者はこのコードを持っていないので、なくすと戻せません。パスワード管理アプリやメモに控えてください。
+            パスキーで開けない端末や、パスキーをなくしたときに使います。運営者はこのコードを持っておらず、同じコードは再表示できません。パスワード管理アプリやメモに控えてください。
           </Text>
           <Code
             fontSize="lg"

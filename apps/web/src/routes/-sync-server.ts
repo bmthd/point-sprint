@@ -1,5 +1,6 @@
 import {
   syncAddPasskeyOptions,
+  syncReissueRecovery,
   syncLogin,
   syncLoginOptions,
   syncPull,
@@ -17,6 +18,7 @@ import type { SyncServer } from "../storage/sync-passkey";
  * down, like the inquiry's, so that the components' tests do without the server.
  */
 export const syncServer: SyncServer = {
+  reissueRecovery: (data) => syncReissueRecovery({ data }),
   startOptions: (data) => syncStartOptions({ data }),
   addPasskeyOptions: () => syncAddPasskeyOptions(),
   register: (data) => syncRegister({ data }),
