@@ -7,9 +7,9 @@ export const Route = createFileRoute("/(plan)/profile")({
   head: () =>
     pageHead({
       path: "/profile",
-      title: "プロフィール",
+      title: "共通設定",
       description:
-        "ほかの端末との同期と、よく買うショップの登録をします。楽天アカウントを使い分けるときは、アカウントもここで登録します。",
+        "すべてのプランに共通する設定です。月ごとの SPU、ほかの端末との同期、よく買うショップ、楽天アカウントの使い分けを設定します。",
     }),
   component: () => <Profile syncServer={syncServer} />,
 });

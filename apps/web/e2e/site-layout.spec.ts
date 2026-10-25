@@ -12,9 +12,10 @@ async function createPlan(page: Page) {
 
 const pages = (id: string) => [
   { name: "トップ", path: "/" },
-  { name: "プロフィール", path: "/profile" },
+  { name: "共通設定", path: "/profile" },
   { name: "プラン", path: `/plan?id=${id}` },
   { name: "プランの設定", path: `/plan/settings?id=${id}` },
+  { name: "月ごとの SPU", path: "/spu?month=2026-10" },
   { name: "使い方・注意事項", path: "/help" },
   { name: "利用規約", path: "/terms" },
   { name: "プライバシーポリシー", path: "/privacy" },

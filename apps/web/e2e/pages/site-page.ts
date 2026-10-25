@@ -21,7 +21,7 @@ export class Header {
   constructor(readonly page: Page) {
     this.root = page.getByRole("banner");
     this.topLink = this.root.getByRole("link", { name: "ポイントスプリント" });
-    this.profileLink = this.root.getByRole("link", { name: "プロフィール", exact: true });
+    this.profileLink = this.root.getByRole("link", { name: "共通設定", exact: true });
     this.menuButton = this.root.getByRole("button", { name: "メニュー" });
     this.colorModeButton = this.root.getByRole("button", { name: /^カラーモード/ });
   }
@@ -67,7 +67,7 @@ export class Menu {
 
   constructor(readonly page: Page) {
     this.root = page.getByRole("dialog", { name: "メニュー" });
-    this.profileLink = this.root.getByRole("link", { name: "プロフィール", exact: true });
+    this.profileLink = this.root.getByRole("link", { name: "共通設定", exact: true });
     this.shareSite = this.root.getByRole("region", { name: "このサイトをシェア" });
   }
 
