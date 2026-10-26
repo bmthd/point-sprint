@@ -17,17 +17,16 @@ import {
   Button,
   Card,
   CheckboxCard,
+  CircleQuestionMarkIcon,
   Flex,
   Heading,
   Image,
   Link,
   type LinkProps,
-  List,
   Modal,
-  NativeAccordion,
   SimpleGrid,
+  Tag,
   Text,
-  VStack,
   useDisclosure,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
@@ -36,7 +35,8 @@ import { withEffectiveAccount } from "../../../state/accounts";
 import { accountSettingsAtom, planResultAtom } from "../../../state/derived";
 import { saveSpuMonthAtom } from "../../../state/mutations";
 import { plansAtom, spuMonthsAtom } from "../../../state/queries";
-import { ExternalIcon } from "../../../ui/icons";
+import { ExternalIcon, ForwardIcon } from "../../../ui/icons";
+import { RouterButton } from "../../../ui/router-link";
 import { imageUrl, pointsText, rateText } from "../-order-shared";
 import { monthDay, monthText, useSpuOffMessages } from "../-warnings";
 
@@ -198,24 +198,6 @@ function SpuLink(props: LinkProps) {
   );
 }
 
-/** Many users check 楽天's page first, so it leads the card as a button. */
-function SpuPageButton() {
-  return (
-    <Button
-      as="a"
-      href={SPU_PAGE_URL}
-      target="_blank"
-      rel="noreferrer"
-      variant="outline"
-      colorScheme="primary"
-      w="full"
-      endIcon={<ExternalIcon />}
-    >
-      楽天で自分のSPUを確認する
-    </Button>
-  );
-}
-
 function DetailBody({
   benefit,
   capped,
@@ -298,9 +280,9 @@ function TileGroup({
         <Heading as="h3" id={titleId} fontSize="sm">
           {title}
         </Heading>
-        <Badge colorScheme="mono" variant="subtle">
+        <Tag colorScheme="mono" variant="subtle" size="sm" bg="bg.muted">
           {note}
-        </Badge>
+        </Tag>
       </Flex>
       <SimpleGrid
         role="group"
@@ -339,52 +321,91 @@ function TileGroup({
   );
 }
 
-/** The plans the month's SPU is used by, folded: what a change to it reaches. */
-function UsingPlans({ accountId, month }: { accountId: string; month: string }) {
+/**
+ * The plans the month's SPU is used by, as links. Opened from a plan (`planId`), only the others:
+ * that the SPU is the plan's own goes without saying, and the others are what a change reaches.
+ */
+function UsingPlans({
+  accountId,
+  month,
+  planId,
+}: {
+  accountId: string;
+  month: string;
+  planId: string | undefined;
+}) {
   const plans = useAtomValue(plansAtom);
   const settings = useAtomValue(accountSettingsAtom);
   const using = plansUsingSpuMonth(
     plans.map((plan) => withEffectiveAccount(plan, settings)),
     accountId,
     month,
-  );
-  const ofMonth = `${monthText(month)}の`;
+  ).filter(({ plan }) => plan.id !== planId);
+  if (planId !== undefined && using.length === 0) return null;
+  const label = `${planId === undefined ? "" : "ほかに "}${monthText(month)}の注文があるプラン`;
   return (
-    <NativeAccordion.Root variant="panel" animate={false}>
-      <NativeAccordion.Item>
-        <NativeAccordion.Button fontSize="sm" color="fg.muted" gap="2">
-          この SPU を使うプラン
-          <Badge colorScheme="primary" variant="subtle" fontVariantNumeric="tabular-nums">
-            {using.length}件
-          </Badge>
-        </NativeAccordion.Button>
-        <NativeAccordion.Panel>
-          <VStack gap="1.5" alignItems="stretch" fontSize="sm">
-            <Text fontSize="xs" color="fg.muted">
-              {ofMonth}日付の注文は、どのプランでもこの SPU で計算します。
-            </Text>
-            {using.length > 0 ? (
-              <List.Root aria-label="この SPU を使うプラン" gap="1">
-                {using.map(({ plan, orders }) => (
-                  <List.Item key={plan.id}>
-                    <Text as="b">{plan.name}</Text>（{monthDay(plan.period.start)}〜
-                    {monthDay(plan.period.end)}）
-                    {orders > 0 ? `${ofMonth}注文 ${orders}件` : "注文はまだありません"}
-                  </List.Item>
-                ))}
-              </List.Root>
-            ) : (
-              <Text>{ofMonth}プランはまだありません。</Text>
-            )}
-            {using.length > 0 ? (
-              <Text fontSize="xs" color="fg.muted">
-                切り替えると、これらのプランの獲得予定が変わります。
+    <Box as="section" aria-label={label}>
+      <Text fontSize="xs" color="fg.muted" mb="1.5">
+        {label}
+      </Text>
+      {using.length > 0 ? (
+        <Flex wrap="wrap" gap="1.5">
+          {using.map(({ plan }) => (
+            <RouterButton
+              key={plan.id}
+              to="/plan"
+              search={{ id: plan.id }}
+              variant="outline"
+              size="xs"
+              fullRounded
+              color="link"
+              endIcon={<ForwardIcon />}
+            >
+              {plan.name}
+              <Text as="span" color="fg.muted" fontWeight="normal">
+                {monthDay(plan.period.start)}〜{monthDay(plan.period.end)}
               </Text>
-            ) : null}
-          </VStack>
-        </NativeAccordion.Panel>
-      </NativeAccordion.Item>
-    </NativeAccordion.Root>
+            </RouterButton>
+          ))}
+        </Flex>
+      ) : (
+        <Text fontSize="sm">まだありません。</Text>
+      )}
+    </Box>
+  );
+}
+
+/** 「? SPU とは」, the explanation in a dialog. */
+function WhatIsSpu() {
+  const { open, onOpen, onClose } = useDisclosure();
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="xs"
+        px="1"
+        ms="-1"
+        color="fg.muted"
+        startIcon={<CircleQuestionMarkIcon />}
+        onClick={onOpen}
+      >
+        SPU とは
+      </Button>
+      <Modal.Root
+        open={open}
+        onClose={onClose}
+        size="sm"
+        title="SPU とは"
+        body={
+          <Text fontSize="sm">
+            楽天カードや楽天モバイルなど、楽天のサービスを使っているほど、楽天市場の買い物でもらえるポイントの倍率が上がる仕組みです。楽天は、どのサービスを使ったかを月ごとに判定します。使っているサービスを
+            ON にすると、その月の日付の注文のポイントに加わります。
+          </Text>
+        }
+        cancel="閉じる"
+        onCancel={onClose}
+      />
+    </>
   );
 }
 
@@ -446,18 +467,10 @@ export function SpuMonthEditor({
             変更を保存できませんでした。もう一度お試しください。
           </Text>
         ) : null}
-        <SpuPageButton />
-        <NativeAccordion.Root animate={false}>
-          <NativeAccordion.Item borderWidth="0">
-            <NativeAccordion.Button px="0">SPU とは</NativeAccordion.Button>
-            <NativeAccordion.Panel>
-              <Text fontSize="sm">
-                楽天カードや楽天モバイルなど、楽天のサービスを使っているほど、楽天市場の買い物でもらえるポイントの倍率が上がる仕組みです。楽天は、どのサービスを使ったかを月ごとに判定します。使っているサービスを
-                ON にすると、その月の日付の注文のポイントに加わります。
-              </Text>
-            </NativeAccordion.Panel>
-          </NativeAccordion.Item>
-        </NativeAccordion.Root>
+        <Flex align="center" justify="space-between" gap="2">
+          <WhatIsSpu />
+          <SpuLink fontSize="xs" />
+        </Flex>
         {/* 「ポイント倍率」 is what 楽天's SPU page calls this number. */}
         <Flex wrap="wrap" align="baseline" columnGap="2" fontVariantNumeric="tabular-nums">
           <Text fontSize="sm" color="fg.muted">
@@ -476,11 +489,10 @@ export function SpuMonthEditor({
             </Text>
           </Text>
         </Flex>
-        <UsingPlans accountId={accountId} month={month} />
         {plan ? <SpuOffWarnings plan={plan} month={month} /> : null}
         <TileGroup
           title="契約・お支払いで決まる"
-          note="翌月に引き継ぎ"
+          note="翌月に引継"
           tiles={tiles.filter((benefit) => CARRIED_SPU_IDS.has(benefit.id))}
           {...group}
         />
@@ -490,6 +502,7 @@ export function SpuMonthEditor({
           tiles={tiles.filter((benefit) => !CARRIED_SPU_IDS.has(benefit.id))}
           {...group}
         />
+        <UsingPlans accountId={accountId} month={month} planId={planId} />
         <Flex wrap="wrap" align="center" columnGap="3" rowGap="1.5" fontSize="xs" color="fg.muted">
           {capped.size > 0 ? (
             <Flex as="span" align="center" gap="1">

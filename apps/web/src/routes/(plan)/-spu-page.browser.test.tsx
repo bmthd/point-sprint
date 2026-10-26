@@ -197,17 +197,46 @@ test("opened from a plan, the badge marks the items that reached their cap in th
     .toHaveAttribute("href", "https://event.rakuten.co.jp/campaign/point-up/everyday/point/");
 });
 
-test("lists the plans the month's SPU is used by, folded", async () => {
+const OTHER = "f0000000-0000-4000-8000-00000000000b";
+
+test("lists the plans of the month as links, and only the others when opened from a plan", async () => {
   const crossing: Plan = {
     ...makePlan([], [order(0), { ...order(1), date: "2026-11-02" }]),
     name: "10月末マラソン",
     period: { start: "2026-10-28", end: "2026-11-02" },
   };
-  const screen = await renderSpu({ month: "2026-11", plans: [crossing] });
-  await screen.getByText("この SPU を使うプラン1件").click();
+  const other: Plan = {
+    ...makePlan([], [{ ...order(2), date: "2026-11-21" }]),
+    id: OTHER,
+    name: "ブラックフライデー",
+    period: { start: "2026-11-20", end: "2026-11-27" },
+  };
+  const all = await renderSpu({ month: "2026-11", plans: [crossing, other] });
+  const listed = all.getByRole("region", { name: "11月の注文があるプラン" });
   await expect
-    .element(screen.getByRole("list", { name: "この SPU を使うプラン" }))
-    .toMatchTextContent("10月末マラソン（10/28〜11/2）11月の注文 1件");
+    .element(listed)
+    .toMatchTextContent("10月末マラソン10/28〜11/2ブラックフライデー11/20〜11/27");
+  await listed.getByRole("link", { name: /ブラックフライデー/ }).click();
+  await expect.element(all.getByRole("heading", { name: "プラン" })).toBeVisible();
+  expect(all.router.state.location.search).toEqual({ id: OTHER });
+
+  // From 10月末マラソン, the SPU is its own: only the plan it also reaches is told.
+  const fromPlan = await renderSpu({ month: "2026-11", plans: [crossing, other], fromPlan: true });
+  await expect
+    .element(fromPlan.getByRole("region", { name: "ほかに 11月の注文があるプラン" }))
+    .toMatchTextContent("ブラックフライデー11/20〜11/27");
+
+  const alone = await renderSpu({ month: "2026-11", plans: [crossing], fromPlan: true });
+  await expect.element(alone.getByRole("heading", { name: "11月の SPU" })).toBeVisible();
+  expect(alone.getByText("ほかに 11月の注文があるプラン").query()).toBeNull();
+});
+
+test("「SPU とは」 explains the SPU in a dialog", async () => {
+  const screen = await renderSpu();
+  await screen.getByRole("button", { name: "SPU とは" }).click();
+  await expect
+    .element(screen.getByRole("dialog", { name: "SPU とは" }))
+    .toMatchTextContent(/月ごとに判定します/);
 });
 
 test("opened from a plan of two months, it switches between them and goes back to the plan", async () => {
