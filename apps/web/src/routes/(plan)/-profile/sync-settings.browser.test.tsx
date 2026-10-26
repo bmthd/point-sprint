@@ -1,3 +1,5 @@
+import { useHydrateAtoms } from "jotai/utils";
+import { syncServerAtom } from "../../-sync-server";
 import { expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { createMemoryRepository } from "../../../storage/memory-repository";
@@ -71,6 +73,11 @@ const fakeServer = (overrides: Partial<SyncServer> = {}): SyncServer => ({
   ...overrides,
 });
 
+function HydrateServer({ server }: { server: SyncServer }) {
+  useHydrateAtoms([[syncServerAtom, server]]);
+  return <SyncSettings siteKey="site-key" passkeys={passkeys} widget={FakeWidget} />;
+}
+
 async function renderSettings(
   server: SyncServer,
   repository: Repository = createMemoryRepository(),
@@ -78,7 +85,7 @@ async function renderSettings(
   await cleanup();
   return render(
     <Providers repository={repository}>
-      <SyncSettings server={server} siteKey="site-key" passkeys={passkeys} widget={FakeWidget} />
+      <HydrateServer server={server} />
     </Providers>,
   );
 }

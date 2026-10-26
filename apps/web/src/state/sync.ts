@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { type SyncOutcome, createSyncRunner, syncOnce } from "../storage/sync-engine";
 import type { SyncServer } from "../storage/sync-passkey";
 import { useLatestRef } from "../use-latest-ref";
+import { OutdatedDatabaseError } from "../storage/repository";
 import { repositoryAtom } from "./repository";
 
 export type SyncStatus =
@@ -58,12 +59,13 @@ export function useSync(server: SyncServer, onOutdated: () => void): void {
       setStatus(status);
     };
     const round = async (): Promise<SyncOutcome | "offline" | "failed"> => {
-      if (!(await repository.sync.meta.get())) return { status: "off" };
-      if (!navigator.onLine) return "offline";
-      set({ state: "syncing", lastSyncedAt: lastSyncedAt(previous) });
       try {
+        if (!(await repository.sync.meta.get())) return { status: "off" };
+        if (!navigator.onLine) return "offline";
+        set({ state: "syncing", lastSyncedAt: lastSyncedAt(previous) });
         return await syncOnce({ repository, server, version: CURRENT_SCHEMA_VERSION });
       } catch (error) {
+        if (error instanceof OutdatedDatabaseError) return { status: "outdated" };
         console.warn("[sync] round failed", error);
         return navigator.onLine ? "failed" : "offline";
       }

@@ -1,32 +1,20 @@
-import {
-  syncAddPasskeyOptions,
-  syncReissueRecovery,
-  syncLogin,
-  syncLoginOptions,
-  syncPull,
-  syncPush,
-  syncRecoveryLogin,
-  syncRegister,
-  syncSetPrfWrap,
-  syncStartOptions,
-  syncStop,
-} from "../server/sync-functions";
+import { atom } from "jotai";
 import type { SyncServer } from "../storage/sync-passkey";
 
-/**
- * The sync's server functions, as the flows call them. Imported by the routes only and passed
- * down, like the inquiry's, so that the components' tests do without the server.
- */
-export const syncServer: SyncServer = {
-  reissueRecovery: (data) => syncReissueRecovery({ data }),
-  startOptions: (data) => syncStartOptions({ data }),
-  addPasskeyOptions: () => syncAddPasskeyOptions(),
-  register: (data) => syncRegister({ data }),
-  loginOptions: () => syncLoginOptions(),
-  login: (data) => syncLogin({ data }),
-  recoveryLogin: (data) => syncRecoveryLogin({ data }),
-  setPrfWrap: (data) => syncSetPrfWrap({ data }),
-  stop: () => syncStop(),
-  push: (data) => syncPush({ data }),
-  pull: (data) => syncPull({ data }),
-};
+/** The sync server functions; tests replace them in their Jotai store. */
+export const syncServerAtom = atom<SyncServer>({
+  reissueRecovery: async (data) =>
+    (await import("../server/sync-functions")).syncReissueRecovery({ data }),
+  startOptions: async (data) =>
+    (await import("../server/sync-functions")).syncStartOptions({ data }),
+  addPasskeyOptions: async () => (await import("../server/sync-functions")).syncAddPasskeyOptions(),
+  register: async (data) => (await import("../server/sync-functions")).syncRegister({ data }),
+  loginOptions: async () => (await import("../server/sync-functions")).syncLoginOptions(),
+  login: async (data) => (await import("../server/sync-functions")).syncLogin({ data }),
+  recoveryLogin: async (data) =>
+    (await import("../server/sync-functions")).syncRecoveryLogin({ data }),
+  setPrfWrap: async (data) => (await import("../server/sync-functions")).syncSetPrfWrap({ data }),
+  stop: async () => (await import("../server/sync-functions")).syncStop(),
+  push: async (data) => (await import("../server/sync-functions")).syncPush({ data }),
+  pull: async (data) => (await import("../server/sync-functions")).syncPull({ data }),
+});

@@ -1,5 +1,6 @@
 import { Field as FormField, useForm } from "@formisch/react";
 import { Alert, Button, Checkbox, Field, Input, Text, Textarea, VStack } from "@workspaces/ui";
+import { atom, useAtomValue } from "jotai";
 import { type ComponentType, useState } from "react";
 import * as v from "valibot";
 import { Form, bind, errorsOf } from "../../../form/form";
@@ -8,6 +9,14 @@ import { InquiryInputSchema, type InquiryRequest } from "../../../server/inquiry
 import { TurnstileWidget, type TurnstileWidgetProps } from "../../-turnstile-widget";
 
 export type SendInquiry = (request: InquiryRequest) => Promise<InquiryResult>;
+
+/** The inquiry sender; tests replace it in their Jotai store. */
+export const inquirySenderAtom = atom<{ send: SendInquiry }>({
+  send: async (request) => {
+    const { submitInquiry } = await import("../../../server/submit-inquiry");
+    return submitInquiry({ data: request });
+  },
+});
 
 /**
  * Only this answer means the mail went out. The server can answer something else, such as an
@@ -18,7 +27,6 @@ const SentSchema = v.object({ ok: v.literal(true) });
 const emptyInput = { name: "", email: "", wantsReply: false, body: "" };
 
 type Props = {
-  send: SendInquiry;
   /** Turnstile's site key, or `undefined` when the build had none: nothing can be sent then. */
   siteKey: string | undefined;
   /** The Turnstile widget; tests give one that does not load Cloudflare's script. */
@@ -29,7 +37,8 @@ type Props = {
  * Name (optional), the address to reply to and the message, sent once Turnstile's check has
  * passed. A failed send keeps what was written, to be sent again.
  */
-export function InquiryForm({ send, siteKey, widget: Widget = TurnstileWidget }: Props) {
+export function InquiryForm({ siteKey, widget: Widget = TurnstileWidget }: Props) {
+  const { send } = useAtomValue(inquirySenderAtom);
   const form = useForm({ schema: InquiryInputSchema, initialInput: emptyInput });
   const [token, setToken] = useState<string | undefined>(undefined);
   const [resetKey, setResetKey] = useState(0);

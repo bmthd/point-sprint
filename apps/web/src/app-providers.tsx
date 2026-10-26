@@ -1,11 +1,12 @@
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { Modal, Text } from "@workspaces/ui";
+import { useAtomValue } from "jotai";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
 import { useHydrateAtoms } from "jotai/utils";
 import { type ReactNode, useState } from "react";
 import { repositoryAtom } from "./state/repository";
 import { useSync } from "./state/sync";
-import type { SyncServer } from "./storage/sync-passkey";
+import { syncServerAtom } from "./routes/-sync-server";
 import { createIndexedDbRepository } from "./storage/indexed-db-repository";
 import { createMemoryRepository } from "./storage/memory-repository";
 import { OutdatedDatabaseError } from "./storage/repository";
@@ -20,7 +21,8 @@ function HydrateRepository({ children }: { children: ReactNode }) {
 }
 
 /** Syncs with the other devices, for a user who started to. */
-function Sync({ server, onOutdated }: { server: SyncServer; onOutdated: () => void }) {
+function Sync({ onOutdated }: { onOutdated: () => void }) {
+  const server = useAtomValue(syncServerAtom);
   useSync(server, onOutdated);
   return null;
 }
@@ -46,14 +48,7 @@ function OutdatedDialog({ open }: { open: boolean }) {
   );
 }
 
-/** `syncServer`: the sync's server functions; without them, as in the components' tests, no sync. */
-export function AppProviders({
-  children,
-  syncServer,
-}: {
-  children: ReactNode;
-  syncServer?: SyncServer;
-}) {
+export function AppProviders({ children }: { children: ReactNode }) {
   const [outdated, setOutdated] = useState(false);
   const [client] = useState(() => {
     const onError = (error: unknown) => {
@@ -68,7 +63,7 @@ export function AppProviders({
     <QueryClientAtomProvider client={client}>
       <HydrateRepository>
         {children}
-        {syncServer ? <Sync server={syncServer} onOutdated={() => setOutdated(true)} /> : null}
+        <Sync onOutdated={() => setOutdated(true)} />
       </HydrateRepository>
       <OutdatedDialog open={outdated} />
     </QueryClientAtomProvider>
