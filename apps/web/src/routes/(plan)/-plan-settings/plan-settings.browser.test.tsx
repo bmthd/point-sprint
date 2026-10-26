@@ -406,6 +406,9 @@ test("adds a two-shop beside the plan's shop-around, as a campaign of its own", 
   await expect
     .poll(async () => (await storedBenefit("2ショップ購入"))?.sharedKey)
     .toBe("2shop:2026-10-04");
+  await expect
+    .poll(async () => await storedBenefit("2ショップ購入"))
+    .toMatchObject({ campaignType: "two-shop" });
 });
 
 test("adds a campaign of tiers by the total, and changes its tiers and cap", async () => {
