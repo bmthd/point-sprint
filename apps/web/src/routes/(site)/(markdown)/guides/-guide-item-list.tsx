@@ -1,4 +1,5 @@
 import { Badge, Box, Card, HStack, Image, LinkBox, List, Text } from "@workspaces/ui";
+import { insetCardProps } from "../-markdown-body";
 import type { GuideItem } from "../../../../guides/guide-items";
 
 /** "2026年10月8日": the day in Japan, the same on the server and in the browser. */
@@ -48,7 +49,13 @@ export function GuideItemList({ items, fetchedAt }: GuideItemListProps) {
   if (!items?.length) return null;
   return (
     // `data-guide-items` lets the build count the lists in the prerendered HTML.
-    <Card.Root as="aside" aria-label="楽天市場の商品（広告）" data-guide-items my="6">
+    <Card.Root
+      as="aside"
+      aria-label="楽天市場の商品（広告）"
+      data-guide-items
+      my="6"
+      {...insetCardProps}
+    >
       <Card.Header>
         <HStack gap="2">
           <Badge colorScheme="mono" variant="outline">
