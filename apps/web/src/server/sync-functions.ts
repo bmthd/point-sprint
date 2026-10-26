@@ -30,17 +30,12 @@ const RecordSchema = v.object({
   body: v.string(),
 });
 
-const parse =
-  <S extends v.GenericSchema>(schema: S) =>
-  (data: unknown): v.InferOutput<S> =>
-    v.parse(schema, data);
-
 export type SignedOut = { ok: false; reason: "signed-out" };
 const signedOut: SignedOut = { ok: false, reason: "signed-out" };
 
 /** The options for the passkey of a new account, once Turnstile let the request through. */
 export const syncStartOptions = createServerFn({ method: "POST" })
-  .validator(parse(v.object({ turnstileToken: v.string() })))
+  .validator(v.object({ turnstileToken: v.string() }))
   .handler(async ({ data }): Promise<SyncRegistrationOptions | undefined> => {
     const [{ syncDeps, turnstileVerifier }, { registrationOptions }] = await Promise.all([
       import("./worker-sync"),
@@ -66,10 +61,14 @@ export const syncAddPasskeyOptions = createServerFn({ method: "POST" }).handler(
   },
 );
 
+// Passkey payloads enter as unknown: their loose WebAuthn fields are preserved and
+// checked at runtime without requiring index signatures on the browser response types.
+// Disable only the input serialization type check; the schema still validates the payload.
 /** Keeps the new passkey, and the new account with it, and logs in. */
-export const syncRegister = createServerFn({ method: "POST" })
+export const syncRegister = createServerFn({ method: "POST", strict: { input: false } })
   .validator(
-    parse(
+    v.pipe(
+      v.unknown(),
       v.object({
         challengeId: v.string(),
         response: ResponseSchema,
@@ -104,8 +103,8 @@ export const syncLoginOptions = createServerFn({ method: "POST" }).handler(
 );
 
 /** Logs in with a passkey, and gives the secret's wraps to open on the device. */
-export const syncLogin = createServerFn({ method: "POST" })
-  .validator(parse(v.object({ challengeId: v.string(), response: ResponseSchema })))
+export const syncLogin = createServerFn({ method: "POST", strict: { input: false } })
+  .validator(v.pipe(v.unknown(), v.object({ challengeId: v.string(), response: ResponseSchema })))
   .handler(async ({ data }) => {
     const [{ syncDeps, setSessionCookie }, { authenticate }] = await Promise.all([
       import("./worker-sync"),
@@ -123,7 +122,7 @@ export const syncLogin = createServerFn({ method: "POST" })
 
 /** Logs in with the recovery code's verifier. */
 export const syncRecoveryLogin = createServerFn({ method: "POST" })
-  .validator(parse(v.object({ verifier: v.string() })))
+  .validator(v.object({ verifier: v.string() }))
   .handler(async ({ data }) => {
     const [{ syncDeps, setSessionCookie }, { loginWithRecovery }] = await Promise.all([
       import("./worker-sync"),
@@ -137,7 +136,7 @@ export const syncRecoveryLogin = createServerFn({ method: "POST" })
 
 /** Keeps the secret wrapped with a passkey's PRF output, unless the passkey has one. */
 export const syncSetPrfWrap = createServerFn({ method: "POST" })
-  .validator(parse(v.object({ credentialId: v.string(), prfWrap: v.string() })))
+  .validator(v.object({ credentialId: v.string(), prfWrap: v.string() }))
   .handler(async ({ data }): Promise<boolean> => {
     const [{ syncDeps, sessionOf }, { setPrfWrap }] = await Promise.all([
       import("./worker-sync"),
@@ -149,7 +148,7 @@ export const syncSetPrfWrap = createServerFn({ method: "POST" })
   });
 
 export const syncPush = createServerFn({ method: "POST" })
-  .validator(parse(v.object({ records: v.array(RecordSchema) })))
+  .validator(v.object({ records: v.array(RecordSchema) }))
   .handler(async ({ data }): Promise<PushResult | SignedOut> => {
     const [{ syncDeps, sessionOf }, { push }] = await Promise.all([
       import("./worker-sync"),
@@ -162,7 +161,7 @@ export const syncPush = createServerFn({ method: "POST" })
   });
 
 export const syncPull = createServerFn({ method: "POST" })
-  .validator(parse(v.object({ since: v.pipe(v.number(), v.integer(), v.minValue(0)) })))
+  .validator(v.object({ since: v.pipe(v.number(), v.integer(), v.minValue(0)) }))
   .handler(async ({ data }): Promise<({ ok: true } & PullResult) | SignedOut> => {
     const [{ syncDeps, sessionOf }, { pull }] = await Promise.all([
       import("./worker-sync"),
@@ -192,13 +191,11 @@ export const syncStop = createServerFn({ method: "POST" }).handler(
 
 export const syncReissueRecovery = createServerFn({ method: "POST" })
   .validator(
-    parse(
-      v.object({
-        accountId: v.string(),
-        verifier: v.pipe(v.string(), v.regex(/^[A-Za-z0-9_-]{43}$/)),
-        wrap: v.pipe(v.string(), v.regex(/^[A-Za-z0-9_-]{80}$/)),
-      }),
-    ),
+    v.object({
+      accountId: v.string(),
+      verifier: v.pipe(v.string(), v.regex(/^[A-Za-z0-9_-]{43}$/)),
+      wrap: v.pipe(v.string(), v.regex(/^[A-Za-z0-9_-]{80}$/)),
+    }),
   )
   .handler(async ({ data }): Promise<boolean> => {
     const [{ syncDeps, sessionOf }, { reissueRecovery }] = await Promise.all([
