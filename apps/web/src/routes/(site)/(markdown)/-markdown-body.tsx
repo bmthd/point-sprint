@@ -24,6 +24,17 @@ import type { FileRoutesById } from "../../../routeTree.gen";
 import { markdownExtensions } from "./-markdown-extensions";
 import { ColumnHead } from "../../../ui/column-head";
 
+/**
+ * A box inside the page's card, as the steps and the lists of items are: sunk a step on a light
+ * gray face, without the card's own shadow or line, so it reads as part of the page.
+ */
+export const insetCardProps = {
+  bg: "bg.subtle",
+  borderColor: "transparent",
+  boxShadow: "none",
+  _dark: { borderColor: "transparent" },
+} as const;
+
 /** The Markdown's tags, drawn with Yamada UI to match the other pages. */
 /**
  * A screenshot that fits the column and a set height, centered and framed like a card, and loads
@@ -165,7 +176,7 @@ export const markdownComponents = {
     </Center>
   ),
   "md-timeline": ({ children }: { children?: ReactNode }) => (
-    <Card.Root my="4">
+    <Card.Root my="4" {...insetCardProps}>
       <Card.Body>
         <Timeline.Root variant="number" colorScheme="mono" size="lg">
           {children}
