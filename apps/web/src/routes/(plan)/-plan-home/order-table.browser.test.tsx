@@ -340,12 +340,12 @@ test("an edit whose save failed can be saved again", async () => {
   await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
   const update = repository().plans.update.bind(repository().plans);
   let failNext = true;
-  repository().plans.update = (id, change) => {
+  repository().plans.update = (id, change, shop) => {
     if (failNext) {
       failNext = false;
       return Promise.reject(new Error("disk full"));
     }
-    return update(id, change);
+    return update(id, change, shop);
   };
 
   const amount = () => screen.getByRole("textbox", { name: "金額（税込）" });
@@ -521,9 +521,9 @@ test("expanded row shows group totals and edits the order", async () => {
 
   let saves = 0;
   const update = repository().plans.update.bind(repository().plans);
-  repository().plans.update = (id, change) => {
+  repository().plans.update = (id, change, shop) => {
     saves += 1;
-    return update(id, change);
+    return update(id, change, shop);
   };
 
   // Text fields save on Enter, and only when valid.
@@ -582,9 +582,9 @@ test("leaving a field of an opened row unchanged saves nothing", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
   let saves = 0;
   const update = repository().plans.update.bind(repository().plans);
-  repository().plans.update = (id, change) => {
+  repository().plans.update = (id, change, shop) => {
     saves += 1;
-    return update(id, change);
+    return update(id, change, shop);
   };
   await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
 

@@ -9,8 +9,6 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { type KeyboardEvent, useDeferredValue, useId, useMemo, useState } from "react";
 import { Form } from "../../../form/form";
 import { asCalculatedAtom, calculationAtom } from "../../../state/derived";
-import { saveShopAtom } from "../../../state/mutations";
-import { addOrderAtom } from "../../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../../state/queries";
 import { openOrderIdAtom } from "../../../state/ui";
 import { useSingleFlight } from "../../../use-single-flight";
@@ -23,7 +21,7 @@ import {
 } from "../-order-editor/order-form";
 import { type OrderForm, useFormInput, useOrderAutofill } from "../-order-editor/order-form-store";
 import { ChevronIcon, PlusIcon } from "../../../ui/icons";
-import { orderSaveFailedAtom, pointsText } from "../-order-shared";
+import { orderSaveFailedAtom, pointsText, useSaveOrderDraft } from "../-order-shared";
 import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
 import { CapFlows } from "../-cap-flows";
 
@@ -31,7 +29,7 @@ const sumOfTotals = (results: Map<string, { total: number }>) =>
   [...results.values()].reduce((sum, result) => sum + result.total, 0);
 
 /** 「この注文で（5店舗目） 約 +120P」 while the form is valid. */
-function Preview({ plan, form }: { plan: Plan; form: OrderForm }) {
+function AddedPointsEstimate({ plan, form }: { plan: Plan; form: OrderForm }) {
   const plans = useAtomValue(plansAtom);
   const shops = useAtomValue(shopsAtom);
   const before = useAtomValue(calculationAtom);
@@ -89,9 +87,7 @@ function Preview({ plan, form }: { plan: Plan; form: OrderForm }) {
  */
 export function OrderAddForm({ plan }: { plan: Plan }) {
   const shops = useAtomValue(shopsAtom);
-  const saveShop = useAtomValue(saveShopAtom);
-  const addOrder = useSetAtom(addOrderAtom);
-  const setFailed = useSetAtom(orderSaveFailedAtom);
+  const saveDraft = useSaveOrderDraft(plan.id, useSetAtom(orderSaveFailedAtom));
   const run = useSingleFlight();
   const [open, setOpen] = useState(plan.orders.length === 0);
   // The form and an opened row take turns: opening one closes the other.
@@ -103,20 +99,12 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
 
   const add = (output: OrderFormOutput) =>
     run(async () => {
-      const draft = draftOf(output, shops, undefined);
-      setFailed(draft === undefined);
-      if (!draft) return;
-      try {
-        if (draft.shopChange) await saveShop.mutateAsync(draft.shopChange);
-        await addOrder({ planId: plan.id, order: draft.order });
-        reset(form, { initialInput: emptyInput(plan.period) });
-        focus(form, { path: ["url"] });
-        // After the focus moves: leaving the URL field would look up the URL it still shows.
-        autofill.reset();
-      } catch {
-        // The typed order stays in the form so it can be added again.
-        setFailed(true);
-      }
+      // Not saved, the typed order stays in the form so it can be added again.
+      if (!(await saveDraft(draftOf(output, shops, undefined), true))) return;
+      reset(form, { initialInput: emptyInput(plan.period) });
+      focus(form, { path: ["url"] });
+      // After the focus moves: leaving the URL field would look up the URL it still shows.
+      autofill.reset();
     });
 
   const onKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
@@ -160,7 +148,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
           <Flex direction="column" gap="3" borderTopWidth="1px" pt="3.5" pb="4" px="4">
             <OrderFormFields form={form} plan={plan} autofill={autofill} />
             <Flex wrap="wrap" align="center" gap="2">
-              <Preview plan={plan} form={form} />
+              <AddedPointsEstimate plan={plan} form={form} />
               <Button type="submit" colorScheme="primary" size="lg" minW={ACTION_BUTTON_WIDTH}>
                 追加する
               </Button>

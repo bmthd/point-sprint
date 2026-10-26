@@ -12,7 +12,7 @@ import {
 import { atom, type Getter } from "jotai";
 import { withEffectiveAccount } from "./accounts";
 import { accountSettingsAtom } from "./derived";
-import { type SavedPlans, savePlanAtom, saveSpuMonthAtom } from "./mutations";
+import { type SavedPlans, type ShopChange, savePlanAtom, saveSpuMonthAtom } from "./mutations";
 import { shopsAtom } from "./queries";
 
 const replaceOrder = (plan: Plan, orderId: string, change: (order: Order) => Order): Plan => {
@@ -103,27 +103,33 @@ export const updateBenefit = (
  * runs, not when the atom is set. Operations set one after another therefore compose: each sees the
  * ones before it, and one that fails is left out of the later ones' saves.
  *
+ * `shop` is saved along with the plan, in the same write (`PlanChange`).
+ *
  * A change whose orders newly achieve an SPU (楽天ブックス、楽天Kobo) for the plan's account and
  * the order's month also turns that SPU on for the month, once the plan is saved. Whether it does
  * is judged on the plans as saved, so an earlier operation that failed counts for nothing.
  */
 function planOperationAtom<TArgs>(toChange: (args: TArgs) => (plan: Plan) => Plan) {
-  return atom(null, async (get, _set, { planId, ...args }: { planId: string } & TArgs) => {
-    const change = toChange(args as unknown as TArgs);
-    const saved = await get(savePlanAtom).mutateAsync({
-      planId,
-      change: (plan) => {
-        if (!plan) throw new Error(`plan ${planId} does not exist`);
-        return change(plan);
-      },
-    });
-    const saveMonth = get(saveSpuMonthAtom).mutateAsync;
-    await Promise.all(
-      newlyAchieved(get, saved).map(({ accountId, month, benefitId }) =>
-        saveMonth({ accountId, month, change: (ids) => enableSpu(ids, [benefitId]) }),
-      ),
-    );
-  });
+  return atom(
+    null,
+    async (get, _set, { planId, shop, ...args }: { planId: string; shop?: ShopChange } & TArgs) => {
+      const change = toChange(args as unknown as TArgs);
+      const saved = await get(savePlanAtom).mutateAsync({
+        planId,
+        change: (plan) => {
+          if (!plan) throw new Error(`plan ${planId} does not exist`);
+          return change(plan);
+        },
+        shop,
+      });
+      const saveMonth = get(saveSpuMonthAtom).mutateAsync;
+      await Promise.all(
+        newlyAchieved(get, saved).map(({ accountId, month, benefitId }) =>
+          saveMonth({ accountId, month, change: (ids) => enableSpu(ids, [benefitId]) }),
+        ),
+      );
+    },
+  );
 }
 
 /** The SPU that the saved change newly achieves. */
@@ -142,6 +148,31 @@ export const updateOrderAtom = planOperationAtom(
   ({ order }: { order: Order }) =>
     (plan) =>
       updateOrder(plan, order),
+);
+/**
+ * Saves the order a form describes with the shop it names, in one write: adds it, or replaces the
+ * saved order of the same id. A failed save leaves neither the order nor a new shop behind.
+ */
+export const saveOrderDraftAtom = atom(
+  null,
+  (
+    _get,
+    set,
+    {
+      planId,
+      draft,
+      isNew,
+    }: {
+      planId: string;
+      draft: { order: Order; shopChange: ShopChange | undefined };
+      isNew: boolean;
+    },
+  ) =>
+    set(isNew ? addOrderAtom : updateOrderAtom, {
+      planId,
+      order: draft.order,
+      shop: draft.shopChange,
+    }),
 );
 export const removeOrderAtom = planOperationAtom(
   ({ orderId }: { orderId: string }) =>

@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { type Order, type Plan, type SyncRow, orderRowId } from "@workspaces/domain";
+import { type Order, type Plan, type Shop, type SyncRow, orderRowId } from "@workspaces/domain";
 import { describe, expect, test } from "vitest";
 import { createIndexedDbRepository } from "./indexed-db-repository";
 import { createMemoryRepository } from "./memory-repository";
@@ -32,6 +32,14 @@ const order = (n: number, unitPrice = 1000): Order => ({
   tags: [],
   shopId: SHOP_ID,
 });
+
+const shop: Shop = {
+  id: SHOP_ID,
+  channel: "rakuten-ichiba",
+  name: "ショップ",
+  tags: [],
+  updatedAt: LATER,
+};
 
 const plan = (orders: Order[], updatedAt = EARLIER, id = PLAN_ID): Plan => ({
   id,
@@ -79,6 +87,40 @@ describe.each(repositories)("%s", (_name, make) => {
     const pending = await repository.sync.pending();
     expect(keys(pending)).toEqual([`order:${orderId(2)}:false`]);
     expect(pending[0]).toMatchObject({ updatedAt: LATER, value: { planId: PLAN_ID } });
+  });
+
+  test("a shop changed with a plan is written and marked with it", async () => {
+    const repository = await create();
+    await repository.plans.put(plan([]));
+    await repository.sync.acknowledge(await repository.sync.pending());
+    await repository.plans.update(PLAN_ID, () => plan([order(1)], LATER), {
+      shopId: SHOP_ID,
+      change: (stored) => {
+        expect(stored).toBeUndefined();
+        return shop;
+      },
+    });
+    expect(await repository.shops.list()).toEqual([shop]);
+    expect(keys(await repository.sync.pending())).toEqual([
+      `order:${orderId(1)}:false`,
+      `shop:${SHOP_ID}:false`,
+    ]);
+  });
+
+  test("a plan change that fails writes neither the plan nor the shop changed with it", async () => {
+    const repository = await create();
+    await repository.plans.put(plan([]));
+    await repository.sync.acknowledge(await repository.sync.pending());
+    const failing = repository.plans.update(
+      PLAN_ID,
+      () => {
+        throw new Error("order is not in plan");
+      },
+      { shopId: SHOP_ID, change: () => shop },
+    );
+    await expect(failing).rejects.toThrow("order is not in plan");
+    expect(await repository.shops.list()).toEqual([]);
+    expect(await repository.sync.pending()).toEqual([]);
   });
 
   test("removing a plan marks it and its orders removed", async () => {

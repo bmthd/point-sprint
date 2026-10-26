@@ -362,27 +362,31 @@ export function createIndexedDbRepository(
     await done;
   };
 
-  // The plan's row and the orders that changed are written with their marks to send in the
-  // transaction they were read in, so a change is never saved without being sent later, and a row
-  // received meanwhile is never taken for one the change removed.
-  const update = async (id: string, change: (plan: Plan | undefined) => Plan) => {
+  // The plan's row and the orders that changed, and the shop saved with them, are written with
+  // their marks to send in the transaction they were read in, so a change is never saved without
+  // being sent later, and a row received meanwhile is never taken for one the change removed.
+  const update: Repository["plans"]["update"] = async (id, change, shopChange) => {
     const { transaction: tx, done } = await transaction(
-      ["plans", "orders", "outbox", "tombstones"],
+      ["plans", "orders", "shops", "outbox", "tombstones"],
       "readwrite",
     );
-    const [row, orders] = await Promise.all([
+    const [row, orders, storedShop] = await Promise.all([
       request<PlanRow | undefined>(tx.objectStore("plans").get(id)),
       request<OrderRow[]>(tx.objectStore("orders").index("planId").getAll(id)),
+      shopChange && request<Shop | undefined>(tx.objectStore("shops").get(shopChange.shopId)),
     ]);
     const before = row && joinPlan(row, orders);
     let after: Plan;
+    let shop: Shop | undefined;
     try {
       after = v.parse(PlanSchema, structuredClone(change(before)));
+      shop = shopChange && v.parse(ShopSchema, structuredClone(shopChange.change(storedShop)));
     } catch (error) {
       tx.abort();
       await done.catch(() => {});
       throw error;
     }
+    if (shop) writeRow(tx, "shop", shop.id, shop);
     const split = splitPlan(after, { row, orders });
     if (split.row) writeRow(tx, "plan", after.id, split.row);
     for (const order of split.orders) {
@@ -413,7 +417,7 @@ export function createIndexedDbRepository(
       put: async (plan) => {
         await update(plan.id, () => plan);
       },
-      update: (id, change) => update(id, change),
+      update,
       delete: async (id) => {
         const removedAt = now();
         const { transaction: tx, done } = await transaction(

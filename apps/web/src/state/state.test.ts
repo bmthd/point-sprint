@@ -20,12 +20,13 @@ import { calculationAtom, orderAtom, orderPointsAtom } from "./derived";
 import {
   changeShop,
   replacePlan,
+  replaceShop,
   saveProfileAtom,
   savePlanAtom,
   saveShopAtom,
   saveSpuMonthAtom,
 } from "./mutations";
-import { addOrderAtom, copyOrderAtom, updateOrderAtom } from "./order-ops";
+import { addOrderAtom, copyOrderAtom, saveOrderDraftAtom, updateOrderAtom } from "./order-ops";
 import { plansAtom, profileAtom, queryKeys, shopsAtom, spuMonthsAtom } from "./queries";
 import { repositoryAtom } from "./repository";
 
@@ -43,9 +44,9 @@ const shop: Shop = {
   updatedAt: now,
 };
 
-const order = (id: string, unitPrice: number): Order => ({
+const order = (id: string, unitPrice: number, shopId = SHOP): Order => ({
   id,
-  shopId: SHOP,
+  shopId,
   date: "2026-10-05",
   lineItems: [
     {
@@ -103,10 +104,10 @@ function controlled(base: Repository) {
     plans: {
       ...base.plans,
       list: () => (listsHang ? new Promise<Plan[]>(() => {}) : base.plans.list()),
-      update: (id, change) =>
+      update: (id, change, shop) =>
         new Promise((resolve, reject) => {
           pending.push({
-            resolve: () => base.plans.update(id, change).then(resolve, reject),
+            resolve: () => base.plans.update(id, change, shop).then(resolve, reject),
             reject,
           });
         }),
@@ -189,6 +190,60 @@ test("a failed operation is left out while an overlapping one is kept", async ()
   expect(priceOf(stored, ORDER_B)).toBe(5000);
   await vi.waitFor(() => expect(priceOf(cachedPlan(store), ORDER_A)).toBe(1000));
   expect(priceOf(cachedPlan(store), ORDER_B)).toBe(5000);
+});
+
+const NEW_SHOP = "a0000000-0000-4000-8000-000000000002";
+const newShop: Shop = { ...shop, id: NEW_SHOP, name: "新しいショップ" };
+const newShopDraft = (id: string) => ({
+  order: order(id, 3000, NEW_SHOP),
+  shopChange: replaceShop(newShop),
+});
+
+test("an order is saved with its new shop", async () => {
+  const repository = createMemoryRepository({ plans: [plan], shops: [shop] });
+  const store = setup(repository);
+  await loaded(store);
+
+  await store.set(saveOrderDraftAtom, { planId: PLAN, draft: newShopDraft(ORDER_B), isNew: true });
+  expect((await repository.shops.list()).map((s) => s.id)).toEqual([SHOP, NEW_SHOP]);
+  expect((await repository.plans.get(PLAN))?.orders.map((o) => o.id)).toEqual([ORDER_A, ORDER_B]);
+  await vi.waitFor(() => expect(store.get(shopsAtom).map((s) => s.id)).toEqual([SHOP, NEW_SHOP]));
+});
+
+test("an order that fails to save leaves no new shop behind", async () => {
+  const { repository, pending, hangLists } = controlled(
+    createMemoryRepository({ plans: [plan], shops: [shop] }),
+  );
+  const store = setup(repository);
+  await loaded(store);
+
+  const saved = store.set(saveOrderDraftAtom, {
+    planId: PLAN,
+    draft: newShopDraft(ORDER_B),
+    isNew: true,
+  });
+  await vi.waitFor(() => expect(store.get(shopsAtom)).toHaveLength(2));
+  hangLists();
+  pending[0]?.reject(new Error("disk full"));
+  await expect(saved).rejects.toThrow("disk full");
+  expect(await repository.shops.list()).toEqual([shop]);
+  expect(cachedPlan(store)?.orders.map((o) => o.id)).toEqual([ORDER_A]);
+  await vi.waitFor(() => expect(store.get(shopsAtom).map((s) => s.id)).toEqual([SHOP]));
+});
+
+test("an edit of an order removed meanwhile saves neither the order nor its new shop", async () => {
+  const repository = createMemoryRepository({ plans: [plan], shops: [shop] });
+  const store = setup(repository);
+  await loaded(store);
+
+  const saved = store.set(saveOrderDraftAtom, {
+    planId: PLAN,
+    draft: newShopDraft(ORDER_B),
+    isNew: false,
+  });
+  await expect(saved).rejects.toThrow(ORDER_B);
+  expect(await repository.shops.list()).toEqual([shop]);
+  await vi.waitFor(() => expect(store.get(shopsAtom).map((s) => s.id)).toEqual([SHOP]));
 });
 
 test("order atom keeps identity when another order changes", async () => {
