@@ -4,7 +4,7 @@ export { GuidePage, GuidesPage } from "./guides-page";
 export { InquiryPage } from "./inquiry-page";
 export { NotFoundPage } from "./not-found-page";
 export { NoticesPage } from "./notices-page";
-export { AddOrderForm, PlanPage, PlanSettingsDialog } from "./plan-page";
+export { AddOrderForm, PlanPage, PlanSettingsDialog, SpuPanel } from "./plan-page";
 export { PlanSettingsPage } from "./plan-settings-page";
 export { ProfilePage } from "./profile-page";
 export { SharePage } from "./share-page";

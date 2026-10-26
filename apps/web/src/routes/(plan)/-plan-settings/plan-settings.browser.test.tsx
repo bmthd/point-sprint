@@ -87,8 +87,13 @@ async function renderSettings(plan: Plan, profile?: Profile, spuMonths: SpuMonth
     path: "/plan/settings",
     component: () => <PlanSettings id={PLAN} />,
   });
+  const spu = createRoute({
+    getParentRoute: () => root,
+    path: "/spu",
+    component: () => <h1>月の SPU</h1>,
+  });
   const router = createRouter({
-    routeTree: root.addChildren([home, settings]),
+    routeTree: root.addChildren([home, settings, spu]),
     history: createMemoryHistory({ initialEntries: [`/plan/settings?id=${PLAN}`] }),
   });
   const screen = await render(
@@ -103,47 +108,6 @@ async function renderSettings(plan: Plan, profile?: Profile, spuMonths: SpuMonth
 type Screen = Awaited<ReturnType<typeof renderSettings>>;
 
 const spuSection = (screen: Screen) => screen.getByRole("region", { name: "SPU" });
-
-test("tile toggles SPU and updates the total", async () => {
-  const screen = await renderSettings(spuPlan());
-  const mobile = screen.getByRole("checkbox", { name: "楽天モバイル +4倍" });
-  await expect
-    .element(spuSection(screen).getByRole("img", { name: "楽天モバイル", exact: true }))
-    .toHaveAttribute("src", "https://assets.bmth.dev/point-sprint/img/spu/service_mobile_v2.webp");
-  await expect.element(mobile).not.toBeChecked();
-  await expect.element(spuSection(screen)).toMatchTextContent("ポイント倍率1倍");
-  // 通常ポイント is not a tile; 楽天カード通常分 is, under a short name.
-  expect(screen.getByRole("checkbox", { name: /^通常ポイント/ }).query()).toBeNull();
-  await expect
-    .element(screen.getByRole("checkbox", { name: "楽天カード（通常） +1倍" }))
-    .not.toBeChecked();
-
-  await tapCard(mobile);
-  await expect.element(mobile).toBeChecked();
-  await expect.element(spuSection(screen)).toMatchTextContent("ポイント倍率5倍");
-  await expect.element(spuSection(screen)).toMatchTextContent("SPU +4倍");
-  await expect.poll(async () => await storedOn("楽天モバイル")).toBe(true);
-
-  // The card's own normal points count as 通常, not as SPU. Turning them on also turns on the
-  // card's SPU bonus, which requires them.
-  await tapCard(screen.getByRole("checkbox", { name: "楽天カード（通常） +1倍" }));
-  await expect.element(spuSection(screen)).toMatchTextContent("ポイント倍率7倍");
-  await expect.element(spuSection(screen)).toMatchTextContent("通常 2倍");
-  await expect.element(spuSection(screen)).toMatchTextContent("SPU +5倍");
-  await expect
-    .element(screen.getByRole("checkbox", { name: "楽天カード特典分（SPU） +1倍" }))
-    .toBeChecked();
-
-  await tapCard(mobile);
-  await expect.element(mobile).not.toBeChecked();
-  await expect.poll(async () => await storedOn("楽天モバイル")).toBe(false);
-
-  // A tile is a checkbox, so Space toggles the focused tile.
-  (mobile.element() as HTMLElement).focus();
-  await userEvent.keyboard(" ");
-  await expect.element(mobile).toBeChecked();
-  await expect.poll(async () => await storedOn("楽天モバイル")).toBe(true);
-});
 
 test("campaigns show the image from their master data", async () => {
   const pointDay = structuredClone(
@@ -168,77 +132,6 @@ test("campaigns show the image from their master data", async () => {
   await expect
     .element(screen.getByRole("button", { name: "勝ったら倍を追加" }).getByRole("presentation"))
     .toHaveAttribute("src", "https://assets.bmth.dev/point-sprint/img/campaign/sports.webp");
-});
-
-test("enabling premium card turns off the regular card", async () => {
-  const screen = await renderSettings(spuPlan(), undefined, [
-    spuMonth(["楽天カード通常分（カード本体の還元）", "楽天カード特典分（SPU）"]),
-  ]);
-  const card = screen.getByRole("checkbox", { name: "楽天カード特典分（SPU） +1倍" });
-  const premium = screen.getByRole("checkbox", { name: "楽天プレミアムカード（特典分） +1倍" });
-  await expect.element(card).toBeChecked();
-
-  await tapCard(premium);
-  await expect.element(premium).toBeChecked();
-  await expect.element(card).not.toBeChecked();
-  await expect
-    .poll(async () => [
-      await storedOn("楽天カード特典分（SPU）"),
-      await storedOn("楽天プレミアムカード（特典分）"),
-    ])
-    .toEqual([false, true]);
-
-  await tapCard(card);
-  await expect.element(card).toBeChecked();
-  await expect.element(premium).not.toBeChecked();
-});
-
-test("the premium card turns the card's normal points on and off with it", async () => {
-  const screen = await renderSettings(spuPlan());
-  const normal = screen.getByRole("checkbox", { name: "楽天カード（通常） +1倍" });
-  const premium = screen.getByRole("checkbox", { name: "楽天プレミアムカード（特典分） +1倍" });
-  await expect.element(normal).not.toBeChecked();
-
-  await tapCard(premium);
-  await expect.element(premium).toBeChecked();
-  await expect.element(normal).toBeChecked();
-  await expect.poll(async () => await storedOn("楽天カード通常分（カード本体の還元）")).toBe(true);
-
-  await tapCard(premium);
-  await expect.element(premium).not.toBeChecked();
-  await expect.element(normal).not.toBeChecked();
-  await expect.poll(async () => await storedOn("楽天カード通常分（カード本体の還元）")).toBe(false);
-});
-
-test("cap badge appears when the cap is reached", async () => {
-  // ¥10,000 before tax per item: +0.5倍 gives 50P per item, so ten items reach the 500P cap.
-  // 楽天Kobo is off, so it has no badge.
-  const screen = await renderSettings(
-    spuPlan([], [order(0, { items: 5 }), order(1, { items: 5 })]),
-    undefined,
-    [spuMonth(["楽天ブックス"])],
-  );
-
-  const booksTile = screen.getByRole("checkbox", { name: "楽天ブックス +0.5倍" });
-  // The badge sits on the tile and describes its checkbox; only the capped tile has one.
-  await expect.element(booksTile).toHaveAccessibleDescription("上限");
-  const badges = screen
-    .getByRole("group", { name: "SPU のサービス" })
-    .getByText("上限", { exact: true });
-  await expect.element(badges).toBeVisible();
-  await expect.element(badges).toHaveLength(1);
-  await expect
-    .element(screen.getByRole("checkbox", { name: "楽天Kobo +0.5倍" }))
-    .not.toHaveAccessibleDescription();
-
-  // The name opens the cap and the conditions.
-  await screen.getByRole("button", { name: "楽天ブックスの上限と条件" }).click();
-  const detail = screen.getByRole("dialog", { name: "楽天ブックス" });
-  await expect.element(detail.getByText("月間上限 500P")).toBeVisible();
-  await expect.element(detail.getByText("このプランで上限に達しています")).toBeVisible();
-  await expect
-    .element(detail.getByRole("link", { name: /楽天で自分のSPUを確認する/ }))
-    .toHaveAttribute("href", "https://event.rakuten.co.jp/campaign/point-up/everyday/point/");
 });
 
 /** Today is 10/6, inside the plan's period (10/4 to 10/9). */
@@ -600,15 +493,19 @@ test("start and end dates committed back to back both persist", async () => {
 });
 
 test("a failed save is reported and cleared when the settings are opened again", async () => {
-  const screen = await renderSettings(spuPlan());
-  const put = repository().spuMonths.put.bind(repository().spuMonths);
-  repository().spuMonths.put = () => Promise.reject(new Error("quota"));
-  await tapCard(screen.getByRole("checkbox", { name: "楽天モバイル +4倍" }));
+  const screen = await renderSettings(spuPlan([pointDay()]));
+  const update = repository().plans.update.bind(repository().plans);
+  repository().plans.update = () => Promise.reject(new Error("quota"));
+  await tapCard(
+    screen
+      .getByRole("region", { name: "キャンペーン" })
+      .getByRole("switch", { name: "5と0のつく日 +1倍 日付で自動" }),
+  );
   await expect
     .element(screen.getByText("変更を保存できませんでした。もう一度お試しください。"))
     .toBeVisible();
 
-  repository().spuMonths.put = put;
+  repository().plans.update = update;
   await screen.getByRole("link", { name: "保存して計算に反映" }).click();
   await expect.element(screen.getByRole("heading", { name: "プランのホーム" })).toBeVisible();
   await screen.router.navigate({ to: "/plan/settings", search: { id: PLAN } });
@@ -625,7 +522,7 @@ test("save button goes back to the plan home", async () => {
   expect(screen.router.state.location.search).toEqual({ id: PLAN });
 });
 
-test("on a desktop the header button opens the settings in a side panel", async () => {
+test("on a desktop the settings open in a side panel, and 変更 opens the month's SPU in its place", async () => {
   await page.viewport(1280, 900);
   const plan = makePlan(structuredClone(marathon), [order(0)]);
   currentRepository = createMemoryRepository({
@@ -634,19 +531,21 @@ test("on a desktop the header button opens the settings in a side panel", async 
     spuMonths: [spuMonth(["楽天モバイル"])],
   });
   const screen = await renderPlanHome(currentRepository);
-  const open = screen.getByRole("button", { name: "プランの設定（SPU +4倍・上限 7,000P）" });
-  await expect.element(open).toBeVisible();
-  await open.click();
+  await screen.getByRole("button", { name: "プランの設定" }).click();
 
   const panel = screen.getByRole("dialog", { name: "プランの設定" });
-  await tapCard(panel.getByRole("checkbox", { name: "楽天ブックス +0.5倍" }));
   await expect
-    .element(screen.getByRole("button", { name: "プランの設定（SPU +4.5倍・上限 7,000P）" }))
-    .toBeInTheDocument();
-  await panel.getByRole("button", { name: "保存して計算に反映" }).click();
+    .element(panel.getByRole("region", { name: "SPU" }))
+    .toMatchTextContent("SPU（10月）5倍");
+  await panel.getByRole("button", { name: "10月の SPU を変更" }).click();
   await expect.element(panel).not.toBeInTheDocument();
-});
 
+  const spu = screen.getByRole("dialog", { name: "10月の SPU" });
+  await tapCard(spu.getByRole("checkbox", { name: "楽天ブックス +0.5倍" }));
+  await expect.poll(() => storedOn("楽天ブックス")).toBe(true);
+  await spu.getByRole("button", { name: "計算に反映して閉じる" }).click();
+  await expect.element(spu).not.toBeInTheDocument();
+});
 test("the account is picked only once accounts are told apart", async () => {
   const SUB = "acc00000-0000-4000-8000-000000000002";
   const profile: Profile = {
@@ -669,60 +568,21 @@ test("the account is picked only once accounts are told apart", async () => {
   await expect.poll(async () => (await storedPlan()).accountId).toBeUndefined();
 });
 
-test("the SPU is the month's: a change shows in the other plans of the month", async () => {
-  const screen = await renderSettings(spuPlan());
-  await expect
-    .element(
-      spuSection(screen).getByText("2026年10月の SPU です。同じ月のプランすべてに反映されます。"),
-    )
-    .toBeVisible();
-  // A plan of one month has nothing to pick.
-  expect(screen.getByRole("radiogroup", { name: "SPU の月" }).query()).toBeNull();
-
-  await tapCard(screen.getByRole("checkbox", { name: "楽天モバイル +4倍" }));
-  await expect.poll(() => storedOn("楽天モバイル")).toBe(true);
-
-  const other: Plan = {
-    ...spuPlan(),
-    name: "5と0のつく日",
-    period: { start: "2026-10-20", end: "2026-10-20" },
-  };
-  const again = await renderSettings(other, undefined, await repository().spuMonths.list());
-  await expect.element(again.getByRole("checkbox", { name: "楽天モバイル +4倍" })).toBeChecked();
-});
-
-test("a plan across two months picks the month whose SPU it changes", async () => {
-  const plan: Plan = { ...spuPlan(), period: { start: "2026-10-25", end: "2026-11-03" } };
-  const screen = await renderSettings(plan, undefined, [
-    spuMonth(["楽天モバイル", "楽天ブックス"]),
-  ]);
-  const months = screen.getByRole("radiogroup", { name: "SPU の月" });
-  const mobile = screen.getByRole("checkbox", { name: "楽天モバイル +4倍" });
-  const books = screen.getByRole("checkbox", { name: "楽天ブックス +0.5倍" });
-  await expect.element(mobile).toBeChecked();
-
-  // November is not set yet: it takes the contract of October, and not what is met each month.
-  await months.getByText("11月", { exact: true }).click();
-  await expect
-    .element(
-      spuSection(screen).getByText("2026年11月の SPU です。同じ月のプランすべてに反映されます。"),
-    )
-    .toBeVisible();
-  await expect.element(mobile).toBeChecked();
-  await expect.element(books).not.toBeChecked();
-
-  await tapCard(mobile);
-  await expect.poll(() => storedOn("楽天モバイル", "2026-11")).toBe(false);
-  expect(await storedOn("楽天モバイル", "2026-10")).toBe(true);
-});
-
-test("the month of an order outside the period can be picked too", async () => {
+test("the SPU is the month's: the settings show each month's rate, and 変更 opens the month's page from the plan", async () => {
   const plan = spuPlan([], [order(0), { ...order(1), date: "2026-11-02" }]);
-  const screen = await renderSettings(plan);
-  await screen
-    .getByRole("radiogroup", { name: "SPU の月" })
-    .getByText("11月", { exact: true })
-    .click();
-  await tapCard(screen.getByRole("checkbox", { name: "楽天モバイル +4倍" }));
-  await expect.poll(() => storedOn("楽天モバイル", "2026-11")).toBe(true);
+  const screen = await renderSettings(plan, undefined, [spuMonth(["楽天モバイル"])]);
+  const section = spuSection(screen);
+  await expect.element(section).toMatchTextContent("月ごとに、すべてのプランで共有");
+  // The order outside the period brings November in; November takes October's contract.
+  await expect
+    .element(section.getByRole("group", { name: "10月の SPU" }))
+    .toMatchTextContent("5倍注文 1件");
+  await expect
+    .element(section.getByRole("group", { name: "11月の SPU" }))
+    .toMatchTextContent("5倍注文 1件未設定・10月から引き継ぎ");
+
+  await section.getByRole("button", { name: "11月の SPU を変更" }).click();
+  await expect.element(screen.getByRole("heading", { name: "月の SPU" })).toBeVisible();
+  expect(screen.router.state.location.search).toEqual({ month: "2026-11" });
+  expect(screen.router.state.location.state.spuFrom).toEqual({ planId: PLAN });
 });

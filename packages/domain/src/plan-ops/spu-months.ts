@@ -53,6 +53,23 @@ export const spuMonthsOfPlan = (plan: Plan): string[] =>
   ].sort();
 
 /**
+ * The plans the SPU of `accountId` in `month` is used by, with how many of their orders are of
+ * the month: those of the account that `spuMonthsOfPlan` gives the month. `plans` must have the
+ * accounts they are calculated with.
+ */
+export const plansUsingSpuMonth = (
+  plans: Plan[],
+  accountId: string,
+  month: string,
+): { plan: Plan; orders: number }[] =>
+  plans
+    .filter((plan) => planAccountId(plan) === accountId && spuMonthsOfPlan(plan).includes(month))
+    .map((plan) => ({
+      plan,
+      orders: plan.orders.filter((order) => order.date.startsWith(month)).length,
+    }));
+
+/**
  * The plan as it is calculated: every `standardSpu` item added to its benefits, on for the orders
  * of the months its account has it on (`conditions.months`). `plan` must have the account it is
  * calculated with. Items the plan holds itself are left to the plan.

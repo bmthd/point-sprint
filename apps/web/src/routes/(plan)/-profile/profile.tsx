@@ -10,6 +10,7 @@ import { StorageHealthFailure, storageMessages } from "../-warnings";
 import { ResetDataButton } from "../../-reset-data";
 import { AccountSettings } from "./account-settings";
 import { ShopRegistry } from "./shop-registry";
+import { SpuMonthsCard } from "./spu-months-card";
 import { SyncSettings } from "./sync-settings";
 import type { SyncServer } from "../../../storage/sync-passkey";
 
@@ -40,6 +41,7 @@ function ProfileContent({ syncServer }: { syncServer: SyncServer | undefined }) 
           変更を保存できませんでした。もう一度お試しください。
         </Text>
       ) : null}
+      <SpuMonthsCard />
       {syncServer ? (
         <SyncSettings
           server={syncServer}
@@ -74,8 +76,8 @@ function BackLink() {
 }
 
 /**
- * The profile at `/profile`: the sync with other devices, the shop registry and advanced settings.
- * Without `syncServer`, as in the tests, no sync.
+ * 共通設定 at `/profile`: what every plan shares, the SPU of each month, the sync with other
+ * devices, the shop registry and advanced settings. Without `syncServer`, as in the tests, no sync.
  * Its title bar is the plan settings page's: a page that goes back where it was opened from.
  */
 export function Profile({ syncServer }: { syncServer?: SyncServer } = {}) {
@@ -84,7 +86,7 @@ export function Profile({ syncServer }: { syncServer?: SyncServer } = {}) {
       <Flex maxW="640px" mx="auto" h="14" align="center" gap="1" px="2">
         <BackLink />
         <Heading as="h1" fontSize="lg">
-          プロフィール
+          共通設定
         </Heading>
       </Flex>
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="16">

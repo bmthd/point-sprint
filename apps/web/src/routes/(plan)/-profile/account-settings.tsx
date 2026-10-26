@@ -112,7 +112,8 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
           複数の楽天アカウントを使い分ける
         </Switch>
         <Text fontSize="xs" color="fg.muted">
-          家族のアカウントなどでも買うときに。キャンペーンの上限をアカウントごとに分けて計算します。
+          家族のアカウントなどでも買うときに。キャンペーンの上限をアカウントごとに分けて計算し、SPU
+          もアカウントごとに設定します。
         </Text>
         {enabled ? (
           <>

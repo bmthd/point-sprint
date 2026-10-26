@@ -1,13 +1,13 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 import { type NavigationOptions, SitePage, endsWithPath } from "./site-page";
 
-/** The profile: the shops and the advanced settings. */
+/** 共通設定 (the profile): the SPU of each month, the shops and the advanced settings. */
 export class ProfilePage {
   readonly heading: Locator;
   readonly backLink: Locator;
 
   constructor(readonly page: Page) {
-    this.heading = page.getByRole("heading", { level: 1, name: "プロフィール" });
+    this.heading = page.getByRole("heading", { level: 1, name: "共通設定" });
     this.backLink = page.getByRole("link", { name: "戻る" });
   }
 

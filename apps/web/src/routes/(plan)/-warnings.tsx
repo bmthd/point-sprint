@@ -16,27 +16,30 @@ import { accountSettingsAtom } from "../../state/derived";
 import { shopsAtom, spuMonthsAtom, storageHealthQueryAtom } from "../../state/queries";
 
 /** `2026-10-11` → `10/11`. */
-const monthDay = (date: string) => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+export const monthDay = (date: string) =>
+  `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
 
 /** `2026-10` → `10月`. */
 export const monthText = (month: string) => `${Number(month.slice(5, 7))}月`;
 
 /**
  * The SPU that the plan's orders achieve but the user turned off for the month: 「楽天ブックスで
- * 3,000円以上の注文がありますが、10月の SPU の楽天ブックスが OFF です。」
+ * 3,000円以上の注文がありますが、10月の SPU の楽天ブックスが OFF です。」 Only those of `month`
+ * when it is given.
  */
-export function useSpuOffMessages(plan: Plan): string[] {
+export function useSpuOffMessages(plan: Plan, month?: string): string[] {
   const shops = useAtomValue(shopsAtom);
   const months = useAtomValue(spuMonthsAtom);
   const settings = useAtomValue(accountSettingsAtom);
   const achievements = disabledAchievedSpu(withEffectiveAccount(plan, settings), shops, months);
-  return achievements.flatMap(({ month, benefitId }) => {
+  return achievements.flatMap(({ month: achieved, benefitId }) => {
+    if (month !== undefined && achieved !== month) return [];
     const rule = spuPurchaseRules.find((candidate) => candidate.benefitId === benefitId);
     const benefit = standardSpu.find((candidate) => candidate.id === benefitId);
     if (!rule || !benefit) return [];
     const amount = rule.minOrderAmount.toLocaleString("ja-JP");
     return [
-      `${channels[rule.channel].label}で ${amount}円以上の注文がありますが、${monthText(month)}の SPU の${benefit.label}が OFF です。`,
+      `${channels[rule.channel].label}で ${amount}円以上の注文がありますが、${monthText(achieved)}の SPU の${benefit.label}が OFF です。`,
     ];
   });
 }
