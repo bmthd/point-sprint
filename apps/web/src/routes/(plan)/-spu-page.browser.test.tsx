@@ -204,9 +204,9 @@ test("lists the plans the month's SPU is used by, folded", async () => {
     period: { start: "2026-10-28", end: "2026-11-02" },
   };
   const screen = await renderSpu({ month: "2026-11", plans: [crossing] });
-  await screen.getByText("この SPU で計算するプラン 1件").click();
+  await screen.getByText("この SPU を使うプラン1件").click();
   await expect
-    .element(screen.getByRole("list", { name: "この SPU で計算するプラン" }))
+    .element(screen.getByRole("list", { name: "この SPU を使うプラン" }))
     .toMatchTextContent("10月末マラソン（10/28〜11/2）11月の注文 1件");
 });
 

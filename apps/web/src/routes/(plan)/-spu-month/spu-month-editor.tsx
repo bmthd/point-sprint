@@ -198,6 +198,24 @@ function SpuLink(props: LinkProps) {
   );
 }
 
+/** Many users check 楽天's page first, so it leads the card as a button. */
+function SpuPageButton() {
+  return (
+    <Button
+      as="a"
+      href={SPU_PAGE_URL}
+      target="_blank"
+      rel="noreferrer"
+      variant="outline"
+      colorScheme="primary"
+      w="full"
+      endIcon={<ExternalIcon />}
+    >
+      楽天で自分のSPUを確認する
+    </Button>
+  );
+}
+
 function DetailBody({
   benefit,
   capped,
@@ -276,13 +294,13 @@ function TileGroup({
   const titleId = useId();
   return (
     <Box as="section" aria-labelledby={titleId}>
-      <Flex wrap="wrap" align="baseline" justify="space-between" columnGap="2" mb="2.5">
+      <Flex wrap="wrap" align="center" columnGap="2" rowGap="1" mb="2.5">
         <Heading as="h3" id={titleId} fontSize="sm">
           {title}
         </Heading>
-        <Text fontSize="xs" color="fg.muted">
+        <Badge colorScheme="mono" variant="subtle">
           {note}
-        </Text>
+        </Badge>
       </Flex>
       <SimpleGrid
         role="group"
@@ -334,14 +352,19 @@ function UsingPlans({ accountId, month }: { accountId: string; month: string }) 
   return (
     <NativeAccordion.Root variant="panel" animate={false}>
       <NativeAccordion.Item>
-        <NativeAccordion.Button>この SPU で計算するプラン {using.length}件</NativeAccordion.Button>
+        <NativeAccordion.Button fontSize="sm" color="fg.muted" gap="2">
+          この SPU を使うプラン
+          <Badge colorScheme="primary" variant="subtle" fontVariantNumeric="tabular-nums">
+            {using.length}件
+          </Badge>
+        </NativeAccordion.Button>
         <NativeAccordion.Panel>
           <VStack gap="1.5" alignItems="stretch" fontSize="sm">
             <Text fontSize="xs" color="fg.muted">
               {ofMonth}日付の注文は、どのプランでもこの SPU で計算します。
             </Text>
             {using.length > 0 ? (
-              <List.Root aria-label="この SPU で計算するプラン" gap="1">
+              <List.Root aria-label="この SPU を使うプラン" gap="1">
                 {using.map(({ plan, orders }) => (
                   <List.Item key={plan.id}>
                     <Text as="b">{plan.name}</Text>（{monthDay(plan.period.start)}〜
@@ -423,9 +446,10 @@ export function SpuMonthEditor({
             変更を保存できませんでした。もう一度お試しください。
           </Text>
         ) : null}
+        <SpuPageButton />
         <NativeAccordion.Root animate={false}>
-          <NativeAccordion.Item>
-            <NativeAccordion.Button>SPU とは</NativeAccordion.Button>
+          <NativeAccordion.Item borderWidth="0">
+            <NativeAccordion.Button px="0">SPU とは</NativeAccordion.Button>
             <NativeAccordion.Panel>
               <Text fontSize="sm">
                 楽天カードや楽天モバイルなど、楽天のサービスを使っているほど、楽天市場の買い物でもらえるポイントの倍率が上がる仕組みです。楽天は、どのサービスを使ったかを月ごとに判定します。使っているサービスを
@@ -456,13 +480,13 @@ export function SpuMonthEditor({
         {plan ? <SpuOffWarnings plan={plan} month={month} /> : null}
         <TileGroup
           title="契約・お支払いで決まる"
-          note="次の月にも引き継ぎます"
+          note="翌月に引き継ぎ"
           tiles={tiles.filter((benefit) => CARRIED_SPU_IDS.has(benefit.id))}
           {...group}
         />
         <TileGroup
           title="その月の利用で決まる"
-          note="毎月 OFF から。達成したら ON に"
+          note="毎月リセット"
           tiles={tiles.filter((benefit) => !CARRIED_SPU_IDS.has(benefit.id))}
           {...group}
         />
@@ -474,7 +498,6 @@ export function SpuMonthEditor({
             </Flex>
           ) : null}
           <Text as="span">名前を押すと達成の条件と上限</Text>
-          <SpuLink fontSize="xs" ms="auto" />
         </Flex>
       </Card.Body>
     </Card.Root>
