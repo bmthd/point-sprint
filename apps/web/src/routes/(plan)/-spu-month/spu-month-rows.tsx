@@ -2,11 +2,12 @@ import { type Plan, type SpuMonth, spuIdsIn, spuMonthsOfPlan } from "@workspaces
 import { Button, Card, Flex, Heading, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
+import { rounded } from "../../../ui/format";
 import { accountIdOf } from "../../../state/accounts";
 import { accountSettingsAtom } from "../../../state/derived";
 import { spuMonthsAtom } from "../../../state/queries";
 import { monthText } from "../-warnings";
-import { num, spuMonthRate } from "./spu-month-editor";
+import { spuMonthRate } from "./spu-month-editor";
 
 /**
  * 「未設定・10月から引き継ぎ」 for a month the account has no SPU stored for: it takes over the
@@ -48,7 +49,7 @@ function Rate({ value }: { value: number }) {
       whiteSpace="nowrap"
       fontVariantNumeric="tabular-nums"
     >
-      {num(value)}
+      {rounded(value)}
       <Text as="span" fontSize="md" fontWeight="medium">
         倍
       </Text>

@@ -31,13 +31,14 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId, useState } from "react";
+import { grouped, pointsText, rateText, rounded } from "../../../ui/format";
 import { withEffectiveAccount } from "../../../state/accounts";
 import { accountSettingsAtom, planResultAtom } from "../../../state/derived";
 import { saveSpuMonthAtom } from "../../../state/mutations";
 import { plansAtom, spuMonthsAtom } from "../../../state/queries";
 import { ExternalIcon, ForwardIcon } from "../../../ui/icons";
 import { RouterButton } from "../../../ui/router-link";
-import { imageUrl, pointsText, rateText } from "../-order-shared";
+import { imageUrl } from "../-order-shared";
 import { monthDay, monthText, useSpuOffMessages } from "../-warnings";
 
 /** Rakuten's page where users check their own SPU. */
@@ -74,8 +75,6 @@ export const spuMonthRate = (ids: ReadonlySet<string>) => {
   const benefits = spuBenefitsOf(ids);
   return enabledRate(benefits, "base") + enabledRate(benefits, "spu");
 };
-
-export const num = (value: number) => Number(value.toFixed(2)).toLocaleString("ja-JP");
 
 /** `2026-11` → `11月`, or `2027年1月` when it is not of the year of `today`. */
 export const spuMonthText = (month: string, today: string | undefined) =>
@@ -145,7 +144,7 @@ function Tile({
           <Image src={imageUrl(benefit.imagePath)} alt={name} boxSize="8" objectFit="contain" />
         ) : null}
         <Text as="span" fontVariantNumeric="tabular-nums">
-          +{num(benefit.params.rate)}
+          +{rounded(benefit.params.rate)}
         </Text>
         {capped ? <CapBadge id={badgeId} position="absolute" top="-2" right="-2" /> : null}
       </CheckboxCard.Root>
@@ -241,7 +240,7 @@ function DetailBody({
       ) : null}
       {rule ? (
         <Text color="fg.muted">
-          {channels[rule.channel].label}で 1 回 {rule.minOrderAmount.toLocaleString("ja-JP")}
+          {channels[rule.channel].label}で 1 回 {grouped(rule.minOrderAmount)}
           円以上の注文を入れると、自動で ON になります。
         </Text>
       ) : null}
@@ -477,15 +476,15 @@ export function SpuMonthEditor({
             ポイント倍率
           </Text>
           <Text fontSize="4xl" fontWeight="bold" lineHeight="1.1">
-            {num(normal + spu)}
+            {rounded(normal + spu)}
             <Text as="span" fontSize="md" fontWeight="medium">
               倍
             </Text>
           </Text>
           <Text fontSize="xs" color="fg.muted" whiteSpace="nowrap">
-            通常 {num(normal)}倍 ＋ SPU{" "}
+            通常 {rounded(normal)}倍 ＋ SPU{" "}
             <Text as="b" color="fg">
-              +{num(spu)}倍
+              +{rounded(spu)}倍
             </Text>
           </Text>
         </Flex>

@@ -1,4 +1,5 @@
 import { Badge, Box, Card, HStack, Image, LinkBox, List, Text } from "@workspaces/ui";
+import { grouped } from "../../../../ui/format";
 import { insetCardProps } from "../-markdown-body";
 import type { GuideItem } from "../../../../guides/guide-items";
 
@@ -25,7 +26,7 @@ function ItemCard({ item }: { item: GuideItem }) {
         {item.name}
       </LinkBox.Overlay>
       <Text fontWeight="bold" fontVariantNumeric="tabular-nums">
-        {item.price.toLocaleString("ja-JP")}円
+        {grouped(item.price)}円
       </Text>
       <Text fontSize="xs" color="fg.muted" lineClamp={1}>
         {item.shopName}

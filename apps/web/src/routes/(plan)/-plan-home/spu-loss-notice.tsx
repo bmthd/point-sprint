@@ -11,6 +11,7 @@ import {
 import { Button, Flex, Text, useNotice } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
+import { grouped } from "../../../ui/format";
 import { withEffectiveAccount } from "../../../state/accounts";
 import { accountSettingsAtom } from "../../../state/derived";
 import { saveSpuMonthAtom } from "../../../state/mutations";
@@ -50,7 +51,7 @@ export function useSpuLossNotice(plan: Plan) {
       const benefit = standardSpu.find((candidate) => candidate.id === benefitId);
       if (!rule || !benefit) continue;
       const id = `spu-lost-${month}-${benefitId}`;
-      const amount = rule.minOrderAmount.toLocaleString("ja-JP");
+      const amount = grouped(rule.minOrderAmount);
       notice({
         id,
         title: `${monthText(month)}の SPU の${benefit.label}の対象外になるかもしれません`,

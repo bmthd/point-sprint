@@ -10,10 +10,11 @@ import {
 import { Flex, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
+import { percent, pointsText, rateText, yen } from "../../../ui/format";
 import { asCalculatedAtom, calculationAtom } from "../../../state/derived";
 import { addOrder, updateOrder } from "../../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../../state/queries";
-import { orderPointRows, pointsText, rateText, yen } from "../-order-shared";
+import { orderPointRows } from "../-order-shared";
 import type { OrderDraft } from "./order-form";
 
 export type OrderPreview = {
@@ -100,7 +101,6 @@ export function previewOf(input: {
   };
 }
 
-const percent = (rate: number) => `${Number(rate.toFixed(2)).toLocaleString("ja-JP")}%`;
 const signed = (points: number) => `${points < 0 ? "−" : "+"}${pointsText(Math.abs(points))}`;
 
 /** The total change and its allocation to this order and every other order. */

@@ -2,12 +2,13 @@ import { type Order, type Plan, spuIdsIn } from "@workspaces/domain";
 import { Box, Button, Flex, List, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
+import { rounded } from "../../../ui/format";
 import { accountIdOf } from "../../../state/accounts";
 import { accountSettingsAtom } from "../../../state/derived";
 import { spuMonthsAtom } from "../../../state/queries";
 import { ForwardIcon } from "../../../ui/icons";
 import { monthText } from "../-warnings";
-import { num, spuMonthRate } from "../-spu-month/spu-month-editor";
+import { spuMonthRate } from "../-spu-month/spu-month-editor";
 
 const monthOf = (order: Order) => order.date.slice(0, 7);
 
@@ -41,7 +42,7 @@ function MonthSeparator({
         onClick={() => onSpu(month)}
       >
         <Flex as="span" fontVariantNumeric="tabular-nums">
-          {monthText(month)}の SPU {num(rate)}倍
+          {monthText(month)}の SPU {rounded(rate)}倍
         </Flex>
       </Button>
     </List.Item>

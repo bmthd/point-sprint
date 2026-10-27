@@ -1,11 +1,10 @@
 import { type CapLine, type Plan, type TaxRate, priceToFill } from "@workspaces/domain";
 import { Badge, Box, Flex, Heading, List, SegmentedControl, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
+import { grouped, yen } from "../../../ui/format";
 import { plansAtom } from "../../../state/queries";
 import { CAP_TAX_RATES, scopeText, sharedText } from "../-cap-lines";
-import { taxRateLabel, taxRateSegmentsStyle, yen } from "../-order-shared";
-
-const num = (value: number) => value.toLocaleString("ja-JP");
+import { taxRateLabel, taxRateSegmentsStyle } from "../-order-shared";
 
 /** The price that fills the line's cap at `taxRate`; `null` while the rate is 0. */
 export const fillPriceOf = (line: CapLine, taxRate: TaxRate) =>
@@ -21,7 +20,7 @@ function CapGauge({ line }: { line: CapLine }) {
   return (
     <Flex
       role="img"
-      aria-label={`ほかのプラン ${num(line.usedElsewhere)}P・このプラン ${num(line.usedHere)}P・上限 ${num(line.cap)}P`}
+      aria-label={`ほかのプラン ${grouped(line.usedElsewhere)}P・このプラン ${grouped(line.usedHere)}P・上限 ${grouped(line.cap)}P`}
       h="2"
       rounded="full"
       overflow="hidden"
@@ -64,7 +63,7 @@ function CapRow({
       <CapGauge line={line} />
       <Flex justify="space-between" fontSize="sm" fontVariantNumeric="tabular-nums">
         <Text as="span" color="fg.muted">
-          {num(line.usedElsewhere + line.usedHere)} / {num(line.cap)}P
+          {grouped(line.usedElsewhere + line.usedHere)} / {grouped(line.cap)}P
         </Text>
         <Text as="b">
           {line.remaining === 0 ? "上限" : price === null ? "—" : `あと${yen(price)}`}

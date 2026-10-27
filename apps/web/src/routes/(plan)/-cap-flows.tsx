@@ -7,14 +7,12 @@ import { type Plan, capFlows } from "@workspaces/domain";
 import { Button, List, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useDeferredValue, useMemo } from "react";
+import { grouped, yen } from "../../ui/format";
 import { asCalculatedAtom } from "../../state/derived";
 import { plansAtom, shopsAtom } from "../../state/queries";
 import { scopeText } from "./-cap-lines";
 import { draftOfInput } from "./-order-editor/order-form";
 import { AMOUNT_PATH, type OrderForm, useFormInput } from "./-order-editor/order-form-store";
-import { yen } from "./-order-shared";
-
-const num = (value: number) => value.toLocaleString("ja-JP");
 
 /**
  * Under a new order's fields: how many of its points the order receives from each cap and how
@@ -56,10 +54,11 @@ export function CapFlows({ plan, form }: { plan: Plan; form: OrderForm }) {
           gap="2"
         >
           <Text as="span" fontVariantNumeric="tabular-nums">
-            {line.benefit.label}（{scopeText(line, undefined)}） <Text as="b">+{num(into)}P</Text>
+            {line.benefit.label}（{scopeText(line, undefined)}）{" "}
+            <Text as="b">+{grouped(into)}P</Text>
             {over > 0 ? (
               <Text as="span" color="fg.muted">
-                ・{num(over)}P はみ出す
+                ・{grouped(over)}P はみ出す
               </Text>
             ) : null}
           </Text>

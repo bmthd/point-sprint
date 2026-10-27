@@ -18,6 +18,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type ReactNode, useState } from "react";
+import { grouped } from "../../../ui/format";
 import { monthDayWithWeekday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";
 import { ColumnHead } from "../../../ui/column-head";
@@ -33,8 +34,7 @@ function tiersSummary(event: OfficialEvent): string {
       const { tiers, cap } = benefit.params;
       const maxRate = Math.max(...tiers.map((tier) => tier.rate));
       // A round is listed from the schedule page before its own page tells the cap.
-      const capText =
-        cap === undefined ? "・上限は未発表" : `・上限 ${cap.toLocaleString("ja-JP")}P`;
+      const capText = cap === undefined ? "・上限は未発表" : `・上限 ${grouped(cap)}P`;
       const what = benefit.kind === "shop-around" ? "買いまわり" : "合計額で";
       return `・${what}最大 +${maxRate}倍${capText}`;
     })
