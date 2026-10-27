@@ -52,19 +52,11 @@ export const Route = createRootRoute({
   }),
   // The document stays when the root's component gives way to the error page.
   shellComponent: RootDocument,
-  component: () => (
-    <SiteLayout>
-      <Outlet />
-    </SiteLayout>
-  ),
+  component: RootComponent,
   // Rendered in the root's `Outlet`, so within the header and footer.
   notFoundComponent: NotFoundPage,
   // Replaces the root's component, so it brings the header and footer back.
-  errorComponent: () => (
-    <SiteLayout>
-      <ErrorPage />
-    </SiteLayout>
-  ),
+  errorComponent: RootError,
 });
 
 function SiteLayout({ children }: { children: ReactNode }) {
@@ -105,5 +97,21 @@ function RootDocument({ children }: { children: ReactNode }) {
         <Scripts />
       </body>
     </html>
+  );
+}
+
+function RootComponent() {
+  return (
+    <SiteLayout>
+      <Outlet />
+    </SiteLayout>
+  );
+}
+
+function RootError() {
+  return (
+    <SiteLayout>
+      <ErrorPage />
+    </SiteLayout>
   );
 }

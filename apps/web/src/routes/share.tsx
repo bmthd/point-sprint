@@ -34,7 +34,9 @@ export const Route = createFileRoute("/share")({
       ],
     };
   },
-  component: function Share() {
-    return <SharedResultPage figures={resultFigures(Route.useSearch())} />;
-  },
+  component: Share,
 });
+
+function Share() {
+  return <SharedResultPage figures={resultFigures(Route.useSearch())} />;
+}
