@@ -4,6 +4,8 @@ import { atomWithQuery } from "jotai-tanstack-query";
 import { repositoryAtom } from "./repository";
 
 export const queryKeys = {
+  syncEnabled: ["sync-enabled"],
+  officialEvents: ["official-events"],
   plans: ["plans"],
   shops: ["shops"],
   profile: ["profile"],
