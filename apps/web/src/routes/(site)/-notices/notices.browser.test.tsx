@@ -120,8 +120,12 @@ test("/notices shows the version of a notice that raises it, and whether the cal
       release: { version: "2.0", changesCalculation: true },
     },
   ]);
+  // The card holding every notice is an article too, so the notice is the innermost match.
   const article = (title: string) =>
-    page.getByRole("article").filter({ has: page.getByRole("heading", { name: title }) });
+    page
+      .getByRole("article")
+      .filter({ has: page.getByRole("heading", { name: title }) })
+      .last();
 
   await expect.element(article("機能の更新").getByText("Ver.1.0")).toBeVisible();
   await expect.element(article("機能の更新").getByText("計算が変わります")).not.toBeInTheDocument();
