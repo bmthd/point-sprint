@@ -4,7 +4,7 @@ import { type ReactNode, useEffect } from "react";
 import { expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { updateOrderAtom } from "../../../state/order-ops";
+import { updateOrderAtom } from "../../../state/plan-operations";
 import { plansQueryAtom, shopsQueryAtom } from "../../../state/queries";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import { OrderList } from "./order-list";

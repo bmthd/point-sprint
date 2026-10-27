@@ -12,7 +12,7 @@ import {
 import { Button, Flex, Image, List, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import type { Ref } from "react";
-import { addBenefitAtom } from "../../../state/order-ops";
+import { addBenefitAtom } from "../../../state/plan-operations";
 import { tokyoToday } from "../../../ui/dates";
 import { PlusIcon } from "../../../ui/icons";
 import { imageUrl } from "../-order-shared";
