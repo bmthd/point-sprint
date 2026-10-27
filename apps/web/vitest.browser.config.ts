@@ -7,6 +7,8 @@ export default defineConfig({
   // Found only after the first test files load, Vite optimizes these mid-run and reloads the
   // tests, which then fail to import.
   optimizeDeps: {
+    // Server adapters are replaced through atoms and never called in browser tests.
+    exclude: ["cloudflare:workers", "@tanstack/react-start"],
     include: [
       "@simplewebauthn/browser",
       "@tanstack/markdown/react",
