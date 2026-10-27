@@ -2,14 +2,13 @@ import { guideSlugs } from "./guides/files.ts";
 import { siteUrl } from "./site-url.ts";
 
 /**
- * Every route, rendered to HTML at build time. Listed so none depends on being reached by a link.
+ * Routes rendered to HTML at build time. Listed so none depends on being reached by a link.
  * A guide is a page for each file in `src/guides/articles/`.
  */
 export const prerenderedPages = [
   "/",
   "/plan",
   "/plan/settings",
-  "/profile",
   "/spu",
   "/help",
   "/terms",
@@ -26,9 +25,9 @@ export const prerenderedPages = [
 /**
  * Routes the Worker renders on each request instead. A shared result's page carries its figures in
  * its OGP tags, and its image is drawn from them, both from the query string. The official events
- * come from the event master in D1.
+ * come from the event master in D1. The profile contains device-specific settings and is noindex.
  */
-export const pagesRenderedOnRequest = ["/share", "/share/image.png", "/events.json"];
+export const pagesRenderedOnRequest = ["/share", "/share/image.png", "/events.json", "/profile"];
 
 /** HTML files, relative to the client output directory, that the build did not write. */
 export function missingPrerenderedPages(exists: (file: string) => boolean): string[] {

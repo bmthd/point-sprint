@@ -1,5 +1,7 @@
+import { createMemoryHistory } from "@tanstack/react-router";
 import { expect, test } from "vitest";
 import { guideSlugs } from "./guides/files";
+import { Route as ProfileRoute } from "./routes/(plan)/profile";
 import { getRouter } from "./router";
 import {
   guideItemListCount,
@@ -116,4 +118,23 @@ Allow: /
 
 Sitemap: ${siteUrl}/sitemap.xml
 `);
+});
+
+test("profile is rendered on request and excluded from the sitemap", async () => {
+  expect(prerenderedPages.map((page) => page.path)).not.toContain("/profile");
+  expect(pagesRenderedOnRequest).toContain("/profile");
+  const router = getRouter();
+  router.update({
+    ...router.options,
+    history: createMemoryHistory({ initialEntries: ["/profile"] }),
+  });
+  await router.load();
+  const match = router.state.matches.find((match) => match.routeId === ProfileRoute.id);
+  expect(match?.meta).toContainEqual({ name: "robots", content: "noindex" });
+  const html = (match?.meta ?? [])
+    .flatMap((meta) =>
+      meta && "name" in meta ? [`<meta name="${meta.name}" content="${meta.content}"/>`] : [],
+    )
+    .join("");
+  expect(sitemapEntry(fullHead.replace("</head>", `${html}</head>`))).toBeUndefined();
 });
