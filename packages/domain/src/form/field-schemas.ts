@@ -2,7 +2,7 @@ import * as v from "valibot";
 import {
   type NumberUnit,
   DateInputSchema,
-  numberInput,
+  NumberInputSchema,
   OptionalTextInputSchema,
   TextInputSchema,
 } from "./normalize";
@@ -46,11 +46,11 @@ function rate(label: string, min: number) {
 
 /** A number field that must be filled in. */
 const requiredNumber = <T>(unit: NumberUnit, label: string, rules: v.GenericSchema<number, T>) =>
-  v.pipe(numberInput(unit), v.nonOptional(rules, required(label)));
+  v.pipe(NumberInputSchema(unit), v.nonOptional(rules, required(label)));
 
 /** A number field that may be left empty, which gives `undefined`. */
 const optionalNumber = <T>(unit: NumberUnit, rules: v.GenericSchema<number, T>) =>
-  v.pipe(numberInput(unit), v.optional(rules));
+  v.pipe(NumberInputSchema(unit), v.optional(rules));
 
 /** Yen, 0 or more. */
 export function YenSchema(label: string) {
@@ -126,7 +126,7 @@ export const AmountSchema = YenSchema("金額");
 
 /** A coupon in yen; empty for none. */
 export const DiscountSchema = v.pipe(
-  numberInput("yen"),
+  NumberInputSchema("yen"),
   v.optional(whole("クーポン値引額", 0, MAX_AMOUNT, "円"), 0),
 );
 
@@ -134,7 +134,7 @@ export const QuantitySchema = requiredNumber("quantity", "数量", whole("数量
 
 /** Empty or 0 for no rate of its own, or a rate of 1 or more. */
 export const ShopRateSchema = v.pipe(
-  numberInput("rate"),
+  NumberInputSchema("rate"),
   v.transform((value) => (value === 0 ? undefined : value)),
   v.optional(rate("ショップ独自倍率", 1)),
 );

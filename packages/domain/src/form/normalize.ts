@@ -22,7 +22,7 @@ const NUMBER = /^[+-]?\d+(\.\d+)?$/;
  * A number. Full-width digits and signs become half-width (NFKC), and the spaces, the digit-group
  * commas and the unit's signs are dropped: 「¥１１，０００」 is 11000, 「+3倍」 is 3.
  */
-export function numberInput(unit: NumberUnit) {
+export function NumberInputSchema(unit: NumberUnit) {
   return v.pipe(
     v.string(),
     v.normalize("NFKC"),

@@ -2,29 +2,29 @@ import * as v from "valibot";
 import { expect, test } from "vitest";
 import {
   DateInputSchema,
-  numberInput,
+  NumberInputSchema,
   OptionalTextInputSchema,
   TextInputSchema,
 } from "./normalize";
 
 test("a number drops full-width forms, commas, spaces and its unit's signs", () => {
-  expect(v.parse(numberInput("yen"), " ¥１１，０００ ")).toBe(11000);
-  expect(v.parse(numberInput("yen"), "3,980円")).toBe(3980);
-  expect(v.parse(numberInput("points"), "７，０００Ｐ")).toBe(7000);
-  expect(v.parse(numberInput("points"), "7000ポイント")).toBe(7000);
-  expect(v.parse(numberInput("rate"), "＋２．５倍")).toBe(2.5);
-  expect(v.parse(numberInput("quantity"), "２個")).toBe(2);
-  expect(v.parse(numberInput("yen"), "-1")).toBe(-1);
+  expect(v.parse(NumberInputSchema("yen"), " ¥１１，０００ ")).toBe(11000);
+  expect(v.parse(NumberInputSchema("yen"), "3,980円")).toBe(3980);
+  expect(v.parse(NumberInputSchema("points"), "７，０００Ｐ")).toBe(7000);
+  expect(v.parse(NumberInputSchema("points"), "7000ポイント")).toBe(7000);
+  expect(v.parse(NumberInputSchema("rate"), "＋２．５倍")).toBe(2.5);
+  expect(v.parse(NumberInputSchema("quantity"), "２個")).toBe(2);
+  expect(v.parse(NumberInputSchema("yen"), "-1")).toBe(-1);
 });
 
 test("an empty number field is undefined, and text that is not a number is NaN", () => {
-  expect(v.parse(numberInput("yen"), "　")).toBeUndefined();
-  expect(v.parse(numberInput("yen"), "12a")).toBeNaN();
+  expect(v.parse(NumberInputSchema("yen"), "　")).toBeUndefined();
+  expect(v.parse(NumberInputSchema("yen"), "12a")).toBeNaN();
   // Only plain digits are read: not a hexadecimal or an exponent.
-  expect(v.parse(numberInput("yen"), "0x10")).toBeNaN();
-  expect(v.parse(numberInput("yen"), "1e3")).toBeNaN();
+  expect(v.parse(NumberInputSchema("yen"), "0x10")).toBeNaN();
+  expect(v.parse(NumberInputSchema("yen"), "1e3")).toBeNaN();
   // A sign belongs to its own unit only.
-  expect(v.parse(numberInput("yen"), "3倍")).toBeNaN();
+  expect(v.parse(NumberInputSchema("yen"), "3倍")).toBeNaN();
 });
 
 test("a date is made half-width, and an empty one is undefined", () => {

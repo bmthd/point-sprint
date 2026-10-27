@@ -189,7 +189,7 @@ export {
 } from "./form/field-schemas";
 export {
   type NumberUnit,
-  numberInput,
+  NumberInputSchema,
   DateInputSchema,
   TextInputSchema,
   OptionalTextInputSchema,

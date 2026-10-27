@@ -57,9 +57,9 @@
 
 ## コードの書き方
 
-- export する関数は `function` 宣言にする。atom や `createServerFn` など、関数呼び出しの結果は `export const` に置く。
-- valibot のスキーマとスキーマを作る関数は `PascalCase` にする。
-- ルートの `component` は名前付きの関数を参照する。ルート固有の関数はファイルの下に置き、props を渡さない部品は直接参照する。
-- `siteUrl` は `site-url.ts` から直接 import する。
-- query key は `apps/web/src/state/queries.ts` の `queryKeys` に集める。
-- `packages/domain/src/index.ts` は、公開する名前を列挙して export する。
+- export する関数は `function` 宣言にする。atom や `createServerFn` など、関数呼び出しの結果は `export const` に置く
+- valibot のスキーマとスキーマを作る関数は `PascalCase` にする
+- ルートの `component` は名前付きの関数を参照する。ルート固有の関数はファイルの下に置き、props を渡さない部品は直接参照する
+- `siteUrl` は `site-url.ts` から直接 import する
+- query key は `apps/web/src/state/queries.ts` の `queryKeys` に集める
+- `packages/domain/src/index.ts` は、公開する名前を列挙して export する
