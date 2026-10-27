@@ -1,7 +1,15 @@
 import { describe, expect, test } from "vitest";
 import type { Order } from "../model/order";
 import type { Plan } from "../model/plan";
-import { copyOrder, moveOrder } from "./order-ops";
+import {
+  addOrder,
+  updateOrder,
+  removeOrder,
+  clearOrders,
+  toggleHold,
+  copyOrder,
+  moveOrder,
+} from "./order-ops";
 
 const SHOP = "a0000000-0000-4000-8000-000000000001";
 const ORDER_IDS = [1, 2, 3].map((n) => `0${n}000000-0000-4000-8000-000000000000`);
@@ -115,4 +123,36 @@ test("unknown order throws", () => {
   const unknown = "00000000-0000-4000-8000-000000000000";
   expect(() => copyOrder(plan, unknown, idSequence())).toThrow(/order/);
   expect(() => moveOrder(plan, unknown, 0)).toThrow(/order/);
+});
+
+describe("order changes", () => {
+  test("add appends, update replaces in place, remove preserves the remaining order", () => {
+    const before = structuredClone(plan);
+    const added = order("new-order", 4);
+    const appended = addOrder(plan, added);
+    expect(appended.orders).toEqual([...plan.orders, added]);
+    const updated: Order = { ...added, tags: [] };
+    expect(updateOrder(appended, updated).orders).toEqual([...plan.orders, updated]);
+    expect(removeOrder(appended, added.id).orders).toEqual(plan.orders);
+    expect(removeOrder(plan, "missing").orders).toEqual(plan.orders);
+    expect(clearOrders(plan)).toEqual({ ...plan, orders: [] });
+    expect(plan).toEqual(before);
+  });
+
+  test("hold toggles only the target and can be toggled back", () => {
+    const before = structuredClone(plan);
+    const target = plan.orders[0];
+    if (!target) throw new Error("missing fixture order");
+    const held = toggleHold(plan, target.id);
+    expect(held.orders).toEqual([{ ...target, onHold: true }, ...plan.orders.slice(1)]);
+    expect(toggleHold(held, target.id)).toEqual(plan);
+    expect(plan).toEqual(before);
+  });
+
+  test("updating or holding a missing order throws", () => {
+    expect(() => updateOrder(plan, order("missing", 4))).toThrow(
+      `order missing is not in plan ${plan.id}`,
+    );
+    expect(() => toggleHold(plan, "missing")).toThrow(`order missing is not in plan ${plan.id}`);
+  });
 });

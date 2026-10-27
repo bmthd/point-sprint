@@ -5,8 +5,7 @@ import { tierRate } from "../benefit-kinds/shop-around";
 import { spendTierRate } from "../benefit-kinds/spend-tiers";
 import { channels } from "../channels";
 import { matchesConditions } from "../conditions/matches";
-import { isTwoShopCampaign } from "../master/campaigns";
-import type { Benefit } from "../model/benefit";
+import { type Benefit, isTwoShopCampaign } from "../model/benefit";
 import type { ChannelId, OrderTag, ShopTag } from "../model/common";
 import { type LineItem, hasShop, orderShopContext } from "../model/order";
 import { type Plan, planAccountId } from "../model/plan";
@@ -151,6 +150,10 @@ function orderContexts(plan: Plan, shops: Map<string, Shop>, warnings: Calculati
     if (hasShop(order) && !shop) warnings.push({ type: "unknown-shop", orderId: order.id });
     if (order.date < plan.period.start || order.date > plan.period.end) {
       warnings.push({ type: "order-outside-period", orderId: order.id });
+    } else if (plan.officialEventId && order.date === plan.period.start) {
+      warnings.push({ type: "order-on-period-edge", orderId: order.id, edge: "start" });
+    } else if (plan.officialEventId && order.date === plan.period.end) {
+      warnings.push({ type: "order-on-period-edge", orderId: order.id, edge: "end" });
     }
     return {
       orderId: order.id,
@@ -354,7 +357,12 @@ function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
       cappedPoints += item.points;
       capReached ||= group?.capReached ?? false;
       if (group?.mismatch) mismatchKeys.add(item.groupKey);
-      breakdown.push({ lineItemId: item.lineItemId, source: benefit.id, points: item.points });
+      breakdown.push({
+        lineItemId: item.lineItemId,
+        source: benefit.id,
+        points: item.points,
+        ...(item.raw !== item.points ? { rawPoints: item.raw } : {}),
+      });
       groupTotals[pointGroup] += item.points;
     }
     benefitTotals.push({ benefitId: benefit.id, rawPoints, cappedPoints, capReached });
@@ -370,7 +378,7 @@ function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
     if (benefit.kind === "spend-tiers") spendTotals[benefit.id] = spendTotal;
   }
 
-  const nonZero = breakdown.filter((row) => row.points !== 0);
+  const nonZero = breakdown.filter((row) => (row.rawPoints ?? row.points) !== 0);
   const mismatchWarnings = [...mismatchKeys].map((groupKey): CalculationWarning => ({
     type: "shared-cap-mismatch",
     groupKey,

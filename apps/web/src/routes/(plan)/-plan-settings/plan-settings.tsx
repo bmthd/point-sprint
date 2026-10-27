@@ -1,30 +1,42 @@
+import { useNavigate } from "@tanstack/react-router";
 import type { Plan } from "@workspaces/domain";
 import { Box, Flex, Button, Drawer, Heading, IconButton, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { planResultAtom } from "../../../state/derived";
+import { accountIdOf } from "../../../state/accounts";
+import { accountSettingsAtom, planResultAtom } from "../../../state/derived";
 import { BackIcon, CloseIcon, PencilIcon } from "../../../ui/icons";
 import { PlanPage } from "../-plan-page";
 import { RouterButton, RouterIconButton } from "../../../ui/router-link";
 import { AccountPicker } from "./account-picker";
 import { CampaignToggles } from "./campaign-toggles";
 import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared";
-import { ShopAroundSettings, shopAroundOf } from "./shop-around-settings";
+import { ShopAroundSettings } from "./shop-around-settings";
 import { SpendTiersSettings } from "./spend-tiers-settings";
-import { SpuTiles, spuRate } from "./spu-tiles";
+import { spuPageFromPlan } from "../-spu-month/spu-from";
+import { SpuSettingsCard } from "../-spu-month/spu-month-rows";
 
 /** 「保存して計算に反映」, in the drawer's footer and in the page's bottom bar. */
 const primaryButton = { colorScheme: "primary", size: "lg", w: "full" } as const;
 
-/** The settings themselves, on the settings page and in the desktop's side panel. */
-export function SettingsContent({ plan }: { plan: Plan }) {
+/**
+ * The settings themselves, on the settings page and in the desktop's side panel. The SPU is not
+ * the plan's but the month's: `onChangeSpu` opens the SPU of a month.
+ */
+export function SettingsContent({
+  plan,
+  onChangeSpu,
+}: {
+  plan: Plan;
+  onChangeSpu: (month: string) => void;
+}) {
   return (
     <SettingsSaveFailureProvider key={plan.id}>
-      <SettingsBody plan={plan} />
+      <SettingsBody plan={plan} onChangeSpu={onChangeSpu} />
     </SettingsSaveFailureProvider>
   );
 }
 
-function SettingsBody({ plan }: { plan: Plan }) {
+function SettingsBody({ plan, onChangeSpu }: { plan: Plan; onChangeSpu: (month: string) => void }) {
   const result = useAtomValue(planResultAtom(plan.id));
   const failed = useSettingsSaveFailurePlanId() === plan.id;
   if (!result) return null;
@@ -36,7 +48,12 @@ function SettingsBody({ plan }: { plan: Plan }) {
         </Text>
       ) : null}
       <AccountPicker plan={plan} />
-      <SpuTiles plan={plan} result={result} />
+      <SpuSettingsCard
+        plan={plan}
+        title="SPU"
+        note="月ごとに、すべてのプランで共有"
+        onChange={onChangeSpu}
+      />
       <CampaignToggles plan={plan} />
       <ShopAroundSettings plan={plan} />
       <SpendTiersSettings plan={plan} />
@@ -44,39 +61,33 @@ function SettingsBody({ plan }: { plan: Plan }) {
   );
 }
 
-const num = (value: number) => Number(value.toFixed(2)).toLocaleString("ja-JP");
-
-/** 「SPU +4.5倍・上限 7,000P」, the desktop header button's text. */
-export function settingsSummary(plan: Plan) {
-  const cap = shopAroundOf(plan)?.params.cap;
-  return `SPU +${num(spuRate(plan))}倍${cap === undefined ? "" : `・上限 ${num(cap)}P`}`;
-}
-
-/** The desktop's header button and the side panel it opens with the same settings. */
+/**
+ * The desktop's header button and the side panel it opens with the same settings. `onChangeSpu`
+ * opens the SPU of a month, in place of the settings.
+ */
 export function SettingsPanelButton({
   plan,
   open,
   onOpen,
   onClose,
+  onChangeSpu,
 }: {
   plan: Plan;
   open: boolean;
   onOpen: () => void;
   onClose: () => void;
+  onChangeSpu: (month: string) => void;
 }) {
-  const summary = settingsSummary(plan);
   return (
     <>
       <Button
         variant="ghost"
         colorScheme="gray"
-        aria-label={`プランの設定（${summary}）`}
         onClick={onOpen}
         flex="none"
-        fontVariantNumeric="tabular-nums"
         endIcon={<PencilIcon />}
       >
-        {summary}
+        プランの設定
       </Button>
       <Drawer.Root
         open={open}
@@ -94,7 +105,13 @@ export function SettingsPanelButton({
             </IconButton>
           </Drawer.Header>
           <Drawer.Body alignItems="stretch">
-            <SettingsContent plan={plan} />
+            <SettingsContent
+              plan={plan}
+              onChangeSpu={(month) => {
+                onClose();
+                onChangeSpu(month);
+              }}
+            />
           </Drawer.Body>
           <Drawer.Footer>
             <Button onClick={onClose} {...primaryButton}>
@@ -108,6 +125,9 @@ export function SettingsPanelButton({
 }
 
 function SettingsScreen({ plan }: { plan: Plan }) {
+  const navigate = useNavigate();
+  const settings = useAtomValue(accountSettingsAtom);
+  const account = settings.enabled ? accountIdOf(plan, settings) : undefined;
   return (
     <>
       {/* 戻る goes back to this plan, which the site header has no link to. */}
@@ -125,7 +145,10 @@ function SettingsScreen({ plan }: { plan: Plan }) {
         </Heading>
       </Flex>
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="32">
-        <SettingsContent plan={plan} />
+        <SettingsContent
+          plan={plan}
+          onChangeSpu={(month) => void navigate(spuPageFromPlan(plan.id, month, account))}
+        />
       </Box>
       <Box
         data-bottom-bar

@@ -30,12 +30,12 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type ReactNode, useId, useMemo } from "react";
-import { type FieldState, bind, errorsOf } from "../../form/form";
+import { type FieldState, bind, errorsOf } from "../-form";
 import { type ShopChange, changeShop, replaceShop } from "../../state/mutations";
 import { shopsAtom } from "../../state/queries";
 import type { RakutenItem } from "../../rakuten/item-search";
 import { imageUrl, taxRateLabel, taxRateSegmentsStyle } from "./-order-shared";
-import type { OrderForm } from "./-order-editor/order-form-store";
+import type { OrderForm } from "./-order-form-store";
 
 // Fields shared by the desktop list's edit grid, its add form and the order editor.
 
@@ -43,8 +43,9 @@ export const NEW_SHOP = "new";
 export const TAX_RATES = ["0.1", "0.08", "0"] as const;
 export type TaxRateValue = (typeof TAX_RATES)[number];
 
-export const taxRateValue = (rate: number): TaxRateValue =>
-  rate === 0.08 ? "0.08" : rate === 0 ? "0" : "0.1";
+export function taxRateValue(rate: number): TaxRateValue {
+  return rate === 0.08 ? "0.08" : rate === 0 ? "0" : "0.1";
+}
 
 /**
  * The grid that wraps the fields by the width available. Its fields keep their own height: a
@@ -333,8 +334,9 @@ export const secondaryButton = {
   fontSize: "sm",
 } as const;
 
-export const withTag = <T extends string>(tags: T[], tag: T, on: boolean): T[] =>
-  on ? [...new Set([...tags, tag])] : tags.filter((other) => other !== tag);
+export function withTag<T extends string>(tags: T[], tag: T, on: boolean): T[] {
+  return on ? [...new Set([...tags, tag])] : tags.filter((other) => other !== tag);
+}
 
 /** The shop an item URL points to: one in the registry, or a new one to create. */
 export type ShopFromUrl =
@@ -377,11 +379,13 @@ export function shopFromItem(item: RakutenItem, shops: Shop[]): ShopFromUrl {
 }
 
 /** What a found item puts in the item's fields. A price without tax is left to be typed. */
-export const fieldsFromItem = (item: RakutenItem) => ({
-  name: item.name,
-  unitPrice: item.taxIncludedPrice === undefined ? undefined : String(item.taxIncludedPrice),
-  shopPointRate: item.pointRate >= 2 ? String(item.pointRate) : "",
-});
+export function fieldsFromItem(item: RakutenItem) {
+  return {
+    name: item.name,
+    unitPrice: item.taxIncludedPrice === undefined ? undefined : String(item.taxIncludedPrice),
+    shopPointRate: item.pointRate >= 2 ? String(item.pointRate) : "",
+  };
+}
 
 /** What a form says about the order's shop. */
 export type ShopChoice = {

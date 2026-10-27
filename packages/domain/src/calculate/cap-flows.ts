@@ -34,17 +34,21 @@ export type CapFlow = {
  * For each cap of the plan the order's points go into, how much the order receives and how much
  * is over. Every plan is calculated with the order added to `planId`, so the order's shop can
  * raise the shop-around rate, for the order and for the orders already in the plan. `plans` must
- * have the accounts they are calculated with, and `shops` the order's shop.
+ * have the accounts they are calculated with, and `shops` the order's shop. `asCalculated` turns
+ * the plans with the order added into the plans as they are calculated (`planWithSpu`).
  */
 export function capFlows(input: {
   plans: Plan[];
   shops: Shop[];
   planId: string;
   order: Order;
+  asCalculated?: (plans: Plan[]) => Plan[];
 }): CapFlow[] {
-  const { shops, planId, order } = input;
-  const plans = input.plans.map((plan) =>
-    plan.id === planId ? { ...plan, orders: [...plan.orders, order] } : plan,
+  const { shops, planId, order, asCalculated = (plans) => plans } = input;
+  const plans = asCalculated(
+    input.plans.map((plan) =>
+      plan.id === planId ? { ...plan, orders: [...plan.orders, order] } : plan,
+    ),
   );
   const plan = plans.find((other) => other.id === planId);
   const result = calculateAll(plans, shops).get(planId);

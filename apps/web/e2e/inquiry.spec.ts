@@ -1,7 +1,7 @@
 import { expect, test } from "./fixtures";
 import { InquiryPage, TopPage } from "./pages";
 
-// The preview's Worker has no Turnstile secret (`playwright.config.ts`), so the server function
+// The preview's Worker has no inquiry destination (`playwright.config.ts`), so the server function
 // stops before it calls siteverify or sends a mail: what is tested is the way there and back.
 
 test("the inquiry page is reached from the footer", async ({ page }) => {

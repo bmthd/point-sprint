@@ -12,9 +12,10 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { memo, useId, useMemo, useRef } from "react";
+import { pointsText, rateText, yen } from "../../../ui/format";
 import { orderAtom } from "../../../state/derived";
-import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "../../../state/order-ops";
-import { openOrderIdAtom, reorderModeAtom } from "../../../state/ui";
+import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "../../../state/plan-operations";
+import { openOrderIdAtom, reorderModeAtom } from "../-ui";
 import { monthDayWithWeekday } from "../../../ui/dates";
 import { ArrowIcon, ChevronIcon } from "../../../ui/icons";
 import {
@@ -23,12 +24,9 @@ import {
   isOpenAtom,
   orderCardPointsAtom,
   orderTitle,
-  pointsText,
-  rateText,
   taxLabel,
   useSaveOrderChange,
   useShopName,
-  yen,
 } from "../-order-shared";
 import { pointFill } from "./point-breakdown";
 

@@ -3,18 +3,19 @@ import {
   imageSize,
   resultFigures,
   resultImagePath,
-  resultSearchSchema,
+  ResultSearchSchema,
   resultSummary,
 } from "./-share/result-card";
 import { SharedResultPage } from "./-shared-result-page";
-import { pageHead, siteUrl } from "../page-head";
+import { pageHead } from "../page-head";
+import { siteUrl } from "../site-url";
 
 /**
  * A shared result. Rendered by the Worker on each request, not ahead of time, so that its OGP tags
  * carry the figures in the query string and point at their image.
  */
 export const Route = createFileRoute("/share")({
-  validateSearch: resultSearchSchema,
+  validateSearch: ResultSearchSchema,
   head: ({ match }) => {
     const figures = resultFigures(match.search);
     const head = pageHead({
@@ -34,7 +35,9 @@ export const Route = createFileRoute("/share")({
       ],
     };
   },
-  component: function Share() {
-    return <SharedResultPage figures={resultFigures(Route.useSearch())} />;
-  },
+  component: Share,
 });
+
+function Share() {
+  return <SharedResultPage figures={resultFigures(Route.useSearch())} />;
+}

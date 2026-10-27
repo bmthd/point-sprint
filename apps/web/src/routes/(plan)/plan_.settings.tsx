@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PlanSettings } from "./-plan-settings/plan-settings";
-import { planSearchSchema } from "../../planSearch";
+import { PlanSearchSchema } from "./-plan-search";
 import { pageHead } from "../../page-head";
 
 export const Route = createFileRoute("/(plan)/plan_/settings")({
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/(plan)/plan_/settings")({
       description: "プランで使う SPU の達成状況、キャンペーン、買いまわりの条件を設定します。",
       noindex: true,
     }),
-  validateSearch: planSearchSchema,
+  validateSearch: PlanSearchSchema,
   component: PlanSettingsRoute,
 });
 

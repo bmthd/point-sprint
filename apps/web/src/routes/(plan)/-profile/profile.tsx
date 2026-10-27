@@ -1,18 +1,17 @@
 import { ClientOnly, useCanGoBack, useRouter } from "@tanstack/react-router";
-import { toggleBenefits } from "@workspaces/domain";
 import { Alert, Box, Flex, Heading, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
-import { saveProfileAtom } from "../../../state/mutations";
-import { profileAtom, profileQueryAtom, storageHealthQueryAtom } from "../../../state/queries";
+import { storageHealthQueryAtom } from "../../../state/queries";
 import { BackIcon } from "../../../ui/icons";
 import { RouterIconButton } from "../../../ui/router-link";
 import { QuarantineNotice } from "../-quarantine-notice";
 import { StorageHealthFailure, storageMessages } from "../-warnings";
-import { SpuCard } from "../-plan-settings/spu-tiles";
 import { ResetDataButton } from "../../-reset-data";
 import { AccountSettings } from "./account-settings";
 import { ShopRegistry } from "./shop-registry";
+import { SpuMonthsCard } from "./spu-months-card";
+import { SyncSettings } from "./sync-settings";
 
 function StorageNotice() {
   const { data } = useAtomValue(storageHealthQueryAtom);
@@ -31,32 +30,6 @@ function StorageNotice() {
   );
 }
 
-function SpuDefaults({ onFailed }: { onFailed: (failed: boolean) => void }) {
-  const profile = useAtomValue(profileAtom);
-  const { isSuccess } = useAtomValue(profileQueryAtom);
-  const { mutateAsync: saveProfile } = useAtomValue(saveProfileAtom);
-  return isSuccess ? (
-    <SpuCard
-      title="SPU の初期値"
-      note="ここでの変更は、これから作るプランの初期値になります。作成済みのプランは変わりません。"
-      benefits={profile.spuBenefits}
-      onToggle={(benefitId) => {
-        onFailed(false);
-        saveProfile({
-          change: (current) => ({
-            ...current,
-            spuBenefits: toggleBenefits(current.spuBenefits, benefitId),
-          }),
-        }).catch(() => onFailed(true));
-      }}
-    />
-  ) : (
-    <Text role="status" fontSize="sm" color="fg.muted">
-      読み込み中…
-    </Text>
-  );
-}
-
 function ProfileContent() {
   const [failed, setFailed] = useState(false);
   return (
@@ -67,7 +40,8 @@ function ProfileContent() {
           変更を保存できませんでした。もう一度お試しください。
         </Text>
       ) : null}
-      <SpuDefaults onFailed={setFailed} />
+      <SpuMonthsCard />
+      <SyncSettings siteKey={import.meta.env.TURNSTILE_SITE_KEY ?? undefined} />
       <ShopRegistry onFailed={setFailed} />
       <AccountSettings onFailed={setFailed} />
       <ResetDataButton />
@@ -96,7 +70,8 @@ function BackLink() {
 }
 
 /**
- * The profile at `/profile`: SPU defaults for new plans, the shop registry and advanced settings.
+ * 共通設定 at `/profile`: what every plan shares, the SPU of each month, the sync with other
+ * devices, the shop registry and advanced settings.
  * Its title bar is the plan settings page's: a page that goes back where it was opened from.
  */
 export function Profile() {
@@ -105,7 +80,7 @@ export function Profile() {
       <Flex maxW="640px" mx="auto" h="14" align="center" gap="1" px="2">
         <BackLink />
         <Heading as="h1" fontSize="lg">
-          プロフィール
+          共通設定
         </Heading>
       </Flex>
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="16">

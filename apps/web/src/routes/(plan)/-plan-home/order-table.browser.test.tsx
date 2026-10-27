@@ -4,7 +4,7 @@ import { type ReactNode, useEffect } from "react";
 import { beforeEach, expect, onTestFinished, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
-import { updateOrderAtom } from "../../../state/order-ops";
+import { updateOrderAtom } from "../../../state/plan-operations";
 import { plansQueryAtom, shopsQueryAtom } from "../../../state/queries";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import { DATE_PICKER_FIELD, misalignedFields, tapArea } from "../../../test-layout";
@@ -140,6 +140,29 @@ test("each row shows the order's shop, items, amount, points and rate", async ()
     await expect.element(row).toMatchTextContent(text);
   }
 });
+
+for (const onHold of [false, true]) {
+  test(`fully capped ${onHold ? "held" : "counted"} row omits the marathon contribution`, async () => {
+    const capped = structuredClone(marathon);
+    for (const benefit of capped) benefit.params.cap = 0;
+    await renderWith(
+      makePlan(
+        [baseBenefit, spuBenefit, ...capped],
+        [order(0), order(1), order(2), order(3, { onHold })],
+      ),
+    );
+
+    const row = rowOf("ショップ3");
+    if (onHold) {
+      await expect
+        .element(row.getByText("保留中の見込み 300P", { exact: true }))
+        .toBeInTheDocument();
+    } else {
+      await expect.element(row.getByText("3倍", { exact: true })).toBeVisible();
+      await expect.element(row).toMatchTextContent("300P");
+    }
+  });
+}
 
 test("fits 1024px without horizontal scroll", async () => {
   await page.viewport(1024, 900);
@@ -294,7 +317,7 @@ test("an error under one field leaves the other fields of its row in place", asy
 test("a failed save keeps the add form's input", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
   await expect.element(rows()).toHaveLength(1);
-  repository().plans.put = async () => {
+  repository().plans.update = async () => {
     throw new Error("disk full");
   };
 
@@ -315,14 +338,14 @@ test("a failed save keeps the add form's input", async () => {
 test("an edit whose save failed can be saved again", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
   await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
-  const put = repository().plans.put.bind(repository().plans);
+  const update = repository().plans.update.bind(repository().plans);
   let failNext = true;
-  repository().plans.put = (plan) => {
+  repository().plans.update = (id, change, shop) => {
     if (failNext) {
       failNext = false;
       return Promise.reject(new Error("disk full"));
     }
-    return put(plan);
+    return update(id, change, shop);
   };
 
   const amount = () => screen.getByRole("textbox", { name: "金額（税込）" });
@@ -497,10 +520,10 @@ test("expanded row shows group totals and edits the order", async () => {
   await expect.element(row).toMatchTextContent("税抜の基準額 ¥10,000");
 
   let saves = 0;
-  const put = repository().plans.put.bind(repository().plans);
-  repository().plans.put = (plan) => {
+  const update = repository().plans.update.bind(repository().plans);
+  repository().plans.update = (id, change, shop) => {
     saves += 1;
-    return put(plan);
+    return update(id, change, shop);
   };
 
   // Text fields save on Enter, and only when valid.
@@ -558,10 +581,10 @@ test("expanded row shows group totals and edits the order", async () => {
 test("leaving a field of an opened row unchanged saves nothing", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
   let saves = 0;
-  const put = repository().plans.put.bind(repository().plans);
-  repository().plans.put = (plan) => {
+  const update = repository().plans.update.bind(repository().plans);
+  repository().plans.update = (id, change, shop) => {
     saves += 1;
-    return put(plan);
+    return update(id, change, shop);
   };
   await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
 

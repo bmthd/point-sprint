@@ -2,7 +2,13 @@ import type { Id } from "../model/common";
 import type { ShopAroundOutlook } from "./outlook";
 import type { PointGroup } from "./point-group";
 
-export type BreakdownRow = { lineItemId: string; source: Id | "shop-rate"; points: number };
+export type BreakdownRow = {
+  lineItemId: string;
+  source: Id | "shop-rate";
+  points: number;
+  /** Points before caps, when a cap reduced this row. Otherwise equal to `points`. */
+  rawPoints?: number;
+};
 
 export type BenefitTotal = {
   benefitId: Id;
@@ -14,6 +20,11 @@ export type BenefitTotal = {
 export type CalculationWarning =
   | { type: "unknown-shop"; orderId: string }
   | { type: "order-outside-period"; orderId: string }
+  /**
+   * An order on the first or last day of an official event's plan. The event may start or end
+   * partway through the day, but it is counted all the same.
+   */
+  | { type: "order-on-period-edge"; orderId: string; edge: "start" | "end" }
   | { type: "shared-cap-mismatch"; groupKey: string };
 
 export type CalculationResult = {

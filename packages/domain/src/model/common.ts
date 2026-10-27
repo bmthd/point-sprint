@@ -6,6 +6,9 @@ export type Id = v.InferOutput<typeof IdSchema>;
 export const IsoDateSchema = v.pipe(v.string(), v.isoDate());
 export type IsoDate = v.InferOutput<typeof IsoDateSchema>;
 
+/** `20:00`. */
+export const IsoTimeSchema = v.pipe(v.string(), v.isoTime());
+
 export const TimestampSchema = v.pipe(v.string(), v.isoTimestamp());
 export type Timestamp = v.InferOutput<typeof TimestampSchema>;
 
@@ -23,6 +26,33 @@ export type OrderTag = v.InferOutput<typeof OrderTagSchema>;
 
 export const PeriodSchema = v.object({ start: IsoDateSchema, end: IsoDateSchema });
 export type Period = v.InferOutput<typeof PeriodSchema>;
+
+/** `2026-10`. */
+export const MonthSchema = v.pipe(v.string(), v.regex(/^\d{4}-(0[1-9]|1[0-2])$/));
+
+/** `YYYY-MM` of every month the period touches. */
+export function monthsOf(period: Period): string[] {
+  const months: string[] = [];
+  let year = Number(period.start.slice(0, 4));
+  let month = Number(period.start.slice(5, 7));
+  const last = period.end.slice(0, 7);
+  for (;;) {
+    const current = `${year}-${String(month).padStart(2, "0")}`;
+    months.push(current);
+    if (current >= last) return months;
+    month += 1;
+    if (month > 12) {
+      year += 1;
+      month = 1;
+    }
+  }
+}
+
+/** The month `count` months after `month` (`YYYY-MM`); before it when `count` is negative. */
+export function addMonths(month: string, count: number): string {
+  const index = Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1 + count;
+  return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
+}
 
 /** The date in `period` nearest to `date`. */
 export function closestDateInPeriod({ date, period }: { date: string; period: Period }): string {
@@ -51,5 +81,7 @@ export const ConditionsSchema = v.object({
   dateRule: v.optional(DateRuleSchema),
   minOrderAmount: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
   orderTags: v.optional(v.array(OrderTagSchema)),
+  /** Only the orders of these months (`YYYY-MM`): an SPU item in the months it is on. */
+  months: v.optional(v.array(MonthSchema)),
 });
 export type Conditions = v.InferOutput<typeof ConditionsSchema>;

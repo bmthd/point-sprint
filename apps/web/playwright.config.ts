@@ -19,13 +19,15 @@ export default defineConfig({
   webServer: [
     {
       // The event master starts from the migrations each run, apart from the dev server's data.
-      command: `node scripts/migrate-events-db.ts --local && pnpm exec vite preview --port ${PORT} --strictPort`,
+      command: `node scripts/migrate-db.ts --local && pnpm exec vite preview --port ${PORT} --strictPort`,
       url: `http://localhost:${PORT}`,
       reuseExistingServer: false,
       env: {
         LOCAL_STATE_DIR: ".cloudflare/e2e-state",
-        // Empty, so the inquiry stops at its config and never reaches Turnstile or Email Routing.
-        TURNSTILE_SECRET_KEY: "",
+        // Turnstile's test secret, which lets every token through, for starting to sync. The
+        // inquiry still stops at its config, without a destination, and never reaches Turnstile or
+        // Email Routing.
+        TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
         INQUIRY_TO_ADDRESS: "",
         // Stand-ins: the item lookup calls the fake API (e2e/fake-rakuten-api.ts).
         RAKUTEN_APPLICATION_ID: "e2e-application-id",

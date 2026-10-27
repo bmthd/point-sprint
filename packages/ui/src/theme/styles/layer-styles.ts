@@ -24,10 +24,17 @@ export const layerStyles = defineStyles.layerStyle({
   "outline.hover": {
     bg: "colorScheme.ghost",
   },
+  // A surface one step above the page: in light, a white face lifted by a faint shadow instead of a
+  // line; in dark, a lighter face with a line, where a shadow would not show. The border stays,
+  // transparent in light, so a panel is as big in both modes.
   panel: {
     bg: "bg.panel",
-    borderColor: "border",
+    borderColor: "transparent",
     borderWidth: "1px",
+    boxShadow:
+      "0 0 0 1px rgb(15 23 42 / 0.05), 0 1px 2px rgb(15 23 42 / 0.06), 0 4px 12px rgb(15 23 42 / 0.04)",
+    rounded: "l4",
+    _dark: { borderColor: "border", boxShadow: "none" },
   },
   readOnly: {
     cursor: "default",

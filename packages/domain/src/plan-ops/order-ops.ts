@@ -1,4 +1,5 @@
 import type { Id } from "../model/common";
+import type { Order } from "../model/order";
 import type { Plan } from "../model/plan";
 
 function indexOfOrder(plan: Plan, orderId: string): number {
@@ -37,4 +38,40 @@ export function moveOrder(plan: Plan, orderId: string, toIndex: number): Plan {
   const to = Math.min(Math.max(Math.trunc(toIndex), 0), orders.length);
   orders.splice(to, 0, moved);
   return { ...plan, orders };
+}
+
+const replaceOrder = (plan: Plan, orderId: string, change: (order: Order) => Order): Plan => {
+  if (!plan.orders.some((order) => order.id === orderId)) {
+    throw new Error(`order ${orderId} is not in plan ${plan.id}`);
+  }
+  return {
+    ...plan,
+    orders: plan.orders.map((order) => (order.id === orderId ? change(order) : order)),
+  };
+};
+
+export function addOrder(plan: Plan, order: Order): Plan {
+  return {
+    ...plan,
+    orders: [...plan.orders, order],
+  };
+}
+
+export function updateOrder(plan: Plan, order: Order): Plan {
+  return replaceOrder(plan, order.id, () => order);
+}
+
+export function removeOrder(plan: Plan, orderId: string): Plan {
+  return {
+    ...plan,
+    orders: plan.orders.filter((order) => order.id !== orderId),
+  };
+}
+
+export function clearOrders(plan: Plan): Plan {
+  return { ...plan, orders: [] };
+}
+
+export function toggleHold(plan: Plan, orderId: string): Plan {
+  return replaceOrder(plan, orderId, (order) => ({ ...order, onHold: !order.onHold }));
 }

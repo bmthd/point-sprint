@@ -3,22 +3,22 @@ import { Box, Button, Card, Fieldset, Flex, IconButton, Text } from "@workspaces
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useId, useRef, useState } from "react";
 import * as v from "valibot";
-import { CommitField } from "../../../form/commit-field";
+import { grouped, rateText, yen } from "../../../ui/format";
+import { CommitField } from "../-form/commit-field";
 import {
   END_BEFORE_START,
   MAX_RATE,
   START_AFTER_END,
-  dateSchema,
-  pointsSchema,
-  rateSchema,
-  requiredTextSchema,
-  yenSchema,
-} from "../../../form/field-schemas";
+  DateSchema,
+  PointsSchema,
+  RateSchema,
+  RequiredTextSchema,
+  YenSchema,
+} from "@workspaces/domain";
 import { planResultAtom } from "../../../state/derived";
-import { updateBenefitAtom } from "../../../state/order-ops";
+import { updateBenefitAtom } from "../../../state/plan-operations";
 import { ChevronIcon, CloseIcon, PlusIcon } from "../../../ui/icons";
 import { CommitDatePicker } from "../-date-picker-field";
-import { rateText, yen } from "../-order-shared";
 import { isAddedCampaign, isFixedCampaign } from "./campaign-toggles";
 import { useDeleteCampaign } from "./delete-campaign";
 import { useSaveSettingsChange, whenText } from "./settings-shared";
@@ -31,8 +31,6 @@ const spendTiersOf = (plan: Plan) =>
     (benefit): benefit is SpendTiersBenefit =>
       benefit.kind === "spend-tiers" && !isFixedCampaign(benefit),
   );
-
-const grouped = (value: number) => value.toLocaleString("ja-JP");
 
 /** The yen a new tier starts from above the highest one, and the rate it adds to it. */
 const NEXT_TIER_STEP = { minAmount: 5000, rate: 1 };
@@ -194,7 +192,7 @@ function SpendTiersEditor({
               key={`label:${benefit.label}`}
               label="名前"
               initial={benefit.label}
-              schema={requiredTextSchema("名前", 50)}
+              schema={RequiredTextSchema("名前", 50)}
               onCommit={(label) => change((current) => ({ ...current, label }))}
             />
           ) : null}
@@ -209,7 +207,7 @@ function SpendTiersEditor({
               label="開始日"
               initial={period.start}
               schema={v.pipe(
-                dateSchema("開始日"),
+                DateSchema("開始日"),
                 v.check((start) => start <= period.end, START_AFTER_END),
               )}
               period={plan.period}
@@ -220,7 +218,7 @@ function SpendTiersEditor({
               label="終了日"
               initial={period.end}
               schema={v.pipe(
-                dateSchema("終了日"),
+                DateSchema("終了日"),
                 v.check((end) => end >= period.start, END_BEFORE_START),
               )}
               period={plan.period}
@@ -273,7 +271,7 @@ function SpendTiersEditor({
             key={`cap:${benefit.params.cap ?? ""}`}
             label="獲得上限（P）"
             initial={benefit.params.cap === undefined ? "" : grouped(benefit.params.cap)}
-            schema={pointsSchema("獲得上限")}
+            schema={PointsSchema("獲得上限")}
             inputMode="numeric"
             align="end"
             onCommit={(cap) =>
@@ -352,7 +350,7 @@ function TierRow({
           hideLabel
           initial={grouped(tier.minAmount)}
           schema={v.pipe(
-            yenSchema("合計額"),
+            YenSchema("合計額"),
             v.check(
               (minAmount) => others.every((other) => other.minAmount !== minAmount),
               "同じ合計額の段階がもうあります",
@@ -366,7 +364,7 @@ function TierRow({
           label={`${name}の倍率（+N倍）`}
           hideLabel
           initial={String(tier.rate)}
-          schema={rateSchema("倍率")}
+          schema={RateSchema("倍率")}
           inputMode="decimal"
           align="end"
           onCommit={(rate) => onCommit({ ...tier, rate })}

@@ -12,6 +12,11 @@ const GoogleTagsEnvSchema = v.object({
   ),
 });
 
+/** A pull request's Preview (preview.yml), whose visits are kept out of Google Analytics. */
+export function isPullRequestPreview(env: Record<string, string | undefined>): boolean {
+  return env.PULL_REQUEST_PREVIEW === "true";
+}
+
 export type GoogleTagIds = { measurementId?: string; adsenseClientId?: string };
 
 /** Throws with the names of the variables that are missing or malformed, e.g. still encrypted by dotenvx. */

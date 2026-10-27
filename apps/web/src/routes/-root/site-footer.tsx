@@ -12,6 +12,14 @@ export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [
 ];
 
 /**
+ * Rakuten Web Service's attribution, required on sites that use its API. The terms forbid changing
+ * the HTML (comments included), so it is inserted as is. https://webservice.rakuten.co.jp/guide/credit
+ */
+const rakutenCredit = `<!-- Rakuten Web Services Attribution Snippet FROM HERE -->
+<a href="https://webservice.rakuten.co.jp/" target="_blank"><img src="https://webservice.rakuten.co.jp/img/credit/200709/credit_31130.gif" border="0" alt="Rakuten Web Service Center" title="Rakuten Web Service Center" width="311" height="30"/></a>
+<!-- Rakuten Web Services Attribution Snippet TO HERE -->`;
+
+/**
  * The footer on every page: the links and where the data is kept (it applies to every page).
  */
 export function SiteFooter() {
@@ -50,8 +58,13 @@ export function SiteFooter() {
           </Flex>
         ) : null}
         <Text fontSize="xs" color="fg.muted" textAlign="center">
-          入力した内容はこのブラウザの中にだけ保存されます。ブラウザのデータを消すと、プランも消えます。
+          入力した内容はこのブラウザの中に保存されます。ほかの端末と同期すると、運営者にも読めない暗号にしてから送ります。
         </Text>
+        <Box
+          display="flex"
+          justifyContent="center"
+          dangerouslySetInnerHTML={{ __html: rakutenCredit }}
+        />
       </Flex>
     </Box>
   );

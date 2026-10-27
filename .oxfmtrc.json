@@ -20,6 +20,6 @@
     "packages/ui/src/components/**",
     "packages/ui/src/hooks/**",
     "packages/ui/src/providers/**",
-    "apps/web/src/server/event-pages/*.html"
+    "apps/web/src/server/official-events/event-pages/*.html"
   ]
 }

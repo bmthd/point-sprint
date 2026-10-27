@@ -1,3 +1,4 @@
+import { grouped } from "../../../ui/format";
 import type { ShopAroundOutlook, ShopAroundOutlookRow } from "@workspaces/domain";
 import {
   Box,
@@ -18,7 +19,9 @@ export function currentRow(outlook: ShopAroundOutlook): ShopAroundOutlookRow | u
 }
 
 /** Yen as 万円 to one decimal, e.g. 245,000 → 24.5万円. */
-export const manYen = (yen: number) => `${(yen / 10000).toFixed(1)}万円`;
+export function manYen(yen: number) {
+  return `${(yen / 10000).toFixed(1)}万円`;
+}
 
 const Th = (props: ThProps) => (
   <NativeTable.Th
@@ -103,7 +106,7 @@ export function ShopLadder({
               {cap === null ? (
                 <VisuallyHidden>もらえるポイントのグラフ</VisuallyHidden>
               ) : (
-                `上限 ${cap.toLocaleString("ja-JP")}P まで`
+                `上限 ${grouped(cap)}P まで`
               )}
             </Th>
             <Th textAlign="end">あと</Th>

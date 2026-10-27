@@ -105,7 +105,7 @@ SPU の各項目はスイッチで切り替えるだけで、文字を入れる�
 
 ### お問い合わせ（`inquiry/inquiry-form.tsx`）
 
-スキーマ（`server/inquiry-input.ts`）はサーバーでも同じものでもう一度検証する。
+スキーマ（`server/inquiry/inquiry-input.ts`）はサーバーでも同じものでもう一度検証する。
 
 | 項目 | 受け付ける値 | エラーの文言 | テスト |
 |---|---|---|---|
