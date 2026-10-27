@@ -11,7 +11,7 @@ import { Box, Button, Flex, Image, RadioCard, RadioCardGroup, Text } from "@work
 import { useSetAtom } from "jotai";
 import * as v from "valibot";
 import { optionalGrouped } from "../../../ui/format";
-import { CommitField } from "../../../form/commit-field";
+import { CommitField } from "../-form/commit-field";
 import { CommitDatePicker } from "../-date-picker-field";
 import {
   END_BEFORE_START,
@@ -22,7 +22,7 @@ import {
   rateSchema,
   requiredTextSchema,
   yenSchema,
-} from "../../../form/field-schemas";
+} from "@workspaces/domain";
 import { updateBenefitAtom } from "../../../state/order-ops";
 import { imageUrl } from "../-order-shared";
 import { SPECS } from "./campaign-form";

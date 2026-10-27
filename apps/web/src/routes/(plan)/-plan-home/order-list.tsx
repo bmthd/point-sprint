@@ -2,7 +2,7 @@ import type { Plan } from "@workspaces/domain";
 import { Flex, Button, List, Text } from "@workspaces/ui";
 import { useAtom } from "jotai";
 import { useRef } from "react";
-import { reorderModeAtom } from "../../../state/ui";
+import { reorderModeAtom } from "../-ui";
 import { PlusIcon } from "../../../ui/icons";
 import { withMonthSeparators } from "./order-months";
 import { OrderCard } from "./order-card";

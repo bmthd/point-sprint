@@ -4,7 +4,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useId, useRef, useState } from "react";
 import * as v from "valibot";
 import { grouped, rateText, yen } from "../../../ui/format";
-import { CommitField } from "../../../form/commit-field";
+import { CommitField } from "../-form/commit-field";
 import {
   END_BEFORE_START,
   MAX_RATE,
@@ -14,7 +14,7 @@ import {
   rateSchema,
   requiredTextSchema,
   yenSchema,
-} from "../../../form/field-schemas";
+} from "@workspaces/domain";
 import { planResultAtom } from "../../../state/derived";
 import { updateBenefitAtom } from "../../../state/order-ops";
 import { ChevronIcon, CloseIcon, PlusIcon } from "../../../ui/icons";

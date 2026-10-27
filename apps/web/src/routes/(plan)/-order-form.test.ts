@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
 import { OrderSchema, countShops } from "@workspaces/domain";
-import { NEW_SHOP } from "../-order-fields";
+import { NEW_SHOP } from "./-order-fields";
 import {
   type ItemInput,
   OrderFormSchema,
@@ -9,7 +9,7 @@ import {
   emptyInput,
   emptyItem,
   inputOf,
-} from "./order-form";
+} from "./-order-form";
 
 const SHOP_ID = "a0000000-0000-4000-8000-000000000001";
 const PERIOD = { start: "2026-10-04", end: "2026-10-09" };

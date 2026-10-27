@@ -6,14 +6,9 @@ import * as v from "valibot";
 import { grouped, rateText } from "../../../ui/format";
 import { updateBenefitAtom } from "../../../state/order-ops";
 import { ChevronIcon } from "../../../ui/icons";
-import { CommitField } from "../../../form/commit-field";
+import { CommitField } from "../-form/commit-field";
 import { CommitDatePicker } from "../-date-picker-field";
-import {
-  END_BEFORE_START,
-  START_AFTER_END,
-  dateSchema,
-  pointsSchema,
-} from "../../../form/field-schemas";
+import { END_BEFORE_START, START_AFTER_END, dateSchema, pointsSchema } from "@workspaces/domain";
 import { officialEventsAtom } from "../../-official-events";
 import { isAddedCampaign } from "./campaign-toggles";
 import { useDeleteCampaign } from "./delete-campaign";

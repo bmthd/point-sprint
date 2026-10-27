@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import markdown from "../../../markdown/privacy.md?raw";
+import markdown from "./-markdown/privacy.md?raw";
 import { pageHead } from "../../../page-head";
 import { MarkdownBody } from "./-markdown-body";
 

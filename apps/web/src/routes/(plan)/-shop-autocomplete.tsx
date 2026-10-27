@@ -5,9 +5,9 @@
 import { setInput, useField } from "@formisch/react";
 import { Autocomplete, Field } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { errorsOf } from "../../form/form";
+import { errorsOf } from "../-form";
 import { shopsAtom } from "../../state/queries";
-import type { OrderForm } from "./-order-editor/order-form-store";
+import type { OrderForm } from "./-order-form-store";
 import { NEW_SHOP, optionalMark, useSortedShops } from "./-order-fields";
 
 /** The label of the choice that makes a shop of the typed name. */

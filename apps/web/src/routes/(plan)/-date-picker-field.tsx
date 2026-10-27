@@ -7,7 +7,7 @@ import type { Plan } from "@workspaces/domain";
 import { Box, DatePicker, type DatePickerProps, Field, useFieldProps } from "@workspaces/ui";
 import { useState } from "react";
 import * as v from "valibot";
-import { dateSchema } from "../../form/field-schemas";
+import { dateSchema } from "@workspaces/domain";
 
 const DateText = dateSchema("日付");
 

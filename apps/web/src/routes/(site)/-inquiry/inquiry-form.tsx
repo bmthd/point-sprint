@@ -3,7 +3,7 @@ import { Alert, Button, Checkbox, Field, Input, Text, Textarea, VStack } from "@
 import { atom, useAtomValue } from "jotai";
 import { type ComponentType, useState } from "react";
 import * as v from "valibot";
-import { Form, bind, errorsOf } from "../../../form/form";
+import { Form, bind, errorsOf } from "../../-form";
 import type { InquiryResult } from "../../../server/inquiry";
 import { InquiryInputSchema, type InquiryRequest } from "../../../server/inquiry-input";
 import { TurnstileWidget, type TurnstileWidgetProps } from "../../-turnstile-widget";

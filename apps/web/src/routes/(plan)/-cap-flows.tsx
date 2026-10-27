@@ -11,8 +11,8 @@ import { grouped, yen } from "../../ui/format";
 import { asCalculatedAtom } from "../../state/derived";
 import { plansAtom, shopsAtom } from "../../state/queries";
 import { scopeText } from "./-cap-lines";
-import { draftOfInput } from "./-order-editor/order-form";
-import { AMOUNT_PATH, type OrderForm, useFormInput } from "./-order-editor/order-form-store";
+import { draftOfInput } from "./-order-form";
+import { AMOUNT_PATH, type OrderForm, useFormInput } from "./-order-form-store";
 
 /**
  * Under a new order's fields: how many of its points the order receives from each cap and how

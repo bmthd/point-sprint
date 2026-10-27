@@ -30,12 +30,12 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type ReactNode, useId, useMemo } from "react";
-import { type FieldState, bind, errorsOf } from "../../form/form";
+import { type FieldState, bind, errorsOf } from "../-form";
 import { type ShopChange, changeShop, replaceShop } from "../../state/mutations";
 import { shopsAtom } from "../../state/queries";
 import type { RakutenItem } from "../../rakuten/item-search";
 import { imageUrl, taxRateLabel, taxRateSegmentsStyle } from "./-order-shared";
-import type { OrderForm } from "./-order-editor/order-form-store";
+import type { OrderForm } from "./-order-form-store";
 
 // Fields shared by the desktop list's edit grid, its add form and the order editor.
 

@@ -15,7 +15,7 @@ import { memo, useId, useMemo, useRef } from "react";
 import { pointsText, rateText, yen } from "../../../ui/format";
 import { orderAtom } from "../../../state/derived";
 import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "../../../state/order-ops";
-import { openOrderIdAtom, reorderModeAtom } from "../../../state/ui";
+import { openOrderIdAtom, reorderModeAtom } from "../-ui";
 import { monthDayWithWeekday } from "../../../ui/dates";
 import { ArrowIcon, ChevronIcon } from "../../../ui/icons";
 import {

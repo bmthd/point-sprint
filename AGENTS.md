@@ -11,6 +11,16 @@
 
 置き場所を合わせるためだけにファイルを分けない。`src/` の直下に、中身ごとのディレクトリを足さない。2 つ目のルートが使うときに、共通の親へ移す。
 
+既存の次のディレクトリは、上の配置ルールの例外として残す。
+
+- `google-tags/`: `__root.tsx` と `vite.config.ts`、`scripts/check-prerender.ts` が使い、ルートに属さない
+- `guides/`: 記事のルートと、ビルド設定が使う `prerender-pages.ts` の両方が参照する
+- `rakuten/`: ルートとサーバーに加え、`vite.config.ts` と `scripts/` も使う
+- `server/`: Worker の入口 `server.ts` とルートの両方が使い、ルートに属さない
+- `state/`: `(plan)` と `(site)` の両方が使い、ルートグループをまたいで状態を共有する
+- `storage/`: ルートと `state/` の両方が使い、永続化と同期は特定のルートに属さない
+- `ui/`: 複数のルートグループに加え、`vite.config.ts` も使う
+
 ## UI の部品
 
 画面の部品は Yamada UI v2 の部品で組む。`@workspaces/ui` は Yamada UI のすべての部品を export している。

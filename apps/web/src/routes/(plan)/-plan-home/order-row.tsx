@@ -37,17 +37,12 @@ import { grouped, pointsText, rateText, yen } from "../../../ui/format";
 import { orderAtom, planAtom } from "../../../state/derived";
 import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "../../../state/order-ops";
 import { shopsAtom } from "../../../state/queries";
-import { openOrderIdAtom } from "../../../state/ui";
+import { openOrderIdAtom } from "../-ui";
 import { useLatestRef } from "../../../use-latest-ref";
 import { monthDayWithWeekday } from "../../../ui/dates";
 import { ChevronIcon, GripIcon } from "../../../ui/icons";
-import {
-  OrderFormSchema,
-  type OrderFormInput,
-  draftOf,
-  inputOf,
-} from "../-order-editor/order-form";
-import { useOrderAutofill } from "../-order-editor/order-form-store";
+import { OrderFormSchema, type OrderFormInput, draftOf, inputOf } from "../-order-form";
+import { useOrderAutofill } from "../-order-form-store";
 import { NEW_SHOP } from "../-order-fields";
 import {
   CampaignChip,

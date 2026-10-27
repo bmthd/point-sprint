@@ -7,6 +7,7 @@ import {
   type Plan,
   type PointGroup,
   pointGroupOf,
+  deepEqual,
 } from "@workspaces/domain";
 import { Badge, Button, Heading, Modal, Tag, Text, useDisclosure } from "@workspaces/ui";
 import { atom, useAtomValue, useSetAtom } from "jotai";
@@ -14,7 +15,6 @@ import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
 import { type ReactNode, type RefObject, useCallback, useRef, useState } from "react";
 import {
-  deepEqual,
   orderAtom,
   orderPointsAtom,
   calculatedPlanAtom,
@@ -22,8 +22,8 @@ import {
 } from "../../state/derived";
 import { clearOrdersAtom, removeOrderAtom, saveOrderDraftAtom } from "../../state/order-ops";
 import { shopsAtom } from "../../state/queries";
-import { openOrderIdAtom } from "../../state/ui";
-import type { OrderDraft } from "./-order-editor/order-form";
+import { openOrderIdAtom } from "./-ui";
+import type { OrderDraft } from "./-order-form";
 
 // What the phone's order cards and the desktop's order list have in common.
 

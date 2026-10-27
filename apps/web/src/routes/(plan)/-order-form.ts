@@ -13,7 +13,7 @@ import {
   matchesConditions,
 } from "@workspaces/domain";
 import * as v from "valibot";
-import type { ShopChange } from "../../../state/mutations";
+import type { ShopChange } from "../../state/mutations";
 import {
   AmountSchema,
   DiscountSchema,
@@ -23,9 +23,9 @@ import {
   QuantitySchema,
   ShopNameSchema,
   ShopRateSchema,
-} from "../../../form/field-schemas";
-import { tokyoToday } from "../../../ui/dates";
-import { NEW_SHOP, TAX_RATES, shopToSave, taxRateValue } from "../-order-fields";
+} from "@workspaces/domain";
+import { tokyoToday } from "../../ui/dates";
+import { NEW_SHOP, TAX_RATES, shopToSave, taxRateValue } from "./-order-fields";
 
 // The fields are in the order the editor shows them, so a submit focuses the first error on screen.
 

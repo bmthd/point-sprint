@@ -6,7 +6,7 @@ import { getInput, reset, useField, useForm, validate } from "@formisch/react";
 import { Field, Input } from "@workspaces/ui";
 import { useRef } from "react";
 import * as v from "valibot";
-import { bind, errorsOf } from "./form";
+import { bind, errorsOf } from "../../-form";
 
 /**
  * A text field that saves its value on Enter or when it loses the focus, and only when `schema`

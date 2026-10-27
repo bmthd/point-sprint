@@ -3,6 +3,7 @@ import {
   type Plan,
   type SpuMonth,
   calculateAll,
+  deepEqual,
   planWithSpu,
 } from "@workspaces/domain";
 import { atom } from "jotai";
@@ -10,23 +11,6 @@ import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
 import { type AccountSettings, accountSettingsOf, withEffectiveAccount } from "./accounts";
 import { plansAtom, profileAtom, shopsAtom, spuMonthsAtom } from "./queries";
-
-/** Structural equality for the plain data that plans and calculation results are made of. */
-export function deepEqual(a: unknown, b: unknown): boolean {
-  if (Object.is(a, b)) return true;
-  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
-  if (Array.isArray(a) !== Array.isArray(b)) return false;
-  const keysA = Object.keys(a);
-  const keysB = Object.keys(b);
-  return (
-    keysA.length === keysB.length &&
-    keysA.every(
-      (key) =>
-        Object.hasOwn(b, key) &&
-        deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]),
-    )
-  );
-}
 
 /**
  * Whether the user tells accounts apart, and the accounts. Only the parts of the profile the
