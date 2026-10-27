@@ -1,10 +1,10 @@
-import { expect, test } from "./fixtures";
+import { expect, test, fixDate } from "./fixtures";
 import { ProfilePage, TopPage } from "./pages";
 
 // Each change is saved to IndexedDB and is still there after a reload.
 
 test("orders, plan settings, profile and shops survive a reload", async ({ page }) => {
-  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  await fixDate(page, new Date("2026-10-05T12:00:00+09:00"));
   let plan = await (await TopPage.open(page)).createPlan();
 
   // Order sequence after a reorder.
