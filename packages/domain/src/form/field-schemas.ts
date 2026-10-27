@@ -47,33 +47,40 @@ const optionalNumber = <T>(unit: NumberUnit, rules: v.GenericSchema<number, T>) 
   v.pipe(toNumber(unit), v.optional(rules));
 
 /** Yen, 0 or more. */
-export const yenSchema = (label: string) =>
-  requiredNumber("yen", label, whole(label, 0, MAX_AMOUNT, "円"));
+export function yenSchema(label: string) {
+  return requiredNumber("yen", label, whole(label, 0, MAX_AMOUNT, "円"));
+}
 
 /** Yen, or `undefined` for an empty field. */
-export const optionalYenSchema = (label: string) =>
-  optionalNumber("yen", whole(label, 0, MAX_AMOUNT, "円"));
+export function optionalYenSchema(label: string) {
+  return optionalNumber("yen", whole(label, 0, MAX_AMOUNT, "円"));
+}
 
 /** Points, 0 or more. */
-export const pointsSchema = (label: string) =>
-  requiredNumber("points", label, whole(label, 0, MAX_AMOUNT, "ポイント"));
+export function pointsSchema(label: string) {
+  return requiredNumber("points", label, whole(label, 0, MAX_AMOUNT, "ポイント"));
+}
 
 /** Points, or `undefined` for an empty field. */
-export const optionalPointsSchema = (label: string) =>
-  optionalNumber("points", whole(label, 0, MAX_AMOUNT, "ポイント"));
+export function optionalPointsSchema(label: string) {
+  return optionalNumber("points", whole(label, 0, MAX_AMOUNT, "ポイント"));
+}
 
 /** A campaign's rate (+N倍): above 0, up to `MAX_RATE`. */
-export const rateSchema = (label: string) => requiredNumber("rate", label, rate(label, 0));
+export function rateSchema(label: string) {
+  return requiredNumber("rate", label, rate(label, 0));
+}
 
 /** A date as YYYY-MM-DD, which a date field gives. */
-export const dateSchema = (label: string) =>
-  v.pipe(
+export function dateSchema(label: string) {
+  return v.pipe(
     toDate,
     v.nonOptional(
       v.pipe(v.string(), v.isoDate(`${label}は YYYY-MM-DD の形で入れてください`)),
       required(label),
     ),
   );
+}
 
 export const END_BEFORE_START = "終了日は開始日と同じ日か、それより後の日にしてください";
 export const START_AFTER_END = "開始日は終了日と同じ日か、それより前の日にしてください";
@@ -82,15 +89,18 @@ const maxLength = (label: string, max: number) =>
   v.maxLength<string, number, string>(max, `${label}は${max}文字以内で入れてください`);
 
 /** Text that must be filled in, up to `max` characters. */
-export const requiredTextSchema = (label: string, max: number) =>
-  v.pipe(toText, v.nonEmpty(required(label)), maxLength(label, max));
+export function requiredTextSchema(label: string, max: number) {
+  return v.pipe(toText, v.nonEmpty(required(label)), maxLength(label, max));
+}
 
 /** Text that may be left empty, up to `max` characters. */
-export const textSchema = (label: string, max: number) => v.pipe(toText, maxLength(label, max));
+export function textSchema(label: string, max: number) {
+  return v.pipe(toText, maxLength(label, max));
+}
 
 /** A web page's address, or `undefined` for an empty field. */
-export const optionalUrlSchema = (label: string) =>
-  v.pipe(
+export function optionalUrlSchema(label: string) {
+  return v.pipe(
     toOptionalText,
     v.optional(
       v.pipe(
@@ -102,6 +112,7 @@ export const optionalUrlSchema = (label: string) =>
       ),
     ),
   );
+}
 
 // The fields of an order and its items.
 

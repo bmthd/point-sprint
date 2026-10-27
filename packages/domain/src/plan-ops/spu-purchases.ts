@@ -55,8 +55,9 @@ const isOn = (months: SpuMonth[]) => (achievement: SpuAchievement) =>
  * already achieved `before` is left as it is, so one the user turned off stays off until an order
  * achieves it again.
  */
-export const newlyAchievedSpu = (before: Plan[], after: Plan[], shops: Shop[]): SpuAchievement[] =>
-  difference(spuAchievements(after, shops), spuAchievements(before, shops));
+export function newlyAchievedSpu(before: Plan[], after: Plan[], shops: Shop[]): SpuAchievement[] {
+  return difference(spuAchievements(after, shops), spuAchievements(before, shops));
+}
 
 /**
  * The SPU that the orders of `before` achieved and those of `after` no longer do, and that are
@@ -78,9 +79,10 @@ export function lostSpuPurchases(input: {
 }
 
 /** The SPU that the orders of `plan` achieve but that are off in `months`: the user turned them off. */
-export const disabledAchievedSpu = (
+export function disabledAchievedSpu(
   plan: Plan,
   shops: Shop[],
   months: SpuMonth[],
-): SpuAchievement[] =>
-  spuAchievements([plan], shops).filter((achievement) => !isOn(months)(achievement));
+): SpuAchievement[] {
+  return spuAchievements([plan], shops).filter((achievement) => !isOn(months)(achievement));
+}

@@ -33,11 +33,12 @@ const SITE_NAME = "ポイントスプリント";
 
 const encoder = new TextEncoder();
 
-export const base64Url = (bytes: Uint8Array): string =>
-  btoa(String.fromCharCode(...bytes))
+export function base64Url(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes))
     .replaceAll("+", "-")
     .replaceAll("/", "_")
     .replace(/=+$/, "");
+}
 
 const fromBase64Url = (text: string): Uint8Array<ArrayBuffer> =>
   Uint8Array.from(atob(text.replaceAll("-", "+").replaceAll("_", "/")), (char) =>

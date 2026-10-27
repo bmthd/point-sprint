@@ -14,4 +14,6 @@ export type Account = v.InferOutput<typeof AccountSchema>;
 /** The account of every plan that names none, which is every plan saved before accounts existed. */
 export const DEFAULT_ACCOUNT_ID = "acc00000-0000-4000-8000-000000000000";
 
-export const defaultAccount = (): Account => ({ id: DEFAULT_ACCOUNT_ID, name: "メイン" });
+export function defaultAccount(): Account {
+  return { id: DEFAULT_ACCOUNT_ID, name: "メイン" };
+}

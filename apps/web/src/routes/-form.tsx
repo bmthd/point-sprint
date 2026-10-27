@@ -19,19 +19,23 @@ export type FieldState = {
 };
 
 /** The props of a Formisch text field for an `Input`, a `Textarea` or a `NativeSelect`. */
-export const bind = (field: FieldState) => ({
-  ...field.props,
-  value: typeof field.input === "string" ? field.input : "",
-});
+export function bind(field: FieldState) {
+  return {
+    ...field.props,
+    value: typeof field.input === "string" ? field.input : "",
+  };
+}
 
 /**
  * `Field`'s props for a Formisch field: the first error under it. The error is announced as the
  * input's description, and the input is marked invalid.
  */
-export const errorsOf = (field: FieldState) => ({
-  invalid: field.errors !== null,
-  errorMessage: field.errors?.[0],
-});
+export function errorsOf(field: FieldState) {
+  return {
+    invalid: field.errors !== null,
+    errorMessage: field.errors?.[0],
+  };
+}
 
 /**
  * Moves the focus to the first field marked invalid, in the order of the page, opening the

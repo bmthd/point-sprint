@@ -25,17 +25,22 @@ export function spuIdsIn(months: SpuMonth[], accountId: string, month: string): 
 }
 
 /** `standardSpu`, each item on exactly when `ids` has it. */
-export const spuBenefitsOf = (ids: ReadonlySet<string>): Benefit[] =>
-  standardSpu.map((benefit) => ({ ...structuredClone(benefit), enabled: ids.has(benefit.id) }));
+export function spuBenefitsOf(ids: ReadonlySet<string>): Benefit[] {
+  return standardSpu.map((benefit) => ({
+    ...structuredClone(benefit),
+    enabled: ids.has(benefit.id),
+  }));
+}
 
 /**
  * The ids that are on after toggling `benefitId`, with the rules of `toggleBenefits`: one item of
  * an exclusive group, and the card's normal points with its bonus.
  */
-export const toggleSpu = (ids: ReadonlySet<string>, benefitId: string): string[] =>
-  toggleBenefits(spuBenefitsOf(ids), benefitId)
+export function toggleSpu(ids: ReadonlySet<string>, benefitId: string): string[] {
+  return toggleBenefits(spuBenefitsOf(ids), benefitId)
     .filter((benefit) => benefit.enabled)
     .map((benefit) => benefit.id);
+}
 
 /** `ids` with `benefitIds` on, through `toggleSpu` so that the same rules hold. */
 export function enableSpu(ids: ReadonlySet<string>, benefitIds: Iterable<string>): string[] {
@@ -47,27 +52,29 @@ export function enableSpu(ids: ReadonlySet<string>, benefitIds: Iterable<string>
 }
 
 /** The months a plan's SPU is for: those of its period and those of its orders. */
-export const spuMonthsOfPlan = (plan: Plan): string[] =>
-  [
+export function spuMonthsOfPlan(plan: Plan): string[] {
+  return [
     ...new Set([...monthsOf(plan.period), ...plan.orders.map((order) => order.date.slice(0, 7))]),
   ].sort();
+}
 
 /**
  * The plans the SPU of `accountId` in `month` is used by, with how many of their orders are of
  * the month: those of the account that `spuMonthsOfPlan` gives the month. `plans` must have the
  * accounts they are calculated with.
  */
-export const plansUsingSpuMonth = (
+export function plansUsingSpuMonth(
   plans: Plan[],
   accountId: string,
   month: string,
-): { plan: Plan; orders: number }[] =>
-  plans
+): { plan: Plan; orders: number }[] {
+  return plans
     .filter((plan) => planAccountId(plan) === accountId && spuMonthsOfPlan(plan).includes(month))
     .map((plan) => ({
       plan,
       orders: plan.orders.filter((order) => order.date.startsWith(month)).length,
     }));
+}
 
 /**
  * The plan as it is calculated: every `standardSpu` item added to its benefits, on for the orders

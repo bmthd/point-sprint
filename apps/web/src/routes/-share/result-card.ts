@@ -45,10 +45,14 @@ const query = ({ points, rate }: ResultFigures) =>
   });
 
 /** The page a result is shared as: it shows the figures, and social media show its image. */
-export const resultPageUrl = (figures: ResultFigures) => `${siteUrl}/share?${query(figures)}`;
+export function resultPageUrl(figures: ResultFigures) {
+  return `${siteUrl}/share?${query(figures)}`;
+}
 
 /** Path of the result's OGP image, drawn on request by the Worker. */
-export const resultImagePath = (figures: ResultFigures) => `/share/image.png?${query(figures)}`;
+export function resultImagePath(figures: ResultFigures) {
+  return `/share/image.png?${query(figures)}`;
+}
 
 /** "獲得予定 2,600P・実質還元率 6.5%" */
 export function resultSummary({ points, rate }: ResultFigures) {

@@ -53,7 +53,9 @@ export function clearSessionCookie(): void {
   deleteCookie(cookieName(), { path: "/" });
 }
 
-export const sessionToken = (): string | undefined => getCookie(cookieName());
+export function sessionToken(): string | undefined {
+  return getCookie(cookieName());
+}
 
 /** The account the request is logged in to. */
 export async function sessionOf(deps: SyncAuthDeps): Promise<string | undefined> {

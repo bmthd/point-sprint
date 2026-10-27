@@ -20,11 +20,12 @@ type ShopAroundBenefit = Extract<Benefit, { kind: "shop-around" }>;
  * The plan's first shop-around benefit, the one the calculation's outlook follows. A 2ショップ購入
  * is a campaign of its own days, among the campaigns.
  */
-export const shopAroundOf = (plan: Plan) =>
-  plan.benefits.find(
+export function shopAroundOf(plan: Plan) {
+  return plan.benefits.find(
     (benefit): benefit is ShopAroundBenefit =>
       benefit.kind === "shop-around" && !isTwoShopCampaign(benefit),
   );
+}
 
 const CapSchema = pointsSchema("獲得上限");
 

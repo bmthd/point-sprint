@@ -31,7 +31,9 @@ import type { OrderDraft } from "./-order-form";
 const IMAGE_ORIGIN = "https://assets.bmth.dev/point-sprint";
 
 /** A benefit's `imagePath` (`/img/...`) → the URL its image is served from. */
-export const imageUrl = (imagePath: string) => `${IMAGE_ORIGIN}${imagePath}`;
+export function imageUrl(imagePath: string) {
+  return `${IMAGE_ORIGIN}${imagePath}`;
+}
 
 type OrderKey = { planId: string; orderId: string };
 const sameOrderKey = (a: OrderKey, b: OrderKey) => a.planId === b.planId && a.orderId === b.orderId;
@@ -112,11 +114,11 @@ export function orderPointRows(
 }
 
 /** An order's points summed into the four point groups. */
-export const groupTotalsOf = (rows: OrderPointRow[]): Record<PointGroup, number> => {
+export function groupTotalsOf(rows: OrderPointRow[]): Record<PointGroup, number> {
   const totals: Record<PointGroup, number> = { base: 0, spu: 0, marathon: 0, campaign: 0 };
   for (const row of rows) totals[row.group] += row.points;
   return totals;
-};
+}
 
 const noBenefits: Benefit[] = [];
 const benefitsAtom = atomFamily((planId: string) =>
@@ -208,8 +210,9 @@ export function useSaveOrderDraft(planId: string, setFailed: (failed: boolean) =
   );
 }
 
-export const taxRateLabel = (rate: number) =>
-  rate === 0 ? "非課税" : `${Math.round(rate * 100)}%`;
+export function taxRateLabel(rate: number) {
+  return rate === 0 ? "非課税" : `${Math.round(rate * 100)}%`;
+}
 
 /**
  * How a tax rate's choices look, wherever they are: framed white as an input is, the chosen one
@@ -244,14 +247,15 @@ export const taxRateSegmentsStyle = {
   },
 } as const;
 
-export const taxLabel = (items: LineItem[]) =>
-  [...new Set(items.map((item) => item.taxRate))].map(taxRateLabel).join("・");
+export function taxLabel(items: LineItem[]) {
+  return [...new Set(items.map((item) => item.taxRate))].map(taxRateLabel).join("・");
+}
 
-export const orderTitle = (order: Order) => {
+export function orderTitle(order: Order) {
   const [first] = order.lineItems;
   const rest = order.lineItems.length - 1;
   return `${first?.name ?? ""}${rest > 0 ? ` 他${rest}点` : ""}`;
-};
+}
 
 export function useShopName(order: Order | undefined) {
   const shops = useAtomValue(shopsAtom);

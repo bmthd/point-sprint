@@ -7,8 +7,9 @@ import { CAP_TAX_RATES, scopeText, sharedText } from "../-cap-lines";
 import { taxRateLabel, taxRateSegmentsStyle } from "../-order-shared";
 
 /** The price that fills the line's cap at `taxRate`; `null` while the rate is 0. */
-export const fillPriceOf = (line: CapLine, taxRate: TaxRate) =>
-  priceToFill(line.remaining, taxRate, line.rate, line.benefit.amountBasis);
+export function fillPriceOf(line: CapLine, taxRate: TaxRate) {
+  return priceToFill(line.remaining, taxRate, line.rate, line.benefit.amountBasis);
+}
 
 /**
  * How full the cap is, in two colors: what other plans used, then what this plan used.

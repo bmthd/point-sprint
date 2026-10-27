@@ -165,5 +165,6 @@ export function createTestPasskeys() {
 }
 
 /** A fixed PRF output per passkey, and another one for a device whose output differs. */
-export const prfOutput = (credentialId: string, salt = "") =>
-  new TextEncoder().encode(`${salt}prf-of-${credentialId}`.padEnd(32, "."));
+export function prfOutput(credentialId: string, salt = "") {
+  return new TextEncoder().encode(`${salt}prf-of-${credentialId}`.padEnd(32, "."));
+}

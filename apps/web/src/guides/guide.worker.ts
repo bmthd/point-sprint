@@ -33,5 +33,6 @@ const isPrerendering = () => new URL(getRequest().url).hostname === "localhost";
  * never calls the API for them, so that calls from outside cannot use up the API's rate, which
  * the item lookup shares: there, the guide has no items.
  */
-export const loadGuideOnServer = (slug: string) =>
-  loadGuide(slug, isPrerendering() ? serverItemSearch() : undefined);
+export function loadGuideOnServer(slug: string) {
+  return loadGuide(slug, isPrerendering() ? serverItemSearch() : undefined);
+}

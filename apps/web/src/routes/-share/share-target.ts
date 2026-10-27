@@ -37,4 +37,6 @@ export function shareLinks({ text, url }: ShareTarget) {
 }
 
 /** What the copy button puts on the clipboard. */
-export const shareMessage = ({ text, url }: ShareTarget) => `${text}\n${url}`;
+export function shareMessage({ text, url }: ShareTarget) {
+  return `${text}\n${url}`;
+}

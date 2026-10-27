@@ -86,15 +86,17 @@ export type OrderFormInput = v.InferInput<typeof OrderFormSchema>;
 export type OrderFormOutput = v.InferOutput<typeof OrderFormSchema>;
 export type ItemInput = OrderFormInput["items"][number];
 
-export const emptyItem = (): ItemInput => ({
-  id: "",
-  name: "",
-  unitPrice: "",
-  quantity: "1",
-  taxRate: "0.1",
-  discount: "",
-  shopPointRate: "",
-});
+export function emptyItem(): ItemInput {
+  return {
+    id: "",
+    name: "",
+    unitPrice: "",
+    quantity: "1",
+    taxRate: "0.1",
+    discount: "",
+    shopPointRate: "",
+  };
+}
 
 const emptyInputForDate = (date: string): OrderFormInput => ({
   url: "",
@@ -112,8 +114,9 @@ const emptyInputForDate = (date: string): OrderFormInput => ({
 });
 
 /** The editor's fields for a new order in this plan. */
-export const emptyInput = (period: Period): OrderFormInput =>
-  emptyInputForDate(closestDateInPeriod({ date: tokyoToday(new Date()), period }));
+export function emptyInput(period: Period): OrderFormInput {
+  return emptyInputForDate(closestDateInPeriod({ date: tokyoToday(new Date()), period }));
+}
 
 /** The editor's fields for an order that is already saved. */
 export function inputOf(order: Order, shops: Shop[]): OrderFormInput {
@@ -197,8 +200,9 @@ export function draftOfInput(
   return parsed.success ? draftOf(parsed.output, shops, original) : undefined;
 }
 
-export const rateOf = (benefit: Benefit) =>
-  benefit.kind === "rate-bonus" ? benefit.params.rate : 0;
+export function rateOf(benefit: Benefit) {
+  return benefit.kind === "rate-bonus" ? benefit.params.rate : 0;
+}
 
 /** The sum of the rates of the plan's campaigns that need a shop or order tag (「+1」). */
 export function tagBonus(benefits: Benefit[], tag: { shop?: "39shop"; order?: OrderTag }) {
@@ -213,8 +217,9 @@ export function tagBonus(benefits: Benefit[], tag: { shop?: "39shop"; order?: Or
 }
 
 /** Whether the plan has a campaign for orders with `tag`; only then is the order asked for it. */
-export const hasOrderTagCampaign = (benefits: Benefit[], tag: OrderTag) =>
-  benefits.some((benefit) => benefit.conditions.orderTags?.includes(tag));
+export function hasOrderTagCampaign(benefits: Benefit[], tag: OrderTag) {
+  return benefits.some((benefit) => benefit.conditions.orderTags?.includes(tag));
+}
 
 /** The plan's campaigns that apply by the order date alone (「日付で自動」). */
 export function dateCampaigns(benefits: Benefit[], date: string) {

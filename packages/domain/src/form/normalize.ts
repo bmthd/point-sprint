@@ -22,13 +22,14 @@ const NUMBER = /^[+-]?\d+(\.\d+)?$/;
  * A number. Full-width digits and signs become half-width (NFKC), and the spaces, the digit-group
  * commas and the unit's signs are dropped: 「¥１１，０００」 is 11000, 「+3倍」 is 3.
  */
-export const toNumber = (unit: NumberUnit) =>
-  v.pipe(
+export function toNumber(unit: NumberUnit) {
+  return v.pipe(
     v.string(),
     v.normalize("NFKC"),
     v.transform((text) => text.replace(/[,\s]/g, "").replace(UNITS[unit], "")),
     v.transform((text) => (text === "" ? undefined : NUMBER.test(text) ? Number(text) : NaN)),
   );
+}
 
 /** A date field's YYYY-MM-DD, made half-width and without the spaces around it. */
 export const toDate = v.pipe(

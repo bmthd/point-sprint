@@ -19,7 +19,9 @@ export function currentRow(outlook: ShopAroundOutlook): ShopAroundOutlookRow | u
 }
 
 /** Yen as 万円 to one decimal, e.g. 245,000 → 24.5万円. */
-export const manYen = (yen: number) => `${(yen / 10000).toFixed(1)}万円`;
+export function manYen(yen: number) {
+  return `${(yen / 10000).toFixed(1)}万円`;
+}
 
 const Th = (props: ThProps) => (
   <NativeTable.Th

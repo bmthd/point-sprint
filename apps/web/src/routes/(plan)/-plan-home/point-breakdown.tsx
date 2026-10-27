@@ -10,12 +10,13 @@ const labels: Record<PointGroup, string> = {
 };
 
 /** Campaign points are always drawn hatched on the panel, so they never rely on color alone. */
-export const pointFill = (group: PointGroup, stripe: number) =>
-  group === "campaign"
+export function pointFill(group: PointGroup, stripe: number) {
+  return group === "campaign"
     ? `repeating-linear-gradient(45deg, {colors.point.campaign} 0 ${stripe}px, {colors.bg.panel} ${stripe}px ${stripe * 2}px)`
     : group === "base"
       ? "point"
       : `point.${group}`;
+}
 
 /**
  * The four point groups as a stacked bar and a legend, always in the order 通常 → SPU → マラソン →

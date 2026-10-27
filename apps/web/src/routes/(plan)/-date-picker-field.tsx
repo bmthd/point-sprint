@@ -12,22 +12,25 @@ import { dateSchema } from "@workspaces/domain";
 const DateText = dateSchema("日付");
 
 /** Whether `text` is a day as the forms hold it: `2026-10-06`. */
-export const isDate = (text: unknown): text is string => v.is(DateText, text);
+export function isDate(text: unknown): text is string {
+  return v.is(DateText, text);
+}
 
 /** `2026-10-06` → that day at midnight here, or `undefined` for anything else. */
-export const parseIsoDate = (text: unknown) => {
+export function parseIsoDate(text: unknown) {
   if (!isDate(text)) return undefined;
   const [year, month, day] = text.split("-").map(Number);
   return new Date(year ?? 0, (month ?? 1) - 1, day);
-};
+}
 
 /** A day → `2026-10-06`, the text the form's date fields hold. */
-export const isoDate = (date: Date) =>
-  [
+export function isoDate(date: Date) {
+  return [
     date.getFullYear(),
     String(date.getMonth() + 1).padStart(2, "0"),
     String(date.getDate()).padStart(2, "0"),
   ].join("-");
+}
 
 /** How a date field shows its day: `2026/10/06`. */
 const DATE_FORMAT = { input: { year: "numeric", month: "2-digit", day: "2-digit" } } as const;

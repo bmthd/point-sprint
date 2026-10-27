@@ -94,7 +94,9 @@ export type PlanChange = {
 };
 
 /** A change that replaces the whole plan, for creating or saving a plan as it is. */
-export const replacePlan = (plan: Plan): PlanChange => ({ planId: plan.id, change: () => plan });
+export function replacePlan(plan: Plan): PlanChange {
+  return { planId: plan.id, change: () => plan };
+}
 
 /** The plans in the repository right before and right after a saved plan change. */
 export type SavedPlans = { before: Plan[]; after: Plan[] };
@@ -158,16 +160,20 @@ export const deletePlanAtom = atomWithMutation<void, string, Error, Snapshot>((g
 export type ShopChange = NonNullable<Parameters<Repository["plans"]["update"]>[2]>;
 
 /** A change that replaces the whole shop, for creating a shop. */
-export const replaceShop = (shop: Shop): ShopChange => ({ shopId: shop.id, change: () => shop });
+export function replaceShop(shop: Shop): ShopChange {
+  return { shopId: shop.id, change: () => shop };
+}
 
 /** A change to a shop that has to exist already. */
-export const changeShop = (shopId: string, change: (shop: Shop) => Shop): ShopChange => ({
-  shopId,
-  change: (shop) => {
-    if (!shop) throw new Error(`shop ${shopId} does not exist`);
-    return change(shop);
-  },
-});
+export function changeShop(shopId: string, change: (shop: Shop) => Shop): ShopChange {
+  return {
+    shopId,
+    change: (shop) => {
+      if (!shop) throw new Error(`shop ${shopId} does not exist`);
+      return change(shop);
+    },
+  };
+}
 
 const changedShops = (shops: Shop[] | undefined, variables: ShopChange) => {
   const stored = shops?.find((shop) => shop.id === variables.shopId);

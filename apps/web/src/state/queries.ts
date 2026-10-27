@@ -12,7 +12,9 @@ export const queryKeys = {
   quarantine: ["quarantine"],
 } as const;
 
-export const defaultProfile = (): Profile => ({ updatedAt: new Date().toISOString() });
+export function defaultProfile(): Profile {
+  return { updatedAt: new Date().toISOString() };
+}
 
 export const plansQueryAtom = atomWithQuery((get) => {
   const repository = get(repositoryAtom);
