@@ -43,18 +43,18 @@ export default defineConfig(({ isPreview }) => ({
     // A prerendered page is `<path>/index.html`, which is served at `<path>` like the sitemap and
     // the canonical URLs name it; `<path>/` redirects there.
     assets: { htmlHandling: "drop-trailing-slash" },
-    // Collects the official events from Rakuten's pages (src/server/collect-events.ts) four times a
+    // Collects the official events from Rakuten's pages (src/server/official-events/collect-events.ts) four times a
     // day: 10:05, 16:05, 22:05 and 04:05 in Japan. A round's page goes up around 10:00. A Preview
     // cannot have triggers, so it serves what its database holds.
     ...(isPreview ? {} : { triggers: [triggers.scheduled({ schedule: "5 1,7,13,19 * * *" })] }),
-    // The turns at the Rakuten API, shared by every user (src/server/rakuten-rate-gate.ts).
+    // The turns at the Rakuten API, shared by every user (src/server/item-lookup/rakuten-rate-gate.worker.ts).
     // SQLite storage, which the Workers Free plan has; the turns are kept in memory only. A Preview
     // cannot create the class, so it has none, and no item lookup.
     exports: isPreview ? {} : { RakutenRateGate: exports.durableObject({ storage: "sqlite" }) },
     env: {
       // Mail to the operator from the inquiry form. Email Routing sends only to its verified
       // addresses; the address is the secret `INQUIRY_TO_ADDRESS`, so it is not written here.
-      // The sender is `INQUIRY_FROM` (src/server/inquiry-mail.ts). A module imported here cannot
+      // The sender is `INQUIRY_FROM` (src/server/inquiry/inquiry-mail.ts). A module imported here cannot
       // be loaded by the dev server's Worker, so it is written out.
       INQUIRY_EMAIL: bindings.sendEmail({ allowedSenderAddresses: ["inquiry@bmth.dev"] }),
       EVENTS_DB: bindings.d1(isPreview ? PREVIEW_EVENTS_DB : EVENTS_DB),

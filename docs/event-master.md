@@ -6,7 +6,7 @@
 
 ## 収集のしくみ
 
-Worker（`apps/web/src/server/collect-events.ts`）が、日本時間の 10:05、16:05、22:05、04:05 に次の2ページを読む。1回の取得は2ページだけにする。User-Agent は一般的なブラウザのものを使う。
+Worker（`apps/web/src/server/official-events/collect-events.ts`）が、日本時間の 10:05、16:05、22:05、04:05 に次の2ページを読む。1回の取得は2ページだけにする。User-Agent は一般的なブラウザのものを使う。
 
 | ページ | URL | 読むもの |
 |---|---|---|
@@ -49,7 +49,7 @@ pnpm exec cf d1 query <データベースの ID> --sql "SELECT * FROM collection
 
 データベースの ID は `apps/web/cloudflare.config.ts` の `EVENTS_DB` にある。
 
-- `failed` が続くとき: スケジュールのページが取れないか、読めない。ページを開いて作りが変わっていないかを確かめ、`apps/web/src/server/event-pages.ts` を直す。直したら、そのときのページを `apps/web/src/server/event-pages/` に固定してテストを足す。
+- `failed` が続くとき: スケジュールのページが取れないか、読めない。ページを開いて作りが変わっていないかを確かめ、`apps/web/src/server/official-events/event-pages.ts` を直す。直したら、そのときのページを `apps/web/src/server/official-events/event-pages/` に固定してテストを足す。
 - `warning` のとき: メッセージにある理由を見る。楽天の告知が正しく、検査が厳しすぎるなら検査を直す。
 
 ## 行を直すとき
@@ -96,4 +96,4 @@ pnpm exec cf d1 query <ID> --sql "INSERT INTO official_events (id, name, period_
 
 ## 表の形を変えるとき
 
-`apps/web/migrations/` に SQL を足す。本番には Deploy のワークフローが、Preview には Preview のワークフローがデプロイの前に当てる。手元の開発サーバーと E2E は、起動のたびにローカルの D1 を作り直して当てる（`pnpm --filter web db:migrate --local`）。開発サーバーは、起動したまま足されたマイグレーションも、次に D1 を読むときに当てる（`apps/web/src/server/dev-migrations.ts`）。
+`apps/web/migrations/` に SQL を足す。本番には Deploy のワークフローが、Preview には Preview のワークフローがデプロイの前に当てる。手元の開発サーバーと E2E は、起動のたびにローカルの D1 を作り直して当てる（`pnpm --filter web db:migrate --local`）。開発サーバーは、起動したまま足されたマイグレーションも、次に D1 を読むときに当てる（`apps/web/src/server/shared/dev-migrations.worker.ts`）。

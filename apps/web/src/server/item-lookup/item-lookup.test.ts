@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { ALLOWED_ORIGIN } from "../rakuten/config";
+import { ALLOWED_ORIGIN } from "../../rakuten/config";
 import { type ItemLookupDeps, handleItemLookup } from "./item-lookup";
 import { type Turn, takeTurn } from "./rate-gate";
 

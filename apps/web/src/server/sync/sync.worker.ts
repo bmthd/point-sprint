@@ -6,9 +6,9 @@ import {
   setCookie,
 } from "@tanstack/react-start/server";
 import { env } from "cloudflare:workers";
-import { devMigrated } from "./dev-migrations";
+import { devMigrated } from "../shared/dev-migrations.worker";
 import { type SyncAuthDeps, sessionAccount } from "./sync-auth";
-import { verifyTurnstile } from "./turnstile";
+import { verifyTurnstile } from "../shared/turnstile";
 
 // The Worker's side of the sync's server functions: the database, the site's origin, the session's
 // cookie and Turnstile.

@@ -6,7 +6,7 @@ import { applyMigrations } from "./migrations";
 
 const first = {
   "0001_official_events.sql": readFileSync(
-    new URL("../../migrations/0001_official_events.sql", import.meta.url),
+    new URL("../../../migrations/0001_official_events.sql", import.meta.url),
     "utf8",
   ),
 };

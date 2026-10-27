@@ -44,7 +44,7 @@ if (problems.length > 0) {
 writeFileSync(join(clientDir, "sitemap.xml"), sitemapXml(indexed));
 
 // A failed search fails the prerendering (`guide-items.ts`): none in any guide happens when the
-// server function stops telling the prerendering apart (`guide-on-server.ts`).
+// server function stops telling the prerendering apart (`guide.worker.ts`).
 if (guideItemLists === 0 && readRakutenConfig(process.env)) {
   console.warn("The guides have no lists of items although the build has the Rakuten settings.");
 }

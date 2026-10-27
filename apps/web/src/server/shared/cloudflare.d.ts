@@ -10,10 +10,12 @@ declare module "cloudflare:workers" {
     RAKUTEN_APPLICATION_ID?: string;
     RAKUTEN_ACCESS_KEY?: string;
     /** Not in a Preview (`cloudflare.config.ts`). */
-    RAKUTEN_RATE_GATE?: DurableObjectNamespace<import("./rakuten-rate-gate").RakutenRateGate>;
-    /** The official event master (src/server/event-store.ts). */
+    RAKUTEN_RATE_GATE?: DurableObjectNamespace<
+      import("../item-lookup/rakuten-rate-gate.worker").RakutenRateGate
+    >;
+    /** The official event master (src/server/official-events/event-store.ts). */
     EVENTS_DB: D1Database;
-    /** The sealed rows of the users who sync (src/server/sync-store.ts). */
+    /** The sealed rows of the users who sync (src/server/sync/sync-records.ts). */
     SYNC_DB: D1Database;
   };
 

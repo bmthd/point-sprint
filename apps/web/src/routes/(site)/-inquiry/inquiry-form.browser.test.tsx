@@ -3,7 +3,7 @@ import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { describe, expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
-import type { InquiryResult } from "../../../server/inquiry";
+import type { InquiryResult } from "../../../server/inquiry/inquiry";
 import { InquiryForm, inquirySenderAtom, type SendInquiry } from "./inquiry-form";
 import type { TurnstileWidgetProps } from "../../-turnstile-widget";
 

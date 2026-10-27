@@ -1,4 +1,4 @@
--- The sync of a user's data between their devices (src/server/sync-store.ts). The rows are sealed on
+-- The sync of a user's data between their devices (src/server/sync/sync-records.ts). The rows are sealed on
 -- the devices: the server keeps what it needs to pick the later row and nothing it could read.
 
 -- One per user who started to sync. Nothing here names the user.

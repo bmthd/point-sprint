@@ -5,7 +5,9 @@ import type { D1Database, D1PreparedStatement } from "cloudflare:workers";
 // Tests only: D1 over SQLite in memory, the part of its API the server uses.
 
 /** A D1 in memory with the migrations of `migrations` applied (`migrations/` by default), or none. */
-export function memoryD1(migrations: URL | null = new URL("../../migrations/", import.meta.url)): {
+export function memoryD1(
+  migrations: URL | null = new URL("../../../migrations/", import.meta.url),
+): {
   db: D1Database;
   sqlite: DatabaseSync;
 } {

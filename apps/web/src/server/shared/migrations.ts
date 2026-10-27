@@ -1,7 +1,7 @@
 import type { D1Database } from "cloudflare:workers";
 
 // Applies migrations/ and migrations-sync/ to the local databases: by scripts/migrate-db.ts, and by
-// the dev server's Worker (dev-migrations.ts). Free of runtime imports, so that Node can run it. Production
+// the dev server's Worker (dev-migrations.worker.ts). Free of runtime imports, so that Node can run it. Production
 // and the Previews are migrated by `cf`, which keeps the same table.
 
 /** The table `cf d1 migrations apply` records the migrations it applied in. */

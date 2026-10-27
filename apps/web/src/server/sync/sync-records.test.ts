@@ -1,12 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { memoryD1 } from "./memory-d1";
+import { memoryD1 } from "../shared/memory-d1";
 import { type RemoteRecord, LIMITS, deleteAccount, pull, push } from "./sync-records";
 
 const ACCOUNT = "account-1";
 const now = new Date("2026-10-25T00:00:00.000Z");
 
 function setUp() {
-  const { db, sqlite } = memoryD1(new URL("../../migrations-sync/", import.meta.url));
+  const { db, sqlite } = memoryD1(new URL("../../../migrations-sync/", import.meta.url));
   sqlite
     .prepare(
       "INSERT INTO accounts (id, created_at, schema_version, recovery_verifier, recovery_wrap) VALUES (?, ?, 0, 'v', 'w')",

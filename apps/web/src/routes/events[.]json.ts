@@ -8,11 +8,11 @@ export const Route = createFileRoute("/events.json")({
   server: {
     handlers: {
       GET: async () => {
-        // Loaded here: they import the Workers runtime, which tests that import the routes lack.
+        // Handler imports: see ../server/shared/README.md.
         const [{ env }, { publishedEvents }, { devMigrated }] = await Promise.all([
           import("cloudflare:workers"),
-          import("../server/event-store"),
-          import("../server/dev-migrations"),
+          import("../server/official-events/event-store"),
+          import("../server/shared/dev-migrations.worker"),
         ]);
         return Response.json(await publishedEvents(await devMigrated(env.EVENTS_DB)), {
           // The cron changes the rows a few times a day at most.

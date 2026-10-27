@@ -4,8 +4,8 @@ import { atom, useAtomValue } from "jotai";
 import { type ComponentType, useState } from "react";
 import * as v from "valibot";
 import { Form, bind, errorsOf } from "../../-form";
-import type { InquiryResult } from "../../../server/inquiry";
-import { InquiryInputSchema, type InquiryRequest } from "../../../server/inquiry-input";
+import type { InquiryResult } from "../../../server/inquiry/inquiry";
+import { InquiryInputSchema, type InquiryRequest } from "../../../server/inquiry/inquiry-input";
 import { TurnstileWidget, type TurnstileWidgetProps } from "../../-turnstile-widget";
 
 export type SendInquiry = (request: InquiryRequest) => Promise<InquiryResult>;
@@ -13,7 +13,7 @@ export type SendInquiry = (request: InquiryRequest) => Promise<InquiryResult>;
 /** The inquiry sender; tests replace it in their Jotai store. */
 export const inquirySenderAtom = atom<{ send: SendInquiry }>({
   send: async (request) => {
-    const { submitInquiry } = await import("../../../server/submit-inquiry");
+    const { submitInquiry } = await import("../../../server/inquiry/inquiry.functions");
     return submitInquiry({ data: request });
   },
 });
