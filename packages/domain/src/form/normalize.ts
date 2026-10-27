@@ -22,7 +22,7 @@ const NUMBER = /^[+-]?\d+(\.\d+)?$/;
  * A number. Full-width digits and signs become half-width (NFKC), and the spaces, the digit-group
  * commas and the unit's signs are dropped: 「¥１１，０００」 is 11000, 「+3倍」 is 3.
  */
-export function toNumber(unit: NumberUnit) {
+export function ToNumberSchema(unit: NumberUnit) {
   return v.pipe(
     v.string(),
     v.normalize("NFKC"),
@@ -32,7 +32,7 @@ export function toNumber(unit: NumberUnit) {
 }
 
 /** A date field's YYYY-MM-DD, made half-width and without the spaces around it. */
-export const toDate = v.pipe(
+export const ToDateSchema = v.pipe(
   v.string(),
   v.normalize("NFKC"),
   v.trim(),
@@ -40,10 +40,10 @@ export const toDate = v.pipe(
 );
 
 /** Text without the spaces around it. An empty field stays an empty string. */
-export const toText = v.pipe(v.string(), v.trim());
+export const ToTextSchema = v.pipe(v.string(), v.trim());
 
 /** Text without the spaces around it, or `undefined` for an empty field. */
-export const toOptionalText = v.pipe(
-  toText,
+export const ToOptionalTextSchema = v.pipe(
+  ToTextSchema,
   v.transform((text) => (text === "" ? undefined : text)),
 );

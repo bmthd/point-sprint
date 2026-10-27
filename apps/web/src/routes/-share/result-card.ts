@@ -8,7 +8,7 @@ import { siteUrl } from "../../site-url";
 export type ResultFigures = { points: number; rate?: number };
 
 /** A number from the query string: the router parses `2600`, a plain `URLSearchParams` gives `"2600"`. */
-const queryNumber = v.pipe(
+const QueryNumberSchema = v.pipe(
   v.union([v.number(), v.pipe(v.string(), v.nonEmpty(), v.decimal(), v.transform(Number))]),
   v.finite(),
 );
@@ -19,10 +19,13 @@ const queryNumber = v.pipe(
  */
 export const ResultSearchSchema = v.object({
   points: v.fallback(
-    v.optional(v.pipe(queryNumber, v.integer(), v.minValue(0), v.maxValue(99_999_999))),
+    v.optional(v.pipe(QueryNumberSchema, v.integer(), v.minValue(0), v.maxValue(99_999_999))),
     undefined,
   ),
-  rate: v.fallback(v.optional(v.pipe(queryNumber, v.minValue(0), v.maxValue(100))), undefined),
+  rate: v.fallback(
+    v.optional(v.pipe(QueryNumberSchema, v.minValue(0), v.maxValue(100))),
+    undefined,
+  ),
 });
 
 /** The figures of a parsed query, or `undefined` when it has no points. */
