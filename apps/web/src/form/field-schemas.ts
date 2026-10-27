@@ -1,4 +1,5 @@
 import * as v from "valibot";
+import { grouped } from "../ui/format";
 import { type NumberUnit, toDate, toNumber, toOptionalText, toText } from "./normalize";
 
 // The schemas of what is typed into the forms, shared by every form. Each first makes the field's
@@ -9,8 +10,6 @@ import { type NumberUnit, toDate, toNumber, toOptionalText, toText } from "./nor
 export const MAX_AMOUNT = 99_999_999;
 export const MAX_QUANTITY = 999;
 export const MAX_RATE = 100;
-
-const grouped = (value: number) => value.toLocaleString("ja-JP");
 
 const required = (label: string) => `${label}を入れてください`;
 

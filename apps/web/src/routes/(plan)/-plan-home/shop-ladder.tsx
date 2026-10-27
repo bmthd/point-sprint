@@ -1,3 +1,4 @@
+import { grouped } from "../../../ui/format";
 import type { ShopAroundOutlook, ShopAroundOutlookRow } from "@workspaces/domain";
 import {
   Box,
@@ -103,7 +104,7 @@ export function ShopLadder({
               {cap === null ? (
                 <VisuallyHidden>もらえるポイントのグラフ</VisuallyHidden>
               ) : (
-                `上限 ${cap.toLocaleString("ja-JP")}P まで`
+                `上限 ${grouped(cap)}P まで`
               )}
             </Th>
             <Th textAlign="end">あと</Th>

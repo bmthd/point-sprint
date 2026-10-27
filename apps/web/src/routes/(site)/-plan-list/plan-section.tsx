@@ -1,3 +1,4 @@
+import { grouped } from "../../../ui/format";
 import { RouterLink } from "../../../ui/router-link";
 import type { Plan } from "@workspaces/domain";
 import {
@@ -59,7 +60,7 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
               </Text>
             </Flex>
             <Text fontSize="lg" fontWeight="bold" fontVariantNumeric="tabular-nums">
-              {(result?.total ?? 0).toLocaleString("ja-JP")}P
+              {grouped(result?.total ?? 0)}P
             </Text>
           </RouterLink>
           <IconButton

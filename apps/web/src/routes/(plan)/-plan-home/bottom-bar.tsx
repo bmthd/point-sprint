@@ -1,9 +1,8 @@
 import type { CalculationResult, Plan } from "@workspaces/domain";
 import { Flex, Button, Text } from "@workspaces/ui";
+import { grouped } from "../../../ui/format";
 import { PlusIcon } from "../../../ui/icons";
 import { countedAmount, effectiveRate } from "./summary-card";
-
-const num = (value: number) => value.toLocaleString("ja-JP");
 
 /** The phone's bar fixed to the bottom of the screen: totals and the way to add an order. */
 export function BottomBar({
@@ -36,10 +35,10 @@ export function BottomBar({
     >
       <Flex flex="1" direction="column" fontVariantNumeric="tabular-nums">
         <Text as="span" fontSize="xs" color="fg.muted">
-          ¥{num(amount)}・{result.shopCount}店舗
+          ¥{grouped(amount)}・{result.shopCount}店舗
         </Text>
         <Text as="span" fontSize="lg" fontWeight="bold">
-          {num(result.total)}P{" "}
+          {grouped(result.total)}P{" "}
           <Text as="span" fontSize="sm" fontWeight="medium" color="fg.muted">
             {effectiveRate(result.total, amount)}%
           </Text>

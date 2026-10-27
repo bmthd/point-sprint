@@ -9,6 +9,7 @@ import {
 } from "@workspaces/domain";
 import { Alert, Button, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
+import { grouped } from "../../ui/format";
 import { QuarantineNotice } from "./-quarantine-notice";
 import { officialEventsAtom } from "../-official-events";
 import { withEffectiveAccount } from "../../state/accounts";
@@ -37,7 +38,7 @@ export function useSpuOffMessages(plan: Plan, month?: string): string[] {
     const rule = spuPurchaseRules.find((candidate) => candidate.benefitId === benefitId);
     const benefit = standardSpu.find((candidate) => candidate.id === benefitId);
     if (!rule || !benefit) return [];
-    const amount = rule.minOrderAmount.toLocaleString("ja-JP");
+    const amount = grouped(rule.minOrderAmount);
     return [
       `${channels[rule.channel].label}で ${amount}円以上の注文がありますが、${monthText(achieved)}の SPU の${benefit.label}が OFF です。`,
     ];

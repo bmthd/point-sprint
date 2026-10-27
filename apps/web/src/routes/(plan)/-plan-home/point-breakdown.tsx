@@ -1,3 +1,4 @@
+import { grouped } from "../../../ui/format";
 import { POINT_GROUPS, type PointGroup } from "@workspaces/domain";
 import { Box, Flex, List, Text } from "@workspaces/ui";
 
@@ -75,7 +76,7 @@ export function PointBreakdown({
               fontWeight={legend === "grid" ? undefined : "bold"}
               fontVariantNumeric="tabular-nums"
             >
-              {totals[group].toLocaleString("ja-JP")}P
+              {grouped(totals[group])}P
             </Text>
           </List.Item>
         ))}
