@@ -7,9 +7,9 @@ import {
 } from "@workspaces/domain";
 import { Box, Card, Flex, Link, NativeAccordion, Progress, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
+import { grouped, yen } from "../../../ui/format";
 import { plansAtom } from "../../../state/queries";
 import { scopeText, sharedText } from "../-cap-lines";
-import { yen } from "../-order-shared";
 import { fillPriceOf } from "./cap-list";
 import { PointBreakdown } from "./point-breakdown";
 import { ShopLadder } from "./shop-ladder";
@@ -28,8 +28,6 @@ export function countedAmount(plan: Plan): number {
 export function effectiveRate(total: number, amount: number): string {
   return amount === 0 ? "—" : ((total / amount) * 100).toFixed(1);
 }
-
-const num = (value: number) => value.toLocaleString("ja-JP");
 
 const Label = (props: { children: string }) => (
   <Text as="span" fontSize="xs" color="primary.contrast/80" {...props} />
@@ -163,7 +161,7 @@ export function SummaryCard({
               lineHeight="1.1"
               fontVariantNumeric="tabular-nums"
             >
-              {num(result.total)}
+              {grouped(result.total)}
               <Text as="span" fontSize="lg" fontWeight="medium" ms="1">
                 P
               </Text>
@@ -205,7 +203,7 @@ export function SummaryCard({
                 </Text>
                 （約{" "}
                 <Text as="b" fontVariantNumeric="tabular-nums">
-                  +{num(outlook.nextShop.pointsGain)}P
+                  +{grouped(outlook.nextShop.pointsGain)}P
                 </Text>
                 ）
               </Text>
@@ -246,7 +244,7 @@ export function SummaryCard({
             <Text as="span" color="primary.contrast/80">
               合計金額
             </Text>
-            <span>¥{num(amount)}</span>
+            <span>¥{grouped(amount)}</span>
           </Flex>
         )}
       </Card.Body>

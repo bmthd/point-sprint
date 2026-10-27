@@ -1,5 +1,6 @@
 import type { Node } from "takumi-js";
 import * as v from "valibot";
+import { fixedPercent, pointsText } from "../../ui/format";
 import { siteName, siteUrl } from "../../page-head";
 
 /** A plan's figures, as a shared result carries them. `rate` is left out when nothing is bought. */
@@ -49,13 +50,10 @@ export const resultPageUrl = (figures: ResultFigures) => `${siteUrl}/share?${que
 /** Path of the result's OGP image, drawn on request by the Worker. */
 export const resultImagePath = (figures: ResultFigures) => `/share/image.png?${query(figures)}`;
 
-export const formatPoints = (points: number) => `${points.toLocaleString("ja-JP")}P`;
-export const formatRate = (rate: number) => `${rate.toFixed(1)}%`;
-
 /** "獲得予定 2,600P・実質還元率 6.5%" */
 export function resultSummary({ points, rate }: ResultFigures) {
-  const earned = `獲得予定 ${formatPoints(points)}`;
-  return rate === undefined ? earned : `${earned}・実質還元率 ${formatRate(rate)}`;
+  const earned = `獲得予定 ${pointsText(points)}`;
+  return rate === undefined ? earned : `${earned}・実質還元率 ${fixedPercent(rate)}`;
 }
 
 export const imageSize = { width: 1200, height: 630 } as const;
@@ -86,8 +84,8 @@ const figure = (label: string, value: string, size: number): Node => ({
 
 /** The OGP image of a result: the points and the rate on a white card over the brand red. */
 export function resultCard(figures: ResultFigures): Node {
-  const points = formatPoints(figures.points);
-  const rate = figures.rate === undefined ? undefined : formatRate(figures.rate);
+  const points = pointsText(figures.points);
+  const rate = figures.rate === undefined ? undefined : fixedPercent(figures.rate);
   // Smaller for long figures, so that both fit on the card: a digit is about 0.6em wide.
   const letters = points.length + (rate?.length ?? 0);
   const size = Math.min(128, Math.floor(820 / (letters * 0.6)));

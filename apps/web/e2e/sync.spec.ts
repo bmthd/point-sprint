@@ -1,5 +1,5 @@
 import type { CDPSession } from "@playwright/test";
-import { type Page, expect, standIn, test } from "./fixtures";
+import { type Page, expect, standIn, test, fixDate } from "./fixtures";
 import { PlanPage, ProfilePage, SyncSection, TopPage } from "./pages";
 
 // Two devices, each a browser context with a virtual authenticator: the passkey made on the first
@@ -56,7 +56,7 @@ async function secondDevice(page: Page) {
 test("a plan written on one device is on the other, and so are the orders added there", async ({
   page,
 }) => {
-  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  await fixDate(page, new Date("2026-10-05T12:00:00+09:00"));
   const phoneKeys = await authenticator(page, { prf: true });
   const plan = await (await TopPage.open(page)).createPlan();
   await plan.addOrder("店A", "3300");
@@ -66,7 +66,7 @@ test("a plan written on one device is on the other, and so are the orders added 
   const code = await new SyncSection(page).start();
 
   const pc = await secondDevice(page);
-  await pc.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  await fixDate(pc, new Date("2026-10-05T12:00:00+09:00"));
   await copyPasskeys(phoneKeys, await authenticator(pc, { prf: true }));
   await ProfilePage.open(pc);
   const pcSync = new SyncSection(pc);
@@ -110,7 +110,7 @@ test("a device whose passkey gives no key opens the data with the recovery code"
 test("the passkey that started the sync opens the data again without the code", async ({
   page,
 }) => {
-  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  await fixDate(page, new Date("2026-10-05T12:00:00+09:00"));
   await authenticator(page, { prf: true });
   const plan = await (await TopPage.open(page)).createPlan();
   await plan.addOrder("店A", "3300");
@@ -141,7 +141,7 @@ test("the passkey that started the sync opens the data again without the code", 
 test("stopping removes the account and the passkey, and the device's data stays", async ({
   page,
 }) => {
-  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  await fixDate(page, new Date("2026-10-05T12:00:00+09:00"));
   const keys = await authenticator(page, { prf: true });
   const plan = await (await TopPage.open(page)).createPlan();
   await plan.addOrder("店A", "3300");
@@ -169,7 +169,7 @@ test("stopping removes the account and the passkey, and the device's data stays"
 test("reissuing rejects a code in an already-open login dialog and keeps syncing", async ({
   page,
 }) => {
-  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  await fixDate(page, new Date("2026-10-05T12:00:00+09:00"));
   const phoneKeys = await authenticator(page, { prf: true });
   const plan = await (await TopPage.open(page)).createPlan();
   await plan.addOrder("店A", "3300");

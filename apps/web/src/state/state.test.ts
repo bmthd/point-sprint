@@ -1,3 +1,4 @@
+import "fake-indexeddb/auto";
 import {
   type Benefit,
   defaultAccount,
@@ -9,23 +10,26 @@ import {
   DEFAULT_ACCOUNT_ID,
   spuIdsIn,
   toggleSpu,
+  wins,
 } from "@workspaces/domain";
 import { QueryClient } from "@tanstack/query-core";
 import { createStore } from "jotai";
 import { queryClientAtom } from "jotai-tanstack-query";
 import { afterEach, expect, test, vi } from "vitest";
+import { createIndexedDbRepository } from "../storage/indexed-db-repository";
 import { createMemoryRepository } from "../storage/memory-repository";
 import type { Repository } from "../storage/repository";
 import { calculationAtom, orderAtom, orderPointsAtom } from "./derived";
 import {
   changeShop,
   replacePlan,
+  replaceShop,
   saveProfileAtom,
   savePlanAtom,
   saveShopAtom,
   saveSpuMonthAtom,
 } from "./mutations";
-import { addOrderAtom, copyOrderAtom, updateOrderAtom } from "./order-ops";
+import { addOrderAtom, copyOrderAtom, saveOrderDraftAtom, updateOrderAtom } from "./order-ops";
 import { plansAtom, profileAtom, queryKeys, shopsAtom, spuMonthsAtom } from "./queries";
 import { repositoryAtom } from "./repository";
 
@@ -43,9 +47,9 @@ const shop: Shop = {
   updatedAt: now,
 };
 
-const order = (id: string, unitPrice: number): Order => ({
+const order = (id: string, unitPrice: number, shopId = SHOP): Order => ({
   id,
-  shopId: SHOP,
+  shopId,
   date: "2026-10-05",
   lineItems: [
     {
@@ -73,6 +77,7 @@ const plan: Plan = {
 
 const unsubscribes: (() => void)[] = [];
 afterEach(() => {
+  vi.useRealTimers();
   unsubscribes.splice(0).forEach((unsubscribe) => unsubscribe());
 });
 
@@ -103,10 +108,10 @@ function controlled(base: Repository) {
     plans: {
       ...base.plans,
       list: () => (listsHang ? new Promise<Plan[]>(() => {}) : base.plans.list()),
-      update: (id, change) =>
+      update: (id, change, shop) =>
         new Promise((resolve, reject) => {
           pending.push({
-            resolve: () => base.plans.update(id, change).then(resolve, reject),
+            resolve: () => base.plans.update(id, change, shop).then(resolve, reject),
             reject,
           });
         }),
@@ -189,6 +194,60 @@ test("a failed operation is left out while an overlapping one is kept", async ()
   expect(priceOf(stored, ORDER_B)).toBe(5000);
   await vi.waitFor(() => expect(priceOf(cachedPlan(store), ORDER_A)).toBe(1000));
   expect(priceOf(cachedPlan(store), ORDER_B)).toBe(5000);
+});
+
+const NEW_SHOP = "a0000000-0000-4000-8000-000000000002";
+const newShop: Shop = { ...shop, id: NEW_SHOP, name: "新しいショップ" };
+const newShopDraft = (id: string) => ({
+  order: order(id, 3000, NEW_SHOP),
+  shopChange: replaceShop(newShop),
+});
+
+test("an order is saved with its new shop", async () => {
+  const repository = createMemoryRepository({ plans: [plan], shops: [shop] });
+  const store = setup(repository);
+  await loaded(store);
+
+  await store.set(saveOrderDraftAtom, { planId: PLAN, draft: newShopDraft(ORDER_B), isNew: true });
+  expect((await repository.shops.list()).map((s) => s.id)).toEqual([SHOP, NEW_SHOP]);
+  expect((await repository.plans.get(PLAN))?.orders.map((o) => o.id)).toEqual([ORDER_A, ORDER_B]);
+  await vi.waitFor(() => expect(store.get(shopsAtom).map((s) => s.id)).toEqual([SHOP, NEW_SHOP]));
+});
+
+test("an order that fails to save leaves no new shop behind", async () => {
+  const { repository, pending, hangLists } = controlled(
+    createMemoryRepository({ plans: [plan], shops: [shop] }),
+  );
+  const store = setup(repository);
+  await loaded(store);
+
+  const saved = store.set(saveOrderDraftAtom, {
+    planId: PLAN,
+    draft: newShopDraft(ORDER_B),
+    isNew: true,
+  });
+  await vi.waitFor(() => expect(store.get(shopsAtom)).toHaveLength(2));
+  hangLists();
+  pending[0]?.reject(new Error("disk full"));
+  await expect(saved).rejects.toThrow("disk full");
+  expect(await repository.shops.list()).toEqual([shop]);
+  expect(cachedPlan(store)?.orders.map((o) => o.id)).toEqual([ORDER_A]);
+  await vi.waitFor(() => expect(store.get(shopsAtom).map((s) => s.id)).toEqual([SHOP]));
+});
+
+test("an edit of an order removed meanwhile saves neither the order nor its new shop", async () => {
+  const repository = createMemoryRepository({ plans: [plan], shops: [shop] });
+  const store = setup(repository);
+  await loaded(store);
+
+  const saved = store.set(saveOrderDraftAtom, {
+    planId: PLAN,
+    draft: newShopDraft(ORDER_B),
+    isNew: false,
+  });
+  await expect(saved).rejects.toThrow(ORDER_B);
+  expect(await repository.shops.list()).toEqual([shop]);
+  await vi.waitFor(() => expect(store.get(shopsAtom).map((s) => s.id)).toEqual([SHOP]));
 });
 
 test("order atom keeps identity when another order changes", async () => {
@@ -285,8 +344,8 @@ function heldPuts<T>(put: (value: T) => Promise<void>) {
 
 test("a failed shop change is left out while an overlapping one is kept", async () => {
   const base = createMemoryRepository({ plans: [plan], shops: [shop] });
-  const { held, pending } = heldPuts(base.shops.put);
-  const store = setup({ ...base, shops: { ...base.shops, put: held } });
+  const { held, pending } = heldShopUpdates(base);
+  const store = setup({ ...base, shops: { ...base.shops, update: held } });
   await loaded(store);
   await vi.waitFor(() => expect(store.get(shopsAtom)).toHaveLength(1));
 
@@ -465,3 +524,182 @@ test("an SPU is achieved by what is saved, not by an earlier operation that fail
   const months = await repository.spuMonths.list();
   expect(spuIdsIn(months, DEFAULT_ACCOUNT_ID, "2026-10").has(BOOKS_SPU_ID)).toBe(true);
 });
+
+for (const kind of ["memory", "indexed-db"] as const) {
+  const seeded = async () => {
+    const base =
+      kind === "memory"
+        ? createMemoryRepository()
+        : createIndexedDbRepository({ name: crypto.randomUUID() });
+    await base.plans.put(plan);
+    await base.shops.put(shop);
+    await base.sync.acknowledge(await base.sync.pending());
+    return base;
+  };
+
+  test(`${kind}: saving an order leaves an unchanged shop and its sync mark untouched`, async () => {
+    const base = await seeded();
+    const store = setup(base);
+    await loaded(store);
+    await vi.waitFor(() => expect(store.get(shopsAtom)).toHaveLength(1));
+    const before = await base.shops.list();
+
+    await store.set(saveOrderDraftAtom, {
+      planId: PLAN,
+      draft: { order: order(ORDER_A, 4000), shopChange: undefined },
+      isNew: false,
+    });
+
+    expect(await base.shops.list()).toEqual(before);
+    expect((await base.sync.pending()).filter((row) => row.kind === "shop")).toEqual([]);
+  });
+
+  test(`${kind}: an order keeps the optimistic shop after its first save fails`, async () => {
+    const base = await seeded();
+    const { repository, pending } = controlled(base);
+    const store = setup(repository);
+    await loaded(store);
+    const first = store.set(saveOrderDraftAtom, {
+      planId: PLAN,
+      draft: newShopDraft(ORDER_B),
+      isNew: true,
+    });
+    await vi.waitFor(() => expect(store.get(shopsAtom)).toHaveLength(2));
+    const second = store.set(saveOrderDraftAtom, {
+      planId: PLAN,
+      draft: { order: order(ORDER_A, 4000, NEW_SHOP), shopChange: undefined },
+      isNew: false,
+    });
+    await vi.waitFor(() => expect(cachedPlan(store)?.orders[0]?.shopId).toBe(NEW_SHOP));
+    pending[0]?.reject(new Error("disk full"));
+    await expect(first).rejects.toThrow("disk full");
+    await vi.waitFor(() => expect(pending).toHaveLength(2));
+    pending[1]?.resolve();
+    await second;
+    expect(await base.shops.list()).toContainEqual(
+      expect.objectContaining({ ...newShop, updatedAt: expect.any(String) }),
+    );
+    expect((await base.plans.get(PLAN))?.orders).toEqual([order(ORDER_A, 4000, NEW_SHOP)]);
+    expect(await base.sync.pending()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: "shop", id: NEW_SHOP, deleted: false }),
+        expect.objectContaining({ kind: "order", id: `${PLAN}:${ORDER_A}`, deleted: false }),
+      ]),
+    );
+  });
+
+  test(`${kind}: a queued order uses the latest shop rather than its cached fallback`, async () => {
+    const base = await seeded();
+    const { repository, pending } = controlled(base);
+    const store = setup(repository);
+    await loaded(store);
+    await vi.waitFor(() => expect(store.get(shopsAtom)).toHaveLength(1));
+    const saved = store.set(saveOrderDraftAtom, {
+      planId: PLAN,
+      draft: { order: order(ORDER_A, 4000), shopChange: undefined },
+      isNew: false,
+    });
+    await vi.waitFor(() => expect(pending).toHaveLength(1));
+    await base.shops.put({ ...shop, name: "updated elsewhere", tags: ["39shop"] });
+    pending[0]?.resolve();
+    await saved;
+    expect(await base.shops.list()).toMatchObject([
+      { name: "updated elsewhere", tags: ["39shop"] },
+    ]);
+  });
+
+  test(`${kind}: a held order shop change wins over a synced shop rename`, async () => {
+    const base = await seeded();
+    const { repository, pending } = controlled(base);
+    const store = setup(repository);
+    await loaded(store);
+    await vi.waitFor(() => expect(store.get(shopsAtom)).toHaveLength(1));
+    vi.setSystemTime("2026-10-06T00:00:00.000Z");
+    const savedOrder = store.set(saveOrderDraftAtom, {
+      planId: PLAN,
+      draft: {
+        order: order(ORDER_A, 4000),
+        shopChange: changeShop(SHOP, (current) => ({ ...current, tags: ["39shop"] })),
+      },
+      isNew: false,
+    });
+    await vi.waitFor(() => expect(pending).toHaveLength(1));
+    vi.setSystemTime("2026-10-07T00:00:00.000Z");
+    await store
+      .get(saveShopAtom)
+      .mutateAsync(changeShop(SHOP, (current) => ({ ...current, name: "renamed" })));
+    const sent = await base.sync.pending();
+    const syncedShop = sent.find((row) => row.kind === "shop");
+    expect(syncedShop).toBeDefined();
+    await base.sync.acknowledge(sent);
+    pending[0]?.resolve();
+    await savedOrder;
+    const outgoing = (await base.sync.pending()).find((row) => row.kind === "shop");
+    if (!outgoing) throw new Error("missing outgoing shop");
+    expect(outgoing.updatedAt > (syncedShop?.updatedAt ?? "")).toBe(true);
+    expect(wins(outgoing, syncedShop)).toBe(true);
+    const stored = await base.shops.list();
+    expect(stored).toMatchObject([
+      { name: "renamed", tags: ["39shop"], updatedAt: outgoing.updatedAt },
+    ]);
+    await vi.waitFor(() => expect(store.get(shopsAtom)).toEqual(stored));
+  });
+
+  test(`${kind}: a held shop rename wins over an already synced order shop change`, async () => {
+    const base = await seeded();
+    const { held, pending } = heldShopUpdates(base);
+    const store = setup({ ...base, shops: { ...base.shops, update: held } });
+    await loaded(store);
+    await vi.waitFor(() => expect(store.get(shopsAtom)).toHaveLength(1));
+    vi.setSystemTime("2026-10-06T00:00:00.000Z");
+    const renamed = store
+      .get(saveShopAtom)
+      .mutateAsync(changeShop(SHOP, (current) => ({ ...current, name: "renamed" })));
+    await vi.waitFor(() => expect(pending).toHaveLength(1));
+    vi.setSystemTime("2026-10-07T00:00:00.000Z");
+    await store.set(saveOrderDraftAtom, {
+      planId: PLAN,
+      draft: {
+        order: order(ORDER_A, 4000),
+        shopChange: changeShop(SHOP, (current) => ({ ...current, tags: ["39shop"] })),
+      },
+      isNew: false,
+    });
+    const sent = await base.sync.pending();
+    const syncedShop = sent.find((row) => row.kind === "shop");
+    expect(syncedShop).toBeDefined();
+    await base.sync.acknowledge(sent);
+    expect(await base.sync.pending()).toEqual([]);
+    const optimisticTimestamp = store.get(shopsAtom)[0]?.updatedAt;
+    // Keep the clock at B's time: the stored timestamp must advance even within one millisecond.
+    pending[0]?.resolve();
+    await renamed;
+    const saved = (await base.shops.list())[0];
+    const outgoing = (await base.sync.pending()).find((row) => row.kind === "shop");
+    expect((saved?.updatedAt ?? "") > (syncedShop?.updatedAt ?? "")).toBe(true);
+    expect(outgoing).toBeDefined();
+    if (!outgoing) throw new Error("missing outgoing shop");
+    expect(wins(outgoing, syncedShop)).toBe(true);
+    expect(outgoing.updatedAt).toBe(saved?.updatedAt);
+    expect(saved?.updatedAt).not.toBe(optimisticTimestamp);
+    await vi.waitFor(() => expect(store.get(shopsAtom)).toEqual([saved]));
+    expect(await base.shops.list()).toMatchObject([{ name: "renamed", tags: ["39shop"] }]);
+    expect(await base.sync.pending()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "shop",
+          id: SHOP,
+          deleted: false,
+          value: expect.objectContaining({ name: "renamed", tags: ["39shop"] }),
+        }),
+      ]),
+    );
+  });
+}
+
+function heldShopUpdates(base: Repository) {
+  const { held, pending } = heldPuts(([id, change]: Parameters<Repository["shops"]["update"]>) =>
+    base.shops.update(id, change),
+  );
+  return { held: (...args: Parameters<Repository["shops"]["update"]>) => held(args), pending };
+}

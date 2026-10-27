@@ -3,13 +3,13 @@ import { Box, Flex, Button, Card, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
 import * as v from "valibot";
+import { grouped, rateText } from "../../../ui/format";
 import { updateBenefitAtom } from "../../../state/order-ops";
 import { ChevronIcon } from "../../../ui/icons";
 import { CommitField } from "../-form/commit-field";
 import { CommitDatePicker } from "../-date-picker-field";
 import { END_BEFORE_START, START_AFTER_END, dateSchema, pointsSchema } from "@workspaces/domain";
 import { officialEventsAtom } from "../../-official-events";
-import { rateText } from "../-order-shared";
 import { isAddedCampaign } from "./campaign-toggles";
 import { useDeleteCampaign } from "./delete-campaign";
 import { useSaveSettingsChange, whenText } from "./settings-shared";
@@ -27,8 +27,6 @@ export const shopAroundOf = (plan: Plan) =>
   );
 
 const CapSchema = pointsSchema("獲得上限");
-
-const grouped = (value: number) => value.toLocaleString("ja-JP");
 
 /** One line about the shop-around: when, the highest rate and the cap. */
 function summaryOf(benefit: ShopAroundBenefit, period: { start: string; end: string }) {

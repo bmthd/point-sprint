@@ -10,6 +10,7 @@ import {
 import { Box, Button, Flex, Image, RadioCard, RadioCardGroup, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import * as v from "valibot";
+import { optionalGrouped } from "../../../ui/format";
 import { CommitField } from "../-form/commit-field";
 import { CommitDatePicker } from "../-date-picker-field";
 import {
@@ -39,9 +40,6 @@ const RANK_CHOICES = [
   { rate: 2, when: "プラチナ会員" },
   { rate: 3, when: "ダイヤモンド会員" },
 ] as const;
-
-const grouped = (value: number | undefined) =>
-  value === undefined ? "" : value.toLocaleString("ja-JP");
 
 const twoColumns = {
   display: "grid",
@@ -230,7 +228,7 @@ export function CampaignEditor({
             <CommitField
               key={`min:${input.minOrderAmount ?? ""}`}
               label="条件金額（円）"
-              initial={grouped(input.minOrderAmount)}
+              initial={optionalGrouped(input.minOrderAmount)}
               schema={yenSchema("条件金額")}
               inputMode="numeric"
               align="end"
@@ -241,7 +239,7 @@ export function CampaignEditor({
             <CommitField
               key={`cap:${input.cap ?? ""}`}
               label="獲得上限（P）"
-              initial={grouped(input.cap)}
+              initial={optionalGrouped(input.cap)}
               schema={pointsSchema("獲得上限")}
               inputMode="numeric"
               align="end"
@@ -252,7 +250,7 @@ export function CampaignEditor({
             <CommitField
               key={`cap:${input.cap ?? ""}`}
               label="獲得上限（P・任意）"
-              initial={grouped(input.cap)}
+              initial={optionalGrouped(input.cap)}
               schema={optionalPointsSchema("獲得上限")}
               inputMode="numeric"
               align="end"

@@ -20,9 +20,10 @@ import {
   calculatedPlanAtom,
   planResultAtom,
 } from "../../state/derived";
-import { clearOrdersAtom, removeOrderAtom } from "../../state/order-ops";
+import { clearOrdersAtom, removeOrderAtom, saveOrderDraftAtom } from "../../state/order-ops";
 import { shopsAtom } from "../../state/queries";
 import { openOrderIdAtom } from "./-ui";
+import type { OrderDraft } from "./-order-form";
 
 // What the phone's order cards and the desktop's order list have in common.
 
@@ -183,10 +184,29 @@ export function useSaveOrderChange() {
   );
 }
 
-export const yen = (value: number) => `¥${value.toLocaleString("ja-JP")}`;
-export const pointsText = (value: number) => `${value.toLocaleString("ja-JP")}P`;
-export const rateText = (rate: number, plus = true) =>
-  `${plus ? "+" : ""}${Number(rate.toFixed(2)).toLocaleString("ja-JP")}倍`;
+/**
+ * Saves the order a form describes with its shop (`saveOrderDraftAtom`), and resolves to whether
+ * it was saved. `setFailed` shows a failure where the screen shows it: the editor in place, the
+ * desktop list above its orders (`orderSaveFailedAtom`). A draft that is `undefined` (the form is
+ * not valid) counts as a failure.
+ */
+export function useSaveOrderDraft(planId: string, setFailed: (failed: boolean) => void) {
+  const saveOrderDraft = useSetAtom(saveOrderDraftAtom);
+  return useCallback(
+    async (draft: OrderDraft | undefined, isNew: boolean) => {
+      setFailed(draft === undefined);
+      if (!draft) return false;
+      try {
+        await saveOrderDraft({ planId, draft, isNew });
+        return true;
+      } catch {
+        setFailed(true);
+        return false;
+      }
+    },
+    [planId, setFailed, saveOrderDraft],
+  );
+}
 
 export const taxRateLabel = (rate: number) =>
   rate === 0 ? "非課税" : `${Math.round(rate * 100)}%`;

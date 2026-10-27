@@ -9,9 +9,10 @@ import {
 import { Box, Card, Flex, Heading, IconButton, Image, List, Switch, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
+import { rateText } from "../../../ui/format";
 import { toggleBenefitAtom } from "../../../state/order-ops";
 import { PencilIcon } from "../../../ui/icons";
-import { imageUrl, rateText } from "../-order-shared";
+import { imageUrl } from "../-order-shared";
 import { CampaignAddButtons } from "./campaign-adder";
 import { CampaignEditor } from "./campaign-editor";
 import { useDeleteCampaign } from "./delete-campaign";
