@@ -1,9 +1,18 @@
 # Deploys the site to Cloudflare Workers on every push to main.
 name: Deploy
 
+# Docs, the Markdown at the root and .github are never read by the site, so a push of only those
+# deploys nothing; workflow_dispatch still deploys by hand. A skipped push never enters the
+# queue below, so it cannot take the place of a push still waiting to deploy.
 on:
   push:
     branches: [main]
+    paths:
+      - "**"
+      - "!docs/**"
+      - "!*.md"
+      - "!.github/**"
+      - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
 # Deploys queue instead of cancelling, so a running `cf deploy` is never
@@ -18,8 +27,11 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       # Takes the pnpm version from packageManager in package.json.
       - uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
         with:

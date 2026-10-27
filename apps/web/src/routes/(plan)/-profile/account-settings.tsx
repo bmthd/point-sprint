@@ -13,8 +13,8 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useRef, useState } from "react";
-import { CommitField } from "../../../form/commit-field";
-import { AccountNameSchema } from "../../../form/field-schemas";
+import { CommitField } from "../-form/commit-field";
+import { AccountNameSchema } from "@workspaces/domain";
 import { accountSettingsAtom } from "../../../state/derived";
 import { saveProfileAtom } from "../../../state/mutations";
 import { profileQueryAtom } from "../../../state/queries";
@@ -112,7 +112,8 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
           複数の楽天アカウントを使い分ける
         </Switch>
         <Text fontSize="xs" color="fg.muted">
-          家族のアカウントなどでも買うときに。キャンペーンの上限をアカウントごとに分けて計算します。
+          家族のアカウントなどでも買うときに。キャンペーンの上限をアカウントごとに分けて計算し、SPU
+          もアカウントごとに設定します。
         </Text>
         {enabled ? (
           <>

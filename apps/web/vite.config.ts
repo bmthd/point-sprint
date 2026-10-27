@@ -3,7 +3,7 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { ogFonts } from "./og-fonts-plugin.ts";
-import { parseGoogleTagsEnv } from "./src/google-tags/env.ts";
+import { isPullRequestPreview, parseGoogleTagsEnv } from "./src/google-tags/env.ts";
 import { prerenderedPages, robotsTxt } from "./src/prerender-pages.ts";
 import { localStateDir } from "./scripts/local-state-dir.ts";
 import { readRakutenConfig } from "./src/rakuten/config.ts";
@@ -26,6 +26,9 @@ export default defineConfig(({ command, mode, isPreview }) => {
   // Only the production build loads Google Analytics and AdSense, and it fails without their IDs.
   // The dev server and the unit tests get none.
   const googleTagIds = command === "build" ? parseGoogleTagsEnv(publicEnv) : undefined;
+  // A pull request's Preview loads no Google Analytics, so that its visits, mostly crawlers', stay
+  // out of production's figures.
+  const measurementId = isPullRequestPreview(process.env) ? undefined : googleTagIds?.measurementId;
   return {
     plugins: [
       cloudflare({
@@ -68,7 +71,7 @@ export default defineConfig(({ command, mode, isPreview }) => {
       "import.meta.env.TURNSTILE_SITE_KEY": JSON.stringify(
         publicEnv.PUBLIC_TURNSTILE_SITE_KEY?.trim() || null,
       ),
-      "import.meta.env.GA_MEASUREMENT_ID": JSON.stringify(googleTagIds?.measurementId),
+      "import.meta.env.GA_MEASUREMENT_ID": JSON.stringify(measurementId),
       "import.meta.env.ADSENSE_CLIENT_ID": JSON.stringify(googleTagIds?.adsenseClientId),
     },
     build: {

@@ -1,7 +1,7 @@
 import { comesWithPlan } from "../model/campaign-template";
 import type { Id } from "../model/common";
 import type { OfficialEvent } from "../model/official-event";
-import type { Plan, Profile } from "../model/plan";
+import type { Plan } from "../model/plan";
 import { campaignTemplates } from "./campaigns";
 import { instantiateCampaign } from "./instantiate";
 
@@ -16,11 +16,10 @@ export function createPlan(input: {
   id: string;
   name: string;
   event?: OfficialEvent;
-  profile: Profile;
   now: string;
   newId: () => Id;
 }): Plan {
-  const { id, name, event, profile, now, newId } = input;
+  const { id, name, event, now, newId } = input;
   // Fixed campaigns (days ending in 5 or 0) are judged by their date rule, so every plan gets them.
   // They stay disabled until the user says they entered.
   const fixedCampaigns = campaignTemplates
@@ -32,10 +31,8 @@ export function createPlan(input: {
     name,
     ...(event ? { officialEventId: event.id } : {}),
     period: event ? { ...event.period } : { start: today, end: today },
-    benefits: [
-      ...structuredClone([...profile.spuBenefits, ...(event?.benefits ?? [])]),
-      ...fixedCampaigns,
-    ],
+    // The SPU is not the plan's: it is the account's for each month (`planWithSpu`).
+    benefits: [...structuredClone(event?.benefits ?? []), ...fixedCampaigns],
     orders: [],
     updatedAt: now,
   };

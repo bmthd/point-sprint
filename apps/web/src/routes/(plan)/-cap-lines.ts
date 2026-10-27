@@ -1,19 +1,18 @@
 import { type CapLine, type Plan, type TaxRate, capLines } from "@workspaces/domain";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
-import { withEffectiveAccount } from "../../state/accounts";
-import { accountSettingsAtom, planResultAtom } from "../../state/derived";
+import { calculatedPlanAtom, planResultAtom } from "../../state/derived";
 
 /** The tax rates a cap's fill price can be shown at. */
 export const CAP_TAX_RATES: TaxRate[] = [0.1, 0.08, 0];
 
-/** The plan's caps, with the account it is calculated with. */
+/** The plan's caps, with the account and the SPU it is calculated with. */
 export function useCapLines(plan: Plan): CapLine[] {
   const result = useAtomValue(planResultAtom(plan.id));
-  const settings = useAtomValue(accountSettingsAtom);
+  const calculated = useAtomValue(calculatedPlanAtom(plan.id));
   return useMemo(
-    () => (result ? capLines(withEffectiveAccount(plan, settings), result) : []),
-    [plan, settings, result],
+    () => (result && calculated ? capLines(calculated, result) : []),
+    [calculated, result],
   );
 }
 

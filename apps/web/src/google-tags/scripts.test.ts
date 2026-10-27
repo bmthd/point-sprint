@@ -31,3 +31,7 @@ test("names the scripts a built page lacks", () => {
   expect(missingGoogleTagScripts(html)).toEqual(["AdSense"]);
   expect(missingGoogleTagScripts("<html></html>")).toEqual(["gtag.js", "AdSense"]);
 });
+
+test("expects no gtag.js of a build without analytics", () => {
+  expect(missingGoogleTagScripts("<html></html>", { analytics: false })).toEqual(["AdSense"]);
+});

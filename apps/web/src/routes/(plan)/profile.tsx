@@ -6,9 +6,10 @@ export const Route = createFileRoute("/(plan)/profile")({
   head: () =>
     pageHead({
       path: "/profile",
-      title: "プロフィール",
+      noindex: true,
+      title: "共通設定",
       description:
-        "SPU（スーパーポイントアッププログラム）の達成状況と、よく買うショップを登録します。新しく作るプランの初期値になります。",
+        "すべてのプランに共通する設定です。月ごとの SPU、ほかの端末との同期、よく買うショップ、楽天アカウントの使い分けを設定します。",
     }),
-  component: () => <Profile />,
+  component: Profile,
 });

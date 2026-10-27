@@ -36,7 +36,7 @@ test("a page whose database a newer app upgraded asks to reload", async () => {
   );
 
   await expect
-    .element(screen.getByRole("heading", { name: "新しい版に更新されました" }))
+    .element(screen.getByRole("heading", { name: "新しいバージョンに更新されました" }))
     .toBeVisible();
   await expect.element(screen.getByRole("button", { name: "再読み込み" })).toBeVisible();
 });

@@ -8,6 +8,7 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import type { Benefit, Order, Plan, Shop } from "@workspaces/domain";
+import { NORMAL_POINT_ID } from "@workspaces/domain";
 import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
@@ -39,7 +40,7 @@ const shops: Shop[] = Array.from({ length: 12 }, (_, index) => ({
 }));
 
 const baseBenefit: Benefit = {
-  id: "b0000000-0000-4000-8000-000000000001",
+  id: NORMAL_POINT_ID,
   kind: "rate-bonus",
   category: "base",
   label: "通常ポイント",

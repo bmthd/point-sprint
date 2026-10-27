@@ -7,6 +7,7 @@ import {
   type Plan,
   type PointGroup,
   pointGroupOf,
+  deepEqual,
 } from "@workspaces/domain";
 import { Badge, Button, Heading, Modal, Tag, Text, useDisclosure } from "@workspaces/ui";
 import { atom, useAtomValue, useSetAtom } from "jotai";
@@ -14,15 +15,15 @@ import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
 import { type ReactNode, type RefObject, useCallback, useRef, useState } from "react";
 import {
-  deepEqual,
   orderAtom,
   orderPointsAtom,
-  planAtom,
+  calculatedPlanAtom,
   planResultAtom,
 } from "../../state/derived";
-import { clearOrdersAtom, removeOrderAtom } from "../../state/order-ops";
+import { clearOrdersAtom, removeOrderAtom, saveOrderDraftAtom } from "../../state/plan-operations";
 import { shopsAtom } from "../../state/queries";
-import { openOrderIdAtom } from "../../state/ui";
+import { openOrderIdAtom } from "./-ui";
+import type { OrderDraft } from "./-order-form";
 
 // What the phone's order cards and the desktop's order list have in common.
 
@@ -30,7 +31,9 @@ import { openOrderIdAtom } from "../../state/ui";
 const IMAGE_ORIGIN = "https://assets.bmth.dev/point-sprint";
 
 /** A benefit's `imagePath` (`/img/...`) → the URL its image is served from. */
-export const imageUrl = (imagePath: string) => `${IMAGE_ORIGIN}${imagePath}`;
+export function imageUrl(imagePath: string) {
+  return `${IMAGE_ORIGIN}${imagePath}`;
+}
 
 type OrderKey = { planId: string; orderId: string };
 const sameOrderKey = (a: OrderKey, b: OrderKey) => a.planId === b.planId && a.orderId === b.orderId;
@@ -111,15 +114,15 @@ export function orderPointRows(
 }
 
 /** An order's points summed into the four point groups. */
-export const groupTotalsOf = (rows: OrderPointRow[]): Record<PointGroup, number> => {
+export function groupTotalsOf(rows: OrderPointRow[]): Record<PointGroup, number> {
   const totals: Record<PointGroup, number> = { base: 0, spu: 0, marathon: 0, campaign: 0 };
   for (const row of rows) totals[row.group] += row.points;
   return totals;
-};
+}
 
 const noBenefits: Benefit[] = [];
 const benefitsAtom = atomFamily((planId: string) =>
-  selectAtom(planAtom(planId), (plan) => plan?.benefits ?? noBenefits, deepEqual),
+  selectAtom(calculatedPlanAtom(planId), (plan) => plan?.benefits ?? noBenefits, deepEqual),
 );
 const noRates: Record<string, number> = {};
 const ratesAtom = atomFamily((planId: string) =>
@@ -145,7 +148,8 @@ export const orderCardPointsAtom = atomFamily(
       atom((get): OrderCardPoints => {
         const counted = get(orderPointsAtom(key));
         const estimate = get(heldEstimateAtom(key));
-        const rows = estimate?.rows ?? counted.rows;
+        // Only the preview shows rows fully cut by a cap. Cards and the table omit their rates too.
+        const rows = (estimate?.rows ?? counted.rows).filter((row) => row.points !== 0);
         return {
           ...orderPointRows(
             rows,
@@ -182,13 +186,33 @@ export function useSaveOrderChange() {
   );
 }
 
-export const yen = (value: number) => `¥${value.toLocaleString("ja-JP")}`;
-export const pointsText = (value: number) => `${value.toLocaleString("ja-JP")}P`;
-export const rateText = (rate: number, plus = true) =>
-  `${plus ? "+" : ""}${Number(rate.toFixed(2)).toLocaleString("ja-JP")}倍`;
+/**
+ * Saves the order a form describes with its shop (`saveOrderDraftAtom`), and resolves to whether
+ * it was saved. `setFailed` shows a failure where the screen shows it: the editor in place, the
+ * desktop list above its orders (`orderSaveFailedAtom`). A draft that is `undefined` (the form is
+ * not valid) counts as a failure.
+ */
+export function useSaveOrderDraft(planId: string, setFailed: (failed: boolean) => void) {
+  const saveOrderDraft = useSetAtom(saveOrderDraftAtom);
+  return useCallback(
+    async (draft: OrderDraft | undefined, isNew: boolean) => {
+      setFailed(draft === undefined);
+      if (!draft) return false;
+      try {
+        await saveOrderDraft({ planId, draft, isNew });
+        return true;
+      } catch {
+        setFailed(true);
+        return false;
+      }
+    },
+    [planId, setFailed, saveOrderDraft],
+  );
+}
 
-export const taxRateLabel = (rate: number) =>
-  rate === 0 ? "非課税" : `${Math.round(rate * 100)}%`;
+export function taxRateLabel(rate: number) {
+  return rate === 0 ? "非課税" : `${Math.round(rate * 100)}%`;
+}
 
 /**
  * How a tax rate's choices look, wherever they are: framed white as an input is, the chosen one
@@ -223,14 +247,15 @@ export const taxRateSegmentsStyle = {
   },
 } as const;
 
-export const taxLabel = (items: LineItem[]) =>
-  [...new Set(items.map((item) => item.taxRate))].map(taxRateLabel).join("・");
+export function taxLabel(items: LineItem[]) {
+  return [...new Set(items.map((item) => item.taxRate))].map(taxRateLabel).join("・");
+}
 
-export const orderTitle = (order: Order) => {
+export function orderTitle(order: Order) {
   const [first] = order.lineItems;
   const rest = order.lineItems.length - 1;
   return `${first?.name ?? ""}${rest > 0 ? ` 他${rest}点` : ""}`;
-};
+}
 
 export function useShopName(order: Order | undefined) {
   const shops = useAtomValue(shopsAtom);

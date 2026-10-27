@@ -32,7 +32,9 @@ test("a guide is prerendered as an article", async ({ request }) => {
   expect(html).toContain(`<h1`);
   expect(html).toContain(TITLE);
   expect(html).toContain('<meta property="og:type" content="article"/>');
-  expect(html).toContain('<meta property="article:modified_time" content="2026-10-08"/>');
+  expect(html).toContain('<meta property="article:published_time" content="2026-10-08"/>');
+  // The guide has not been changed since it was published.
+  expect(html).not.toContain("article:modified_time");
 });
 
 test("the sitemap lists the guide list and every guide", async ({ request }) => {

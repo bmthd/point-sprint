@@ -25,16 +25,22 @@ test.each([
   { slug: "Items_1000", source: source(fields), error: "needs a slug" },
   { slug: "a", source: source(fields.replace(/^title.*\n/, "")), error: "title" },
   { slug: "a", source: source(fields.replace("2026-10-08", "10/8")), error: "published" },
-  { slug: "a", source: source(fields.replace("2026-10-10", "2026-10-01")), error: "before" },
+  { slug: "a", source: source(fields.replace("2026-10-10", "2026-10-01")), error: "after" },
+  { slug: "a", source: source(fields.replace("2026-10-10", "2026-10-08")), error: "after" },
   { slug: "a", source: source(`${fields}\nauthor: 誰か`), error: "author" },
   { slug: "a", source: source(`${fields}\nコロンのない行`), error: "cannot read" },
 ])("a guide with a broken frontmatter throws: $error", ({ slug, source, error }) => {
   expect(() => parseArticle(slug, source)).toThrow(error);
 });
 
+test("an article not changed since it was published has no updated day", () => {
+  const article = parseArticle("a", source(fields.replace(/\nupdated.*/, "")));
+  expect(article).not.toHaveProperty("updated");
+});
+
 test("lists the newest first", () => {
   const article = (slug: string, day: string) =>
-    parseArticle(slug, source(`title: t\ndescription: d\npublished: ${day}\nupdated: ${day}`));
+    parseArticle(slug, source(`title: t\ndescription: d\npublished: ${day}`));
   const sorted = newestFirst([
     article("old", "2026-01-01"),
     article("new", "2026-10-01"),

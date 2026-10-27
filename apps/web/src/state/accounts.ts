@@ -10,10 +10,12 @@ import {
 export type AccountSettings = { enabled: boolean; accounts: Account[] };
 
 /** Whether the user tells accounts apart, and the accounts. */
-export const accountSettingsOf = (profile: Profile): AccountSettings => ({
-  enabled: profile.multiAccount ?? false,
-  accounts: accountsOf(profile),
-});
+export function accountSettingsOf(profile: Profile): AccountSettings {
+  return {
+    enabled: profile.multiAccount ?? false,
+    accounts: accountsOf(profile),
+  };
+}
 
 /**
  * The account a plan is calculated and shown with: the default one until the user tells accounts

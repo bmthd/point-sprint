@@ -1,3 +1,4 @@
+import { grouped } from "../../../ui/format";
 import { POINT_GROUPS, type PointGroup } from "@workspaces/domain";
 import { Box, Flex, List, Text } from "@workspaces/ui";
 
@@ -9,12 +10,13 @@ const labels: Record<PointGroup, string> = {
 };
 
 /** Campaign points are always drawn hatched on the panel, so they never rely on color alone. */
-export const pointFill = (group: PointGroup, stripe: number) =>
-  group === "campaign"
+export function pointFill(group: PointGroup, stripe: number) {
+  return group === "campaign"
     ? `repeating-linear-gradient(45deg, {colors.point.campaign} 0 ${stripe}px, {colors.bg.panel} ${stripe}px ${stripe * 2}px)`
     : group === "base"
       ? "point"
       : `point.${group}`;
+}
 
 /**
  * The four point groups as a stacked bar and a legend, always in the order 通常 → SPU → マラソン →
@@ -75,7 +77,7 @@ export function PointBreakdown({
               fontWeight={legend === "grid" ? undefined : "bold"}
               fontVariantNumeric="tabular-nums"
             >
-              {totals[group].toLocaleString("ja-JP")}P
+              {grouped(totals[group])}P
             </Text>
           </List.Item>
         ))}

@@ -75,8 +75,9 @@ export function withShop(
   return { ...common, ...orderPurchase(shopId, context) };
 }
 
-export const hasShop = (order: Order): order is Extract<Order, { shopId: string }> =>
-  order.shopId !== undefined;
+export function hasShop(order: Order): order is Extract<Order, { shopId: string }> {
+  return order.shopId !== undefined;
+}
 
 export function orderShopContext(
   order: Order,

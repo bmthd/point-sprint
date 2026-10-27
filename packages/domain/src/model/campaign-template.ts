@@ -15,5 +15,6 @@ export const CampaignTemplateSchema = v.object({
 export type CampaignTemplate = v.InferOutput<typeof CampaignTemplateSchema>;
 
 /** Whether every plan comes with this campaign (days ending in 5 or 0), instead of the user adding it. */
-export const comesWithPlan = (template: CampaignTemplate) =>
-  template.occurrence === "fixed" && template.addedByUser !== true;
+export function comesWithPlan(template: CampaignTemplate) {
+  return template.occurrence === "fixed" && template.addedByUser !== true;
+}

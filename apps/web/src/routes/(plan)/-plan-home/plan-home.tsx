@@ -13,7 +13,8 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
-import { planResultAtom } from "../../../state/derived";
+import { accountIdOf } from "../../../state/accounts";
+import { accountSettingsAtom, planResultAtom } from "../../../state/derived";
 import { plansAtom } from "../../../state/queries";
 import { NEW_ORDER, OrderEditor } from "../-order-editor/order-editor";
 import { SettingsPanelButton } from "../-plan-settings/plan-settings";
@@ -35,6 +36,9 @@ import { ShopLadder } from "./shop-ladder";
 import { SummaryCard, countedAmount, effectiveRate } from "./summary-card";
 import { Warnings } from "../-warnings";
 import { useSpuLossNotice } from "./spu-loss-notice";
+import { SpuPanel, useSpuPanelTarget } from "./spu-panel";
+import { spuPageFromPlan } from "../-spu-month/spu-from";
+import { SpuSettingsCard } from "../-spu-month/spu-month-rows";
 
 /** Same as the `lg` breakpoint: from here the summary is a column to the right of the orders. */
 const WIDE = "(min-width: 61em)";
@@ -82,7 +86,15 @@ function PlanSwitcher({ plan }: { plan: Plan }) {
 }
 
 /** On a desktop the settings open in a side panel; on a phone they are their own page. */
-function SettingsEntry({ plan, desktop }: { plan: Plan; desktop: boolean }) {
+function SettingsEntry({
+  plan,
+  desktop,
+  onChangeSpu,
+}: {
+  plan: Plan;
+  desktop: boolean;
+  onChangeSpu: (month: string) => void;
+}) {
   const panel = useDisclosure();
   return desktop ? (
     <SettingsPanelButton
@@ -90,6 +102,7 @@ function SettingsEntry({ plan, desktop }: { plan: Plan; desktop: boolean }) {
       open={panel.open}
       onOpen={panel.onOpen}
       onClose={panel.onClose}
+      onChangeSpu={onChangeSpu}
     />
   ) : (
     <RouterIconButton
@@ -105,7 +118,15 @@ function SettingsEntry({ plan, desktop }: { plan: Plan; desktop: boolean }) {
 }
 
 /** The plan's own bar under the site header: which plan this is, and its settings. */
-function PlanBar({ plan, desktop }: { plan: Plan; desktop: boolean }) {
+function PlanBar({
+  plan,
+  desktop,
+  onChangeSpu,
+}: {
+  plan: Plan;
+  desktop: boolean;
+  onChangeSpu: (month: string) => void;
+}) {
   return (
     <Flex
       maxW="1280px"
@@ -118,7 +139,7 @@ function PlanBar({ plan, desktop }: { plan: Plan; desktop: boolean }) {
       pr={{ base: "6", lg: "2" }}
     >
       <PlanSwitcher plan={plan} />
-      <SettingsEntry plan={plan} desktop={desktop} />
+      <SettingsEntry plan={plan} desktop={desktop} onChangeSpu={onChangeSpu} />
     </Flex>
   );
 }
@@ -180,6 +201,17 @@ function Home({ plan }: { plan: Plan }) {
   const wide = useMediaQuery(WIDE);
   const desktop = useMediaQuery(DESKTOP);
   const editor = useOrderEditorTarget(plan);
+  const spuPanel = useSpuPanelTarget(plan.id);
+  const navigate = useNavigate();
+  const settings = useAtomValue(accountSettingsAtom);
+  // On a desktop a month's SPU opens in a side panel over the plan; elsewhere it is its own page.
+  const changeSpu = (month: string) => {
+    if (desktop) spuPanel.open(month);
+    else {
+      const account = settings.enabled ? accountIdOf(plan, settings) : undefined;
+      void navigate(spuPageFromPlan(plan.id, month, account));
+    }
+  };
   const { open: editOrder } = editor;
   const addOrder = useCallback(() => editOrder(NEW_ORDER), [editOrder]);
   const today = useToday(now);
@@ -205,7 +237,7 @@ function Home({ plan }: { plan: Plan }) {
 
   return (
     <>
-      <PlanBar plan={plan} desktop={desktop} />
+      <PlanBar plan={plan} desktop={desktop} onChangeSpu={changeSpu} />
       {/* One column on a phone (summary first); on a wide screen the summary is the right column. */}
       <Box
         as="main"
@@ -245,6 +277,12 @@ function Home({ plan }: { plan: Plan }) {
               today={today}
               taxRate={taxRate}
             />
+            <SpuSettingsCard
+              plan={plan}
+              title="SPU の設定"
+              note="注文の日付の月で決まります"
+              onChange={changeSpu}
+            />
             <Warnings plan={plan} warnings={result.warnings} hasShopAround={outlook !== null} />
             {wide ? capList : null}
             {wide ? (
@@ -272,9 +310,14 @@ function Home({ plan }: { plan: Plan }) {
           minW="0"
         >
           {desktop ? (
-            <OrderTable plan={plan} onEdit={editOrder} />
+            <OrderTable plan={plan} onEdit={editOrder} onSpu={changeSpu} />
           ) : (
-            <OrderList plan={plan} onEdit={editOrder} onAdd={wide ? addOrder : undefined} />
+            <OrderList
+              plan={plan}
+              onEdit={editOrder}
+              onAdd={wide ? addOrder : undefined}
+              onSpu={changeSpu}
+            />
           )}
         </Box>
         {/* On a phone the caps and the share button come after the orders; on a wide screen they are in the right column. */}
@@ -291,6 +334,12 @@ function Home({ plan }: { plan: Plan }) {
         target={editor.target}
         layout={desktop ? "dialog" : "sheet"}
         onClose={editor.close}
+      />
+      <SpuPanel
+        plan={plan}
+        month={desktop ? spuPanel.target : undefined}
+        onMonth={spuPanel.show}
+        onClose={spuPanel.close}
       />
     </>
   );
