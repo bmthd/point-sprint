@@ -10,6 +10,7 @@ import {
   DEFAULT_ACCOUNT_ID,
   spuIdsIn,
   toggleSpu,
+  wins,
 } from "@workspaces/domain";
 import { QueryClient } from "@tanstack/query-core";
 import { createStore } from "jotai";
@@ -76,6 +77,7 @@ const plan: Plan = {
 
 const unsubscribes: (() => void)[] = [];
 afterEach(() => {
+  vi.useRealTimers();
   unsubscribes.splice(0).forEach((unsubscribe) => unsubscribe());
 });
 
@@ -606,16 +608,55 @@ for (const kind of ["memory", "indexed-db"] as const) {
     ]);
   });
 
-  test(`${kind}: a held shop rename preserves a tag saved with an order`, async () => {
+  test(`${kind}: a held order shop change wins over a synced shop rename`, async () => {
+    const base = await seeded();
+    const { repository, pending } = controlled(base);
+    const store = setup(repository);
+    await loaded(store);
+    await vi.waitFor(() => expect(store.get(shopsAtom)).toHaveLength(1));
+    vi.setSystemTime("2026-10-06T00:00:00.000Z");
+    const savedOrder = store.set(saveOrderDraftAtom, {
+      planId: PLAN,
+      draft: {
+        order: order(ORDER_A, 4000),
+        shopChange: changeShop(SHOP, (current) => ({ ...current, tags: ["39shop"] })),
+      },
+      isNew: false,
+    });
+    await vi.waitFor(() => expect(pending).toHaveLength(1));
+    vi.setSystemTime("2026-10-07T00:00:00.000Z");
+    await store
+      .get(saveShopAtom)
+      .mutateAsync(changeShop(SHOP, (current) => ({ ...current, name: "renamed" })));
+    const sent = await base.sync.pending();
+    const syncedShop = sent.find((row) => row.kind === "shop");
+    expect(syncedShop).toBeDefined();
+    await base.sync.acknowledge(sent);
+    pending[0]?.resolve();
+    await savedOrder;
+    const outgoing = (await base.sync.pending()).find((row) => row.kind === "shop");
+    if (!outgoing) throw new Error("missing outgoing shop");
+    expect(outgoing.updatedAt > (syncedShop?.updatedAt ?? "")).toBe(true);
+    expect(wins(outgoing, syncedShop)).toBe(true);
+    const stored = await base.shops.list();
+    expect(stored).toMatchObject([
+      { name: "renamed", tags: ["39shop"], updatedAt: outgoing.updatedAt },
+    ]);
+    await vi.waitFor(() => expect(store.get(shopsAtom)).toEqual(stored));
+  });
+
+  test(`${kind}: a held shop rename wins over an already synced order shop change`, async () => {
     const base = await seeded();
     const { held, pending } = heldShopUpdates(base);
     const store = setup({ ...base, shops: { ...base.shops, update: held } });
     await loaded(store);
     await vi.waitFor(() => expect(store.get(shopsAtom)).toHaveLength(1));
+    vi.setSystemTime("2026-10-06T00:00:00.000Z");
     const renamed = store
       .get(saveShopAtom)
       .mutateAsync(changeShop(SHOP, (current) => ({ ...current, name: "renamed" })));
     await vi.waitFor(() => expect(pending).toHaveLength(1));
+    vi.setSystemTime("2026-10-07T00:00:00.000Z");
     await store.set(saveOrderDraftAtom, {
       planId: PLAN,
       draft: {
@@ -624,8 +665,24 @@ for (const kind of ["memory", "indexed-db"] as const) {
       },
       isNew: false,
     });
+    const sent = await base.sync.pending();
+    const syncedShop = sent.find((row) => row.kind === "shop");
+    expect(syncedShop).toBeDefined();
+    await base.sync.acknowledge(sent);
+    expect(await base.sync.pending()).toEqual([]);
+    const optimisticTimestamp = store.get(shopsAtom)[0]?.updatedAt;
+    // Keep the clock at B's time: the stored timestamp must advance even within one millisecond.
     pending[0]?.resolve();
     await renamed;
+    const saved = (await base.shops.list())[0];
+    const outgoing = (await base.sync.pending()).find((row) => row.kind === "shop");
+    expect((saved?.updatedAt ?? "") > (syncedShop?.updatedAt ?? "")).toBe(true);
+    expect(outgoing).toBeDefined();
+    if (!outgoing) throw new Error("missing outgoing shop");
+    expect(wins(outgoing, syncedShop)).toBe(true);
+    expect(outgoing.updatedAt).toBe(saved?.updatedAt);
+    expect(saved?.updatedAt).not.toBe(optimisticTimestamp);
+    await vi.waitFor(() => expect(store.get(shopsAtom)).toEqual([saved]));
     expect(await base.shops.list()).toMatchObject([{ name: "renamed", tags: ["39shop"] }]);
     expect(await base.sync.pending()).toEqual(
       expect.arrayContaining([

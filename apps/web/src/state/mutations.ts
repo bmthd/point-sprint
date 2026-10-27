@@ -14,9 +14,13 @@ import { repositoryAtom } from "./repository";
 
 const timestamps = new WeakMap<object, string>();
 
-/** One timestamp per mutation call, so the cache and the repository get the same `updatedAt`. */
-const stamp = <T extends { updatedAt: string }>(value: T, variables: object): T => {
-  const updatedAt = timestamps.get(variables) ?? new Date().toISOString();
+/** Reuses the optimistic timestamp, advancing past the stored row when a later write won first. */
+const stamp = <T extends { updatedAt: string }>(value: T, variables: object, stored?: T): T => {
+  const proposed = timestamps.get(variables) ?? new Date().toISOString();
+  const updatedAt =
+    stored && proposed <= stored.updatedAt
+      ? new Date(Date.parse(stored.updatedAt) + 1).toISOString()
+      : proposed;
   timestamps.set(variables, updatedAt);
   return { ...value, updatedAt };
 };
@@ -117,7 +121,7 @@ export const savePlanAtom = atomWithMutation<SavedPlans, PlanChange, Error, Plan
       const { before, after } = await repository.plans.update(
         planId,
         (plan) => stamp(variables.change(plan), variables),
-        shop && { ...shop, change: (stored) => stamp(shop.change(stored), shop) },
+        shop && { ...shop, change: (stored) => stamp(shop.change(stored), shop, stored) },
       );
       return { before: before ? upsert(others, before) : others, after: upsert(others, after) };
     },
@@ -168,7 +172,7 @@ export const changeShop = (shopId: string, change: (shop: Shop) => Shop): ShopCh
 const changedShops = (shops: Shop[] | undefined, variables: ShopChange) => {
   const stored = shops?.find((shop) => shop.id === variables.shopId);
   if (variables.onlyIfMissing && stored) return shops;
-  return upsert(shops, stamp(variables.change(stored), variables));
+  return upsert(shops, stamp(variables.change(stored), variables, stored));
 };
 
 /** How many pending mutations change the shops: shop changes, and plan changes with a shop. */
@@ -185,7 +189,7 @@ export const saveShopAtom = atomWithMutation<void, ShopChange, Error, Snapshot>(
   return {
     mutationFn: (variables) =>
       repository.shops.update(variables.shopId, (stored) =>
-        stamp(variables.change(stored), variables),
+        stamp(variables.change(stored), variables, stored),
       ),
     ...optimistic(client, queryKeys.shops, changedShops, () => shopsPending(client)),
   };
