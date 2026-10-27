@@ -1,8 +1,6 @@
 import { useEffect } from "react";
 import { siteUrl } from "./site-url";
 
-export { siteUrl };
-
 export const siteName = "ポイントスプリント";
 /** The top page's title, and the one shared on social media for the whole site. */
 export const defaultTitle = `${siteName} 楽天市場お買い物マラソン攻略計算ツール`;

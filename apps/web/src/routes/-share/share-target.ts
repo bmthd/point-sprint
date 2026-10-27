@@ -1,4 +1,5 @@
-import { defaultTitle, siteName, siteUrl } from "../../page-head";
+import { defaultTitle, siteName } from "../../page-head";
+import { siteUrl } from "../../site-url";
 import { type ResultFigures, resultPageUrl, resultSummary } from "./result-card";
 
 /** What a share posts: a line of text and the link under it. */

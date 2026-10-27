@@ -11,7 +11,8 @@ import { ErrorPage } from "./-root/error-page";
 import { NotFoundPage, notFoundTitle } from "./-root/not-found-page";
 import { FormControlDefaults } from "../ui/form-control-defaults";
 import { GoogleTagScripts } from "../google-tags/google-tag-scripts";
-import { defaultDescription, defaultTitle, pageTitle, siteName, siteUrl } from "../page-head";
+import { defaultDescription, defaultTitle, pageTitle, siteName } from "../page-head";
+import { siteUrl } from "../site-url";
 
 export const Route = createRootRoute({
   head: ({ match }) => ({

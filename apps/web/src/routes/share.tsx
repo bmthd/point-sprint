@@ -7,7 +7,8 @@ import {
   resultSummary,
 } from "./-share/result-card";
 import { SharedResultPage } from "./-shared-result-page";
-import { pageHead, siteUrl } from "../page-head";
+import { pageHead } from "../page-head";
+import { siteUrl } from "../site-url";
 
 /**
  * A shared result. Rendered by the Worker on each request, not ahead of time, so that its OGP tags
