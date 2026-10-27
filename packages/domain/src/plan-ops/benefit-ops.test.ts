@@ -5,7 +5,13 @@ import {
   standardSpu,
 } from "../master/spu";
 import type { Plan } from "../model/plan";
-import { toggleBenefit, toggleBenefits } from "./benefit-ops";
+import {
+  addBenefit,
+  removeBenefit,
+  updateBenefit,
+  toggleBenefit,
+  toggleBenefits,
+} from "./benefit-ops";
 
 const idOf = (label: string): string => {
   const found = standardSpu.find((b) => b.label === label);
@@ -131,5 +137,34 @@ describe("toggleBenefits", () => {
     toggleBenefits(benefits, PREMIUM);
     expect(benefits).toEqual(snapshot);
     expect(() => toggleBenefits(benefits, "missing")).toThrow(/missing/);
+  });
+});
+
+describe("benefit changes", () => {
+  test("add appends, update changes only the target, remove keeps the others", () => {
+    const plan = makePlan();
+    const before = structuredClone(plan);
+    const source = plan.benefits[0];
+    if (!source) throw new Error("missing fixture benefit");
+    const added = { ...source, id: "new-benefit" };
+    const appended = addBenefit(plan, added);
+    expect(appended.benefits).toEqual([...plan.benefits, added]);
+    const updated = updateBenefit(appended, added.id, (benefit) => ({
+      ...benefit,
+      label: "changed",
+    }));
+    expect(updated.benefits).toEqual([...plan.benefits, { ...added, label: "changed" }]);
+    expect(removeBenefit(appended, added.id)).toEqual(plan);
+    expect(removeBenefit(plan, "missing")).toEqual(plan);
+    expect(plan).toEqual(before);
+  });
+
+  test("updating a missing benefit throws without applying the change", () => {
+    const plan = makePlan();
+    expect(() =>
+      updateBenefit(plan, "missing", () => {
+        throw new Error("change must not run");
+      }),
+    ).toThrow(`benefit missing is not in plan ${plan.id}`);
   });
 });

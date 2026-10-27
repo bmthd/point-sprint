@@ -23,7 +23,7 @@ import {
   requiredTextSchema,
   yenSchema,
 } from "@workspaces/domain";
-import { updateBenefitAtom } from "../../../state/order-ops";
+import { updateBenefitAtom } from "../../../state/plan-operations";
 import { imageUrl } from "../-order-shared";
 import { SPECS } from "./campaign-form";
 import { useSaveSettingsChange } from "./settings-shared";

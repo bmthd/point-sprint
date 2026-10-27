@@ -1,4 +1,6 @@
 import {
+  addOrder,
+  updateOrder,
   type CalculationResult,
   type Order,
   type Plan,
@@ -12,7 +14,6 @@ import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { percent, pointsText, rateText, yen } from "../../../ui/format";
 import { asCalculatedAtom, calculationAtom } from "../../../state/derived";
-import { addOrder, updateOrder } from "../../../state/order-ops";
 import { plansAtom, shopsAtom } from "../../../state/queries";
 import { orderPointRows } from "../-order-shared";
 import type { OrderDraft } from "../-order-form";
