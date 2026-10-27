@@ -1,11 +1,11 @@
-import { type Page, expect, test } from "./fixtures";
+import { type Page, expect, test, fixDate } from "./fixtures";
 import { SitePage, TopPage } from "./pages";
 
 // The header and the footer are on every page, and their links go where they say.
 
 /** Creates a plan from the top page and returns its id. */
 async function createPlan(page: Page) {
-  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  await fixDate(page, new Date("2026-10-05T12:00:00+09:00"));
   const plan = await (await TopPage.open(page)).createPlan();
   return plan.id;
 }

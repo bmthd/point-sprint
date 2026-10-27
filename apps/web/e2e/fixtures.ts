@@ -47,6 +47,26 @@ export async function standIn(page: Page): Promise<void> {
   );
 }
 
+/**
+ * Fixes the page's `new Date()` and `Date.now()` at `date`, on every load. Unlike
+ * `page.clock.setFixedTime`, it leaves `performance.now()` and `requestAnimationFrame` as they are:
+ * Playwright's fake `performance.now()` keeps counting across a reload while the page's animation
+ * timeline starts again, and Motion starts its Web Animations (a Drawer's overlay fading out) at
+ * `performance.now()`, so after a reload they started as late as the time before it.
+ */
+export async function fixDate(page: Page, date: Date): Promise<void> {
+  await page.addInitScript((time) => {
+    const RealDate = Date;
+    // A Proxy keeps `Date.prototype`, so dates read back from IndexedDB are still `instanceof Date`.
+    globalThis.Date = new Proxy(RealDate, {
+      construct: (target, args, newTarget) =>
+        Reflect.construct(target, args.length === 0 ? [time] : args, newTarget),
+      apply: () => new RealDate(time).toString(),
+    });
+    RealDate.now = () => time;
+  }, date.getTime());
+}
+
 /** Playwright's `test`, its page stood in for (`standIn`). A test answers them with `page.route`, which is tried before these. */
 export const test = base.extend({
   page: async ({ page }, use) => {
