@@ -535,6 +535,23 @@ for (const kind of ["memory", "indexed-db"] as const) {
     return base;
   };
 
+  test(`${kind}: saving an order leaves an unchanged shop and its sync mark untouched`, async () => {
+    const base = await seeded();
+    const store = setup(base);
+    await loaded(store);
+    await vi.waitFor(() => expect(store.get(shopsAtom)).toHaveLength(1));
+    const before = await base.shops.list();
+
+    await store.set(saveOrderDraftAtom, {
+      planId: PLAN,
+      draft: { order: order(ORDER_A, 4000), shopChange: undefined },
+      isNew: false,
+    });
+
+    expect(await base.shops.list()).toEqual(before);
+    expect((await base.sync.pending()).filter((row) => row.kind === "shop")).toEqual([]);
+  });
+
   test(`${kind}: an order keeps the optimistic shop after its first save fails`, async () => {
     const base = await seeded();
     const { repository, pending } = controlled(base);

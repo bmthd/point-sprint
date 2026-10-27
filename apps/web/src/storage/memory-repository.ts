@@ -70,7 +70,9 @@ export function createMemoryRepository(
     const plan = v.parse(PlanSchema, structuredClone(change(before)));
     const stored = shopChange && (rows.shop.get(shopChange.shopId) as Shop | undefined);
     const shop =
-      shopChange && v.parse(syncSchemas.shop, structuredClone(shopChange.change(stored)));
+      shopChange && !(shopChange.onlyIfMissing && stored)
+        ? v.parse(syncSchemas.shop, structuredClone(shopChange.change(stored)))
+        : undefined;
     if (shop) putRow("shop", shop.id, shop);
     const after = putPlan(plan);
     return { before, after };

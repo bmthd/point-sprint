@@ -380,7 +380,10 @@ export function createIndexedDbRepository(
     let shop: Shop | undefined;
     try {
       after = v.parse(PlanSchema, structuredClone(change(before)));
-      shop = shopChange && v.parse(ShopSchema, structuredClone(shopChange.change(storedShop)));
+      shop =
+        shopChange && !(shopChange.onlyIfMissing && storedShop)
+          ? v.parse(ShopSchema, structuredClone(shopChange.change(storedShop)))
+          : undefined;
     } catch (error) {
       tx.abort();
       await done.catch(() => {});

@@ -174,6 +174,7 @@ export const saveOrderDraftAtom = atom(
     const shop = selected
       ? {
           shopId: selected.id,
+          onlyIfMissing: !draft.shopChange,
           change: (stored: typeof selected | undefined) =>
             draft.shopChange ? draft.shopChange.change(stored ?? selected) : (stored ?? selected),
         }

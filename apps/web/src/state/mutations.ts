@@ -1,3 +1,4 @@
+import type { Repository } from "../storage/repository";
 import {
   type Plan,
   type Profile,
@@ -116,7 +117,7 @@ export const savePlanAtom = atomWithMutation<SavedPlans, PlanChange, Error, Plan
       const { before, after } = await repository.plans.update(
         planId,
         (plan) => stamp(variables.change(plan), variables),
-        shop && { shopId: shop.shopId, change: (stored) => stamp(shop.change(stored), shop) },
+        shop && { ...shop, change: (stored) => stamp(shop.change(stored), shop) },
       );
       return { before: before ? upsert(others, before) : others, after: upsert(others, after) };
     },
@@ -150,7 +151,7 @@ export const deletePlanAtom = atomWithMutation<void, string, Error, Snapshot>((g
  * A change to one shop. Like a plan change, `change` gets the shop as it is in the cache for the
  * optimistic update and in the repository when saving.
  */
-export type ShopChange = { shopId: string; change: (shop: Shop | undefined) => Shop };
+export type ShopChange = NonNullable<Parameters<Repository["plans"]["update"]>[2]>;
 
 /** A change that replaces the whole shop, for creating a shop. */
 export const replaceShop = (shop: Shop): ShopChange => ({ shopId: shop.id, change: () => shop });
@@ -164,11 +165,11 @@ export const changeShop = (shopId: string, change: (shop: Shop) => Shop): ShopCh
   },
 });
 
-const changedShops = (shops: Shop[] | undefined, variables: ShopChange) =>
-  upsert(
-    shops,
-    stamp(variables.change(shops?.find((shop) => shop.id === variables.shopId)), variables),
-  );
+const changedShops = (shops: Shop[] | undefined, variables: ShopChange) => {
+  const stored = shops?.find((shop) => shop.id === variables.shopId);
+  if (variables.onlyIfMissing && stored) return shops;
+  return upsert(shops, stamp(variables.change(stored), variables));
+};
 
 /** How many pending mutations change the shops: shop changes, and plan changes with a shop. */
 const shopsPending = (client: QueryClient) =>

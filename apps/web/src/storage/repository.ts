@@ -61,12 +61,13 @@ export interface Repository {
      * Changes the plan as it is stored, reading and writing in one transaction: a row received
      * from another device meanwhile is part of what `change` gets, never taken for removed.
      * `shop` changes a shop as it is stored in the same transaction, so an order is never saved
-     * without the shop it names, nor that shop without the order.
+     * without the shop it names, nor that shop without the order. `onlyIfMissing` leaves an existing shop and its sync mark
+     * untouched, deciding from the row read in this transaction.
      */
     update(
       id: string,
       change: (plan: Plan | undefined) => Plan,
-      shop?: { shopId: string; change: (shop: Shop | undefined) => Shop },
+      shop?: { shopId: string; change: (shop: Shop | undefined) => Shop; onlyIfMissing?: boolean },
     ): Promise<{ before: Plan | undefined; after: Plan }>;
     delete(id: string): Promise<void>;
   };
