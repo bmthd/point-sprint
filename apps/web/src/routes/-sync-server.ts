@@ -1,32 +1,20 @@
-import {
-  syncAddPasskeyOptions,
-  syncReissueRecovery,
-  syncLogin,
-  syncLoginOptions,
-  syncPull,
-  syncPush,
-  syncRecoveryLogin,
-  syncRegister,
-  syncSetPrfWrap,
-  syncStartOptions,
-  syncStop,
-} from "../server/sync-functions";
+import { atom } from "jotai";
 import type { SyncServer } from "../storage/sync-passkey";
 
-/**
- * The sync's server functions, as the flows call them. Imported by the routes only and passed
- * down, like the inquiry's, so that the components' tests do without the server.
- */
-export const syncServer: SyncServer = {
-  reissueRecovery: (data) => syncReissueRecovery({ data }),
-  startOptions: (data) => syncStartOptions({ data }),
-  addPasskeyOptions: () => syncAddPasskeyOptions(),
-  register: (data) => syncRegister({ data }),
-  loginOptions: () => syncLoginOptions(),
-  login: (data) => syncLogin({ data }),
-  recoveryLogin: (data) => syncRecoveryLogin({ data }),
-  setPrfWrap: (data) => syncSetPrfWrap({ data }),
-  stop: () => syncStop(),
-  push: (data) => syncPush({ data }),
-  pull: (data) => syncPull({ data }),
-};
+// Load on demand so browser tests can replace the atom without loading the server runtime.
+const functions = () => import("../server/sync-functions");
+
+/** The sync server functions; tests replace them in their Jotai store. */
+export const syncServerAtom = atom<SyncServer>({
+  reissueRecovery: async (data) => (await functions()).syncReissueRecovery({ data }),
+  startOptions: async (data) => (await functions()).syncStartOptions({ data }),
+  addPasskeyOptions: async () => (await functions()).syncAddPasskeyOptions(),
+  register: async (data) => (await functions()).syncRegister({ data }),
+  loginOptions: async () => (await functions()).syncLoginOptions(),
+  login: async (data) => (await functions()).syncLogin({ data }),
+  recoveryLogin: async (data) => (await functions()).syncRecoveryLogin({ data }),
+  setPrfWrap: async (data) => (await functions()).syncSetPrfWrap({ data }),
+  stop: async () => (await functions()).syncStop(),
+  push: async (data) => (await functions()).syncPush({ data }),
+  pull: async (data) => (await functions()).syncPull({ data }),
+});

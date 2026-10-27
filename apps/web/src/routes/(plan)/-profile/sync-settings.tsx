@@ -25,7 +25,6 @@ import {
   type Locked,
   type Passkeys,
   SyncError,
-  type SyncServer,
   browserPasskeys,
   recoverWithCode,
   reissueRecoveryCode,
@@ -34,6 +33,7 @@ import {
   stopSync,
   unlockWithRecoveryCode,
 } from "../../../storage/sync-passkey";
+import { syncServerAtom } from "../../-sync-server";
 import { TurnstileWidget, type TurnstileWidgetProps } from "../../-turnstile-widget";
 import { RecoveryCodeDialog, RecoveryCodeEntry } from "./recovery-code-dialog";
 
@@ -78,7 +78,6 @@ function statusText(status: SyncStatus): {
 }
 
 type Props = {
-  server: SyncServer;
   siteKey: string | undefined;
   /** Tests only: stand-ins for the browser's passkeys and the Turnstile widget. */
   passkeys?: Passkeys;
@@ -90,11 +89,11 @@ type Props = {
  * stopping. The data is sealed on the device; the recovery code is shown once.
  */
 export function SyncSettings({
-  server,
   siteKey,
   passkeys = browserPasskeys,
   widget: Widget = TurnstileWidget,
 }: Props) {
+  const server = useAtomValue(syncServerAtom);
   const repository = useAtomValue(repositoryAtom);
   const client = useAtomValue(queryClientAtom);
   const { data: enabled } = useAtomValue(syncEnabledQueryAtom);
