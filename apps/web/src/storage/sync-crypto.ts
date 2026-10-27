@@ -8,16 +8,18 @@ import * as v from "valibot";
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-export const toBase64Url = (bytes: Uint8Array): string =>
-  btoa(String.fromCharCode(...bytes))
+export function toBase64Url(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes))
     .replaceAll("+", "-")
     .replaceAll("/", "_")
     .replace(/=+$/, "");
+}
 
-export const fromBase64Url = (text: string): Uint8Array =>
-  Uint8Array.from(atob(text.replaceAll("-", "+").replaceAll("_", "/")), (char) =>
+export function fromBase64Url(text: string): Uint8Array {
+  return Uint8Array.from(atob(text.replaceAll("-", "+").replaceAll("_", "/")), (char) =>
     char.charCodeAt(0),
   );
+}
 
 /** What the passkey's PRF is asked to evaluate; the browser hashes it with its own prefix. */
 export const PRF_SALT = encoder.encode("point-sprint sync prf v1");
@@ -25,7 +27,9 @@ export const PRF_SALT = encoder.encode("point-sprint sync prf v1");
 export type SyncKeys = { encryptionKey: CryptoKey; idKey: CryptoKey };
 
 /** The root of every sync key: 32 random bytes. */
-export const generateMasterSecret = (): Uint8Array => crypto.getRandomValues(new Uint8Array(32));
+export function generateMasterSecret(): Uint8Array {
+  return crypto.getRandomValues(new Uint8Array(32));
+}
 
 const hkdf = (material: Uint8Array) =>
   crypto.subtle.importKey("raw", material as BufferSource, "HKDF", false, [

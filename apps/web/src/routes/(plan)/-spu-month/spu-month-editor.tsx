@@ -71,16 +71,17 @@ const enabledRate = (benefits: Benefit[], category: Benefit["category"]) =>
   );
 
 /** The ポイント倍率 of the SPU items `ids`: 通常 and SPU together, as 楽天's SPU page shows it. */
-export const spuMonthRate = (ids: ReadonlySet<string>) => {
+export function spuMonthRate(ids: ReadonlySet<string>) {
   const benefits = spuBenefitsOf(ids);
   return enabledRate(benefits, "base") + enabledRate(benefits, "spu");
-};
+}
 
 /** `2026-11` → `11月`, or `2027年1月` when it is not of the year of `today`. */
-export const spuMonthText = (month: string, today: string | undefined) =>
-  today === undefined || today.startsWith(month.slice(0, 4))
+export function spuMonthText(month: string, today: string | undefined) {
+  return today === undefined || today.startsWith(month.slice(0, 4))
     ? monthText(month)
     : `${month.slice(0, 4)}年${monthText(month)}`;
+}
 
 /** The card's normal points are shown under a short name. */
 const tileName = (benefit: Benefit) =>

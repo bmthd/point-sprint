@@ -50,20 +50,28 @@ const replaceOrder = (plan: Plan, orderId: string, change: (order: Order) => Ord
   };
 };
 
-export const addOrder = (plan: Plan, order: Order): Plan => ({
-  ...plan,
-  orders: [...plan.orders, order],
-});
+export function addOrder(plan: Plan, order: Order): Plan {
+  return {
+    ...plan,
+    orders: [...plan.orders, order],
+  };
+}
 
-export const updateOrder = (plan: Plan, order: Order): Plan =>
-  replaceOrder(plan, order.id, () => order);
+export function updateOrder(plan: Plan, order: Order): Plan {
+  return replaceOrder(plan, order.id, () => order);
+}
 
-export const removeOrder = (plan: Plan, orderId: string): Plan => ({
-  ...plan,
-  orders: plan.orders.filter((order) => order.id !== orderId),
-});
+export function removeOrder(plan: Plan, orderId: string): Plan {
+  return {
+    ...plan,
+    orders: plan.orders.filter((order) => order.id !== orderId),
+  };
+}
 
-export const clearOrders = (plan: Plan): Plan => ({ ...plan, orders: [] });
+export function clearOrders(plan: Plan): Plan {
+  return { ...plan, orders: [] };
+}
 
-export const toggleHold = (plan: Plan, orderId: string): Plan =>
-  replaceOrder(plan, orderId, (order) => ({ ...order, onHold: !order.onHold }));
+export function toggleHold(plan: Plan, orderId: string): Plan {
+  return replaceOrder(plan, orderId, (order) => ({ ...order, onHold: !order.onHold }));
+}

@@ -7,13 +7,13 @@ import {
   resultFigures,
   resultImagePath,
   resultPageUrl,
-  resultSearchSchema,
+  ResultSearchSchema,
   resultSummary,
 } from "./result-card";
 import { siteUrl } from "../../site-url";
 
 const parse = (search: Record<string, unknown>) =>
-  resultFigures(v.parse(resultSearchSchema, search));
+  resultFigures(v.parse(ResultSearchSchema, search));
 
 describe("the figures of a shared result", () => {
   test("come from the router's numbers and from plain query strings alike", () => {

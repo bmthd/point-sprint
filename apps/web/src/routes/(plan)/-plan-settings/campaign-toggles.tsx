@@ -29,8 +29,9 @@ const fixedDayKeys = new Set(
 );
 
 /** Whether the campaign's days are set by its date rule (5と0のつく日, ワンダフルデー). */
-export const isFixedCampaign = (benefit: Benefit) =>
-  benefit.sharedKey !== undefined && fixedDayKeys.has(benefit.sharedKey);
+export function isFixedCampaign(benefit: Benefit) {
+  return benefit.sharedKey !== undefined && fixedDayKeys.has(benefit.sharedKey);
+}
 
 /**
  * Whether the user added this campaign themselves, so it can be deleted. Fixed campaigns (days

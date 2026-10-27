@@ -9,10 +9,10 @@ import {
 } from "react";
 
 /** `2026-10-06` → `10/6`. */
-export const monthDay = (date: string) => {
+export function monthDay(date: string) {
   const [, month, day] = date.split("-");
   return `${Number(month)}/${Number(day)}`;
-};
+}
 
 /** When a campaign applies, as its toggle shows it. */
 export function whenText(rule: DateRule | undefined): string {

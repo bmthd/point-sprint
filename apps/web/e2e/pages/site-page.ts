@@ -5,7 +5,9 @@ import { ProfilePage } from "./profile-page";
 import { TopPage } from "./top-page";
 
 /** Matches a URL that ends with `path`: the preview server answers a page's path with its directory (`/help/`). */
-export const endsWithPath = (path: string) => new RegExp(`${path.replace(/[?]/g, "\\?")}/?$`);
+export function endsWithPath(path: string) {
+  return new RegExp(`${path.replace(/[?]/g, "\\?")}/?$`);
+}
 
 /** Options for a navigation that a test retries: how long to wait for the next page's URL. */
 export type NavigationOptions = { timeout?: number };

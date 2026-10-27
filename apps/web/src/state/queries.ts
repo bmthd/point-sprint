@@ -4,6 +4,8 @@ import { atomWithQuery } from "jotai-tanstack-query";
 import { repositoryAtom } from "./repository";
 
 export const queryKeys = {
+  syncEnabled: ["sync-enabled"],
+  officialEvents: ["official-events"],
   plans: ["plans"],
   shops: ["shops"],
   profile: ["profile"],
@@ -12,7 +14,9 @@ export const queryKeys = {
   quarantine: ["quarantine"],
 } as const;
 
-export const defaultProfile = (): Profile => ({ updatedAt: new Date().toISOString() });
+export function defaultProfile(): Profile {
+  return { updatedAt: new Date().toISOString() };
+}
 
 export const plansQueryAtom = atomWithQuery((get) => {
   const repository = get(repositoryAtom);

@@ -10,9 +10,10 @@ declare module "@tanstack/react-router" {
 }
 
 /** Opens the month's SPU page from the plan `planId`, the URL being the same as from anywhere. */
-export const spuPageFromPlan = (planId: string, month: string, account: string | undefined) =>
-  ({
+export function spuPageFromPlan(planId: string, month: string, account: string | undefined) {
+  return {
     to: "/spu",
     search: { month, ...(account === undefined ? {} : { account }) },
     state: { spuFrom: { planId } },
-  }) as const;
+  } as const;
+}

@@ -56,10 +56,14 @@ export const SyncRowSchema = v.variant("deleted", [
  * The id of an order's row: orders are told apart within their plan, so the same order id in two
  * plans is two rows.
  */
-export const orderRowId = (planId: string, orderId: string) => `${planId}:${orderId}`;
+export function orderRowId(planId: string, orderId: string) {
+  return `${planId}:${orderId}`;
+}
 
 /** One key per row across every kind. */
-export const syncKey = (kind: SyncKind, id: string) => `${kind}:${id}`;
+export function syncKey(kind: SyncKind, id: string) {
+  return `${kind}:${id}`;
+}
 
 /**
  * Whether a row from the server replaces the one here: a later `updatedAt` does. On the same

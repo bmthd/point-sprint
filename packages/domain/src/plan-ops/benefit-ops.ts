@@ -51,21 +51,25 @@ export function toggleBenefit(plan: Plan, benefitId: string): Plan {
   return { ...structuredClone(plan), benefits: toggleBenefits(plan.benefits, benefitId) };
 }
 
-export const addBenefit = (plan: Plan, benefit: Benefit): Plan => ({
-  ...plan,
-  benefits: [...plan.benefits, benefit],
-});
+export function addBenefit(plan: Plan, benefit: Benefit): Plan {
+  return {
+    ...plan,
+    benefits: [...plan.benefits, benefit],
+  };
+}
 
-export const removeBenefit = (plan: Plan, benefitId: string): Plan => ({
-  ...plan,
-  benefits: plan.benefits.filter((benefit) => benefit.id !== benefitId),
-});
+export function removeBenefit(plan: Plan, benefitId: string): Plan {
+  return {
+    ...plan,
+    benefits: plan.benefits.filter((benefit) => benefit.id !== benefitId),
+  };
+}
 
-export const updateBenefit = (
+export function updateBenefit(
   plan: Plan,
   benefitId: string,
   change: (benefit: Benefit) => Benefit,
-): Plan => {
+): Plan {
   if (!plan.benefits.some((benefit) => benefit.id === benefitId)) {
     throw new Error(`benefit ${benefitId} is not in plan ${plan.id}`);
   }
@@ -75,4 +79,4 @@ export const updateBenefit = (
       benefit.id === benefitId ? change(benefit) : benefit,
     ),
   };
-};
+}

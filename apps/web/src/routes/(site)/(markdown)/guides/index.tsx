@@ -12,7 +12,9 @@ export const Route = createFileRoute("/(site)/(markdown)/guides/")({
       description:
         "楽天市場のお買い物マラソンで何を買うか迷ったときの買い物ガイドです。1000円ポッキリの商品など、目的ごとに楽天市場の商品を紹介します。",
     }),
-  component: function GuideListPage() {
-    return <GuideList articles={Route.useLoaderData()} />;
-  },
+  component: GuideListPage,
 });
+
+function GuideListPage() {
+  return <GuideList articles={Route.useLoaderData()} />;
+}

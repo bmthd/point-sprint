@@ -13,8 +13,9 @@ const GoogleTagsEnvSchema = v.object({
 });
 
 /** A pull request's Preview (preview.yml), whose visits are kept out of Google Analytics. */
-export const isPullRequestPreview = (env: Record<string, string | undefined>): boolean =>
-  env.PULL_REQUEST_PREVIEW === "true";
+export function isPullRequestPreview(env: Record<string, string | undefined>): boolean {
+  return env.PULL_REQUEST_PREVIEW === "true";
+}
 
 export type GoogleTagIds = { measurementId?: string; adsenseClientId?: string };
 

@@ -27,7 +27,9 @@ export const ProfileSchema = v.object({
 export type Profile = v.InferOutput<typeof ProfileSchema>;
 
 /** The ID of the account a plan is bought with. */
-export const planAccountId = (plan: Plan): string => plan.accountId ?? DEFAULT_ACCOUNT_ID;
+export function planAccountId(plan: Plan): string {
+  return plan.accountId ?? DEFAULT_ACCOUNT_ID;
+}
 
 /** The profile's accounts. The default account is always among them, first unless stored. */
 export function accountsOf(profile: Profile): Account[] {

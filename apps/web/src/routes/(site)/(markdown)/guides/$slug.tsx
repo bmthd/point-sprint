@@ -14,7 +14,9 @@ export const Route = createFileRoute("/(site)/(markdown)/guides/$slug")({
           article: loaderData.article,
         })
       : {},
-  component: function GuidePage() {
-    return <GuideArticle guide={Route.useLoaderData()} />;
-  },
+  component: GuidePage,
 });
+
+function GuidePage() {
+  return <GuideArticle guide={Route.useLoaderData()} />;
+}

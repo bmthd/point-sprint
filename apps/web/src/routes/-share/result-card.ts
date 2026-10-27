@@ -1,13 +1,14 @@
 import type { Node } from "takumi-js";
 import * as v from "valibot";
 import { fixedPercent, pointsText } from "../../ui/format";
-import { siteName, siteUrl } from "../../page-head";
+import { siteName } from "../../page-head";
+import { siteUrl } from "../../site-url";
 
 /** A plan's figures, as a shared result carries them. `rate` is left out when nothing is bought. */
 export type ResultFigures = { points: number; rate?: number };
 
 /** A number from the query string: the router parses `2600`, a plain `URLSearchParams` gives `"2600"`. */
-const queryNumber = v.pipe(
+const QueryNumberSchema = v.pipe(
   v.union([v.number(), v.pipe(v.string(), v.nonEmpty(), v.decimal(), v.transform(Number))]),
   v.finite(),
 );
@@ -16,19 +17,22 @@ const queryNumber = v.pipe(
  * The figures in `/share` and its image's query string. A value that is missing or out of range
  * is dropped rather than refused, so a mangled link still opens the page.
  */
-export const resultSearchSchema = v.object({
+export const ResultSearchSchema = v.object({
   points: v.fallback(
-    v.optional(v.pipe(queryNumber, v.integer(), v.minValue(0), v.maxValue(99_999_999))),
+    v.optional(v.pipe(QueryNumberSchema, v.integer(), v.minValue(0), v.maxValue(99_999_999))),
     undefined,
   ),
-  rate: v.fallback(v.optional(v.pipe(queryNumber, v.minValue(0), v.maxValue(100))), undefined),
+  rate: v.fallback(
+    v.optional(v.pipe(QueryNumberSchema, v.minValue(0), v.maxValue(100))),
+    undefined,
+  ),
 });
 
 /** The figures of a parsed query, or `undefined` when it has no points. */
 export function resultFigures({
   points,
   rate,
-}: v.InferOutput<typeof resultSearchSchema>): ResultFigures | undefined {
+}: v.InferOutput<typeof ResultSearchSchema>): ResultFigures | undefined {
   if (points === undefined) return undefined;
   return rate === undefined ? { points } : { points, rate };
 }
@@ -45,10 +49,14 @@ const query = ({ points, rate }: ResultFigures) =>
   });
 
 /** The page a result is shared as: it shows the figures, and social media show its image. */
-export const resultPageUrl = (figures: ResultFigures) => `${siteUrl}/share?${query(figures)}`;
+export function resultPageUrl(figures: ResultFigures) {
+  return `${siteUrl}/share?${query(figures)}`;
+}
 
 /** Path of the result's OGP image, drawn on request by the Worker. */
-export const resultImagePath = (figures: ResultFigures) => `/share/image.png?${query(figures)}`;
+export function resultImagePath(figures: ResultFigures) {
+  return `/share/image.png?${query(figures)}`;
+}
 
 /** "獲得予定 2,600P・実質還元率 6.5%" */
 export function resultSummary({ points, rate }: ResultFigures) {

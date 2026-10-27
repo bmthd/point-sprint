@@ -16,4 +16,6 @@ export const SpuMonthSchema = v.object({
 });
 export type SpuMonth = v.InferOutput<typeof SpuMonthSchema>;
 
-export const spuMonthId = (accountId: string, month: string) => `${accountId}:${month}`;
+export function spuMonthId(accountId: string, month: string) {
+  return `${accountId}:${month}`;
+}

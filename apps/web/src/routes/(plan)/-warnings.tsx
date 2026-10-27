@@ -17,11 +17,14 @@ import { accountSettingsAtom } from "../../state/derived";
 import { shopsAtom, spuMonthsAtom, storageHealthQueryAtom } from "../../state/queries";
 
 /** `2026-10-11` → `10/11`. */
-export const monthDay = (date: string) =>
-  `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+export function monthDay(date: string) {
+  return `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+}
 
 /** `2026-10` → `10月`. */
-export const monthText = (month: string) => `${Number(month.slice(5, 7))}月`;
+export function monthText(month: string) {
+  return `${Number(month.slice(5, 7))}月`;
+}
 
 /**
  * The SPU that the plan's orders achieve but the user turned off for the month: 「楽天ブックスで

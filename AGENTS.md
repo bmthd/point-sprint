@@ -54,3 +54,12 @@
 
 - Preview のジョブが終わったら、各リンクが 200 を返すことを確かめる
 - Preview と本番で違うページは、リンクにその違いを添える。`cf previews deploy` はビルドをやり直すので、`pnpm build` の後に生成するファイル（`/sitemap.xml` など）は Preview では 404 になる
+
+## コードの書き方
+
+- export する関数は `function` 宣言にする。atom や `createServerFn` など、関数呼び出しの結果は `export const` に置く
+- valibot のスキーマとスキーマを作る関数は `PascalCase` にする
+- ルートの `component` は名前付きの関数を参照する。ルート固有の関数はファイルの下に置き、props を渡さない部品は直接参照する
+- `siteUrl` は `site-url.ts` から直接 import する
+- query key は `apps/web/src/state/queries.ts` の `queryKeys` に集める
+- `packages/domain/src/index.ts` は、公開する名前を列挙して export する

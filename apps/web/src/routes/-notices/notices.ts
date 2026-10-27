@@ -36,12 +36,14 @@ export const notices: readonly Notice[] = [
 ];
 
 /** Newest first. Notices of the same day keep the order they are listed in. */
-export const newestFirst = (list: readonly Notice[]): Notice[] =>
-  list.toSorted((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+export function newestFirst(list: readonly Notice[]): Notice[] {
+  return list.toSorted((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+}
 
 /** The paragraphs of a notice's body. */
-export const paragraphs = (body: string): string[] =>
-  body
+export function paragraphs(body: string): string[] {
+  return body
     .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
     .filter((paragraph) => paragraph !== "");
+}

@@ -198,7 +198,9 @@ export const markdownComponents = {
  * A heading's id is its text, so the Markdown links to a section by its name
  * (`[免責事項](#免責事項)`).
  */
-export const headingIds = (text: string) => text;
+export function headingIds(text: string) {
+  return text;
+}
 
 /**
  * The routes under `(markdown)` that show their Markdown with `MarkdownBody`. The shopping guides

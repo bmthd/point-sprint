@@ -1,3 +1,4 @@
+import { queryKeys } from "../../../state/queries";
 import {
   Alert,
   Button,
@@ -18,7 +19,6 @@ import {
   type SyncStatus,
   requestSyncAtom,
   syncEnabledQueryAtom,
-  syncEnabledQueryKey,
   syncStatusAtom,
 } from "../../../state/sync";
 import {
@@ -115,7 +115,7 @@ export function SyncSettings({
   const reissuing = useDisclosure();
 
   const synced = async () => {
-    await client.invalidateQueries({ queryKey: syncEnabledQueryKey });
+    await client.invalidateQueries({ queryKey: queryKeys.syncEnabled });
     void request();
   };
   const run = async (action: () => Promise<void>) => {
@@ -342,7 +342,7 @@ export function SyncSettings({
             void run(async () => {
               try {
                 const { removed } = await stopSync(deps);
-                await client.invalidateQueries({ queryKey: syncEnabledQueryKey });
+                await client.invalidateQueries({ queryKey: queryKeys.syncEnabled });
                 if (!removed) {
                   setNotice(
                     "この端末の同期をやめました。ログインが切れていたため、サーバーのデータは消していません。ほかの端末ですでに同期をやめていれば、消えています。",

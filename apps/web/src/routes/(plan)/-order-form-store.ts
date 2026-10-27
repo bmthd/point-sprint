@@ -16,7 +16,9 @@ export type OrderForm = FormStore<typeof OrderFormSchema>;
 
 export const AMOUNT_PATH = ["items", 0, "unitPrice"] as const;
 
-export const urlFromPastedText = (text: string) => text.match(/https?:\/\/\S+/i)?.[0] ?? text;
+export function urlFromPastedText(text: string) {
+  return text.match(/https?:\/\/\S+/i)?.[0] ?? text;
+}
 
 /** The form's input, re-read whenever a field changes (`useField` subscribes this component). */
 export function useFormInput(form: OrderForm) {
