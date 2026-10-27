@@ -20,6 +20,10 @@
 - 見た目は部品の `variant`、`size`、`colorScheme` で選び、色はテーマのトークンで指定する（`docs/design-system.md`）
 - Yamada UI にない部品を作ったときは、探した部品の名前と、使わなかった理由を PR に書く
 
+## 外部とのやりとりの差し替え
+
+外部とのやりとりは、本番の処理を初期値に持つ jotai の atom に置き、使う部品で `useAtomValue` から読む。関数はオブジェクトに包む。テストでは専用の store を用意し、`store.set` または `useHydrateAtoms` で atom を差し替える。
+
 ## 保存するデータの形
 
 `packages/domain/src/model` の保存する形を変えたら、`CURRENT_SCHEMA_VERSION`（`packages/domain/src/migrations/index.ts`）を 1 上げる。移し替える処理がいらない変更でも上げる。

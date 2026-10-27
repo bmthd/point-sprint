@@ -12,7 +12,6 @@ import { AccountSettings } from "./account-settings";
 import { ShopRegistry } from "./shop-registry";
 import { SpuMonthsCard } from "./spu-months-card";
 import { SyncSettings } from "./sync-settings";
-import type { SyncServer } from "../../../storage/sync-passkey";
 
 function StorageNotice() {
   const { data } = useAtomValue(storageHealthQueryAtom);
@@ -31,7 +30,7 @@ function StorageNotice() {
   );
 }
 
-function ProfileContent({ syncServer }: { syncServer: SyncServer | undefined }) {
+function ProfileContent() {
   const [failed, setFailed] = useState(false);
   return (
     <VStack gap="5" alignItems="stretch">
@@ -42,12 +41,7 @@ function ProfileContent({ syncServer }: { syncServer: SyncServer | undefined }) 
         </Text>
       ) : null}
       <SpuMonthsCard />
-      {syncServer ? (
-        <SyncSettings
-          server={syncServer}
-          siteKey={import.meta.env.TURNSTILE_SITE_KEY ?? undefined}
-        />
-      ) : null}
+      <SyncSettings siteKey={import.meta.env.TURNSTILE_SITE_KEY ?? undefined} />
       <ShopRegistry onFailed={setFailed} />
       <AccountSettings onFailed={setFailed} />
       <ResetDataButton />
@@ -77,10 +71,10 @@ function BackLink() {
 
 /**
  * 共通設定 at `/profile`: what every plan shares, the SPU of each month, the sync with other
- * devices, the shop registry and advanced settings. Without `syncServer`, as in the tests, no sync.
+ * devices, the shop registry and advanced settings.
  * Its title bar is the plan settings page's: a page that goes back where it was opened from.
  */
-export function Profile({ syncServer }: { syncServer?: SyncServer } = {}) {
+export function Profile() {
   return (
     <>
       <Flex maxW="640px" mx="auto" h="14" align="center" gap="1" px="2">
@@ -91,7 +85,7 @@ export function Profile({ syncServer }: { syncServer?: SyncServer } = {}) {
       </Flex>
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="16">
         <ClientOnly>
-          <ProfileContent syncServer={syncServer} />
+          <ProfileContent />
         </ClientOnly>
       </Box>
     </>
