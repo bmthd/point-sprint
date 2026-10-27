@@ -2,18 +2,17 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import { grouped } from "../../ui/format";
 import { setInput } from "@formisch/react";
 import { type Plan, capFlows } from "@workspaces/domain";
 import { Button, List, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useDeferredValue, useMemo } from "react";
+import { grouped, yen } from "../../ui/format";
 import { asCalculatedAtom } from "../../state/derived";
 import { plansAtom, shopsAtom } from "../../state/queries";
 import { scopeText } from "./-cap-lines";
 import { draftOfInput } from "./-order-editor/order-form";
 import { AMOUNT_PATH, type OrderForm, useFormInput } from "./-order-editor/order-form-store";
-import { yen } from "./-order-shared";
 
 /**
  * Under a new order's fields: how many of its points the order receives from each cap and how

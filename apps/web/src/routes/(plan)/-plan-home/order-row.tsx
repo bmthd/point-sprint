@@ -33,6 +33,7 @@ import {
   useMemo,
   useRef,
 } from "react";
+import { grouped, pointsText, rateText, yen } from "../../../ui/format";
 import { orderAtom, planAtom } from "../../../state/derived";
 import { saveShopAtom } from "../../../state/mutations";
 import {
@@ -61,13 +62,10 @@ import {
   isOpenAtom,
   orderCardPointsAtom,
   orderTitle,
-  pointsText,
-  rateText,
   taxLabel,
   taxRateLabel,
   useSaveOrderChange,
   useShopName,
-  yen,
 } from "../-order-shared";
 import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
 import { PointBreakdown } from "./point-breakdown";
@@ -134,7 +132,7 @@ function editInputOf(order: Order, shops: Shop[]): OrderFormInput {
     ...input,
     items: input.items.map((item) => ({
       ...item,
-      unitPrice: Number(item.unitPrice).toLocaleString("ja-JP"),
+      unitPrice: grouped(Number(item.unitPrice)),
     })),
   };
 }

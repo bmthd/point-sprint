@@ -3,7 +3,7 @@ import { Box, Button, Card, Fieldset, Flex, IconButton, Text } from "@workspaces
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useId, useRef, useState } from "react";
 import * as v from "valibot";
-import { grouped } from "../../../ui/format";
+import { grouped, rateText, yen } from "../../../ui/format";
 import { CommitField } from "../../../form/commit-field";
 import {
   END_BEFORE_START,
@@ -19,7 +19,6 @@ import { planResultAtom } from "../../../state/derived";
 import { updateBenefitAtom } from "../../../state/order-ops";
 import { ChevronIcon, CloseIcon, PlusIcon } from "../../../ui/icons";
 import { CommitDatePicker } from "../-date-picker-field";
-import { rateText, yen } from "../-order-shared";
 import { isAddedCampaign, isFixedCampaign } from "./campaign-toggles";
 import { useDeleteCampaign } from "./delete-campaign";
 import { useSaveSettingsChange, whenText } from "./settings-shared";

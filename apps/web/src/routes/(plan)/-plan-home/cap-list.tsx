@@ -1,10 +1,10 @@
 import { type CapLine, type Plan, type TaxRate, priceToFill } from "@workspaces/domain";
 import { Badge, Box, Flex, Heading, List, SegmentedControl, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { grouped } from "../../../ui/format";
+import { grouped, yen } from "../../../ui/format";
 import { plansAtom } from "../../../state/queries";
 import { CAP_TAX_RATES, scopeText, sharedText } from "../-cap-lines";
-import { taxRateLabel, taxRateSegmentsStyle, yen } from "../-order-shared";
+import { taxRateLabel, taxRateSegmentsStyle } from "../-order-shared";
 
 /** The price that fills the line's cap at `taxRate`; `null` while the rate is 0. */
 export const fillPriceOf = (line: CapLine, taxRate: TaxRate) =>

@@ -7,6 +7,7 @@ import { type Plan, calculateAll } from "@workspaces/domain";
 import { Collapse, Flex, Button, List, Text } from "@workspaces/ui";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { type KeyboardEvent, useDeferredValue, useId, useMemo, useState } from "react";
+import { pointsText } from "../../../ui/format";
 import { Form } from "../../../form/form";
 import { asCalculatedAtom, calculationAtom } from "../../../state/derived";
 import { saveShopAtom } from "../../../state/mutations";
@@ -23,7 +24,7 @@ import {
 } from "../-order-editor/order-form";
 import { type OrderForm, useFormInput, useOrderAutofill } from "../-order-editor/order-form-store";
 import { ChevronIcon, PlusIcon } from "../../../ui/icons";
-import { orderSaveFailedAtom, pointsText } from "../-order-shared";
+import { orderSaveFailedAtom } from "../-order-shared";
 import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
 import { CapFlows } from "../-cap-flows";
 

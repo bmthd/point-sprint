@@ -7,10 +7,9 @@ import {
 } from "@workspaces/domain";
 import { Box, Card, Flex, Link, NativeAccordion, Progress, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { grouped } from "../../../ui/format";
+import { grouped, yen } from "../../../ui/format";
 import { plansAtom } from "../../../state/queries";
 import { scopeText, sharedText } from "../-cap-lines";
-import { yen } from "../-order-shared";
 import { fillPriceOf } from "./cap-list";
 import { PointBreakdown } from "./point-breakdown";
 import { ShopLadder } from "./shop-ladder";

@@ -3,7 +3,7 @@ import { Box, Flex, Button, Card, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
 import * as v from "valibot";
-import { grouped } from "../../../ui/format";
+import { grouped, rateText } from "../../../ui/format";
 import { updateBenefitAtom } from "../../../state/order-ops";
 import { ChevronIcon } from "../../../ui/icons";
 import { CommitField } from "../../../form/commit-field";
@@ -15,7 +15,6 @@ import {
   pointsSchema,
 } from "../../../form/field-schemas";
 import { officialEventsAtom } from "../../-official-events";
-import { rateText } from "../-order-shared";
 import { isAddedCampaign } from "./campaign-toggles";
 import { useDeleteCampaign } from "./delete-campaign";
 import { useSaveSettingsChange, whenText } from "./settings-shared";

@@ -31,14 +31,14 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId, useState } from "react";
-import { grouped, rounded } from "../../../ui/format";
+import { grouped, pointsText, rateText, rounded } from "../../../ui/format";
 import { withEffectiveAccount } from "../../../state/accounts";
 import { accountSettingsAtom, planResultAtom } from "../../../state/derived";
 import { saveSpuMonthAtom } from "../../../state/mutations";
 import { plansAtom, spuMonthsAtom } from "../../../state/queries";
 import { ExternalIcon, ForwardIcon } from "../../../ui/icons";
 import { RouterButton } from "../../../ui/router-link";
-import { imageUrl, pointsText, rateText } from "../-order-shared";
+import { imageUrl } from "../-order-shared";
 import { monthDay, monthText, useSpuOffMessages } from "../-warnings";
 
 /** Rakuten's page where users check their own SPU. */
