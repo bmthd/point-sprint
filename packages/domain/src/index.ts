@@ -189,8 +189,8 @@ export {
 } from "./form/field-schemas";
 export {
   type NumberUnit,
-  ToNumberSchema,
-  ToDateSchema,
-  ToTextSchema,
-  ToOptionalTextSchema,
+  numberInput,
+  DateInputSchema,
+  TextInputSchema,
+  OptionalTextInputSchema,
 } from "./form/normalize";

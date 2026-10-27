@@ -1,10 +1,10 @@
 import * as v from "valibot";
 import {
   type NumberUnit,
-  ToDateSchema,
-  ToNumberSchema,
-  ToOptionalTextSchema,
-  ToTextSchema,
+  DateInputSchema,
+  numberInput,
+  OptionalTextInputSchema,
+  TextInputSchema,
 } from "./normalize";
 
 // The schemas of what is typed into the forms, shared by every form. Each first makes the field's
@@ -46,11 +46,11 @@ function rate(label: string, min: number) {
 
 /** A number field that must be filled in. */
 const requiredNumber = <T>(unit: NumberUnit, label: string, rules: v.GenericSchema<number, T>) =>
-  v.pipe(ToNumberSchema(unit), v.nonOptional(rules, required(label)));
+  v.pipe(numberInput(unit), v.nonOptional(rules, required(label)));
 
 /** A number field that may be left empty, which gives `undefined`. */
 const optionalNumber = <T>(unit: NumberUnit, rules: v.GenericSchema<number, T>) =>
-  v.pipe(ToNumberSchema(unit), v.optional(rules));
+  v.pipe(numberInput(unit), v.optional(rules));
 
 /** Yen, 0 or more. */
 export function YenSchema(label: string) {
@@ -80,7 +80,7 @@ export function RateSchema(label: string) {
 /** A date as YYYY-MM-DD, which a date field gives. */
 export function DateSchema(label: string) {
   return v.pipe(
-    ToDateSchema,
+    DateInputSchema,
     v.nonOptional(
       v.pipe(v.string(), v.isoDate(`${label}は YYYY-MM-DD の形で入れてください`)),
       required(label),
@@ -96,18 +96,18 @@ const maxLength = (label: string, max: number) =>
 
 /** Text that must be filled in, up to `max` characters. */
 export function RequiredTextSchema(label: string, max: number) {
-  return v.pipe(ToTextSchema, v.nonEmpty(required(label)), maxLength(label, max));
+  return v.pipe(TextInputSchema, v.nonEmpty(required(label)), maxLength(label, max));
 }
 
 /** Text that may be left empty, up to `max` characters. */
 export function TextSchema(label: string, max: number) {
-  return v.pipe(ToTextSchema, maxLength(label, max));
+  return v.pipe(TextInputSchema, maxLength(label, max));
 }
 
 /** A web page's address, or `undefined` for an empty field. */
 export function OptionalUrlSchema(label: string) {
   return v.pipe(
-    ToOptionalTextSchema,
+    OptionalTextInputSchema,
     v.optional(
       v.pipe(
         v.string(),
@@ -126,7 +126,7 @@ export const AmountSchema = YenSchema("金額");
 
 /** A coupon in yen; empty for none. */
 export const DiscountSchema = v.pipe(
-  ToNumberSchema("yen"),
+  numberInput("yen"),
   v.optional(whole("クーポン値引額", 0, MAX_AMOUNT, "円"), 0),
 );
 
@@ -134,7 +134,7 @@ export const QuantitySchema = requiredNumber("quantity", "数量", whole("数量
 
 /** Empty or 0 for no rate of its own, or a rate of 1 or more. */
 export const ShopRateSchema = v.pipe(
-  ToNumberSchema("rate"),
+  numberInput("rate"),
   v.transform((value) => (value === 0 ? undefined : value)),
   v.optional(rate("ショップ独自倍率", 1)),
 );
