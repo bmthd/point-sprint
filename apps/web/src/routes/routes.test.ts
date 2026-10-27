@@ -2,7 +2,7 @@ import { createMemoryHistory } from "@tanstack/react-router";
 import * as v from "valibot";
 import { expect, test } from "vitest";
 import { getRouter } from "../router";
-import { planSearchSchema } from "../planSearch";
+import { planSearchSchema } from "./(plan)/-plan-search";
 import { Route as planRoute } from "./(plan)/plan";
 import { Route as settingsRoute } from "./(plan)/plan_.settings";
 
