@@ -37,7 +37,11 @@ function benefitEntry<K extends string, P extends { cap?: number }>(def: Benefit
 
 export const BenefitSchema = v.variant("kind", [
   benefitEntry(benefitKinds["rate-bonus"]),
-  benefitEntry(benefitKinds["shop-around"]),
+  v.object({
+    ...benefitEntry(benefitKinds["shop-around"]).entries,
+    /** A separate two-shop campaign, excluded from the plan's shop-around outlook. */
+    campaignType: v.optional(v.literal("two-shop")),
+  }),
   benefitEntry(benefitKinds["spend-tiers"]),
 ]);
 export type Benefit = v.InferOutput<typeof BenefitSchema>;

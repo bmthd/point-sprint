@@ -48,11 +48,7 @@ export function defaultInput(
   today: string,
 ): CampaignInput | undefined {
   const spec = SPECS[template.id] ?? {};
-  if (
-    template.benefit.kind === "shop-around" &&
-    template.id !== "2shop" &&
-    plan.benefits.some(isShopAround)
-  ) {
+  if (isShopAround(template.benefit) && plan.benefits.some(isShopAround)) {
     return undefined;
   }
   const cap =
