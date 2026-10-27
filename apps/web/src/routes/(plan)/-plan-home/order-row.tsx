@@ -35,7 +35,7 @@ import {
 } from "react";
 import { grouped, pointsText, rateText, yen } from "../../../ui/format";
 import { orderAtom, planAtom } from "../../../state/derived";
-import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "../../../state/order-ops";
+import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "../../../state/plan-operations";
 import { shopsAtom } from "../../../state/queries";
 import { openOrderIdAtom } from "../-ui";
 import { useLatestRef } from "../../../use-latest-ref";

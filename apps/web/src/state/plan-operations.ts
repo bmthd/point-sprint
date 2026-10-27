@@ -1,50 +1,27 @@
 import {
+  addBenefit,
+  addOrder,
   type Benefit,
+  clearOrders,
   copyOrder,
   enableSpu,
   moveOrder,
   newlyAchievedSpu,
   type Order,
   type Plan,
+  removeBenefit,
+  removeOrder,
   type SpuAchievement,
   toggleBenefit,
+  toggleHold,
+  updateBenefit,
+  updateOrder,
 } from "@workspaces/domain";
 import { atom, type Getter } from "jotai";
 import { withEffectiveAccount } from "./accounts";
 import { accountSettingsAtom } from "./derived";
 import { type SavedPlans, type ShopChange, savePlanAtom, saveSpuMonthAtom } from "./mutations";
 import { shopsAtom } from "./queries";
-
-const replaceOrder = (plan: Plan, orderId: string, change: (order: Order) => Order): Plan => {
-  if (!plan.orders.some((order) => order.id === orderId)) {
-    throw new Error(`order ${orderId} is not in plan ${plan.id}`);
-  }
-  return {
-    ...plan,
-    orders: plan.orders.map((order) => (order.id === orderId ? change(order) : order)),
-  };
-};
-
-export const addOrder = (plan: Plan, order: Order): Plan => ({
-  ...plan,
-  orders: [...plan.orders, order],
-});
-
-export const updateOrder = (plan: Plan, order: Order): Plan =>
-  replaceOrder(plan, order.id, () => order);
-
-export const removeOrder = (plan: Plan, orderId: string): Plan => ({
-  ...plan,
-  orders: plan.orders.filter((order) => order.id !== orderId),
-});
-
-export const clearOrders = (plan: Plan): Plan => ({ ...plan, orders: [] });
-
-export const copyOrderInPlan = (
-  plan: Plan,
-  orderId: string,
-  newId: () => string = () => crypto.randomUUID(),
-): Plan => copyOrder(plan, orderId, newId);
 
 /**
  * New ids that come out the same each time the returned function is called again, so a change
@@ -61,41 +38,6 @@ function repeatableIds() {
     };
   };
 }
-
-export const moveOrderInPlan = (plan: Plan, orderId: string, toIndex: number): Plan =>
-  moveOrder(plan, orderId, toIndex);
-
-export const toggleHold = (plan: Plan, orderId: string): Plan =>
-  replaceOrder(plan, orderId, (order) => ({ ...order, onHold: !order.onHold }));
-
-export const toggleBenefitInPlan = (plan: Plan, benefitId: string): Plan =>
-  toggleBenefit(plan, benefitId);
-
-export const addBenefit = (plan: Plan, benefit: Benefit): Plan => ({
-  ...plan,
-  benefits: [...plan.benefits, benefit],
-});
-
-export const removeBenefit = (plan: Plan, benefitId: string): Plan => ({
-  ...plan,
-  benefits: plan.benefits.filter((benefit) => benefit.id !== benefitId),
-});
-
-export const updateBenefit = (
-  plan: Plan,
-  benefitId: string,
-  change: (benefit: Benefit) => Benefit,
-): Plan => {
-  if (!plan.benefits.some((benefit) => benefit.id === benefitId)) {
-    throw new Error(`benefit ${benefitId} is not in plan ${plan.id}`);
-  }
-  return {
-    ...plan,
-    benefits: plan.benefits.map((benefit) =>
-      benefit.id === benefitId ? change(benefit) : benefit,
-    ),
-  };
-};
 
 /**
  * A write-only atom that saves a change through `savePlanAtom`. `toChange` turns the arguments into
@@ -194,12 +136,12 @@ export const removeOrderAtom = planOperationAtom(
 export const clearOrdersAtom = planOperationAtom<object>(() => clearOrders);
 export const copyOrderAtom = planOperationAtom(({ orderId }: { orderId: string }) => {
   const newIds = repeatableIds();
-  return (plan) => copyOrderInPlan(plan, orderId, newIds());
+  return (plan) => copyOrder(plan, orderId, newIds());
 });
 export const moveOrderAtom = planOperationAtom(
   ({ orderId, toIndex }: { orderId: string; toIndex: number }) =>
     (plan) =>
-      moveOrderInPlan(plan, orderId, toIndex),
+      moveOrder(plan, orderId, toIndex),
 );
 export const toggleHoldAtom = planOperationAtom(
   ({ orderId }: { orderId: string }) =>
@@ -209,7 +151,7 @@ export const toggleHoldAtom = planOperationAtom(
 export const toggleBenefitAtom = planOperationAtom(
   ({ benefitId }: { benefitId: string }) =>
     (plan) =>
-      toggleBenefitInPlan(plan, benefitId),
+      toggleBenefit(plan, benefitId),
 );
 export const addBenefitAtom = planOperationAtom(
   ({ benefit }: { benefit: Benefit }) =>

@@ -29,7 +29,12 @@ import {
   saveShopAtom,
   saveSpuMonthAtom,
 } from "./mutations";
-import { addOrderAtom, copyOrderAtom, saveOrderDraftAtom, updateOrderAtom } from "./order-ops";
+import {
+  addOrderAtom,
+  copyOrderAtom,
+  saveOrderDraftAtom,
+  updateOrderAtom,
+} from "./plan-operations";
 import { plansAtom, profileAtom, queryKeys, shopsAtom, spuMonthsAtom } from "./queries";
 import { repositoryAtom } from "./repository";
 

@@ -11,7 +11,7 @@ import { Profiler, type ReactNode, useEffect } from "react";
 import { expect, test } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
-import { updateOrderAtom } from "../../../state/order-ops";
+import { updateOrderAtom } from "../../../state/plan-operations";
 import { plansQueryAtom, shopsQueryAtom } from "../../../state/queries";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import { expectTexts } from "../../../test-texts";

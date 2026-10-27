@@ -20,7 +20,7 @@ import {
   calculatedPlanAtom,
   planResultAtom,
 } from "../../state/derived";
-import { clearOrdersAtom, removeOrderAtom, saveOrderDraftAtom } from "../../state/order-ops";
+import { clearOrdersAtom, removeOrderAtom, saveOrderDraftAtom } from "../../state/plan-operations";
 import { shopsAtom } from "../../state/queries";
 import { openOrderIdAtom } from "./-ui";
 import type { OrderDraft } from "./-order-form";

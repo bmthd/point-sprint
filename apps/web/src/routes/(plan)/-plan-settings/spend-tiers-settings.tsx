@@ -16,7 +16,7 @@ import {
   yenSchema,
 } from "@workspaces/domain";
 import { planResultAtom } from "../../../state/derived";
-import { updateBenefitAtom } from "../../../state/order-ops";
+import { updateBenefitAtom } from "../../../state/plan-operations";
 import { ChevronIcon, CloseIcon, PlusIcon } from "../../../ui/icons";
 import { CommitDatePicker } from "../-date-picker-field";
 import { isAddedCampaign, isFixedCampaign } from "./campaign-toggles";
