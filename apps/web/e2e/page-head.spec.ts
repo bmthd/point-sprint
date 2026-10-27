@@ -1,5 +1,5 @@
 import { siteUrl } from "../src/site-url";
-import { expect, test } from "./fixtures";
+import { expect, test, fixDate } from "./fixtures";
 import { PlanSettingsPage, SitePage, TopPage } from "./pages";
 
 // The prerendered HTML holds each page's title; a plan's pages put the plan's name in once loaded.
@@ -20,7 +20,7 @@ test("each page has its own title", async ({ page }) => {
 });
 
 test("a plan's pages show the plan's name in the title", async ({ page }) => {
-  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  await fixDate(page, new Date("2026-10-05T12:00:00+09:00"));
   const plan = await (await TopPage.open(page)).createPlan();
   const name = (await plan.name.innerText()).trim();
   await expect(page).toHaveTitle(`${name} | ポイントスプリント`);

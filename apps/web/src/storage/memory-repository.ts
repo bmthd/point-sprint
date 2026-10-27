@@ -63,10 +63,18 @@ export function createMemoryRepository(
     [...rows.order.values()].filter((row) => (row as OrderRow).planId === planId) as OrderRow[];
 
   const planOf = (row: PlanRow) => structuredClone(joinPlan(row, ordersOf(row.id)));
-  const updatePlan = (id: string, change: (plan: Plan | undefined) => Plan) => {
+  const updatePlan: Repository["plans"]["update"] = async (id, change, shopChange) => {
     const row = rows.plan.get(id) as PlanRow | undefined;
     const before = row && planOf(row);
-    const after = putPlan(change(before));
+    // Both are checked before either is written, as one transaction would.
+    const plan = v.parse(PlanSchema, structuredClone(change(before)));
+    const stored = shopChange && (rows.shop.get(shopChange.shopId) as Shop | undefined);
+    const shop =
+      shopChange && !(shopChange.onlyIfMissing && stored)
+        ? v.parse(syncSchemas.shop, structuredClone(shopChange.change(stored)))
+        : undefined;
+    if (shop) putRow("shop", shop.id, shop);
+    const after = putPlan(plan);
     return { before, after };
   };
   const putPlan = (plan: Plan) => {
@@ -103,7 +111,7 @@ export function createMemoryRepository(
       put: async (plan) => {
         putPlan(plan);
       },
-      update: async (id, change) => updatePlan(id, change),
+      update: updatePlan,
       delete: async (id) => {
         const removedAt = now().toISOString();
         for (const order of ordersOf(id)) removeRow("order", orderRowId(id, order.id), removedAt);
@@ -113,6 +121,11 @@ export function createMemoryRepository(
     shops: {
       list: async () => list<Shop>("shop"),
       put: async (shop) => putRow("shop", shop.id, shop),
+      update: async (id, change) => {
+        const stored = structuredClone(rows.shop.get(id) as Shop | undefined);
+        const shop = change(stored);
+        putRow("shop", shop.id, shop);
+      },
     },
     profile: {
       get: async () => structuredClone(rows.profile.get(PROFILE_ID) as Profile | undefined),
