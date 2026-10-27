@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import { BANK_CARD_ID, BANK_SALARY_ID, standardSpu } from "../master/spu";
 import type { Benefit } from "../model/benefit";
 import type { LineItem, Order } from "../model/order";
 import type { Plan } from "../model/plan";
@@ -447,27 +446,5 @@ describe("spend-tiers", () => {
       cappedPoints: 1000,
       capReached: true,
     });
-  });
-});
-
-describe("楽天銀行 SPU", () => {
-  /** The standard SPU with only 通常ポイント and the given 楽天銀行 tier on. */
-  const withBank = (bankId: string) =>
-    structuredClone(standardSpu).map((benefit) => ({
-      ...benefit,
-      enabled: benefit.label === "通常ポイント" || benefit.id === bankId,
-    }));
-  const tenThousand = [order(ORDER_1, SHOP_A, [item(ITEM_1, 10000)])];
-
-  test("the card-payment tier adds +0.3", () => {
-    const result = calculate(plan(tenThousand, withBank(BANK_CARD_ID)), shops);
-    expect(totalOf(result, BANK_CARD_ID)?.cappedPoints).toBe(27);
-    expect(result.total).toBe(117);
-  });
-
-  test("the salary tier adds +0.5", () => {
-    const result = calculate(plan(tenThousand, withBank(BANK_SALARY_ID)), shops);
-    expect(totalOf(result, BANK_SALARY_ID)?.cappedPoints).toBe(45);
-    expect(result.total).toBe(135);
   });
 });

@@ -45,7 +45,8 @@ export {
   spuPurchaseRules,
   standardSpu,
 } from "./master/spu";
-export { campaignTemplates, isTwoShopCampaign } from "./master/campaigns";
+export { campaignTemplates } from "./master/campaigns";
+export { isTwoShopCampaign } from "./model/benefit";
 export {
   type CampaignInput,
   campaignInputOf,

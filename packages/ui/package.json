@@ -5,10 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./theme": "./src/theme/index.ts",
-    "./components/*": "./src/components/*/index.ts",
-    "./hooks/*": "./src/hooks/*/index.ts",
-    "./providers/*": "./src/providers/*/index.ts"
+    "./theme": "./src/theme/index.ts"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
