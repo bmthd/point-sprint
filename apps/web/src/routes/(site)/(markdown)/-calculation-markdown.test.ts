@@ -1,7 +1,7 @@
 import { campaignSources, campaignTemplates, standardSpu } from "@workspaces/domain";
 import { parseMarkdown } from "@tanstack/markdown/parser";
 import { expect, test } from "vitest";
-import template from "../../../markdown/calculation.md?raw";
+import template from "./-markdown/calculation.md?raw";
 import {
   calculationMarkdown,
   campaignListMarkdown,

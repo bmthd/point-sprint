@@ -1,6 +1,7 @@
-import { Box, Grid } from "@workspaces/ui";
+import { Box, Card, Grid } from "@workspaces/ui";
 import type { ReactNode } from "react";
 import { SiteSidebar } from "../-sidebar/sidebar";
+import { COLUMN_HEAD_HEIGHT } from "../../ui/column-head";
 
 /** The right column's width on a wide screen. */
 const SIDEBAR_WIDTH = "320px";
@@ -13,24 +14,23 @@ const MAIN_WIDTH = "768px";
  * are as wide on every page; `maxW` is the width of the page's own content, from the left of its
  * column, which stays the same with or without the sidebar. The sidebar stays on the screen as
  * the page scrolls. `/notices`, which has the notices in full, leaves their headlines out with
- * `noticeHeadlines`. `sidebarTop` goes at the top of the sidebar, above its own sections. With `paper`, `main` is on white, like a sheet of paper, from the header
- * down to the footer; the sidebar stays on the page's gray, as on the other pages.
+ * `noticeHeadlines`. `sidebarTop` goes at the top of the sidebar, above its own sections. With
+ * `card`, `main` is a card, as a page of reading is; beside the sidebar it starts on the line of
+ * the sidebar's first card, under the row its heading takes.
  */
 export function PageWithSidebar({
   maxW,
   noticeHeadlines = true,
-  paper = false,
+  card = false,
   sidebarTop,
   children,
 }: {
   maxW: string;
   noticeHeadlines?: boolean;
-  paper?: boolean;
+  card?: boolean;
   sidebarTop?: ReactNode;
   children: ReactNode;
 }) {
-  // On paper the sheet reaches the header and the footer, so the space above and below goes in it.
-  const ends = { pt: "md", pb: "16" } as const;
   return (
     <Grid
       gridTemplateColumns={{
@@ -41,17 +41,22 @@ export function PageWithSidebar({
       alignItems="start"
       columnGap="lg"
       rowGap="10"
-      px={paper ? { base: "md", lg: "0" } : "md"}
-      h={paper ? "full" : undefined}
-      {...(paper ? {} : ends)}
+      px="md"
+      pt="md"
+      pb="16"
     >
-      {paper ? (
-        // The sheet holds the space above `main`, so `main` starts on the sidebar's line.
-        <Box minW="0" alignSelf="stretch" bg="bg.panel" px="md" {...ends}>
-          <Box as="main" maxW={maxW}>
+      {card ? (
+        <Card.Root
+          as="main"
+          minW="0"
+          // As wide as the text and its padding on both sides, so the text stays `maxW` wide.
+          maxW={{ base: `calc(${maxW} + {spaces.16})`, md: maxW }}
+          mt={{ base: `calc(${COLUMN_HEAD_HEIGHT} + {spaces.2.5})`, lg: "0" }}
+        >
+          <Card.Body display="block" px={{ base: "8", md: "4" }} pt="6" pb="10">
             {children}
-          </Box>
-        </Box>
+          </Card.Body>
+        </Card.Root>
       ) : (
         <Box as="main" minW="0" maxW={maxW}>
           {children}
@@ -63,7 +68,6 @@ export function PageWithSidebar({
         display={{ base: "flex", lg: "none" }}
         position="sticky"
         top="md"
-        mt={paper ? ends.pt : undefined}
       >
         {sidebarTop}
       </SiteSidebar>

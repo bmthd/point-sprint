@@ -68,10 +68,11 @@ export function parseArticle(slug: string, source: string): Article {
 }
 
 /** Newest first, by the day each was published. */
-export const newestFirst = (articles: Article[]) =>
-  articles.toSorted(
+export function newestFirst(articles: Article[]) {
+  return articles.toSorted(
     (a, b) => b.published.localeCompare(a.published) || a.slug.localeCompare(b.slug),
   );
+}
 
 /** "2026年10月8日", from `YYYY-MM-DD`. */
 export function japaneseDate(date: string) {

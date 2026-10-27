@@ -1,9 +1,9 @@
-import { expect, test } from "./fixtures";
+import { expect, test, fixDate } from "./fixtures";
 import { TopPage } from "./pages";
 
 test("create plan, add order, see points, hold it, reload keeps data", async ({ page }) => {
   // The October marathon runs 10/4 to 10/9; the order date defaults to today.
-  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  await fixDate(page, new Date("2026-10-05T12:00:00+09:00"));
 
   let plan = await (await TopPage.open(page)).createPlan();
 

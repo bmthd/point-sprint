@@ -10,19 +10,20 @@ import {
 import { Box, Button, Flex, Image, RadioCard, RadioCardGroup, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import * as v from "valibot";
-import { CommitField } from "../../../form/commit-field";
+import { optionalGrouped } from "../../../ui/format";
+import { CommitField } from "../-form/commit-field";
 import { CommitDatePicker } from "../-date-picker-field";
 import {
   END_BEFORE_START,
   START_AFTER_END,
-  dateSchema,
-  optionalPointsSchema,
-  pointsSchema,
-  rateSchema,
-  requiredTextSchema,
-  yenSchema,
-} from "../../../form/field-schemas";
-import { updateBenefitAtom } from "../../../state/order-ops";
+  DateSchema,
+  OptionalPointsSchema,
+  PointsSchema,
+  RateSchema,
+  RequiredTextSchema,
+  YenSchema,
+} from "@workspaces/domain";
+import { updateBenefitAtom } from "../../../state/plan-operations";
 import { imageUrl } from "../-order-shared";
 import { SPECS } from "./campaign-form";
 import { useSaveSettingsChange } from "./settings-shared";
@@ -39,9 +40,6 @@ const RANK_CHOICES = [
   { rate: 2, when: "プラチナ会員" },
   { rate: 3, when: "ダイヤモンド会員" },
 ] as const;
-
-const grouped = (value: number | undefined) =>
-  value === undefined ? "" : value.toLocaleString("ja-JP");
 
 const twoColumns = {
   display: "grid",
@@ -141,7 +139,7 @@ export function CampaignEditor({
           key={`label:${benefit.label}`}
           label="名前"
           initial={benefit.label}
-          schema={requiredTextSchema("名前", 50)}
+          schema={RequiredTextSchema("名前", 50)}
           onCommit={(label) => set({ label })}
         />
       ) : null}
@@ -152,7 +150,7 @@ export function CampaignEditor({
             label="日付"
             initial={date}
             schema={v.pipe(
-              dateSchema("日付"),
+              DateSchema("日付"),
               v.check(
                 (day) => !taken({ dates: [day] }),
                 `この日の${template.name}はもう追加してあります`,
@@ -184,7 +182,7 @@ export function CampaignEditor({
             label="開始日"
             initial={period.start}
             schema={v.pipe(
-              dateSchema("開始日"),
+              DateSchema("開始日"),
               v.check((start) => start <= period.end, START_AFTER_END),
               v.check(
                 (start) => !taken({ period: { start, end: period.end } }),
@@ -201,7 +199,7 @@ export function CampaignEditor({
             label="終了日"
             initial={period.end}
             schema={v.pipe(
-              dateSchema("終了日"),
+              DateSchema("終了日"),
               v.check((end) => end >= period.start, END_BEFORE_START),
             )}
             period={plan.period}
@@ -220,7 +218,7 @@ export function CampaignEditor({
               key={`rate:${rate}`}
               label="倍率（+N倍）"
               initial={String(rate)}
-              schema={rateSchema("倍率")}
+              schema={RateSchema("倍率")}
               inputMode="decimal"
               align="end"
               onCommit={(value) => set({ rate: value })}
@@ -230,8 +228,8 @@ export function CampaignEditor({
             <CommitField
               key={`min:${input.minOrderAmount ?? ""}`}
               label="条件金額（円）"
-              initial={grouped(input.minOrderAmount)}
-              schema={yenSchema("条件金額")}
+              initial={optionalGrouped(input.minOrderAmount)}
+              schema={YenSchema("条件金額")}
               inputMode="numeric"
               align="end"
               onCommit={(minOrderAmount) => set({ minOrderAmount })}
@@ -241,8 +239,8 @@ export function CampaignEditor({
             <CommitField
               key={`cap:${input.cap ?? ""}`}
               label="獲得上限（P）"
-              initial={grouped(input.cap)}
-              schema={pointsSchema("獲得上限")}
+              initial={optionalGrouped(input.cap)}
+              schema={PointsSchema("獲得上限")}
               inputMode="numeric"
               align="end"
               onCommit={(cap) => set({ cap })}
@@ -252,8 +250,8 @@ export function CampaignEditor({
             <CommitField
               key={`cap:${input.cap ?? ""}`}
               label="獲得上限（P・任意）"
-              initial={grouped(input.cap)}
-              schema={optionalPointsSchema("獲得上限")}
+              initial={optionalGrouped(input.cap)}
+              schema={OptionalPointsSchema("獲得上限")}
               inputMode="numeric"
               align="end"
               onCommit={(cap) => set({ cap })}

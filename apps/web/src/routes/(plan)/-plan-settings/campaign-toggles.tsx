@@ -9,9 +9,10 @@ import {
 import { Box, Card, Flex, Heading, IconButton, Image, List, Switch, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
-import { toggleBenefitAtom } from "../../../state/order-ops";
+import { rateText } from "../../../ui/format";
+import { toggleBenefitAtom } from "../../../state/plan-operations";
 import { PencilIcon } from "../../../ui/icons";
-import { imageUrl, rateText } from "../-order-shared";
+import { imageUrl } from "../-order-shared";
 import { CampaignAddButtons } from "./campaign-adder";
 import { CampaignEditor } from "./campaign-editor";
 import { useDeleteCampaign } from "./delete-campaign";
@@ -28,8 +29,9 @@ const fixedDayKeys = new Set(
 );
 
 /** Whether the campaign's days are set by its date rule (5と0のつく日, ワンダフルデー). */
-export const isFixedCampaign = (benefit: Benefit) =>
-  benefit.sharedKey !== undefined && fixedDayKeys.has(benefit.sharedKey);
+export function isFixedCampaign(benefit: Benefit) {
+  return benefit.sharedKey !== undefined && fixedDayKeys.has(benefit.sharedKey);
+}
 
 /**
  * Whether the user added this campaign themselves, so it can be deleted. Fixed campaigns (days

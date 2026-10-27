@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as v from "valibot";
 import { renderResultImage } from "./-result-image";
-import { resultFigures, resultSearchSchema } from "./-share/result-card";
+import { resultFigures, ResultSearchSchema } from "./-share/result-card";
 
 /** The OGP image of a shared result, drawn by the Worker from the figures in the query string. */
 export const Route = createFileRoute("/share_/image.png")({
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/share_/image.png")({
     handlers: {
       GET: async ({ request }) => {
         const search = Object.fromEntries(new URL(request.url).searchParams);
-        const figures = resultFigures(v.parse(resultSearchSchema, search));
+        const figures = resultFigures(v.parse(ResultSearchSchema, search));
         if (!figures) return new Response("Not Found", { status: 404 });
         return new Response(await renderResultImage(figures), {
           headers: {

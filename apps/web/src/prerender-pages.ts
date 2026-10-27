@@ -10,6 +10,7 @@ export const prerenderedPages = [
   "/plan",
   "/plan/settings",
   "/profile",
+  "/spu",
   "/help",
   "/calculation",
   "/terms",
@@ -31,8 +32,9 @@ export const prerenderedPages = [
 export const pagesRenderedOnRequest = ["/share", "/share/image.png", "/events.json"];
 
 /** HTML files, relative to the client output directory, that the build did not write. */
-export const missingPrerenderedPages = (exists: (file: string) => boolean): string[] =>
-  prerenderedPages.map((page) => page.file).filter((file) => !exists(file));
+export function missingPrerenderedPages(exists: (file: string) => boolean): string[] {
+  return prerenderedPages.map((page) => page.file).filter((file) => !exists(file));
+}
 
 type Tag = Record<string, string>;
 
@@ -52,7 +54,7 @@ const requiredMeta = {
 const requiredLinks = ["icon", "apple-touch-icon", "manifest", "canonical"];
 
 /** The head tags a prerendered page lacks, by name ("title", "og:image", "canonical"…). */
-export const missingHeadTags = (html: string): string[] => {
+export function missingHeadTags(html: string): string[] {
   const meta = headTags(html, "meta");
   const links = headTags(html, "link");
   const title = /<title\b[^>]*>[^<]+<\/title>/.test(html);
@@ -64,7 +66,7 @@ export const missingHeadTags = (html: string): string[] => {
     ...requiredMeta.property.filter((property) => !hasMeta("property", property)),
     ...requiredLinks.filter((rel) => !links.some((l) => l.rel === rel && l.href)),
   ];
-};
+}
 
 type SitemapEntry = { url: string; lastModified?: string };
 
@@ -72,7 +74,7 @@ type SitemapEntry = { url: string; lastModified?: string };
  * A page's entry in the sitemap: its canonical URL, and for an article the day it was last
  * changed, or published when it never was. `undefined` when the page asks search engines not to index it.
  */
-export const sitemapEntry = (html: string): SitemapEntry | undefined => {
+export function sitemapEntry(html: string): SitemapEntry | undefined {
   const meta = headTags(html, "meta");
   if (meta.some((m) => m.name === "robots" && m.content?.includes("noindex"))) return undefined;
   const url = headTags(html, "link").find((l) => l.rel === "canonical")?.href;
@@ -82,14 +84,14 @@ export const sitemapEntry = (html: string): SitemapEntry | undefined => {
     meta.find((m) => m.property === "article:published_time")
   )?.content;
   return lastModified ? { url, lastModified } : { url };
-};
+}
 
 const escapeXml = (text: string) =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 /** The `sitemap.xml` that lists `entries`. */
-export const sitemapXml = (entries: SitemapEntry[]) =>
-  [
+export function sitemapXml(entries: SitemapEntry[]) {
+  return [
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
     ...entries.map(({ url, lastModified }) => {
@@ -99,6 +101,7 @@ export const sitemapXml = (entries: SitemapEntry[]) =>
     `</urlset>`,
     "",
   ].join("\n");
+}
 
 /**
  * The `robots.txt`, pointing to the sitemap. Written by the client build, unlike the sitemap, so
@@ -113,5 +116,6 @@ export const robotsTxt = [
 ].join("\n");
 
 /** How many lists of Rakuten items a prerendered guide has. */
-export const guideItemListCount = (html: string): number =>
-  [...html.matchAll(/<aside\b[^>]*\bdata-guide-items\b/g)].length;
+export function guideItemListCount(html: string): number {
+  return [...html.matchAll(/<aside\b[^>]*\bdata-guide-items\b/g)].length;
+}

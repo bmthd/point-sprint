@@ -1,7 +1,6 @@
 // 定例キャンペーンと、利用者が自分で作るキャンペーン（買いまわり（手動）、自由な倍率）のテンプレート。
 // ユーザーが instantiateCampaign で自分のプランに取り込む。
 // 出典と確認日は sources.ts の campaignSources に持つ。値を直したら、そちらの確認日も直す。
-import type { Benefit } from "../model/benefit";
 import type { CampaignTemplate } from "../model/campaign-template";
 import type { ChannelId } from "../model/common";
 
@@ -175,6 +174,7 @@ export const campaignTemplates: CampaignTemplate[] = [
       amountBasis: "tax-excluded",
       capScope: "occurrence",
       sharedKey: "2shop",
+      campaignType: "two-shop",
       conditions: {},
       params: { tiers: [{ minShops: 2, rate: 2 }], cap: 3000, roundingUnit: "item" },
     },
@@ -278,10 +278,3 @@ export const campaignTemplates: CampaignTemplate[] = [
     },
   },
 ];
-
-/**
- * Whether the benefit is a 2ショップ購入 the user added: a campaign of its own days beside the plan's
- * shop-around (お買い物マラソン and the like), which the shop-around's outlook does not follow.
- */
-export const isTwoShopCampaign = (benefit: Benefit) =>
-  benefit.kind === "shop-around" && benefit.sharedKey?.startsWith("2shop:") === true;

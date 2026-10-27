@@ -9,5 +9,5 @@ export const Route = createFileRoute("/(site)/notices")({
       title: "お知らせ",
       description: "ポイントスプリントからのお知らせです。新しい機能や変更をお伝えします。",
     }),
-  component: () => <NoticesPage />,
+  component: NoticesPage,
 });

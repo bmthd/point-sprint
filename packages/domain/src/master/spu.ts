@@ -66,6 +66,12 @@ export const PREMIUM_CARD_BONUS_ID = "b3acca83-be7b-4c8a-9637-7706296679d4";
 export const BANK_CARD_ID = "1933c19c-0aa3-4052-8d5e-c0d07859a0a9";
 export const BANK_SALARY_ID = "3a7c47bd-3404-4dcb-9569-54989e63f077";
 
+/** 通常ポイント: always on, whatever the month's SPU says. */
+export const NORMAL_POINT_ID = "c69441cb-ac51-4cf9-8ebd-a909a093907e";
+const MOBILE_SPU_ID = "ca794fa7-4a85-43c6-ab34-e06feb115c5d";
+const TURBO_HIKARI_SPU_ID = "135ea1c8-2125-4571-9561-e606edf3b9c3";
+const DENKI_SPU_ID = "7cb3966c-5f5f-42d3-89ad-270a6a77cad8";
+
 export const BOOKS_SPU_ID = "c6a1511e-c5e8-4c68-958a-4b1d5dd3ea42";
 export const KOBO_SPU_ID = "e86e12fd-173a-48a4-995d-2408c4b1d4c2";
 
@@ -80,10 +86,26 @@ export const spuPurchaseRules: { benefitId: string; channel: ChannelId; minOrder
     { benefitId: KOBO_SPU_ID, channel: "rakuten-kobo", minOrderAmount: 3000 },
   ];
 
+/**
+ * The SPU items a month takes over from the month before it: contracts and payments that go on
+ * from month to month. The others are met by what the user does that month (ファミリーマートでの
+ * 購入、投資信託など), so a new month starts with them off and the user turns them on each month.
+ */
+export const CARRIED_SPU_IDS: ReadonlySet<string> = new Set([
+  CARD_NORMAL_ID,
+  CARD_BONUS_ID,
+  PREMIUM_CARD_BONUS_ID,
+  MOBILE_SPU_ID,
+  TURBO_HIKARI_SPU_ID,
+  BANK_CARD_ID,
+  BANK_SALARY_ID,
+  DENKI_SPU_ID,
+]);
+
 export const standardSpu: Benefit[] = [
   // 「お買い物通常ポイント：1倍（楽天市場から進呈）」。上限の記載なし。
   spu(
-    "c69441cb-ac51-4cf9-8ebd-a909a093907e",
+    NORMAL_POINT_ID,
     "通常ポイント",
     "/img/spu/service_normal.webp",
     { rate: 1, category: "base" },
@@ -133,7 +155,7 @@ export const standardSpu: Benefit[] = [
     false,
   ),
   // 「特典2 楽天モバイルのご契約者はポイント+4倍」「月間獲得上限ポイント数 2,000ポイント」。
-  spu("ca794fa7-4a85-43c6-ab34-e06feb115c5d", "楽天モバイル", "/img/spu/service_mobile_v2.webp", {
+  spu(MOBILE_SPU_ID, "楽天モバイル", "/img/spu/service_mobile_v2.webp", {
     rate: 4,
     cap: 2000,
   }),
@@ -201,12 +223,10 @@ export const standardSpu: Benefit[] = [
     cap: 1000,
   }),
   // 「特典11 Rakuten Turboまたは楽天ひかりのご契約者はポイント+2倍」「1,000ポイント」。
-  spu(
-    "135ea1c8-2125-4571-9561-e606edf3b9c3",
-    "Rakuten Turbo／楽天ひかり",
-    "/img/spu/service_turbo_hikari.webp",
-    { rate: 2, cap: 1000 },
-  ),
+  spu(TURBO_HIKARI_SPU_ID, "Rakuten Turbo／楽天ひかり", "/img/spu/service_turbo_hikari.webp", {
+    rate: 2,
+    cap: 1000,
+  }),
   // 「特典12 楽天モバイルキャリア決済（Androidのみ）を月に合計2,000円（税込）以上ご利用でポイント＋2倍」「1,000ポイント」。
   spu(
     "ece41157-00dd-4626-a7f9-24715d505645",
@@ -225,7 +245,7 @@ export const standardSpu: Benefit[] = [
     },
   ),
   // 「特典14 楽天でんきの前月のご利用金額が5,500円（税込）以上…ポイント+0.5倍」「1,000ポイント」。
-  spu("7cb3966c-5f5f-42d3-89ad-270a6a77cad8", "楽天でんき", "/img/spu/service_denki.webp", {
+  spu(DENKI_SPU_ID, "楽天でんき", "/img/spu/service_denki.webp", {
     rate: 0.5,
     cap: 1000,
   }),

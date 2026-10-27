@@ -1,29 +1,19 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 import { type NavigationOptions, SitePage, endsWithPath } from "./site-page";
 
-/** The profile: the SPU defaults and the shops. */
+/** 共通設定 (the profile): the SPU of each month, the shops and the advanced settings. */
 export class ProfilePage {
   readonly heading: Locator;
   readonly backLink: Locator;
 
   constructor(readonly page: Page) {
-    this.heading = page.getByRole("heading", { level: 1, name: "プロフィール" });
+    this.heading = page.getByRole("heading", { level: 1, name: "共通設定" });
     this.backLink = page.getByRole("link", { name: "戻る" });
   }
 
   static async open(page: Page) {
     await page.goto("/profile");
     return new ProfilePage(page);
-  }
-
-  /** An SPU tile, such as `楽天モバイル +4倍`. */
-  spuTile(name: string) {
-    return this.page.getByRole("checkbox", { name });
-  }
-
-  /** Taps an SPU tile on its label: its checkbox is visually hidden. */
-  async toggleSpuTile(name: string) {
-    await this.spuTile(name).locator("xpath=ancestor::label[1]").click();
   }
 
   /** The field with a shop's name. */

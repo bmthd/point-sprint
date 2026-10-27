@@ -5,6 +5,7 @@ import {
   IconButton,
   MenuIcon,
   MoonIcon,
+  SettingsIcon,
   SunIcon,
   Text,
   useColorMode,
@@ -17,26 +18,7 @@ import { ResetDataButton } from "../-reset-data";
 import { SiteSidebar } from "../-sidebar/sidebar";
 import { ReleaseLink } from "./release-link";
 
-function ProfileIcon() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
-    </svg>
-  );
-}
-
-function ProfileLink() {
+function CommonSettingsLink() {
   return (
     <RouterLink
       to="/profile"
@@ -48,9 +30,9 @@ function ProfileLink() {
       color="fg"
       _current={{ fontWeight: "bold" }}
     >
-      <ProfileIcon />
+      <SettingsIcon fontSize="xl" />
       <Text as="span" fontSize="sm">
-        プロフィール
+        共通設定
       </Text>
     </RouterLink>
   );
@@ -118,7 +100,7 @@ export function SiteHeader() {
           <ReleaseLink />
           <ColorModeButton />
           <Box display={{ base: "contents", lg: "none" }}>
-            <ProfileLink />
+            <CommonSettingsLink />
           </Box>
           <SiteMenu />
         </Flex>
@@ -167,7 +149,7 @@ function SiteMenu() {
               if (event.target instanceof Element && event.target.closest("a")) onClose();
             }}
           >
-            <ProfileLink />
+            <CommonSettingsLink />
             <SiteSidebar />
             <ResetDataButton onDone={onClose} />
           </Drawer.Body>

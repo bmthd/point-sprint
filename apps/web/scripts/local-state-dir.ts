@@ -3,5 +3,6 @@
  * `LOCAL_STATE_DIR`, which the E2E tests set (playwright.config.ts). Free of imports, so that the
  * Vite config can load it without type-checking `cloudflare.config.ts`.
  */
-export const localStateDir = (env: Record<string, string | undefined>) =>
-  env.LOCAL_STATE_DIR || ".cloudflare/state";
+export function localStateDir(env: Record<string, string | undefined>) {
+  return env.LOCAL_STATE_DIR || ".cloudflare/state";
+}

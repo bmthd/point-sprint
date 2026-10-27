@@ -2,15 +2,15 @@ import { createMemoryHistory } from "@tanstack/react-router";
 import * as v from "valibot";
 import { expect, test } from "vitest";
 import { getRouter } from "../router";
-import { planSearchSchema } from "../planSearch";
+import { PlanSearchSchema } from "./(plan)/-plan-search";
 import { Route as planRoute } from "./(plan)/plan";
 import { Route as settingsRoute } from "./(plan)/plan_.settings";
 
 test("plan route validates search id", () => {
-  expect(planRoute.options.validateSearch).toBe(planSearchSchema);
-  expect(settingsRoute.options.validateSearch).toBe(planSearchSchema);
-  expect(v.parse(planSearchSchema, { id: "abc" })).toEqual({ id: "abc" });
-  expect(v.parse(planSearchSchema, {})).toEqual({ id: undefined });
+  expect(planRoute.options.validateSearch).toBe(PlanSearchSchema);
+  expect(settingsRoute.options.validateSearch).toBe(PlanSearchSchema);
+  expect(v.parse(PlanSearchSchema, { id: "abc" })).toEqual({ id: "abc" });
+  expect(v.parse(PlanSearchSchema, {})).toEqual({ id: undefined });
 });
 
 test("plan settings is a sibling of the plan route, not its child", () => {
@@ -42,4 +42,15 @@ test("a page that exists is not marked as not found", async () => {
   await router.load();
   const meta = router.state.matches.flatMap((match) => match.meta ?? []);
   expect(meta.findLast((m) => m?.title)?.title).toBe("使い方・注意事項 | ポイントスプリント");
+});
+
+test("the profile, which holds this device's settings, asks search engines not to index it", async () => {
+  const router = getRouter();
+  router.update({
+    ...router.options,
+    history: createMemoryHistory({ initialEntries: ["/profile"] }),
+  });
+  await router.load();
+  const meta = router.state.matches.flatMap((match) => match.meta ?? []);
+  expect(meta).toContainEqual({ name: "robots", content: "noindex" });
 });

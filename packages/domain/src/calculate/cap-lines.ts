@@ -1,4 +1,5 @@
 import type { Benefit } from "../model/benefit";
+import { monthsOf } from "../model/common";
 import { type Plan, planAccountId } from "../model/plan";
 import { capGroupKey } from "./cap-groups";
 import type { CalculationResult } from "./types";
@@ -29,24 +30,6 @@ export type CapLine = {
   rate: number;
 };
 
-/** `YYYY-MM` of every month the period touches. */
-function monthsOf(period: Plan["period"]): string[] {
-  const months: string[] = [];
-  let year = Number(period.start.slice(0, 4));
-  let month = Number(period.start.slice(5, 7));
-  const last = period.end.slice(0, 7);
-  for (;;) {
-    const current = `${year}-${String(month).padStart(2, "0")}`;
-    months.push(current);
-    if (current >= last) return months;
-    month += 1;
-    if (month > 12) {
-      year += 1;
-      month = 1;
-    }
-  }
-}
-
 /** The dates whose groups a benefit's lines show, and each line's `period`. */
 function datesOf(benefit: Benefit, plan: Plan): { date: string; period: string | null }[] {
   switch (benefit.capScope) {
@@ -54,7 +37,9 @@ function datesOf(benefit: Benefit, plan: Plan): { date: string; period: string |
     case "campaign":
       return [{ date: plan.period.start, period: null }];
     case "month":
-      return monthsOf(plan.period).map((month) => ({ date: `${month}-01`, period: month }));
+      return monthsOf(plan.period)
+        .filter((month) => benefit.conditions.months?.includes(month) ?? true)
+        .map((month) => ({ date: `${month}-01`, period: month }));
     case "occurrence":
       return [{ date: plan.period.start, period: firstDayOf(benefit) }];
   }

@@ -2,8 +2,9 @@ import type { Plan } from "@workspaces/domain";
 import { Flex, Button, List, Text } from "@workspaces/ui";
 import { useAtom } from "jotai";
 import { useRef } from "react";
-import { reorderModeAtom } from "../../../state/ui";
+import { reorderModeAtom } from "../-ui";
 import { PlusIcon } from "../../../ui/icons";
+import { withMonthSeparators } from "./order-months";
 import { OrderCard } from "./order-card";
 import { HeaderButton, OrdersHeading, SaveFailedAlert, useOrderConfirm } from "../-order-shared";
 import { ColumnHead } from "../../../ui/column-head";
@@ -16,9 +17,12 @@ export function OrderList({
   plan,
   onEdit,
   onAdd,
+  onSpu,
 }: {
   plan: Plan;
   onEdit: (orderId: string) => void;
+  /** Opens a month's SPU from the month's separator, when the orders are of more than one month. */
+  onSpu?: ((month: string) => void) | undefined;
   /** Shown as a button under the list when the screen has no bottom bar to add from. */
   onAdd?: (() => void) | undefined;
 }) {
@@ -53,18 +57,22 @@ export function OrderList({
         </Text>
       ) : (
         <List.Root aria-label="注文" gap="2.5">
-          {orders.map((order, index) => (
-            <OrderCard
-              key={order.id}
-              planId={plan.id}
-              orderId={order.id}
-              badge={order.onHold ? null : ++counted}
-              index={index}
-              count={orders.length}
-              onEdit={onEdit}
-              onDelete={askDelete}
-            />
-          ))}
+          {withMonthSeparators({
+            plan,
+            onSpu,
+            items: orders.map((order, index) => (
+              <OrderCard
+                key={order.id}
+                planId={plan.id}
+                orderId={order.id}
+                badge={order.onHold ? null : ++counted}
+                index={index}
+                count={orders.length}
+                onEdit={onEdit}
+                onDelete={askDelete}
+              />
+            )),
+          })}
         </List.Root>
       )}
       {onAdd ? (

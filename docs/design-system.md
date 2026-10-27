@@ -59,8 +59,11 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 
 | トークン | ライト | ダーク | 理由 |
 | --- | --- | --- | --- |
-| `bg.base` | `#f5f5f5` | `#121212` | ページの地を薄い灰にして、白いカード（`bg.panel`）を浮かせる |
-| `bg.panel` | `#ffffff` | `#1e1e1e` | カード、表、シートの面 |
+| `bg.base` | `#f4f5f7` | `#212328` | ページの地をわずかに青みのある灰にして、カード（`bg.panel`）を浮かせる。ダークは黒ではなく濃い灰にして、沈んで見えないようにする |
+| `bg.panel` | `#ffffff` | `#2c2f35` | カード、表、シートの面。ダークは地より一段明るくする |
+| `bg.muted` | `black.100` | `#41454e` | ゲージの溝、セグメントの溝、保留中の注文の地。ダークでは `bg.panel` の上で見えるよう一段明るくする |
+| `bg.subtle` | `black.50` | `#363a42` | 棒グラフ（`Progress`）の溝など、面より一段だけ沈める地。ダークでは `bg.panel` と `bg.muted` の間にする |
+| `border.base`・`border.muted` | `black.100` | `#3a3d44` | カードの枠（ダーク）、区切り線。ダークの面 `bg.panel` より一段明るくする |
 | `border.emphasized` | `#8f8f8f` | `#8a8a8a` | 入力欄、ボタン、チェックボックスの枠。細い線でも地に溶けないよう、`bg.panel` の上で 4.5:1 前後にする |
 | `fg.base` | `#171717` | `#fafafa` | 本文。ダークでは白に近づけ、暗い地でもくっきり読めるようにする |
 | `fg.emphasized` | `gray.600` | `gray.100` | 本文に次ぐ文字 |
@@ -69,7 +72,7 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 
 ### 既定のまま使うもの
 
-`bg.muted`（セグメントの溝、保留中の注文の地）、`bg.subtle`、`bg.overlay`（シートの背後）、`border.base`（カードの枠、区切り線）、`border.muted`。
+`bg.overlay`（シートの背後）。ライトの `border.base`（区切り線）と `border.muted`。
 
 ### 追加するもの: `point.*`（ポイントの内訳の4区分）
 
@@ -77,8 +80,8 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 
 | トークン | ライト | ダーク | 区別のしかた |
 | --- | --- | --- | --- |
-| `point.base` | `gray.300` | `gray.700` | 4区分で最も控えめ |
-| `point.spu` | `gray.600` | `gray.400` | 通常と明度で区別する |
+| `point.base` | `gray.300` | `gray.500` | 4区分で最も控えめ |
+| `point.spu` | `gray.600` | `gray.300` | 通常と明度で区別する |
 | `point.marathon` | `brand.500` | `brand.400` | 赤 |
 | `point.campaign` | `amber.400` | `amber.300` | 必ず斜線の模様と組み合わせる（模様の地は `bg.panel`） |
 
@@ -87,8 +90,8 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 部品 | 使うトークン |
 | --- | --- |
 | ページ | 地 `bg.base`、文字 `fg.base` |
-| カード、表、ボトムシート | `Card.Root` の既定の `variant="panel"` と `size="md"`。地 `bg.base` の上に白い面 `bg.panel` を浮かせる。中身は `Card.Body` に置く |
-| サマリーカード | `Card.Root variant="solid" colorScheme="primary"`。次に上限に届く特典の 1 行は地 `blackAlpha.400`、内訳を開くボタンは `Button variant="subtle" colorScheme="mono"`。補足ラベル `primary.contrast/80`、未到達の買いまわりドット `blackAlpha.400`、到達済みのドット `primary.contrast` |
+| カード、表、ボトムシート | `Card.Root` の既定の `variant="panel"` と `size="md"`。地 `bg.base` の上に白い面 `bg.panel` を浮かせる。中身は `Card.Body` に置く。面の見た目はレイヤースタイル `panel` で決める。ライトは枠線の代わりにごく薄い影で浮かせ、ダークは枠線で区切る。角丸は `l4`（12px） |
+| サマリーカード | `Card.Root variant="solid" colorScheme="primary" rounded="l4"`。次に上限に届く特典の 1 行は地 `blackAlpha.400`、内訳を開くボタンは `Button variant="subtle" colorScheme="mono"`。補足ラベル `primary.contrast/80`、未到達の買いまわりドット `blackAlpha.400`、到達済みのドット `primary.contrast` |
 | サマリーカードの中の内訳 | 地 `bg.panel` の小さなパネルを置き、その上に `point.*` |
 | 主要ボタン（追加する、保存） | `Button colorScheme="primary"`（solid）。ボトムバーの「注文を追加」は `size="xl"`、そのほかは `size="lg"`。画面を移るボタンは `RouterButton` |
 | 補助のボタン（編集、コピー、貼り付け、続けて追加、キャンセル） | `Button variant="outline"`。`outline` は面を塗らないので、地 `bg.base` の上に置くときは `bg="bg.panel"` を付ける。プランの画面と注文の編集の「続けて追加」は `size="lg"`、注文の編集の「貼り付け」は既定の size |
@@ -117,7 +120,8 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 上限までの残り | 行は `List`。枠の単位は `Badge variant="outline" colorScheme="gray" fullRounded`。ゲージは 2 色に分けるため `Progress` ではなく帯を組む（ほかのプランの分 `gray.solid`、このプランの分 `primary.solid`、溝 `bg.muted`）。税率の切り替えは、注文の入力欄の税率と同じ `SegmentedControl`（`size="sm"`） |
 | 警告 | `Alert.Root status="warning"`（既定の見た目） |
 | サイドバー（右カラム） | 読むページ（トップ、Markdown のページ、お問い合わせ、お知らせ）に置く（`PageWithSidebar`）。プランとプロフィールのような作業するページには置かない。PC は本文の右に幅 320px、`lg` 以下は本文の下。各区画は `SidebarSection`（`Card.Root` の既定の panel と `h2` の見出し） |
-| トップのイベント欄 | `Tabs.Root`（既定の `variant="line"`）で「開催中・開催予定」と「終了」に分ける。開催中・開催予定がないときは「終了」を開いて出す。状態のバッジは開催中 `Badge colorScheme="primary" variant="solid"`、開催予定 `colorScheme="mono" variant="outline"`、終了 `colorScheme="gray" variant="subtle"`。終わって 30 日を過ぎたイベントは「もっと見る」の `Drawer`（スマホは `block-end`、PC は `inline-end`）に、月ごとの `Card` の行で並べ、行のボタンは `Button variant="outline"` |
+| 読むページの本文 | Markdown のページ（使い方、利用規約、プライバシーポリシー、ガイドの記事）は、本文を `Card.Root` に載せる（`PageWithSidebar` の `card`）。見出しもカードの中に置き、PC ではカードの上端をサイドバーの最初のカードにそろえる。お知らせとお問い合わせは、見出しの行（`ColumnHead`）の下に本文のカードを置く。ガイドの一覧は、記事ごとのカードを並べるので、外側のカードに載せない。本文のカードの中の囲み（使い方の手順のタイムライン、ガイドの商品の一覧）は、`insetCardProps` で枠と影を外し、地 `bg.subtle` で一段沈める |
+| トップのイベント欄 | `Tabs.Root size="sm"`（既定の `variant="line"`）で「開催中・開催予定」と「終了」に分ける。タブは見出し「イベント」の行（`ColumnHead`）の右に置き、カードの上端をサイドバーのカードにそろえる。開催中・開催予定がないときは「終了」を開いて出す。状態のバッジは開催中 `Badge colorScheme="primary" variant="solid"`、開催予定 `colorScheme="mono" variant="outline"`、終了 `colorScheme="gray" variant="subtle"`。終わって 30 日を過ぎたイベントは「もっと見る」の `Drawer`（スマホは `block-end`、PC は `inline-end`）に、月ごとの `Card` の行で並べ、行のボタンは `Button variant="outline"` |
 | お知らせ | 本文は `/notices` に新しい順にすべて並べる（幅 640px）。サイドバーには最新3件の日付と題名だけを置き、題名は `/notices#<id>` へのリンクにする。`/notices` 自身のサイドバーには出さない。日付は `fg.muted` の `xs` |
 | リンク | `Link`（既定の `colorScheme="link"`、`variant="plain"`）。アプリ内の移動は `RouterLink`（`Link` を TanStack Router の `createLink` で包んだもの）。行がまるごとリンクのときは `colorScheme="mono"` |
 | オン・オフの切り替え（39ショップ） | `Switch colorScheme="primary"`（既定の `variant="thick"`）。ラベルを前に置くときは `reverse` |

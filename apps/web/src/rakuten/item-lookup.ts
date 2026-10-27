@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import type { ItemPage, LookupFailure, RakutenItem } from "./item-search";
 
-// The item lookup as the browser asks the Worker for it (`src/server/lookup-item.ts`).
+// The item lookup as the browser asks the Worker for it (`src/server/item-lookup/item-lookup.functions.ts`).
 
 /** How long the first lookup of a URL may wait for its turn at the API. */
 export const FIRST_MAX_WAIT_MS = 5_000;

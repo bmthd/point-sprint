@@ -27,12 +27,13 @@ export const SPU_PAGE = {
 } as const;
 
 /** SPU の項目の出典。どれも SPU のページで、楽天銀行の 2 つだけ後から確かめ直した。 */
-export const spuSource = (benefit: Benefit): OfficialSource =>
-  official(
+export function spuSource(benefit: Benefit): OfficialSource {
+  return official(
     SPU_PAGE.title,
     SPU_PAGE.url,
     benefit.id === BANK_CARD_ID || benefit.id === BANK_SALARY_ID ? "2026-10-19" : "2026-10-04",
   );
+}
 
 /** キャンペーンのテンプレートの出典。キーはテンプレートの id。 */
 export const campaignSources: Readonly<Record<string, BenefitSource>> = {

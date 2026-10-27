@@ -5,7 +5,9 @@ import { ProfilePage } from "./profile-page";
 import { TopPage } from "./top-page";
 
 /** Matches a URL that ends with `path`: the preview server answers a page's path with its directory (`/help/`). */
-export const endsWithPath = (path: string) => new RegExp(`${path.replace(/[?]/g, "\\?")}/?$`);
+export function endsWithPath(path: string) {
+  return new RegExp(`${path.replace(/[?]/g, "\\?")}/?$`);
+}
 
 /** Options for a navigation that a test retries: how long to wait for the next page's URL. */
 export type NavigationOptions = { timeout?: number };
@@ -21,7 +23,7 @@ export class Header {
   constructor(readonly page: Page) {
     this.root = page.getByRole("banner");
     this.topLink = this.root.getByRole("link", { name: "ポイントスプリント" });
-    this.profileLink = this.root.getByRole("link", { name: "プロフィール", exact: true });
+    this.profileLink = this.root.getByRole("link", { name: "共通設定", exact: true });
     this.menuButton = this.root.getByRole("button", { name: "メニュー" });
     this.colorModeButton = this.root.getByRole("button", { name: /^カラーモード/ });
   }
@@ -67,7 +69,7 @@ export class Menu {
 
   constructor(readonly page: Page) {
     this.root = page.getByRole("dialog", { name: "メニュー" });
-    this.profileLink = this.root.getByRole("link", { name: "プロフィール", exact: true });
+    this.profileLink = this.root.getByRole("link", { name: "共通設定", exact: true });
     this.shareSite = this.root.getByRole("region", { name: "このサイトをシェア" });
   }
 
@@ -98,9 +100,10 @@ export class Footer {
     this.root = page.getByRole("contentinfo");
   }
 
-  /** The `href` of every link. */
+  /** The `href` of every link to a page of the site (not the Rakuten credit, which leaves it). */
   linkTargets() {
     return this.root
+      .getByRole("navigation", { name: "サイトの案内" })
       .getByRole("link")
       .evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
   }

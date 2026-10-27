@@ -11,12 +11,11 @@ import {
 import type { ItemPage, RakutenItem } from "../../rakuten/item-search";
 import { useLatestRef } from "../../use-latest-ref";
 
-/**
- * The lookup of an item page, or `undefined` for none. The plan page puts in the lookup through the
- * Worker (`-worker-item-lookup.ts`); tests give their own. Wrapped in an object: an atom made from a
- * function would take it for a getter.
- */
-export const itemLookupAtom = atom<{ lookup: ItemLookup | undefined }>({ lookup: undefined });
+import { workerItemLookup } from "./-worker-item-lookup";
+/** The item lookup through the Worker; tests replace it in their Jotai store. */
+export const itemLookupAtom = atom<{ lookup: ItemLookup | undefined }>({
+  lookup: workerItemLookup,
+});
 
 /** What the lookup of the URL's item is doing, as the status under the URL field shows it. */
 export type AutofillState =

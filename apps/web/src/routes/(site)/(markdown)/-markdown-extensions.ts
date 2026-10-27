@@ -148,7 +148,9 @@ function textOf(nodes: InlineNode[]): string {
 }
 
 /** The number in a text, its commas dropped: `税込 5,500円` is 5500. */
-export const amountIn = (text: string) => Number(text.replace(/[^\d.]/g, "")) || 0;
+export function amountIn(text: string) {
+  return Number(text.replace(/[^\d.]/g, "")) || 0;
+}
 
 /** The one table of a `:::name` block, or an error naming what the block should hold. */
 function tableIn(context: BlockContext, name: string) {

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import template from "../../../markdown/calculation.md?raw";
+import template from "./-markdown/calculation.md?raw";
 import { pageHead } from "../../../page-head";
 import { calculationMarkdown } from "./-calculation-markdown";
 import { MarkdownBody } from "./-markdown-body";

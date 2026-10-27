@@ -1,4 +1,4 @@
-import { Badge, Flex, Heading, Separator, Text, VStack } from "@workspaces/ui";
+import { Badge, Card, Flex, Heading, Separator, Text, VStack } from "@workspaces/ui";
 import { PageWithSidebar } from "../-page-with-sidebar";
 import { NoticeDate } from "../../-notices/notice-date";
 import { ColumnHead } from "../../../ui/column-head";
@@ -57,15 +57,19 @@ export function NoticesPage({ notices = allNotices }: { notices?: readonly Notic
           お知らせ
         </Heading>
       </ColumnHead>
-      {sorted.length === 0 ? (
-        <Text color="fg.muted">お知らせはありません。</Text>
-      ) : (
-        <VStack gap="6" alignItems="stretch" separator={<Separator />}>
-          {sorted.map((notice) => (
-            <NoticeArticle key={notice.id} notice={notice} />
-          ))}
-        </VStack>
-      )}
+      <Card.Root>
+        <Card.Body alignItems="stretch">
+          {sorted.length === 0 ? (
+            <Text color="fg.muted">お知らせはありません。</Text>
+          ) : (
+            <VStack gap="6" alignItems="stretch" separator={<Separator />}>
+              {sorted.map((notice) => (
+                <NoticeArticle key={notice.id} notice={notice} />
+              ))}
+            </VStack>
+          )}
+        </Card.Body>
+      </Card.Root>
     </PageWithSidebar>
   );
 }

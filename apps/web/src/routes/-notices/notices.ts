@@ -35,6 +35,16 @@ export const notices: readonly Notice[] = [
     release: { version: "1.0", changesCalculation: false },
   },
   {
+    id: "sync",
+    date: "2026-10-26",
+    title: "PC とスマホで同じデータを使えるようになりました",
+    body: `プロフィールの「ほかの端末と同期」から、パスキーでログインすると、PC とスマホで同じプランと注文を使えます。名前やメールアドレス、パスワードは使いません。
+
+データは端末の中で暗号にしてから送るので、運営者も中身を読めません。始めたときに出る復元用のコードは、パスワード管理アプリやメモに控えてください。
+
+同期を使わない場合は、これまでどおり入力した内容はこのブラウザの中にだけ保存されます。あわせて、プライバシーポリシーと利用規約に同期についての項目を加えました。`,
+  },
+  {
     id: "rebuilt",
     date: "2026-10-08",
     title: "ポイントスプリントを作り直しました",
@@ -47,15 +57,17 @@ export const notices: readonly Notice[] = [
 ];
 
 /** Newest first. Notices of the same day keep the order they are listed in. */
-export const newestFirst = (list: readonly Notice[]): Notice[] =>
-  list.toSorted((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+export function newestFirst(list: readonly Notice[]): Notice[] {
+  return list.toSorted((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+}
 
 /** The paragraphs of a notice's body. */
-export const paragraphs = (body: string): string[] =>
-  body
+export function paragraphs(body: string): string[] {
+  return body
     .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
     .filter((paragraph) => paragraph !== "");
+}
 
 const versionParts = (version: string) => {
   const [major = 0, minor = 0] = version.split(".").map(Number);
@@ -72,21 +84,25 @@ const compareVersions = (a: string, b: string): number => {
  * The version after `previous`: the major number goes up when the calculation changes, the minor
  * one otherwise. The first is `1.0`.
  */
-export const nextVersion = (previous: string | undefined, changesCalculation: boolean): string => {
+export function nextVersion(previous: string | undefined, changesCalculation: boolean): string {
   if (previous === undefined) return "1.0";
   const { major, minor } = versionParts(previous);
   return changesCalculation ? `${major + 1}.0` : `${major}.${minor + 1}`;
-};
+}
 
 const isRelease = (notice: Notice): notice is ReleaseNotice => notice.release !== undefined;
 
 /** The notices that raise the version, oldest version first. */
-export const releasesOldestFirst = (list: readonly Notice[]): ReleaseNotice[] =>
-  list.filter(isRelease).toSorted((a, b) => compareVersions(a.release.version, b.release.version));
+export function releasesOldestFirst(list: readonly Notice[]): ReleaseNotice[] {
+  return list
+    .filter(isRelease)
+    .toSorted((a, b) => compareVersions(a.release.version, b.release.version));
+}
 
 /** The notice of the current version, or `undefined` when none raised it. */
-export const latestRelease = (list: readonly Notice[]): ReleaseNotice | undefined =>
-  releasesOldestFirst(list).at(-1);
+export function latestRelease(list: readonly Notice[]): ReleaseNotice | undefined {
+  return releasesOldestFirst(list).at(-1);
+}
 
 /** How many days a release counts as recent in the header. */
 export const FRESH_DAYS = 30;
@@ -94,6 +110,9 @@ export const FRESH_DAYS = 30;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Whether `today` (`YYYY-MM-DD`) is within `FRESH_DAYS` of the release. */
-export const isFreshRelease = (release: ReleaseNotice, today: string): boolean =>
-  (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${release.date}T00:00:00Z`)) / DAY_MS <=
-  FRESH_DAYS;
+export function isFreshRelease(release: ReleaseNotice, today: string): boolean {
+  return (
+    (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${release.date}T00:00:00Z`)) / DAY_MS <=
+    FRESH_DAYS
+  );
+}

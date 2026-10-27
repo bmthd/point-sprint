@@ -1,66 +1,88 @@
 import { taxIncludedTarget } from "../amounts/target-amount";
 import { spuPurchaseRules } from "../master/spu";
 import { orderShopContext, hasShop } from "../model/order";
-import type { Plan } from "../model/plan";
+import { type Plan, planAccountId } from "../model/plan";
 import type { Shop } from "../model/shop";
-import { toggleBenefits } from "./benefit-ops";
+import type { SpuMonth } from "../model/spu-month";
+import { spuIdsIn } from "./spu-months";
+
+/** An SPU item that an order achieves for an account in a month. */
+export type SpuAchievement = { accountId: string; month: string; benefitId: string };
+
+const keyOf = ({ accountId, month, benefitId }: SpuAchievement) =>
+  `${accountId}|${month}|${benefitId}`;
 
 /**
- * The SPU benefits of the plan that its orders achieve: an order that is not held, bought on the
- * rule's channel, of at least the rule's amount. Orders whose shop is not in `shops` achieve none.
+ * The SPU that the orders of `plans` achieve: an order that is not held, bought on the rule's
+ * channel, of at least the rule's amount, achieves the rule's item for its plan's account in the
+ * order's month. Orders whose shop is not in `shops` achieve none. `plans` must have the accounts
+ * they are calculated with.
  */
-export function achievedSpuPurchases(plan: Plan, shops: Shop[]): Set<string> {
+export function spuAchievements(plans: Plan[], shops: Shop[]): SpuAchievement[] {
   const shopsById = new Map(shops.map((shop) => [shop.id, shop]));
-  const achieved = new Set<string>();
-  for (const order of plan.orders) {
-    if (order.onHold) continue;
-    const shop = hasShop(order) ? shopsById.get(order.shopId) : undefined;
-    const { channel } = orderShopContext(order, shop);
-    const amount = order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0);
-    for (const rule of spuPurchaseRules) {
-      if (rule.channel === channel && amount >= rule.minOrderAmount) achieved.add(rule.benefitId);
+  const achieved = new Map<string, SpuAchievement>();
+  for (const plan of plans) {
+    for (const order of plan.orders) {
+      if (order.onHold) continue;
+      const shop = hasShop(order) ? shopsById.get(order.shopId) : undefined;
+      const { channel } = orderShopContext(order, shop);
+      const amount = order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0);
+      for (const rule of spuPurchaseRules) {
+        if (rule.channel !== channel || amount < rule.minOrderAmount) continue;
+        const achievement = {
+          accountId: planAccountId(plan),
+          month: order.date.slice(0, 7),
+          benefitId: rule.benefitId,
+        };
+        achieved.set(keyOf(achievement), achievement);
+      }
     }
   }
-  return new Set(plan.benefits.filter((benefit) => achieved.has(benefit.id)).map((b) => b.id));
+  return [...achieved.values()];
 }
 
-/** The achieved SPU benefits that are off: the user turned them off over their orders. */
-export const disabledAchievedSpu = (plan: Plan, shops: Shop[]): string[] => {
-  const achieved = achievedSpuPurchases(plan, shops);
-  return plan.benefits
-    .filter((benefit) => achieved.has(benefit.id) && !benefit.enabled)
-    .map((benefit) => benefit.id);
-};
+/** The achievements of `after` that `before` does not have. */
+function difference(from: SpuAchievement[], without: SpuAchievement[]): SpuAchievement[] {
+  const keys = new Set(without.map(keyOf));
+  return from.filter((achievement) => !keys.has(keyOf(achievement)));
+}
+
+const isOn = (months: SpuMonth[]) => (achievement: SpuAchievement) =>
+  spuIdsIn(months, achievement.accountId, achievement.month).has(achievement.benefitId);
 
 /**
- * `after` with the SPU benefits its orders newly achieve turned on. A benefit already achieved
- * `before` is left as it is, so one the user turned off stays off until an order achieves it again.
+ * The SPU that a change from `before` to `after` newly achieves. Each should be turned on; one
+ * already achieved `before` is left as it is, so one the user turned off stays off until an order
+ * achieves it again.
  */
-export function enableAchievedSpu(before: Plan | undefined, after: Plan, shops: Shop[]): Plan {
-  const already = before ? achievedSpuPurchases(before, shops) : new Set<string>();
-  let benefits = after.benefits;
-  for (const id of achievedSpuPurchases(after, shops)) {
-    if (already.has(id)) continue;
-    if (benefits.find((benefit) => benefit.id === id)?.enabled !== false) continue;
-    benefits = toggleBenefits(benefits, id);
-  }
-  return benefits === after.benefits ? after : { ...after, benefits };
+export function newlyAchievedSpu(before: Plan[], after: Plan[], shops: Shop[]): SpuAchievement[] {
+  return difference(spuAchievements(after, shops), spuAchievements(before, shops));
 }
 
 /**
- * The SPU benefits that `before`'s orders achieved and `after`'s no longer do, and that are still
- * on in `after`: an order was held, deleted or changed so that it no longer meets the rule.
- * `beforeShops` are the shops as they were before, when a shop's channel changed with them.
+ * The SPU that the orders of `before` achieved and those of `after` no longer do, and that are
+ * still on in `months`: an order was held, deleted or changed so that no order of the account's
+ * month meets the rule. `beforeShops` are the shops as they were before, when a shop's channel
+ * changed with them.
  */
-export function lostSpuPurchases(
-  before: Plan,
-  after: Plan,
+export function lostSpuPurchases(input: {
+  before: Plan[];
+  after: Plan[];
+  shops: Shop[];
+  beforeShops?: Shop[];
+  months: SpuMonth[];
+}): SpuAchievement[] {
+  const { before, after, shops, beforeShops = shops, months } = input;
+  return difference(spuAchievements(before, beforeShops), spuAchievements(after, shops)).filter(
+    isOn(months),
+  );
+}
+
+/** The SPU that the orders of `plan` achieve but that are off in `months`: the user turned them off. */
+export function disabledAchievedSpu(
+  plan: Plan,
   shops: Shop[],
-  beforeShops: Shop[] = shops,
-): string[] {
-  const was = achievedSpuPurchases(before, beforeShops);
-  const now = achievedSpuPurchases(after, shops);
-  return after.benefits
-    .filter((benefit) => benefit.enabled && was.has(benefit.id) && !now.has(benefit.id))
-    .map((benefit) => benefit.id);
+  months: SpuMonth[],
+): SpuAchievement[] {
+  return spuAchievements([plan], shops).filter((achievement) => !isOn(months)(achievement));
 }

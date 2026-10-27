@@ -7,7 +7,14 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import type { Benefit, OfficialEvent, Order, Plan, Shop } from "@workspaces/domain";
+import {
+  type Benefit,
+  NORMAL_POINT_ID,
+  type OfficialEvent,
+  type Order,
+  type Plan,
+  type Shop,
+} from "@workspaces/domain";
 import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
@@ -27,8 +34,9 @@ import { PlanHome } from "./-plan-home/plan-home";
 
 export const PLAN = "f0000000-0000-4000-8000-00000000000a";
 
-export const shopId = (index: number) =>
-  `a0000000-0000-4000-8000-0000000000${String(index).padStart(2, "0")}`;
+export function shopId(index: number) {
+  return `a0000000-0000-4000-8000-0000000000${String(index).padStart(2, "0")}`;
+}
 
 export const shops: Shop[] = Array.from({ length: 6 }, (_, index) => ({
   id: shopId(index),
@@ -38,8 +46,9 @@ export const shops: Shop[] = Array.from({ length: 6 }, (_, index) => ({
   updatedAt: "2026-10-05T00:00:00.000Z",
 }));
 
+/** 通常ポイント, under its own id so that the plan's SPU does not add it again. */
 export const baseBenefit: Benefit = {
-  id: "b0000000-0000-4000-8000-000000000001",
+  id: NORMAL_POINT_ID,
   kind: "rate-bonus",
   category: "base",
   label: "通常ポイント",
@@ -86,41 +95,44 @@ export const marathon: Benefit[] = [
   },
 ];
 
-export const orderId = (index: number) =>
-  `0${String(index).padStart(2, "0")}00000-0000-4000-8000-000000000000`;
+export function orderId(index: number) {
+  return `0${String(index).padStart(2, "0")}00000-0000-4000-8000-000000000000`;
+}
 
 /** An order of ¥11,000 per item (¥10,000 before tax) at shop `index`. */
-export const order = (
-  index: number,
-  options: { onHold?: boolean; items?: number } = {},
-): Order => ({
-  id: orderId(index),
-  shopId: shopId(index),
-  date: "2026-10-05",
-  lineItems: Array.from({ length: options.items ?? 1 }, (_, item) => ({
-    id: `0${String(index).padStart(2, "0")}00000-0000-4000-8000-00000000000${item + 1}`,
-    name: `商品${index}-${item + 1}`,
-    unitPrice: 11000,
-    quantity: 1,
-    taxRate: 0.1,
-    discount: 0,
-  })),
-  onHold: options.onHold ?? false,
-  tags: [],
-});
+export function order(index: number, options: { onHold?: boolean; items?: number } = {}): Order {
+  return {
+    id: orderId(index),
+    shopId: shopId(index),
+    date: "2026-10-05",
+    lineItems: Array.from({ length: options.items ?? 1 }, (_, item) => ({
+      id: `0${String(index).padStart(2, "0")}00000-0000-4000-8000-00000000000${item + 1}`,
+      name: `商品${index}-${item + 1}`,
+      unitPrice: 11000,
+      quantity: 1,
+      taxRate: 0.1,
+      discount: 0,
+    })),
+    onHold: options.onHold ?? false,
+    tags: [],
+  };
+}
 
-export const makePlan = (benefits: Benefit[], orders: Order[]): Plan => ({
-  id: PLAN,
-  name: "10月 お買い物マラソン",
-  period: { start: "2026-10-04", end: "2026-10-09" },
-  benefits,
-  orders,
-  updatedAt: "2026-10-05T00:00:00.000Z",
-});
+export function makePlan(benefits: Benefit[], orders: Order[]): Plan {
+  return {
+    id: PLAN,
+    name: "10月 お買い物マラソン",
+    period: { start: "2026-10-04", end: "2026-10-09" },
+    benefits,
+    orders,
+    updatedAt: "2026-10-05T00:00:00.000Z",
+  };
+}
 
 /** Four counted shops of ¥11,000 (¥10,000 before tax), so the marathon is at +3倍. */
-export const marathonPlan = (orders = [order(0), order(1), order(2), order(3)]) =>
-  makePlan([baseBenefit, spuBenefit, ...marathon], orders);
+export function marathonPlan(orders = [order(0), order(1), order(2), order(3)]) {
+  return makePlan([baseBenefit, spuBenefit, ...marathon], orders);
+}
 
 function Hydrate({
   repository,
@@ -194,7 +206,9 @@ export async function renderPlanHome(
   return Object.assign(screen, { router });
 }
 
-export const summary = () => page.getByRole("region", { name: "サマリー" });
+export function summary() {
+  return page.getByRole("region", { name: "サマリー" });
+}
 
 /** Expects one item per shop, in this order, each holding its shop's name. */
 export async function expectShopsInOrder(items: Locator, shops: string[]) {
@@ -209,24 +223,26 @@ export async function expectShopsInOrder(items: Locator, shops: string[]) {
  * the card (its label) is tapped. Locators cannot reach an element's parent, so the label is found from the
  * checkbox.
  */
-export const tapCard = (tile: Locator) => {
+export function tapCard(tile: Locator) {
   const label = tile.element().closest("label");
   if (!label) throw new Error("no card label");
   return page.elementLocator(label).click();
-};
+}
 
 /** The order's shop field: typed to find a saved shop, or to name a new one. */
-export const shopField = (scope: Pick<Locator, "getByRole">) =>
-  scope.getByRole("textbox", { name: /^ショップ/ });
+export function shopField(scope: Pick<Locator, "getByRole">) {
+  return scope.getByRole("textbox", { name: /^ショップ/ });
+}
 
 /**
  * Puts a shop on the order being entered: a saved shop by its name, a new shop of a name no
  * saved shop has, or none with "".
  */
-export const enterShop = (scope: Pick<Locator, "getByRole">, name: string) =>
-  shopField(scope).fill(name);
+export function enterShop(scope: Pick<Locator, "getByRole">, name: string) {
+  return shopField(scope).fill(name);
+}
 
 /** Chooses the item's tax rate by its label (「10%」, 「8%（食品）」 or 「非課税」), as a tap does. */
-export const chooseTaxRate = (scope: Pick<Locator, "getByRole">, label: string) =>
-  // The choice's radio is hidden under its label: the label is what is pressed.
-  scope.getByRole("radiogroup").getByText(label, { exact: true }).click();
+export function chooseTaxRate(scope: Pick<Locator, "getByRole">, label: string) {
+  return scope.getByRole("radiogroup").getByText(label, { exact: true }).click();
+}

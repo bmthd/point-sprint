@@ -1,10 +1,11 @@
+import { Provider, createStore } from "jotai";
 import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { describe, expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
-import type { InquiryResult } from "../../../server/inquiry";
-import { InquiryForm, type SendInquiry } from "./inquiry-form";
-import type { TurnstileWidgetProps } from "./turnstile-widget";
+import type { InquiryResult } from "../../../server/inquiry/inquiry";
+import { InquiryForm, inquirySenderAtom, type SendInquiry } from "./inquiry-form";
+import type { TurnstileWidgetProps } from "../../-turnstile-widget";
 
 // Turnstile's script is not loaded and nothing is sent: the widget and the server function are
 // stood in for.
@@ -33,10 +34,14 @@ async function renderForm(
   { siteKey }: { siteKey?: string } = { siteKey: "site-key" },
 ) {
   await cleanup();
+  const store = createStore();
+  store.set(inquirySenderAtom, { send });
   return render(
-    <UIProvider theme={theme} config={config}>
-      <InquiryForm send={send} siteKey={siteKey} widget={FakeWidget} />
-    </UIProvider>,
+    <Provider store={store}>
+      <UIProvider theme={theme} config={config}>
+        <InquiryForm siteKey={siteKey} widget={FakeWidget} />
+      </UIProvider>
+    </Provider>,
   );
 }
 
