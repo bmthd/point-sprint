@@ -4,8 +4,7 @@ import * as v from "valibot";
 import type { SyncAuthenticationOptions, SyncRegistrationOptions } from "./sync-auth";
 import type { PullResult, PushResult, RemoteRecord } from "./sync-records";
 
-// The server functions of sync, run by the Worker. Each loads its modules in the handler: they
-// import the Workers runtime, which tests that import this module lack.
+// The server functions of sync, run by the Worker.
 
 const ResponseSchema = v.looseObject({
   id: v.string(),
@@ -37,8 +36,9 @@ const signedOut: SignedOut = { ok: false, reason: "signed-out" };
 export const syncStartOptions = createServerFn({ method: "POST" })
   .validator(v.object({ turnstileToken: v.string() }))
   .handler(async ({ data }): Promise<SyncRegistrationOptions | undefined> => {
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, turnstileVerifier }, { registrationOptions }] = await Promise.all([
-      import("./worker-sync"),
+      import("./sync.worker"),
       import("./sync-auth"),
     ]);
     return registrationOptions(await syncDeps(), {
@@ -50,8 +50,9 @@ export const syncStartOptions = createServerFn({ method: "POST" })
 /** The options for another passkey of the account logged in, after the recovery code. */
 export const syncAddPasskeyOptions = createServerFn({ method: "POST" }).handler(
   async (): Promise<SyncRegistrationOptions | SignedOut> => {
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, sessionOf }, { registrationOptions }] = await Promise.all([
-      import("./worker-sync"),
+      import("./sync.worker"),
       import("./sync-auth"),
     ]);
     const deps = await syncDeps();
@@ -77,8 +78,9 @@ export const syncRegister = createServerFn({ method: "POST", strict: { input: fa
     ),
   )
   .handler(async ({ data }) => {
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, setSessionCookie }, { register }] = await Promise.all([
-      import("./worker-sync"),
+      import("./sync.worker"),
       import("./sync-auth"),
     ]);
     const session = await register(await syncDeps(), {
@@ -94,8 +96,9 @@ export const syncRegister = createServerFn({ method: "POST", strict: { input: fa
 /** The options for logging in with a passkey. */
 export const syncLoginOptions = createServerFn({ method: "POST" }).handler(
   async (): Promise<SyncAuthenticationOptions> => {
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps }, { authenticationOptions }] = await Promise.all([
-      import("./worker-sync"),
+      import("./sync.worker"),
       import("./sync-auth"),
     ]);
     return authenticationOptions(await syncDeps());
@@ -106,8 +109,9 @@ export const syncLoginOptions = createServerFn({ method: "POST" }).handler(
 export const syncLogin = createServerFn({ method: "POST", strict: { input: false } })
   .validator(v.pipe(v.unknown(), v.object({ challengeId: v.string(), response: ResponseSchema })))
   .handler(async ({ data }) => {
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, setSessionCookie }, { authenticate }] = await Promise.all([
-      import("./worker-sync"),
+      import("./sync.worker"),
       import("./sync-auth"),
     ]);
     const login = await authenticate(await syncDeps(), {
@@ -124,8 +128,9 @@ export const syncLogin = createServerFn({ method: "POST", strict: { input: false
 export const syncRecoveryLogin = createServerFn({ method: "POST" })
   .validator(v.object({ verifier: v.string() }))
   .handler(async ({ data }) => {
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, setSessionCookie }, { loginWithRecovery }] = await Promise.all([
-      import("./worker-sync"),
+      import("./sync.worker"),
       import("./sync-auth"),
     ]);
     const login = await loginWithRecovery(await syncDeps(), data.verifier);
@@ -138,8 +143,9 @@ export const syncRecoveryLogin = createServerFn({ method: "POST" })
 export const syncSetPrfWrap = createServerFn({ method: "POST" })
   .validator(v.object({ credentialId: v.string(), prfWrap: v.string() }))
   .handler(async ({ data }): Promise<boolean> => {
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, sessionOf }, { setPrfWrap }] = await Promise.all([
-      import("./worker-sync"),
+      import("./sync.worker"),
       import("./sync-auth"),
     ]);
     const deps = await syncDeps();
@@ -150,8 +156,9 @@ export const syncSetPrfWrap = createServerFn({ method: "POST" })
 export const syncPush = createServerFn({ method: "POST" })
   .validator(v.object({ records: v.array(RecordSchema) }))
   .handler(async ({ data }): Promise<PushResult | SignedOut> => {
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, sessionOf }, { push }] = await Promise.all([
-      import("./worker-sync"),
+      import("./sync.worker"),
       import("./sync-records"),
     ]);
     const deps = await syncDeps();
@@ -163,8 +170,9 @@ export const syncPush = createServerFn({ method: "POST" })
 export const syncPull = createServerFn({ method: "POST" })
   .validator(v.object({ since: v.pipe(v.number(), v.integer(), v.minValue(0)) }))
   .handler(async ({ data }): Promise<({ ok: true } & PullResult) | SignedOut> => {
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, sessionOf }, { pull }] = await Promise.all([
-      import("./worker-sync"),
+      import("./sync.worker"),
       import("./sync-records"),
     ]);
     const deps = await syncDeps();
@@ -176,8 +184,9 @@ export const syncPull = createServerFn({ method: "POST" })
 /** Removes everything kept for the account logged in, and logs out. */
 export const syncStop = createServerFn({ method: "POST" }).handler(
   async (): Promise<{ ok: true } | SignedOut> => {
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, sessionOf, clearSessionCookie }, { deleteAccount }] = await Promise.all([
-      import("./worker-sync"),
+      import("./sync.worker"),
       import("./sync-records"),
     ]);
     const deps = await syncDeps();
@@ -198,8 +207,9 @@ export const syncReissueRecovery = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }): Promise<boolean> => {
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, sessionOf }, { reissueRecovery }] = await Promise.all([
-      import("./worker-sync"),
+      import("./sync.worker"),
       import("./sync-auth"),
     ]);
     const deps = await syncDeps();

@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { readRakutenConfig } from "../rakuten/config";
+import { readRakutenConfig } from "../../rakuten/config";
 
 /** The Rakuten settings: the keys are the Worker's secrets, the affiliate id is in the build. */
 export const workerRakutenConfig = () =>

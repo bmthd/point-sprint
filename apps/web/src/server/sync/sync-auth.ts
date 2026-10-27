@@ -9,7 +9,7 @@ import {
   verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import type { D1Database } from "cloudflare:workers";
-import type { TurnstileResult } from "./turnstile";
+import type { TurnstileResult } from "../shared/turnstile";
 
 // Logging in to sync with a passkey, or with the recovery code, and the sessions that follow. The
 // server never learns who the user is: an account is a random id, and the passkey's name is the

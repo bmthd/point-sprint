@@ -1,14 +1,14 @@
 // Applies migrations/ to the event master's D1 and migrations-sync/ to the sync's D1: production's,
 // or a Preview's with `--preview`, through `cf`. With `--local`, makes the local ones the dev server
 // and `vite preview` use afresh and runs every migration on them through Miniflare
-// (src/server/migrations.ts): `cf` 1.0.0-beta.12 often hangs on a local database. Run by Node,
+// (src/server/shared/migrations.ts): `cf` 1.0.0-beta.12 often hangs on a local database. Run by Node,
 // which strips the types.
 import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { EVENTS_DB, PREVIEW_EVENTS_DB, PREVIEW_SYNC_DB, SYNC_DB } from "../cloudflare.config.ts";
-import { applyMigrations } from "../src/server/migrations.ts";
+import { applyMigrations } from "../src/server/shared/migrations.ts";
 import { localStateDir } from "./local-state-dir.ts";
 
 const args = new Set(process.argv.slice(2));

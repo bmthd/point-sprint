@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { InquiryRequestSchema } from "./inquiry-input";
 import { INQUIRY_FROM, buildInquiryMail } from "./inquiry-mail";
-import type { TurnstileResult } from "./turnstile";
+import type { TurnstileResult } from "../shared/turnstile";
 
 // The inquiry's steps on the server, with the Worker's bindings passed in so tests can stand in.
 

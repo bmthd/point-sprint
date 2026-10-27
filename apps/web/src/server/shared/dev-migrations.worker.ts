@@ -7,12 +7,12 @@ import { applyMigrations } from "./migrations";
 // migrations-sync/ reloads this module, and the next read applies it.
 
 const files = {
-  events: import.meta.glob<string>("../../migrations/*.sql", {
+  events: import.meta.glob<string>("../../../migrations/*.sql", {
     query: "?raw",
     import: "default",
     eager: true,
   }),
-  sync: import.meta.glob<string>("../../migrations-sync/*.sql", {
+  sync: import.meta.glob<string>("../../../migrations-sync/*.sql", {
     query: "?raw",
     import: "default",
     eager: true,

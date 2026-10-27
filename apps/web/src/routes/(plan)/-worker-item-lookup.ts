@@ -6,7 +6,7 @@ import { type ItemLookup, cachedLookup } from "../../rakuten/item-lookup";
  */
 export const workerItemLookup: ItemLookup = cachedLookup(async (page, { maxWaitMs, signal }) => {
   try {
-    const { lookupItem } = await import("../../server/lookup-item");
+    const { lookupItem } = await import("../../server/item-lookup/item-lookup.functions");
     return await lookupItem({ data: { page, maxWaitMs }, ...(signal ? { signal } : {}) });
   } catch {
     return { ok: false, error: { reason: "network" } };

@@ -1,4 +1,4 @@
--- The 楽天ブランドデー of 2026-10-20 to 21. Collection (src/server/collect-events.ts) does not read
+-- The 楽天ブランドデー of 2026-10-20 to 21. Collection (src/server/official-events/collect-events.ts) does not read
 -- brand days, so the row is copied by hand from https://event.rakuten.co.jp/brand/campaign/ and locked
 -- (docs/event-master.md). The `brand-day` order tag it needs is read from this version of the app on,
 -- so the row ships with it. A row the operator put in first is kept.

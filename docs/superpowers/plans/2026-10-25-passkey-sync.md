@@ -63,10 +63,10 @@
 | `apps/web/src/state/sync.ts`（新規） | 同期の状態の atom と、エンジンを動かす hook |
 | `apps/web/migrations-sync/0001_sync.sql`（新規） | `accounts`・`credentials`・`sessions`・`challenges`・`records`・`usage` |
 | `apps/web/src/server/sync-store.ts`（新規） | D1 への読み書き（テストは `node:sqlite`） |
-| `apps/web/src/server/sync-auth.ts`（新規） | WebAuthn の検証、セッション、Turnstile |
-| `apps/web/src/server/sync-records.ts`（新規） | push / pull / 退会、上限、バージョンの門 |
-| `apps/web/src/server/sync-functions.ts`（新規） | `createServerFn` の口、Cookie、`Origin` の確認 |
-| `apps/web/src/server/memory-d1.ts`（新規） | `event-store.test.ts` の `memoryD1` を移し、マイグレーションの場所を引数にする |
+| `apps/web/src/server/sync/sync-auth.ts`（新規） | WebAuthn の検証、セッション、Turnstile |
+| `apps/web/src/server/sync/sync-records.ts`（新規） | push / pull / 退会、上限、バージョンの門 |
+| `apps/web/src/server/sync/sync.functions.ts`（新規） | `createServerFn` の口、Cookie、`Origin` の確認 |
+| `apps/web/src/server/shared/memory-d1.ts`（新規） | `event-store.test.ts` の `memoryD1` を移し、マイグレーションの場所を引数にする |
 | `apps/web/src/routes/(plan)/-profile/sync-settings.tsx`（新規） | 「ほかの端末と同期」の節 |
 | `apps/web/src/routes/(plan)/-profile/recovery-code-dialog.tsx`（新規） | 復元用のコードを見せる・入れてもらうダイアログ |
 
@@ -209,8 +209,8 @@ test("joinPlan は position の順に並べ、updatedAt は一番新しいもの
 ### Task 5: 同期の D1 と設定
 
 **Files:**
-- Create: `apps/web/migrations-sync/0001_sync.sql`, `apps/web/src/server/memory-d1.ts`
-- Modify: `apps/web/cloudflare.config.ts`, `apps/web/src/server/cloudflare.d.ts`, `apps/web/src/server/dev-migrations.ts`, `apps/web/scripts/migrate-events-db.ts`（→ 両方のデータベースを扱う。名前は変えず、`--sync` を足すのではなく、いつも両方を当てる）, `apps/web/package.json`, `.github/workflows/deploy.yml`, `.github/workflows/preview.yml`, `apps/web/src/server/event-store.test.ts`（`memoryD1` を移したものを使う）
+- Create: `apps/web/migrations-sync/0001_sync.sql`, `apps/web/src/server/shared/memory-d1.ts`
+- Modify: `apps/web/cloudflare.config.ts`, `apps/web/src/server/shared/cloudflare.d.ts`, `apps/web/src/server/shared/dev-migrations.worker.ts`, `apps/web/scripts/migrate-events-db.ts`（→ 両方のデータベースを扱う。名前は変えず、`--sync` を足すのではなく、いつも両方を当てる）, `apps/web/package.json`, `.github/workflows/deploy.yml`, `.github/workflows/preview.yml`, `apps/web/src/server/official-events/event-store.test.ts`（`memoryD1` を移したものを使う）
 
 - [ ] **Step 1: スキーマを書く**
 
@@ -262,11 +262,11 @@ CREATE TABLE usage (account_id TEXT NOT NULL, hour TEXT NOT NULL, writes INTEGER
 ### Task 6: サーバーの認証（パスキー、セッション、Turnstile）
 
 **Files:**
-- Create: `apps/web/src/server/sync-store.ts`, `apps/web/src/server/sync-auth.ts`, `sync-auth.test.ts`
+- Create: `apps/web/src/server/sync-store.ts`, `apps/web/src/server/sync/sync-auth.ts`, `sync-auth.test.ts`
 - Modify: `apps/web/package.json`（`@simplewebauthn/server@14.0.3`）
 
 **Interfaces:**
-- Consumes: Task 5 の `memoryD1`、`verifyTurnstile`（`src/server/turnstile.ts`）
+- Consumes: Task 5 の `memoryD1`、`verifyTurnstile`（`src/server/shared/turnstile.ts`）
 - Produces（すべて `deps: { db: D1Database; now: () => Date; rpID: string; origin: string; verifyToken: (token: string) => Promise<TurnstileResult>; verifyRegistration?, verifyAuthentication? }` を受ける。検証関数はテストで差し替える）:
   - `registrationOptions(deps, { turnstileToken } | { accountId }): Promise<{ challengeId: string; options: PublicKeyCredentialCreationOptionsJSON }>` — 新しく始めるときは Turnstile を通す。パスキーを足すとき（復元用のコードでログインした後）は `accountId` を使い、Turnstile は通さない。`user.name` は `ポイントスプリント`、`residentKey: "required"`、`userVerification: "required"`、`extensions: { prf: {} }`
   - `register(deps, { challengeId, response, recoveryVerifier, recoveryWrap, prfWrap? }): Promise<{ accountId: string; sessionToken: string }>`
@@ -284,7 +284,7 @@ CREATE TABLE usage (account_id TEXT NOT NULL, hour TEXT NOT NULL, writes INTEGER
 ### Task 7: サーバーのレコード（送る・受け取る・やめる）
 
 **Files:**
-- Create: `apps/web/src/server/sync-records.ts`, `sync-records.test.ts`
+- Create: `apps/web/src/server/sync/sync-records.ts`, `sync-records.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -300,7 +300,7 @@ CREATE TABLE usage (account_id TEXT NOT NULL, hour TEXT NOT NULL, writes INTEGER
 ### Task 8: サーバー関数の口
 
 **Files:**
-- Create: `apps/web/src/server/sync-functions.ts`（`submit-inquiry.ts` と同じく、Workers に依存するものは handler の中で import）
+- Create: `apps/web/src/server/sync/sync.functions.ts`（`submit-inquiry.ts` と同じく、Workers に依存するものは handler の中で import）
 
 **Interfaces:**
 - Produces（`createServerFn({ method: "POST" })`）: `syncRegistrationOptions`、`syncRegister`、`syncAuthenticationOptions`、`syncAuthenticate`、`syncRecoveryLogin`、`syncSetPrfWrap`、`syncPush`、`syncPull`、`syncDeleteAccount`

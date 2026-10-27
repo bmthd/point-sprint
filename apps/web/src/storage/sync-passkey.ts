@@ -6,7 +6,7 @@ import {
   startAuthentication,
   startRegistration,
 } from "@simplewebauthn/browser";
-import type { PullResult, PushResult } from "../server/sync-records";
+import type { PullResult, PushResult } from "../server/sync/sync-records";
 import type { Repository } from "./repository";
 import {
   PRF_SALT,
@@ -91,7 +91,7 @@ export const browserPasskeys: Passkeys = {
 type Maybe<T> = Promise<T | undefined>;
 type SignedOut = { ok: false; reason: "signed-out" };
 
-/** The server functions the flows call (src/server/sync-functions.ts). */
+/** The server functions the flows call (src/server/sync/sync.functions.ts). */
 export type SyncServer = {
   startOptions(data: {
     turnstileToken: string;

@@ -2,9 +2,9 @@ import type {
   verifyAuthenticationResponse,
   verifyRegistrationResponse,
 } from "@simplewebauthn/server";
-import { memoryD1 } from "../server/memory-d1";
-import * as auth from "../server/sync-auth";
-import * as records from "../server/sync-records";
+import { memoryD1 } from "../server/shared/memory-d1";
+import * as auth from "../server/sync/sync-auth";
+import * as records from "../server/sync/sync-records";
 import type { Asserted, Created, Passkeys, SyncServer } from "./sync-passkey";
 
 // Tests only: the sync's server functions over a D1 in memory, with stand-ins for the WebAuthn

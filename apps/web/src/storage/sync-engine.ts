@@ -1,5 +1,5 @@
 import { type SyncRow, migrateRow, syncStores } from "@workspaces/domain";
-import { LIMITS } from "../server/sync-records";
+import { LIMITS } from "../server/sync/sync-records";
 import type { Repository } from "./repository";
 import { decryptRecord, encryptRow } from "./sync-crypto";
 import type { SyncServer } from "./sync-passkey";

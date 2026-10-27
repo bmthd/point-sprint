@@ -5,7 +5,7 @@ import type {
   verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import { describe, expect, test } from "vitest";
-import { memoryD1 } from "./memory-d1";
+import { memoryD1 } from "../shared/memory-d1";
 import {
   type SyncAuthDeps,
   authenticate,
@@ -45,7 +45,7 @@ const verifyAuthentication = (async (
 
 let clock = new Date("2026-10-25T00:00:00.000Z");
 const deps = (): SyncAuthDeps => ({
-  db: memoryD1(new URL("../../migrations-sync/", import.meta.url)).db,
+  db: memoryD1(new URL("../../../migrations-sync/", import.meta.url)).db,
   rpID: "point-sprint.bmth.dev",
   origin: "https://point-sprint.bmth.dev",
   now: () => clock,

@@ -21,6 +21,12 @@
 - `storage/`: ルートと `state/` の両方が使い、永続化と同期は特定のルートに属さない
 - `ui/`: 複数のルートグループに加え、`vite.config.ts` も使う
 
+## サーバーのファイル名
+
+`server/` の処理は、`sync/`、`inquiry/`、`item-lookup/`、`official-events/`、`shared/` に分ける。
+
+サーバー関数は `<名前>.functions.ts`、Worker ランタイムに依存する処理は `<名前>.worker.ts`、ランタイムに依存しない処理は `<名前>.ts` にする。テストは対象の隣に `<名前>.test.ts` で置く。`guides/` も同じ付け方にする。ハンドラー内の動的 import は [docs/server-imports.md](docs/server-imports.md) に従う。
+
 ## UI の部品
 
 画面の部品は Yamada UI v2 の部品で組む。`@workspaces/ui` は Yamada UI のすべての部品を export している。
