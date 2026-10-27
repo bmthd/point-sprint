@@ -8,7 +8,7 @@ import { updateBenefitAtom } from "../../../state/plan-operations";
 import { ChevronIcon } from "../../../ui/icons";
 import { CommitField } from "../-form/commit-field";
 import { CommitDatePicker } from "../-date-picker-field";
-import { END_BEFORE_START, START_AFTER_END, dateSchema, pointsSchema } from "@workspaces/domain";
+import { END_BEFORE_START, START_AFTER_END, DateSchema, PointsSchema } from "@workspaces/domain";
 import { officialEventsAtom } from "../../-official-events";
 import { isAddedCampaign } from "./campaign-toggles";
 import { useDeleteCampaign } from "./delete-campaign";
@@ -27,7 +27,7 @@ export function shopAroundOf(plan: Plan) {
   );
 }
 
-const CapSchema = pointsSchema("獲得上限");
+const CapSchema = PointsSchema("獲得上限");
 
 /** One line about the shop-around: when, the highest rate and the cap. */
 function summaryOf(benefit: ShopAroundBenefit, period: { start: string; end: string }) {
@@ -175,7 +175,7 @@ function ShopAroundEditor({
               label="開始日"
               initial={period.start}
               schema={v.pipe(
-                dateSchema("開始日"),
+                DateSchema("開始日"),
                 v.check((start) => start <= period.end, START_AFTER_END),
               )}
               period={plan.period}
@@ -186,7 +186,7 @@ function ShopAroundEditor({
               label="終了日"
               initial={period.end}
               schema={v.pipe(
-                dateSchema("終了日"),
+                DateSchema("終了日"),
                 v.check((end) => end >= period.start, END_BEFORE_START),
               )}
               period={plan.period}

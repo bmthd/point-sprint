@@ -7,9 +7,9 @@ import type { Plan } from "@workspaces/domain";
 import { Box, DatePicker, type DatePickerProps, Field, useFieldProps } from "@workspaces/ui";
 import { useState } from "react";
 import * as v from "valibot";
-import { dateSchema } from "@workspaces/domain";
+import { DateSchema } from "@workspaces/domain";
 
-const DateText = dateSchema("日付");
+const DateText = DateSchema("日付");
 
 /** Whether `text` is a day as the forms hold it: `2026-10-06`. */
 export function isDate(text: unknown): text is string {

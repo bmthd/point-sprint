@@ -9,11 +9,11 @@ import {
   QuantitySchema,
   ShopNameSchema,
   ShopRateSchema,
-  dateSchema,
-  optionalPointsSchema,
-  pointsSchema,
-  rateSchema,
-  yenSchema,
+  DateSchema,
+  OptionalPointsSchema,
+  PointsSchema,
+  RateSchema,
+  YenSchema,
 } from "./field-schemas";
 
 /** The value a schema gives for `input`, or the message of its first error. */
@@ -45,7 +45,7 @@ describe("yen", () => {
   });
 
   test("names its field", () => {
-    expect(parse(yenSchema("条件金額"), "abc")).toEqual({
+    expect(parse(YenSchema("条件金額"), "abc")).toEqual({
       error: "条件金額は0以上の整数で入れてください",
     });
   });
@@ -108,7 +108,7 @@ describe("shop rate", () => {
 });
 
 describe("campaign rate", () => {
-  const schema = rateSchema("倍率");
+  const schema = RateSchema("倍率");
 
   test("takes a number above 0, with + and 倍", () => {
     expect(parse(schema, "0.5")).toEqual({ value: 0.5 });
@@ -126,17 +126,17 @@ describe("campaign rate", () => {
 
 describe("points", () => {
   test("takes full-width digits, commas and P", () => {
-    expect(parse(pointsSchema("獲得上限"), "7,000P")).toEqual({ value: 7000 });
-    expect(parse(pointsSchema("獲得上限"), "７０００ポイント")).toEqual({ value: 7000 });
-    expect(parse(optionalPointsSchema("獲得上限"), "")).toEqual({ value: undefined });
+    expect(parse(PointsSchema("獲得上限"), "7,000P")).toEqual({ value: 7000 });
+    expect(parse(PointsSchema("獲得上限"), "７０００ポイント")).toEqual({ value: 7000 });
+    expect(parse(OptionalPointsSchema("獲得上限"), "")).toEqual({ value: undefined });
   });
 
   test("says what to type instead", () => {
-    expect(parse(pointsSchema("獲得上限"), "")).toEqual({ error: "獲得上限を入れてください" });
-    expect(parse(optionalPointsSchema("獲得上限"), "1.5")).toEqual({
+    expect(parse(PointsSchema("獲得上限"), "")).toEqual({ error: "獲得上限を入れてください" });
+    expect(parse(OptionalPointsSchema("獲得上限"), "1.5")).toEqual({
       error: "獲得上限は0以上の整数で入れてください",
     });
-    expect(parse(pointsSchema("獲得上限"), "100000000")).toEqual({
+    expect(parse(PointsSchema("獲得上限"), "100000000")).toEqual({
       error: "獲得上限は99,999,999ポイント以下で入れてください",
     });
   });
@@ -150,10 +150,10 @@ describe("date", () => {
 
   test("says what to type instead", () => {
     expect(parse(OrderDateSchema, "")).toEqual({ error: "注文日を入れてください" });
-    expect(parse(dateSchema("開始日"), "2026/10/05")).toEqual({
+    expect(parse(DateSchema("開始日"), "2026/10/05")).toEqual({
       error: "開始日は YYYY-MM-DD の形で入れてください",
     });
-    expect(parse(dateSchema("終了日"), "2026-13-01")).toEqual({
+    expect(parse(DateSchema("終了日"), "2026-13-01")).toEqual({
       error: "終了日は YYYY-MM-DD の形で入れてください",
     });
   });

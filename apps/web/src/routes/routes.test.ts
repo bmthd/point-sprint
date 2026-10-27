@@ -2,15 +2,15 @@ import { createMemoryHistory } from "@tanstack/react-router";
 import * as v from "valibot";
 import { expect, test } from "vitest";
 import { getRouter } from "../router";
-import { planSearchSchema } from "./(plan)/-plan-search";
+import { PlanSearchSchema } from "./(plan)/-plan-search";
 import { Route as planRoute } from "./(plan)/plan";
 import { Route as settingsRoute } from "./(plan)/plan_.settings";
 
 test("plan route validates search id", () => {
-  expect(planRoute.options.validateSearch).toBe(planSearchSchema);
-  expect(settingsRoute.options.validateSearch).toBe(planSearchSchema);
-  expect(v.parse(planSearchSchema, { id: "abc" })).toEqual({ id: "abc" });
-  expect(v.parse(planSearchSchema, {})).toEqual({ id: undefined });
+  expect(planRoute.options.validateSearch).toBe(PlanSearchSchema);
+  expect(settingsRoute.options.validateSearch).toBe(PlanSearchSchema);
+  expect(v.parse(PlanSearchSchema, { id: "abc" })).toEqual({ id: "abc" });
+  expect(v.parse(PlanSearchSchema, {})).toEqual({ id: undefined });
 });
 
 test("plan settings is a sibling of the plan route, not its child", () => {

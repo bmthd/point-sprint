@@ -16,12 +16,12 @@ import { CommitDatePicker } from "../-date-picker-field";
 import {
   END_BEFORE_START,
   START_AFTER_END,
-  dateSchema,
-  optionalPointsSchema,
-  pointsSchema,
-  rateSchema,
-  requiredTextSchema,
-  yenSchema,
+  DateSchema,
+  OptionalPointsSchema,
+  PointsSchema,
+  RateSchema,
+  RequiredTextSchema,
+  YenSchema,
 } from "@workspaces/domain";
 import { updateBenefitAtom } from "../../../state/plan-operations";
 import { imageUrl } from "../-order-shared";
@@ -139,7 +139,7 @@ export function CampaignEditor({
           key={`label:${benefit.label}`}
           label="名前"
           initial={benefit.label}
-          schema={requiredTextSchema("名前", 50)}
+          schema={RequiredTextSchema("名前", 50)}
           onCommit={(label) => set({ label })}
         />
       ) : null}
@@ -150,7 +150,7 @@ export function CampaignEditor({
             label="日付"
             initial={date}
             schema={v.pipe(
-              dateSchema("日付"),
+              DateSchema("日付"),
               v.check(
                 (day) => !taken({ dates: [day] }),
                 `この日の${template.name}はもう追加してあります`,
@@ -182,7 +182,7 @@ export function CampaignEditor({
             label="開始日"
             initial={period.start}
             schema={v.pipe(
-              dateSchema("開始日"),
+              DateSchema("開始日"),
               v.check((start) => start <= period.end, START_AFTER_END),
               v.check(
                 (start) => !taken({ period: { start, end: period.end } }),
@@ -199,7 +199,7 @@ export function CampaignEditor({
             label="終了日"
             initial={period.end}
             schema={v.pipe(
-              dateSchema("終了日"),
+              DateSchema("終了日"),
               v.check((end) => end >= period.start, END_BEFORE_START),
             )}
             period={plan.period}
@@ -218,7 +218,7 @@ export function CampaignEditor({
               key={`rate:${rate}`}
               label="倍率（+N倍）"
               initial={String(rate)}
-              schema={rateSchema("倍率")}
+              schema={RateSchema("倍率")}
               inputMode="decimal"
               align="end"
               onCommit={(value) => set({ rate: value })}
@@ -229,7 +229,7 @@ export function CampaignEditor({
               key={`min:${input.minOrderAmount ?? ""}`}
               label="条件金額（円）"
               initial={optionalGrouped(input.minOrderAmount)}
-              schema={yenSchema("条件金額")}
+              schema={YenSchema("条件金額")}
               inputMode="numeric"
               align="end"
               onCommit={(minOrderAmount) => set({ minOrderAmount })}
@@ -240,7 +240,7 @@ export function CampaignEditor({
               key={`cap:${input.cap ?? ""}`}
               label="獲得上限（P）"
               initial={optionalGrouped(input.cap)}
-              schema={pointsSchema("獲得上限")}
+              schema={PointsSchema("獲得上限")}
               inputMode="numeric"
               align="end"
               onCommit={(cap) => set({ cap })}
@@ -251,7 +251,7 @@ export function CampaignEditor({
               key={`cap:${input.cap ?? ""}`}
               label="獲得上限（P・任意）"
               initial={optionalGrouped(input.cap)}
-              schema={optionalPointsSchema("獲得上限")}
+              schema={OptionalPointsSchema("獲得上限")}
               inputMode="numeric"
               align="end"
               onCommit={(cap) => set({ cap })}

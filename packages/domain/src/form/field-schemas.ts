@@ -47,32 +47,32 @@ const optionalNumber = <T>(unit: NumberUnit, rules: v.GenericSchema<number, T>) 
   v.pipe(toNumber(unit), v.optional(rules));
 
 /** Yen, 0 or more. */
-export function yenSchema(label: string) {
+export function YenSchema(label: string) {
   return requiredNumber("yen", label, whole(label, 0, MAX_AMOUNT, "円"));
 }
 
 /** Yen, or `undefined` for an empty field. */
-export function optionalYenSchema(label: string) {
+export function OptionalYenSchema(label: string) {
   return optionalNumber("yen", whole(label, 0, MAX_AMOUNT, "円"));
 }
 
 /** Points, 0 or more. */
-export function pointsSchema(label: string) {
+export function PointsSchema(label: string) {
   return requiredNumber("points", label, whole(label, 0, MAX_AMOUNT, "ポイント"));
 }
 
 /** Points, or `undefined` for an empty field. */
-export function optionalPointsSchema(label: string) {
+export function OptionalPointsSchema(label: string) {
   return optionalNumber("points", whole(label, 0, MAX_AMOUNT, "ポイント"));
 }
 
 /** A campaign's rate (+N倍): above 0, up to `MAX_RATE`. */
-export function rateSchema(label: string) {
+export function RateSchema(label: string) {
   return requiredNumber("rate", label, rate(label, 0));
 }
 
 /** A date as YYYY-MM-DD, which a date field gives. */
-export function dateSchema(label: string) {
+export function DateSchema(label: string) {
   return v.pipe(
     toDate,
     v.nonOptional(
@@ -89,17 +89,17 @@ const maxLength = (label: string, max: number) =>
   v.maxLength<string, number, string>(max, `${label}は${max}文字以内で入れてください`);
 
 /** Text that must be filled in, up to `max` characters. */
-export function requiredTextSchema(label: string, max: number) {
+export function RequiredTextSchema(label: string, max: number) {
   return v.pipe(toText, v.nonEmpty(required(label)), maxLength(label, max));
 }
 
 /** Text that may be left empty, up to `max` characters. */
-export function textSchema(label: string, max: number) {
+export function TextSchema(label: string, max: number) {
   return v.pipe(toText, maxLength(label, max));
 }
 
 /** A web page's address, or `undefined` for an empty field. */
-export function optionalUrlSchema(label: string) {
+export function OptionalUrlSchema(label: string) {
   return v.pipe(
     toOptionalText,
     v.optional(
@@ -116,7 +116,7 @@ export function optionalUrlSchema(label: string) {
 
 // The fields of an order and its items.
 
-export const AmountSchema = yenSchema("金額");
+export const AmountSchema = YenSchema("金額");
 
 /** A coupon in yen; empty for none. */
 export const DiscountSchema = v.pipe(
@@ -133,12 +133,12 @@ export const ShopRateSchema = v.pipe(
   v.optional(rate("ショップ独自倍率", 1)),
 );
 
-export const OrderDateSchema = dateSchema("注文日");
+export const OrderDateSchema = DateSchema("注文日");
 
-export const ItemNameSchema = textSchema("商品名", 200);
+export const ItemNameSchema = TextSchema("商品名", 200);
 
-export const ItemUrlSchema = optionalUrlSchema("商品のURL");
+export const ItemUrlSchema = OptionalUrlSchema("商品のURL");
 
-export const ShopNameSchema = requiredTextSchema("ショップの名前", 100);
+export const ShopNameSchema = RequiredTextSchema("ショップの名前", 100);
 
-export const AccountNameSchema = requiredTextSchema("アカウントの名前", 30);
+export const AccountNameSchema = RequiredTextSchema("アカウントの名前", 30);

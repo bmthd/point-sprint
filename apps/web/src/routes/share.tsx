@@ -3,7 +3,7 @@ import {
   imageSize,
   resultFigures,
   resultImagePath,
-  resultSearchSchema,
+  ResultSearchSchema,
   resultSummary,
 } from "./-share/result-card";
 import { SharedResultPage } from "./-shared-result-page";
@@ -14,7 +14,7 @@ import { pageHead, siteUrl } from "../page-head";
  * carry the figures in the query string and point at their image.
  */
 export const Route = createFileRoute("/share")({
-  validateSearch: resultSearchSchema,
+  validateSearch: ResultSearchSchema,
   head: ({ match }) => {
     const figures = resultFigures(match.search);
     const head = pageHead({

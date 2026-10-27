@@ -5,7 +5,7 @@ import { SpuPage } from "./-spu-page";
 import { pageHead } from "../../page-head";
 
 /** `month` is the month shown (`YYYY-MM`), this month when left out; `account` the account's id. */
-const spuSearchSchema = v.object({
+const SpuSearchSchema = v.object({
   month: v.fallback(v.optional(MonthSchema), undefined),
   account: v.optional(v.string()),
 });
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/(plan)/spu")({
         "楽天のサービスの利用で上がるポイント倍率（SPU）を、月ごとに設定します。すべてのプランの計算に使います。",
       noindex: true,
     }),
-  validateSearch: spuSearchSchema,
+  validateSearch: SpuSearchSchema,
   component: SpuRoute,
 });
 

@@ -16,7 +16,7 @@ const queryNumber = v.pipe(
  * The figures in `/share` and its image's query string. A value that is missing or out of range
  * is dropped rather than refused, so a mangled link still opens the page.
  */
-export const resultSearchSchema = v.object({
+export const ResultSearchSchema = v.object({
   points: v.fallback(
     v.optional(v.pipe(queryNumber, v.integer(), v.minValue(0), v.maxValue(99_999_999))),
     undefined,
@@ -28,7 +28,7 @@ export const resultSearchSchema = v.object({
 export function resultFigures({
   points,
   rate,
-}: v.InferOutput<typeof resultSearchSchema>): ResultFigures | undefined {
+}: v.InferOutput<typeof ResultSearchSchema>): ResultFigures | undefined {
   if (points === undefined) return undefined;
   return rate === undefined ? { points } : { points, rate };
 }
