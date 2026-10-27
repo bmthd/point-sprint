@@ -9,7 +9,7 @@ import * as v from "valibot";
 export const getGuide = createServerFn({ method: "GET" })
   .validator(v.pipe(v.string(), v.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)))
   .handler(async ({ data: slug }) => {
-    // Handler imports: see ../server/shared/README.md.
+    // Handler imports: see ../../../../docs/server-imports.md.
     const { loadGuideOnServer } = await import("./guide.worker");
     const guide = await loadGuideOnServer(slug);
     if (!guide) throw notFound();

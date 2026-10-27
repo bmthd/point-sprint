@@ -9,7 +9,7 @@ import type { InquiryRequest } from "./inquiry-input";
 export const submitInquiry = createServerFn({ method: "POST" })
   .validator((data: InquiryRequest) => data)
   .handler(async ({ data }): Promise<InquiryResult> => {
-    // Handler imports: see ../shared/README.md.
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const { handleInquiryInWorker } = await import("./inquiry.worker");
     return handleInquiryInWorker(data);
   });

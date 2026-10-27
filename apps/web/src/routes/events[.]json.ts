@@ -8,7 +8,7 @@ export const Route = createFileRoute("/events.json")({
   server: {
     handlers: {
       GET: async () => {
-        // Handler imports: see ../server/shared/README.md.
+        // Handler imports: see ../../../../docs/server-imports.md.
         const [{ env }, { publishedEvents }, { devMigrated }] = await Promise.all([
           import("cloudflare:workers"),
           import("../server/official-events/event-store"),

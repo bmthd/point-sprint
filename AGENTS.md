@@ -16,14 +16,16 @@
 - `google-tags/`: `__root.tsx` と `vite.config.ts`、`scripts/check-prerender.ts` が使い、ルートに属さない
 - `guides/`: 記事のルートと、ビルド設定が使う `prerender-pages.ts` の両方が参照する
 - `rakuten/`: ルートとサーバーに加え、`vite.config.ts` と `scripts/` も使う
-- `server/`: Worker の入口 `server.ts` とルートが使う処理を、`sync/`、`inquiry/`、`item-lookup/`、`official-events/`、`shared/` に分ける
+- `server/`: Worker の入口 `server.ts` とルートの両方が使い、ルートに属さない
 - `state/`: `(plan)` と `(site)` の両方が使い、ルートグループをまたいで状態を共有する
 - `storage/`: ルートと `state/` の両方が使い、永続化と同期は特定のルートに属さない
 - `ui/`: 複数のルートグループに加え、`vite.config.ts` も使う
 
 ## サーバーのファイル名
 
-サーバー関数は `<名前>.functions.ts`、Worker ランタイムに依存する処理は `<名前>.worker.ts`、ランタイムに依存しない処理は `<名前>.ts` にする。テストは対象の隣に `<名前>.test.ts` で置く。`guides/` も同じ付け方にする。ハンドラー内の動的 import は [server/shared/README.md](apps/web/src/server/shared/README.md) に従う。
+`server/` の処理は、`sync/`、`inquiry/`、`item-lookup/`、`official-events/`、`shared/` に分ける。
+
+サーバー関数は `<名前>.functions.ts`、Worker ランタイムに依存する処理は `<名前>.worker.ts`、ランタイムに依存しない処理は `<名前>.ts` にする。テストは対象の隣に `<名前>.test.ts` で置く。`guides/` も同じ付け方にする。ハンドラー内の動的 import は [docs/server-imports.md](docs/server-imports.md) に従う。
 
 ## UI の部品
 

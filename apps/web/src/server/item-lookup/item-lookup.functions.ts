@@ -8,7 +8,7 @@ import { LookupItemInputSchema } from "../../rakuten/item-lookup";
 export const lookupItem = createServerFn({ method: "POST" })
   .validator(LookupItemInputSchema)
   .handler(async ({ data }) => {
-    // Handler imports: see ../shared/README.md.
+    // Handler imports: see ../../../../../docs/server-imports.md.
     const { lookupItemInWorker } = await import("./item-lookup.worker");
     return lookupItemInWorker(data);
   });
