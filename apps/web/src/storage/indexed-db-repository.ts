@@ -435,6 +435,23 @@ export function createIndexedDbRepository(
     shops: {
       list: async () => (await settled()).stores.shops.getAll(),
       put: (shop) => putRow<Shop>("shop", (row) => row.id, shop),
+      update: async (id, change) => {
+        const { transaction: tx, done } = await transaction(
+          ["shops", "outbox", "tombstones"],
+          "readwrite",
+        );
+        const stored = await request<Shop | undefined>(tx.objectStore("shops").get(id));
+        let shop: Shop;
+        try {
+          shop = v.parse(ShopSchema, structuredClone(change(stored)));
+        } catch (error) {
+          tx.abort();
+          await done.catch(() => {});
+          throw error;
+        }
+        writeRow(tx, "shop", shop.id, shop);
+        await done;
+      },
     },
     profile: {
       get: async () => (await settled()).stores.profile.get(PROFILE_KEY),

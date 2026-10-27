@@ -182,10 +182,10 @@ export const saveShopAtom = atomWithMutation<void, ShopChange, Error, Snapshot>(
   const repository = get(repositoryAtom);
   const client = get(queryClientAtom);
   return {
-    mutationFn: async (variables) => {
-      const stored = (await repository.shops.list()).find((shop) => shop.id === variables.shopId);
-      await repository.shops.put(stamp(variables.change(stored), variables));
-    },
+    mutationFn: (variables) =>
+      repository.shops.update(variables.shopId, (stored) =>
+        stamp(variables.change(stored), variables),
+      ),
     ...optimistic(client, queryKeys.shops, changedShops, () => shopsPending(client)),
   };
 });

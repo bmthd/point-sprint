@@ -156,7 +156,7 @@ export const updateOrderAtom = planOperationAtom(
 export const saveOrderDraftAtom = atom(
   null,
   (
-    _get,
+    get,
     set,
     {
       planId,
@@ -167,12 +167,23 @@ export const saveOrderDraftAtom = atom(
       draft: { order: Order; shopChange: ShopChange | undefined };
       isNew: boolean;
     },
-  ) =>
-    set(isNew ? addOrderAtom : updateOrderAtom, {
+  ) => {
+    const selected = get(shopsAtom).find((shop) => shop.id === draft.order.shopId);
+    // A selected shop may only exist in another save's optimistic cache. Keep it as a
+    // fallback, while applying changes to the latest stored shop whenever it exists.
+    const shop = selected
+      ? {
+          shopId: selected.id,
+          change: (stored: typeof selected | undefined) =>
+            draft.shopChange ? draft.shopChange.change(stored ?? selected) : (stored ?? selected),
+        }
+      : draft.shopChange;
+    return set(isNew ? addOrderAtom : updateOrderAtom, {
       planId,
       order: draft.order,
-      shop: draft.shopChange,
-    }),
+      shop,
+    });
+  },
 );
 export const removeOrderAtom = planOperationAtom(
   ({ orderId }: { orderId: string }) =>

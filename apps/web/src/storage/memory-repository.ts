@@ -119,6 +119,11 @@ export function createMemoryRepository(
     shops: {
       list: async () => list<Shop>("shop"),
       put: async (shop) => putRow("shop", shop.id, shop),
+      update: async (id, change) => {
+        const stored = structuredClone(rows.shop.get(id) as Shop | undefined);
+        const shop = change(stored);
+        putRow("shop", shop.id, shop);
+      },
     },
     profile: {
       get: async () => structuredClone(rows.profile.get(PROFILE_ID) as Profile | undefined),

@@ -70,7 +70,12 @@ export interface Repository {
     ): Promise<{ before: Plan | undefined; after: Plan }>;
     delete(id: string): Promise<void>;
   };
-  shops: { list(): Promise<Shop[]>; put(shop: Shop): Promise<void> };
+  shops: {
+    list(): Promise<Shop[]>;
+    put(shop: Shop): Promise<void>;
+    /** Applies a change to the current shop and marks it to send in one transaction. */
+    update(id: string, change: (shop: Shop | undefined) => Shop): Promise<void>;
+  };
   profile: { get(): Promise<Profile | undefined>; put(profile: Profile): Promise<void> };
   /** The SPU of each account and month that the user has set. */
   spuMonths: { list(): Promise<SpuMonth[]>; put(month: SpuMonth): Promise<void> };
