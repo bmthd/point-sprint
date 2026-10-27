@@ -10,8 +10,8 @@ import { useDeferredValue, useMemo } from "react";
 import { asCalculatedAtom } from "../../state/derived";
 import { plansAtom, shopsAtom } from "../../state/queries";
 import { scopeText } from "./-cap-lines";
-import { draftOfInput } from "./-order-editor/order-form";
-import { AMOUNT_PATH, type OrderForm, useFormInput } from "./-order-editor/order-form-store";
+import { draftOfInput } from "./-order-form";
+import { AMOUNT_PATH, type OrderForm, useFormInput } from "./-order-form-store";
 import { yen } from "./-order-shared";
 
 const num = (value: number) => value.toLocaleString("ja-JP");

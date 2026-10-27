@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { requiredTextSchema, textSchema } from "../form/field-schemas";
+import { requiredTextSchema, textSchema } from "@workspaces/domain";
 
 // What the inquiry form sends. The form checks it before sending, and the server checks it again.
 

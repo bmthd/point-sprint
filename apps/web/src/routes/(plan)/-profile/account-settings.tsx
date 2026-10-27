@@ -13,8 +13,8 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useRef, useState } from "react";
-import { CommitField } from "../../../form/commit-field";
-import { AccountNameSchema } from "../../../form/field-schemas";
+import { CommitField } from "../-form/commit-field";
+import { AccountNameSchema } from "@workspaces/domain";
 import { accountSettingsAtom } from "../../../state/derived";
 import { saveProfileAtom } from "../../../state/mutations";
 import { profileQueryAtom } from "../../../state/queries";

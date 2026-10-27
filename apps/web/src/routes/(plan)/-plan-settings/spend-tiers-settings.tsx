@@ -3,7 +3,7 @@ import { Box, Button, Card, Fieldset, Flex, IconButton, Text } from "@workspaces
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useId, useRef, useState } from "react";
 import * as v from "valibot";
-import { CommitField } from "../../../form/commit-field";
+import { CommitField } from "../-form/commit-field";
 import {
   END_BEFORE_START,
   MAX_RATE,
@@ -13,7 +13,7 @@ import {
   rateSchema,
   requiredTextSchema,
   yenSchema,
-} from "../../../form/field-schemas";
+} from "@workspaces/domain";
 import { planResultAtom } from "../../../state/derived";
 import { updateBenefitAtom } from "../../../state/order-ops";
 import { ChevronIcon, CloseIcon, PlusIcon } from "../../../ui/icons";

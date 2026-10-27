@@ -3,7 +3,7 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { ogFonts } from "./og-fonts-plugin.ts";
-import { isPullRequestPreview, parseGoogleTagsEnv } from "./src/routes/-root/google-tags/env.ts";
+import { isPullRequestPreview, parseGoogleTagsEnv } from "./src/google-tags/env.ts";
 import { prerenderedPages, robotsTxt } from "./src/prerender-pages.ts";
 import { localStateDir } from "./scripts/local-state-dir.ts";
 import { readRakutenConfig } from "./src/rakuten/config.ts";

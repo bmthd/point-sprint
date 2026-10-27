@@ -4,8 +4,8 @@
 // Rakuten settings. Run by Node, which strips the types.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { isPullRequestPreview } from "../src/routes/-root/google-tags/env.ts";
-import { missingGoogleTagScripts } from "../src/routes/-root/google-tags/scripts.ts";
+import { isPullRequestPreview } from "../src/google-tags/env.ts";
+import { missingGoogleTagScripts } from "../src/google-tags/scripts.ts";
 import {
   guideItemListCount,
   missingHeadTags,

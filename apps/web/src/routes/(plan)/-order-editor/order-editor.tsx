@@ -41,7 +41,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { type FieldState, Form, bind, errorsOf } from "../../../form/form";
+import { type FieldState, Form, bind, errorsOf } from "../../-form";
 import { saveShopAtom } from "../../../state/mutations";
 import { addOrderAtom, updateOrderAtom } from "../../../state/order-ops";
 import { shopsAtom } from "../../../state/queries";
@@ -75,7 +75,7 @@ import {
   inputOf,
   rateOf,
   tagBonus,
-} from "./order-form";
+} from "../-order-form";
 import {
   AMOUNT_PATH,
   type OrderForm,
@@ -84,7 +84,7 @@ import {
   urlFromPastedText,
   useFormInput,
   useOrderAutofill,
-} from "./order-form-store";
+} from "../-order-form-store";
 import { OrderPreviewBox } from "./order-preview";
 import { CapFlows } from "../-cap-flows";
 

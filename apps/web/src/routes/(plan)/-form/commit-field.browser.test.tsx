@@ -4,7 +4,7 @@ import { expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { userEvent } from "vitest/browser";
 import { CommitField } from "./commit-field";
-import { AmountSchema } from "./field-schemas";
+import { AmountSchema } from "@workspaces/domain";
 
 function renderField(onCommit: (amount: number) => Promise<unknown>) {
   return render(

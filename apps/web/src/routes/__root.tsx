@@ -10,7 +10,7 @@ import { ViewportMeta } from "./-root/viewport-meta";
 import { ErrorPage } from "./-root/error-page";
 import { NotFoundPage, notFoundTitle } from "./-root/not-found-page";
 import { FormControlDefaults } from "../ui/form-control-defaults";
-import { GoogleTagScripts } from "./-root/google-tags/google-tag-scripts";
+import { GoogleTagScripts } from "../google-tags/google-tag-scripts";
 import { defaultDescription, defaultTitle, pageTitle, siteName, siteUrl } from "../page-head";
 
 export const Route = createRootRoute({
