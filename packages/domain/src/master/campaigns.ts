@@ -2,7 +2,6 @@
 // ユーザーが instantiateCampaign で自分のプランに取り込む。
 // 出典: 設計書 3節「計算が従う楽天の規則」に書いた値と出典 URL を使う（各テンプレートのコメントに要点を再掲する）。
 // 確認日: 2026-10-04
-import type { Benefit } from "../model/benefit";
 import type { CampaignTemplate } from "../model/campaign-template";
 import type { ChannelId } from "../model/common";
 
@@ -182,6 +181,7 @@ export const campaignTemplates: CampaignTemplate[] = [
       amountBasis: "tax-excluded",
       capScope: "occurrence",
       sharedKey: "2shop",
+      campaignType: "two-shop",
       conditions: {},
       params: { tiers: [{ minShops: 2, rate: 2 }], cap: 3000, roundingUnit: "item" },
     },
@@ -286,10 +286,3 @@ export const campaignTemplates: CampaignTemplate[] = [
     },
   },
 ];
-
-/**
- * Whether the benefit is a 2ショップ購入 the user added: a campaign of its own days beside the plan's
- * shop-around (お買い物マラソン and the like), which the shop-around's outlook does not follow.
- */
-export const isTwoShopCampaign = (benefit: Benefit) =>
-  benefit.kind === "shop-around" && benefit.sharedKey?.startsWith("2shop:") === true;
