@@ -1,11 +1,24 @@
+import { POINT_GROUPS, type PointGroup } from "@workspaces/domain";
 import type { Node } from "takumi-js";
 import * as v from "valibot";
 import { fixedPercent, pointsText } from "../../ui/format";
 import { siteName } from "../../page-head";
 import { siteUrl } from "../../site-url";
 
-/** A plan's figures, as a shared result carries them. `rate` is left out when nothing is bought. */
-export type ResultFigures = { points: number; rate?: number };
+/** The kinds of event a shared result names, by the prefix of the official event's id. */
+export const EVENT_KINDS = ["marathon", "brand-day"] as const;
+export type EventKind = (typeof EVENT_KINDS)[number];
+
+/**
+ * A plan's figures, as a shared result carries them. `rate` is left out when nothing is bought,
+ * `breakdown` when the link has none, and `event` for a plan of no event.
+ */
+export type ResultFigures = {
+  points: number;
+  rate?: number;
+  breakdown?: Record<PointGroup, number>;
+  event?: EventKind;
+};
 
 /** A number from the query string: the router parses `2600`, a plain `URLSearchParams` gives `"2600"`. */
 const QueryNumberSchema = v.pipe(
@@ -13,39 +26,86 @@ const QueryNumberSchema = v.pipe(
   v.finite(),
 );
 
+const PointsSchema = v.fallback(
+  v.optional(v.pipe(QueryNumberSchema, v.integer(), v.minValue(0), v.maxValue(99_999_999))),
+  undefined,
+);
+
 /**
  * The figures in `/share` and its image's query string. A value that is missing or out of range
  * is dropped rather than refused, so a mangled link still opens the page.
  */
 export const ResultSearchSchema = v.object({
-  points: v.fallback(
-    v.optional(v.pipe(QueryNumberSchema, v.integer(), v.minValue(0), v.maxValue(99_999_999))),
-    undefined,
-  ),
+  points: PointsSchema,
   rate: v.fallback(
     v.optional(v.pipe(QueryNumberSchema, v.minValue(0), v.maxValue(100))),
     undefined,
   ),
+  base: PointsSchema,
+  spu: PointsSchema,
+  marathon: PointsSchema,
+  campaign: PointsSchema,
+  event: v.fallback(v.optional(v.picklist(EVENT_KINDS)), undefined),
 });
 
-/** The figures of a parsed query, or `undefined` when it has no points. */
-export function resultFigures({
-  points,
-  rate,
-}: v.InferOutput<typeof ResultSearchSchema>): ResultFigures | undefined {
+/**
+ * The figures of a parsed query, or `undefined` when it has no points. The breakdown is kept only
+ * when all four groups are there and add up to the points.
+ */
+export function resultFigures(
+  search: v.InferOutput<typeof ResultSearchSchema>,
+): ResultFigures | undefined {
+  const { points, rate, event } = search;
   if (points === undefined) return undefined;
-  return rate === undefined ? { points } : { points, rate };
+  const values = POINT_GROUPS.map((group) => search[group]);
+  const addsUp =
+    values.every((value) => value !== undefined) &&
+    values.reduce((sum, value) => sum + value, 0) === points;
+  return {
+    points,
+    ...(rate === undefined ? {} : { rate }),
+    ...(addsUp
+      ? {
+          breakdown: Object.fromEntries(
+            POINT_GROUPS.map((group, i) => [group, values[i]]),
+          ) as Record<PointGroup, number>,
+        }
+      : {}),
+    ...(event === undefined ? {} : { event }),
+  };
 }
 
-/** The figures of a plan: `rate` is `effectiveRate`'s text, "—" when nothing is bought. */
-export function planFigures(total: number, rate: string): ResultFigures {
-  return rate === "—" ? { points: total } : { points: total, rate: Number(rate) };
+/** The kind of an official event, from the prefix of its id (`marathon-2026-10-24`). */
+export function eventKindOf(officialEventId: string | undefined): EventKind | undefined {
+  return EVENT_KINDS.find((kind) => officialEventId?.startsWith(`${kind}-`));
 }
 
-const query = ({ points, rate }: ResultFigures) =>
+/**
+ * The figures of a plan: `rate` is `effectiveRate`'s text, "—" when nothing is bought. A plan of
+ * no points has nothing to break down.
+ */
+export function planFigures(
+  result: { total: number; groupTotals: Record<PointGroup, number> },
+  rate: string,
+  officialEventId: string | undefined,
+): ResultFigures {
+  const event = eventKindOf(officialEventId);
+  return {
+    points: result.total,
+    ...(rate === "—" ? {} : { rate: Number(rate) }),
+    ...(result.total === 0 ? {} : { breakdown: { ...result.groupTotals } }),
+    ...(event === undefined ? {} : { event }),
+  };
+}
+
+const query = ({ points, rate, breakdown, event }: ResultFigures) =>
   new URLSearchParams({
     points: String(points),
     ...(rate === undefined ? {} : { rate: rate.toFixed(1) }),
+    ...(breakdown === undefined
+      ? {}
+      : Object.fromEntries(POINT_GROUPS.map((group) => [group, String(breakdown[group])]))),
+    ...(event === undefined ? {} : { event }),
   });
 
 /** The page a result is shared as: it shows the figures, and social media show its image. */
@@ -58,9 +118,9 @@ export function resultImagePath(figures: ResultFigures) {
   return `/share/image.png?${query(figures)}`;
 }
 
-/** "獲得予定 2,600P・実質還元率 6.5%" */
+/** "獲得ポイント 2,600P・実質還元率 6.5%" */
 export function resultSummary({ points, rate }: ResultFigures) {
-  const earned = `獲得予定 ${pointsText(points)}`;
+  const earned = `獲得ポイント ${pointsText(points)}`;
   return rate === undefined ? earned : `${earned}・実質還元率 ${fixedPercent(rate)}`;
 }
 

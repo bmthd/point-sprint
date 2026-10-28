@@ -14,21 +14,21 @@ describe("share targets", () => {
 
   test("a result puts the points and the rate in the text and in the link", () => {
     expect(resultShareTarget({ points: 2600, rate: 6.5 })).toEqual({
-      text: "獲得予定 2,600P・実質還元率 6.5%（ポイントスプリントで計算）",
+      text: "獲得ポイント 2,600P・実質還元率 6.5%（ポイントスプリントで計算）",
       url: `${siteUrl}/share?points=2600&rate=6.5`,
     });
   });
 
   test("a result with nothing bought leaves the rate out", () => {
     expect(resultShareTarget({ points: 0 })).toEqual({
-      text: "獲得予定 0P（ポイントスプリントで計算）",
+      text: "獲得ポイント 0P（ポイントスプリントで計算）",
       url: `${siteUrl}/share?points=0`,
     });
   });
 });
 
 describe("shareLinks", () => {
-  const target = { text: "獲得予定 2,600P & 6.5%", url: `${siteUrl}/` };
+  const target = { text: "獲得ポイント 2,600P & 6.5%", url: `${siteUrl}/` };
   const [x, facebook, line] = shareLinks(target);
 
   test("X posts the text and the link", () => {
@@ -52,7 +52,7 @@ describe("shareLinks", () => {
 });
 
 test("the copied message is the text and the link on the next line", () => {
-  expect(shareMessage({ text: "獲得予定 2,600P", url: `${siteUrl}/` })).toBe(
-    `獲得予定 2,600P\n${siteUrl}/`,
+  expect(shareMessage({ text: "獲得ポイント 2,600P", url: `${siteUrl}/` })).toBe(
+    `獲得ポイント 2,600P\n${siteUrl}/`,
   );
 });
