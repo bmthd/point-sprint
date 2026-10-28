@@ -39,7 +39,7 @@ test("the result is shared with its points, linking to its page", async ({ page 
   await plan.shareResult();
   const href = await plan.shareLink("X でシェア").getAttribute("href");
   const query = new URL(href ?? "").searchParams;
-  expect(query.get("text")).toMatch(/^獲得予定 [\d,]+P.*（ポイントスプリントで計算）$/);
+  expect(query.get("text")).toMatch(/^獲得ポイント [\d,]+P.*（ポイントスプリントで計算）$/);
   expect(query.get("url")).toMatch(/^https:\/\/point-sprint\.bmth\.dev\/share\?points=\d+/);
 });
 
@@ -48,9 +48,13 @@ test("a shared result's page shows its figures and points social media at their 
   request,
 }) => {
   const share = await SharePage.open(page, "?points=2600&rate=6.5");
-  await expect(page).toHaveTitle("獲得予定 2,600P・実質還元率 6.5% | ポイントスプリント");
-  await expect(page.getByRole("img", { name: "獲得予定 2,600P・実質還元率 6.5%" })).toBeVisible();
-  expect(await share.ogp("og:title")).toBe("獲得予定 2,600P・実質還元率 6.5% | ポイントスプリント");
+  await expect(page).toHaveTitle("獲得ポイント 2,600P・実質還元率 6.5% | ポイントスプリント");
+  await expect(
+    page.getByRole("img", { name: "獲得ポイント 2,600P・実質還元率 6.5%" }),
+  ).toBeVisible();
+  expect(await share.ogp("og:title")).toBe(
+    "獲得ポイント 2,600P・実質還元率 6.5% | ポイントスプリント",
+  );
   const image = new URL((await share.ogp("og:image")) ?? "");
   expect(image.href).toBe(`${siteUrl}/share/image.png?points=2600&rate=6.5`);
 
