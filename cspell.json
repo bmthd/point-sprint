@@ -19,6 +19,10 @@
     "packages/ui/src/theme/tokens/z-indices.ts"
   ],
   "words": [
+    "simplewebauthn",
+    "ctap",
+    "RPID",
+    "Crockford",
     "nosniff",
     "spinbutton",
     "bmthd",
@@ -80,6 +84,7 @@
     "autoincrement",
     "khtml",
     "miniflare",
+    "toon",
     "jactionlint",
     "shellcheck"
   ]

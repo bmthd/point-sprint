@@ -86,14 +86,16 @@ export function parseItemsLine(line: string): ItemQuery | undefined {
 }
 
 /** The same key for the same query, however its attributes were ordered in the Markdown. */
-export const itemQueryKey = (query: ItemQuery) =>
-  JSON.stringify(
+export function itemQueryKey(query: ItemQuery) {
+  return JSON.stringify(
     Object.fromEntries(Object.entries(query).toSorted(([a], [b]) => a.localeCompare(b))),
   );
+}
 
 /** The queries of every `:::items{…}` line in a Markdown source, in order. */
-export const itemQueriesIn = (markdown: string): ItemQuery[] =>
-  markdown.split("\n").flatMap((line) => {
+export function itemQueriesIn(markdown: string): ItemQuery[] {
+  return markdown.split("\n").flatMap((line) => {
     const query = parseItemsLine(line);
     return query ? [query] : [];
   });
+}

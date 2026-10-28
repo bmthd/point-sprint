@@ -20,5 +20,40 @@ const items: MarkdownExtension = {
   },
 };
 
-/** The syntax a guide may use: that of the other Markdown pages, and the item lists. */
-export const guideExtensions = [...markdownExtensions, items];
+/** `:rakuten[楽天ブックス](https://books.rakuten.co.jp/)`: a link to a Rakuten page that pays as an affiliate link. */
+const rakutenLink: MarkdownExtension = {
+  name: "rakuten-link",
+  inlineParser: {
+    markers: ":",
+    parse(context) {
+      const link = context.source
+        .slice(context.index)
+        .match(/^:rakuten\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/);
+      if (!link?.[1] || !link[2]) return undefined;
+      return {
+        node: {
+          type: "inlineComponent",
+          name: "rakuten-link",
+          tagName: "md-rakuten-link",
+          attributes: {},
+          properties: { href: link[2] },
+          children: context.parseInline(link[1]),
+        },
+        length: link[0].length,
+      };
+    },
+  },
+};
+
+/**
+ * The affiliate link to a Rakuten page, or the page itself without an affiliate id: a build without
+ * the settings still links to the shop.
+ */
+export function rakutenAffiliateUrl(page: string, affiliateId: string | null | undefined) {
+  if (!affiliateId) return page;
+  const encoded = encodeURIComponent(page);
+  return `https://hb.afl.rakuten.co.jp/hgc/${affiliateId}/?pc=${encoded}&m=${encoded}`;
+}
+
+/** The syntax a guide may use: that of the other Markdown pages, the item lists, and the links to Rakuten. */
+export const guideExtensions = [...markdownExtensions, items, rakutenLink];

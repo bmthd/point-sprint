@@ -7,7 +7,7 @@ import type { Plan } from "@workspaces/domain";
 import { Box, Field, Flex, Input, InputGroup, Separator, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId } from "react";
-import { bind, errorsOf } from "../../../form/form";
+import { bind, errorsOf } from "../../-form";
 import { shopsAtom } from "../../../state/queries";
 import { AutofillStatus } from "../-item-autofill";
 import {
@@ -16,8 +16,8 @@ import {
   applyShop,
   autofillUrlHandlers,
   type useOrderAutofill,
-} from "../-order-editor/order-form-store";
-import { hasOrderTagCampaign } from "../-order-editor/order-form";
+} from "../-order-form-store";
+import { hasOrderTagCampaign } from "../-order-form";
 import {
   CampaignCheck,
   ChannelField,

@@ -5,7 +5,8 @@ import {
   type Order,
   type Plan,
   type Shop,
-  standardSpu,
+  DEFAULT_ACCOUNT_ID,
+  spuIdsIn,
 } from "@workspaces/domain";
 import { beforeEach, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
@@ -213,13 +214,13 @@ test("repeat chip sets the order tag", async () => {
   const screen = await renderWith(makePlan([baseBenefit, repeatBenefit], []));
   const sheet = await openAdd(screen);
   await fillOrder(sheet, { shop: "ショップ4", amount: "11000" });
-  await expect.element(preview()).toMatchTextContent("× 1% → 100P");
+  await expect.element(preview()).toMatchTextContent("この注文単体で 100P（税抜 ¥10,000 × 1%）");
 
   const chip = sheet.getByRole("checkbox", { name: /^リピート購入/ });
   await expect.element(chip).toHaveAccessibleName("リピート購入 +1");
   await tapCard(chip);
   await expect.element(chip).toBeChecked();
-  await expect.element(preview()).toMatchTextContent("× 2% → 200P");
+  await expect.element(preview()).toMatchTextContent("この注文単体で 200P（税抜 ¥10,000 × 2%）");
 
   await sheet.getByRole("button", { name: "追加する" }).click();
   await expect.poll(async () => (await stored()).at(-1)?.tags).toEqual(["repeat"]);
@@ -253,13 +254,13 @@ test("brand day is asked only in a plan that has it, and its tag is kept beside 
   const screen = await renderWith(makePlan([baseBenefit, repeatBenefit, brandDayBenefit], []));
   const sheet = await openAdd(screen);
   await fillOrder(sheet, { shop: "ショップ4", amount: "11000" });
-  await expect.element(preview()).toMatchTextContent("× 1% → 100P");
+  await expect.element(preview()).toMatchTextContent("この注文単体で 100P（税抜 ¥10,000 × 1%）");
   await tapCard(sheet.getByRole("checkbox", { name: /^リピート購入/ }));
   const chip = sheet.getByRole("checkbox", { name: /^ブランドデー対象/ });
   await tapCard(chip);
   await expect.element(chip).toBeChecked();
   // ¥11,000 is under ¥30,000, so +2倍; with +1倍 for リピート購入 that is 4%.
-  await expect.element(preview()).toMatchTextContent("× 4% → 400P");
+  await expect.element(preview()).toMatchTextContent("この注文単体で 400P（税抜 ¥10,000 × 4%）");
 
   await sheet.getByRole("button", { name: "追加する" }).click();
   await expect.poll(async () => (await stored()).at(-1)?.tags).toEqual(["repeat", "brand-day"]);
@@ -280,7 +281,7 @@ test("24-hour chip sets the order tag", async () => {
   const chip = sheet.getByRole("checkbox", { name: /^24時間限定/ });
   await expect.element(chip).toHaveAccessibleName("24時間限定 +9");
   await tapCard(chip);
-  await expect.element(preview()).toMatchTextContent("× 10% → 1,000P");
+  await expect.element(preview()).toMatchTextContent("この注文単体で 1,000P（税抜 ¥10,000 × 10%）");
 
   await sheet.getByRole("button", { name: "追加する" }).click();
   await expect.poll(async () => (await stored()).at(-1)?.tags).toEqual(["24h"]);
@@ -306,14 +307,14 @@ test("preview shows the next shop count and points", async () => {
   await fillOrder(sheet, { shop: "ショップ4", amount: "11,000" });
 
   // ¥10,000 before tax at 通常 1 + SPU 2 + marathon 4 (5 shops) = 7%.
-  await expect.element(preview()).toMatchTextContent("この注文で（5店舗目としてカウント）");
-  await expect.element(preview()).toMatchTextContent("税抜 ¥10,000 × 7% → 700P");
+  await expect.element(preview()).toMatchTextContent("5店舗目としてカウント");
+  await expect.element(preview()).toMatchTextContent("この注文単体で 700P（税抜 ¥10,000 × 7%）");
   // The four other orders of ¥10,000 each go from +3倍 to +4倍.
-  await expect.element(preview()).toMatchTextContent("買い回りが +1倍 になり、ほかの注文も +400P");
+  await expect.element(preview()).toMatchTextContent("ほかの注文 +400P（買い回りが +1倍）");
 
   // A shop that already counts adds no shop.
   await enterShop(sheet, "ショップ0");
-  await expect.element(preview()).toMatchTextContent("税抜 ¥10,000 × 6% → 600P");
+  await expect.element(preview()).toMatchTextContent("この注文単体で 600P（税抜 ¥10,000 × 6%）");
   await expect.element(preview()).not.toMatchTextContent("店舗目");
   await expect.element(preview()).not.toMatchTextContent("買い回り");
 });
@@ -511,7 +512,7 @@ test("editing an order from its card saves the changes", async () => {
   await expect.element(shopField(sheet)).toHaveValue("ショップ1");
   await expect.element(sheet.getByRole("button", { name: "続けて追加" })).not.toBeInTheDocument();
   // Editing the order does not add a shop: the order's own figures only.
-  await expect.element(preview()).toMatchTextContent("税抜 ¥10,000 × 6% → 600P");
+  await expect.element(preview()).toMatchTextContent("この注文単体で 600P（税抜 ¥10,000 × 6%）");
 
   await amountOf(sheet).fill("5,500");
   await sheet.getByRole("button", { name: "保存する" }).click();
@@ -585,28 +586,112 @@ test("an edit= for an order that does not exist is dropped from the URL", async 
   await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
 });
 
-const storedBenefit = async (id: string) =>
-  (await repository().plans.get(PLAN))?.benefits.find((benefit) => benefit.id === id);
+/** The SPU of the plan's account in October as stored. */
+const storedSpu = async () =>
+  spuIdsIn(await repository().spuMonths.list(), DEFAULT_ACCOUNT_ID, "2026-10");
 
-test("a Books order of 3,000円 or more turns the Books SPU on", async () => {
-  const screen = await renderWith(makePlan([...structuredClone(standardSpu), ...marathon], []));
+test("a Books order of 3,000円 or more turns the Books SPU on for the month", async () => {
+  const screen = await renderWith(makePlan([...marathon], []));
   const sheet = await openAdd(screen);
   await sheet.getByLabelText("購入先", { exact: true }).selectOptions("rakuten-books");
   await fillOrder(sheet, { amount: "3000" });
   await sheet.getByRole("button", { name: "追加する" }).click();
-  await expect.poll(async () => (await storedBenefit(BOOKS_SPU_ID))?.enabled).toBe(true);
-  expect((await storedBenefit(KOBO_SPU_ID))?.enabled).toBe(false);
+  await expect.poll(async () => (await storedSpu()).has(BOOKS_SPU_ID)).toBe(true);
+  expect((await storedSpu()).has(KOBO_SPU_ID)).toBe(false);
 });
 
 test("an achieved SPU that is off is warned about", async () => {
   const { shopId: _shopId, ...common } = order(0);
   const unnamed: Order = { ...common, channel: "rakuten-books", shopTags: [] };
-  await renderWith(makePlan([...structuredClone(standardSpu), ...marathon], [unnamed]));
+  await renderWith(makePlan([...marathon], [unnamed]));
   await expect
     .element(
       page.getByText(
-        "楽天ブックスで 3,000円以上の注文がありますが、SPU の楽天ブックスが OFF です。",
+        "楽天ブックスで 3,000円以上の注文がありますが、10月の SPU の楽天ブックスが OFF です。",
       ),
     )
     .toBeVisible();
 });
+
+for (const capped of [true, false]) {
+  test(`preview explains the tenth shop ${capped ? "at the cap" : "below the cap"}`, async () => {
+    const nineShops = Array.from({ length: 9 }, (_, index): Shop => ({
+      channel: "rakuten-ichiba",
+      tags: [],
+      updatedAt: "2026-10-05T00:00:00.000Z",
+      id: shopId(index),
+      name: `ショップ${index}`,
+    }));
+    const orders = Array.from({ length: 9 }, (_, index) => {
+      const existing = order(index);
+      return {
+        ...existing,
+        lineItems: existing.lineItems.map((item) => ({
+          ...item,
+          unitPrice: capped ? 11000 : 3300,
+        })),
+      };
+    });
+    const screen = await renderWith(makePlan([baseBenefit, ...marathon], orders), nineShops);
+    const sheet = await openAdd(screen);
+    await fillOrder(sheet, { shop: "10店舗目", amount: "1000" });
+    await chooseTaxRate(sheet, "8%（食品）");
+
+    await expect.element(preview()).toMatchTextContent("10店舗目としてカウント");
+    await expect
+      .element(preview())
+      .toMatchTextContent(capped ? "この注文で +9P" : "この注文で +362P");
+    await expect
+      .element(preview())
+      .toMatchTextContent(
+        capped
+          ? "この注文単体で 80P（税抜 ¥926 × 10% = 92P、上限で 12P 減）"
+          : "この注文単体で 92P（税抜 ¥926 × 10%）",
+      );
+    await expect
+      .element(preview())
+      .toMatchTextContent(capped ? "ほかの注文 −71P" : "ほかの注文 +270P（買い回りが +1倍）");
+    if (capped) {
+      await expect
+        .element(preview())
+        .toMatchTextContent(
+          "買い回りは +1倍 になりますが、上限 7,000P に届いているため、ほかの注文の分の 71P がこの注文に移ります",
+        );
+      await expect.element(preview()).not.toMatchTextContent("（買い回りが");
+    } else {
+      await expect.element(preview()).not.toMatchTextContent("上限");
+    }
+  });
+}
+
+for (const multiAccount of [false, true]) {
+  test(`preview shares monthly caps with an effective account when multi-account is ${multiAccount}`, async () => {
+    const benefit: Benefit = {
+      ...baseBenefit,
+      capScope: "month",
+      kind: "rate-bonus",
+      sharedKey: "monthly-cap",
+      params: { rate: 1, cap: 99, roundingUnit: "item" },
+    };
+    const plan = makePlan([benefit], [order(0)]);
+    const other: Plan = {
+      ...makePlan([benefit], [order(1)]),
+      id: "f0000000-0000-4000-8000-00000000000b",
+      accountId: "a0000000-0000-4000-8000-000000000099",
+    };
+    currentRepository = createMemoryRepository({
+      shops,
+      plans: [plan, other],
+      profile: { multiAccount, updatedAt: plan.updatedAt },
+    });
+    const screen = await renderPlanHome(currentRepository);
+    const sheet = await openAdd(screen);
+    await fillOrder(sheet, { shop: "ショップ2", amount: "11000" });
+
+    // Two existing 100P orders already share the 99P cap. Adding another redistributes
+    // that same 99P, so its points must be offset by losses on the existing orders.
+    await expect.element(preview()).toMatchTextContent("この注文で +0P");
+    await expect.element(preview()).toMatchTextContent("この注文単体で 33P");
+    await expect.element(preview()).toMatchTextContent("ほかの注文 −33P");
+  });
+}

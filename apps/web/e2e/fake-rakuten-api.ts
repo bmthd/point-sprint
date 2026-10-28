@@ -40,8 +40,8 @@ export type FakeCall = { params: Record<string, string>; origin: string | undefi
 
 const calls: FakeCall[] = [];
 
-export const fakeRakutenApi = () =>
-  createServer((request, response) => {
+export function fakeRakutenApi() {
+  return createServer((request, response) => {
     const url = new URL(request.url ?? "/", "http://localhost");
     const send = (status: number, body: unknown) => {
       response.writeHead(status, { "Content-Type": "application/json" });
@@ -58,6 +58,7 @@ export const fakeRakutenApi = () =>
     const found = params.shopCode === "coffee-beans" && params.keyword === "blend-500g";
     return send(200, { count: found ? 1 : 0, Items: found ? [{ Item: item }] : [] });
   });
+}
 
 if (process.argv[1] === import.meta.filename) {
   fakeRakutenApi().listen(FAKE_RAKUTEN_API_PORT, "127.0.0.1");

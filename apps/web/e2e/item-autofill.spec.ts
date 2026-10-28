@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { expect, test, fixDate } from "./fixtures";
 import { FAKE_RAKUTEN_API_PORT, type FakeCall } from "./fake-rakuten-api";
 import { TopPage } from "./pages";
 import { siteUrl } from "../src/site-url";
@@ -12,7 +12,7 @@ test("a pasted Ichiba URL fills in the order from the Worker's lookup", async ({
   page,
   request,
 }) => {
-  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  await fixDate(page, new Date("2026-10-05T12:00:00+09:00"));
   const browserCalls: string[] = [];
   page.on("request", (sent) => {
     if (new URL(sent.url()).hostname === "openapi.rakuten.co.jp") browserCalls.push(sent.url());

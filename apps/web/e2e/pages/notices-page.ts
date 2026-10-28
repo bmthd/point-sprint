@@ -16,7 +16,7 @@ export class NoticesPage {
 
   /** The newest notice. */
   get latest() {
-    return this.page.getByRole("main").getByRole("article").first();
+    return this.page.getByRole("main").locator("article[id]").first();
   }
 
   notice(id: string) {

@@ -6,14 +6,14 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { standardSpu } from "@workspaces/domain";
-import { beforeEach, expect, test } from "vitest";
+import { DEFAULT_ACCOUNT_ID, standardSpu } from "@workspaces/domain";
+import { beforeEach, expect, onTestFinished, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import { createIndexedDbRepository } from "../../../storage/indexed-db-repository";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
-import { Providers, shops, tapCard } from "../-test-fixtures";
+import { Providers, shops } from "../-test-fixtures";
 import { Profile } from "./profile";
 
 beforeEach(async () => {
@@ -42,8 +42,13 @@ async function renderProfile(
     path: "/profile",
     component: () => <Profile />,
   });
+  const spu = createRoute({
+    getParentRoute: () => root,
+    path: "/spu",
+    component: () => <p>月の SPU</p>,
+  });
   const router = createRouter({
-    routeTree: root.addChildren([index, plan, profile]),
+    routeTree: root.addChildren([index, plan, profile, spu]),
     history: createMemoryHistory({ initialEntries }),
   });
   const screen = await render(
@@ -51,8 +56,8 @@ async function renderProfile(
       <RouterProvider router={router} />
     </Providers>,
   );
-  await expect.element(screen.getByRole("heading", { name: "プロフィール" })).toBeVisible();
-  return screen;
+  await expect.element(screen.getByRole("heading", { name: "共通設定" })).toBeVisible();
+  return Object.assign(screen, { router });
 }
 
 const storedProfile = async (repository: Repository) => {
@@ -73,50 +78,40 @@ test("戻る goes to the top when the profile was opened directly", async () => 
   await expect.element(screen.getByText("一覧")).toBeVisible();
 });
 
-test("SPU defaults are saved to the profile", async () => {
-  const repository = createMemoryRepository({ shops });
-  const screen = await renderProfile(repository);
-  await expect
-    .element(
-      screen.getByText(
-        "ここでの変更は、これから作るプランの初期値になります。作成済みのプランは変わりません。",
-      ),
-    )
-    .toBeVisible();
-  expect(screen.getByRole("checkbox", { name: /^通常ポイント/ }).query()).toBeNull();
+const mobile = standardSpu.find((benefit) => benefit.label === "楽天モバイル");
 
-  const mobile = screen.getByRole("checkbox", { name: "楽天モバイル +4倍" });
-  await expect.element(mobile).not.toBeChecked();
-  await tapCard(mobile);
-  await expect.element(mobile).toBeChecked();
+test("shows the SPU of this month and the next, and 変更 opens the month's SPU", async () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-10-06T03:00:00Z"));
+  onTestFinished(() => {
+    vi.useRealTimers();
+  });
+  if (!mobile) throw new Error("no 楽天モバイル");
+  const screen = await renderProfile(
+    createMemoryRepository({
+      shops,
+      spuMonths: [
+        {
+          id: `${DEFAULT_ACCOUNT_ID}:2026-10`,
+          accountId: DEFAULT_ACCOUNT_ID,
+          month: "2026-10",
+          enabledIds: [mobile.id],
+          updatedAt: "2026-10-05T00:00:00.000Z",
+        },
+      ],
+    }),
+  );
+  // November is not set yet: it takes the contract of October.
   await expect
-    .poll(
-      async () =>
-        (await storedProfile(repository)).spuBenefits.find((b) => b.label === "楽天モバイル")
-          ?.enabled,
-    )
-    .toBe(true);
+    .element(screen.getByRole("group", { name: "10月の SPU" }))
+    .toHaveTextContent("10月5倍今月変更");
+  await expect
+    .element(screen.getByRole("group", { name: "11月の SPU" }))
+    .toHaveTextContent("11月5倍来月・未設定・10月から引き継ぎ変更");
 
-  // The exclusive group and the card's normal points follow the same rules as in a plan.
-  const card = screen.getByRole("checkbox", { name: "楽天カード特典分（SPU） +1倍" });
-  const premium = screen.getByRole("checkbox", { name: "楽天プレミアムカード（特典分） +1倍" });
-  await tapCard(card);
-  await expect.element(card).toBeChecked();
-  await tapCard(premium);
-  await expect.element(card).not.toBeChecked();
-  await expect
-    .poll(async () => (await storedProfile(repository)).spuBenefits.map((b) => b.enabled))
-    .toEqual(
-      standardSpu.map((b) =>
-        [
-          "楽天モバイル",
-          "楽天プレミアムカード（特典分）",
-          "楽天カード通常分（カード本体の還元）",
-        ].includes(b.label)
-          ? true
-          : b.enabled,
-      ),
-    );
+  await screen.getByRole("button", { name: "11月の SPU を変更" }).click();
+  await expect.element(screen.getByText("月の SPU")).toBeVisible();
+  expect(screen.router.state.location.search).toEqual({ month: "2026-11" });
 });
 
 test("marks a shop as 39shop", async () => {
@@ -216,7 +211,7 @@ test("shows a notice when the stored profile is invalid", async () => {
   const name = `profile-health-${Date.now()}`;
   const stored = createIndexedDbRepository({ name });
   await stored.quarantined(); // creates the stores
-  await putRawProfile(name, { spuBenefits: "broken", updatedAt: "not a timestamp" });
+  await putRawProfile(name, { updatedAt: "not a timestamp" });
 
   // The profile is read well after the plans and shops, so the notice has to be checked again
   // once the profile has been read.
@@ -309,7 +304,7 @@ test("accounts stay hidden until they are turned on in the advanced settings", a
 test("データを初期化 removes every stored row and goes to the top", async () => {
   const repository = createMemoryRepository({
     shops,
-    profile: { spuBenefits: [], updatedAt: "2026-10-05T00:00:00.000Z" },
+    profile: { updatedAt: "2026-10-05T00:00:00.000Z" },
   });
   const screen = await renderProfile(repository);
 
@@ -328,6 +323,6 @@ test("キャンセル in the reset dialog keeps the data", async () => {
   await screen.getByRole("button", { name: "データを初期化" }).click();
   await screen.getByRole("button", { name: "キャンセル" }).click();
 
-  await expect.element(screen.getByRole("heading", { name: "プロフィール" })).toBeVisible();
+  await expect.element(screen.getByRole("heading", { name: "共通設定" })).toBeVisible();
   expect(await repository.shops.list()).toHaveLength(shops.length);
 });

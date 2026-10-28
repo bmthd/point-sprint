@@ -3,18 +3,13 @@ import { Box, Flex, Button, Card, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
 import * as v from "valibot";
-import { updateBenefitAtom } from "../../../state/order-ops";
+import { grouped, rateText } from "../../../ui/format";
+import { updateBenefitAtom } from "../../../state/plan-operations";
 import { ChevronIcon } from "../../../ui/icons";
-import { CommitField } from "../../../form/commit-field";
+import { CommitField } from "../-form/commit-field";
 import { CommitDatePicker } from "../-date-picker-field";
-import {
-  END_BEFORE_START,
-  START_AFTER_END,
-  dateSchema,
-  pointsSchema,
-} from "../../../form/field-schemas";
+import { END_BEFORE_START, START_AFTER_END, DateSchema, PointsSchema } from "@workspaces/domain";
 import { officialEventsAtom } from "../../-official-events";
-import { rateText } from "../-order-shared";
 import { isAddedCampaign } from "./campaign-toggles";
 import { useDeleteCampaign } from "./delete-campaign";
 import { useSaveSettingsChange, whenText } from "./settings-shared";
@@ -25,15 +20,14 @@ type ShopAroundBenefit = Extract<Benefit, { kind: "shop-around" }>;
  * The plan's first shop-around benefit, the one the calculation's outlook follows. A 2ショップ購入
  * is a campaign of its own days, among the campaigns.
  */
-export const shopAroundOf = (plan: Plan) =>
-  plan.benefits.find(
+export function shopAroundOf(plan: Plan) {
+  return plan.benefits.find(
     (benefit): benefit is ShopAroundBenefit =>
       benefit.kind === "shop-around" && !isTwoShopCampaign(benefit),
   );
+}
 
-const CapSchema = pointsSchema("獲得上限");
-
-const grouped = (value: number) => value.toLocaleString("ja-JP");
+const CapSchema = PointsSchema("獲得上限");
 
 /** One line about the shop-around: when, the highest rate and the cap. */
 function summaryOf(benefit: ShopAroundBenefit, period: { start: string; end: string }) {
@@ -181,7 +175,7 @@ function ShopAroundEditor({
               label="開始日"
               initial={period.start}
               schema={v.pipe(
-                dateSchema("開始日"),
+                DateSchema("開始日"),
                 v.check((start) => start <= period.end, START_AFTER_END),
               )}
               period={plan.period}
@@ -192,7 +186,7 @@ function ShopAroundEditor({
               label="終了日"
               initial={period.end}
               schema={v.pipe(
-                dateSchema("終了日"),
+                DateSchema("終了日"),
                 v.check((end) => end >= period.start, END_BEFORE_START),
               )}
               period={plan.period}

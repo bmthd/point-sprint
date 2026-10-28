@@ -12,7 +12,7 @@ export interface ConditionContext {
 }
 
 export function matchesConditions(conditions: Conditions, ctx: ConditionContext): boolean {
-  const { channels, shopIds, shopTags, dateRule, minOrderAmount, orderTags } = conditions;
+  const { channels, shopIds, shopTags, dateRule, minOrderAmount, orderTags, months } = conditions;
   if (channels && (ctx.channel === null || !channels.includes(ctx.channel))) return false;
   if (shopIds && (ctx.shopId === undefined || !shopIds.includes(ctx.shopId))) return false;
   if (
@@ -24,6 +24,7 @@ export function matchesConditions(conditions: Conditions, ctx: ConditionContext)
   if (dateRule && !inDateRule(dateRule, ctx.date)) return false;
   if (minOrderAmount !== undefined && ctx.orderTaxIncluded < minOrderAmount) return false;
   if (orderTags && !orderTags.every((tag) => ctx.orderTags.includes(tag))) return false;
+  if (months && !months.includes(ctx.date.slice(0, 7))) return false;
   return true;
 }
 

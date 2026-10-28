@@ -14,6 +14,16 @@ export type Notice = {
  */
 export const notices: readonly Notice[] = [
   {
+    id: "sync",
+    date: "2026-10-26",
+    title: "PC とスマホで同じデータを使えるようになりました",
+    body: `プロフィールの「ほかの端末と同期」から、パスキーでログインすると、PC とスマホで同じプランと注文を使えます。名前やメールアドレス、パスワードは使いません。
+
+データは端末の中で暗号にしてから送るので、運営者も中身を読めません。始めたときに出る復元用のコードは、パスワード管理アプリやメモに控えてください。
+
+同期を使わない場合は、これまでどおり入力した内容はこのブラウザの中にだけ保存されます。あわせて、プライバシーポリシーと利用規約に同期についての項目を加えました。`,
+  },
+  {
     id: "rebuilt",
     date: "2026-10-08",
     title: "ポイントスプリントを作り直しました",
@@ -26,12 +36,14 @@ export const notices: readonly Notice[] = [
 ];
 
 /** Newest first. Notices of the same day keep the order they are listed in. */
-export const newestFirst = (list: readonly Notice[]): Notice[] =>
-  list.toSorted((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+export function newestFirst(list: readonly Notice[]): Notice[] {
+  return list.toSorted((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+}
 
 /** The paragraphs of a notice's body. */
-export const paragraphs = (body: string): string[] =>
-  body
+export function paragraphs(body: string): string[] {
+  return body
     .split(/\n\s*\n/)
     .map((paragraph) => paragraph.trim())
     .filter((paragraph) => paragraph !== "");
+}

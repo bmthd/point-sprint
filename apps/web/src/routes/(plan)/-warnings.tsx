@@ -2,30 +2,48 @@ import {
   type CalculationWarning,
   channels,
   disabledAchievedSpu,
+  type OfficialEvent,
   type Plan,
   spuPurchaseRules,
+  standardSpu,
 } from "@workspaces/domain";
 import { Alert, Button, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
+import { grouped } from "../../ui/format";
 import { QuarantineNotice } from "./-quarantine-notice";
-import { shopsAtom, storageHealthQueryAtom } from "../../state/queries";
+import { officialEventsAtom } from "../-official-events";
+import { withEffectiveAccount } from "../../state/accounts";
+import { accountSettingsAtom } from "../../state/derived";
+import { shopsAtom, spuMonthsAtom, storageHealthQueryAtom } from "../../state/queries";
 
 /** `2026-10-11` → `10/11`. */
-const monthDay = (date: string) => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+export function monthDay(date: string) {
+  return `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+}
+
+/** `2026-10` → `10月`. */
+export function monthText(month: string) {
+  return `${Number(month.slice(5, 7))}月`;
+}
 
 /**
- * The SPU that the plan's orders achieve but the user turned off: 「楽天ブックスで 3,000円以上の注文
- * がありますが、SPU の楽天ブックスが OFF です。」
+ * The SPU that the plan's orders achieve but the user turned off for the month: 「楽天ブックスで
+ * 3,000円以上の注文がありますが、10月の SPU の楽天ブックスが OFF です。」 Only those of `month`
+ * when it is given.
  */
-export function useSpuOffMessages(plan: Plan): string[] {
+export function useSpuOffMessages(plan: Plan, month?: string): string[] {
   const shops = useAtomValue(shopsAtom);
-  return disabledAchievedSpu(plan, shops).flatMap((benefitId) => {
+  const months = useAtomValue(spuMonthsAtom);
+  const settings = useAtomValue(accountSettingsAtom);
+  const achievements = disabledAchievedSpu(withEffectiveAccount(plan, settings), shops, months);
+  return achievements.flatMap(({ month: achieved, benefitId }) => {
+    if (month !== undefined && achieved !== month) return [];
     const rule = spuPurchaseRules.find((candidate) => candidate.benefitId === benefitId);
-    const benefit = plan.benefits.find((candidate) => candidate.id === benefitId);
+    const benefit = standardSpu.find((candidate) => candidate.id === benefitId);
     if (!rule || !benefit) return [];
-    const amount = rule.minOrderAmount.toLocaleString("ja-JP");
+    const amount = grouped(rule.minOrderAmount);
     return [
-      `${channels[rule.channel].label}で ${amount}円以上の注文がありますが、SPU の${benefit.label}が OFF です。`,
+      `${channels[rule.channel].label}で ${amount}円以上の注文がありますが、${monthText(achieved)}の SPU の${benefit.label}が OFF です。`,
     ];
   });
 }
@@ -39,8 +57,45 @@ export function storageMessages(storage: { wasReset: boolean } | undefined): str
   return messages;
 }
 
+/**
+ * About the orders on the first and last days of the plan's event, which may start or end partway
+ * through the day: 「期間の初日・最終日の注文が2件あります（10/4、10/9）。10/4 20:00 より前、10/9
+ * 01:59 より後の注文は対象外ですが、ここでは対象に数えています。」
+ */
+function edgeMessage(
+  plan: Plan,
+  event: OfficialEvent | undefined,
+  warnings: CalculationWarning[],
+): string | undefined {
+  const samePeriod =
+    event?.period.start === plan.period.start && event.period.end === plan.period.end;
+  const times = samePeriod ? event.times : undefined;
+  const allDay = { start: "00:00", end: "23:59" } as const;
+  const orders = warnings.flatMap((warning) =>
+    warning.type === "order-on-period-edge" && times?.[warning.edge] !== allDay[warning.edge]
+      ? [warning]
+      : [],
+  );
+  if (orders.length === 0) return undefined;
+  const edges = (["start", "end"] as const).filter((edge) =>
+    orders.some((order) => order.edge === edge),
+  );
+  const dates = edges.map((edge) => monthDay(plan.period[edge])).join("、");
+  const outside = times
+    ? `${edges
+        .map((edge) =>
+          edge === "start"
+            ? `${monthDay(plan.period.start)} ${times.start} より前`
+            : `${monthDay(plan.period.end)} ${times.end} より後`,
+        )
+        .join("、")}の注文は対象外です`
+    : "時刻によっては対象外です";
+  return `期間の初日・最終日の注文が${orders.length}件あります（${dates}）。${outside}が、ここでは対象に数えています。`;
+}
+
 function messagesOf(
   plan: Plan,
+  event: OfficialEvent | undefined,
   warnings: CalculationWarning[],
   hasShopAround: boolean,
   storage: { wasReset: boolean } | undefined,
@@ -60,6 +115,8 @@ function messagesOf(
       `期間外の注文が${outside.length}件あります（${dates}）。${hasShopAround ? "マラソンの対象外です。" : ""}`,
     );
   }
+  const edge = edgeMessage(plan, event, warnings);
+  if (edge) messages.push(edge);
   const unknown = ordersOf("unknown-shop");
   if (unknown.length > 0) {
     messages.push(
@@ -101,8 +158,11 @@ export function Warnings({
   hasShopAround: boolean;
 }) {
   const { data: storage } = useAtomValue(storageHealthQueryAtom);
+  const event = useAtomValue(officialEventsAtom).find(
+    (candidate) => candidate.id === plan.officialEventId,
+  );
   const messages = [
-    ...messagesOf(plan, warnings, hasShopAround, storage),
+    ...messagesOf(plan, event, warnings, hasShopAround, storage),
     ...useSpuOffMessages(plan),
   ];
   return (

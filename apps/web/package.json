@@ -3,12 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/migrate-events-db.ts --local && dotenvx run -q -f ../../.env.development -- vite dev",
+    "dev": "node scripts/migrate-db.ts --local && dotenvx run -q -f ../../.env.development -- vite dev",
     "build": "dotenvx run -q -f ../../.env.development -- vite build && node scripts/check-prerender.ts",
-    "db:migrate": "node scripts/migrate-events-db.ts"
+    "db:migrate": "node scripts/migrate-db.ts"
   },
   "dependencies": {
     "@formisch/react": "1.1.0",
+    "@simplewebauthn/browser": "14.0.0",
+    "@simplewebauthn/server": "14.0.3",
     "@tanstack/markdown": "1.0.0",
     "@tanstack/query-core": "5.104.1",
     "@tanstack/react-query": "5.104.1",

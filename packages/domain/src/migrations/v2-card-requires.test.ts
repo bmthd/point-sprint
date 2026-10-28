@@ -1,6 +1,9 @@
 import { expect, test } from "vitest";
 import { CARD_BONUS_ID, CARD_NORMAL_ID, PREMIUM_CARD_BONUS_ID } from "../master/spu";
-import { migrateRow } from "./index";
+import { migrateRow, migrations } from "./index";
+
+// Version 10 moves the SPU out of plans and profiles; these tests look at the rows before it.
+const beforeSpuMonths = migrations.filter((migration) => migration.to < 10);
 
 const MOBILE_ID = "ca794fa7-4a85-43c6-ab34-e06feb115c5d";
 const saved = () => [
@@ -17,16 +20,18 @@ const linked = [
 ];
 
 test("links the card bonuses of a plan saved at version 1", () => {
-  expect(migrateRow("plans", { id: "p", benefits: saved() }, 1)).toEqual({
+  expect(migrateRow("plans", { id: "p", benefits: saved() }, 1, beforeSpuMonths)).toEqual({
     id: "p",
     benefits: linked,
   });
 });
 
 test("links the card bonuses of the profile saved at version 1", () => {
-  expect(migrateRow("profile", { spuBenefits: saved() }, 1)).toEqual({ spuBenefits: linked });
+  expect(migrateRow("profile", { spuBenefits: saved() }, 1, beforeSpuMonths)).toEqual({
+    spuBenefits: linked,
+  });
 });
 
 test("leaves shops as they are", () => {
-  expect(migrateRow("shops", { id: "s" }, 1)).toEqual({ id: "s" });
+  expect(migrateRow("shops", { id: "s" }, 1, beforeSpuMonths)).toEqual({ id: "s" });
 });

@@ -1,5 +1,5 @@
--- The official event master (src/server/event-store.ts), collected from Rakuten's marathon pages by
--- the Worker's cron (src/server/collect-events.ts). How to fix a row: docs/event-master.md.
+-- The official event master (src/server/official-events/event-store.ts), collected from Rakuten's marathon pages by
+-- the Worker's cron (src/server/official-events/collect-events.ts). How to fix a row: docs/event-master.md.
 
 CREATE TABLE official_events (
   -- `marathon-<start>`. Saved plans refer to it as `officialEventId`, so it never changes.

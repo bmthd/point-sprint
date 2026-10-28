@@ -12,7 +12,7 @@ import {
 import { Button, Flex, Image, List, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import type { Ref } from "react";
-import { addBenefitAtom } from "../../../state/order-ops";
+import { addBenefitAtom } from "../../../state/plan-operations";
 import { tokyoToday } from "../../../ui/dates";
 import { PlusIcon } from "../../../ui/icons";
 import { imageUrl } from "../-order-shared";
@@ -48,11 +48,7 @@ export function defaultInput(
   today: string,
 ): CampaignInput | undefined {
   const spec = SPECS[template.id] ?? {};
-  if (
-    template.benefit.kind === "shop-around" &&
-    template.id !== "2shop" &&
-    plan.benefits.some(isShopAround)
-  ) {
+  if (isShopAround(template.benefit) && plan.benefits.some(isShopAround)) {
     return undefined;
   }
   const cap =

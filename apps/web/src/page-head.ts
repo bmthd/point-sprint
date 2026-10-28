@@ -1,8 +1,6 @@
 import { useEffect } from "react";
 import { siteUrl } from "./site-url";
 
-export { siteUrl };
-
 export const siteName = "ポイントスプリント";
 /** The top page's title, and the one shared on social media for the whole site. */
 export const defaultTitle = `${siteName} 楽天市場お買い物マラソン攻略計算ツール`;
@@ -10,7 +8,9 @@ export const defaultDescription =
   "楽天市場のお買い物マラソンに特化した計算ツール。厳密な還元率、獲得上限に対応。あなたのポイ活を応援します。";
 
 /** The title of a page other than the top: "プロフィール | ポイントスプリント". */
-export const pageTitle = (title: string) => `${title} | ${siteName}`;
+export function pageTitle(title: string) {
+  return `${title} | ${siteName}`;
+}
 
 type PageHeadOptions = {
   /** Path of the page, as in `prerenderedPages`. */
@@ -33,13 +33,13 @@ type PageHeadOptions = {
  * root route has the tags every page shares (the OGP image, favicon, manifest). A route's meta
  * replaces the root's one of the same `name` or `property`.
  */
-export const pageHead = ({
+export function pageHead({
   path,
   title,
   description = defaultDescription,
   noindex = false,
   article,
-}: PageHeadOptions) => {
+}: PageHeadOptions) {
   const fullTitle = title === undefined ? defaultTitle : pageTitle(title);
   const url = `${siteUrl}${path}`;
   return {
@@ -62,7 +62,7 @@ export const pageHead = ({
     ],
     links: [{ rel: "canonical", href: url }],
   };
-};
+}
 
 /**
  * Puts `title` in the tab once it is known on the client, for a page whose name the prerendered

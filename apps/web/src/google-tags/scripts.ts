@@ -42,10 +42,13 @@ export function googleTagScripts({
   return scripts;
 }
 
-/** Names of the Google tag scripts that a built HTML page does not load. */
-export function missingGoogleTagScripts(html: string): string[] {
+/**
+ * Names of the Google tag scripts that a built HTML page does not load. A build without
+ * `analytics`, a pull request's Preview, is not expected to load gtag.js.
+ */
+export function missingGoogleTagScripts(html: string, { analytics = true } = {}): string[] {
   return [
-    { name: "gtag.js", src: GTAG_SRC },
+    ...(analytics ? [{ name: "gtag.js", src: GTAG_SRC }] : []),
     { name: "AdSense", src: ADSENSE_SRC },
   ]
     .filter(({ src }) => !html.includes(src))

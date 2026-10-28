@@ -2,7 +2,7 @@ import type { Benefit, Plan } from "@workspaces/domain";
 import { Modal, Text, useDisclosure } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { type RefObject, useRef, useState } from "react";
-import { removeBenefitAtom } from "../../../state/order-ops";
+import { removeBenefitAtom } from "../../../state/plan-operations";
 import { useSaveSettingsChange } from "./settings-shared";
 
 /**

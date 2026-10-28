@@ -30,7 +30,7 @@ import {
   Switch,
   Text,
 } from "@workspaces/ui";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import { useDragControls } from "motion/react";
 import {
   type PointerEvent,
@@ -41,9 +41,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { type FieldState, Form, bind, errorsOf } from "../../../form/form";
-import { saveShopAtom } from "../../../state/mutations";
-import { addOrderAtom, updateOrderAtom } from "../../../state/order-ops";
+import { type FieldState, Form, bind, errorsOf } from "../../-form";
 import { shopsAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
 import { CloseIcon } from "../../../ui/icons";
@@ -60,7 +58,7 @@ import {
   shopFromUrl,
 } from "../-order-fields";
 import { ShopAutocomplete } from "../-shop-autocomplete";
-import { CampaignChip } from "../-order-shared";
+import { CampaignChip, useSaveOrderDraft } from "../-order-shared";
 import { FormDatePicker } from "../-date-picker-field";
 import {
   type OrderFormInput,
@@ -75,7 +73,7 @@ import {
   inputOf,
   rateOf,
   tagBonus,
-} from "./order-form";
+} from "../-order-form";
 import {
   AMOUNT_PATH,
   type OrderForm,
@@ -84,7 +82,7 @@ import {
   urlFromPastedText,
   useFormInput,
   useOrderAutofill,
-} from "./order-form-store";
+} from "../-order-form-store";
 import { OrderPreviewBox } from "./order-preview";
 import { CapFlows } from "../-cap-flows";
 
@@ -221,7 +219,8 @@ function ExtraItem({ form, index }: { form: OrderForm; index: number }) {
   );
 }
 
-function Preview({ form, plan, original }: { form: OrderForm; plan: Plan; original?: Order }) {
+/** The points the order the form describes gets, in the editor. */
+function DraftPreview({ form, plan, original }: { form: OrderForm; plan: Plan; original?: Order }) {
   const shops = useAtomValue(shopsAtom);
   const current = useFormInput(form);
   const key = JSON.stringify(current);
@@ -503,10 +502,8 @@ type EditorProps = {
 /** The header, fields and buttons inside the sheet or the dialog. */
 function EditorContent({ plan, original, layout, amountRef, onDragStart, onClose }: EditorProps) {
   const shops = useAtomValue(shopsAtom);
-  const saveShop = useAtomValue(saveShopAtom);
-  const addOrder = useSetAtom(addOrderAtom);
-  const updateOrder = useSetAtom(updateOrderAtom);
   const [failed, setFailed] = useState(false);
+  const saveDraft = useSaveOrderDraft(plan.id, setFailed);
   const run = useSingleFlight();
   const formId = useId();
   const urlId = useId();
@@ -522,28 +519,16 @@ function EditorContent({ plan, original, layout, amountRef, onDragStart, onClose
 
   const save = async (output: OrderFormOutput, keepOpen: boolean) => {
     await run(async () => {
-      const draft = draftOf(output, shops, original);
-      if (!draft) {
-        setFailed(true);
-        return;
-      }
-      setFailed(false);
-      try {
-        if (draft.shopChange) await saveShop.mutateAsync(draft.shopChange);
-        if (original) await updateOrder({ planId: plan.id, order: draft.order });
-        else await addOrder({ planId: plan.id, order: draft.order });
-        if (keepOpen) {
-          reset(form, { initialInput: emptyInput(plan.period) });
-          // On a phone the focus would only bring up the keyboard over the sheet.
-          if (layout === "dialog") focus(form, { path: AMOUNT_PATH });
-          // After the focus moves: leaving the URL field would look up the URL it still shows.
-          autofill.reset();
-        } else {
-          onClose();
-        }
-      } catch {
-        // What was typed stays in the fields so it can be saved again.
-        setFailed(true);
+      // Not saved, what was typed stays in the fields so it can be saved again.
+      if (!(await saveDraft(draftOf(output, shops, original), !original))) return;
+      if (keepOpen) {
+        reset(form, { initialInput: emptyInput(plan.period) });
+        // On a phone the focus would only bring up the keyboard over the sheet.
+        if (layout === "dialog") focus(form, { path: AMOUNT_PATH });
+        // After the focus moves: leaving the URL field would look up the URL it still shows.
+        autofill.reset();
+      } else {
+        onClose();
       }
     });
   };
@@ -574,7 +559,7 @@ function EditorContent({ plan, original, layout, amountRef, onDragStart, onClose
             <MainItemFields form={form} amountRef={amountRef} />
             <Separator />
             <Campaigns form={form} plan={plan} />
-            <Preview form={form} plan={plan} original={original} />
+            <DraftPreview form={form} plan={plan} original={original} />
             {original ? null : <CapFlows plan={plan} form={form} />}
             <Details form={form} defaultOpen={(original?.lineItems.length ?? 1) > 1} />
           </Flex>

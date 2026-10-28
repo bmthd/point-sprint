@@ -33,26 +33,16 @@ import {
   useMemo,
   useRef,
 } from "react";
+import { grouped, pointsText, rateText, yen } from "../../../ui/format";
 import { orderAtom, planAtom } from "../../../state/derived";
-import { saveShopAtom } from "../../../state/mutations";
-import {
-  copyOrderAtom,
-  moveOrderAtom,
-  toggleHoldAtom,
-  updateOrderAtom,
-} from "../../../state/order-ops";
+import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "../../../state/plan-operations";
 import { shopsAtom } from "../../../state/queries";
-import { openOrderIdAtom } from "../../../state/ui";
+import { openOrderIdAtom } from "../-ui";
 import { useLatestRef } from "../../../use-latest-ref";
 import { monthDayWithWeekday } from "../../../ui/dates";
 import { ChevronIcon, GripIcon } from "../../../ui/icons";
-import {
-  OrderFormSchema,
-  type OrderFormInput,
-  draftOf,
-  inputOf,
-} from "../-order-editor/order-form";
-import { useOrderAutofill } from "../-order-editor/order-form-store";
+import { OrderFormSchema, type OrderFormInput, draftOf, inputOf } from "../-order-form";
+import { useOrderAutofill } from "../-order-form-store";
 import { NEW_SHOP } from "../-order-fields";
 import {
   CampaignChip,
@@ -61,13 +51,12 @@ import {
   isOpenAtom,
   orderCardPointsAtom,
   orderTitle,
-  pointsText,
-  rateText,
   taxLabel,
   taxRateLabel,
+  orderSaveFailedAtom,
   useSaveOrderChange,
+  useSaveOrderDraft,
   useShopName,
-  yen,
 } from "../-order-shared";
 import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
 import { PointBreakdown } from "./point-breakdown";
@@ -134,7 +123,7 @@ function editInputOf(order: Order, shops: Shop[]): OrderFormInput {
     ...input,
     items: input.items.map((item) => ({
       ...item,
-      unitPrice: Number(item.unitPrice).toLocaleString("ja-JP"),
+      unitPrice: grouped(Number(item.unitPrice)),
     })),
   };
 }
@@ -143,7 +132,7 @@ function editInputOf(order: Order, shops: Shop[]): OrderFormInput {
  * The order's fields, edited in place with the add form's fields. A change is saved once it is
  * valid: a choice at once, typed text when its field is left or Enter is pressed.
  */
-function OrderEditor({
+function InlineOrderEditor({
   planId,
   order,
   onEdit,
@@ -154,9 +143,7 @@ function OrderEditor({
 }) {
   const plan = useAtomValue(planAtom(planId));
   const shops = useAtomValue(shopsAtom);
-  const saveShop = useAtomValue(saveShopAtom);
-  const updateOrder = useSetAtom(updateOrderAtom);
-  const save = useSaveOrderChange();
+  const saveDraft = useSaveOrderDraft(planId, useSetAtom(orderSaveFailedAtom));
   const form = useForm({ schema: OrderFormSchema, initialInput: editInputOf(order, shops) });
   /** The input last saved, or being saved: the same input is not saved twice. */
   const saved = useRef(inputKey(getInput(form)));
@@ -175,16 +162,8 @@ function OrderEditor({
       saved.current = previous;
       return;
     }
-    save(
-      (async () => {
-        if (draft.shopChange) await saveShop.mutateAsync(draft.shopChange);
-        await updateOrder({ planId, order: draft.order });
-      })().catch((error: unknown) => {
-        // Not saved: the same input can be saved again.
-        saved.current = previous;
-        throw error;
-      }),
-    );
+    // Not saved: the same input can be saved again.
+    if (!(await saveDraft(draft, false))) saved.current = previous;
   };
   const commitRef = useLatestRef(commit);
   const autofill = useOrderAutofill(form, () => void commitRef.current());
@@ -462,7 +441,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
               {`税抜の基準額 ${yen(base)}`}
             </Text>
           </Flex>
-          <OrderEditor planId={planId} order={order} onEdit={props.onEdit} />
+          <InlineOrderEditor planId={planId} order={order} onEdit={props.onEdit} />
           <Flex wrap="wrap" gap="2" justify="flex-end">
             <Button
               variant="outline"

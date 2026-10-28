@@ -1,20 +1,21 @@
-import { type Page, expect, test } from "./fixtures";
+import { type Page, expect, test, fixDate } from "./fixtures";
 import { SitePage, TopPage } from "./pages";
 
 // The header and the footer are on every page, and their links go where they say.
 
 /** Creates a plan from the top page and returns its id. */
 async function createPlan(page: Page) {
-  await page.clock.setFixedTime(new Date("2026-10-05T12:00:00+09:00"));
+  await fixDate(page, new Date("2026-10-05T12:00:00+09:00"));
   const plan = await (await TopPage.open(page)).createPlan();
   return plan.id;
 }
 
 const pages = (id: string) => [
   { name: "トップ", path: "/" },
-  { name: "プロフィール", path: "/profile" },
+  { name: "共通設定", path: "/profile" },
   { name: "プラン", path: `/plan?id=${id}` },
   { name: "プランの設定", path: `/plan/settings?id=${id}` },
+  { name: "月ごとの SPU", path: "/spu?month=2026-10" },
   { name: "使い方・注意事項", path: "/help" },
   { name: "利用規約", path: "/terms" },
   { name: "プライバシーポリシー", path: "/privacy" },
@@ -113,7 +114,7 @@ for (const { name } of pages("")) {
     const id = await createPlan(page);
     const path = pages(id).find((p) => p.name === name)?.path ?? "";
     const { footer } = await openReady(page, path);
-    await expect(footer.root).toContainText("このブラウザの中にだけ保存されます");
+    await expect(footer.root).toContainText("このブラウザの中に保存されます");
     // No link to an anchor that is not on the page, or to a page that does not exist yet.
     await expect(footer.root.locator('a[href^="#"]')).toHaveCount(0);
 
@@ -150,7 +151,7 @@ test("a bar fixed to the bottom of a phone screen does not hide the footer", asy
   for (const path of [`/plan?id=${id}`, `/plan/settings?id=${id}`]) {
     const site = await openReady(page, path);
     await expect(site.bottomBar).toBeVisible();
-    const text = site.footer.root.getByText("このブラウザの中にだけ保存されます");
+    const text = site.footer.root.getByText("このブラウザの中に保存されます");
     // Retried: the page can still be laying out and put the scroll back to the top.
     await expect(async () => {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));

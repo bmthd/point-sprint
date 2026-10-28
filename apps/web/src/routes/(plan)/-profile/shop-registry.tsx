@@ -1,8 +1,8 @@
 import { type Shop, channels } from "@workspaces/domain";
 import { Card, Flex, Heading, List, Switch, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { CommitField } from "../../../form/commit-field";
-import { ShopNameSchema } from "../../../form/field-schemas";
+import { CommitField } from "../-form/commit-field";
+import { ShopNameSchema } from "@workspaces/domain";
 import { changeShop, saveShopAtom } from "../../../state/mutations";
 import { shopsAtom } from "../../../state/queries";
 import { withTag } from "../-order-fields";

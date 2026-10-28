@@ -4,5 +4,5 @@ import { pageHead } from "../../page-head";
 
 export const Route = createFileRoute("/(site)/")({
   head: () => pageHead({ path: "/" }),
-  component: () => <PlanList />,
+  component: PlanList,
 });
