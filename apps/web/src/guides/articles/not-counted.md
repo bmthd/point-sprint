@@ -1,7 +1,7 @@
 ---
 title: お買い物マラソンの店舗数に数えられない買い物
 description: お買い物マラソンで買ったのに、買いまわりの店舗数が増えないのはなぜか。楽天ふるさと納税、金券類などの対象外のサービス、クーポンで1,000円を下回る場合、同じショップでの2回目の購入、エントリーし忘れを、楽天の公式の案内をもとにまとめました。購入前に確かめることのチェックリストも付けています。
-published: 2026-10-19
+published: 2026-10-28
 ---
 
 お買い物マラソンでは、1,000円以上買ったショップの数で、ポイントの倍率が上がります。ところが、買ったのにカウンターが動かず、店舗数に数えられないことがあります。この記事では、数えられない買い物を、楽天の公式の案内（2026年10月19日に確認）をもとにまとめます。
@@ -34,7 +34,7 @@ published: 2026-10-19
 - 楽天Kobo の一部。R-TOON、Rakuten Kobo（kobo.com）、楽天Kobo 電子書籍リーダーの中での買い物
 - 1商品あたり税抜100円未満の買い物
 
-一方で、同じページでは、楽券、Apple Gift Card 認定店、Google Play ギフトカード認定店を対象のサービスに挙げています。ギフトカードを買うなら、どのショップで買うかを確かめてください。楽天ブックス、楽天Kobo、楽天24、楽天ビック、楽天スーパーDEAL、Rakuten Fashion も対象です。ただし、Rakuten Fashion は複数のブランドで買っても1店舗と数えます（[ショップ買いまわりのガイド](https://event.rakuten.co.jp/campaign/point-up/marathon/guide/)）。
+一方で、同じページでは、楽券、Apple Gift Card 認定店、Google Play ギフトカード認定店を対象のサービスに挙げています。ギフトカードを買うなら、どのショップで買うかを確かめてください。:rakuten[楽天ブックス](https://books.rakuten.co.jp/)、:rakuten[楽天Kobo](https://books.rakuten.co.jp/e-book/)、:rakuten[楽天24](https://24.rakuten.co.jp/)、:rakuten[楽天ビック](https://biccamera.rakuten.co.jp/)、:rakuten[楽天スーパーDEAL](https://event.rakuten.co.jp/superdeal/)、:rakuten[Rakuten Fashion](https://brandavenue.rakuten.co.jp/) も対象です。ただし、Rakuten Fashion は複数のブランドで買っても1店舗と数えます（[ショップ買いまわりのガイド](https://event.rakuten.co.jp/campaign/point-up/marathon/guide/)）。
 
 ## クーポンで1,000円を下回ると数えられない
 

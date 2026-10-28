@@ -1,9 +1,10 @@
 import { Markdown } from "@tanstack/markdown/react";
-import { Box, Heading } from "@workspaces/ui";
+import { Box, Heading, Link } from "@workspaces/ui";
+import type { ReactNode } from "react";
 import { ArticleDates } from "./-article-dates";
 import { GuideItemList } from "./-guide-item-list";
 import type { Guide } from "../../../../guides/load-guide";
-import { guideExtensions } from "../../../../guides/markdown";
+import { guideExtensions, rakutenAffiliateUrl } from "../../../../guides/markdown";
 import { GuideToc, guideSections, splitIntroduction } from "../-guide-toc";
 import { headingIds, markdownComponents } from "../-markdown-body";
 
@@ -16,6 +17,17 @@ export function GuideArticle({ guide: { article, lists, fetchedAt } }: { guide: 
     ...markdownComponents,
     "md-items": ({ query }: { query: string }) => (
       <GuideItemList items={lists[query]} fetchedAt={fetchedAt} />
+    ),
+    "md-rakuten-link": ({ href, children }: { href: string; children?: ReactNode }) => (
+      <Link
+        href={rakutenAffiliateUrl(href, import.meta.env.RAKUTEN_AFFILIATE_ID)}
+        target="_blank"
+        // An affiliate link: `sponsored` tells search engines it is paid.
+        rel="sponsored noopener"
+        color="link"
+      >
+        {children}
+      </Link>
     ),
   };
   const [introduction, sections] = splitIntroduction(article.body);
