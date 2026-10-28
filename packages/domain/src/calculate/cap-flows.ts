@@ -6,8 +6,7 @@ import { type Order, orderShopContext } from "../model/order";
 import type { Plan } from "../model/plan";
 import type { Shop } from "../model/shop";
 import { calculateAll } from "./calculate";
-import { type CapLine, capLines } from "./cap-lines";
-import { priceToFill } from "./fill-price";
+import { type CapLine, capLines, fillPrice } from "./cap-lines";
 
 /** Where the points of an order not added yet go in one cap. */
 export type CapFlow = {
@@ -84,10 +83,8 @@ export function capFlows(input: {
     const into = result.breakdown
       .filter((row) => row.source === benefit.id && itemIds.has(row.lineItemId))
       .reduce((sum, row) => sum + row.points, 0);
-    // What the other orders leave of the cap: buying that much fills it exactly.
-    const room = Math.max(0, line.cap - (line.raw - points));
-    const fillPrice =
-      single && room > 0 ? priceToFill(room, single.taxRate, line.rate, benefit.amountBasis) : null;
-    return [{ line, points, into, over: points - into, fillPrice }];
+    // The price that fills what the other orders leave of the cap.
+    const price = single ? fillPrice(line, single.taxRate, [...itemIds]) : null;
+    return [{ line, points, into, over: points - into, fillPrice: price === 0 ? null : price }];
   });
 }

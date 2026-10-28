@@ -1,3 +1,4 @@
+import type { EligibleItem } from "../benefit-kinds";
 import type { Id } from "../model/common";
 import type { ShopAroundOutlook } from "./outlook";
 import type { PointGroup } from "./point-group";
@@ -38,6 +39,11 @@ export type CalculationResult = {
   rates: Record<Id, number>;
   /** Tax-included total over its days of each enabled spend-tiers benefit, keyed by benefit ID. */
   spendTotals: Record<Id, number>;
+  /**
+   * The line items each enabled benefit is given to, keyed by benefit ID. Held orders are not in
+   * them.
+   */
+  eligibleItems: Record<Id, EligibleLineItem[]>;
   total: number;
   warnings: CalculationWarning[];
   /** Breakdown rows summed by point group. The values sum to `total`. */
@@ -57,6 +63,13 @@ export type CalculationResult = {
    * use. Held orders are not in them.
    */
   capUsage: Record<string, CapGroupUsage>;
+};
+
+/** A line item a benefit is given to, with the cap group it goes into. */
+export type EligibleLineItem = EligibleItem & {
+  /** What the item adds to a spend-tiers total. */
+  taxIncluded: number;
+  groupKey: string;
 };
 
 /** How much of one cap group is used, by plan. */

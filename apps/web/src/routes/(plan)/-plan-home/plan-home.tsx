@@ -223,7 +223,13 @@ function Home({ plan }: { plan: Plan }) {
   const capList =
     lines.length === 0 ? null : (
       <Panel id="caps" label="上限までの残り">
-        <CapList lines={lines} today={today} taxRate={taxRate} onTaxRate={setTaxRate} />
+        <CapList
+          lines={lines}
+          today={today}
+          period={plan.period}
+          taxRate={taxRate}
+          onTaxRate={setTaxRate}
+        />
       </Panel>
     );
   const shareResult = (
@@ -269,14 +275,7 @@ function Home({ plan }: { plan: Plan }) {
             </ColumnHead>
           ) : null}
           <VStack gap="4" alignItems="stretch">
-            <SummaryCard
-              plan={plan}
-              result={result}
-              compact={!wide}
-              lines={lines}
-              today={today}
-              taxRate={taxRate}
-            />
+            <SummaryCard plan={plan} result={result} compact={!wide} lines={lines} />
             <SpuSettingsCard
               plan={plan}
               title="SPU の設定"

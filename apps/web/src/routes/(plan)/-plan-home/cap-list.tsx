@@ -1,15 +1,17 @@
-import { type CapLine, type Plan, type TaxRate, priceToFill } from "@workspaces/domain";
+import {
+  type CapLine,
+  type CapRow as Row,
+  type Period,
+  type Plan,
+  type TaxRate,
+  capRows,
+} from "@workspaces/domain";
 import { Badge, Box, Flex, Heading, List, SegmentedControl, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { grouped, yen } from "../../../ui/format";
 import { plansAtom } from "../../../state/queries";
-import { CAP_TAX_RATES, scopeText, sharedText } from "../-cap-lines";
+import { CAP_TAX_RATES, conditionText, scopeText, sharedText } from "../-cap-lines";
 import { taxRateLabel, taxRateSegmentsStyle } from "../-order-shared";
-
-/** The price that fills the line's cap at `taxRate`; `null` while the rate is 0. */
-export function fillPriceOf(line: CapLine, taxRate: TaxRate) {
-  return priceToFill(line.remaining, taxRate, line.rate, line.benefit.amountBasis);
-}
 
 /**
  * How full the cap is, in two colors: what other plans used, then what this plan used.
@@ -33,24 +35,27 @@ function CapGauge({ line }: { line: CapLine }) {
   );
 }
 
+/** One row of caps that the same price fills alike: their names, and one gauge for them all. */
 function CapRow({
-  line,
+  row,
   today,
-  taxRate,
+  period,
   plans,
 }: {
-  line: CapLine;
+  row: Row;
   today: string | undefined;
-  taxRate: TaxRate;
+  period: Period;
   plans: Plan[];
 }) {
-  const price = fillPriceOf(line, taxRate);
+  const [line] = row.lines;
+  if (!line) return null;
   const shared = sharedText(line, plans);
+  const condition = row.price === 0 ? undefined : conditionText(line, period);
   return (
     <List.Item display="flex" flexDirection="column" gap="1.5" py="2">
       <Flex align="center" gap="2" wrap="wrap">
         <Text as="span" fontSize="sm" fontWeight="bold">
-          {line.benefit.label}
+          {row.lines.map((each) => each.benefit.label).join("・")}
         </Text>
         <Badge variant="outline" colorScheme="gray" fullRounded>
           {scopeText(line, today)}
@@ -62,31 +67,60 @@ function CapRow({
         ) : null}
       </Flex>
       <CapGauge line={line} />
-      <Flex justify="space-between" fontSize="sm" fontVariantNumeric="tabular-nums">
-        <Text as="span" color="fg.muted">
+      <Flex justify="space-between" align="flex-end" gap="2" fontSize="sm">
+        <Text as="span" color="fg.muted" fontVariantNumeric="tabular-nums">
           {grouped(line.usedElsewhere + line.usedHere)} / {grouped(line.cap)}P
+          {row.lines.length > 1 ? "（それぞれ）" : ""}
         </Text>
-        <Text as="b">
-          {line.remaining === 0 ? "上限" : price === null ? "—" : `あと${yen(price)}`}
-        </Text>
+        <Flex direction="column" align="flex-end">
+          {condition ? (
+            <Text as="span" fontSize="xs" color="fg.muted">
+              {condition}
+            </Text>
+          ) : null}
+          <Text as="b" fontVariantNumeric="tabular-nums">
+            {row.price === 0 ? "上限" : row.price === null ? "—" : `あと${yen(row.price)}`}
+          </Text>
+        </Flex>
       </Flex>
     </List.Item>
   );
 }
 
-/** 「上限までの残り」: every cap of the plan, and the tax-included price that fills it exactly. */
+/**
+ * 「上限までの残り」: every cap of the plan, in the order the tax-included price that fills it
+ * exactly reaches it. Caps one price fills alike are one row, and the filled caps come last.
+ */
 export function CapList({
   lines,
   today,
+  period,
   taxRate,
   onTaxRate,
 }: {
   lines: CapLine[];
   today: string | undefined;
+  period: Period;
   taxRate: TaxRate;
   onTaxRate: (taxRate: TaxRate) => void;
 }) {
   const plans = useAtomValue(plansAtom);
+  const rows = capRows(lines, taxRate);
+  const open = rows.filter((row) => row.price !== 0);
+  const filled = rows.filter((row) => row.price === 0);
+  const list = (shown: Row[]) => (
+    <List.Root gap="0">
+      {shown.map((row) => (
+        <CapRow
+          key={row.lines.map((line) => `${line.benefit.id}:${line.key}`).join(",")}
+          row={row}
+          today={today}
+          period={period}
+          plans={plans}
+        />
+      ))}
+    </List.Root>
+  );
   return (
     <Flex direction="column" gap="2">
       <Flex justify="space-between" align="center" gap="2" wrap="wrap">
@@ -103,17 +137,15 @@ export function CapList({
           {...taxRateSegmentsStyle}
         />
       </Flex>
-      <List.Root gap="0">
-        {lines.map((line) => (
-          <CapRow
-            key={`${line.benefit.id}:${line.key}`}
-            line={line}
-            today={today}
-            taxRate={taxRate}
-            plans={plans}
-          />
-        ))}
-      </List.Root>
+      {open.length > 0 ? list(open) : null}
+      {filled.length > 0 ? (
+        <>
+          <Heading as="h4" fontSize="xs" color="fg.muted" pt="2">
+            上限に届いた特典
+          </Heading>
+          {list(filled)}
+        </>
+      ) : null}
       <Text fontSize="xs" color="fg.muted">
         選んだ税率の商品を1つ買って、上限をちょうど使い切る税込の金額です。マラソンはいまの店舗数の倍率で計算しています。
       </Text>

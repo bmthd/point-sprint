@@ -153,10 +153,9 @@ describe("capFlows", () => {
   test("a shop-around cap takes from a Kobo order like an Ichiba order", () => {
     const plans = [plan(PLAN, [], [shopAround])];
     const kobo = [shop(SHOP_A, { channel: "rakuten-kobo" })];
-    expect(flowsOf(plans, order("2026-10-05", 11000), kobo)).toEqual(
-      flowsOf(plans, order("2026-10-05", 11000)),
-    );
-    expect(flowsOf(plans, order("2026-10-05", 11000), kobo)).toHaveLength(1);
+    const draft = order("2026-10-05", 11000);
+    expect(flowsOf(plans, draft, kobo)).toEqual(flowsOf(plans, draft));
+    expect(flowsOf(plans, draft, kobo)).toHaveLength(1);
   });
 
   test("an order from a new shop is priced at the rate that shop gives", () => {
@@ -175,5 +174,33 @@ describe("capFlows", () => {
     expect(flowsOf([plan(PLAN, [])], two)).toEqual([
       expect.objectContaining({ points: 20, into: 20, fillPrice: null }),
     ]);
+  });
+
+  test("a spend-tiers cap is filled at the tier the price reaches", () => {
+    // +2倍, +4倍 from ¥30,000. ¥12,000 bought earns 436P at +4倍: ¥98,009 earns the other 3,564P.
+    const brandDay: Benefit = {
+      id: "5d000000-0000-4000-8000-000000000001",
+      kind: "spend-tiers",
+      category: "campaign",
+      label: "ブランドデー",
+      enabled: true,
+      conditions: { orderTags: ["brand-day"] },
+      amountBasis: "tax-excluded",
+      capScope: "plan",
+      params: {
+        tiers: [
+          { minAmount: 0, rate: 2 },
+          { minAmount: 30000, rate: 4 },
+        ],
+        cap: 4000,
+        roundingUnit: "item",
+      },
+    };
+    const tagged = (price: number): Order => ({
+      ...order("2026-10-05", price),
+      tags: ["brand-day"],
+    });
+    const plans = [plan(PLAN, [tagged(12000)], [brandDay])];
+    expect(flowsOf(plans, tagged(5000))).toEqual([expect.objectContaining({ fillPrice: 98009 })]);
   });
 });

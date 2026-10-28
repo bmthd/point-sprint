@@ -2,15 +2,10 @@ import {
   type CalculationResult,
   type CapLine,
   type Plan,
-  type TaxRate,
   taxIncludedTarget,
 } from "@workspaces/domain";
-import { Box, Card, Flex, Link, NativeAccordion, Progress, Text } from "@workspaces/ui";
-import { useAtomValue } from "jotai";
-import { grouped, yen } from "../../../ui/format";
-import { plansAtom } from "../../../state/queries";
-import { scopeText, sharedText } from "../-cap-lines";
-import { fillPriceOf } from "./cap-list";
+import { Box, Card, Flex, NativeAccordion, Progress, Text } from "@workspaces/ui";
+import { grouped } from "../../../ui/format";
 import { PointBreakdown } from "./point-breakdown";
 import { ShopLadder } from "./shop-ladder";
 
@@ -70,50 +65,12 @@ function ShopChevrons({ count }: { count: number }) {
   );
 }
 
-/** The cap the least money fills at `taxRate`; a cap whose rate is 0 now cannot be filled. */
-export function nextCap(lines: CapLine[], taxRate: TaxRate) {
-  let next: { line: CapLine; price: number } | undefined;
-  for (const line of lines) {
-    if (line.remaining === 0) continue;
-    const price = fillPriceOf(line, taxRate);
-    if (price !== null && (next === undefined || price < next.price)) next = { line, price };
-  }
-  return next;
-}
-
-/** 「次に上限に届くのは…」: the cap closest to full, with a link to every cap. */
-function NextCap({
-  lines,
-  today,
-  taxRate,
-}: {
-  lines: CapLine[];
-  today: string | undefined;
-  taxRate: TaxRate;
-}) {
-  const plans = useAtomValue(plansAtom);
-  if (lines.length === 0) return null;
-  const next = nextCap(lines, taxRate);
-  if (!next) {
-    return lines.every((line) => line.remaining === 0) ? (
-      <Text fontSize="sm" fontWeight="bold">
-        上限のある特典は、すべて上限に届きました
-      </Text>
-    ) : null;
-  }
-  const shared = sharedText(next.line, plans);
+/** 「上限のある特典は、すべて上限に届きました」, once every cap of the plan is filled. */
+function AllCapsFilled({ lines }: { lines: CapLine[] }) {
+  if (lines.length === 0 || lines.some((line) => line.remaining > 0)) return null;
   return (
-    <Text fontSize="sm" bg="blackAlpha.400" rounded="md" px="2.5" py="2">
-      次に上限に届くのは<Text as="b">{next.line.benefit.label}</Text> あと
-      <Text as="b" fontVariantNumeric="tabular-nums">
-        {yen(next.price)}
-      </Text>
-      <Text as="span" color="primary.contrast/80">
-        （{scopeText(next.line, today)}の枠{shared ? `・${shared}` : ""}）
-      </Text>{" "}
-      <Link href="#caps" color="inherit" textDecoration="underline">
-        すべて見る
-      </Link>
+    <Text fontSize="sm" fontWeight="bold">
+      上限のある特典は、すべて上限に届きました
     </Text>
   );
 }
@@ -128,17 +85,12 @@ export function SummaryCard({
   result,
   compact,
   lines,
-  today,
-  taxRate,
 }: {
   plan: Plan;
   result: CalculationResult;
   compact: boolean;
   /** The plan's caps (`useCapLines`). */
   lines: CapLine[];
-  today: string | undefined;
-  /** The tax rate the caps' fill prices are shown at. */
-  taxRate: TaxRate;
 }) {
   const outlook = result.shopAroundOutlook;
   const amount = countedAmount(plan);
@@ -211,7 +163,7 @@ export function SummaryCard({
           </Flex>
         ) : null}
 
-        <NextCap lines={lines} today={today} taxRate={taxRate} />
+        <AllCapsFilled lines={lines} />
 
         {compact && outlook ? (
           <Box bg="bg.panel" color="fg" rounded="md" px="3" py="2">
