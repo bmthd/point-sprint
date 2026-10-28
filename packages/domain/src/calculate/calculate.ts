@@ -20,6 +20,7 @@ import type {
   CalculationResult,
   CapGroupUsage,
   CalculationWarning,
+  EligibleLineItem,
   HeldEstimate,
 } from "./types";
 
@@ -48,6 +49,7 @@ type BenefitItem = {
 type BenefitEntry = {
   benefit: Benefit;
   items: BenefitItem[];
+  eligible: EligibleLineItem[];
   receivingBase: number;
   /** Tax-included total of the benefit's orders over its days. */
   spendTotal: number;
@@ -175,7 +177,10 @@ function planPhase(plan: Plan, shops: Shop[], shopsById: Map<string, Shop>): Pla
   const entries = plan.benefits
     .filter((benefit) => benefit.enabled)
     .map((benefit): BenefitEntry => {
-      const eligible = eligibleItems(benefit, orders);
+      const eligible = eligibleItems(benefit, orders).map((item) => ({
+        ...item,
+        groupKey: capGroupKey(groupOwner, benefit, item.orderDate),
+      }));
       const spendTotal = spendTotalOf(benefit, eligible, plan.period);
       const { dateRule } = benefit.conditions;
       const benefitShopCount =
@@ -183,13 +188,19 @@ function planPhase(plan: Plan, shops: Shop[], shopsById: Map<string, Shop>): Pla
           ? countShops(plan.orders, shops, plan.period, dateRule)
           : shopCount;
       const raw = rawPointsOf(benefit, eligible, { shopCount: benefitShopCount, spendTotal });
-      const items = eligible.map(({ lineItemId, orderDate }) => {
+      const items = eligible.map(({ lineItemId, orderDate, groupKey }) => {
         const points = raw.get(lineItemId) ?? 0;
-        const groupKey = capGroupKey(groupOwner, benefit, orderDate);
         return { planId: plan.id, lineItemId, date: orderDate, groupKey, raw: points, points };
       });
       const receivingBase = eligible.reduce((sum, item) => sum + item.amount, 0);
-      return { benefit, items, receivingBase, spendTotal, shopCount: benefitShopCount };
+      return {
+        benefit,
+        items,
+        eligible,
+        receivingBase,
+        spendTotal,
+        shopCount: benefitShopCount,
+      };
     });
   return { plan, orders, shopCount, warnings, entries };
 }
@@ -373,8 +384,10 @@ function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
 
   const rates: Record<string, number> = {};
   const spendTotals: Record<string, number> = {};
-  for (const { benefit, spendTotal, shopCount } of phase.entries) {
+  const eligibleItems: Record<string, EligibleLineItem[]> = {};
+  for (const { benefit, spendTotal, shopCount, eligible } of phase.entries) {
     rates[benefit.id] = rateOf(benefit, { shopCount, spendTotal });
+    eligibleItems[benefit.id] = eligible;
     if (benefit.kind === "spend-tiers") spendTotals[benefit.id] = spendTotal;
   }
 
@@ -389,6 +402,7 @@ function assemble(phase: PlanPhase, groups: Map<string, CapGroup>): CoreResult {
     shopCount: phase.shopCount,
     rates,
     spendTotals,
+    eligibleItems,
     total: nonZero.reduce((sum, row) => sum + row.points, 0),
     warnings: [...phase.warnings, ...mismatchWarnings],
     groupTotals,

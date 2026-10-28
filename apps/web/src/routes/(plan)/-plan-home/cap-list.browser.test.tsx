@@ -85,9 +85,10 @@ test("a cap shows what other plans used and the price that fills it", async () =
   await expect.element(cardRow()).toMatchTextContent("あと¥7,000");
 });
 
-test("a cap that is used up says so", async () => {
+test("a cap that is used up is under its own heading", async () => {
   // 1回目: ¥11,000 → 100P, the whole cap.
   await renderPlanHome(createMemoryRepository({ shops, plans: plans(11000) }));
+  await expect.element(caps()).toMatchTextContent(/上限に届いた特典.*楽天カード特典分/);
   await expect.element(cardRow()).toMatchTextContent("上限");
   await expect.element(cardRow()).not.toMatchTextContent("あと¥");
 });
@@ -98,7 +99,7 @@ test("without a capped benefit there is no list", async () => {
   await expect.element(caps()).not.toBeInTheDocument();
 });
 
-test("the summary names the cap that the least money fills", async () => {
+test("the caps are in the order the least money fills them", async () => {
   // The plan's own 1,000P cap needs more money than the card's 70P, and the marathon's rate is
   // 0 with no shops yet, so no money fills it.
   const ownCap: Benefit = {
@@ -112,10 +113,53 @@ test("the summary names the cap that the least money fills", async () => {
   await renderPlanHome(
     createMemoryRepository({
       shops,
-      plans: plans(3300, [baseBenefit, card, ownCap, ...marathon]),
+      plans: plans(3300, [baseBenefit, ownCap, ...marathon, card]),
     }),
   );
+  const rows = caps().getByRole("listitem");
+  await expect.element(rows.nth(0)).toMatchTextContent("楽天カード特典分");
+  await expect.element(rows.nth(1)).toMatchTextContent("キャンペーン");
+  await expect.element(rows.nth(2)).toMatchTextContent("—");
+  await expect.element(summary()).not.toMatchTextContent("次に上限に届くのは");
+});
+
+test("caps one price fills alike are one row", async () => {
+  const spu = (id: string, label: string): Benefit => ({
+    ...card,
+    id,
+    label,
+    sharedKey: undefined,
+    params: { rate: 0.5, roundingUnit: "item", cap: 1000 },
+  });
+  await renderPlanHome(
+    createMemoryRepository({
+      shops,
+      plans: plans(3300, [
+        baseBenefit,
+        spu("b0000000-0000-4000-8000-0000000000d1", "楽天銀行"),
+        spu("b0000000-0000-4000-8000-0000000000d2", "楽天でんき"),
+      ]),
+    }),
+  );
+  const row = caps().getByRole("listitem");
+  await expect.element(row).toMatchTextContent("楽天銀行・楽天でんき");
+  await expect.element(row).toMatchTextContent("0 / 1,000P（それぞれ）");
+});
+
+test("a cap of some days and tags says which orders fill it", async () => {
+  const limited: Benefit = {
+    ...card,
+    id: "b0000000-0000-4000-8000-0000000000e1",
+    label: "24時間限定",
+    capScope: "occurrence",
+    sharedKey: undefined,
+    conditions: { orderTags: ["24h"], dateRule: { type: "dates", dates: ["2026-10-22"] } },
+    params: { rate: 9, roundingUnit: "item", cap: 10000 },
+  };
+  await renderPlanHome(
+    createMemoryRepository({ shops, plans: plans(3300, [baseBenefit, limited]) }),
+  );
   await expect
-    .element(summary())
-    .toMatchTextContent("次に上限に届くのは楽天カード特典分 あと¥7,699（10月の枠・1回目と共有）");
+    .element(caps().getByRole("listitem"))
+    .toMatchTextContent("10/22・24時間限定の注文で");
 });

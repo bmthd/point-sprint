@@ -30,6 +30,17 @@ export type Period = v.InferOutput<typeof PeriodSchema>;
 /** `2026-10`. */
 export const MonthSchema = v.pipe(v.string(), v.regex(/^\d{4}-(0[1-9]|1[0-2])$/));
 
+/** Every day of the period, `YYYY-MM-DD`. */
+export function daysOf(period: Period): string[] {
+  const days: string[] = [];
+  const [year = 0, month = 1, day = 1] = period.start.split("-").map(Number);
+  for (let offset = 0; ; offset++) {
+    const date = new Date(Date.UTC(year, month - 1, day + offset)).toISOString().slice(0, 10);
+    if (date > period.end) return days;
+    days.push(date);
+  }
+}
+
 /** `YYYY-MM` of every month the period touches. */
 export function monthsOf(period: Period): string[] {
   const months: string[] = [];

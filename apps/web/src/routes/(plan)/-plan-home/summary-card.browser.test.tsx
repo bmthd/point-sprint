@@ -166,10 +166,8 @@ test("shows total and effective rate", async () => {
   await expect.element(summary()).toMatchTextContent("実質還元率6.5%");
   await expect.element(summary()).toMatchTextContent("4店舗を買い回り中");
   await expect.element(summary()).toMatchTextContent("マラソン +3倍");
-  // 5,800P of the 7,000P cap are left: ¥193,334 before tax at +3倍, ¥212,667 at 10%.
-  await expect
-    .element(summary())
-    .toMatchTextContent("次に上限に届くのはショップ買いまわり あと¥212,667（期間中の枠）");
+  // The cap closest to full is in 「上限までの残り」 only.
+  await expect.element(summary()).not.toMatchTextContent("次に上限に届くのは");
   const progress = summary().getByRole("progressbar", { name: "買い回り" });
   await expect.element(progress).toHaveAttribute("aria-valuenow", "4");
   await expect.element(progress).toHaveAttribute("aria-valuemax", "10");
