@@ -132,7 +132,7 @@ const ink = "#222222";
 const muted = "#5c5c5c";
 const brand = "#bf0000";
 const domain = new URL(siteUrl).host;
-const tagline = "楽天のポイントを、上限まで計算するツール";
+const tagline = "お買い物マラソンの実質還元率を、正確に計算";
 /** `public/icon.svg`, inlined: the Worker has no files to read it from. */
 const icon = `data:image/svg+xml;utf8,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#bf0000"/><g fill="#fff"><rect x="5" y="19" width="12" height="5" rx="2.5"/><rect x="2" y="29.5" width="15" height="5" rx="2.5"/><rect x="7" y="40" width="10" height="5" rx="2.5"/><path transform="translate(6 0) skewX(-12) translate(6 0)" d="M18 12H35a14 14 0 0 1 0 28H30v12H18Z M30 22v8h4a4 4 0 0 0 0-8Z"/></g></svg>',
