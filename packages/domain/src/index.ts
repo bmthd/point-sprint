@@ -22,6 +22,7 @@ export {
   PeriodSchema,
   type Period,
   MonthSchema,
+  daysOf,
   monthsOf,
   addMonths,
   closestDateInPeriod,
@@ -79,7 +80,7 @@ export {
   type ShopAroundOutlookRow,
 } from "./calculate/outlook";
 export { capFlows, type CapFlow } from "./calculate/cap-flows";
-export { capLines, type CapLine } from "./calculate/cap-lines";
+export { capLines, capRows, fillPrice, type CapLine, type CapRow } from "./calculate/cap-lines";
 export { pointsForPrice, priceToFill, type TaxRate } from "./calculate/fill-price";
 export type {
   BenefitTotal,
