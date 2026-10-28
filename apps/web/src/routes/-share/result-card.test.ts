@@ -2,10 +2,12 @@ import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 import { cardGlyphs } from "./card-glyphs";
 import {
+  EVENT_KINDS,
   eventKindOf,
   planFigures,
   resultCard,
   resultFigures,
+  resultHeading,
   resultImagePath,
   resultPageUrl,
   ResultSearchSchema,
@@ -123,16 +125,35 @@ const texts = (node: unknown): string[] => {
   return [...(text === undefined ? [] : [text]), ...(children ?? []).flatMap(texts)];
 };
 
-describe("the card", () => {
-  const card = resultCard({ points: 1234567, rate: 10.5 });
+test("the heading names the event's kind", () => {
+  expect(resultHeading("marathon")).toBe("お買い物マラソンの獲得ポイント");
+  expect(resultHeading("brand-day")).toBe("楽天ブランドデーの獲得ポイント");
+  expect(resultHeading(undefined)).toBe("獲得ポイント");
+});
 
+describe("the card", () => {
   test("shows the points and the rate", () => {
-    expect(texts(card)).toEqual(expect.arrayContaining(["1,234,567P", "10.5%"]));
-    expect(texts(resultCard({ points: 0 }))).not.toContain("実質還元率");
+    expect(texts(resultCard({ points: 1234567, rate: 10.5 }))).toEqual(
+      expect.arrayContaining(["1,234,567", "10.5%"]),
+    );
+    expect(texts(resultCard({ points: 0 }))).not.toContain("還元率");
+  });
+
+  test("leaves out groups with no points", () => {
+    const card = resultCard({
+      points: 1500,
+      breakdown: { base: 0, spu: 500, marathon: 1000, campaign: 0 },
+    });
+    expect(texts(card)).toEqual(expect.arrayContaining(["SPU", "マラソン", "500P", "1,000P"]));
+    expect(texts(card)).not.toContain("通常");
+    expect(texts(card)).not.toContain("キャンペーン");
   });
 
   test("draws only letters the fonts are cut down to", () => {
-    const missing = [...texts(card).join("")].filter((c) => !cardGlyphs.includes(c));
+    const cards = [...EVENT_KINDS, undefined].map((event) =>
+      resultCard({ points: 2600, rate: 6.5, breakdown, ...(event ? { event } : {}) }),
+    );
+    const missing = [...cards.flatMap(texts).join("")].filter((c) => !cardGlyphs.includes(c));
     expect(missing).toEqual([]);
   });
 });

@@ -5,4 +5,4 @@ import { siteUrl } from "../../site-url.ts";
  * build time (`og-fonts-plugin.ts`), so a letter added to the card must be added here too; a test
  * checks it. Kept apart from the card, which the Vite config cannot load.
  */
-export const cardGlyphs = `楽天市場お買い物マラソン獲得予定実質還元率ポイントスプリントで計算${new URL(siteUrl).host}0123456789,P%`;
+export const cardGlyphs = `ポイントスプリントお買い物マラソン楽天ブランドデーの獲得還元率通常SPUキャンペーンを、上限まで計算するツール${new URL(siteUrl).host}0123456789,.P%`;
