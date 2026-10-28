@@ -1,5 +1,7 @@
 import { expect, test, vi } from "vitest";
 import type { GuideItem, GuideItemSearch } from "./guide-items";
+import { loadArticle } from "./articles";
+import { itemQueriesIn, itemQueryKey } from "./item-query";
 import { loadGuide } from "./load-guide";
 
 const item: GuideItem = {
@@ -14,17 +16,19 @@ const item: GuideItem = {
 const now = () => new Date("2026-10-08T00:00:00Z");
 
 test("searches each list of the guide, and keeps the items by its query", async () => {
-  // The food list finds nothing; the others find an item.
-  const search = vi.fn<GuideItemSearch>(async (query) => (query.genreId === 100227 ? [] : [item]));
+  const article = await loadArticle("1000yen-items");
+  const [first, ...rest] = itemQueriesIn(article?.body ?? "").map(itemQueryKey);
+  // The first list finds nothing; the others find an item.
+  const search = vi.fn<GuideItemSearch>(async (query) =>
+    itemQueryKey(query) === first ? [] : [item],
+  );
   const guide = await loadGuide("1000yen-items", search, now);
 
   expect(guide?.article.title).toBe("1000円ポッキリで買えるもの");
-  expect(search).toHaveBeenCalledTimes(3);
-  expect(Object.entries(guide?.lists ?? {})).toEqual([
-    [expect.stringContaining('"genreId":100227'), []],
-    [expect.stringContaining('"genreId":215783'), [item]],
-    [expect.stringContaining('"genreId":100939'), [item]],
-  ]);
+  expect(search).toHaveBeenCalledTimes(rest.length + 1);
+  expect(guide?.lists).toEqual(
+    Object.fromEntries([[first, []], ...rest.map((key) => [key, [item]])]),
+  );
   expect(guide?.fetchedAt).toBe("2026-10-08T00:00:00.000Z");
 });
 
