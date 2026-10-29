@@ -9,7 +9,7 @@ import { NoticesPage, SitePage } from "./pages";
 const latest = newestFirst(notices)[0]!;
 
 const withHeadlines = ["/", "/help", "/terms", "/privacy", "/inquiry", "/guides"];
-const withoutSidebar = ["/profile", "/spu", "/plan", "/plan/settings"];
+const withoutSidebar = ["/settings", "/spu", "/plan", "/plan/settings"];
 
 test("the HTML rendered at build time has the headlines on the pages that read", async ({
   request,

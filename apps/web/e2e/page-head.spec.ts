@@ -7,7 +7,7 @@ import { PlanSettingsPage, SitePage, TopPage } from "./pages";
 test("each page has its own title", async ({ page }) => {
   const pages = [
     { path: "/", title: "ポイントスプリント 楽天市場お買い物マラソン攻略計算ツール" },
-    { path: "/profile", title: "共通設定 | ポイントスプリント" },
+    { path: "/settings", title: "共通設定 | ポイントスプリント" },
     { path: "/spu", title: "月ごとの SPU | ポイントスプリント" },
     { path: "/help", title: "使い方・注意事項 | ポイントスプリント" },
     { path: "/terms", title: "利用規約 | ポイントスプリント" },
@@ -31,7 +31,7 @@ test("a plan's pages show the plan's name in the title", async ({ page }) => {
   const settings = await PlanSettingsPage.open(page, plan.id);
   await expect(page).toHaveTitle(`${name}の設定 | ポイントスプリント`);
 
-  await settings.header.goToProfile();
+  await settings.header.goToSettings();
   await expect(page).toHaveTitle("共通設定 | ポイントスプリント");
 });
 
