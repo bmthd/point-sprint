@@ -24,8 +24,8 @@ test("loads gtag.js and AdSense and configures GA once without manual page views
   });
 
   const top = await TopPage.open(page);
-  const profile = await top.header.goToProfile();
-  await expect(profile.heading).toBeVisible();
+  const settings = await top.header.goToSettings();
+  await expect(settings.heading).toBeVisible();
 
   // Each script was loaded once, and navigating did not load or run them again.
   expect(googleRequests.toSorted()).toEqual([

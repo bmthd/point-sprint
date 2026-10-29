@@ -44,11 +44,11 @@ test("a page that exists is not marked as not found", async () => {
   expect(meta.findLast((m) => m?.title)?.title).toBe("使い方・注意事項 | ポイントスプリント");
 });
 
-test("the profile, which holds this device's settings, asks search engines not to index it", async () => {
+test("共通設定, which holds this device's settings, asks search engines not to index it", async () => {
   const router = getRouter();
   router.update({
     ...router.options,
-    history: createMemoryHistory({ initialEntries: ["/profile"] }),
+    history: createMemoryHistory({ initialEntries: ["/settings"] }),
   });
   await router.load();
   const meta = router.state.matches.flatMap((match) => match.meta ?? []);

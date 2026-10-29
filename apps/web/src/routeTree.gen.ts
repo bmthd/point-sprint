@@ -12,11 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as EventsDotjsonRouteImport } from './routes/events[.]json'
 import { Route as ShareRouteImport } from './routes/share'
 import { Route as planPlanRouteImport } from './routes/(plan)/plan'
-import { Route as planProfileRouteImport } from './routes/(plan)/profile'
+import { Route as planSettingsRouteImport } from './routes/(plan)/settings'
 import { Route as planSpuRouteImport } from './routes/(plan)/spu'
 import { Route as siteIndexRouteImport } from './routes/(site)/index'
 import { Route as sitemarkdownRouteRouteImport } from './routes/(site)/(markdown)/route'
 import { Route as siteInquiryRouteImport } from './routes/(site)/inquiry'
+import { Route as siteMarathonRouteImport } from './routes/(site)/marathon'
 import { Route as siteNoticesRouteImport } from './routes/(site)/notices'
 import { Route as ShareImageDotpngRouteImport } from './routes/share_.image[.]png'
 import { Route as planPlanSettingsRouteImport } from './routes/(plan)/plan_.settings'
@@ -41,9 +42,9 @@ const planPlanRoute = planPlanRouteImport.update({
   path: '/plan',
   getParentRoute: () => rootRouteImport,
 } as any)
-const planProfileRoute = planProfileRouteImport.update({
-  id: '/(plan)/profile',
-  path: '/profile',
+const planSettingsRoute = planSettingsRouteImport.update({
+  id: '/(plan)/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const planSpuRoute = planSpuRouteImport.update({
@@ -63,6 +64,11 @@ const sitemarkdownRouteRoute = sitemarkdownRouteRouteImport.update({
 const siteInquiryRoute = siteInquiryRouteImport.update({
   id: '/(site)/inquiry',
   path: '/inquiry',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const siteMarathonRoute = siteMarathonRouteImport.update({
+  id: '/(site)/marathon',
+  path: '/marathon',
   getParentRoute: () => rootRouteImport,
 } as any)
 const siteNoticesRoute = siteNoticesRouteImport.update({
@@ -110,9 +116,10 @@ export interface FileRoutesByFullPath {
   '/events.json': typeof EventsDotjsonRoute
   '/share': typeof ShareRoute
   '/plan': typeof planPlanRoute
-  '/profile': typeof planProfileRoute
+  '/settings': typeof planSettingsRoute
   '/spu': typeof planSpuRoute
   '/inquiry': typeof siteInquiryRoute
+  '/marathon': typeof siteMarathonRoute
   '/notices': typeof siteNoticesRoute
   '/share/image.png': typeof ShareImageDotpngRoute
   '/': typeof siteIndexRoute
@@ -127,9 +134,10 @@ export interface FileRoutesByTo {
   '/events.json': typeof EventsDotjsonRoute
   '/share': typeof ShareRoute
   '/plan': typeof planPlanRoute
-  '/profile': typeof planProfileRoute
+  '/settings': typeof planSettingsRoute
   '/spu': typeof planSpuRoute
   '/inquiry': typeof siteInquiryRoute
+  '/marathon': typeof siteMarathonRoute
   '/notices': typeof siteNoticesRoute
   '/share/image.png': typeof ShareImageDotpngRoute
   '/': typeof siteIndexRoute
@@ -146,9 +154,10 @@ export interface FileRoutesById {
   '/share': typeof ShareRoute
   '/(site)/(markdown)': typeof sitemarkdownRouteRouteWithChildren
   '/(plan)/plan': typeof planPlanRoute
-  '/(plan)/profile': typeof planProfileRoute
+  '/(plan)/settings': typeof planSettingsRoute
   '/(plan)/spu': typeof planSpuRoute
   '/(site)/inquiry': typeof siteInquiryRoute
+  '/(site)/marathon': typeof siteMarathonRoute
   '/(site)/notices': typeof siteNoticesRoute
   '/share_/image.png': typeof ShareImageDotpngRoute
   '/(site)/': typeof siteIndexRoute
@@ -165,9 +174,10 @@ export interface FileRouteTypes {
     | '/events.json'
     | '/share'
     | '/plan'
-    | '/profile'
+    | '/settings'
     | '/spu'
     | '/inquiry'
+    | '/marathon'
     | '/notices'
     | '/share/image.png'
     | '/'
@@ -182,9 +192,10 @@ export interface FileRouteTypes {
     | '/events.json'
     | '/share'
     | '/plan'
-    | '/profile'
+    | '/settings'
     | '/spu'
     | '/inquiry'
+    | '/marathon'
     | '/notices'
     | '/share/image.png'
     | '/'
@@ -200,9 +211,10 @@ export interface FileRouteTypes {
     | '/share'
     | '/(site)/(markdown)'
     | '/(plan)/plan'
-    | '/(plan)/profile'
+    | '/(plan)/settings'
     | '/(plan)/spu'
     | '/(site)/inquiry'
+    | '/(site)/marathon'
     | '/(site)/notices'
     | '/share_/image.png'
     | '/(site)/'
@@ -219,9 +231,10 @@ export interface RootRouteChildren {
   ShareRoute: typeof ShareRoute
   sitemarkdownRouteRoute: typeof sitemarkdownRouteRouteWithChildren
   planPlanRoute: typeof planPlanRoute
-  planProfileRoute: typeof planProfileRoute
+  planSettingsRoute: typeof planSettingsRoute
   planSpuRoute: typeof planSpuRoute
   siteInquiryRoute: typeof siteInquiryRoute
+  siteMarathonRoute: typeof siteMarathonRoute
   siteNoticesRoute: typeof siteNoticesRoute
   ShareImageDotpngRoute: typeof ShareImageDotpngRoute
   siteIndexRoute: typeof siteIndexRoute
@@ -251,11 +264,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof planPlanRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(plan)/profile': {
-      id: '/(plan)/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof planProfileRouteImport
+    '/(plan)/settings': {
+      id: '/(plan)/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof planSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(plan)/spu': {
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       path: '/inquiry'
       fullPath: '/inquiry'
       preLoaderRoute: typeof siteInquiryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(site)/marathon': {
+      id: '/(site)/marathon'
+      path: '/marathon'
+      fullPath: '/marathon'
+      preLoaderRoute: typeof siteMarathonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(site)/notices': {
@@ -369,9 +389,10 @@ const rootRouteChildren: RootRouteChildren = {
   ShareRoute: ShareRoute,
   sitemarkdownRouteRoute: sitemarkdownRouteRouteWithChildren,
   planPlanRoute: planPlanRoute,
-  planProfileRoute: planProfileRoute,
+  planSettingsRoute: planSettingsRoute,
   planSpuRoute: planSpuRoute,
   siteInquiryRoute: siteInquiryRoute,
+  siteMarathonRoute: siteMarathonRoute,
   siteNoticesRoute: siteNoticesRoute,
   ShareImageDotpngRoute: ShareImageDotpngRoute,
   siteIndexRoute: siteIndexRoute,

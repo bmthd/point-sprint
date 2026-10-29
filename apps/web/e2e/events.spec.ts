@@ -13,3 +13,16 @@ test("the top page lists the events in the master that have not ended", async ({
   await expect(top.events.nth(1)).toContainText("楽天ブランドデー");
   await expect(top.events.nth(2)).toContainText("お買い物マラソン第三弾");
 });
+
+test("the marathon's page has the rounds in its HTML, before any script runs", async ({
+  request,
+}) => {
+  const response = await request.get("/marathon");
+  expect(response.status()).toBe(200);
+  const html = await response.text();
+  expect(html).toContain('<link rel="canonical" href="https://point-sprint.bmth.dev/marathon"/>');
+  // The rounds the migrations put in have ended, whatever day the test runs on.
+  expect(html).toContain("これまでの回");
+  expect(html).toContain("お買い物マラソン第三弾");
+  expect(html).toContain("7,000P");
+});

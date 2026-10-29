@@ -1,6 +1,6 @@
 import type { CDPSession } from "@playwright/test";
 import { type Page, expect, standIn, test, fixDate } from "./fixtures";
-import { PlanPage, ProfilePage, SyncSection, TopPage } from "./pages";
+import { PlanPage, SettingsPage, SyncSection, TopPage } from "./pages";
 
 // Two devices, each a browser context with a virtual authenticator: the passkey made on the first
 // is copied to the second, as a password manager syncs it. A copied passkey gives another PRF
@@ -62,13 +62,13 @@ test("a plan written on one device is on the other, and so are the orders added 
   await plan.addOrder("店A", "3300");
   // Read from the URL, so kept before leaving the plan.
   const planId = plan.id;
-  await ProfilePage.open(page);
+  await SettingsPage.open(page);
   const code = await new SyncSection(page).start();
 
   const pc = await secondDevice(page);
   await fixDate(pc, new Date("2026-10-05T12:00:00+09:00"));
   await copyPasskeys(phoneKeys, await authenticator(pc, { prf: true }));
-  await ProfilePage.open(pc);
+  await SettingsPage.open(pc);
   const pcSync = new SyncSection(pc);
   await pcSync.logIn();
   await pcSync.enterCode(code);
@@ -80,8 +80,8 @@ test("a plan written on one device is on the other, and so are the orders added 
   await pcPlan.orders.getByRole("button", { name: /^注文を追加/ }).click();
   await pcPlan.addOrder("店B", "2200");
 
-  // Sent by the round that runs as the profile opens, if not already 2 seconds after it was saved.
-  await ProfilePage.open(pc);
+  // Sent by the round that runs as 共通設定 opens, if not already 2 seconds after it was saved.
+  await SettingsPage.open(pc);
   await pcSync.waitSynced();
 
   // Read by the round that runs as the phone's app opens.
@@ -93,12 +93,12 @@ test("a device whose passkey gives no key opens the data with the recovery code"
   page,
 }) => {
   const phoneKeys = await authenticator(page, { prf: true });
-  await ProfilePage.open(page);
+  await SettingsPage.open(page);
   const code = await new SyncSection(page).start();
 
   const pc = await secondDevice(page);
   await copyPasskeys(phoneKeys, await authenticator(pc, { prf: false }));
-  await ProfilePage.open(pc);
+  await SettingsPage.open(pc);
   const pcSync = new SyncSection(pc);
   await pcSync.logIn();
   await pcSync.enterCode("AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AA");
@@ -116,7 +116,7 @@ test("the passkey that started the sync opens the data again without the code", 
   await plan.addOrder("店A", "3300");
   // Read from the URL, so kept before leaving the plan.
   const planId = plan.id;
-  await ProfilePage.open(page);
+  await SettingsPage.open(page);
   await new SyncSection(page).start();
 
   // The same device with its data gone, as a new phone with the same passkey.
@@ -129,8 +129,8 @@ test("the passkey that started the sync opens the data again without the code", 
         request.onblocked = resolve;
       }),
   );
-  const profile = await ProfilePage.open(page);
-  const sync = new SyncSection(profile.page);
+  const settings = await SettingsPage.open(page);
+  const sync = new SyncSection(settings.page);
   await sync.logIn();
   await sync.waitSynced();
   await expect(sync.codeDialog).toBeHidden();
@@ -146,7 +146,7 @@ test("stopping removes the account and the passkey, and the device's data stays"
   const plan = await (await TopPage.open(page)).createPlan();
   await plan.addOrder("店A", "3300");
   const planId = plan.id;
-  await ProfilePage.open(page);
+  await SettingsPage.open(page);
   const sync = new SyncSection(page);
   await sync.start();
   await sync.stop();
@@ -174,12 +174,12 @@ test("reissuing rejects a code in an already-open login dialog and keeps syncing
   const plan = await (await TopPage.open(page)).createPlan();
   await plan.addOrder("店A", "3300");
   const planId = plan.id;
-  await ProfilePage.open(page);
+  await SettingsPage.open(page);
   const phoneSync = new SyncSection(page);
   const oldCode = await phoneSync.start();
   const pc = await secondDevice(page);
   await copyPasskeys(phoneKeys, await authenticator(pc, { prf: false }));
-  await ProfilePage.open(pc);
+  await SettingsPage.open(pc);
   const pcSync = new SyncSection(pc);
   await pcSync.logIn();
   await expect(pcSync.codeDialog).toBeVisible();

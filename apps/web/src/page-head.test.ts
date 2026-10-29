@@ -3,15 +3,15 @@ import { defaultDescription, defaultTitle, pageHead } from "./page-head";
 import { siteUrl } from "./site-url";
 
 test("a page's title follows the site's format, and its OGP repeats it", () => {
-  expect(pageHead({ path: "/profile", title: "プロフィール", description: "説明" })).toEqual({
+  expect(pageHead({ path: "/settings", title: "プロフィール", description: "説明" })).toEqual({
     meta: [
       { title: "プロフィール | ポイントスプリント" },
       { name: "description", content: "説明" },
       { property: "og:title", content: "プロフィール | ポイントスプリント" },
       { property: "og:description", content: "説明" },
-      { property: "og:url", content: `${siteUrl}/profile` },
+      { property: "og:url", content: `${siteUrl}/settings` },
     ],
-    links: [{ rel: "canonical", href: `${siteUrl}/profile` }],
+    links: [{ rel: "canonical", href: `${siteUrl}/settings` }],
   });
 });
 

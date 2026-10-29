@@ -8,7 +8,7 @@ import { siteUrl } from "./site-url.ts";
 export const prerenderedPages = [
   "/plan",
   "/plan/settings",
-  "/profile",
+  "/settings",
   "/spu",
   "/help",
   "/terms",
@@ -23,17 +23,22 @@ export const prerenderedPages = [
  * Routes the Worker renders on each request instead. The top page lists the official events from
  * the event master in D1, and is kept in the cache until they change
  * (`server/official-events/top-page-cache.ts`). A shared result's page carries its figures in its
- * OGP tags, and its image is drawn from them, both from the query string. `/events.json` serves the
- * events.
+ * OGP tags, and its image is drawn from them, both from the query string. `/events.json` and the
+ * marathon's page also come from the event master.
  */
-export const pagesRenderedOnRequest = ["/", "/share", "/share/image.png", "/events.json"];
+export const pagesRenderedOnRequest = [
+  "/",
+  "/share",
+  "/share/image.png",
+  "/events.json",
+  "/marathon",
+];
 
 /**
- * The pages rendered on request that search engines index, which the sitemap lists with the
- * prerendered ones. The E2E tests check their heads (`e2e/page-head.spec.ts`), as the build does
- * the prerendered pages'.
+ * The pages rendered on request that search engines index: the sitemap lists them too. The E2E
+ * tests check their heads (`e2e/page-head.spec.ts`), as the build does the prerendered pages'.
  */
-export const indexedPagesRenderedOnRequest = ["/"];
+export const indexedPagesRenderedOnRequest = ["/", "/marathon"];
 
 /** HTML files, relative to the client output directory, that the build did not write. */
 export function missingPrerenderedPages(exists: (file: string) => boolean): string[] {

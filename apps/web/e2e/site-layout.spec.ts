@@ -12,7 +12,7 @@ async function createPlan(page: Page) {
 
 const pages = (id: string) => [
   { name: "トップ", path: "/" },
-  { name: "共通設定", path: "/profile" },
+  { name: "共通設定", path: "/settings" },
   { name: "プラン", path: `/plan?id=${id}` },
   { name: "プランの設定", path: `/plan/settings?id=${id}` },
   { name: "月ごとの SPU", path: "/spu?month=2026-10" },
@@ -21,6 +21,7 @@ const pages = (id: string) => [
   { name: "プライバシーポリシー", path: "/privacy" },
   { name: "お問い合わせ", path: "/inquiry" },
   { name: "お知らせ", path: "/notices" },
+  { name: "マラソンの日程と上限", path: "/marathon" },
 ];
 
 /** Opens the page at `path` and waits until it shows its content. */
@@ -33,20 +34,20 @@ async function openReady(page: Page, path: string) {
 // One test per page, like the footer's: the retries of every page together take more than one
 // test's time allows.
 for (const { name } of pages("")) {
-  test(`${name} links to the top and the profile from the header, and 戻る comes back`, async ({
+  test(`${name} links to the top and 共通設定 from the header, and 戻る comes back`, async ({
     page,
   }) => {
     const id = await createPlan(page);
     const path = pages(id).find((p) => p.name === name)?.path ?? "";
     await (await openReady(page, path)).header.goToTop();
 
-    // Retried from the page: a click before the page hydrates loads the profile as a new
+    // Retried from the page: a click before the page hydrates loads 共通設定 as a new
     // document, and 戻る then has no page to go back to.
     await expect(async () => {
-      const profile = await (await openReady(page, path)).header.goToProfile();
-      await expect(profile.heading).toBeVisible();
-      if (path === "/profile") return;
-      await profile.goBack(path, { timeout: 2000 });
+      const settings = await (await openReady(page, path)).header.goToSettings();
+      await expect(settings.heading).toBeVisible();
+      if (path === "/settings") return;
+      await settings.goBack(path, { timeout: 2000 });
     }).toPass();
   });
 }
@@ -58,25 +59,25 @@ test("the header marks the page being shown", async ({ page }) => {
       const { header } = await SitePage.open(page, path);
       if (path === "/") await expect(header.topLink).toHaveAttribute("aria-current", "page");
       else await expect(header.topLink).not.toHaveAttribute("aria-current");
-      if (path === "/profile")
-        await expect(header.profileLink).toHaveAttribute("aria-current", "page");
-      else await expect(header.profileLink).not.toHaveAttribute("aria-current");
+      if (path === "/settings")
+        await expect(header.settingsLink).toHaveAttribute("aria-current", "page");
+      else await expect(header.settingsLink).not.toHaveAttribute("aria-current");
     });
   }
 });
 
-test("on a phone the header has the site name, the color mode and the menu, which has the profile", async ({
+test("on a phone the header has the site name, the color mode and the menu, which has 共通設定", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const { header } = await openReady(page, "/help");
-  await expect(header.profileLink).toBeHidden();
+  await expect(header.settingsLink).toBeHidden();
   await expect(header.colorModeButton).toBeVisible();
   const box = (await header.topLink.boundingBox())!;
   expect(box.height).toBeLessThanOrEqual(44);
 
   const menu = await header.openMenu();
-  await menu.goToProfile();
+  await menu.goToSettings();
   await expect(menu.root).toHaveCount(0);
 });
 
@@ -131,6 +132,7 @@ for (const { name } of pages("")) {
 
 test("the footer links to each page that tells about the site", async ({ page }) => {
   for (const { label, path, heading } of [
+    { label: "マラソンの日程と上限", path: "/marathon", heading: "お買い物マラソンの日程と上限" },
     { label: "お知らせ", path: "/notices", heading: "お知らせ" },
     { label: "使い方・注意事項", path: "/help", heading: "使い方・注意事項" },
     { label: "利用規約", path: "/terms", heading: "利用規約" },
