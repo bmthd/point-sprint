@@ -10,7 +10,7 @@
 
 ## 必要なもの
 
-- [mise](https://mise.jdx.dev/)。Node と pnpm の版は `mise.toml` に書き、`mise install` で入れます。CI とデプロイも `.github/actions/setup` から同じ版を入れます
+- [mise](https://mise.jdx.dev/)。Node と pnpm の版は `package.json` の `devEngines.runtime` と `packageManager` に書き、mise が読みます（`mise.toml`）。`mise install` で入れます。CI とデプロイも `.github/actions/setup` から同じ版を入れます
 - Node は `apps/web/scripts` などの `.ts` を、型を取り除いてそのまま実行します
 
 ## セットアップ

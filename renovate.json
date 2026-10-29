@@ -37,8 +37,8 @@
       "automerge": false
     },
     {
-      "description": "Node / pnpm(mise.toml)は手動レビュー",
-      "matchManagers": ["mise"],
+      "description": "Node / pnpm(package.json の devEngines.runtime と packageManager)は手動レビュー",
+      "matchDepTypes": ["devEngines.runtime", "packageManager"],
       "automerge": false
     }
   ]

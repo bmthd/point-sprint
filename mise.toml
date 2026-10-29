@@ -1,4 +1,4 @@
-# The versions of Node and pnpm, for local work and for every workflow (.github/actions/setup).
-[tools]
-node = "26.12.0"
-pnpm = "12.9.1"
+# The versions of Node and pnpm are in package.json (devEngines.runtime and packageManager). mise
+# reads them there, for local work and for every workflow (.github/actions/setup).
+[settings]
+idiomatic_version_file_enable_tools = ["node", "pnpm"]

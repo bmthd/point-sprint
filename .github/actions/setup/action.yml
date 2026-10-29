@@ -1,5 +1,5 @@
 name: Set up Node and pnpm
-description: Installs the Node and pnpm in mise.toml, and restores the pnpm store when asked.
+description: Installs the Node and pnpm in package.json through mise, and restores the pnpm store when asked.
 
 inputs:
   cache:
