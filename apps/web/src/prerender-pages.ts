@@ -26,9 +26,12 @@ export const prerenderedPages = [
 /**
  * Routes the Worker renders on each request instead. A shared result's page carries its figures in
  * its OGP tags, and its image is drawn from them, both from the query string. The official events
- * come from the event master in D1.
+ * and the marathon's page come from the event master in D1.
  */
-export const pagesRenderedOnRequest = ["/share", "/share/image.png", "/events.json"];
+export const pagesRenderedOnRequest = ["/share", "/share/image.png", "/events.json", "/marathon"];
+
+/** The pages rendered on request that search engines index: the sitemap lists them too. */
+export const indexedPagesRenderedOnRequest = ["/marathon"];
 
 /** HTML files, relative to the client output directory, that the build did not write. */
 export function missingPrerenderedPages(exists: (file: string) => boolean): string[] {

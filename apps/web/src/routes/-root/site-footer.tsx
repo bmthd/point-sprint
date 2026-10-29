@@ -4,6 +4,7 @@ import { RouterLink } from "../../ui/router-link";
 
 /** The footer's links. */
 export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [
+  { to: "/marathon", label: "マラソンの日程と上限" },
   { to: "/notices", label: "お知らせ" },
   { to: "/help", label: "使い方・注意事項" },
   { to: "/terms", label: "利用規約" },
