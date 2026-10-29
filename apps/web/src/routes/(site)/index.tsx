@@ -1,9 +1,8 @@
 import { QueryClient, HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
-import { guideCards } from "./-top/guide-cards";
 import { TopPage } from "./-top/top-page";
-import { loadArticles } from "../../guides/articles";
+import { getGuideCards } from "../../guides/guide-cards.functions";
 import { pageHead, siteName } from "../../page-head";
 import { siteUrl } from "../../site-url";
 import { queryKeys } from "../../state/queries";
@@ -27,7 +26,7 @@ export const Route = createFileRoute("/(site)/")({
   }),
   loader: async ({ serverContext }) => ({
     ...renderedEvents(serverContext?.topPage),
-    articles: guideCards(await loadArticles()),
+    articles: await getGuideCards(),
   }),
   component: TopRoute,
 });

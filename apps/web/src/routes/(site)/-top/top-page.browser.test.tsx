@@ -20,11 +20,11 @@ import { repositoryAtom } from "../../../state/repository";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
 import type { Article } from "../../../guides/article";
+import { guideCards } from "../../../guides/guide-cards";
 import { TestColorMode } from "../../../test-color-mode";
 import { expectTexts } from "../../../test-texts";
 import { officialEventsSourceAtom } from "../../-official-events";
 import { useToday } from "../../-use-today";
-import { guideCards } from "./guide-cards";
 import { TopPage } from "./top-page";
 
 // 2026-10-05 12:00 in Japan: the October marathon (10/4〜10/9) is running.
