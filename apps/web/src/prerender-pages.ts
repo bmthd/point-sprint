@@ -6,7 +6,6 @@ import { siteUrl } from "./site-url.ts";
  * A guide is a page for each file in `src/guides/articles/`.
  */
 export const prerenderedPages = [
-  "/",
   "/plan",
   "/plan/settings",
   "/profile",
@@ -18,17 +17,23 @@ export const prerenderedPages = [
   "/notices",
   "/guides",
   ...guideSlugs().map((slug) => `/guides/${slug}`),
-].map((path) => ({
-  path,
-  file: path === "/" ? "index.html" : `${path.slice(1)}/index.html`,
-}));
+].map((path) => ({ path, file: `${path.slice(1)}/index.html` }));
 
 /**
- * Routes the Worker renders on each request instead. A shared result's page carries its figures in
- * its OGP tags, and its image is drawn from them, both from the query string. The official events
- * come from the event master in D1.
+ * Routes the Worker renders on each request instead. The top page lists the official events from
+ * the event master in D1, and is kept in the cache until they change
+ * (`server/official-events/top-page-cache.ts`). A shared result's page carries its figures in its
+ * OGP tags, and its image is drawn from them, both from the query string. `/events.json` serves the
+ * events.
  */
-export const pagesRenderedOnRequest = ["/share", "/share/image.png", "/events.json"];
+export const pagesRenderedOnRequest = ["/", "/share", "/share/image.png", "/events.json"];
+
+/**
+ * The pages rendered on request that search engines index, which the sitemap lists with the
+ * prerendered ones. The E2E tests check their heads (`e2e/page-head.spec.ts`), as the build does
+ * the prerendered pages'.
+ */
+export const indexedPagesRenderedOnRequest = ["/"];
 
 /** HTML files, relative to the client output directory, that the build did not write. */
 export function missingPrerenderedPages(exists: (file: string) => boolean): string[] {

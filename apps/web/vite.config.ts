@@ -56,6 +56,9 @@ export default defineConfig(({ command, mode, isPreview }) => {
     define: {
       // Today in the HTML rendered ahead of time, which the page starts from while it hydrates.
       "import.meta.env.BUILD_DATE": JSON.stringify(tokyoToday(new Date())),
+      // The key the Worker keeps the top page under carries it: a page of an earlier build loads
+      // scripts the new one no longer has.
+      "import.meta.env.BUILD_ID": JSON.stringify(Date.now().toString(36)),
       "import.meta.env.RAKUTEN_AFFILIATE_ID": JSON.stringify(
         publicEnv.RAKUTEN_AFFILIATE_ID?.trim() || null,
       ),

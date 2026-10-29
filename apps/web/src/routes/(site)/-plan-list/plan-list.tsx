@@ -1,4 +1,4 @@
-import { ClientOnly, useNavigate } from "@tanstack/react-router";
+import { ClientOnly, useHydrated, useNavigate } from "@tanstack/react-router";
 import { type OfficialEvent, type Plan, createPlan } from "@workspaces/domain";
 import { Button, Heading, Modal, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
@@ -16,6 +16,9 @@ import { PlanSection } from "./plan-section";
 export function PlanList({ now = () => new Date() }: { now?: () => Date }) {
   const navigate = useNavigate();
   const today = useToday(now);
+  // The Worker keeps the page it rendered until the events change, so the page holds no day: the
+  // events' statuses and tabs follow the browser's today once the page runs.
+  const hydrated = useHydrated();
   const { mutateAsync: savePlan } = useAtomValue(savePlanAtom);
   const [creating, setCreating] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -66,7 +69,7 @@ export function PlanList({ now = () => new Date() }: { now?: () => Date }) {
     <PageWithSidebar maxW="768px">
       <VStack alignItems="stretch" gap="6">
         <EventSection
-          today={today}
+          today={hydrated ? today : undefined}
           disabled={creating}
           onCreate={request}
           onCreateWithoutEvent={() => request()}

@@ -1,6 +1,11 @@
 // The parts of the Workers runtime modules the server functions use. The plugin's generated types
 // (`.cloudflare/types`) exist only after a dev server or a build has run.
 
+/** The cache of the data center the Worker runs in. */
+interface CacheStorage {
+  readonly default: Cache;
+}
+
 declare module "cloudflare:workers" {
   /** The bindings in `cloudflare.config.ts`. A secret without a value is left out. */
   export const env: {
