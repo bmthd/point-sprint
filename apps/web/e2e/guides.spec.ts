@@ -36,6 +36,11 @@ test("a guide is prerendered as an article", async ({ request }) => {
   expect(html).toContain('<meta property="article:modified_time" content="2026-10-28"/>');
 });
 
+test("the top page links to a guide in its HTML rendered at build time", async ({ request }) => {
+  const html = await (await request.get("/")).text();
+  expect(html).toContain(`href="${GUIDE}"`);
+});
+
 test("the sitemap lists the guide list and every guide", async ({ request }) => {
   const sitemap = await (await request.get("/sitemap.xml")).text();
   expect(sitemap).toContain(`<loc>${siteUrl}/guides</loc>`);

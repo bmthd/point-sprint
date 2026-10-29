@@ -39,13 +39,14 @@ test("/notices has every notice in full, and its HTML rendered at build time too
 });
 
 test("on a wide screen the sidebar is a column to the right of the content", async ({ page }) => {
-  for (const path of withHeadlines) {
+  // The top page is a landing page: its notices and share sit in the page, not in a column.
+  for (const path of withHeadlines.filter((path) => path !== "/")) {
     const { sidebar, main } = await SitePage.open(page, path);
     await expect(sidebar.headlines.getByRole("link", { name: latest.title })).toBeVisible();
     const mainBox = (await main.boundingBox())!;
     const aside = (await sidebar.root.boundingBox())!;
     expect(aside.x, path).toBeGreaterThanOrEqual(mainBox.x + mainBox.width);
-    if (["/", "/inquiry", "/guides"].includes(path)) {
+    if (["/inquiry", "/guides"].includes(path)) {
       expect(Math.abs(aside.y - mainBox.y), path).toBeLessThan(1);
     }
     expect(aside.width, path).toBe(320);

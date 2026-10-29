@@ -2,6 +2,7 @@ import { QueryClient, HydrationBoundary, dehydrate } from "@tanstack/react-query
 import { createFileRoute } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { TopPage } from "./-top/top-page";
+import { loadArticles } from "../../guides/articles";
 import { pageHead, siteName } from "../../page-head";
 import { siteUrl } from "../../site-url";
 import { queryKeys } from "../../state/queries";
@@ -23,7 +24,10 @@ export const Route = createFileRoute("/(site)/")({
       },
     ],
   }),
-  loader: ({ serverContext }) => renderedEvents(serverContext?.topPage),
+  loader: async ({ serverContext }) => ({
+    ...renderedEvents(serverContext?.topPage),
+    articles: await loadArticles(),
+  }),
   component: TopRoute,
 });
 
@@ -32,10 +36,10 @@ export const Route = createFileRoute("/(site)/")({
  * it runs, and the events' statuses and tabs stay where they were rendered.
  */
 function TopRoute() {
-  const { events, today } = Route.useLoaderData();
+  const { events, today, articles } = Route.useLoaderData();
   return (
     <HydrationBoundary state={events}>
-      <TopPage renderedToday={today} />
+      <TopPage articles={articles} renderedToday={today} />
     </HydrationBoundary>
   );
 }

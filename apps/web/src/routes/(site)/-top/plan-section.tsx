@@ -17,7 +17,7 @@ import { useId, useRef, useState } from "react";
 import { accountIdOf } from "../../../state/accounts";
 import { accountSettingsAtom, planResultAtom } from "../../../state/derived";
 import { deletePlanAtom } from "../../../state/mutations";
-import { plansAtom, plansQueryAtom } from "../../../state/queries";
+import { plansAtom } from "../../../state/queries";
 import { formatPeriod } from "../../../ui/dates";
 
 function TrashIcon() {
@@ -81,7 +81,6 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
 /** Plans live on this device, so this section only renders on the client. */
 export function PlanSection() {
   const plans = useAtomValue(plansAtom);
-  const { isSuccess } = useAtomValue(plansQueryAtom);
   const { mutate: deletePlan } = useAtomValue(deletePlanAtom);
   const { open, onOpen, onClose } = useDisclosure();
   const [target, setTarget] = useState<Plan>();
@@ -91,30 +90,27 @@ export function PlanSection() {
 
   const sorted = [...plans].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
 
+  // Nothing to show until there is a plan: the events above are where one starts.
+  if (sorted.length === 0) return null;
+
   return (
     <VStack as="section" aria-labelledby={headingId} gap="2.5" alignItems="stretch">
       <Heading as="h2" id={headingId} fontSize="md" ref={heading} tabIndex={-1}>
-        プラン
+        自分のプラン
       </Heading>
-      {isSuccess && sorted.length === 0 ? (
-        <Text fontSize="sm" color="fg.muted">
-          まだプランがありません。上のボタンから作れます。
-        </Text>
-      ) : (
-        <List.Root gap="2.5">
-          {sorted.map((plan) => (
-            <PlanRow
-              key={plan.id}
-              plan={plan}
-              onDelete={(next) => {
-                setTarget(next);
-                finalFocus.current = null;
-                onOpen();
-              }}
-            />
-          ))}
-        </List.Root>
-      )}
+      <List.Root gap="2.5">
+        {sorted.map((plan) => (
+          <PlanRow
+            key={plan.id}
+            plan={plan}
+            onDelete={(next) => {
+              setTarget(next);
+              finalFocus.current = null;
+              onOpen();
+            }}
+          />
+        ))}
+      </List.Root>
       <Modal.Root
         open={open}
         title="プランを削除しますか？"
@@ -129,8 +125,10 @@ export function PlanSection() {
         onSuccess={() => {
           if (target) deletePlan(target.id);
           onClose();
-          // The delete button is gone, so the dialog cannot hand focus back to it.
-          finalFocus.current = heading.current;
+          // The delete button is gone, so the dialog cannot hand focus back to it. With the last
+          // plan the section goes too, so focus moves to the events above.
+          finalFocus.current =
+            plans.length > 1 ? heading.current : document.querySelector<HTMLElement>("#events h2");
         }}
       />
     </VStack>

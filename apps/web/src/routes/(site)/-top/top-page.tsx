@@ -1,16 +1,21 @@
 import { ClientOnly, useHydrated, useNavigate } from "@tanstack/react-router";
 import { type OfficialEvent, type Plan, createPlan } from "@workspaces/domain";
-import { Box, Button, Heading, Modal, Text, VStack } from "@workspaces/ui";
+import { Box, Button, Modal, SimpleGrid, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { replacePlan, savePlanAtom } from "../../../state/mutations";
 import { plansAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
+import type { Article } from "../../../guides/article";
+import { NoticeHeadlines } from "../../-notices/notice-headlines";
+import { ShareSection } from "../../-sidebar/share-section";
 import { monthOf, tokyoToday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";
 import { useToday } from "../../-use-today";
 import { EventSection } from "./event-section";
+import { GuideCards } from "./guide-cards";
 import { Hero } from "./hero";
+import { HowTo } from "./how-to";
 import { PlanSection } from "./plan-section";
 import { startTarget } from "./start-target";
 
@@ -19,9 +24,11 @@ import { startTarget } from "./start-target";
  * Japan the Worker rendered the page for, which the page keeps until it runs.
  */
 export function TopPage({
+  articles,
   now = () => new Date(),
   renderedToday,
 }: {
+  articles: Article[];
   now?: () => Date;
   renderedToday?: string;
 }) {
@@ -90,6 +97,9 @@ export function TopPage({
     <Box as="main">
       <Hero onStart={start} disabled={creating} />
       <VStack alignItems="stretch" gap="6" maxW="1120px" mx="auto" px="md" pt="md" pb="16">
+        <ClientOnly fallback={null}>
+          <PlanSection />
+        </ClientOnly>
         <EventSection
           today={hydrated ? today : renderedToday}
           disabled={!hydrated || creating}
@@ -101,15 +111,12 @@ export function TopPage({
             プランを作れませんでした。もう一度お試しください。
           </Text>
         ) : null}
-        <ClientOnly
-          fallback={
-            <Heading as="h2" fontSize="md">
-              プラン
-            </Heading>
-          }
-        >
-          <PlanSection />
-        </ClientOnly>
+        <HowTo />
+        <GuideCards articles={articles} />
+        <SimpleGrid columns={{ base: 2, md: 1 }} gap="6" alignItems="start">
+          <NoticeHeadlines />
+          <ShareSection />
+        </SimpleGrid>
         <Modal.Root open={duplicate !== undefined} onClose={() => setDuplicate(undefined)}>
           <Modal.Content>
             <Modal.Header>
