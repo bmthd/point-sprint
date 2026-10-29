@@ -182,7 +182,7 @@ async function renderPlanList(repository: Repository, options: { events?: EventS
   });
   const profileRoute = createRoute({
     getParentRoute: () => root,
-    path: "/profile",
+    path: "/settings",
     component: () => <p>プロフィール画面</p>,
   });
   const router = createRouter({

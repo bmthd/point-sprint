@@ -33,7 +33,7 @@ function BackToCommon() {
   const canGoBack = useCanGoBack();
   return (
     <RouterIconButton
-      to="/profile"
+      to="/settings"
       aria-label="共通設定に戻る"
       onClick={(event) => {
         if (!canGoBack) return;
@@ -176,7 +176,7 @@ function SpuScreen({ month, account }: { month: string; account: string | undefi
               {plan.name}に戻る
             </RouterButton>
           ) : (
-            <RouterButton to="/profile" colorScheme="primary" size="lg" w="full">
+            <RouterButton to="/settings" colorScheme="primary" size="lg" w="full">
               共通設定に戻る
             </RouterButton>
           )}

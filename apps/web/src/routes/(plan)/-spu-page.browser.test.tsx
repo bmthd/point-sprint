@@ -78,14 +78,14 @@ async function renderSpu({
     createRoute({ getParentRoute: () => root, path: "/plan", component: () => <h1>プラン</h1> }),
     createRoute({
       getParentRoute: () => root,
-      path: "/profile",
+      path: "/settings",
       component: () => <h1>共通設定</h1>,
     }),
     createRoute({ getParentRoute: () => root, path: "/spu", component: SpuRoute }),
   ];
   const router = createRouter({
     routeTree: root.addChildren(routes),
-    history: createMemoryHistory({ initialEntries: ["/profile"] }),
+    history: createMemoryHistory({ initialEntries: ["/settings"] }),
   });
   const screen = await render(
     <Providers repository={currentRepository}>

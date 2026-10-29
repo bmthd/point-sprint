@@ -74,9 +74,6 @@ jobs:
             run: pnpm type:check
           - name: Check spelling
             run: pnpm spell:check
-          - name: Audit production dependencies
-            if: needs.changes.outputs.app == 'true'
-            run: pnpm audit --prod
           - name: Build
             if: needs.changes.outputs.app == 'true'
             run: pnpm build

@@ -40,13 +40,13 @@ const fullHead = `<head>
 <meta property="og:site_name" content="ポイントスプリント"/>
 <meta property="og:title" content="プロフィール | ポイントスプリント"/>
 <meta property="og:description" content="説明"/>
-<meta property="og:url" content="${siteUrl}/profile"/>
+<meta property="og:url" content="${siteUrl}/settings"/>
 <meta property="og:image" content="${siteUrl}/opengraph-image.png"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <link rel="icon" href="/favicon.ico" sizes="any"/>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 <link rel="manifest" href="/manifest.json"/>
-<link rel="canonical" href="${siteUrl}/profile"/>
+<link rel="canonical" href="${siteUrl}/settings"/>
 </head>`;
 
 test("a page with every head tag lacks none", () => {
@@ -63,7 +63,7 @@ test("names the head tags a page lacks", () => {
 });
 
 test("a page belongs in the sitemap at its canonical URL unless it is noindex", () => {
-  expect(sitemapEntry(fullHead)).toEqual({ url: `${siteUrl}/profile` });
+  expect(sitemapEntry(fullHead)).toEqual({ url: `${siteUrl}/settings` });
   const noindex = fullHead.replace("</head>", '<meta name="robots" content="noindex"/></head>');
   expect(sitemapEntry(noindex)).toBeUndefined();
 });
@@ -74,7 +74,7 @@ test("an article is in the sitemap with the day it was last changed", () => {
     '<meta property="article:modified_time" content="2026-10-10"/></head>',
   );
   expect(sitemapEntry(article)).toEqual({
-    url: `${siteUrl}/profile`,
+    url: `${siteUrl}/settings`,
     lastModified: "2026-10-10",
   });
 });
@@ -85,7 +85,7 @@ test("an article never changed is in the sitemap with the day it was published",
     '<meta property="article:published_time" content="2026-10-08"/></head>',
   );
   expect(sitemapEntry(article)).toEqual({
-    url: `${siteUrl}/profile`,
+    url: `${siteUrl}/settings`,
     lastModified: "2026-10-08",
   });
 });
