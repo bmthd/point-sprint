@@ -1,4 +1,4 @@
-import { Card, Flex, Heading, Separator, Text, VStack } from "@workspaces/ui";
+import { Badge, Card, Flex, Heading, Separator, Text, VStack } from "@workspaces/ui";
 import { PageWithSidebar } from "../-page-with-sidebar";
 import { NoticeDate } from "../../-notices/notice-date";
 import { ColumnHead } from "../../../ui/column-head";
@@ -12,7 +12,26 @@ import {
 function NoticeArticle({ notice }: { notice: Notice }) {
   return (
     <Flex as="article" id={notice.id} direction="column" gap="2">
-      <NoticeDate date={notice.date} />
+      <Flex align="center" gap="2" wrap="wrap">
+        <NoticeDate date={notice.date} />
+        {notice.release ? (
+          <>
+            <Badge
+              variant="outline"
+              colorScheme="gray"
+              textTransform="none"
+              fontVariantNumeric="tabular-nums"
+            >
+              Ver.{notice.release.version}
+            </Badge>
+            {notice.release.changesCalculation ? (
+              <Badge variant="subtle" colorScheme="warning">
+                計算が変わります
+              </Badge>
+            ) : null}
+          </>
+        ) : null}
+      </Flex>
       <Heading as="h2" fontSize="md">
         {notice.title}
       </Heading>

@@ -22,6 +22,7 @@ import {
 import type { ReactNode } from "react";
 import type { FileRoutesById } from "../../../routeTree.gen";
 import { markdownExtensions } from "./-markdown-extensions";
+import { figureComponents } from "./-markdown-figures";
 import { ColumnHead } from "../../../ui/column-head";
 
 /**
@@ -109,6 +110,11 @@ export const markdownComponents = {
       {children}
     </Heading>
   ),
+  h3: ({ children, id }) => (
+    <Heading as="h3" id={id} fontSize="sm" mt="6" mb="2">
+      {children}
+    </Heading>
+  ),
   p: ({ children }) => (
     <Text my="lg" lineHeight="1.9">
       {children}
@@ -184,6 +190,7 @@ export const markdownComponents = {
       </Card.Body>
     </Card.Root>
   ),
+  ...figureComponents,
   "md-timeline-step": ({ step, children }: { step: string; children?: ReactNode }) => (
     <Timeline.Item>
       <Timeline.Connector>

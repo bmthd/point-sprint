@@ -81,3 +81,59 @@ test.each([
 ])("a broken block throws: $error", ({ source, error }) => {
   expect(() => parse(source)).toThrow(error);
 });
+
+test.each(["flow", "breakdown", "meter", "cards"])(
+  ":::%s turns each row of its table into a row of cells named by their column",
+  (name) => {
+    const [node] = parse(
+      `:::${name} 合計 1,500P\n| 名前 | 計算 | 値 |\n| --- | --- | --- |\n| 通常 | 税抜 50,000円 | 500P |\n| SPU | | 1,000P |\n:::`,
+    ).children;
+    expect(node).toMatchObject({
+      tagName: `md-${name}`,
+      properties: { argument: "合計 1,500P", names: '["通常","SPU"]', amounts: "[500,1000]" },
+      children: [
+        {
+          tagName: `md-${name}-row`,
+          properties: { index: "0" },
+          children: [
+            { tagName: "md-cell", properties: { label: "名前" } },
+            { tagName: "md-cell", properties: { label: "計算" } },
+            { tagName: "md-cell", properties: { label: "値" } },
+          ],
+        },
+        {
+          tagName: `md-${name}-row`,
+          properties: { index: "1" },
+          children: [{}, { tagName: "md-cell", properties: { label: "計算", empty: "true" } }, {}],
+        },
+      ],
+    });
+  },
+);
+
+test(":::compare makes a card of each column, named by the first column", () => {
+  const [node] = parse(
+    ":::compare\n|  | 通常分 | 特典分 |\n| --- | --- | --- |\n| 対象 | 税込 | 税抜 |\n| ポイント | 55P | 50P |\n:::",
+  ).children;
+  expect(node).toMatchObject({
+    tagName: "md-compare",
+    children: [
+      {
+        tagName: "md-compare-item",
+        properties: { title: "通常分" },
+        children: [
+          { tagName: "md-cell", properties: { label: "対象" } },
+          { tagName: "md-cell", properties: { label: "ポイント" } },
+        ],
+      },
+      { tagName: "md-compare-item", properties: { title: "特典分" } },
+    ],
+  });
+});
+
+test.each(["flow", "breakdown", "meter", "cards", "compare"])(
+  ":::%s without a table fails the build",
+  (name) => {
+    expect(() => parse(`:::${name}\n- 表ではない\n:::`)).toThrow(`:::${name} holds one table`);
+  },
+);

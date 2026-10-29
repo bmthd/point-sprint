@@ -11,16 +11,20 @@ const latest = newestFirst(notices)[0]!;
 const withHeadlines = ["/", "/help", "/terms", "/privacy", "/inquiry", "/guides"];
 const withoutSidebar = ["/profile", "/spu", "/plan", "/plan/settings"];
 
+// The headline is a link with the notice's title. The header's version links to the same notice
+// on every page, but with the version as its text.
+const headline = new RegExp(`<a [^>]*href="/notices#${latest.id}"[^>]*>${latest.title}</a>`);
+
 test("the HTML rendered at build time has the headlines on the pages that read", async ({
   request,
 }) => {
   for (const path of withHeadlines) {
     const html = await (await request.get(path)).text();
-    expect(html, path).toContain(`href="/notices#${latest.id}"`);
+    expect(html, path).toMatch(headline);
   }
   for (const path of [...withoutSidebar, "/notices"]) {
     const html = await (await request.get(path)).text();
-    expect(html, path).not.toContain(`href="/notices#${latest.id}"`);
+    expect(html, path).not.toMatch(headline);
   }
 });
 

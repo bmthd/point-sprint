@@ -107,3 +107,31 @@ test("/notices says so when there is no notice", async () => {
   await renderAt("/notices", []);
   await expect.element(page.getByRole("main").getByText("お知らせはありません。")).toBeVisible();
 });
+
+test("/notices shows the version of a notice that raises it, and whether the calculation changed", async () => {
+  await renderAt("/notices", [
+    { ...notice("2026-10-01", "バージョンのないお知らせ") },
+    {
+      ...notice("2026-10-02", "機能の更新"),
+      release: { version: "1.0", changesCalculation: false },
+    },
+    {
+      ...notice("2026-10-03", "計算の直し"),
+      release: { version: "2.0", changesCalculation: true },
+    },
+  ]);
+  // The card holding every notice is an article too, so the notice is the innermost match.
+  const article = (title: string) =>
+    page
+      .getByRole("article")
+      .filter({ has: page.getByRole("heading", { name: title }) })
+      .last();
+
+  await expect.element(article("機能の更新").getByText("Ver.1.0")).toBeVisible();
+  await expect.element(article("機能の更新").getByText("計算が変わります")).not.toBeInTheDocument();
+  await expect.element(article("計算の直し").getByText("Ver.2.0")).toBeVisible();
+  await expect.element(article("計算の直し").getByText("計算が変わります")).toBeVisible();
+  await expect
+    .element(article("バージョンのないお知らせ").getByText("Ver.", { exact: false }))
+    .not.toBeInTheDocument();
+});

@@ -1,6 +1,7 @@
 import {
   type Benefit,
   CARRIED_SPU_IDS,
+  SPU_PAGE,
   type Plan,
   channels,
   plansUsingSpuMonth,
@@ -40,9 +41,6 @@ import { ExternalIcon, ForwardIcon } from "../../../ui/icons";
 import { RouterButton } from "../../../ui/router-link";
 import { imageUrl } from "../-order-shared";
 import { monthDay, monthText, useSpuOffMessages } from "../-warnings";
-
-/** Rakuten's page where users check their own SPU. */
-const SPU_PAGE_URL = "https://event.rakuten.co.jp/campaign/point-up/everyday/point/";
 
 type RateBenefit = Extract<Benefit, { kind: "rate-bonus" }>;
 
@@ -184,7 +182,7 @@ function CapBadge(props: BadgeProps) {
 function SpuLink(props: LinkProps) {
   return (
     <Link
-      href={SPU_PAGE_URL}
+      href={SPU_PAGE.url}
       color="link"
       target="_blank"
       rel="noreferrer"

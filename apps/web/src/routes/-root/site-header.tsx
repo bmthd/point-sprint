@@ -16,6 +16,7 @@ import { RouterLink } from "../../ui/router-link";
 import { CloseIcon } from "../../ui/icons";
 import { ResetDataButton } from "../-reset-data";
 import { SiteSidebar } from "../-sidebar/sidebar";
+import { ReleaseLink } from "./release-link";
 
 function CommonSettingsLink() {
   return (
@@ -62,7 +63,7 @@ function ColorModeButton() {
 }
 
 /**
- * The header on every page: the site name (to the top) and the profile. The router marks the link
+ * The header on every page: the site name (to the top), the site's version and the profile. The router marks the link
  * to the page being shown with `aria-current="page"`. The color mode switch is on every width, left of
  * the profile link or the menu. The profile link spells out its name: it moves to a page, unlike
  * the icon buttons that act in place. At the `lg` breakpoint and below the site name leaves no room
@@ -96,6 +97,7 @@ export function SiteHeader() {
           ポイントスプリント
         </RouterLink>
         <Flex align="center" gap="1">
+          <ReleaseLink />
           <ColorModeButton />
           <Box display={{ base: "contents", lg: "none" }}>
             <CommonSettingsLink />

@@ -12,6 +12,7 @@ export const prerenderedPages = [
   "/profile",
   "/spu",
   "/help",
+  "/calculation",
   "/terms",
   "/privacy",
   "/inquiry",

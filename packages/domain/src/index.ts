@@ -109,6 +109,13 @@ export {
 } from "./master/spu";
 export { campaignTemplates } from "./master/campaigns";
 export {
+  type BenefitSource,
+  type OfficialSource,
+  SPU_PAGE,
+  campaignSources,
+  spuSource,
+} from "./master/sources";
+export {
   type CampaignInput,
   campaignInputOf,
   editCampaign,

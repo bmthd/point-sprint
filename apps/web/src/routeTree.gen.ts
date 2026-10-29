@@ -20,6 +20,7 @@ import { Route as siteInquiryRouteImport } from './routes/(site)/inquiry'
 import { Route as siteNoticesRouteImport } from './routes/(site)/notices'
 import { Route as ShareImageDotpngRouteImport } from './routes/share_.image[.]png'
 import { Route as planPlanSettingsRouteImport } from './routes/(plan)/plan_.settings'
+import { Route as sitemarkdownCalculationRouteImport } from './routes/(site)/(markdown)/calculation'
 import { Route as sitemarkdownHelpRouteImport } from './routes/(site)/(markdown)/help'
 import { Route as sitemarkdownPrivacyRouteImport } from './routes/(site)/(markdown)/privacy'
 import { Route as sitemarkdownTermsRouteImport } from './routes/(site)/(markdown)/terms'
@@ -80,6 +81,11 @@ const planPlanSettingsRoute = planPlanSettingsRouteImport.update({
   path: '/plan/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const sitemarkdownCalculationRoute = sitemarkdownCalculationRouteImport.update({
+  id: '/calculation',
+  path: '/calculation',
+  getParentRoute: () => sitemarkdownRouteRoute,
+} as any)
 const sitemarkdownHelpRoute = sitemarkdownHelpRouteImport.update({
   id: '/help',
   path: '/help',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/share/image.png': typeof ShareImageDotpngRoute
   '/': typeof siteIndexRoute
   '/plan/settings': typeof planPlanSettingsRoute
+  '/calculation': typeof sitemarkdownCalculationRoute
   '/help': typeof sitemarkdownHelpRoute
   '/privacy': typeof sitemarkdownPrivacyRoute
   '/terms': typeof sitemarkdownTermsRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/share/image.png': typeof ShareImageDotpngRoute
   '/': typeof siteIndexRoute
   '/plan/settings': typeof planPlanSettingsRoute
+  '/calculation': typeof sitemarkdownCalculationRoute
   '/help': typeof sitemarkdownHelpRoute
   '/privacy': typeof sitemarkdownPrivacyRoute
   '/terms': typeof sitemarkdownTermsRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/share_/image.png': typeof ShareImageDotpngRoute
   '/(site)/': typeof siteIndexRoute
   '/(plan)/plan_/settings': typeof planPlanSettingsRoute
+  '/(site)/(markdown)/calculation': typeof sitemarkdownCalculationRoute
   '/(site)/(markdown)/help': typeof sitemarkdownHelpRoute
   '/(site)/(markdown)/privacy': typeof sitemarkdownPrivacyRoute
   '/(site)/(markdown)/terms': typeof sitemarkdownTermsRoute
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
     | '/share/image.png'
     | '/'
     | '/plan/settings'
+    | '/calculation'
     | '/help'
     | '/privacy'
     | '/terms'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/share/image.png'
     | '/'
     | '/plan/settings'
+    | '/calculation'
     | '/help'
     | '/privacy'
     | '/terms'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/share_/image.png'
     | '/(site)/'
     | '/(plan)/plan_/settings'
+    | '/(site)/(markdown)/calculation'
     | '/(site)/(markdown)/help'
     | '/(site)/(markdown)/privacy'
     | '/(site)/(markdown)/terms'
@@ -307,6 +319,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof planPlanSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(site)/(markdown)/calculation': {
+      id: '/(site)/(markdown)/calculation'
+      path: '/calculation'
+      fullPath: '/calculation'
+      preLoaderRoute: typeof sitemarkdownCalculationRouteImport
+      parentRoute: typeof sitemarkdownRouteRoute
+    }
     '/(site)/(markdown)/help': {
       id: '/(site)/(markdown)/help'
       path: '/help'
@@ -346,6 +365,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface sitemarkdownRouteRouteChildren {
+  sitemarkdownCalculationRoute: typeof sitemarkdownCalculationRoute
   sitemarkdownHelpRoute: typeof sitemarkdownHelpRoute
   sitemarkdownPrivacyRoute: typeof sitemarkdownPrivacyRoute
   sitemarkdownTermsRoute: typeof sitemarkdownTermsRoute
@@ -354,6 +374,7 @@ interface sitemarkdownRouteRouteChildren {
 }
 
 const sitemarkdownRouteRouteChildren: sitemarkdownRouteRouteChildren = {
+  sitemarkdownCalculationRoute: sitemarkdownCalculationRoute,
   sitemarkdownHelpRoute: sitemarkdownHelpRoute,
   sitemarkdownPrivacyRoute: sitemarkdownPrivacyRoute,
   sitemarkdownTermsRoute: sitemarkdownTermsRoute,
