@@ -21,6 +21,7 @@ const pages = (id: string) => [
   { name: "プライバシーポリシー", path: "/privacy" },
   { name: "お問い合わせ", path: "/inquiry" },
   { name: "お知らせ", path: "/notices" },
+  { name: "マラソンの日程と上限", path: "/marathon" },
 ];
 
 /** Opens the page at `path` and waits until it shows its content. */
@@ -131,6 +132,7 @@ for (const { name } of pages("")) {
 
 test("the footer links to each page that tells about the site", async ({ page }) => {
   for (const { label, path, heading } of [
+    { label: "マラソンの日程と上限", path: "/marathon", heading: "お買い物マラソンの日程と上限" },
     { label: "お知らせ", path: "/notices", heading: "お知らせ" },
     { label: "使い方・注意事項", path: "/help", heading: "使い方・注意事項" },
     { label: "利用規約", path: "/terms", heading: "利用規約" },

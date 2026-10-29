@@ -3,7 +3,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { expect, test } from "vitest";
 import { collectEvents } from "./collect-events";
 import { MARATHON_URL, SCHEDULE_URL } from "./event-pages";
-import { d1EventStore, publishedEvents } from "./event-store";
+import { d1EventStore, lastCheckedAt, publishedEvents } from "./event-store";
 import { memoryD1 } from "../shared/memory-d1";
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
@@ -103,4 +103,16 @@ test("logs a failed run without writing when the schedule page cannot be fetched
   expect(runs(sqlite)).toEqual([
     { outcome: "failed", message: "スケジュールのページを取得できない（HTTP 503）" },
   ]);
+});
+
+test("the last check is the latest run that did not fail", async () => {
+  const { db, sqlite } = memoryD1();
+  expect(await lastCheckedAt(db)).toBeUndefined();
+  sqlite.exec(
+    `INSERT INTO collection_runs (started_at, outcome, message) VALUES
+       ('2026-10-28T19:05:00.000Z', 'ok', '変更なし'),
+       ('2026-10-29T01:05:00.000Z', 'warning', '上限が 500'),
+       ('2026-10-29T07:05:00.000Z', 'failed', 'スケジュールのページを取得できない')`,
+  );
+  expect(await lastCheckedAt(db)).toBe("2026-10-29T01:05:00.000Z");
 });
