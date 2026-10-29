@@ -589,3 +589,79 @@ test("shows each plan's account only once accounts are told apart", async () => 
     "メインのプランメイン・10/1〜10/31・1店舗・1件200P",
   ]);
 });
+
+test("names the tool in the top heading", async () => {
+  const { screen } = await renderPlanList(createMemoryRepository());
+  await expect
+    .element(
+      screen.getByRole("heading", { level: 1, name: "楽天お買い物マラソンのポイント計算ツール" }),
+    )
+    .toBeVisible();
+});
+
+test("starts a plan for the one event running", async () => {
+  const repository = createMemoryRepository();
+  const { screen, router } = await renderPlanList(repository);
+  // Wait for the events: until they load, the button only leads to the list.
+  await expect.element(screen.getByText("開催中")).toBeVisible();
+
+  await screen.getByRole("button", { name: "計算をはじめる" }).click();
+
+  await expect.poll(() => router.state.location.pathname).toBe("/plan");
+  const [created] = await repository.plans.list();
+  expect(created?.officialEventId).toBe("marathon-2026-10");
+});
+
+test("asks before starting a plan whose name is taken", async () => {
+  const repository = createMemoryRepository({
+    plans: [plan(PLAN_A, "10月 お買い物マラソン&ジャンル祭", "2026-10-01T00:00:00.000Z", 0)],
+  });
+  const { screen } = await renderPlanList(repository);
+  await expect.element(screen.getByText("開催中")).toBeVisible();
+
+  await screen.getByRole("button", { name: "計算をはじめる" }).click();
+
+  await expect
+    .element(screen.getByRole("dialog", { name: "同じ名前のプランがあります" }))
+    .toBeVisible();
+  expect(await repository.plans.list()).toHaveLength(1);
+});
+
+test("takes the visitor to the events when two are running", async () => {
+  const repository = createMemoryRepository();
+  const second = marathon({
+    id: "marathon-2026-10-second",
+    name: "お買い物マラソン別枠",
+    start: "2026-10-04",
+    end: "2026-10-09",
+  });
+  const { screen, router } = await renderPlanList(repository, {
+    events: { load: async () => [servedEvents[1] as OfficialEvent, second] },
+  });
+  await expect.element(screen.getByText("お買い物マラソン別枠")).toBeVisible();
+
+  await screen.getByRole("button", { name: "計算をはじめる" }).click();
+
+  await expect.element(screen.getByRole("heading", { name: "イベント" })).toHaveFocus();
+  expect(router.state.location.pathname).toBe("/");
+  expect(await repository.plans.list()).toHaveLength(0);
+});
+
+test("takes the visitor to the events while they cannot be read", async () => {
+  const repository = createMemoryRepository();
+  const { screen, router } = await renderPlanList(repository, {
+    events: {
+      load: async () => {
+        throw new Error("offline");
+      },
+    },
+  });
+  await expect
+    .element(screen.getByRole("tabpanel").getByText("イベントを読み込めませんでした"))
+    .toBeVisible();
+
+  await screen.getByRole("button", { name: "計算をはじめる" }).click();
+
+  expect(router.state.location.pathname).toBe("/");
+  expect(await repository.plans.list()).toHaveLength(0);
+});

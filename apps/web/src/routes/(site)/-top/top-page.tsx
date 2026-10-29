@@ -1,16 +1,18 @@
 import { ClientOnly, useHydrated, useNavigate } from "@tanstack/react-router";
 import { type OfficialEvent, type Plan, createPlan } from "@workspaces/domain";
-import { Button, Heading, Modal, Text, VStack } from "@workspaces/ui";
+import { Box, Button, Heading, Modal, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { replacePlan, savePlanAtom } from "../../../state/mutations";
 import { plansAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
-import { PageWithSidebar } from "../-page-with-sidebar";
 import { monthOf, tokyoToday } from "../../../ui/dates";
+import { officialEventsQueryAtom } from "../../-official-events";
 import { useToday } from "../../-use-today";
 import { EventSection } from "./event-section";
+import { Hero } from "./hero";
 import { PlanSection } from "./plan-section";
+import { startTarget } from "./start-target";
 
 /**
  * What `now` is overridden by in tests; the default is the real clock. `renderedToday` is the day in
@@ -35,6 +37,15 @@ export function TopPage({
   const plans = useAtomValue(plansAtom);
   const [duplicate, setDuplicate] = useState<{ existing: Plan; event?: OfficialEvent }>();
   const run = useSingleFlight();
+  const events = useAtomValue(officialEventsQueryAtom).data;
+
+  const start = () => {
+    const target = startTarget(events, today);
+    if (target.kind === "create") return request(target.event);
+    const section = document.getElementById("events");
+    section?.scrollIntoView({ behavior: "smooth", block: "start" });
+    section?.querySelector<HTMLElement>("h2")?.focus({ preventScroll: true });
+  };
 
   const nameOf = (event: OfficialEvent | undefined, date: Date) => {
     const month = monthOf(event ? event.period.start : tokyoToday(date));
@@ -76,8 +87,9 @@ export function TopPage({
     });
 
   return (
-    <PageWithSidebar maxW="768px">
-      <VStack alignItems="stretch" gap="6">
+    <Box as="main">
+      <Hero onStart={start} disabled={creating} />
+      <VStack alignItems="stretch" gap="6" maxW="1120px" mx="auto" px="md" pt="md" pb="16">
         <EventSection
           today={hydrated ? today : renderedToday}
           disabled={!hydrated || creating}
@@ -135,6 +147,6 @@ export function TopPage({
           </Modal.Content>
         </Modal.Root>
       </VStack>
-    </PageWithSidebar>
+    </Box>
   );
 }
