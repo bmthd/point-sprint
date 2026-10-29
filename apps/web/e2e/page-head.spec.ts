@@ -1,3 +1,5 @@
+import { missingGoogleTagScripts } from "../src/google-tags/scripts";
+import { indexedPagesRenderedOnRequest, missingHeadTags } from "../src/prerender-pages";
 import { siteUrl } from "../src/site-url";
 import { expect, test, fixDate } from "./fixtures";
 import { PlanSettingsPage, SitePage, TopPage } from "./pages";
@@ -19,6 +21,17 @@ test("each page has its own title", async ({ page }) => {
   for (const { path, title } of pages) {
     await SitePage.open(page, path);
     await expect(page).toHaveTitle(title);
+  }
+});
+
+// The build checks the prerendered pages' heads (scripts/check-prerender.ts); these the Worker renders.
+test("the pages rendered on request have every head tag and the Google tags", async ({
+  request,
+}) => {
+  for (const path of indexedPagesRenderedOnRequest) {
+    const html = await (await request.get(path)).text();
+    expect(missingHeadTags(html), path).toEqual([]);
+    expect(missingGoogleTagScripts(html), path).toEqual([]);
   }
 });
 
@@ -61,7 +74,7 @@ test("robots.txt points to the sitemap on the site's domain", async ({ request }
   expect(robots).toContain(`Sitemap: ${siteUrl}/sitemap.xml`);
 });
 
-test("the prerendered top page names the site for search results", async ({ request }) => {
+test("the top page names the site for search results", async ({ request }) => {
   const html = await (await request.get("/")).text();
   const json = /<script type="application\/ld\+json">(.*?)<\/script>/.exec(html)?.[1];
   expect(JSON.parse(json ?? "null")).toEqual({

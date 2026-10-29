@@ -1,4 +1,3 @@
-import { ClientOnly } from "@tanstack/react-router";
 import type { OfficialEvent } from "@workspaces/domain";
 import {
   Badge,
@@ -252,7 +251,10 @@ function EventTabs({
   );
 }
 
-/** The events, read from the Worker once the page runs. */
+/**
+ * The events the page was rendered with, or read from the Worker once the page runs when it was
+ * not: on a visit from another page, or when the Worker could not read them.
+ */
 function EventList({ today, disabled, onCreate }: EventListProps) {
   const { data, isPending, isError, refetch } = useAtomValue(officialEventsQueryAtom);
   // Until a tab is chosen, the ended events show when nothing is ahead.
@@ -442,10 +444,7 @@ type EventSectionProps = {
   onCreateWithoutEvent: () => void;
 };
 
-/**
- * The events come from the Worker, so the HTML rendered ahead of time has only the heading, the
- * tabs with grayed cards, and the button that needs no event.
- */
+/** The events, and the button that needs no event. */
 export function EventSection({
   today,
   disabled,
@@ -454,13 +453,7 @@ export function EventSection({
 }: EventSectionProps) {
   return (
     <VStack as="section" gap="2.5" alignItems="stretch">
-      <ClientOnly
-        fallback={
-          <EventTabs index={0} ahead={<EventListSkeleton />} ended={<EventListSkeleton />} />
-        }
-      >
-        <EventList today={today} disabled={disabled} onCreate={onCreate} />
-      </ClientOnly>
+      <EventList today={today} disabled={disabled} onCreate={onCreate} />
       <Button
         variant="ghost"
         colorScheme="link"

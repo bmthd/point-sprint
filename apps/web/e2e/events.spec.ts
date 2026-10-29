@@ -26,3 +26,26 @@ test("the marathon's page has the rounds in its HTML, before any script runs", a
   expect(html).toContain("お買い物マラソン第三弾");
   expect(html).toContain("7,000P");
 });
+
+test("plan buttons wait for hydration before accepting clicks", async ({ page }) => {
+  let releaseScripts = () => {};
+  const scripts = new Promise<void>((resolve) => {
+    releaseScripts = resolve;
+  });
+  await page.route("**/assets/*.js", async (route) => {
+    await scripts;
+    await route.continue();
+  });
+  await page.goto("/", { waitUntil: "commit" });
+  const top = new TopPage(page);
+  try {
+    await expect(top.createPlanButton).toBeVisible();
+    await expect(top.createPlanButton).toBeDisabled();
+    await expect(top.createPlanWithoutEventButton).toBeDisabled();
+  } finally {
+    releaseScripts();
+  }
+  await expect(top.createPlanButton).toBeEnabled();
+  await expect(top.createPlanWithoutEventButton).toBeEnabled();
+  await top.createPlan();
+});

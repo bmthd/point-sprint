@@ -9,4 +9,6 @@ interface ImportMetaEnv {
    * is plain text in the `.env` files and needs no key to read.
    */
   readonly RAKUTEN_AFFILIATE_ID?: string | null;
+  /** Tells the builds apart, put in by `vite.config.ts`; not set in tests. */
+  readonly BUILD_ID?: string;
 }
