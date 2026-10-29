@@ -80,7 +80,7 @@ export function PlanList({
       <VStack alignItems="stretch" gap="6">
         <EventSection
           today={hydrated ? today : renderedToday}
-          disabled={creating}
+          disabled={!hydrated || creating}
           onCreate={request}
           onCreateWithoutEvent={() => request()}
         />
