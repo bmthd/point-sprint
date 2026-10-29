@@ -35,6 +35,11 @@
       "description": "0.x とプレリリース(cf beta など)は minor/patch でも破壊的変更があり得るので手動レビュー",
       "matchCurrentVersion": "/^[\\^~]?v?0\\.|-/",
       "automerge": false
+    },
+    {
+      "description": "Node / pnpm(mise.toml)は手動レビュー",
+      "matchManagers": ["mise"],
+      "automerge": false
     }
   ]
 }
