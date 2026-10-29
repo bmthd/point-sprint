@@ -10,12 +10,13 @@
 
 ## 必要なもの
 
-- Node 26。CI とデプロイは `pnpm/setup` の `runtime: node@26` で動きます。`apps/web/scripts` などの `.ts` は、Node が型を取り除いてそのまま実行します
-- pnpm 12.9.1。`package.json` の `packageManager` に合わせます
+- [mise](https://mise.jdx.dev/)。Node と pnpm の版は `mise.toml` に書き、`mise install` で入れます。CI とデプロイも `.github/actions/setup` から同じ版を入れます
+- Node は `apps/web/scripts` などの `.ts` を、型を取り除いてそのまま実行します
 
 ## セットアップ
 
 ```sh
+mise install
 pnpm install
 # pnpm test のブラウザテスト（web-browser）と E2E が使う Chromium を入れる
 pnpm --filter web exec playwright install chromium

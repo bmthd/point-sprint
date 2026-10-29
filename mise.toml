@@ -1,0 +1,4 @@
+# The versions of Node and pnpm, for local work and for every workflow (.github/actions/setup).
+[tools]
+node = "26.12.0"
+pnpm = "12.9.1"

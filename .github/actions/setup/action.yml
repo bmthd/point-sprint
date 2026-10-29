@@ -1,0 +1,22 @@
+name: Set up Node and pnpm
+description: Installs the Node and pnpm in mise.toml, and restores the pnpm store when asked.
+
+inputs:
+  cache:
+    description: Whether to restore the pnpm store, keyed on the lockfile, and save it after the job.
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+    - id: store
+      if: inputs.cache == 'true'
+      shell: bash
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+    - if: inputs.cache == 'true'
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ${{ steps.store.outputs.path }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: ${{ runner.os }}-pnpm-store-

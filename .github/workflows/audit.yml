@@ -38,9 +38,7 @@ jobs:
         with:
           persist-credentials: false
       # pnpm audit reads only the lockfile, so it needs no install.
-      - uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
-        with:
-          runtime: node@26
+      - uses: ./.github/actions/setup
       - id: audit
         name: Audit production dependencies
         # A failed audit fails the step, not only `tee`.
