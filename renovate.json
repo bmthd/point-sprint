@@ -1,17 +1,40 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "timezone": "Asia/Tokyo",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigestsToSemver",
+    ":timezone(Asia/Tokyo)"
+  ],
   "schedule": ["before 9am on monday"],
+  "minimumReleaseAge": "1 day",
+  "internalChecksFilter": "strict",
+  "rangeStrategy": "bump",
+  "platformAutomerge": false,
   "lockFileMaintenance": {
     "enabled": true,
+    "automerge": true,
     "schedule": ["before 9am on monday"]
   },
-  "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "non-major dependencies"
+      "description": "react / react-dom / 型定義は揃えて上げる",
+      "groupName": "react",
+      "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"]
+    },
+    {
+      "description": "GitHub Actions はまとめて1PRに",
+      "groupName": "GitHub Actions",
+      "matchManagers": ["github-actions"]
+    },
+    {
+      "description": "安定版の minor / patch と Actions のダイジェスト更新は CI が通れば自動マージ",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "0.x とプレリリース(cf beta など)は minor/patch でも破壊的変更があり得るので手動レビュー",
+      "matchCurrentVersion": "/^[\\^~]?v?0\\.|-/",
+      "automerge": false
     }
   ]
 }
