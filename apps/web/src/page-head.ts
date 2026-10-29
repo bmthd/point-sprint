@@ -2,10 +2,13 @@ import { useEffect } from "react";
 import { siteUrl } from "./site-url";
 
 export const siteName = "ポイントスプリント";
-/** The top page's title, and the one shared on social media for the whole site. */
-export const defaultTitle = `${siteName} 楽天市場お買い物マラソン攻略計算ツール`;
+/**
+ * The top page's title, and the one shared on social media for the whole site. It leads with the
+ * words people search for, as search results show the site's name on a line of its own.
+ */
+export const defaultTitle = `楽天お買い物マラソン ポイント計算ツール｜買いまわり・SPU・上限 | ${siteName}`;
 export const defaultDescription =
-  "楽天市場のお買い物マラソンに特化した計算ツール。厳密な還元率、獲得上限に対応。あなたのポイ活を応援します。";
+  "お買い物マラソンの買いまわり・SPU・上限を、ショップごとの金額を入れるだけで計算。獲得予定のポイントと還元率、上限まであといくら買えるかがわかります。0と5のつく日などのキャンペーンにも対応。無料・登録不要。";
 
 /** The title of a page other than the top: "プロフィール | ポイントスプリント". */
 export function pageTitle(title: string) {
