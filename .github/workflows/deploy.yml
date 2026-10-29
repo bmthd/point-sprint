@@ -32,10 +32,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # Takes the pnpm version from packageManager in package.json.
-      - uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
+      - uses: ./.github/actions/setup
         with:
-          runtime: node@26
           cache: true
       - run: pnpm install --frozen-lockfile
       # dotenvx decrypts the Rakuten keys in .env.production, which the prerendering of the guides

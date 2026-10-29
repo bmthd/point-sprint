@@ -25,9 +25,7 @@ jobs:
         with:
           persist-credentials: false
       # The check reads the site's /events.json, so it needs Node to strip the types but no install.
-      - uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1
-        with:
-          runtime: node@26
+      - uses: ./.github/actions/setup
       - id: check
         name: Check the served events
         continue-on-error: true
