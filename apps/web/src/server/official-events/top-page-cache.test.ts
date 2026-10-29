@@ -36,9 +36,10 @@ function topPageServer({ build = "b1", cache = memoryCache() } = {}) {
   const get = async (path = "/", init?: RequestInit) => {
     const response = await cachedTopPage({
       request: new Request(`https://point-sprint.example${path}`, init),
-      render: async () => {
+      render: async (_request, snapshot) => {
         renders += 1;
-        const names = events instanceof Error ? "" : events.map((event) => event.name).join(",");
+        const names =
+          snapshot?.kind === "ready" ? snapshot.events.map((event) => event.name).join(",") : "";
         return new Response(`<html>${names}</html>`, { headers: { "set-by": "render" } });
       },
       events: read,
@@ -127,4 +128,80 @@ test("keeps only GET / without a query", async () => {
   await server.get("/share");
   expect(server.renders()).toBe(3);
   expect(server.cache.size()).toBe(0);
+});
+
+test("renders from the events already read even if the source becomes unavailable", async () => {
+  const cache = memoryCache();
+  const pending: Promise<unknown>[] = [];
+  let reads = 0;
+  const get = () =>
+    cachedTopPage({
+      request: new Request("https://point-sprint.example/"),
+      events: async () => {
+        reads += 1;
+        if (reads > 1) throw new Error("D1 became unavailable");
+        return [marathon];
+      },
+      render: async (_request, snapshot) =>
+        new Response(
+          snapshot?.kind === "ready"
+            ? `${snapshot.today}: ${snapshot.events.map((event) => event.name).join(",")}`
+            : "events unavailable",
+        ),
+      cache,
+      build: "b1",
+      today: "2026-10-12",
+      waitUntil: (promise) => pending.push(promise),
+    });
+  expect(await (await get()).text()).toBe("2026-10-12: お買い物マラソン第二弾");
+  await Promise.all(pending);
+  expect(reads).toBe(1);
+  expect(cache.size()).toBe(1);
+  expect(await (await get()).text()).toBe("events unavailable");
+  expect(cache.size()).toBe(1);
+});
+
+test("does not retain a failed read and renders events once the source recovers", async () => {
+  const server = topPageServer();
+  server.setEvents(new Error("D1 is down"));
+  expect(await (await server.get()).text()).toBe("<html></html>");
+  expect(server.cache.size()).toBe(0);
+  server.setEvents([marathon]);
+  expect(await (await server.get()).text()).toBe("<html>お買い物マラソン第二弾</html>");
+  await server.get();
+  expect(server.renders()).toBe(2);
+});
+
+test("caches a successfully read empty event list", async () => {
+  const server = topPageServer();
+  server.setEvents([]);
+  expect(await (await server.get()).text()).toBe("<html></html>");
+  await server.get();
+  expect(server.renders()).toBe(1);
+  expect(server.cache.size()).toBe(1);
+});
+
+test("renders the snapshot without caching on query requests and HEAD requests", async () => {
+  const server = topPageServer();
+  for (const response of [
+    await server.get("/?utm_source=x"),
+    await server.get("/", { method: "HEAD" }),
+  ]) {
+    expect(await response.text()).toBe("<html>お買い物マラソン第二弾</html>");
+  }
+  expect(server.cache.size()).toBe(0);
+});
+
+test("provides the snapshot when the cache is disabled", async () => {
+  const response = await cachedTopPage({
+    request: new Request("https://point-sprint.example/"),
+    events: async () => [marathon],
+    render: (_request, snapshot) => Response.json(snapshot),
+    build: "dev",
+    today: "2026-10-12",
+    waitUntil: () => {
+      throw new Error("must not store a page");
+    },
+  });
+  expect(await response.json()).toEqual({ kind: "ready", events: [marathon], today: "2026-10-12" });
 });

@@ -5,7 +5,7 @@ import { PlanList } from "./-plan-list/plan-list";
 import { pageHead, siteName } from "../../page-head";
 import { siteUrl } from "../../site-url";
 import { queryKeys } from "../../state/queries";
-import { tokyoToday } from "../../ui/dates";
+import type { TopPageSnapshot } from "../../server/official-events/top-page-cache";
 
 export const Route = createFileRoute("/(site)/")({
   head: () => ({
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/(site)/")({
       },
     ],
   }),
-  loader: () => renderedEvents(),
+  loader: ({ serverContext }) => renderedEvents(serverContext?.topPage),
   component: TopPage,
 });
 
@@ -40,30 +40,12 @@ function TopPage() {
   );
 }
 
-/**
- * The published events, as the query's state, and today in Japan, for the page the Worker renders.
- * No events when the event master cannot be read, so that the page loads them as it does on the
- * client, where the query reads `/events.json` itself and the browser's today is known.
- */
+/** Seed the existing query from the same snapshot used to choose the HTML cache key. */
 const renderedEvents = createIsomorphicFn()
-  .server(async () => {
-    // Handler imports: see ../../../../../docs/server-imports.md.
-    const [{ env }, { publishedEvents }, { devMigrated }] = await Promise.all([
-      import("cloudflare:workers"),
-      import("../../server/official-events/event-store"),
-      import("../../server/shared/dev-migrations.worker"),
-    ]);
-    const today = tokyoToday(new Date());
-    try {
-      const client = new QueryClient();
-      client.setQueryData(
-        queryKeys.officialEvents,
-        await publishedEvents(await devMigrated(env.EVENTS_DB)),
-      );
-      return { events: dehydrate(client), today };
-    } catch (error) {
-      console.error("The top page is rendered without the events", error);
-      return { events: undefined, today };
-    }
+  .server((snapshot: TopPageSnapshot | undefined) => {
+    if (snapshot?.kind !== "ready") return { events: undefined, today: snapshot?.today };
+    const client = new QueryClient();
+    client.setQueryData(queryKeys.officialEvents, snapshot.events);
+    return { events: dehydrate(client), today: snapshot.today };
   })
-  .client(() => ({ events: undefined, today: undefined }));
+  .client((_snapshot: TopPageSnapshot | undefined) => ({ events: undefined, today: undefined }));

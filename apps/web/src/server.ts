@@ -16,7 +16,9 @@ const start = createServerEntry({ fetch: createStartHandler(defaultStreamHandler
 
 export default {
   fetch(request: Request, _env: unknown, ctx: ExecutionContext) {
-    return topPageFromCache(request, ctx, (rendered) => start.fetch(rendered));
+    return topPageFromCache(request, ctx, (rendered, topPage) =>
+      start.fetch(rendered, { context: { topPage } }),
+    );
   },
   scheduled(_controller: ScheduledController, _env: unknown, ctx: ExecutionContext) {
     ctx.waitUntil(

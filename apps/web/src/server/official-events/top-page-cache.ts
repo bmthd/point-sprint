@@ -6,6 +6,17 @@ import type { OfficialEvent } from "@workspaces/domain";
 // key in every data center at once, which deleting the entry from `caches.default` would do only in
 // the cron's own.
 
+/** One request's event data and date, shared by the cache key and the page loader. */
+export type TopPageSnapshot =
+  | { kind: "ready"; events: OfficialEvent[]; today: string }
+  | { kind: "unavailable"; today: string };
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    server: { requestContext: { topPage?: TopPageSnapshot } };
+  }
+}
+
 /** Where the rendered pages are kept: `caches.default` on the Worker. */
 export type PageCache = Pick<Cache, "match" | "put">;
 
@@ -41,10 +52,10 @@ export async function cachedTopPage({
   waitUntil,
 }: {
   request: Request;
-  render: (request: Request) => Response | Promise<Response>;
+  render: (request: Request, snapshot?: TopPageSnapshot) => Response | Promise<Response>;
   /** The published events. Throws when the event master cannot be read. */
   events: () => Promise<OfficialEvent[]>;
-  cache: PageCache;
+  cache?: PageCache;
   /** Tells the builds apart: a page of an earlier build loads scripts that are gone. */
   build: string;
   /** Today in Japan as `YYYY-MM-DD`, which the page is rendered for. */
@@ -52,18 +63,20 @@ export async function cachedTopPage({
   waitUntil: (promise: Promise<unknown>) => void;
 }): Promise<Response> {
   const url = new URL(request.url);
-  if (request.method !== "GET" || url.pathname !== "/" || url.search !== "") return render(request);
-  let version: string;
+  if (url.pathname !== "/") return render(request);
+  let snapshot: TopPageSnapshot;
   try {
-    version = await digest(JSON.stringify(await events()));
+    snapshot = { kind: "ready", events: await events(), today };
   } catch (error) {
     console.error("The top page is rendered without its cache", error);
-    return render(request);
+    return render(request, { kind: "unavailable", today });
   }
+  if (!cache || request.method !== "GET" || url.search !== "") return render(request, snapshot);
+  const version = await digest(JSON.stringify(snapshot.events));
   const key = new Request(new URL(`/__top-page/${build}/${today}/${version}`, url.origin));
   const hit = await cache.match(key);
   if (hit) return served(hit);
-  const response = await render(request);
+  const response = await render(request, snapshot);
   if (response.status !== 200) return response;
   const stored = new Response(response.clone().body, response);
   stored.headers.set("cache-control", STORED_FOR);
