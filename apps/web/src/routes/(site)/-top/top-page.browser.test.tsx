@@ -23,7 +23,7 @@ import { TestColorMode } from "../../../test-color-mode";
 import { expectTexts } from "../../../test-texts";
 import { officialEventsSourceAtom } from "../../-official-events";
 import { useToday } from "../../-use-today";
-import { PlanList } from "./plan-list";
+import { TopPage } from "./top-page";
 
 // 2026-10-05 12:00 in Japan: the October marathon (10/4〜10/9) is running.
 const now = () => new Date("2026-10-05T03:00:00Z");
@@ -173,7 +173,7 @@ async function renderPlanList(repository: Repository, options: { events?: EventS
   const index = createRoute({
     getParentRoute: () => root,
     path: "/",
-    component: () => <PlanList now={now} />,
+    component: () => <TopPage now={now} />,
   });
   const planRoute = createRoute({
     getParentRoute: () => root,

@@ -16,7 +16,7 @@ import { PlanSection } from "./plan-section";
  * What `now` is overridden by in tests; the default is the real clock. `renderedToday` is the day in
  * Japan the Worker rendered the page for, which the page keeps until it runs.
  */
-export function PlanList({
+export function TopPage({
   now = () => new Date(),
   renderedToday,
 }: {
