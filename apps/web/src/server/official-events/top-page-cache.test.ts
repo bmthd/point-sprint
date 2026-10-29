@@ -25,6 +25,7 @@ function memoryCache(): PageCache & { size: () => number } {
 
 /** The top page's server: renders the events it reads, and counts the renders. */
 function topPageServer({ build = "b1", cache = memoryCache() } = {}) {
+  let today = "2026-10-12";
   let events: OfficialEvent[] | Error = [marathon];
   let renders = 0;
   const pending: Promise<unknown>[] = [];
@@ -43,6 +44,7 @@ function topPageServer({ build = "b1", cache = memoryCache() } = {}) {
       events: read,
       cache,
       build,
+      today,
       waitUntil: (promise) => pending.push(promise),
     });
     await Promise.all(pending);
@@ -54,6 +56,9 @@ function topPageServer({ build = "b1", cache = memoryCache() } = {}) {
     renders: () => renders,
     setEvents: (next: OfficialEvent[] | Error) => {
       events = next;
+    },
+    setToday: (next: string) => {
+      today = next;
     },
   };
 }
@@ -86,6 +91,15 @@ test("renders the new events on the first request after they change", async () =
   server.setEvents([{ ...marathon, period: { start: "2026-10-14", end: "2026-10-18" } }]);
   await server.get();
   expect(server.renders()).toBe(3);
+});
+
+test("renders the page anew on the next day, for the events' statuses on it", async () => {
+  const server = topPageServer();
+  await server.get();
+  server.setToday("2026-10-13");
+  await server.get();
+  await server.get();
+  expect(server.renders()).toBe(2);
 });
 
 test("a page of another build is not served", async () => {

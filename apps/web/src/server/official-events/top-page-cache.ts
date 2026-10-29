@@ -1,14 +1,15 @@
 import type { OfficialEvent } from "@workspaces/domain";
 
 // The top page lists the official events, so the Worker renders it on request and keeps what it
-// rendered. The cache key holds the build and a digest of the published events: a cron that
-// rewrites the events changes the key in every data center at once, which deleting the entry from
-// `caches.default` would do only in the cron's own.
+// rendered. The cache key holds the build, today in Japan, which the events' statuses and tabs are
+// rendered for, and a digest of the published events: a cron that rewrites the events changes the
+// key in every data center at once, which deleting the entry from `caches.default` would do only in
+// the cron's own.
 
 /** Where the rendered pages are kept: `caches.default` on the Worker. */
 export type PageCache = Pick<Cache, "match" | "put">;
 
-/** How long a data center keeps a rendered page. Its key changes with the events, not with time. */
+/** How long a data center keeps a rendered page. Its key changes with the day and the events. */
 const STORED_FOR = "public, max-age=86400";
 
 /** What the browser is told: ask again each time, so that the next round shows once it is out. */
@@ -36,6 +37,7 @@ export async function cachedTopPage({
   events,
   cache,
   build,
+  today,
   waitUntil,
 }: {
   request: Request;
@@ -45,6 +47,8 @@ export async function cachedTopPage({
   cache: PageCache;
   /** Tells the builds apart: a page of an earlier build loads scripts that are gone. */
   build: string;
+  /** Today in Japan as `YYYY-MM-DD`, which the page is rendered for. */
+  today: string;
   waitUntil: (promise: Promise<unknown>) => void;
 }): Promise<Response> {
   const url = new URL(request.url);
@@ -56,7 +60,7 @@ export async function cachedTopPage({
     console.error("The top page is rendered without its cache", error);
     return render(request);
   }
-  const key = new Request(new URL(`/__top-page/${build}/${version}`, url.origin));
+  const key = new Request(new URL(`/__top-page/${build}/${today}/${version}`, url.origin));
   const hit = await cache.match(key);
   if (hit) return served(hit);
   const response = await render(request);

@@ -1,4 +1,5 @@
 import { type ExecutionContext, env } from "cloudflare:workers";
+import { tokyoToday } from "../../ui/dates";
 import { publishedEvents } from "./event-store";
 import { cachedTopPage } from "./top-page-cache";
 
@@ -18,6 +19,7 @@ export async function topPageFromCache(
     events: () => publishedEvents(env.EVENTS_DB),
     cache: caches.default,
     build: import.meta.env.BUILD_ID ?? "",
+    today: tokyoToday(new Date()),
     waitUntil: (promise) => ctx.waitUntil(promise),
   });
 }

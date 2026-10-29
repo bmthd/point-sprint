@@ -12,12 +12,22 @@ import { useToday } from "../../-use-today";
 import { EventSection } from "./event-section";
 import { PlanSection } from "./plan-section";
 
-/** What `now` is overridden by in tests; the default is the real clock. */
-export function PlanList({ now = () => new Date() }: { now?: () => Date }) {
+/**
+ * What `now` is overridden by in tests; the default is the real clock. `renderedToday` is the day in
+ * Japan the Worker rendered the page for, which the page keeps until it runs.
+ */
+export function PlanList({
+  now = () => new Date(),
+  renderedToday,
+}: {
+  now?: () => Date;
+  renderedToday?: string;
+}) {
   const navigate = useNavigate();
   const today = useToday(now);
-  // The Worker keeps the page it rendered until the events change, so the page holds no day: the
-  // events' statuses and tabs follow the browser's today once the page runs.
+  // The events' statuses and tabs start from the day the page was rendered for, so that they do not
+  // move as it hydrates, then follow the browser's today, should a page kept from the day before
+  // reach it.
   const hydrated = useHydrated();
   const { mutateAsync: savePlan } = useAtomValue(savePlanAtom);
   const [creating, setCreating] = useState(false);
@@ -69,7 +79,7 @@ export function PlanList({ now = () => new Date() }: { now?: () => Date }) {
     <PageWithSidebar maxW="768px">
       <VStack alignItems="stretch" gap="6">
         <EventSection
-          today={hydrated ? today : undefined}
+          today={hydrated ? today : renderedToday}
           disabled={creating}
           onCreate={request}
           onCreateWithoutEvent={() => request()}
