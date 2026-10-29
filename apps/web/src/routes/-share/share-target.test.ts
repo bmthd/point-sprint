@@ -7,7 +7,7 @@ const query = (href: string) => Object.fromEntries(new URL(href).searchParams);
 describe("share targets", () => {
   test("the site is shared under its default title", () => {
     expect(siteShareTarget).toEqual({
-      text: "ポイントスプリント 楽天市場お買い物マラソン攻略計算ツール",
+      text: "楽天お買い物マラソン ポイント計算ツール｜買いまわり・SPU・上限 | ポイントスプリント",
       url: `${siteUrl}/`,
     });
   });
