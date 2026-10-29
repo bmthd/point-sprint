@@ -24,6 +24,7 @@ import { TestColorMode } from "../../../test-color-mode";
 import { expectTexts } from "../../../test-texts";
 import { officialEventsSourceAtom } from "../../-official-events";
 import { useToday } from "../../-use-today";
+import { guideCards } from "./guide-cards";
 import { TopPage } from "./top-page";
 
 // 2026-10-05 12:00 in Japan: the October marathon (10/4〜10/9) is running.
@@ -169,8 +170,8 @@ const article = (index: number): Article => ({
   body: "",
 });
 
-/** Newest first, as the loader hands them over. */
-const articles = [5, 4, 3, 2, 1].map(article);
+/** Newest first, as the loader reads them, then cut down to the cards. */
+const articles = guideCards([5, 4, 3, 2, 1].map(article));
 
 const planRows = () =>
   page.getByRole("region", { name: "自分のプラン", exact: true }).getByRole("listitem");
@@ -327,7 +328,7 @@ test("shows the latest ended event when none is ahead, and plans with its terms"
 
   await expect.element(screen.getByRole("heading", { name: "前回のイベント" })).toBeVisible();
   await expect.element(screen.getByText("次回の日程は未発表です")).toBeVisible();
-  await expect.element(screen.getByRole("tab")).toHaveLength(0);
+  await expect.element(screen.getByRole("tab").first()).not.toBeInTheDocument();
   await screen.getByRole("button", { name: "この条件で計算してみる" }).click();
 
   await expect.poll(() => router.state.location.pathname).toBe("/plan");
@@ -710,4 +711,48 @@ test("takes the visitor to the events while they cannot be read", async () => {
 
   expect(router.state.location.pathname).toBe("/");
   expect(await repository.plans.list()).toHaveLength(0);
+});
+
+test("starts a plan for the same ended event the list shows when none is ahead", async () => {
+  const repository = createMemoryRepository();
+  // Both ended on the same day: the one that started later is the latest.
+  const longer = marathon({
+    id: "marathon-2026-09-a",
+    name: "お買い物マラソン長め",
+    start: "2026-09-15",
+    end: "2026-09-24",
+  });
+  const shorter = marathon({
+    id: "marathon-2026-09-b",
+    name: "お買い物マラソン短め",
+    start: "2026-09-19",
+    end: "2026-09-24",
+  });
+  const { screen, router } = await renderTopPage(repository, {
+    events: { load: async () => [longer, shorter] },
+  });
+  const shown = screen.getByRole("listitem").filter({ hasText: "この条件で計算してみる" });
+  await expect.element(shown.getByText("お買い物マラソン短め")).toBeVisible();
+
+  await screen.getByRole("button", { name: "計算をはじめる" }).click();
+
+  await expect.poll(() => router.state.location.pathname).toBe("/plan");
+  const [created] = await repository.plans.list();
+  expect(created?.officialEventId).toBe("marathon-2026-09-b");
+});
+
+test("shows next to the start button that the plan it started cannot be saved", async () => {
+  const repository = createMemoryRepository();
+  repository.plans.update = () => Promise.reject(new Error("quota"));
+  const { screen, router } = await renderTopPage(repository);
+  await expect.element(screen.getByText("開催中")).toBeVisible();
+
+  await screen.getByRole("button", { name: "計算をはじめる" }).click();
+
+  const hero = screen.getByRole("region", { name: "楽天お買い物マラソンのポイント計算ツール" });
+  await expect
+    .element(hero.getByRole("alert"))
+    .toHaveTextContent("プランを作れませんでした。もう一度お試しください。");
+  expect(screen.getByRole("alert").elements()).toHaveLength(1);
+  expect(router.state.location.pathname).toBe("/");
 });

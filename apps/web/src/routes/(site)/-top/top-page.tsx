@@ -6,18 +6,20 @@ import { useState } from "react";
 import { replacePlan, savePlanAtom } from "../../../state/mutations";
 import { plansAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
-import type { Article } from "../../../guides/article";
 import { NoticeHeadlines } from "../../-notices/notice-headlines";
 import { ShareSection } from "../../-sidebar/share-section";
 import { monthOf, tokyoToday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";
 import { useToday } from "../../-use-today";
 import { EventSection } from "./event-section";
-import { GuideCards } from "./guide-cards";
-import { Hero } from "./hero";
+import { type GuideCard, GuideCards } from "./guide-cards";
+import { Hero, SaveFailed } from "./hero";
 import { HowTo } from "./how-to";
 import { PlanSection } from "./plan-section";
 import { startTarget } from "./start-target";
+
+/** The button a plan was started from: the hero's, or one in the events. */
+type Origin = "hero" | "events";
 
 /**
  * What `now` is overridden by in tests; the default is the real clock. `renderedToday` is the day in
@@ -28,7 +30,7 @@ export function TopPage({
   now = () => new Date(),
   renderedToday,
 }: {
-  articles: Article[];
+  articles: GuideCard[];
   now?: () => Date;
   renderedToday?: string;
 }) {
@@ -38,19 +40,26 @@ export function TopPage({
   // move as it hydrates, then follow the browser's today, should a page kept from the day before
   // reach it.
   const hydrated = useHydrated();
+  const shownToday = hydrated ? today : renderedToday;
   const { mutateAsync: savePlan } = useAtomValue(savePlanAtom);
   const [creating, setCreating] = useState(false);
-  const [failed, setFailed] = useState(false);
+  // Where the plan that could not be saved was started, so the error shows next to that button.
+  const [failed, setFailed] = useState<Origin>();
   const plans = useAtomValue(plansAtom);
-  const [duplicate, setDuplicate] = useState<{ existing: Plan; event?: OfficialEvent }>();
+  const [duplicate, setDuplicate] = useState<{
+    existing: Plan;
+    event?: OfficialEvent;
+    origin: Origin;
+  }>();
   const run = useSingleFlight();
   const events = useAtomValue(officialEventsQueryAtom).data;
 
   const start = () => {
-    const target = startTarget(events, today);
-    if (target.kind === "create") return request(target.event);
+    const target = startTarget(events, shownToday);
+    if (target.kind === "create") return request(target.event, "hero");
     const section = document.getElementById("events");
-    section?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    section?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
     section?.querySelector<HTMLElement>("h2")?.focus({ preventScroll: true });
   };
 
@@ -59,17 +68,17 @@ export function TopPage({
     return event ? `${month}月 ${event.name}` : `${month}月の買い物`;
   };
 
-  const request = (event?: OfficialEvent) => {
+  const request = (event: OfficialEvent | undefined, origin: Origin) => {
     const name = nameOf(event, now());
     const existing = plans.find((plan) => plan.name === name);
-    if (existing) setDuplicate({ existing, event });
-    else void create(event);
+    if (existing) setDuplicate({ existing, event, origin });
+    else void create(event, origin);
   };
 
-  const create = (event?: OfficialEvent) =>
+  const create = (event: OfficialEvent | undefined, origin: Origin) =>
     run(async () => {
       setCreating(true);
-      setFailed(false);
+      setFailed(undefined);
       const date = now();
       const id = crypto.randomUUID();
       const name = nameOf(event, date);
@@ -87,7 +96,7 @@ export function TopPage({
         );
         await navigate({ to: "/plan", search: { id } });
       } catch {
-        setFailed(true);
+        setFailed(origin);
       } finally {
         setCreating(false);
       }
@@ -95,22 +104,18 @@ export function TopPage({
 
   return (
     <Box as="main">
-      <Hero onStart={start} disabled={creating} />
+      <Hero onStart={start} disabled={!hydrated || creating} failed={failed === "hero"} />
       <VStack alignItems="stretch" gap="6" maxW="1120px" mx="auto" px="md" pt="md" pb="16">
         <ClientOnly fallback={null}>
           <PlanSection />
         </ClientOnly>
         <EventSection
-          today={hydrated ? today : renderedToday}
+          today={shownToday}
           disabled={!hydrated || creating}
-          onCreate={request}
-          onCreateWithoutEvent={() => request()}
+          onCreate={(event) => request(event, "events")}
+          onCreateWithoutEvent={() => request(undefined, "events")}
         />
-        {failed ? (
-          <Text role="alert" fontSize="sm" color="danger.fg">
-            プランを作れませんでした。もう一度お試しください。
-          </Text>
-        ) : null}
+        {failed === "events" ? <SaveFailed /> : null}
         <HowTo />
         <GuideCards articles={articles} />
         <SimpleGrid columns={{ base: 2, md: 1 }} gap="6" alignItems="start">
@@ -132,9 +137,9 @@ export function TopPage({
                 size="lg"
                 flexGrow="1"
                 onClick={() => {
-                  const event = duplicate?.event;
+                  if (!duplicate) return;
                   setDuplicate(undefined);
-                  void create(event);
+                  void create(duplicate.event, duplicate.origin);
                 }}
               >
                 新しく作る

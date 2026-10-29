@@ -1,6 +1,6 @@
 import type { OfficialEvent } from "@workspaces/domain";
 import { expect, test } from "vitest";
-import { startTarget } from "./start-target";
+import { endedLatestFirst, startTarget } from "./start-target";
 
 const TODAY = "2026-10-05";
 
@@ -54,4 +54,15 @@ test("uses the most recently ended event when only ended ones exist", () => {
     kind: "create",
     event: latestEnded,
   });
+});
+
+test("breaks a tie on the end by the later start, then by the id, in any order", () => {
+  const shorter = event("shorter", "2026-09-21", "2026-09-24");
+  const sameB = event("same-b", "2026-09-19", "2026-09-24");
+  const sameA = event("same-a", "2026-09-19", "2026-09-24");
+  const expected = [shorter, sameA, sameB, earlierEnded];
+  expect(endedLatestFirst([sameB, earlierEnded, sameA, shorter], TODAY)).toEqual(expected);
+  expect(endedLatestFirst([shorter, sameA, earlierEnded, sameB], TODAY)).toEqual(expected);
+  expect(startTarget([sameB, sameA, shorter], TODAY)).toEqual({ kind: "create", event: shorter });
+  expect(startTarget([sameB, sameA], TODAY)).toEqual({ kind: "create", event: sameA });
 });

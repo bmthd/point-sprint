@@ -1,4 +1,14 @@
 import { Box, Button, Card, Heading, HStack, Text, VStack } from "@workspaces/ui";
+import { useId } from "react";
+
+/** That a plan could not be saved; next to the button that started it. */
+export function SaveFailed() {
+  return (
+    <Text role="alert" fontSize="sm" color="danger.fg">
+      プランを作れませんでした。もう一度お試しください。
+    </Text>
+  );
+}
 
 /** A fixed result card, so a visitor sees what the tool answers; it is not computed. */
 function SampleCard() {
@@ -16,26 +26,39 @@ function SampleCard() {
   );
 }
 
-/** The top page's first screen: what the tool is, how to start, and a sample answer. */
-export function Hero({ onStart, disabled }: { onStart: () => void; disabled: boolean }) {
+/**
+ * The top page's first screen: what the tool is, how to start, and a sample answer. `failed` shows
+ * that the plan its button started could not be saved.
+ */
+export function Hero({
+  onStart,
+  disabled,
+  failed,
+}: {
+  onStart: () => void;
+  disabled: boolean;
+  failed: boolean;
+}) {
+  const headingId = useId();
   return (
-    <Box bg="bg.panel" borderBottomWidth="1px">
+    <Box as="section" aria-labelledby={headingId} bg="bg.panel" borderBottomWidth="1px">
+      {/* Breakpoints here apply from that width down: two columns, one on a phone. */}
       <Box
         maxW="1120px"
         mx="auto"
         px="md"
-        py={{ base: "8", md: "12" }}
+        py={{ base: "12", md: "8" }}
         display="grid"
-        gridTemplateColumns={{ base: "minmax(0, 1fr)", md: "minmax(0, 1fr) auto" }}
+        gridTemplateColumns={{ base: "minmax(0, 1fr) auto", md: "minmax(0, 1fr)" }}
         alignItems="center"
         columnGap="12"
         rowGap="8"
       >
         <VStack alignItems="stretch" gap="4">
-          <Heading as="h1" fontSize={{ base: "2xl", md: "3xl" }}>
+          <Heading as="h1" id={headingId} fontSize={{ base: "3xl", md: "2xl" }}>
             楽天お買い物マラソンのポイント計算ツール
           </Heading>
-          <Text fontSize={{ base: "lg", md: "xl" }} fontWeight="bold">
+          <Text fontSize={{ base: "xl", md: "lg" }} fontWeight="bold">
             何店舗・いくら買えば上限に届くか、買う前にわかる
           </Text>
           <Text color="fg.muted">
@@ -49,6 +72,7 @@ export function Hero({ onStart, disabled }: { onStart: () => void; disabled: boo
               はじめての方へ
             </Button>
           </HStack>
+          {failed ? <SaveFailed /> : null}
         </VStack>
         <SampleCard />
       </Box>

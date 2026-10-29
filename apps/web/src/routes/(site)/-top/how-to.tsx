@@ -28,7 +28,9 @@ export function HowTo() {
       <Heading as="h2" id="how-to-heading" fontSize="md">
         使い方
       </Heading>
+      {/* An ordered list without its markers: each card shows its step's number. */}
       <List.Root
+        as="ol"
         display="grid"
         gridTemplateColumns={{ base: "repeat(3, minmax(0, 1fr))", md: "minmax(0, 1fr)" }}
         gap="2.5"

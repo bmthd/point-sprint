@@ -21,6 +21,7 @@ import { grouped } from "../../../ui/format";
 import { monthDayWithWeekday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";
 import { ColumnHead } from "../../../ui/column-head";
+import { endedLatestFirst } from "./start-target";
 
 /**
  * The highest rate and the cap of each shop-around and spend-tiers benefit,
@@ -181,9 +182,7 @@ const daysBefore = (date: string, days: number): string =>
  */
 function splitEvents(events: OfficialEvent[], today: string | undefined) {
   if (!today) return { ahead: events, recent: [], older: [] };
-  const ended = events
-    .filter((event) => event.period.end < today)
-    .sort((a, b) => (a.period.end < b.period.end ? 1 : -1));
+  const ended = endedLatestFirst(events, today);
   const cutoff = daysBefore(today, RECENT_DAYS);
   return {
     ahead: events.filter((event) => event.period.end >= today),

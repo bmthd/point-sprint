@@ -6,14 +6,17 @@ import { Footer, Header } from "./site-page";
 export class TopPage {
   readonly createPlanButton: Locator;
   readonly createPlanWithoutEventButton: Locator;
+  readonly startButton: Locator;
 
   constructor(readonly page: Page) {
+    // When no event is ahead, the latest ended one is offered under its own label.
     this.createPlanButton = page
-      .getByRole("button", { name: "このイベントでプランを作る" })
+      .getByRole("button", { name: /^(このイベントでプランを作る|この条件で計算してみる)$/ })
       .first();
     this.createPlanWithoutEventButton = page.getByRole("button", {
       name: "イベントを選ばずにプランを作る",
     });
+    this.startButton = page.getByRole("button", { name: "計算をはじめる" });
   }
 
   static async open(page: Page) {
@@ -38,6 +41,9 @@ export class TopPage {
   async createPlan() {
     await this.createPlanButton.click();
     await expect(this.page).toHaveURL(/\/plan\?id=/);
-    return new PlanPage(this.page);
+    const plan = new PlanPage(this.page);
+    // The top page's heading stays until the plan's replaces it.
+    await expect(plan.orders).toBeVisible();
+    return plan;
   }
 }
