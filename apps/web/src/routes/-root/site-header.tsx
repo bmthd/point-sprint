@@ -37,6 +37,24 @@ function CommonSettingsLink() {
   );
 }
 
+/** A link of the header that spells its name, like `CommonSettingsLink`. */
+function HeaderTextLink({ to, children }: { to: "/guides" | "/help"; children: string }) {
+  return (
+    <RouterLink
+      to={to}
+      minH="11"
+      display="flex"
+      alignItems="center"
+      px="2"
+      fontSize="sm"
+      color="fg"
+      _current={{ fontWeight: "bold" }}
+    >
+      {children}
+    </RouterLink>
+  );
+}
+
 const colorModeLabels = { light: "ライト", dark: "ダーク" } as const;
 
 /**
@@ -95,7 +113,14 @@ export function SiteHeader() {
         >
           ポイントスプリント
         </RouterLink>
+        <Flex flex="1" align="center" gap="1" display={{ base: "flex", lg: "none" }}>
+          <HeaderTextLink to="/guides">買い物ガイド</HeaderTextLink>
+          <HeaderTextLink to="/help">ヘルプ</HeaderTextLink>
+        </Flex>
         <Flex align="center" gap="1">
+          <Box display={{ base: "none", lg: "contents" }}>
+            <HeaderTextLink to="/guides">ガイド</HeaderTextLink>
+          </Box>
           <ColorModeButton />
           <Box display={{ base: "contents", lg: "none" }}>
             <CommonSettingsLink />
@@ -148,6 +173,7 @@ function SiteMenu() {
             }}
           >
             <CommonSettingsLink />
+            <HeaderTextLink to="/help">ヘルプ</HeaderTextLink>
             <SiteSidebar />
             <ResetDataButton onDone={onClose} />
           </Drawer.Body>

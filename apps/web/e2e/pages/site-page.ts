@@ -17,6 +17,9 @@ export class Header {
   readonly root: Locator;
   readonly topLink: Locator;
   readonly settingsLink: Locator;
+  readonly guidesLink: Locator;
+  readonly phoneGuidesLink: Locator;
+  readonly helpLink: Locator;
   readonly menuButton: Locator;
   readonly colorModeButton: Locator;
 
@@ -24,6 +27,9 @@ export class Header {
     this.root = page.getByRole("banner");
     this.topLink = this.root.getByRole("link", { name: "ポイントスプリント" });
     this.settingsLink = this.root.getByRole("link", { name: "共通設定", exact: true });
+    this.guidesLink = this.root.getByRole("link", { name: "買い物ガイド", exact: true });
+    this.phoneGuidesLink = this.root.getByRole("link", { name: "ガイド", exact: true });
+    this.helpLink = this.root.getByRole("link", { name: "ヘルプ", exact: true });
     this.menuButton = this.root.getByRole("button", { name: "メニュー" });
     this.colorModeButton = this.root.getByRole("button", { name: /^カラーモード/ });
   }
@@ -65,11 +71,13 @@ export class Header {
 export class Menu {
   readonly root: Locator;
   readonly settingsLink: Locator;
+  readonly helpLink: Locator;
   readonly shareSite: Locator;
 
   constructor(readonly page: Page) {
     this.root = page.getByRole("dialog", { name: "メニュー" });
     this.settingsLink = this.root.getByRole("link", { name: "共通設定", exact: true });
+    this.helpLink = this.root.getByRole("link", { name: "ヘルプ", exact: true });
     this.shareSite = this.root.getByRole("region", { name: "このサイトをシェア" });
   }
 
