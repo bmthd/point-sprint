@@ -15,7 +15,7 @@ published: 2026-10-19
 ## 確かめた時点の買いまわりの条件
 
 :::info
-2026年10月19日に、楽天の公式の案内（[お買い物マラソンのガイド](https://event.rakuten.co.jp/campaign/point-up/marathon/guide/)と[ルールがわかるクイズ](https://event.rakuten.co.jp/campaign/point-up/marathon/guide/quiz/)）で確かめた内容です。倍率と上限は開催回で変わるので、買う前にその回のエントリーページで確かめてください。
+2026年10月19日に、楽天の公式の案内（[お買い物マラソンのガイド](https://event.rakuten.co.jp/campaign/point-up/marathon/guide/)と[ルールがわかるクイズ](https://event.rakuten.co.jp/campaign/point-up/marathon/guide/quiz/)）で確かめた内容です。倍率と上限は開催回で変わるので、買う前にその回のエントリーページで確かめてください。開催中・開催予定の回の上限は、[お買い物マラソンの日程と上限](/marathon)にまとめています。
 :::
 
 - 参加にはエントリーが要ります。期間中にエントリーすれば、エントリーより前の購入も対象になります。

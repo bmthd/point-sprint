@@ -17,6 +17,7 @@ import { Route as planSpuRouteImport } from './routes/(plan)/spu'
 import { Route as siteIndexRouteImport } from './routes/(site)/index'
 import { Route as sitemarkdownRouteRouteImport } from './routes/(site)/(markdown)/route'
 import { Route as siteInquiryRouteImport } from './routes/(site)/inquiry'
+import { Route as siteMarathonRouteImport } from './routes/(site)/marathon'
 import { Route as siteNoticesRouteImport } from './routes/(site)/notices'
 import { Route as ShareImageDotpngRouteImport } from './routes/share_.image[.]png'
 import { Route as planPlanSettingsRouteImport } from './routes/(plan)/plan_.settings'
@@ -63,6 +64,11 @@ const sitemarkdownRouteRoute = sitemarkdownRouteRouteImport.update({
 const siteInquiryRoute = siteInquiryRouteImport.update({
   id: '/(site)/inquiry',
   path: '/inquiry',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const siteMarathonRoute = siteMarathonRouteImport.update({
+  id: '/(site)/marathon',
+  path: '/marathon',
   getParentRoute: () => rootRouteImport,
 } as any)
 const siteNoticesRoute = siteNoticesRouteImport.update({
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof planSettingsRoute
   '/spu': typeof planSpuRoute
   '/inquiry': typeof siteInquiryRoute
+  '/marathon': typeof siteMarathonRoute
   '/notices': typeof siteNoticesRoute
   '/share/image.png': typeof ShareImageDotpngRoute
   '/': typeof siteIndexRoute
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/settings': typeof planSettingsRoute
   '/spu': typeof planSpuRoute
   '/inquiry': typeof siteInquiryRoute
+  '/marathon': typeof siteMarathonRoute
   '/notices': typeof siteNoticesRoute
   '/share/image.png': typeof ShareImageDotpngRoute
   '/': typeof siteIndexRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/(plan)/settings': typeof planSettingsRoute
   '/(plan)/spu': typeof planSpuRoute
   '/(site)/inquiry': typeof siteInquiryRoute
+  '/(site)/marathon': typeof siteMarathonRoute
   '/(site)/notices': typeof siteNoticesRoute
   '/share_/image.png': typeof ShareImageDotpngRoute
   '/(site)/': typeof siteIndexRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/spu'
     | '/inquiry'
+    | '/marathon'
     | '/notices'
     | '/share/image.png'
     | '/'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/spu'
     | '/inquiry'
+    | '/marathon'
     | '/notices'
     | '/share/image.png'
     | '/'
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/(plan)/settings'
     | '/(plan)/spu'
     | '/(site)/inquiry'
+    | '/(site)/marathon'
     | '/(site)/notices'
     | '/share_/image.png'
     | '/(site)/'
@@ -222,6 +234,7 @@ export interface RootRouteChildren {
   planSettingsRoute: typeof planSettingsRoute
   planSpuRoute: typeof planSpuRoute
   siteInquiryRoute: typeof siteInquiryRoute
+  siteMarathonRoute: typeof siteMarathonRoute
   siteNoticesRoute: typeof siteNoticesRoute
   ShareImageDotpngRoute: typeof ShareImageDotpngRoute
   siteIndexRoute: typeof siteIndexRoute
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       path: '/inquiry'
       fullPath: '/inquiry'
       preLoaderRoute: typeof siteInquiryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(site)/marathon': {
+      id: '/(site)/marathon'
+      path: '/marathon'
+      fullPath: '/marathon'
+      preLoaderRoute: typeof siteMarathonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(site)/notices': {
@@ -372,6 +392,7 @@ const rootRouteChildren: RootRouteChildren = {
   planSettingsRoute: planSettingsRoute,
   planSpuRoute: planSpuRoute,
   siteInquiryRoute: siteInquiryRoute,
+  siteMarathonRoute: siteMarathonRoute,
   siteNoticesRoute: siteNoticesRoute,
   ShareImageDotpngRoute: ShareImageDotpngRoute,
   siteIndexRoute: siteIndexRoute,

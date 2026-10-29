@@ -1,13 +1,15 @@
 // Fails the build when a page was not rendered to HTML, lacks a head tag every page needs or the
 // Google tags, or ads.txt is missing, then writes the sitemap from the pages: each indexable page at
-// its canonical URL. Warns when the guides have no lists of items although the build had the
-// Rakuten settings. Run by Node, which strips the types.
+// its canonical URL, and the indexed pages the Worker renders on request. Warns when the guides
+// have no lists of items although the build had the Rakuten settings. Run by Node, which strips
+// the types.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { isPullRequestPreview } from "../src/google-tags/env.ts";
 import { missingGoogleTagScripts } from "../src/google-tags/scripts.ts";
 import {
   guideItemListCount,
+  indexedPagesRenderedOnRequest,
   missingHeadTags,
   missingPrerenderedPages,
   prerenderedPages,
@@ -15,6 +17,7 @@ import {
   sitemapXml,
 } from "../src/prerender-pages.ts";
 import { readRakutenConfig } from "../src/rakuten/config.ts";
+import { siteUrl } from "../src/site-url.ts";
 
 const clientDir = join(import.meta.dirname, "../.cloudflare/output/v0/workers/default/assets");
 const missing = missingPrerenderedPages((file) => existsSync(join(clientDir, file)));
@@ -41,7 +44,9 @@ if (problems.length > 0) {
   console.error(problems.join("\n"));
   process.exit(1);
 }
-writeFileSync(join(clientDir, "sitemap.xml"), sitemapXml(indexed));
+// The pages rendered on request change without a build, so they have no day of last change.
+const onRequest = indexedPagesRenderedOnRequest.map((path) => ({ url: `${siteUrl}${path}` }));
+writeFileSync(join(clientDir, "sitemap.xml"), sitemapXml([...indexed, ...onRequest]));
 
 // A failed search fails the prerendering (`guide-items.ts`): none in any guide happens when the
 // server function stops telling the prerendering apart (`guide.worker.ts`).

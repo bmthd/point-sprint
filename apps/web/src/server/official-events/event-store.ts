@@ -53,6 +53,17 @@ export async function publishedEvents(db: D1Database): Promise<OfficialEvent[]> 
   });
 }
 
+/**
+ * When collection last read Rakuten's pages, as an ISO timestamp: the latest run that did not fail.
+ * `undefined` before the first.
+ */
+export async function lastCheckedAt(db: D1Database): Promise<string | undefined> {
+  const row = await db
+    .prepare("SELECT MAX(started_at) AS at FROM collection_runs WHERE outcome <> 'failed'")
+    .first<{ at: string | null }>();
+  return row?.at ?? undefined;
+}
+
 export function d1EventStore(db: D1Database): EventStore {
   return {
     async stored() {
