@@ -300,19 +300,54 @@ test("says when the events cannot be read, and reads them again", async () => {
   await expect.element(screen.getByText("お買い物マラソン&ジャンル祭")).toBeVisible();
 });
 
-test("opens the ended events when no event is ahead, and says so on the other tab", async () => {
+test("shows the latest ended event when none is ahead, and plans with its terms", async () => {
+  const repository = createMemoryRepository();
+  const earlier = marathon({
+    id: "marathon-2026-09-04",
+    name: "お買い物マラソン第一弾",
+    start: "2026-09-04",
+    end: "2026-09-09",
+    cap: 7000,
+  });
+  const { screen, router } = await renderPlanList(repository, {
+    events: { load: async () => [...servedEvents.slice(0, 1), earlier] },
+  });
+
+  await expect.element(screen.getByRole("heading", { name: "前回のイベント" })).toBeVisible();
+  await expect.element(screen.getByText("次回の日程は未発表です")).toBeVisible();
+  await expect.element(screen.getByRole("tab")).toHaveLength(0);
+  await screen.getByRole("button", { name: "この条件で計算してみる" }).click();
+
+  await expect.poll(() => router.state.location.pathname).toBe("/plan");
+  const [created] = await repository.plans.list();
+  expect(created?.officialEventId).toBe("marathon-2026-09-19");
+});
+
+test("lists the other ended events in the drawer behind the latest one", async () => {
+  const earlier = marathon({
+    id: "marathon-2026-09-04",
+    name: "お買い物マラソン第一弾",
+    start: "2026-09-04",
+    end: "2026-09-09",
+    cap: 7000,
+  });
+  const { screen } = await renderPlanList(createMemoryRepository(), {
+    events: { load: async () => [...servedEvents.slice(0, 1), earlier] },
+  });
+
+  await screen.getByRole("button", { name: "そのほかの終了したイベント（1 件）" }).click();
+  await expect.element(screen.getByText("お買い物マラソン第一弾")).toBeVisible();
+});
+
+test("does not offer the other ended events when there is only one", async () => {
   const { screen } = await renderPlanList(createMemoryRepository(), {
     events: { load: async () => servedEvents.slice(0, 1) },
   });
 
+  await expect.element(screen.getByRole("heading", { name: "前回のイベント" })).toBeVisible();
   await expect
-    .element(screen.getByRole("tab", { name: "終了" }))
-    .toHaveAttribute("aria-selected", "true");
-  await expect.element(screen.getByText("お買い物マラソン", { exact: true })).toBeVisible();
-  await screen.getByRole("tab", { name: "開催中・開催予定" }).click();
-  await expect
-    .element(screen.getByText("開催中・開催予定のイベントはまだありません"))
-    .toBeVisible();
+    .element(screen.getByRole("button", { name: "そのほかの終了したイベント" }))
+    .not.toBeInTheDocument();
 });
 
 test("creates a plan from an event that ended, the latest first", async () => {
