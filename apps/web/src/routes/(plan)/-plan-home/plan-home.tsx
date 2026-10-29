@@ -236,7 +236,7 @@ function Home({ plan }: { plan: Plan }) {
     <ShareButton
       label="結果をシェア"
       target={resultShareTarget(
-        planFigures(result.total, effectiveRate(result.total, countedAmount(plan))),
+        planFigures(result, effectiveRate(result.total, countedAmount(plan)), plan.officialEventId),
       )}
     />
   );
