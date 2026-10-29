@@ -20,7 +20,7 @@ import { SiteSidebar } from "../-sidebar/sidebar";
 function CommonSettingsLink() {
   return (
     <RouterLink
-      to="/profile"
+      to="/settings"
       minH="11"
       display="flex"
       alignItems="center"
@@ -62,9 +62,9 @@ function ColorModeButton() {
 }
 
 /**
- * The header on every page: the site name (to the top) and the profile. The router marks the link
+ * The header on every page: the site name (to the top) and 共通設定. The router marks the link
  * to the page being shown with `aria-current="page"`. The color mode switch is on every width, left of
- * the profile link or the menu. The profile link spells out its name: it moves to a page, unlike
+ * the 共通設定 link or the menu. The 共通設定 link spells out its name: it moves to a page, unlike
  * the icon buttons that act in place. At the `lg` breakpoint and below the site name leaves no room
  * for it: the menu has it, with the sidebar.
  */
@@ -108,7 +108,7 @@ export function SiteHeader() {
 }
 
 /**
- * The menu at the `lg` breakpoint and below: the profile and the sidebar. It closes
+ * The menu at the `lg` breakpoint and below: 共通設定 and the sidebar. It closes
  * on a link: one in the site moves to its page, one to a service opens in a new tab.
  */
 function SiteMenu() {

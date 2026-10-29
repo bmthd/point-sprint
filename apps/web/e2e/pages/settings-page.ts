@@ -1,8 +1,8 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 import { type NavigationOptions, SitePage, endsWithPath } from "./site-page";
 
-/** 共通設定 (the profile): the SPU of each month, the shops and the advanced settings. */
-export class ProfilePage {
+/** 共通設定 (the settings): the SPU of each month, the shops and the advanced settings. */
+export class SettingsPage {
   readonly heading: Locator;
   readonly backLink: Locator;
 
@@ -12,8 +12,8 @@ export class ProfilePage {
   }
 
   static async open(page: Page) {
-    await page.goto("/profile");
-    return new ProfilePage(page);
+    await page.goto("/settings");
+    return new SettingsPage(page);
   }
 
   /** The field with a shop's name. */
@@ -41,10 +41,10 @@ export class ProfilePage {
 
   async reload() {
     await this.page.reload();
-    return new ProfilePage(this.page);
+    return new SettingsPage(this.page);
   }
 
-  /** Goes back to the page the profile was opened from, at `path`. */
+  /** Goes back to the page 共通設定 was opened from, at `path`. */
   async goBack(path: string, options?: NavigationOptions) {
     await this.backLink.click();
     await expect(this.page).toHaveURL(endsWithPath(path), options);

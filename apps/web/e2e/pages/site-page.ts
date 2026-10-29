@@ -1,7 +1,7 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 import { InquiryPage } from "./inquiry-page";
 import { NoticesPage } from "./notices-page";
-import { ProfilePage } from "./profile-page";
+import { SettingsPage } from "./settings-page";
 import { TopPage } from "./top-page";
 
 /** Matches a URL that ends with `path`: the preview server answers a page's path with its directory (`/help/`). */
@@ -16,14 +16,14 @@ export type NavigationOptions = { timeout?: number };
 export class Header {
   readonly root: Locator;
   readonly topLink: Locator;
-  readonly profileLink: Locator;
+  readonly settingsLink: Locator;
   readonly menuButton: Locator;
   readonly colorModeButton: Locator;
 
   constructor(readonly page: Page) {
     this.root = page.getByRole("banner");
     this.topLink = this.root.getByRole("link", { name: "ポイントスプリント" });
-    this.profileLink = this.root.getByRole("link", { name: "共通設定", exact: true });
+    this.settingsLink = this.root.getByRole("link", { name: "共通設定", exact: true });
     this.menuButton = this.root.getByRole("button", { name: "メニュー" });
     this.colorModeButton = this.root.getByRole("button", { name: /^カラーモード/ });
   }
@@ -34,10 +34,10 @@ export class Header {
     return new TopPage(this.page);
   }
 
-  async goToProfile() {
-    await this.profileLink.click();
-    await expect(this.page).toHaveURL(endsWithPath("/profile"));
-    return new ProfilePage(this.page);
+  async goToSettings() {
+    await this.settingsLink.click();
+    await expect(this.page).toHaveURL(endsWithPath("/settings"));
+    return new SettingsPage(this.page);
   }
 
   /** Switches between light and dark. Retried: a click before the prerendered page hydrates does nothing. */
@@ -61,15 +61,15 @@ export class Header {
   }
 }
 
-/** The header's menu, on a phone: the profile and the sidebar. */
+/** The header's menu, on a phone: 共通設定 and the sidebar. */
 export class Menu {
   readonly root: Locator;
-  readonly profileLink: Locator;
+  readonly settingsLink: Locator;
   readonly shareSite: Locator;
 
   constructor(readonly page: Page) {
     this.root = page.getByRole("dialog", { name: "メニュー" });
-    this.profileLink = this.root.getByRole("link", { name: "共通設定", exact: true });
+    this.settingsLink = this.root.getByRole("link", { name: "共通設定", exact: true });
     this.shareSite = this.root.getByRole("region", { name: "このサイトをシェア" });
   }
 
@@ -78,10 +78,10 @@ export class Menu {
     return this.root.getByRole("link", { name: title });
   }
 
-  async goToProfile() {
-    await this.profileLink.click();
-    await expect(this.page).toHaveURL(endsWithPath("/profile"));
-    return new ProfilePage(this.page);
+  async goToSettings() {
+    await this.settingsLink.click();
+    await expect(this.page).toHaveURL(endsWithPath("/settings"));
+    return new SettingsPage(this.page);
   }
 
   /** Follows a notice's headline to the notice on /notices. */

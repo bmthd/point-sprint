@@ -1,6 +1,6 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 
-/** The profile's 「ほかの端末と同期」. */
+/** 共通設定's 「ほかの端末と同期」. */
 export class SyncSection {
   readonly root: Locator;
   readonly status: Locator;
