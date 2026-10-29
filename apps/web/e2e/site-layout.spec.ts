@@ -1,6 +1,5 @@
 import { type Page, expect, test, fixDate } from "./fixtures";
 import { SitePage, TopPage } from "./pages";
-import { endsWithPath } from "./pages/site-page";
 
 // The header and the footer are on every page, and their links go where they say.
 
@@ -165,10 +164,4 @@ test("a bar fixed to the bottom of a phone screen does not hide the footer", asy
       expect(covered, path).toBe(false);
     }).toPass();
   }
-});
-
-test("the old path of 共通設定 leads to it", async ({ page }) => {
-  await page.goto("/profile");
-  await expect(page).toHaveURL(endsWithPath("/settings"));
-  await expect(page.getByRole("heading", { level: 1, name: "共通設定" })).toBeVisible();
 });

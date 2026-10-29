@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as EventsDotjsonRouteImport } from './routes/events[.]json'
 import { Route as ShareRouteImport } from './routes/share'
 import { Route as planPlanRouteImport } from './routes/(plan)/plan'
-import { Route as planProfileRouteImport } from './routes/(plan)/profile'
 import { Route as planSettingsRouteImport } from './routes/(plan)/settings'
 import { Route as planSpuRouteImport } from './routes/(plan)/spu'
 import { Route as siteIndexRouteImport } from './routes/(site)/index'
@@ -40,11 +39,6 @@ const ShareRoute = ShareRouteImport.update({
 const planPlanRoute = planPlanRouteImport.update({
   id: '/(plan)/plan',
   path: '/plan',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const planProfileRoute = planProfileRouteImport.update({
-  id: '/(plan)/profile',
-  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const planSettingsRoute = planSettingsRouteImport.update({
@@ -116,7 +110,6 @@ export interface FileRoutesByFullPath {
   '/events.json': typeof EventsDotjsonRoute
   '/share': typeof ShareRoute
   '/plan': typeof planPlanRoute
-  '/profile': typeof planProfileRoute
   '/settings': typeof planSettingsRoute
   '/spu': typeof planSpuRoute
   '/inquiry': typeof siteInquiryRoute
@@ -134,7 +127,6 @@ export interface FileRoutesByTo {
   '/events.json': typeof EventsDotjsonRoute
   '/share': typeof ShareRoute
   '/plan': typeof planPlanRoute
-  '/profile': typeof planProfileRoute
   '/settings': typeof planSettingsRoute
   '/spu': typeof planSpuRoute
   '/inquiry': typeof siteInquiryRoute
@@ -154,7 +146,6 @@ export interface FileRoutesById {
   '/share': typeof ShareRoute
   '/(site)/(markdown)': typeof sitemarkdownRouteRouteWithChildren
   '/(plan)/plan': typeof planPlanRoute
-  '/(plan)/profile': typeof planProfileRoute
   '/(plan)/settings': typeof planSettingsRoute
   '/(plan)/spu': typeof planSpuRoute
   '/(site)/inquiry': typeof siteInquiryRoute
@@ -174,7 +165,6 @@ export interface FileRouteTypes {
     | '/events.json'
     | '/share'
     | '/plan'
-    | '/profile'
     | '/settings'
     | '/spu'
     | '/inquiry'
@@ -192,7 +182,6 @@ export interface FileRouteTypes {
     | '/events.json'
     | '/share'
     | '/plan'
-    | '/profile'
     | '/settings'
     | '/spu'
     | '/inquiry'
@@ -211,7 +200,6 @@ export interface FileRouteTypes {
     | '/share'
     | '/(site)/(markdown)'
     | '/(plan)/plan'
-    | '/(plan)/profile'
     | '/(plan)/settings'
     | '/(plan)/spu'
     | '/(site)/inquiry'
@@ -231,7 +219,6 @@ export interface RootRouteChildren {
   ShareRoute: typeof ShareRoute
   sitemarkdownRouteRoute: typeof sitemarkdownRouteRouteWithChildren
   planPlanRoute: typeof planPlanRoute
-  planProfileRoute: typeof planProfileRoute
   planSettingsRoute: typeof planSettingsRoute
   planSpuRoute: typeof planSpuRoute
   siteInquiryRoute: typeof siteInquiryRoute
@@ -262,13 +249,6 @@ declare module '@tanstack/react-router' {
       path: '/plan'
       fullPath: '/plan'
       preLoaderRoute: typeof planPlanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(plan)/profile': {
-      id: '/(plan)/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof planProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(plan)/settings': {
@@ -389,7 +369,6 @@ const rootRouteChildren: RootRouteChildren = {
   ShareRoute: ShareRoute,
   sitemarkdownRouteRoute: sitemarkdownRouteRouteWithChildren,
   planPlanRoute: planPlanRoute,
-  planProfileRoute: planProfileRoute,
   planSettingsRoute: planSettingsRoute,
   planSpuRoute: planSpuRoute,
   siteInquiryRoute: siteInquiryRoute,
