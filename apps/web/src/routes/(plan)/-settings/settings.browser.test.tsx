@@ -14,16 +14,16 @@ import { createIndexedDbRepository } from "../../../storage/indexed-db-repositor
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
 import { Providers, shops } from "../-test-fixtures";
-import { Profile } from "./profile";
+import { Settings } from "./settings";
 
 beforeEach(async () => {
   await page.viewport(390, 844);
 });
 
-async function renderProfile(
+async function renderSettings(
   repository: Repository = createMemoryRepository({ shops }),
   from: Repository = repository,
-  initialEntries = ["/profile"],
+  initialEntries = ["/settings"],
 ) {
   await cleanup();
   const root = createRootRoute({ component: Outlet });
@@ -37,10 +37,10 @@ async function renderProfile(
     path: "/plan",
     component: () => <p>プラン</p>,
   });
-  const profile = createRoute({
+  const settings = createRoute({
     getParentRoute: () => root,
-    path: "/profile",
-    component: () => <Profile />,
+    path: "/settings",
+    component: () => <Settings />,
   });
   const spu = createRoute({
     getParentRoute: () => root,
@@ -48,7 +48,7 @@ async function renderProfile(
     component: () => <p>月の SPU</p>,
   });
   const router = createRouter({
-    routeTree: root.addChildren([index, plan, profile, spu]),
+    routeTree: root.addChildren([index, plan, settings, spu]),
     history: createMemoryHistory({ initialEntries }),
   });
   const screen = await render(
@@ -66,14 +66,14 @@ const storedProfile = async (repository: Repository) => {
   return profile;
 };
 
-test("戻る goes back to the page the profile was opened from", async () => {
-  const screen = await renderProfile(undefined, undefined, ["/plan", "/profile"]);
+test("戻る goes back to the page the settings were opened from", async () => {
+  const screen = await renderSettings(undefined, undefined, ["/plan", "/settings"]);
   await screen.getByRole("link", { name: "戻る" }).click();
   await expect.element(screen.getByText("プラン")).toBeVisible();
 });
 
-test("戻る goes to the top when the profile was opened directly", async () => {
-  const screen = await renderProfile();
+test("戻る goes to the top when the settings were opened directly", async () => {
+  const screen = await renderSettings();
   await screen.getByRole("link", { name: "戻る" }).click();
   await expect.element(screen.getByText("一覧")).toBeVisible();
 });
@@ -87,7 +87,7 @@ test("shows the SPU of this month and the next, and 変更 opens the month's SPU
     vi.useRealTimers();
   });
   if (!mobile) throw new Error("no 楽天モバイル");
-  const screen = await renderProfile(
+  const screen = await renderSettings(
     createMemoryRepository({
       shops,
       spuMonths: [
@@ -116,7 +116,7 @@ test("shows the SPU of this month and the next, and 変更 opens the month's SPU
 
 test("marks a shop as 39shop", async () => {
   const repository = createMemoryRepository({ shops });
-  const screen = await renderProfile(repository);
+  const screen = await renderSettings(repository);
   const list = screen.getByRole("list", { name: "ショップ台帳" });
   await expect.element(list.getByText(/購入先 楽天市場/).first()).toBeVisible();
 
@@ -141,7 +141,7 @@ test("marks a shop as 39shop", async () => {
 
 test("renames a shop inline", async () => {
   const repository = createMemoryRepository({ shops });
-  const screen = await renderProfile(repository);
+  const screen = await renderSettings(repository);
   const name = screen.getByRole("textbox", { name: "ショップ2の名前" });
   await name.fill("新しい名前");
   await name.element().blur();
@@ -163,7 +163,7 @@ test("renames a shop inline", async () => {
 
 test("shows a notice when data was quarantined", async () => {
   const base = createMemoryRepository({ shops });
-  const screen = await renderProfile(base, {
+  const screen = await renderSettings(base, {
     ...base,
     quarantined: async () => 2,
     wasReset: () => true,
@@ -183,7 +183,7 @@ test("shows the quarantined rows as JSON and removes them", async () => {
       { store: "shops", value: { id: "shop", name: 2 }, issues },
     ],
   });
-  const screen = await renderProfile(repository);
+  const screen = await renderSettings(repository);
   await screen.getByRole("button", { name: "確認する" }).click();
 
   const dialog = screen.getByRole("dialog");
@@ -202,7 +202,7 @@ test("shows the quarantined rows as JSON and removes them", async () => {
 });
 
 test("shows no notice when the data is healthy", async () => {
-  const screen = await renderProfile();
+  const screen = await renderSettings();
   await expect.element(screen.getByRole("list", { name: "ショップ台帳" })).toBeVisible();
   expect(screen.getByText(/読み込めなかったデータ/).query()).toBeNull();
 });
@@ -215,7 +215,7 @@ test("shows a notice when the stored profile is invalid", async () => {
 
   // The profile is read well after the plans and shops, so the notice has to be checked again
   // once the profile has been read.
-  const screen = await renderProfile(createMemoryRepository({ shops }), {
+  const screen = await renderSettings(createMemoryRepository({ shops }), {
     ...stored,
     profile: {
       ...stored.profile,
@@ -231,7 +231,7 @@ test("shows a notice when the stored profile is invalid", async () => {
 test("offers a retry when the stored data cannot be checked", async () => {
   const base = createMemoryRepository({ shops });
   let failures = 1;
-  const screen = await renderProfile(base, {
+  const screen = await renderSettings(base, {
     ...base,
     quarantined: async () => {
       if (failures-- > 0) throw new Error("unavailable");
@@ -264,7 +264,7 @@ async function putRawProfile(name: string, row: unknown): Promise<void> {
 
 test("accounts stay hidden until they are turned on in the advanced settings", async () => {
   const repository = createMemoryRepository({ shops });
-  const screen = await renderProfile(repository);
+  const screen = await renderSettings(repository);
   const toggle = screen.getByRole("switch", { name: "複数の楽天アカウントを使い分ける" });
   await expect.element(toggle).not.toBeChecked();
   expect(screen.getByRole("list", { name: "楽天アカウント" }).query()).toBeNull();
@@ -306,7 +306,7 @@ test("データを初期化 removes every stored row and goes to the top", async
     shops,
     profile: { updatedAt: "2026-10-05T00:00:00.000Z" },
   });
-  const screen = await renderProfile(repository);
+  const screen = await renderSettings(repository);
 
   await screen.getByRole("button", { name: "データを初期化" }).click();
   await screen.getByRole("button", { name: "初期化する" }).click();
@@ -318,7 +318,7 @@ test("データを初期化 removes every stored row and goes to the top", async
 
 test("キャンセル in the reset dialog keeps the data", async () => {
   const repository = createMemoryRepository({ shops });
-  const screen = await renderProfile(repository);
+  const screen = await renderSettings(repository);
 
   await screen.getByRole("button", { name: "データを初期化" }).click();
   await screen.getByRole("button", { name: "キャンセル" }).click();

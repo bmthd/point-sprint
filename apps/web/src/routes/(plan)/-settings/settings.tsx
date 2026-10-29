@@ -30,7 +30,7 @@ function StorageNotice() {
   );
 }
 
-function ProfileContent() {
+function SettingsContent() {
   const [failed, setFailed] = useState(false);
   return (
     <VStack gap="5" alignItems="stretch">
@@ -49,7 +49,7 @@ function ProfileContent() {
   );
 }
 
-/** Back to the page the profile was opened from, or to the top when it was opened directly. */
+/** Back to the page 共通設定 was opened from, or to the top when it was opened directly. */
 function BackLink() {
   const router = useRouter();
   const canGoBack = useCanGoBack();
@@ -70,11 +70,11 @@ function BackLink() {
 }
 
 /**
- * 共通設定 at `/profile`: what every plan shares, the SPU of each month, the sync with other
+ * 共通設定 at `/settings`: what every plan shares, the SPU of each month, the sync with other
  * devices, the shop registry and advanced settings.
  * Its title bar is the plan settings page's: a page that goes back where it was opened from.
  */
-export function Profile() {
+export function Settings() {
   return (
     <>
       <Flex maxW="640px" mx="auto" h="14" align="center" gap="1" px="2">
@@ -85,7 +85,7 @@ export function Profile() {
       </Flex>
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="16">
         <ClientOnly>
-          <ProfileContent />
+          <SettingsContent />
         </ClientOnly>
       </Box>
     </>

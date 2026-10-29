@@ -9,7 +9,7 @@ export const prerenderedPages = [
   "/",
   "/plan",
   "/plan/settings",
-  "/profile",
+  "/settings",
   "/spu",
   "/help",
   "/terms",

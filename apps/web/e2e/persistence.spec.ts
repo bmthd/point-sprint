@@ -1,5 +1,5 @@
 import { expect, test, fixDate } from "./fixtures";
-import { ProfilePage, TopPage } from "./pages";
+import { SettingsPage, TopPage } from "./pages";
 
 // Each change is saved to IndexedDB and is still there after a reload.
 
@@ -35,13 +35,13 @@ test("orders, plan settings, profile and shops survive a reload", async ({ page 
   await expect(campaign).toBeChecked({ checked: !campaignWas });
 
   // A shop's name and its 39ショップ mark.
-  let profile = await ProfilePage.open(page);
-  await profile.renameShop("店A", "店A本店");
-  await expect(profile.shopName("店A本店")).toBeVisible();
-  await profile.toggleShop39("店B");
-  await expect(profile.shop39("店B")).toBeChecked();
+  let common = await SettingsPage.open(page);
+  await common.renameShop("店A", "店A本店");
+  await expect(common.shopName("店A本店")).toBeVisible();
+  await common.toggleShop39("店B");
+  await expect(common.shop39("店B")).toBeChecked();
 
-  profile = await profile.reload();
-  await expect(profile.shopName("店A本店")).toHaveValue("店A本店");
-  await expect(profile.shop39("店B")).toBeChecked();
+  common = await common.reload();
+  await expect(common.shopName("店A本店")).toHaveValue("店A本店");
+  await expect(common.shop39("店B")).toBeChecked();
 });
