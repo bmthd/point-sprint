@@ -19,6 +19,9 @@ import { HowTo } from "./how-to";
 import { PlanSection } from "./plan-section";
 import { startTarget } from "./start-target";
 
+/** The events' tab of the ones running and to come. */
+const AHEAD_TAB = 0;
+
 /** The button a plan was started from: the hero's, or one in the events. */
 type Origin = "hero" | "events";
 
@@ -53,11 +56,16 @@ export function TopPage({
     origin: Origin;
   }>();
   const run = useSingleFlight();
-  const events = useAtomValue(officialEventsQueryAtom).data;
+  const { data, isError } = useAtomValue(officialEventsQueryAtom);
+  // Events kept from before a read that failed are not offered: the list says they cannot be read.
+  const events = isError ? undefined : data;
+  // The events' tab, which the page opens itself when the visitor is to choose a running event.
+  const [chosenTab, setChosenTab] = useState<number>();
 
   const start = () => {
     const target = startTarget(events, shownToday);
     if (target.kind === "create") return request(target.event, "hero");
+    setChosenTab(AHEAD_TAB);
     const section = document.getElementById("events");
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     section?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
@@ -115,6 +123,8 @@ export function TopPage({
           disabled={!hydrated || creating}
           onCreate={(event) => request(event, "events")}
           onCreateWithoutEvent={() => request(undefined, "events")}
+          chosen={chosenTab}
+          setChosen={setChosenTab}
         />
         {failed === "events" ? <SaveFailed /> : null}
         <HowTo />

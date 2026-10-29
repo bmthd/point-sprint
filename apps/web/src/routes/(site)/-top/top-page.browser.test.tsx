@@ -129,14 +129,14 @@ type EventSource = { load: () => Promise<OfficialEvent[]> };
 function TestProviders({
   repository,
   events,
+  client,
   children,
 }: {
   repository: Repository;
   events: EventSource;
+  client: QueryClient;
   children: ReactNode;
 }) {
-  // Not retried, so a failing load shows at once.
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientAtomProvider client={client}>
       <Hydrate repository={repository} events={events}>
@@ -180,8 +180,14 @@ const planRows = () =>
  * The screen runs in a router with a memory history, so links and `navigate` are the real ones
  * and the test reads where they ended up.
  */
-async function renderTopPage(repository: Repository, options: { events?: EventSource } = {}) {
+async function renderTopPage(
+  repository: Repository,
+  options: { events?: EventSource; client?: QueryClient } = {},
+) {
   await cleanup();
+  // Not retried, so a failing load shows at once.
+  const client =
+    options.client ?? new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const root = createRootRoute({ component: Outlet });
   const index = createRoute({
     getParentRoute: () => root,
@@ -208,6 +214,7 @@ async function renderTopPage(repository: Repository, options: { events?: EventSo
       <TestProviders
         repository={repository}
         events={options.events ?? { load: async () => servedEvents }}
+        client={client}
       >
         <RouterProvider router={router} />
       </TestProviders>
@@ -690,6 +697,52 @@ test("takes the visitor to the events when two are running", async () => {
   await screen.getByRole("button", { name: "計算をはじめる" }).click();
 
   await expect.element(screen.getByRole("heading", { name: "イベント" })).toHaveFocus();
+  expect(router.state.location.pathname).toBe("/");
+  expect(await repository.plans.list()).toHaveLength(0);
+});
+
+test("opens the tab of the running events when the visitor is taken to choose one", async () => {
+  const second = marathon({
+    id: "marathon-2026-10-second",
+    name: "お買い物マラソン別枠",
+    start: "2026-10-04",
+    end: "2026-10-09",
+  });
+  const { screen } = await renderTopPage(createMemoryRepository(), {
+    events: { load: async () => [...servedEvents.slice(0, 2), second] },
+  });
+  await screen.getByRole("tab", { name: "終了" }).click();
+
+  await screen.getByRole("button", { name: "計算をはじめる" }).click();
+
+  await expect
+    .element(screen.getByRole("tab", { name: "開催中・開催予定" }))
+    .toHaveAttribute("aria-selected", "true");
+  await expect.element(screen.getByText("お買い物マラソン別枠")).toBeVisible();
+});
+
+test("does not start a plan from events kept from before a read that failed", async () => {
+  const repository = createMemoryRepository();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  let fail = false;
+  const { screen, router } = await renderTopPage(repository, {
+    client,
+    events: {
+      load: async () => {
+        if (fail) throw new Error("offline");
+        return servedEvents;
+      },
+    },
+  });
+  await expect.element(screen.getByText("お買い物マラソン&ジャンル祭")).toBeVisible();
+  fail = true;
+  await client.refetchQueries();
+  await expect
+    .element(screen.getByRole("tabpanel").getByText("イベントを読み込めませんでした"))
+    .toBeVisible();
+
+  await screen.getByRole("button", { name: "計算をはじめる" }).click();
+
   expect(router.state.location.pathname).toBe("/");
   expect(await repository.plans.list()).toHaveLength(0);
 });

@@ -263,9 +263,14 @@ function EventTabs({
  * The events the page was rendered with, or read from the Worker once the page runs when it was
  * not: on a visit from another page, or when the Worker could not read them.
  */
-function EventList({ today, disabled, onCreate }: EventListProps) {
+function EventList({
+  today,
+  disabled,
+  onCreate,
+  chosen,
+  setChosen,
+}: EventListProps & EventTabChoice) {
   const { data, isPending, isError, refetch } = useAtomValue(officialEventsQueryAtom);
-  const [chosen, setChosen] = useState<number>();
   if (isPending) {
     return <EventTabs index={0} ahead={<EventListSkeleton />} ended={<EventListSkeleton />} />;
   }
@@ -471,7 +476,13 @@ function EventListSkeleton() {
   );
 }
 
-type EventSectionProps = {
+/** The tab chosen, `undefined` until one is; kept by the page, which opens a tab itself too. */
+type EventTabChoice = {
+  chosen: number | undefined;
+  setChosen: (index: number) => void;
+};
+
+type EventSectionProps = EventTabChoice & {
   /** Today in Japan as `YYYY-MM-DD`. */
   today: string | undefined;
   disabled: boolean;
@@ -485,10 +496,18 @@ export function EventSection({
   disabled,
   onCreate,
   onCreateWithoutEvent,
+  chosen,
+  setChosen,
 }: EventSectionProps) {
   return (
     <VStack as="section" id="events" gap="2.5" alignItems="stretch">
-      <EventList today={today} disabled={disabled} onCreate={onCreate} />
+      <EventList
+        today={today}
+        disabled={disabled}
+        onCreate={onCreate}
+        chosen={chosen}
+        setChosen={setChosen}
+      />
       <Button
         variant="ghost"
         colorScheme="link"
