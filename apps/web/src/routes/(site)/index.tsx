@@ -1,7 +1,8 @@
 import { QueryClient, HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
-import { PlanList } from "./-plan-list/plan-list";
+import { TopPage } from "./-top/top-page";
+import { getGuideCards } from "../../guides/guide-cards.functions";
 import { pageHead, siteName } from "../../page-head";
 import { siteUrl } from "../../site-url";
 import { queryKeys } from "../../state/queries";
@@ -23,19 +24,22 @@ export const Route = createFileRoute("/(site)/")({
       },
     ],
   }),
-  loader: ({ serverContext }) => renderedEvents(serverContext?.topPage),
-  component: TopPage,
+  loader: async ({ serverContext }) => ({
+    ...renderedEvents(serverContext?.topPage),
+    articles: await getGuideCards(),
+  }),
+  component: TopRoute,
 });
 
 /**
  * The page starts from the events and the day it was rendered with: the query has the events before
  * it runs, and the events' statuses and tabs stay where they were rendered.
  */
-function TopPage() {
-  const { events, today } = Route.useLoaderData();
+function TopRoute() {
+  const { events, today, articles } = Route.useLoaderData();
   return (
     <HydrationBoundary state={events}>
-      <PlanList renderedToday={today} />
+      <TopPage articles={articles} renderedToday={today} />
     </HydrationBoundary>
   );
 }

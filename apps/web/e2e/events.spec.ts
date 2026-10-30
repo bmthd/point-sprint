@@ -42,10 +42,12 @@ test("plan buttons wait for hydration before accepting clicks", async ({ page })
     await expect(top.createPlanButton).toBeVisible();
     await expect(top.createPlanButton).toBeDisabled();
     await expect(top.createPlanWithoutEventButton).toBeDisabled();
+    await expect(top.startButton).toBeDisabled();
   } finally {
     releaseScripts();
   }
   await expect(top.createPlanButton).toBeEnabled();
   await expect(top.createPlanWithoutEventButton).toBeEnabled();
+  await expect(top.startButton).toBeEnabled();
   await top.createPlan();
 });

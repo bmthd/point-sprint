@@ -1,5 +1,6 @@
 import { type Page, expect, test, fixDate } from "./fixtures";
 import { SitePage, TopPage } from "./pages";
+import { endsWithPath } from "./pages/site-page";
 
 // The header and the footer are on every page, and their links go where they say.
 
@@ -66,12 +67,34 @@ test("the header marks the page being shown", async ({ page }) => {
   }
 });
 
-test("on a phone the header has the site name, the color mode and the menu, which has 共通設定", async ({
+test("the header links to the guides and the help", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const { header } = await openReady(page, "/");
+  await expect(header.phoneGuidesLink).toBeHidden();
+  // Retried: a click before the page hydrates loads the page as a new document.
+  await expect(async () => {
+    await header.guidesLink.click();
+    await expect(page).toHaveURL(endsWithPath("/guides"), { timeout: 2000 });
+  }).toPass();
+  await expect(new SitePage(page).heading("買い物ガイド")).toBeVisible();
+  await expect(header.guidesLink).toHaveAttribute("aria-current", "page");
+  await expect(header.helpLink).not.toHaveAttribute("aria-current");
+
+  await header.helpLink.click();
+  await expect(page).toHaveURL(endsWithPath("/help"));
+  await expect(new SitePage(page).heading("使い方・注意事項")).toBeVisible();
+  await expect(header.helpLink).toHaveAttribute("aria-current", "page");
+});
+
+test("on a phone the header has the site name, the guides, the color mode and the menu, which has 共通設定 and the help", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const { header } = await openReady(page, "/help");
   await expect(header.settingsLink).toBeHidden();
+  await expect(header.guidesLink).toBeHidden();
+  await expect(header.helpLink).toBeHidden();
+  await expect(header.phoneGuidesLink).toBeVisible();
   await expect(header.colorModeButton).toBeVisible();
   const box = (await header.topLink.boundingBox())!;
   expect(box.height).toBeLessThanOrEqual(44);
@@ -79,6 +102,10 @@ test("on a phone the header has the site name, the color mode and the menu, whic
   const menu = await header.openMenu();
   await menu.goToSettings();
   await expect(menu.root).toHaveCount(0);
+
+  await (await header.openMenu()).helpLink.click();
+  await expect(page).toHaveURL(endsWithPath("/help"));
+  await expect(new SitePage(page).heading("使い方・注意事項")).toBeVisible();
 });
 
 for (const width of [390, 1280]) {

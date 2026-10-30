@@ -75,7 +75,7 @@ test("a shared result's link without figures keeps the site's image", async ({ p
 });
 
 test("the sidebar shares the site, with the links out from the start", async ({ page }) => {
-  for (const path of ["/", "/help", "/terms", "/privacy"]) {
+  for (const path of ["/help", "/terms", "/privacy"]) {
     const section = (await SitePage.open(page, path)).sidebar.shareSite;
     const href = await section
       .getByRole("link", { name: "Facebook でシェア" })

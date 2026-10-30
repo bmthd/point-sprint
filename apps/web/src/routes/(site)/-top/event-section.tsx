@@ -21,6 +21,7 @@ import { grouped } from "../../../ui/format";
 import { monthDayWithWeekday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";
 import { ColumnHead } from "../../../ui/column-head";
+import { endedLatestFirst } from "./start-target";
 
 /**
  * The highest rate and the cap of each shop-around and spend-tiers benefit,
@@ -46,6 +47,7 @@ type EventCardProps = {
   status: "active" | "upcoming" | "ended" | undefined;
   disabled: boolean;
   onCreate: (event: OfficialEvent) => void;
+  actionLabel?: string;
 };
 
 function StatusBadge({ status }: { status: "active" | "upcoming" | "ended" }) {
@@ -71,7 +73,13 @@ function StatusBadge({ status }: { status: "active" | "upcoming" | "ended" }) {
   }
 }
 
-function EventCard({ event, status, disabled, onCreate }: EventCardProps) {
+function EventCard({
+  event,
+  status,
+  disabled,
+  onCreate,
+  actionLabel = "このイベントでプランを作る",
+}: EventCardProps) {
   return (
     <List.Item>
       <Card.Root>
@@ -111,7 +119,7 @@ function EventCard({ event, status, disabled, onCreate }: EventCardProps) {
             disabled={disabled}
             onClick={() => onCreate(event)}
           >
-            このイベントでプランを作る
+            {actionLabel}
           </Button>
         </Card.Body>
       </Card.Root>
@@ -174,9 +182,7 @@ const daysBefore = (date: string, days: number): string =>
  */
 function splitEvents(events: OfficialEvent[], today: string | undefined) {
   if (!today) return { ahead: events, recent: [], older: [] };
-  const ended = events
-    .filter((event) => event.period.end < today)
-    .sort((a, b) => (a.period.end < b.period.end ? 1 : -1));
+  const ended = endedLatestFirst(events, today);
   const cutoff = daysBefore(today, RECENT_DAYS);
   return {
     ahead: events.filter((event) => event.period.end >= today),
@@ -190,7 +196,8 @@ function EventCards({
   today,
   disabled,
   onCreate,
-}: { events: OfficialEvent[] } & EventListProps) {
+  actionLabel,
+}: { events: OfficialEvent[]; actionLabel?: string } & EventListProps) {
   return (
     <List.Root gap="2.5">
       {events.map((event) => (
@@ -208,6 +215,7 @@ function EventCards({
           }
           disabled={disabled}
           onCreate={onCreate}
+          actionLabel={actionLabel}
         />
       ))}
     </List.Root>
@@ -233,7 +241,7 @@ function EventTabs({
   return (
     <Tabs.Root index={index} onChange={onChange} size="sm" gap="2.5">
       <ColumnHead>
-        <Heading as="h2" fontSize="md">
+        <Heading as="h2" fontSize="md" tabIndex={-1}>
           イベント
         </Heading>
         <Tabs.List>
@@ -255,10 +263,14 @@ function EventTabs({
  * The events the page was rendered with, or read from the Worker once the page runs when it was
  * not: on a visit from another page, or when the Worker could not read them.
  */
-function EventList({ today, disabled, onCreate }: EventListProps) {
+function EventList({
+  today,
+  disabled,
+  onCreate,
+  chosen,
+  setChosen,
+}: EventListProps & EventTabChoice) {
   const { data, isPending, isError, refetch } = useAtomValue(officialEventsQueryAtom);
-  // Until a tab is chosen, the ended events show when nothing is ahead.
-  const [chosen, setChosen] = useState<number>();
   if (isPending) {
     return <EventTabs index={0} ahead={<EventListSkeleton />} ended={<EventListSkeleton />} />;
   }
@@ -286,9 +298,32 @@ function EventList({ today, disabled, onCreate }: EventListProps) {
   }
   const { ahead, recent, older } = splitEvents(data, today);
   const props = { today, disabled, onCreate };
+  const [latestEnded, ...otherEnded] = [...recent, ...older];
+  if (ahead.length === 0 && latestEnded) {
+    return (
+      <VStack gap="2.5" alignItems="stretch">
+        <ColumnHead>
+          <Heading as="h2" fontSize="md" tabIndex={-1}>
+            前回のイベント
+          </Heading>
+          <Text fontSize="sm" color="fg.muted">
+            次回の日程は未発表です
+          </Text>
+        </ColumnHead>
+        <EventCards events={[latestEnded]} actionLabel="この条件で計算してみる" {...props} />
+        {otherEnded.length === 0 ? null : (
+          <OlderEvents
+            events={otherEnded}
+            label={`そのほかの終了したイベント（${otherEnded.length} 件）`}
+            {...props}
+          />
+        )}
+      </VStack>
+    );
+  }
   return (
     <EventTabs
-      index={chosen ?? (ahead.length === 0 && recent.length + older.length > 0 ? 1 : 0)}
+      index={chosen ?? 0}
       onChange={setChosen}
       ahead={
         ahead.length === 0 ? (
@@ -316,7 +351,7 @@ function EventList({ today, disabled, onCreate }: EventListProps) {
           ) : (
             <EventCards events={recent} {...props} />
           )}
-          {older.length === 0 ? null : <OlderEvents events={older} {...props} />}
+          {older.length === 0 ? null : <OlderEvents events={older} label="もっと見る" {...props} />}
         </VStack>
       }
     />
@@ -327,10 +362,15 @@ function EventList({ today, disabled, onCreate }: EventListProps) {
 const yearMonth = (date: string) => `${date.slice(0, 4)}年${Number(date.slice(5, 7))}月`;
 
 /**
- * 「もっと見る」 and the drawer it opens: the events that ended before `RECENT_DAYS`, a panel for
+ * The button (`label`) and the drawer it opens: the ended events it is given, a panel for
  * each month they started in, the latest first. From the bottom on a phone, from the side otherwise.
  */
-function OlderEvents({ events, disabled, onCreate }: { events: OfficialEvent[] } & EventListProps) {
+function OlderEvents({
+  events,
+  label,
+  disabled,
+  onCreate,
+}: { events: OfficialEvent[]; label: string } & EventListProps) {
   const [open, setOpen] = useState(false);
   const months = new Map<string, OfficialEvent[]>();
   for (const event of events) {
@@ -346,7 +386,7 @@ function OlderEvents({ events, disabled, onCreate }: { events: OfficialEvent[] }
         alignSelf="flex-start"
         onClick={() => setOpen(true)}
       >
-        もっと見る
+        {label}
       </Button>
       <Drawer.Root
         open={open}
@@ -436,7 +476,13 @@ function EventListSkeleton() {
   );
 }
 
-type EventSectionProps = {
+/** The tab chosen, `undefined` until one is; kept by the page, which opens a tab itself too. */
+type EventTabChoice = {
+  chosen: number | undefined;
+  setChosen: (index: number) => void;
+};
+
+type EventSectionProps = EventTabChoice & {
   /** Today in Japan as `YYYY-MM-DD`. */
   today: string | undefined;
   disabled: boolean;
@@ -450,10 +496,18 @@ export function EventSection({
   disabled,
   onCreate,
   onCreateWithoutEvent,
+  chosen,
+  setChosen,
 }: EventSectionProps) {
   return (
-    <VStack as="section" gap="2.5" alignItems="stretch">
-      <EventList today={today} disabled={disabled} onCreate={onCreate} />
+    <VStack as="section" id="events" gap="2.5" alignItems="stretch">
+      <EventList
+        today={today}
+        disabled={disabled}
+        onCreate={onCreate}
+        chosen={chosen}
+        setChosen={setChosen}
+      />
       <Button
         variant="ghost"
         colorScheme="link"

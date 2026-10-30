@@ -36,6 +36,17 @@ test("a guide is prerendered as an article", async ({ request }) => {
   expect(html).toContain('<meta property="article:modified_time" content="2026-10-28"/>');
 });
 
+test("the top page has its heading, its description and a guide in the HTML the Worker renders", async ({
+  request,
+}) => {
+  const html = await (await request.get("/")).text();
+  expect(html).toMatch(/<h1[^>]*>楽天お買い物マラソンのポイント計算ツール<\/h1>/);
+  expect(html).toContain("買うものを入れるだけで、");
+  expect(html).toContain(`href="${GUIDE}"`);
+  // The cards carry the guides' titles, not their text.
+  expect(html).not.toContain("自分用のおやつにも");
+});
+
 test("the sitemap lists the guide list and every guide", async ({ request }) => {
   const sitemap = await (await request.get("/sitemap.xml")).text();
   expect(sitemap).toContain(`<loc>${siteUrl}/guides</loc>`);

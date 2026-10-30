@@ -1,25 +1,40 @@
 import { ClientOnly, useHydrated, useNavigate } from "@tanstack/react-router";
 import { type OfficialEvent, type Plan, createPlan } from "@workspaces/domain";
-import { Button, Heading, Modal, Text, VStack } from "@workspaces/ui";
+import { Box, Button, Modal, SimpleGrid, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { replacePlan, savePlanAtom } from "../../../state/mutations";
 import { plansAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
-import { PageWithSidebar } from "../-page-with-sidebar";
+import { NoticeHeadlines } from "../../-notices/notice-headlines";
+import { ShareSection } from "../../-sidebar/share-section";
 import { monthOf, tokyoToday } from "../../../ui/dates";
+import { officialEventsQueryAtom } from "../../-official-events";
 import { useToday } from "../../-use-today";
 import { EventSection } from "./event-section";
+import type { GuideCard } from "../../../guides/guide-cards";
+import { GuideCards } from "./guide-cards";
+import { Hero, SaveFailed } from "./hero";
+import { HowTo } from "./how-to";
 import { PlanSection } from "./plan-section";
+import { startTarget } from "./start-target";
+
+/** The events' tab of the ones running and to come. */
+const AHEAD_TAB = 0;
+
+/** The button a plan was started from: the hero's, or one in the events. */
+type Origin = "hero" | "events";
 
 /**
  * What `now` is overridden by in tests; the default is the real clock. `renderedToday` is the day in
  * Japan the Worker rendered the page for, which the page keeps until it runs.
  */
-export function PlanList({
+export function TopPage({
+  articles,
   now = () => new Date(),
   renderedToday,
 }: {
+  articles: GuideCard[];
   now?: () => Date;
   renderedToday?: string;
 }) {
@@ -29,29 +44,50 @@ export function PlanList({
   // move as it hydrates, then follow the browser's today, should a page kept from the day before
   // reach it.
   const hydrated = useHydrated();
+  const shownToday = hydrated ? today : renderedToday;
   const { mutateAsync: savePlan } = useAtomValue(savePlanAtom);
   const [creating, setCreating] = useState(false);
-  const [failed, setFailed] = useState(false);
+  // Where the plan that could not be saved was started, so the error shows next to that button.
+  const [failed, setFailed] = useState<Origin>();
   const plans = useAtomValue(plansAtom);
-  const [duplicate, setDuplicate] = useState<{ existing: Plan; event?: OfficialEvent }>();
+  const [duplicate, setDuplicate] = useState<{
+    existing: Plan;
+    event?: OfficialEvent;
+    origin: Origin;
+  }>();
   const run = useSingleFlight();
+  const { data, isError } = useAtomValue(officialEventsQueryAtom);
+  // Events kept from before a read that failed are not offered: the list says they cannot be read.
+  const events = isError ? undefined : data;
+  // The events' tab, which the page opens itself when the visitor is to choose a running event.
+  const [chosenTab, setChosenTab] = useState<number>();
+
+  const start = () => {
+    const target = startTarget(events, shownToday);
+    if (target.kind === "create") return request(target.event, "hero");
+    setChosenTab(AHEAD_TAB);
+    const section = document.getElementById("events");
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    section?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    section?.querySelector<HTMLElement>("h2")?.focus({ preventScroll: true });
+  };
 
   const nameOf = (event: OfficialEvent | undefined, date: Date) => {
     const month = monthOf(event ? event.period.start : tokyoToday(date));
     return event ? `${month}月 ${event.name}` : `${month}月の買い物`;
   };
 
-  const request = (event?: OfficialEvent) => {
+  const request = (event: OfficialEvent | undefined, origin: Origin) => {
     const name = nameOf(event, now());
     const existing = plans.find((plan) => plan.name === name);
-    if (existing) setDuplicate({ existing, event });
-    else void create(event);
+    if (existing) setDuplicate({ existing, event, origin });
+    else void create(event, origin);
   };
 
-  const create = (event?: OfficialEvent) =>
+  const create = (event: OfficialEvent | undefined, origin: Origin) =>
     run(async () => {
       setCreating(true);
-      setFailed(false);
+      setFailed(undefined);
       const date = now();
       const id = crypto.randomUUID();
       const name = nameOf(event, date);
@@ -69,35 +105,34 @@ export function PlanList({
         );
         await navigate({ to: "/plan", search: { id } });
       } catch {
-        setFailed(true);
+        setFailed(origin);
       } finally {
         setCreating(false);
       }
     });
 
   return (
-    <PageWithSidebar maxW="768px">
-      <VStack alignItems="stretch" gap="6">
-        <EventSection
-          today={hydrated ? today : renderedToday}
-          disabled={!hydrated || creating}
-          onCreate={request}
-          onCreateWithoutEvent={() => request()}
-        />
-        {failed ? (
-          <Text role="alert" fontSize="sm" color="danger.fg">
-            プランを作れませんでした。もう一度お試しください。
-          </Text>
-        ) : null}
-        <ClientOnly
-          fallback={
-            <Heading as="h2" fontSize="md">
-              プラン
-            </Heading>
-          }
-        >
+    <Box as="main">
+      <Hero onStart={start} disabled={!hydrated || creating} failed={failed === "hero"} />
+      <VStack alignItems="stretch" gap="6" maxW="1120px" mx="auto" px="md" pt="md" pb="16">
+        <ClientOnly fallback={null}>
           <PlanSection />
         </ClientOnly>
+        <EventSection
+          today={shownToday}
+          disabled={!hydrated || creating}
+          onCreate={(event) => request(event, "events")}
+          onCreateWithoutEvent={() => request(undefined, "events")}
+          chosen={chosenTab}
+          setChosen={setChosenTab}
+        />
+        {failed === "events" ? <SaveFailed /> : null}
+        <HowTo />
+        <GuideCards articles={articles} />
+        <SimpleGrid columns={{ base: 2, md: 1 }} gap="6" alignItems="start">
+          <NoticeHeadlines />
+          <ShareSection />
+        </SimpleGrid>
         <Modal.Root open={duplicate !== undefined} onClose={() => setDuplicate(undefined)}>
           <Modal.Content>
             <Modal.Header>
@@ -113,9 +148,9 @@ export function PlanList({
                 size="lg"
                 flexGrow="1"
                 onClick={() => {
-                  const event = duplicate?.event;
+                  if (!duplicate) return;
                   setDuplicate(undefined);
-                  void create(event);
+                  void create(duplicate.event, duplicate.origin);
                 }}
               >
                 新しく作る
@@ -135,6 +170,6 @@ export function PlanList({
           </Modal.Content>
         </Modal.Root>
       </VStack>
-    </PageWithSidebar>
+    </Box>
   );
 }
