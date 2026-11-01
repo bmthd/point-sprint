@@ -29,6 +29,11 @@ type PageHeadOptions = {
    * page's last change.
    */
   article?: { published: string; updated?: string };
+  /**
+   * The page's own OGP image, 1200×630, in place of the site's: its path and what it shows. Search
+   * engines may then show it large.
+   */
+  image?: { path: string; alt: string };
 };
 
 /**
@@ -42,6 +47,7 @@ export function pageHead({
   description = defaultDescription,
   noindex = false,
   article,
+  image,
 }: PageHeadOptions) {
   const fullTitle = title === undefined ? defaultTitle : pageTitle(title);
   const url = `${siteUrl}${path}`;
@@ -52,7 +58,17 @@ export function pageHead({
       { property: "og:title", content: fullTitle },
       { property: "og:description", content: description },
       { property: "og:url", content: url },
-      ...(noindex ? [{ name: "robots", content: "noindex" }] : []),
+      ...(noindex
+        ? [{ name: "robots", content: "noindex" }]
+        : image
+          ? [{ name: "robots", content: "max-image-preview:large" }]
+          : []),
+      ...(image
+        ? [
+            { property: "og:image", content: `${siteUrl}${image.path}` },
+            { property: "og:image:alt", content: image.alt },
+          ]
+        : []),
       ...(article
         ? [
             { property: "og:type", content: "article" },

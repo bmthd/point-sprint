@@ -1,10 +1,11 @@
-import { Card, Heading, LinkBox, List, Text, VStack } from "@workspaces/ui";
+import { Heading, List, VStack } from "@workspaces/ui";
 import { useId } from "react";
-import type { GuideCard } from "../../../guides/guide-cards";
+import type { GuideCard as GuideCardData } from "../../../guides/guide-cards";
 import { RouterLink } from "../../../ui/router-link";
+import { GuideCard } from "../-guide-card";
 
-/** The newest shopping guides as cards, with a link to all of them. */
-export function GuideCards({ articles }: { articles: GuideCard[] }) {
+/** The newest shopping guides as their thumbnails, with a link to all of them. */
+export function GuideCards({ articles }: { articles: GuideCardData[] }) {
   const headingId = useId();
   return (
     <VStack as="section" aria-labelledby={headingId} gap="2.5" alignItems="stretch">
@@ -18,22 +19,7 @@ export function GuideCards({ articles }: { articles: GuideCard[] }) {
         gap="2.5"
       >
         {articles.map((article) => (
-          <LinkBox.Root as="li" key={article.slug}>
-            <Card.Root h="full">
-              <Card.Body gap="1">
-                <Heading as="h3" fontSize="md">
-                  {/* A link that loads the page, as in the guide list: the guide's items are in
-                      its prerendered HTML only. */}
-                  <LinkBox.Overlay href={`/guides/${article.slug}`}>
-                    {article.title}
-                  </LinkBox.Overlay>
-                </Heading>
-                <Text fontSize="sm" lineClamp={2}>
-                  {article.description}
-                </Text>
-              </Card.Body>
-            </Card.Root>
-          </LinkBox.Root>
+          <GuideCard key={article.slug} article={article} />
         ))}
       </List.Root>
       <RouterLink to="/guides" fontSize="sm" color="link" alignSelf="end">

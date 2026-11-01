@@ -47,3 +47,17 @@ test("an article never changed has no modified time", () => {
   const { meta } = pageHead({ path: "/a", title: "記事", article: { published: "2026-10-08" } });
   expect(meta).not.toContainEqual(expect.objectContaining({ property: "article:modified_time" }));
 });
+
+test("a page with its own image puts it in the OGP and lets search engines show it large", () => {
+  const { meta } = pageHead({
+    path: "/guides/a",
+    title: "記事",
+    image: { path: "/guides/a/thumbnail.png", alt: "画像の文字" },
+  });
+  expect(meta).toContainEqual({
+    property: "og:image",
+    content: `${siteUrl}/guides/a/thumbnail.png`,
+  });
+  expect(meta).toContainEqual({ property: "og:image:alt", content: "画像の文字" });
+  expect(meta).toContainEqual({ name: "robots", content: "max-image-preview:large" });
+});
