@@ -7,7 +7,6 @@ import {
   Drawer,
   Flex,
   Heading,
-  Link,
   List,
   Skeleton,
   Tabs,
@@ -86,26 +85,9 @@ function EventCard({
         <Card.Body>
           <Flex align="center" gap="2">
             {status ? <StatusBadge status={status} /> : null}
-            {event.url ? (
-              // The name is the link, underlined rather than given an icon: a row of the link's own,
-              // or an icon beside the name, would make the card taller than its skeleton on a phone.
-              <Link
-                href={event.url}
-                color="fg"
-                fontSize="md"
-                fontWeight="bold"
-                textDecoration="underline"
-                textUnderlineOffset="0.2em"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {event.name}
-              </Link>
-            ) : (
-              <Text fontSize="md" fontWeight="bold">
-                {event.name}
-              </Text>
-            )}
+            <Text fontSize="md" fontWeight="bold">
+              {event.name}
+            </Text>
           </Flex>
           <Text fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
             {monthDayWithWeekday(event.period.start)}
