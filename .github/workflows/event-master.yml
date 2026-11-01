@@ -21,11 +21,11 @@ jobs:
       contents: read
       issues: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
       # The check reads the site's /events.json, so it needs Node to strip the types but no install.
-      - uses: ./.github/actions/setup
+      - uses: $/.github/actions/setup
       - id: check
         name: Check the served events
         continue-on-error: true

@@ -1,10 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    "helpers:pinGitHubActionDigestsToSemver",
-    ":timezone(Asia/Tokyo)"
-  ],
+  "extends": ["config:recommended", ":timezone(Asia/Tokyo)"],
   "schedule": ["before 9am on monday"],
   "minimumReleaseAge": "1 day",
   "internalChecksFilter": "strict",
@@ -27,8 +23,8 @@
       "matchManagers": ["github-actions"]
     },
     {
-      "description": "安定版の minor / patch と Actions のダイジェスト更新は CI が通れば自動マージ",
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "description": "安定版の minor / patch は CI が通れば自動マージ",
+      "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     },
     {
