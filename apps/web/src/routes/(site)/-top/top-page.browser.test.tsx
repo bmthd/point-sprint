@@ -253,13 +253,12 @@ test("lists only the events that have not ended, and a round whose cap is not ou
   await expect.element(screen.getByRole("tabpanel").getByRole("listitem")).toHaveLength(2);
 });
 
-test("links each event's name to Rakuten's page in a new tab", async () => {
+test("shows each event's name without a link to Rakuten's page", async () => {
   const { screen } = await renderTopPage(createMemoryRepository());
-  const link = screen.getByRole("link", { name: "お買い物マラソン第二弾" });
+  await expect.element(screen.getByText("お買い物マラソン第二弾", { exact: true })).toBeVisible();
   await expect
-    .element(link)
-    .toHaveAttribute("href", "https://event.rakuten.co.jp/campaign/point-up/marathon/");
-  await expect.element(link).toHaveAttribute("target", "_blank");
+    .element(screen.getByRole("link", { name: "お買い物マラソン第二弾" }))
+    .not.toBeInTheDocument();
 });
 
 test("sums up an event whose rate the total sets by its highest rate and its cap", async () => {
@@ -386,9 +385,7 @@ test("creates a plan from an event that ended, the latest first", async () => {
   await screen.getByRole("tab", { name: "終了" }).click();
   const cards = screen.getByRole("tabpanel").getByRole("listitem");
   await expect.element(cards).toHaveLength(2);
-  await expect
-    .element(cards.first().getByRole("link", { name: "お買い物マラソン", exact: true }))
-    .toBeVisible();
+  await expect.element(cards.first().getByText("お買い物マラソン", { exact: true })).toBeVisible();
   await expect.element(cards.first().getByText("終了", { exact: true })).toBeVisible();
   await cards.first().getByRole("button", { name: "このイベントでプランを作る" }).click();
 
