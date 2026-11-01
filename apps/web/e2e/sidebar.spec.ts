@@ -2,26 +2,35 @@ import { newestFirst, notices } from "../src/routes/-notices/notices";
 import { expect, test } from "./fixtures";
 import { NoticesPage, SitePage } from "./pages";
 
-// The notices are in full on /notices. The sidebar lists their headlines: on a wide screen beside
-// the content of the pages that read (the pages for working on a plan have none), on a phone in the
-// header's menu on every page.
+// The sidebar lists the guides changed most recently: on a wide screen beside the content of the
+// pages that read (the pages for working on a plan have none), on a phone in the header's menu on
+// every page. The notices are in full on /notices; the top page lists their headlines.
 
 const latest = newestFirst(notices)[0]!;
 
-const withHeadlines = ["/", "/help", "/terms", "/privacy", "/inquiry", "/guides"];
+const withSidebar = ["/help", "/terms", "/privacy", "/inquiry", "/guides", "/notices"];
 const withoutSidebar = ["/settings", "/spu", "/plan", "/plan/settings"];
 
-test("the HTML rendered at build time has the headlines on the pages that read", async ({
+test("the HTML rendered at build time has the recent guides on the pages that read", async ({
   request,
 }) => {
-  for (const path of withHeadlines) {
+  for (const path of withSidebar) {
     const html = await (await request.get(path)).text();
-    expect(html, path).toContain(`href="/notices#${latest.id}"`);
+    expect(html, path).toContain("最近更新された記事");
+    expect(html, path).toMatch(/href="\/guides\/[a-z0-9-]+"/);
   }
-  for (const path of [...withoutSidebar, "/notices"]) {
+  for (const path of withoutSidebar) {
     const html = await (await request.get(path)).text();
-    expect(html, path).not.toContain(`href="/notices#${latest.id}"`);
+    expect(html, path).not.toContain("最近更新された記事");
   }
+  const top = await (await request.get("/")).text();
+  expect(top).toContain(`href="/notices#${latest.id}"`);
+});
+
+test("a guide's page leaves itself out of the recent guides", async ({ page }) => {
+  const { sidebar } = await SitePage.open(page, "/guides/1000yen-items");
+  await expect(sidebar.recentArticles.getByRole("link").first()).toBeVisible();
+  await expect(sidebar.recentArticles.locator('a[href="/guides/1000yen-items"]')).toHaveCount(0);
 });
 
 test("/notices has every notice in full, and its HTML rendered at build time too", async ({
@@ -39,10 +48,9 @@ test("/notices has every notice in full, and its HTML rendered at build time too
 });
 
 test("on a wide screen the sidebar is a column to the right of the content", async ({ page }) => {
-  // The top page is a landing page: its notices and share sit in the page, not in a column.
-  for (const path of withHeadlines.filter((path) => path !== "/")) {
+  for (const path of withSidebar) {
     const { sidebar, main } = await SitePage.open(page, path);
-    await expect(sidebar.headlines.getByRole("link", { name: latest.title })).toBeVisible();
+    await expect(sidebar.recentArticles.getByRole("link").first()).toBeVisible();
     const mainBox = (await main.boundingBox())!;
     const aside = (await sidebar.root.boundingBox())!;
     expect(aside.x, path).toBeGreaterThanOrEqual(mainBox.x + mainBox.width);
@@ -76,12 +84,13 @@ test("the reading card starts at the same height as the first sidebar card", asy
 
 test("on a phone the sidebar is in the header's menu, on every page", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  for (const path of [...withHeadlines, ...withoutSidebar]) {
+  for (const path of ["/", ...withSidebar, ...withoutSidebar]) {
     const site = await SitePage.open(page, path);
     await expect(site.main.getByText("読み込み中…")).toHaveCount(0);
     await expect(site.sidebar.root).toHaveCount(0);
     const menu = await site.header.openMenu();
-    await expect(menu.headline(latest.title)).toBeVisible();
+    await expect(menu.noticesLink).toBeVisible();
+    await expect(menu.recentArticles.getByRole("link").first()).toBeVisible();
     await expect(menu.shareSite).toBeVisible();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,
@@ -90,12 +99,13 @@ test("on a phone the sidebar is in the header's menu, on every page", async ({ p
   }
 });
 
-test("a headline in the sidebar goes to the notice on /notices", async ({ page }) => {
+test("the notices are marked unread until /notices is opened", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const site = await SitePage.open(page, "/help");
-  await expect(site.main.getByText("読み込み中…")).toHaveCount(0);
+  await expect(site.header.menuButton).toHaveAccessibleName("メニュー（未読のお知らせあり）");
   const menu = await site.header.openMenu();
-  const noticesPage = await menu.goToNotice(latest.title, latest.id);
-  await expect(noticesPage.notice(latest.id)).toBeInViewport();
-  await expect(noticesPage.sidebar.headlines).toHaveCount(0);
+  await expect(menu.noticesLink).toHaveAccessibleName("お知らせ（未読あり）");
+  const noticesPage = await menu.goToNotices();
+  await expect(noticesPage.latest).toBeVisible();
+  await expect(site.header.menuButton).toHaveAccessibleName("メニュー");
 });
