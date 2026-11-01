@@ -11,6 +11,12 @@ import * as v from "valibot";
 //   ---
 //
 // `updated` is written only once the article is changed after the day it was published.
+//
+// `cardLead` and `cardFigure` are the words of its thumbnail (`thumbnail.ts`), written together:
+// the figure is the article's answer, drawn large under the lead.
+//
+//   cardLead: あと1店舗を足すなら
+//   cardFigure: 1,000円ポッキリ
 
 const Text = v.pipe(v.string(), v.trim(), v.nonEmpty());
 
@@ -22,10 +28,18 @@ const FrontmatterSchema = v.pipe(
     published: v.pipe(v.string(), v.isoDate()),
     /** `YYYY-MM-DD`: the day it was last changed, after `published`. None until it is changed. */
     updated: v.optional(v.pipe(v.string(), v.isoDate())),
+    /** The line above the thumbnail's figure. */
+    cardLead: v.optional(Text),
+    /** The thumbnail's figure: the article's answer, in a few letters. */
+    cardFigure: v.optional(Text),
   }),
   v.check(
     ({ published, updated }) => updated === undefined || published < updated,
     "updated is not after published: leave it out until the article is changed",
+  ),
+  v.check(
+    ({ cardLead, cardFigure }) => (cardLead === undefined) === (cardFigure === undefined),
+    "cardLead and cardFigure go together: write both, or neither for a thumbnail of the title",
   ),
 );
 

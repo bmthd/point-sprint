@@ -12,9 +12,12 @@ import {
   useDisclosure,
   useSystemColorMode,
 } from "@workspaces/ui";
+import type { ReactNode } from "react";
 import { RouterLink } from "../../ui/router-link";
 import { CloseIcon } from "../../ui/icons";
 import { ResetDataButton } from "../-reset-data";
+import { UnreadDot } from "../-notices/unread-dot";
+import { useUnreadNoticeIds } from "../-notices/unread-notices";
 import { SiteSidebar } from "../-sidebar/sidebar";
 
 function CommonSettingsLink() {
@@ -38,10 +41,19 @@ function CommonSettingsLink() {
 }
 
 /** A link of the header that spells its name, like `CommonSettingsLink`. */
-function HeaderTextLink({ to, children }: { to: "/guides" | "/help"; children: string }) {
+function HeaderTextLink({
+  to,
+  children,
+  ...rest
+}: {
+  to: "/guides" | "/help" | "/notices";
+  children: ReactNode;
+  "aria-label"?: string;
+}) {
   return (
     <RouterLink
       to={to}
+      {...rest}
       minH="11"
       display="flex"
       alignItems="center"
@@ -52,6 +64,18 @@ function HeaderTextLink({ to, children }: { to: "/guides" | "/help"; children: s
     >
       {children}
     </RouterLink>
+  );
+}
+
+/** The link to `/notices`, with a dot while a notice there has not been read. */
+function NoticesLink() {
+  const unread = useUnreadNoticeIds().size > 0;
+  return (
+    <HeaderTextLink to="/notices" aria-label={unread ? "お知らせ（未読あり）" : undefined}>
+      <UnreadDot unread={unread} offset="-0.5">
+        お知らせ
+      </UnreadDot>
+    </HeaderTextLink>
   );
 }
 
@@ -116,6 +140,7 @@ export function SiteHeader() {
         <Flex flex="1" align="center" gap="1" display={{ base: "flex", lg: "none" }}>
           <HeaderTextLink to="/guides">買い物ガイド</HeaderTextLink>
           <HeaderTextLink to="/help">ヘルプ</HeaderTextLink>
+          <NoticesLink />
         </Flex>
         <Flex align="center" gap="1">
           <Box display={{ base: "none", lg: "contents" }}>
@@ -133,24 +158,27 @@ export function SiteHeader() {
 }
 
 /**
- * The menu at the `lg` breakpoint and below: 共通設定 and the sidebar. It closes
+ * The menu at the `lg` breakpoint and below: 共通設定, ヘルプ, お知らせ and the sidebar. Its button
+ * has the dot of the お知らせ link too. It closes
  * on a link: one in the site moves to its page, one to a service opens in a new tab.
  */
 function SiteMenu() {
   const { open, onOpen, onClose } = useDisclosure();
+  const unread = useUnreadNoticeIds().size > 0;
 
   return (
     <>
-      <IconButton
-        aria-label="メニュー"
-        display={{ base: "none", lg: "inline-flex" }}
-        size="lg"
-        variant="ghost"
-        color="fg"
-        _hover={{ bg: "bg.muted" }}
-        icon={<MenuIcon />}
-        onClick={onOpen}
-      />
+      <UnreadDot unread={unread} offset="2.5" display={{ base: "none", lg: "inline-block" }}>
+        <IconButton
+          aria-label={unread ? "メニュー（未読のお知らせあり）" : "メニュー"}
+          size="lg"
+          variant="ghost"
+          color="fg"
+          _hover={{ bg: "bg.muted" }}
+          icon={<MenuIcon />}
+          onClick={onOpen}
+        />
+      </UnreadDot>
       <Drawer.Root
         open={open}
         onClose={onClose}
@@ -174,6 +202,7 @@ function SiteMenu() {
           >
             <CommonSettingsLink />
             <HeaderTextLink to="/help">ヘルプ</HeaderTextLink>
+            <NoticesLink />
             <SiteSidebar />
             <ResetDataButton onDone={onClose} />
           </Drawer.Body>

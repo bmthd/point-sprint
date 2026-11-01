@@ -262,6 +262,16 @@ export const saveSpuMonthAtom = atomWithMutation<void, SpuMonthChange, Error, Sn
   };
 });
 
+/** Marks the notices as read, those read already staying as they were. */
+export const markNoticesReadAtom = atomWithMutation<void, readonly string[]>((get) => {
+  const repository = get(repositoryAtom);
+  const client = get(queryClientAtom);
+  return {
+    mutationFn: (ids) => repository.noticeReads.markRead(ids),
+    onSettled: () => client.invalidateQueries({ queryKey: queryKeys.noticeReads }),
+  };
+});
+
 /** Removes every stored row, then reads everything again so each screen starts over empty. */
 export const clearDataAtom = atomWithMutation<void, void>((get) => {
   const repository = get(repositoryAtom);

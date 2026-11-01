@@ -36,6 +36,15 @@ test("a guide is prerendered as an article", async ({ request }) => {
   expect(html).toContain('<meta property="article:modified_time" content="2026-10-28"/>');
 });
 
+test("a guide's OGP image is the thumbnail the build drew", async ({ request }) => {
+  const html = await (await request.get(GUIDE)).text();
+  const image = `${GUIDE}/thumbnail.png`;
+  expect(html).toContain(`<meta property="og:image" content="${siteUrl}${image}"/>`);
+  const response = await request.get(image);
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toBe("image/png");
+});
+
 test("the top page has its heading, its description and a guide in the HTML the Worker renders", async ({
   request,
 }) => {

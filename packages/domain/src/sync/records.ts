@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import { ProfileSchema } from "../model/plan";
+import { NoticeReadSchema } from "../model/notice-read";
 import { ShopSchema } from "../model/shop";
 import { SpuMonthSchema } from "../model/spu-month";
 import { OrderRowSchema, PlanRowSchema } from "../model/stored-plan";
@@ -9,7 +10,7 @@ import { stableJson } from "../model/stored-plan";
 // What two devices send each other: one row of a store, or the mark that it was removed. The later
 // `updatedAt` wins row by row.
 
-export const SYNC_KINDS = ["plan", "order", "shop", "profile", "spuMonth"] as const;
+export const SYNC_KINDS = ["plan", "order", "shop", "profile", "spuMonth", "noticeRead"] as const;
 export type SyncKind = (typeof SYNC_KINDS)[number];
 
 /** The store each kind of row is kept in. */
@@ -19,6 +20,7 @@ export const syncStores = {
   shop: "shops",
   profile: "profile",
   spuMonth: "spuMonths",
+  noticeRead: "noticeReads",
 } as const satisfies Record<SyncKind, StoreName>;
 
 export const syncSchemas = {
@@ -27,6 +29,7 @@ export const syncSchemas = {
   shop: ShopSchema,
   profile: ProfileSchema,
   spuMonth: SpuMonthSchema,
+  noticeRead: NoticeReadSchema,
 } as const;
 
 /** The id of the profile, which is one row with no id of its own. */

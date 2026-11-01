@@ -6,7 +6,7 @@ import { useState } from "react";
 import { replacePlan, savePlanAtom } from "../../../state/mutations";
 import { plansAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
-import { NoticeHeadlines } from "../../-notices/notice-headlines";
+import { NoticeHeadlines } from "./notice-headlines";
 import { ShareSection } from "../../-sidebar/share-section";
 import { monthOf, tokyoToday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";

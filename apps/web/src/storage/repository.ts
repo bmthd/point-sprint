@@ -1,4 +1,5 @@
 import type {
+  NoticeRead,
   Plan,
   Profile,
   Shop,
@@ -80,6 +81,12 @@ export interface Repository {
   profile: { get(): Promise<Profile | undefined>; put(profile: Profile): Promise<void> };
   /** The SPU of each account and month that the user has set. */
   spuMonths: { list(): Promise<SpuMonth[]>; put(month: SpuMonth): Promise<void> };
+  /** The notices read, one row each. */
+  noticeReads: {
+    list(): Promise<NoticeRead[]>;
+    /** Marks the notices not read yet as read now, in one transaction; read ones stay as they are. */
+    markRead(ids: readonly string[]): Promise<void>;
+  };
   /** Number of stored rows that failed validation on read and were moved aside. */
   quarantined(): Promise<number>;
   /** The rows set aside, oldest first, and a way to remove them for good. */

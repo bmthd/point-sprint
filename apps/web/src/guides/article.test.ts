@@ -29,6 +29,8 @@ test.each([
   { slug: "a", source: source(fields.replace("2026-10-10", "2026-10-08")), error: "after" },
   { slug: "a", source: source(`${fields}\nauthor: 誰か`), error: "author" },
   { slug: "a", source: source(`${fields}\nコロンのない行`), error: "cannot read" },
+  { slug: "a", source: source(`${fields}\ncardLead: あと1店舗を足すなら`), error: "together" },
+  { slug: "a", source: source(`${fields}\ncardFigure: 1,000円ポッキリ`), error: "together" },
 ])("a guide with a broken frontmatter throws: $error", ({ slug, source, error }) => {
   expect(() => parseArticle(slug, source)).toThrow(error);
 });
@@ -58,4 +60,12 @@ test("every guide in articles/ reads, and an unknown slug finds none", async () 
   expect(articles.map((a) => a.slug)).toContain("1000yen-items");
   expect(await loadArticle("1000yen-items")).toMatchObject({ title: "1000円ポッキリで買えるもの" });
   expect(await loadArticle("no-such-guide")).toBeUndefined();
+});
+
+test("reads the thumbnail's lead and figure", () => {
+  const article = parseArticle(
+    "a",
+    source(`${fields}\ncardLead: あと1店舗を足すなら\ncardFigure: 1,000円ポッキリ`),
+  );
+  expect(article).toMatchObject({ cardLead: "あと1店舗を足すなら", cardFigure: "1,000円ポッキリ" });
 });
