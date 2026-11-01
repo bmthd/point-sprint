@@ -1,4 +1,4 @@
-import { Box, Card, Heading, List, Text, VStack } from "@workspaces/ui";
+import { Box, Card, HStack, Heading, List, Text, VStack } from "@workspaces/ui";
 
 const steps = [
   {
@@ -39,22 +39,26 @@ export function HowTo() {
           <List.Item key={step.title}>
             <Card.Root h="full">
               <Card.Body gap="2">
-                <Box
-                  aria-hidden
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  boxSize="8"
-                  rounded="full"
-                  bg="primary"
-                  color="primary.contrast"
-                  fontWeight="bold"
-                >
-                  {index + 1}
-                </Box>
-                <Heading as="h3" fontSize="md">
-                  {step.title}
-                </Heading>
+                {/* The circle stays by the title's first line when the title wraps. */}
+                <HStack gap="2.5" alignItems="flex-start">
+                  <Box
+                    aria-hidden
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    flexShrink="0"
+                    boxSize="8"
+                    rounded="full"
+                    bg="primary"
+                    color="primary.contrast"
+                    fontWeight="bold"
+                  >
+                    {index + 1}
+                  </Box>
+                  <Heading as="h3" fontSize="md" lineHeight="{sizes.6}" pt="1">
+                    {step.title}
+                  </Heading>
+                </HStack>
                 <Text fontSize="sm">{step.body}</Text>
               </Card.Body>
             </Card.Root>

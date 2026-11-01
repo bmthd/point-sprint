@@ -178,18 +178,35 @@ export const markdownComponents = {
   "md-timeline": ({ children }: { children?: ReactNode }) => (
     <Card.Root my="4" {...insetCardProps}>
       <Card.Body>
-        <Timeline.Root variant="number" colorScheme="mono" size="lg">
+        <Timeline.Root variant="number" colorScheme="primary" size="lg">
           {children}
         </Timeline.Root>
       </Card.Body>
     </Card.Root>
   ),
-  "md-timeline-step": ({ step, children }: { step: string; children?: ReactNode }) => (
+  "md-timeline-step": ({
+    step,
+    title,
+    children,
+  }: {
+    step: string;
+    title: string;
+    children?: ReactNode;
+  }) => (
     <Timeline.Item>
       <Timeline.Connector>
-        <Timeline.Indicator>{step}</Timeline.Indicator>
+        {/* The same circle as the top page's steps, so a step reads as one on every page. */}
+        <Timeline.Indicator boxSize="8" bg="primary" color="primary.contrast" fontWeight="bold">
+          {step}
+        </Timeline.Indicator>
       </Timeline.Connector>
-      <Timeline.Content css={{ "& > p": { margin: 0 } }}>{children}</Timeline.Content>
+      <Timeline.Content css={{ "& > p": { margin: 0 } }}>
+        {/* A 24px line, 4px down, sits mid-circle, as on the top page. */}
+        <Timeline.Title lineHeight="{sizes.6}" pt="1">
+          {title}
+        </Timeline.Title>
+        {children}
+      </Timeline.Content>
     </Timeline.Item>
   ),
 } satisfies MarkdownComponents;
