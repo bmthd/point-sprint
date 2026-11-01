@@ -385,9 +385,7 @@ test("creates a plan from an event that ended, the latest first", async () => {
   await screen.getByRole("tab", { name: "終了" }).click();
   const cards = screen.getByRole("tabpanel").getByRole("listitem");
   await expect.element(cards).toHaveLength(2);
-  await expect
-    .element(cards.first().getByText("お買い物マラソン", { exact: true }))
-    .toBeVisible();
+  await expect.element(cards.first().getByText("お買い物マラソン", { exact: true })).toBeVisible();
   await expect.element(cards.first().getByText("終了", { exact: true })).toBeVisible();
   await cards.first().getByRole("button", { name: "このイベントでプランを作る" }).click();
 
