@@ -527,17 +527,23 @@ test("hides its plans section until there is a plan", async () => {
 
 test("lists the four newest guides", async () => {
   const { screen } = await renderTopPage(createMemoryRepository());
-  const links = screen.getByRole("region", { name: "買い物ガイド" }).getByRole("link");
+  const guides = screen.getByRole("region", { name: "買い物ガイド" });
+  const links = guides.getByRole("link");
   await expect.element(links.nth(3)).toBeVisible();
-  expect(links.elements().map((link) => link.textContent)).toEqual([
-    "ガイド5",
-    "ガイド4",
-    "ガイド3",
-    "ガイド2",
-    "すべての記事",
+  expect(links.elements().map((link) => link.getAttribute("href"))).toEqual([
+    "/guides/guide-5",
+    "/guides/guide-4",
+    "/guides/guide-3",
+    "/guides/guide-2",
+    "/guides",
   ]);
-  await expect.element(links.first()).toHaveAttribute("href", "/guides/guide-5");
-  await expect.element(links.last()).toHaveAttribute("href", "/guides");
+  // A card is the guide's thumbnail alone: its link is named by the picture's text, the title.
+  await expect
+    .element(guides.getByRole("link", { name: "ガイド5" }))
+    .toHaveAttribute("href", "/guides/guide-5");
+  await expect
+    .element(guides.getByRole("link", { name: "すべての記事" }))
+    .toHaveAttribute("href", "/guides");
 });
 
 test("links to the steps for a first visit", async () => {

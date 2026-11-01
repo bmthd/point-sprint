@@ -15,6 +15,7 @@ import type { ReactNode } from "react";
 import { grouped } from "../../../ui/format";
 import { formatPeriod } from "../../../ui/dates";
 import { RouterButton } from "../../../ui/router-link";
+import { GuideCard } from "../-guide-card";
 import { PageWithSidebar } from "../-page-with-sidebar";
 import {
   capReachingSpend,
@@ -201,14 +202,14 @@ export function MarathonPage({ today, rounds, checkedAt, guides }: MarathonPageP
         )}
         {guides.length === 0 ? null : (
           <Section title="買い物ガイド">
-            <List.Root gap="2" styleType="disc" ps="5">
+            {/* Breakpoints here apply from that width down: two columns, one on a phone. */}
+            <List.Root
+              display="grid"
+              gridTemplateColumns={{ base: "repeat(2, minmax(0, 1fr))", md: "minmax(0, 1fr)" }}
+              gap="2.5"
+            >
               {guides.map((guide) => (
-                <List.Item key={guide.slug}>
-                  {/* Loads the page: the guide's items are in its prerendered HTML only. */}
-                  <Link href={`/guides/${guide.slug}`} color="link">
-                    {guide.title}
-                  </Link>
-                </List.Item>
+                <GuideCard key={guide.slug} article={guide} />
               ))}
             </List.Root>
           </Section>
