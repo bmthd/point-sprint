@@ -1,4 +1,5 @@
 import {
+  type NoticeRead,
   type OrderRow,
   PROFILE_ID,
   type Plan,
@@ -32,6 +33,7 @@ export function createMemoryRepository(
     shops?: Shop[];
     profile?: Profile;
     spuMonths?: SpuMonth[];
+    noticeReads?: NoticeRead[];
     quarantine?: Omit<QuarantinedRow, "key">[];
   } = {},
   { now = () => new Date() }: { now?: () => Date } = {},
@@ -42,6 +44,7 @@ export function createMemoryRepository(
     shop: new Map(),
     profile: new Map(),
     spuMonth: new Map(),
+    noticeRead: new Map(),
   };
   const outbox = new Map<string, Mark>();
   const tombstones = new Map<string, Mark>();
@@ -97,6 +100,7 @@ export function createMemoryRepository(
 
   initial.plans?.forEach(putPlan);
   initial.spuMonths?.forEach((month) => putRow("spuMonth", month.id, month));
+  initial.noticeReads?.forEach((read) => putRow("noticeRead", read.id, read));
   initial.shops?.forEach((shop) => putRow("shop", shop.id, shop));
   if (initial.profile) putRow("profile", PROFILE_ID, initial.profile);
   initial.quarantine?.forEach((row, key) => quarantine.set(key + 1, { ...row, key: key + 1 }));
@@ -134,6 +138,15 @@ export function createMemoryRepository(
     spuMonths: {
       list: async () => list<SpuMonth>("spuMonth"),
       put: async (month) => putRow("spuMonth", month.id, month),
+    },
+    noticeReads: {
+      list: async () => list<NoticeRead>("noticeRead"),
+      markRead: async (ids) => {
+        const updatedAt = now().toISOString();
+        for (const id of ids) {
+          if (!rows.noticeRead.has(id)) putRow("noticeRead", id, { id, updatedAt });
+        }
+      },
     },
     sync: {
       pending: async () =>

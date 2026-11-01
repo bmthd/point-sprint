@@ -1,5 +1,5 @@
 import { type StackProps, VStack } from "@workspaces/ui";
-import { NoticeHeadlines } from "../-notices/notice-headlines";
+import { RecentArticles } from "./recent-articles";
 import { ShareSection } from "./share-section";
 
 /**
@@ -8,15 +8,11 @@ import { ShareSection } from "./share-section";
  * the sidebar. A page's own section (`children`) goes first. On a wide screen it is a column of the pages that read; at the `lg` breakpoint and
  * below it is in the header's menu, on every page.
  */
-export function SiteSidebar({
-  noticeHeadlines = true,
-  children,
-  ...rest
-}: { noticeHeadlines?: boolean } & StackProps) {
+export function SiteSidebar({ children, ...rest }: StackProps) {
   return (
     <VStack as="aside" aria-label="サイドバー" gap="md" alignItems="stretch" minW="0" {...rest}>
       {children}
-      {noticeHeadlines ? <NoticeHeadlines /> : null}
+      <RecentArticles />
       <ShareSection />
     </VStack>
   );

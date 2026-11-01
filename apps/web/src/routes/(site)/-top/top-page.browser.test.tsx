@@ -188,7 +188,7 @@ async function renderTopPage(
   // Not retried, so a failing load shows at once.
   const client =
     options.client ?? new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const root = createRootRoute({ component: Outlet });
+  const root = createRootRoute({ component: Outlet, loader: () => ({ recentArticles: [] }) });
   const index = createRoute({
     getParentRoute: () => root,
     path: "/",

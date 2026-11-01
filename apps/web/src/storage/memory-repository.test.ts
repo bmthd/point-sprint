@@ -102,3 +102,32 @@ test("memory repository starts from the initial data and does not share referenc
   expect(await repo.profile.get()).toEqual(profile);
   expect(await repo.shops.list()).toHaveLength(1);
 });
+
+async function noticeScenario(repo: Repository) {
+  await repo.noticeReads.markRead(["sync"]);
+  await repo.noticeReads.markRead(["sync", "rebuilt"]);
+  const afterReads = await repo.noticeReads.list();
+  const pending = (await repo.sync.pending())
+    .map(({ kind, id, updatedAt }) => ({ kind, id, updatedAt }))
+    .toSorted((a, b) => a.id.localeCompare(b.id));
+  await repo.clear();
+  return { afterReads, pending, afterClear: await repo.noticeReads.list() };
+}
+
+test("a notice read stays read from the first time, in both repositories", async () => {
+  let tick = 0;
+  const clock = () => new Date(Date.parse(now) + 1000 * tick++);
+  const fromMemory = await noticeScenario(createMemoryRepository({}, { now: clock }));
+  tick = 0;
+  const fromIndexedDb = await noticeScenario(
+    createIndexedDbRepository({ name: "notice-contract", now: clock }),
+  );
+
+  expect(fromMemory).toEqual(fromIndexedDb);
+  expect(fromMemory.afterReads).toEqual([
+    { id: "rebuilt", updatedAt: "2026-10-05T00:00:01.000Z" },
+    { id: "sync", updatedAt: "2026-10-05T00:00:00.000Z" },
+  ]);
+  expect(fromMemory.pending).toHaveLength(2);
+  expect(fromMemory.afterClear).toEqual([]);
+});

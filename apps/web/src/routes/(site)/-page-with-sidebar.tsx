@@ -13,20 +13,17 @@ const MAIN_WIDTH = "768px";
  * `lg` breakpoint and below (a phone or a tablet) it is in the header's menu instead. The columns
  * are as wide on every page; `maxW` is the width of the page's own content, from the left of its
  * column, which stays the same with or without the sidebar. The sidebar stays on the screen as
- * the page scrolls. `/notices`, which has the notices in full, leaves their headlines out with
- * `noticeHeadlines`. `sidebarTop` goes at the top of the sidebar, above its own sections. With
+ * the page scrolls. `sidebarTop` goes at the top of the sidebar, above its own sections. With
  * `card`, `main` is a card, as a page of reading is; beside the sidebar it starts on the line of
  * the sidebar's first card, under the row its heading takes.
  */
 export function PageWithSidebar({
   maxW,
-  noticeHeadlines = true,
   card = false,
   sidebarTop,
   children,
 }: {
   maxW: string;
-  noticeHeadlines?: boolean;
   card?: boolean;
   sidebarTop?: ReactNode;
   children: ReactNode;
@@ -63,12 +60,7 @@ export function PageWithSidebar({
         </Box>
       )}
       {/* It follows the scroll, so a long page has no empty column beside it. */}
-      <SiteSidebar
-        noticeHeadlines={noticeHeadlines}
-        display={{ base: "flex", lg: "none" }}
-        position="sticky"
-        top="md"
-      >
+      <SiteSidebar display={{ base: "flex", lg: "none" }} position="sticky" top="md">
         {sidebarTop}
       </SiteSidebar>
     </Grid>

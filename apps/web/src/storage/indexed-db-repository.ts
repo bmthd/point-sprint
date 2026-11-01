@@ -3,6 +3,8 @@ import {
   type Migration,
   migrateRow,
   migrations as domainMigrations,
+  type NoticeRead,
+  NoticeReadSchema,
   type OrderRow,
   OrderRowSchema,
   PROFILE_ID,
@@ -42,7 +44,7 @@ const PROFILE_KEY = "profile";
 const SYNC_META_KEY = "meta";
 
 const QuarantineSchema = v.object({
-  store: v.picklist(["plans", "orders", "shops", "profile", "spuMonths"]),
+  store: v.picklist(["plans", "orders", "shops", "profile", "spuMonths", "noticeReads"]),
   value: v.unknown(),
   issues: v.array(v.object({ message: v.string(), path: v.array(v.string()) })),
 });
@@ -69,11 +71,12 @@ const schemas = {
   shops: ShopSchema,
   profile: ProfileSchema,
   spuMonths: SpuMonthSchema,
+  noticeReads: NoticeReadSchema,
 };
 
 /** A row marked to send, or the mark that a row was removed, keyed by `syncKey`. */
 const SyncMarkSchema = v.object({
-  kind: v.picklist(["plan", "order", "shop", "profile", "spuMonth"]),
+  kind: v.picklist(["plan", "order", "shop", "profile", "spuMonth", "noticeRead"]),
   id: v.string(),
   updatedAt: v.string(),
 });
@@ -90,7 +93,7 @@ const SyncMetaSchema = v.object({
   idKey: v.custom<CryptoKey>(isCryptoKey),
 });
 
-const ROW_STORES = ["plans", "orders", "shops", "profile", "spuMonths"] as const;
+const ROW_STORES = ["plans", "orders", "shops", "profile", "spuMonths", "noticeReads"] as const;
 const STORES = [...ROW_STORES, "quarantine", "outbox", "tombstones", "syncMeta"] as const;
 
 function request<T>(request: IDBRequest<T>): Promise<T> {
@@ -260,6 +263,11 @@ function openDatabase(name: string, migrations: readonly Migration[], state: Ope
         keyPath: "id",
         schema: SpuMonthSchema,
         onValidationError: quarantine("spuMonths", idOf),
+      }),
+      noticeReads: createIndexedDbTable({
+        keyPath: "id",
+        schema: NoticeReadSchema,
+        onValidationError: quarantine("noticeReads", idOf),
       }),
       quarantine: createIndexedDbTable({ autoIncrement: true, schema: QuarantineSchema }),
       outbox: createIndexedDbTable({ schema: SyncMarkSchema }),
@@ -463,6 +471,24 @@ export function createIndexedDbRepository(
     spuMonths: {
       list: async () => (await settled()).stores.spuMonths.getAll(),
       put: (month) => putRow<SpuMonth>("spuMonth", (row) => row.id, month),
+    },
+    noticeReads: {
+      list: async () => (await settled()).stores.noticeReads.getAll(),
+      markRead: async (ids) => {
+        const readAt = now();
+        const { transaction: tx, done } = await transaction(
+          ["noticeReads", "outbox", "tombstones"],
+          "readwrite",
+        );
+        const read = await Promise.all(
+          ids.map((id) => request<NoticeRead | undefined>(tx.objectStore("noticeReads").get(id))),
+        );
+        ids.forEach((id, index) => {
+          if (read[index]) return;
+          writeRow(tx, "noticeRead", id, v.parse(NoticeReadSchema, { id, updatedAt: readAt }));
+        });
+        await done;
+      },
     },
     sync: {
       pending: async () => {

@@ -9,9 +9,9 @@ export class GuidesPage {
     return new GuidesPage(page);
   }
 
-  /** Follows the link to the guide titled `title`, at `path`. */
+  /** Follows the list's link to the guide titled `title`, at `path`; the sidebar has links too. */
   async goToGuide(title: string, path: string) {
-    await this.page.getByRole("link", { name: title }).click();
+    await this.page.getByRole("main").getByRole("link", { name: title }).click();
     // A page load: the static files are served at the path with a trailing slash.
     await expect(this.page).toHaveURL(new RegExp(`${path}/?$`));
     return new GuidePage(this.page);

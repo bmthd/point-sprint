@@ -1,4 +1,7 @@
 import { Card, Flex, Heading, Separator, Text, VStack } from "@workspaces/ui";
+import { useAtomValue } from "jotai";
+import { useEffect } from "react";
+import { markNoticesReadAtom } from "../../../state/mutations";
 import { PageWithSidebar } from "../-page-with-sidebar";
 import { NoticeDate } from "../../-notices/notice-date";
 import { ColumnHead } from "../../../ui/column-head";
@@ -27,12 +30,16 @@ function NoticeArticle({ notice }: { notice: Notice }) {
 
 /**
  * The notices at `/notices`, newest first, each in full. They are data in the source, so the HTML
- * rendered at build time has them all.
+ * rendered at build time has them all. Opening the page reads every notice on it.
  */
 export function NoticesPage({ notices = allNotices }: { notices?: readonly Notice[] }) {
   const sorted = newestFirst(notices);
+  const { mutate: markRead } = useAtomValue(markNoticesReadAtom);
+  useEffect(() => {
+    markRead(notices.map((notice) => notice.id));
+  }, [notices, markRead]);
   return (
-    <PageWithSidebar maxW="640px" noticeHeadlines={false}>
+    <PageWithSidebar maxW="640px">
       <ColumnHead mb="2.5">
         <Heading as="h1" fontSize="lg">
           お知らせ

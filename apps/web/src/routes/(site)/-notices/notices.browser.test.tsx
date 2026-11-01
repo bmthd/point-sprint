@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import {
   Outlet,
   RouterProvider,
@@ -8,12 +9,19 @@ import {
 } from "@tanstack/react-router";
 import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
+import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
+import { useHydrateAtoms } from "jotai/utils";
+import type { ReactNode } from "react";
 import { expect, test } from "vitest";
 import { page } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
+import type { RecentArticle } from "../../../guides/recent-articles";
+import { repositoryAtom } from "../../../state/repository";
+import { createMemoryRepository } from "../../../storage/memory-repository";
+import type { Repository } from "../../../storage/repository";
 import { expectTexts } from "../../../test-texts";
-import { NoticeHeadlines } from "../../-notices/notice-headlines";
 import type { Notice } from "../../-notices/notices";
+import { NoticeHeadlines } from "../-top/notice-headlines";
 import { NoticesPage } from "./notices-page";
 
 const notice = (date: string, title: string): Notice => ({
@@ -23,10 +31,23 @@ const notice = (date: string, title: string): Notice => ({
   body: `${title}の本文です。\n\n2段落目です。`,
 });
 
+function Hydrate({ repository, children }: { repository: Repository; children: ReactNode }) {
+  useHydrateAtoms([[repositoryAtom, repository]]);
+  return children;
+}
+
+const recentArticles: RecentArticle[] = [
+  { slug: "buying-order", title: "買う順番", date: "2026-10-20" },
+];
+
 /** `/` has the headlines alone, `/notices` the page, in a router with a memory history. */
-async function renderAt(path: string, notices: Notice[]) {
+async function renderAt(
+  path: string,
+  notices: Notice[],
+  repository: Repository = createMemoryRepository(),
+) {
   await cleanup();
-  const root = createRootRoute({ component: Outlet });
+  const root = createRootRoute({ component: Outlet, loader: () => ({ recentArticles }) });
   const index = createRoute({
     getParentRoute: () => root,
     path: "/",
@@ -41,9 +62,14 @@ async function renderAt(path: string, notices: Notice[]) {
     routeTree: root.addChildren([index, noticesRoute]),
     history: createMemoryHistory({ initialEntries: [path] }),
   });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   await render(
     <UIProvider theme={theme} config={config}>
-      <RouterProvider router={router} />
+      <QueryClientAtomProvider client={client}>
+        <Hydrate repository={repository}>
+          <RouterProvider router={router} />
+        </Hydrate>
+      </QueryClientAtomProvider>
     </UIProvider>,
   );
   return router;
@@ -77,7 +103,34 @@ test("the headlines say so when there is no notice", async () => {
   await expect.element(headlines().getByRole("link")).not.toBeInTheDocument();
 });
 
-test("/notices shows every notice in full, newest first, without the headlines", async () => {
+test("the headlines tell the notices not read yet", async () => {
+  const repository = createMemoryRepository({
+    noticeReads: [{ id: "notice-2026-10-01", updatedAt: "2026-10-02T00:00:00.000Z" }],
+  });
+  await renderAt("/", [notice("2026-10-01", "読んだ"), notice("2026-10-05", "まだ")], repository);
+
+  await expect.element(headlines().getByRole("link", { name: "まだ（未読）" })).toBeVisible();
+  await expect
+    .element(headlines().getByRole("link", { name: "読んだ", exact: true }))
+    .toBeVisible();
+});
+
+test("opening /notices reads every notice on it, keeping when one was read first", async () => {
+  const first = { id: "notice-2026-10-01", updatedAt: "2026-10-02T00:00:00.000Z" };
+  const repository = createMemoryRepository({ noticeReads: [first] });
+  const notices = [notice("2026-10-01", "読んだ"), notice("2026-10-05", "まだ")];
+  await renderAt("/notices", notices, repository);
+
+  await expect
+    .poll(async () => (await repository.noticeReads.list()).map((read) => read.id))
+    .toEqual(["notice-2026-10-01", "notice-2026-10-05"]);
+  expect((await repository.noticeReads.list())[0]).toEqual(first);
+
+  await renderAt("/", notices, repository);
+  await expect.element(headlines().getByRole("link", { name: "まだ", exact: true })).toBeVisible();
+});
+
+test("/notices shows every notice in full, newest first, and the recent articles beside", async () => {
   await renderAt(
     "/notices",
     ["2026-10-01", "2026-10-05", "2026-10-02", "2026-10-04", "2026-10-03"].map((date) =>
@@ -99,8 +152,9 @@ test("/notices shows every notice in full, newest first, without the headlines",
   await expect.element(oldest.getByText("2段落目です。")).toBeVisible();
   // At a phone's width the sidebar is in the header's menu, hidden here.
   const sidebar = page.getByRole("complementary", { name: "サイドバー", includeHidden: true });
-  await expect.element(sidebar).toBeInTheDocument();
-  await expect.element(sidebar).not.toMatchTextContent("お知らせ");
+  await expect
+    .element(sidebar.getByRole("link", { name: "買う順番", includeHidden: true }))
+    .toHaveAttribute("href", "/guides/buying-order");
 });
 
 test("/notices says so when there is no notice", async () => {

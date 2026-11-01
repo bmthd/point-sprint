@@ -20,6 +20,9 @@ export class Header {
   readonly guidesLink: Locator;
   readonly phoneGuidesLink: Locator;
   readonly helpLink: Locator;
+  /** Named `お知らせ（未読あり）` while a notice has not been read. */
+  readonly noticesLink: Locator;
+  /** Named `メニュー（未読のお知らせあり）` while a notice has not been read. */
   readonly menuButton: Locator;
   readonly colorModeButton: Locator;
 
@@ -30,7 +33,8 @@ export class Header {
     this.guidesLink = this.root.getByRole("link", { name: "買い物ガイド", exact: true });
     this.phoneGuidesLink = this.root.getByRole("link", { name: "ガイド", exact: true });
     this.helpLink = this.root.getByRole("link", { name: "ヘルプ", exact: true });
-    this.menuButton = this.root.getByRole("button", { name: "メニュー" });
+    this.noticesLink = this.root.getByRole("link", { name: /^お知らせ/ });
+    this.menuButton = this.root.getByRole("button", { name: /^メニュー/ });
     this.colorModeButton = this.root.getByRole("button", { name: /^カラーモード/ });
   }
 
@@ -67,23 +71,23 @@ export class Header {
   }
 }
 
-/** The header's menu, on a phone: 共通設定 and the sidebar. */
+/** The header's menu, on a phone: 共通設定, ヘルプ, お知らせ and the sidebar. */
 export class Menu {
   readonly root: Locator;
   readonly settingsLink: Locator;
   readonly helpLink: Locator;
+  /** Named `お知らせ（未読あり）` while a notice has not been read. */
+  readonly noticesLink: Locator;
+  readonly recentArticles: Locator;
   readonly shareSite: Locator;
 
   constructor(readonly page: Page) {
     this.root = page.getByRole("dialog", { name: "メニュー" });
     this.settingsLink = this.root.getByRole("link", { name: "共通設定", exact: true });
     this.helpLink = this.root.getByRole("link", { name: "ヘルプ", exact: true });
+    this.noticesLink = this.root.getByRole("link", { name: /^お知らせ/ });
+    this.recentArticles = this.root.getByRole("region", { name: "最近更新された記事" });
     this.shareSite = this.root.getByRole("region", { name: "このサイトをシェア" });
-  }
-
-  /** A notice's headline. */
-  headline(title: string) {
-    return this.root.getByRole("link", { name: title });
   }
 
   async goToSettings() {
@@ -92,10 +96,9 @@ export class Menu {
     return new SettingsPage(this.page);
   }
 
-  /** Follows a notice's headline to the notice on /notices. */
-  async goToNotice(title: string, id: string) {
-    await this.headline(title).click();
-    await expect(this.page).toHaveURL(new RegExp(`/notices/?#${id}$`));
+  async goToNotices() {
+    await this.noticesLink.click();
+    await expect(this.page).toHaveURL(endsWithPath("/notices"));
     return new NoticesPage(this.page);
   }
 }
@@ -139,12 +142,12 @@ export class Footer {
 /** The sidebar, beside the content of the pages that read on a wide screen. */
 export class Sidebar {
   readonly root: Locator;
-  readonly headlines: Locator;
+  readonly recentArticles: Locator;
   readonly shareSite: Locator;
 
   constructor(readonly page: Page) {
     this.root = page.getByRole("complementary", { name: "サイドバー" });
-    this.headlines = this.root.getByRole("region", { name: "お知らせ" });
+    this.recentArticles = this.root.getByRole("region", { name: "最近更新された記事" });
     this.shareSite = this.root.getByRole("region", { name: "このサイトをシェア" });
   }
 }

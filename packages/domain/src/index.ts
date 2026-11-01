@@ -51,6 +51,7 @@ export {
   planAccountId,
   accountsOf,
 } from "./model/plan";
+export { NoticeReadSchema, type NoticeRead } from "./model/notice-read";
 export { ShopSchema, type Shop } from "./model/shop";
 export { SpuMonthSchema, type SpuMonth, spuMonthId } from "./model/spu-month";
 export {
