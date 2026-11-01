@@ -1,4 +1,10 @@
-import { type SyncKind, type SyncRow, SyncRowSchema, syncKey } from "@workspaces/domain";
+import {
+  SYNC_KINDS,
+  type SyncKind,
+  type SyncRow,
+  SyncRowSchema,
+  syncKey,
+} from "@workspaces/domain";
 import * as v from "valibot";
 
 // The keys of sync and what they lock, all made on this device. A random secret is the root: the
@@ -170,7 +176,7 @@ export async function encryptRow(
 }
 
 const PlainSchema = v.object({
-  kind: v.picklist(["plan", "order", "shop", "profile", "spuMonth"]),
+  kind: v.picklist(SYNC_KINDS),
   id: v.string(),
   value: v.optional(v.unknown()),
 });

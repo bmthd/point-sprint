@@ -21,6 +21,7 @@ const storeLabels: Record<StoreName, string> = {
   shops: "ショップ台帳",
   profile: "プロフィール",
   spuMonths: "月の SPU",
+  noticeReads: "お知らせの既読",
 };
 
 function QuarantinedRows() {

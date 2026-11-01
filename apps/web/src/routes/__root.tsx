@@ -13,6 +13,7 @@ import { FormControlDefaults } from "../ui/form-control-defaults";
 import { GoogleTagScripts } from "../google-tags/google-tag-scripts";
 import { defaultDescription, defaultTitle, pageTitle, siteName } from "../page-head";
 import { siteUrl } from "../site-url";
+import { getRecentArticles } from "../guides/recent-articles.functions";
 
 export const Route = createRootRoute({
   head: ({ match }) => ({
@@ -51,6 +52,9 @@ export const Route = createRootRoute({
       },
     ],
   }),
+  // The guides change only with a new build: read once, with the first page.
+  loader: async () => ({ recentArticles: await getRecentArticles() }),
+  staleTime: Number.POSITIVE_INFINITY,
   // The document stays when the root's component gives way to the error page.
   shellComponent: RootDocument,
   component: RootComponent,

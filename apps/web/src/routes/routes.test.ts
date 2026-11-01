@@ -1,10 +1,13 @@
 import { createMemoryHistory } from "@tanstack/react-router";
 import * as v from "valibot";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { getRouter } from "../router";
 import { PlanSearchSchema } from "./(plan)/-plan-search";
 import { Route as planRoute } from "./(plan)/plan";
 import { Route as settingsRoute } from "./(plan)/plan_.settings";
+
+// The root's loader calls a server function, which has no server to answer it here.
+vi.mock("../guides/recent-articles.functions", () => ({ getRecentArticles: async () => [] }));
 
 test("plan route validates search id", () => {
   expect(planRoute.options.validateSearch).toBe(PlanSearchSchema);

@@ -10,6 +10,7 @@ export const queryKeys = {
   shops: ["shops"],
   profile: ["profile"],
   spuMonths: ["spuMonths"],
+  noticeReads: ["noticeReads"],
   storageHealth: ["storage-health"],
   quarantine: ["quarantine"],
 } as const;
@@ -39,6 +40,12 @@ export const profileQueryAtom = atomWithQuery((get) => {
 export const spuMonthsQueryAtom = atomWithQuery((get) => {
   const repository = get(repositoryAtom);
   return { queryKey: queryKeys.spuMonths, queryFn: () => repository.spuMonths.list() };
+});
+
+/** The notices read on this device or one it syncs with. None until read: unknown on the server. */
+export const noticeReadsQueryAtom = atomWithQuery((get) => {
+  const repository = get(repositoryAtom);
+  return { queryKey: queryKeys.noticeReads, queryFn: () => repository.noticeReads.list() };
 });
 
 /**
