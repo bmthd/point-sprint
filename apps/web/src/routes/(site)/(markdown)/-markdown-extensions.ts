@@ -42,7 +42,10 @@ const details: MarkdownExtension = {
   },
 };
 
-/** `:::timeline` with one numbered list inside: each item becomes a numbered step. */
+/**
+ * `:::timeline` with one numbered list inside: each item becomes a numbered step. An item's first
+ * paragraph is its title, in plain text, and the blocks after a blank line are its body.
+ */
 const timeline: MarkdownExtension = {
   name: "timeline",
   parseBlock(context) {
@@ -52,14 +55,25 @@ const timeline: MarkdownExtension = {
     if (list?.type !== "list" || !list.ordered || rest.length > 0)
       throw new Error(":::timeline holds one numbered list (`1. …`) and nothing else");
     context.consume(block.length);
-    const steps = list.items.map((item, index): ComponentNode => ({
-      type: "component",
-      name: "timeline-step",
-      tagName: "md-timeline-step",
-      attributes: {},
-      properties: { step: String(index + 1) },
-      children: item.children satisfies BlockNode[],
-    }));
+    const steps = list.items.map((item, index): ComponentNode => {
+      const [first, ...body] = item.children satisfies BlockNode[];
+      const title =
+        first?.type === "paragraph" && first.children.every((node) => node.type === "text")
+          ? first.children.map((node) => node.value).join("")
+          : undefined;
+      if (title === undefined || body.length === 0)
+        throw new Error(
+          ":::timeline steps are a title and, after a blank line, a body: `1. 見出し\n\n   本文`",
+        );
+      return {
+        type: "component",
+        name: "timeline-step",
+        tagName: "md-timeline-step",
+        attributes: {},
+        properties: { step: String(index + 1), title },
+        children: body,
+      };
+    });
     return {
       type: "component",
       name: "timeline",

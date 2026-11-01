@@ -16,15 +16,25 @@ test(":::details holds its heading and its blocks", () => {
   });
 });
 
-test(":::timeline turns each item of its numbered list into a numbered step", () => {
-  const [node] = parse(":::timeline\n1. プランを作る\n2. 注文を追加する\n:::").children;
+test(":::timeline turns each item of its numbered list into a numbered step with a title", () => {
+  const [node] = parse(
+    ":::timeline\n1. プランを作る\n\n   イベントを選びます。\n2. 注文を追加する\n\n   金額を入れます。\n:::",
+  ).children;
   expect(node).toMatchObject({
     tagName: "md-timeline",
     children: [
-      { tagName: "md-timeline-step", properties: { step: "1" } },
-      { tagName: "md-timeline-step", properties: { step: "2" } },
+      {
+        tagName: "md-timeline-step",
+        properties: { step: "1", title: "プランを作る" },
+        children: [{ type: "paragraph" }],
+      },
+      { tagName: "md-timeline-step", properties: { step: "2", title: "注文を追加する" } },
     ],
   });
+});
+
+test(":::timeline refuses a step without a title and a body", () => {
+  expect(() => parse(":::timeline\n1. プランを作る\n:::")).toThrow(/title/);
 });
 
 test.each(["info", "success", "warning", "error"])(
@@ -59,7 +69,7 @@ test(":::button turns its one link into a button", () => {
 });
 
 test("the closing may be indented, as the formatter writes it after a list", () => {
-  const nodes = parse(":::timeline\n1. プランを作る\n   :::\n\n続きの段落").children;
+  const nodes = parse(":::timeline\n1. プランを作る\n\n   本文\n   :::\n\n続きの段落").children;
   expect(nodes.map((node) => node.type)).toEqual(["component", "paragraph"]);
 });
 
