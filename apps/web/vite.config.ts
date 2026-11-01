@@ -2,6 +2,7 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
+import { guideThumbnails } from "./guide-thumbnails-plugin.ts";
 import { ogFonts } from "./og-fonts-plugin.ts";
 import { isPullRequestPreview, parseGoogleTagsEnv } from "./src/google-tags/env.ts";
 import { prerenderedPages, robotsTxt } from "./src/prerender-pages.ts";
@@ -45,6 +46,7 @@ export default defineConfig(({ command, mode, isPreview }) => {
       }),
       viteReact({ compiler: true }),
       ogFonts(),
+      guideThumbnails(),
       {
         name: "robots-txt",
         applyToEnvironment: (environment) => environment.name === "client",
