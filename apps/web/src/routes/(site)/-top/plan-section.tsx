@@ -2,11 +2,14 @@ import { grouped } from "../../../ui/format";
 import { RouterLink } from "../../../ui/router-link";
 import type { Plan } from "@workspaces/domain";
 import {
+  Button,
+  Drawer,
   Flex,
   Card,
   Heading,
   IconButton,
   List,
+  type ListItemProps,
   Modal,
   Text,
   VStack,
@@ -38,7 +41,16 @@ function TrashIcon() {
   );
 }
 
-function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => void }) {
+/**
+ * A plan's row, a link to it with its total, and its delete button. The `featured` one, the latest,
+ * is the red card with its total large.
+ */
+function PlanRow({
+  plan,
+  onDelete,
+  featured = false,
+  ...rest
+}: { plan: Plan; onDelete: (plan: Plan) => void; featured?: boolean } & ListItemProps) {
   const result = useAtomValue(planResultAtom(plan.id));
   const settings = useAtomValue(accountSettingsAtom);
   const accountId = accountIdOf(plan, settings);
@@ -46,26 +58,49 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
     ? settings.accounts.find((candidate) => candidate.id === accountId)
     : undefined;
   return (
-    <List.Item>
-      <Card.Root>
+    <List.Item {...rest}>
+      <Card.Root
+        variant={featured ? "solid" : undefined}
+        colorScheme={featured ? "primary" : undefined}
+      >
         <Card.Body flexDirection="row" alignItems="center">
-          <RouterLink to="/plan" search={{ id: plan.id }} colorScheme="mono" flex="1" minW="0">
+          <RouterLink
+            to="/plan"
+            search={{ id: plan.id }}
+            colorScheme="mono"
+            color={featured ? "inherit" : undefined}
+            flex="1"
+            minW="0"
+            display="flex"
+            alignItems={featured ? "flex-end" : "center"}
+            gap="3"
+          >
             <Flex flex="1" minW="0" direction="column" gap="0.5">
-              <Text fontSize="md" fontWeight="bold" lineClamp={1}>
+              <Text fontSize={featured ? "sm" : "md"} fontWeight="bold" lineClamp={1}>
                 {plan.name}
               </Text>
-              <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
+              <Text
+                fontSize="xs"
+                color={featured ? "primary.contrast/80" : "fg.muted"}
+                fontVariantNumeric="tabular-nums"
+              >
                 {account ? `${account.name}・` : null}
                 {formatPeriod(plan.period)}・{result?.shopCount ?? 0}店舗・{plan.orders.length}件
               </Text>
             </Flex>
-            <Text fontSize="lg" fontWeight="bold" fontVariantNumeric="tabular-nums">
+            <Text
+              fontSize={featured ? "4xl" : "lg"}
+              lineHeight={featured ? "1" : undefined}
+              fontWeight="bold"
+              fontVariantNumeric="tabular-nums"
+            >
               {grouped(result?.total ?? 0)}P
             </Text>
           </RouterLink>
           <IconButton
             variant="ghost"
-            colorScheme="danger"
+            colorScheme={featured ? "mono" : "danger"}
+            color={featured ? "primary.contrast" : undefined}
             size="lg"
             aria-label={`${plan.name}を削除`}
             onClick={() => onDelete(plan)}
@@ -78,11 +113,19 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
   );
 }
 
-/** Plans live on this device, so this section only renders on the client. */
+/** How many of the latest plans the top page lists on a wide screen; a phone lists the latest. */
+const SHOWN = 3;
+
+/**
+ * The visitor's plans, the latest first, in the sample's place beside the hero: the latest large,
+ * the next ones under it, and all of them behind 「すべてのプラン」. Plans live on this device, so
+ * this section only renders on the client.
+ */
 export function PlanSection() {
   const plans = useAtomValue(plansAtom);
   const { mutate: deletePlan } = useAtomValue(deletePlanAtom);
   const { open, onOpen, onClose } = useDisclosure();
+  const all = useDisclosure();
   const [target, setTarget] = useState<Plan>();
   const finalFocus = useRef<HTMLElement | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -90,27 +133,66 @@ export function PlanSection() {
 
   const sorted = [...plans].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
 
-  // Nothing to show until there is a plan: the events above are where one starts.
+  // Nothing to show until there is a plan: the sample takes its place.
   if (sorted.length === 0) return null;
+
+  const onDelete = (next: Plan) => {
+    setTarget(next);
+    finalFocus.current = null;
+    onOpen();
+  };
 
   return (
     <VStack as="section" aria-labelledby={headingId} gap="2.5" alignItems="stretch">
-      <Heading as="h2" id={headingId} fontSize="md" ref={heading} tabIndex={-1}>
+      <Heading as="h2" id={headingId} fontSize="sm" ref={heading} tabIndex={-1}>
         自分のプラン
       </Heading>
       <List.Root gap="2.5">
-        {sorted.map((plan) => (
+        {sorted.slice(0, SHOWN).map((plan, index) => (
           <PlanRow
             key={plan.id}
             plan={plan}
-            onDelete={(next) => {
-              setTarget(next);
-              finalFocus.current = null;
-              onOpen();
-            }}
+            featured={index === 0}
+            // A phone lists the latest alone.
+            display={index === 0 ? undefined : { base: "list-item", md: "none" }}
+            onDelete={onDelete}
           />
         ))}
       </List.Root>
+      {sorted.length > 1 ? (
+        <Button
+          variant="ghost"
+          colorScheme="link"
+          alignSelf="flex-end"
+          display={sorted.length > SHOWN ? undefined : { base: "none", md: "inline-flex" }}
+          onClick={all.onOpen}
+        >
+          すべてのプラン（{sorted.length} 件）
+        </Button>
+      ) : null}
+      <Drawer.Root
+        open={all.open}
+        onClose={all.onClose}
+        placement={{ base: "inline-end", md: "block-end" }}
+        size="lg"
+      >
+        <Drawer.Content
+          bg="bg.base"
+          maxH={{ base: "none", md: "calc(100dvh - 24px)" }}
+          roundedTop={{ base: "0", md: "l2" }}
+        >
+          <Drawer.Header bg="bg.panel" borderBottomWidth="1px">
+            <Drawer.Title fontSize="md">すべてのプラン</Drawer.Title>
+          </Drawer.Header>
+          <Drawer.Body py="4">
+            <List.Root gap="2.5">
+              {sorted.map((plan) => (
+                <PlanRow key={plan.id} plan={plan} onDelete={onDelete} />
+              ))}
+            </List.Root>
+          </Drawer.Body>
+        </Drawer.Content>
+      </Drawer.Root>
       <Modal.Root
         open={open}
         title="プランを削除しますか？"
@@ -126,7 +208,7 @@ export function PlanSection() {
           if (target) deletePlan(target.id);
           onClose();
           // The delete button is gone, so the dialog cannot hand focus back to it. With the last
-          // plan the section goes too, so focus moves to the events above.
+          // plan the section goes too, so focus moves to the events below.
           finalFocus.current =
             plans.length > 1 ? heading.current : document.querySelector<HTMLElement>("#events h2");
         }}

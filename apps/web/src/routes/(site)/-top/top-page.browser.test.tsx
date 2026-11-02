@@ -19,8 +19,6 @@ import { cleanup, render } from "vitest-browser-react";
 import { repositoryAtom } from "../../../state/repository";
 import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
-import type { Article } from "../../../guides/article";
-import { guideCards } from "../../../guides/guide-cards";
 import { TestColorMode } from "../../../test-color-mode";
 import { expectTexts } from "../../../test-texts";
 import { officialEventsSourceAtom } from "../../-official-events";
@@ -162,17 +160,6 @@ function Hydrate({
   return children;
 }
 
-const article = (index: number): Article => ({
-  slug: `guide-${index}`,
-  title: `ガイド${index}`,
-  description: `ガイド${index}の説明`,
-  published: `2026-10-0${index}`,
-  body: "",
-});
-
-/** Newest first, as the loader reads them, then cut down to the cards. */
-const articles = guideCards([5, 4, 3, 2, 1].map(article));
-
 const planRows = () =>
   page.getByRole("region", { name: "自分のプラン", exact: true }).getByRole("listitem");
 
@@ -185,6 +172,8 @@ async function renderTopPage(
   options: { events?: EventSource; client?: QueryClient } = {},
 ) {
   await cleanup();
+  // A wide screen, where the page has every part: a phone leaves some out to fit the first screen.
+  await page.viewport(1280, 800);
   // Not retried, so a failing load shows at once.
   const client =
     options.client ?? new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -192,12 +181,17 @@ async function renderTopPage(
   const index = createRoute({
     getParentRoute: () => root,
     path: "/",
-    component: () => <TopPage now={now} articles={articles} />,
+    component: () => <TopPage now={now} />,
   });
   const planRoute = createRoute({
     getParentRoute: () => root,
     path: "/plan",
     component: () => <p>プラン画面</p>,
+  });
+  const helpRoute = createRoute({
+    getParentRoute: () => root,
+    path: "/help",
+    component: () => <p>ヘルプ画面</p>,
   });
   const profileRoute = createRoute({
     getParentRoute: () => root,
@@ -205,7 +199,7 @@ async function renderTopPage(
     component: () => <p>プロフィール画面</p>,
   });
   const router = createRouter({
-    routeTree: root.addChildren([index, planRoute, profileRoute]),
+    routeTree: root.addChildren([index, planRoute, helpRoute, profileRoute]),
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
   const screen = await render(
@@ -231,10 +225,10 @@ test("creates a plan from an official event and navigates to it", async () => {
   const next = screen.getByRole("listitem").filter({ hasText: "お買い物マラソン第二弾" });
   await expect.element(current.getByText("開催中")).toBeVisible();
   await expect
-    .element(current.getByText("・買いまわり最大 +9倍・上限 7,000P", { exact: false }))
+    .element(current.getByText("買いまわり最大 +9倍・上限 7,000P", { exact: false }))
     .toBeVisible();
   await expect.element(next.getByText("開催予定")).toBeVisible();
-  await current.getByRole("button", { name: "このイベントでプランを作る" }).click();
+  await current.getByRole("button", { name: "プランを作る" }).click();
 
   await expect.poll(() => router.state.location.pathname).toBe("/plan");
   const [created, ...rest] = await repository.plans.list();
@@ -249,8 +243,12 @@ test("lists only the events that have not ended, and a round whose cap is not ou
   const { screen } = await renderTopPage(createMemoryRepository());
 
   const next = screen.getByRole("listitem").filter({ hasText: "お買い物マラソン第二弾" });
-  await expect.element(next.getByText("・上限は未発表", { exact: false })).toBeVisible();
-  await expect.element(screen.getByRole("tabpanel").getByRole("listitem")).toHaveLength(2);
+  await expect
+    .element(next.getByText("買いまわり最大 +9倍・上限は未発表", { exact: false }))
+    .toBeVisible();
+  await expect
+    .element(screen.getByRole("list", { name: "イベント" }).getByRole("listitem"))
+    .toHaveLength(2);
 });
 
 test("shows each event's name without a link to Rakuten's page", async () => {
@@ -297,7 +295,7 @@ test("sums up an event whose rate the total sets by its highest rate and its cap
 
   const card = screen.getByRole("listitem").filter({ hasText: "楽天ブランドデー" });
   await expect
-    .element(card.getByText("・合計額で最大 +4倍・上限 4,000P", { exact: false }))
+    .element(card.getByText("合計額で最大 +4倍・上限 4,000P", { exact: false }))
     .toBeVisible();
 });
 
@@ -311,9 +309,7 @@ test("says when the events cannot be read, and reads them again", async () => {
   };
   const { screen } = await renderTopPage(createMemoryRepository(), { events });
 
-  await expect
-    .element(screen.getByRole("tabpanel").getByText("イベントを読み込めませんでした"))
-    .toBeVisible();
+  await expect.element(screen.getByText("イベントを読み込めませんでした")).toBeVisible();
   fail = false;
   await screen.getByRole("button", { name: "再試行" }).click();
   await expect.element(screen.getByText("お買い物マラソン&ジャンル祭")).toBeVisible();
@@ -335,14 +331,14 @@ test("shows the latest ended event when none is ahead, and plans with its terms"
   await expect.element(screen.getByRole("heading", { name: "前回のイベント" })).toBeVisible();
   await expect.element(screen.getByText("次回の日程は未発表です")).toBeVisible();
   await expect.element(screen.getByRole("tab").first()).not.toBeInTheDocument();
-  await screen.getByRole("button", { name: "この条件で計算してみる" }).click();
+  await screen.getByRole("button", { name: "この条件で計算" }).click();
 
   await expect.poll(() => router.state.location.pathname).toBe("/plan");
   const [created] = await repository.plans.list();
   expect(created?.officialEventId).toBe("marathon-2026-09-19");
 });
 
-test("lists the other ended events in the drawer behind the latest one", async () => {
+test("lists the other ended events in the drawer beside the latest one", async () => {
   const earlier = marathon({
     id: "marathon-2026-09-04",
     name: "お買い物マラソン第一弾",
@@ -354,8 +350,9 @@ test("lists the other ended events in the drawer behind the latest one", async (
     events: { load: async () => [...servedEvents.slice(0, 1), earlier] },
   });
 
-  await screen.getByRole("button", { name: "そのほかの終了したイベント（1 件）" }).click();
-  await expect.element(screen.getByText("お買い物マラソン第一弾")).toBeVisible();
+  await screen.getByRole("button", { name: "終了したイベント（1 件）" }).click();
+  const drawer = screen.getByRole("dialog", { name: "終了したイベント" });
+  await expect.element(drawer.getByText("お買い物マラソン第一弾")).toBeVisible();
 });
 
 test("does not offer the other ended events when there is only one", async () => {
@@ -365,38 +362,11 @@ test("does not offer the other ended events when there is only one", async () =>
 
   await expect.element(screen.getByRole("heading", { name: "前回のイベント" })).toBeVisible();
   await expect
-    .element(screen.getByRole("button", { name: "そのほかの終了したイベント" }))
+    .element(screen.getByRole("button", { name: "終了したイベント" }))
     .not.toBeInTheDocument();
 });
 
-test("creates a plan from an event that ended, the latest first", async () => {
-  const repository = createMemoryRepository();
-  const earlier = marathon({
-    id: "marathon-2026-09-04",
-    name: "お買い物マラソン第一弾",
-    start: "2026-09-04",
-    end: "2026-09-09",
-    cap: 7000,
-  });
-  const { screen, router } = await renderTopPage(repository, {
-    events: { load: async () => [earlier, ...servedEvents] },
-  });
-
-  await screen.getByRole("tab", { name: "終了" }).click();
-  const cards = screen.getByRole("tabpanel").getByRole("listitem");
-  await expect.element(cards).toHaveLength(2);
-  await expect.element(cards.first().getByText("お買い物マラソン", { exact: true })).toBeVisible();
-  await expect.element(cards.first().getByText("終了", { exact: true })).toBeVisible();
-  await cards.first().getByRole("button", { name: "このイベントでプランを作る" }).click();
-
-  await expect.poll(() => router.state.location.pathname).toBe("/plan");
-  const [created] = await repository.plans.list();
-  expect(created?.name).toBe("9月 お買い物マラソン");
-  expect(created?.officialEventId).toBe("marathon-2026-09-19");
-  expect(created?.period).toEqual({ start: "2026-09-19", end: "2026-09-24" });
-});
-
-test("keeps the events that ended over 30 days ago behind 「もっと見る」", async () => {
+test("creates a plan from an event that ended, in the drawer by month, the latest first", async () => {
   const repository = createMemoryRepository();
   const old = marathon({
     id: "marathon-2026-08-24",
@@ -409,19 +379,27 @@ test("keeps the events that ended over 30 days ago behind 「もっと見る」"
     events: { load: async () => [old, ...servedEvents] },
   });
 
-  await screen.getByRole("tab", { name: "終了" }).click();
-  await expect.element(screen.getByRole("tabpanel").getByRole("listitem")).toHaveLength(1);
-  await screen.getByRole("button", { name: "もっと見る" }).click();
-  const drawer = screen.getByRole("dialog", { name: "それより前のイベント" });
-  await expect.element(drawer.getByRole("heading", { name: "2026年8月" })).toBeVisible();
-  await drawer.getByRole("button", { name: "プランを作る" }).click();
+  await screen.getByRole("button", { name: "終了したイベント（2 件）" }).click();
+  const drawer = screen.getByRole("dialog", { name: "終了したイベント" });
+  await expect.element(drawer.getByRole("heading", { level: 3 })).toHaveLength(2);
+  expect(
+    drawer
+      .getByRole("heading", { level: 3 })
+      .elements()
+      .map((h) => h.textContent),
+  ).toEqual(["2026年9月", "2026年8月"]);
+  await drawer
+    .getByRole("listitem")
+    .filter({ hasText: "お買い物マラソン8月" })
+    .getByRole("button", { name: "プランを作る" })
+    .click();
 
   await expect.poll(() => router.state.location.pathname).toBe("/plan");
   const [created] = await repository.plans.list();
+  expect(created?.name).toBe("8月 お買い物マラソン8月");
   expect(created?.officialEventId).toBe("marathon-2026-08-24");
   expect(created?.period).toEqual({ start: "2026-08-24", end: "2026-08-29" });
 });
-
 test("creates a plan without an event", async () => {
   const repository = createMemoryRepository();
   const { screen, router } = await renderTopPage(repository);
@@ -522,33 +500,11 @@ test("hides its plans section until there is a plan", async () => {
   await expect.element(page.getByRole("region", { name: "自分のプラン" })).not.toBeInTheDocument();
 });
 
-test("lists the four newest guides", async () => {
-  const { screen } = await renderTopPage(createMemoryRepository());
-  const guides = screen.getByRole("region", { name: "買い物ガイド" });
-  const links = guides.getByRole("link");
-  await expect.element(links.nth(3)).toBeVisible();
-  expect(links.elements().map((link) => link.getAttribute("href"))).toEqual([
-    "/guides/guide-5",
-    "/guides/guide-4",
-    "/guides/guide-3",
-    "/guides/guide-2",
-    "/guides",
-  ]);
-  // A card is the guide's thumbnail alone: its link is named by the picture's text, the title.
-  await expect
-    .element(guides.getByRole("link", { name: "ガイド5" }))
-    .toHaveAttribute("href", "/guides/guide-5");
-  await expect
-    .element(guides.getByRole("link", { name: "すべての記事" }))
-    .toHaveAttribute("href", "/guides");
-});
-
 test("links to the steps for a first visit", async () => {
   const { screen } = await renderTopPage(createMemoryRepository());
   await expect
     .element(screen.getByRole("link", { name: "はじめての方へ" }))
-    .toHaveAttribute("href", "#how-to");
-  await expect.element(screen.getByRole("heading", { name: "使い方" })).toBeVisible();
+    .toHaveAttribute("href", "/help");
 });
 
 test("shows an error and stays put when the plan cannot be saved", async () => {
@@ -704,26 +660,6 @@ test("takes the visitor to the events when two are running", async () => {
   expect(await repository.plans.list()).toHaveLength(0);
 });
 
-test("opens the tab of the running events when the visitor is taken to choose one", async () => {
-  const second = marathon({
-    id: "marathon-2026-10-second",
-    name: "お買い物マラソン別枠",
-    start: "2026-10-04",
-    end: "2026-10-09",
-  });
-  const { screen } = await renderTopPage(createMemoryRepository(), {
-    events: { load: async () => [...servedEvents.slice(0, 2), second] },
-  });
-  await screen.getByRole("tab", { name: "終了" }).click();
-
-  await screen.getByRole("button", { name: "計算をはじめる" }).click();
-
-  await expect
-    .element(screen.getByRole("tab", { name: "開催中・開催予定" }))
-    .toHaveAttribute("aria-selected", "true");
-  await expect.element(screen.getByText("お買い物マラソン別枠")).toBeVisible();
-});
-
 test("does not start a plan from events kept from before a read that failed", async () => {
   const repository = createMemoryRepository();
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -740,9 +676,7 @@ test("does not start a plan from events kept from before a read that failed", as
   await expect.element(screen.getByText("お買い物マラソン&ジャンル祭")).toBeVisible();
   fail = true;
   await client.refetchQueries();
-  await expect
-    .element(screen.getByRole("tabpanel").getByText("イベントを読み込めませんでした"))
-    .toBeVisible();
+  await expect.element(screen.getByText("イベントを読み込めませんでした")).toBeVisible();
 
   await screen.getByRole("button", { name: "計算をはじめる" }).click();
 
@@ -759,9 +693,7 @@ test("takes the visitor to the events while they cannot be read", async () => {
       },
     },
   });
-  await expect
-    .element(screen.getByRole("tabpanel").getByText("イベントを読み込めませんでした"))
-    .toBeVisible();
+  await expect.element(screen.getByText("イベントを読み込めませんでした")).toBeVisible();
 
   await screen.getByRole("button", { name: "計算をはじめる" }).click();
 
@@ -787,7 +719,7 @@ test("starts a plan for the same ended event the list shows when none is ahead",
   const { screen, router } = await renderTopPage(repository, {
     events: { load: async () => [longer, shorter] },
   });
-  const shown = screen.getByRole("listitem").filter({ hasText: "この条件で計算してみる" });
+  const shown = screen.getByRole("listitem").filter({ hasText: "この条件で計算" });
   await expect.element(shown.getByText("お買い物マラソン短め")).toBeVisible();
 
   await screen.getByRole("button", { name: "計算をはじめる" }).click();

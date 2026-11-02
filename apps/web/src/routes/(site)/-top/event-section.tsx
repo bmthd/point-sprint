@@ -1,55 +1,60 @@
 import type { OfficialEvent } from "@workspaces/domain";
 import {
   Badge,
+  Box,
   Button,
   CalendarXIcon,
   Card,
   Drawer,
   Flex,
+  Grid,
   Heading,
   List,
   Skeleton,
-  Tabs,
   Text,
   TriangleAlertIcon,
   VStack,
+  useDisclosure,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useId } from "react";
 import { grouped } from "../../../ui/format";
-import { monthDayWithWeekday } from "../../../ui/dates";
+import { monthDay, monthDayWithWeekday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";
-import { ColumnHead } from "../../../ui/column-head";
+import { SaveFailed } from "./hero";
 import { endedLatestFirst } from "./start-target";
 
 /**
- * The highest rate and the cap of each shop-around and spend-tiers benefit,
- * e.g. 「・買いまわり最大 +9倍・上限 7,000P」 or 「・合計額で最大 +4倍・上限 4,000P」.
+ * The highest rate and the cap of each shop-around and spend-tiers benefit, e.g.
+ * 「買いまわり最大 +9倍・上限 7,000P」 or 「合計額で最大 +4倍・上限 4,000P」. `short` leaves out what
+ * the rate is on, for a phone's one line.
  */
-function tiersSummary(event: OfficialEvent): string {
+function tiersSummary(event: OfficialEvent, short = false): string {
   return event.benefits
-    .map((benefit) => {
-      if (benefit.kind !== "shop-around" && benefit.kind !== "spend-tiers") return "";
+    .flatMap((benefit) => {
+      if (benefit.kind !== "shop-around" && benefit.kind !== "spend-tiers") return [];
       const { tiers, cap } = benefit.params;
       const maxRate = Math.max(...tiers.map((tier) => tier.rate));
       // A round is listed from the schedule page before its own page tells the cap.
-      const capText = cap === undefined ? "・上限は未発表" : `・上限 ${grouped(cap)}P`;
-      const what = benefit.kind === "shop-around" ? "買いまわり" : "合計額で";
-      return `・${what}最大 +${maxRate}倍${capText}`;
+      const capText = cap === undefined ? "上限は未発表" : `上限 ${grouped(cap)}P`;
+      const what = short ? "" : benefit.kind === "shop-around" ? "買いまわり" : "合計額で";
+      return [`${what}最大 +${maxRate}倍・${capText}`];
     })
-    .join("");
+    .join("・");
 }
 
-type EventCardProps = {
-  event: OfficialEvent;
-  /** `undefined` before the date is known: the card then has no status badge. */
-  status: "active" | "upcoming" | "ended" | undefined;
-  disabled: boolean;
-  onCreate: (event: OfficialEvent) => void;
-  actionLabel?: string;
-};
+type Status = "active" | "upcoming" | "ended";
 
-function StatusBadge({ status }: { status: "active" | "upcoming" | "ended" }) {
+const statusOf = (event: OfficialEvent, today: string | undefined): Status | undefined =>
+  !today
+    ? undefined
+    : event.period.end < today
+      ? "ended"
+      : event.period.start <= today
+        ? "active"
+        : "upcoming";
+
+function StatusBadge({ status }: { status: Status }) {
   switch (status) {
     case "active":
       return (
@@ -72,49 +77,68 @@ function StatusBadge({ status }: { status: "active" | "upcoming" | "ended" }) {
   }
 }
 
+type CreateProps = {
+  disabled: boolean;
+  onCreate: (event: OfficialEvent) => void;
+};
+
+/**
+ * An event's card: its name and terms on the left, the button on the right. A phone has the terms
+ * on one short line, so the card stays low.
+ */
 function EventCard({
   event,
   status,
   disabled,
   onCreate,
-  actionLabel = "このイベントでプランを作る",
-}: EventCardProps) {
+  actionLabel,
+}: { event: OfficialEvent; status: Status | undefined; actionLabel: string } & CreateProps) {
   return (
-    <List.Item>
-      <Card.Root>
-        <Card.Body>
-          <Flex align="center" gap="2">
+    <Card.Root h="full">
+      <Card.Body flexDirection="row" alignItems="center" gap={{ base: "4", md: "3" }}>
+        <VStack flex="1" minW="0" gap="1" alignItems="stretch">
+          <Flex align="center" gap="2" minW="0">
             {status ? <StatusBadge status={status} /> : null}
-            <Text fontSize="md" fontWeight="bold">
+            <Text fontSize={{ base: "md", md: "sm" }} fontWeight="bold" truncated>
               {event.name}
             </Text>
           </Flex>
-          <Text fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
+          <Text
+            fontSize="sm"
+            color="fg.muted"
+            fontVariantNumeric="tabular-nums"
+            display={{ base: "block", md: "none" }}
+          >
             {monthDayWithWeekday(event.period.start)}
             {event.times?.start} 〜 {monthDayWithWeekday(event.period.end)}
             {event.times?.end}
+            <br />
             {tiersSummary(event)}
           </Text>
-          <Button
-            colorScheme="primary"
-            size="lg"
-            disabled={disabled}
-            onClick={() => onCreate(event)}
+          <Text
+            fontSize="xs"
+            color="fg.muted"
+            fontVariantNumeric="tabular-nums"
+            truncated
+            display={{ base: "none", md: "block" }}
           >
-            {actionLabel}
-          </Button>
-        </Card.Body>
-      </Card.Root>
-    </List.Item>
+            {monthDay(event.period.start)}〜{monthDay(event.period.end)}・
+            {tiersSummary(event, true)}
+          </Text>
+        </VStack>
+        <Button
+          colorScheme="primary"
+          size={{ base: "lg", md: "md" }}
+          flexShrink="0"
+          disabled={disabled}
+          onClick={() => onCreate(event)}
+        >
+          {actionLabel}
+        </Button>
+      </Card.Body>
+    </Card.Root>
   );
 }
-
-type EventListProps = {
-  /** Today in Japan as `YYYY-MM-DD`; `undefined` where nothing sets it, as in some tests. */
-  today: string | undefined;
-  disabled: boolean;
-  onCreate: (event: OfficialEvent) => void;
-};
 
 /**
  * What takes the list's place when there is no list, set as an event's card is: the line in bold,
@@ -151,192 +175,27 @@ function EventListNotice({
   );
 }
 
-/** How long an ended event stays on its tab; older ones are behind 「もっと見る」. */
-const RECENT_DAYS = 30;
-
-/** `date` moved back by `days`, both as `YYYY-MM-DD`. */
-const daysBefore = (date: string, days: number): string =>
-  new Date(Date.parse(date) - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-
 /**
- * The events split by `today`: the ones that have not ended, the ones that ended within
- * `RECENT_DAYS`, and the older ones. The ended ones are the latest first.
+ * Where the cards go while the events load: an event's card with its lines grayed, so the card
+ * that comes after it, an event's or the error's, is as tall.
  */
-function splitEvents(events: OfficialEvent[], today: string | undefined) {
-  if (!today) return { ahead: events, recent: [], older: [] };
-  const ended = endedLatestFirst(events, today);
-  const cutoff = daysBefore(today, RECENT_DAYS);
-  return {
-    ahead: events.filter((event) => event.period.end >= today),
-    recent: ended.filter((event) => event.period.end >= cutoff),
-    older: ended.filter((event) => event.period.end < cutoff),
-  };
-}
-
-function EventCards({
-  events,
-  today,
-  disabled,
-  onCreate,
-  actionLabel,
-}: { events: OfficialEvent[]; actionLabel?: string } & EventListProps) {
+function EventCardSkeleton() {
   return (
-    <List.Root gap="2.5">
-      {events.map((event) => (
-        <EventCard
-          key={event.id}
-          event={event}
-          status={
-            !today
-              ? undefined
-              : event.period.end < today
-                ? "ended"
-                : event.period.start <= today
-                  ? "active"
-                  : "upcoming"
-          }
-          disabled={disabled}
-          onCreate={onCreate}
-          actionLabel={actionLabel}
-        />
-      ))}
-    </List.Root>
-  );
-}
-
-/**
- * The heading and the two tabs. The tabs sit on the heading's row, so the cards start on the same
- * line as the sidebar's. Each panel holds `ahead` or `ended`, or the same thing while the events
- * load.
- */
-function EventTabs({
-  index,
-  onChange,
-  ahead,
-  ended,
-}: {
-  index: number;
-  onChange?: (index: number) => void;
-  ahead: ReactNode;
-  ended: ReactNode;
-}) {
-  return (
-    <Tabs.Root index={index} onChange={onChange} size="sm" gap="2.5">
-      <ColumnHead>
-        <Heading as="h2" fontSize="md" tabIndex={-1}>
-          イベント
-        </Heading>
-        <Tabs.List>
-          <Tabs.Tab index={0}>開催中・開催予定</Tabs.Tab>
-          <Tabs.Tab index={1}>終了</Tabs.Tab>
-        </Tabs.List>
-      </ColumnHead>
-      <Tabs.Panel index={0} p="0">
-        {ahead}
-      </Tabs.Panel>
-      <Tabs.Panel index={1} p="0">
-        {ended}
-      </Tabs.Panel>
-    </Tabs.Root>
-  );
-}
-
-/**
- * The events the page was rendered with, or read from the Worker once the page runs when it was
- * not: on a visit from another page, or when the Worker could not read them.
- */
-function EventList({
-  today,
-  disabled,
-  onCreate,
-  chosen,
-  setChosen,
-}: EventListProps & EventTabChoice) {
-  const { data, isPending, isError, refetch } = useAtomValue(officialEventsQueryAtom);
-  if (isPending) {
-    return <EventTabs index={0} ahead={<EventListSkeleton />} ended={<EventListSkeleton />} />;
-  }
-  if (isError) {
-    const notice = (
-      <EventListNotice
-        tone="danger"
-        icon={<TriangleAlertIcon />}
-        title="イベントを読み込めませんでした"
-        description="通信状況をご確認の上再度お試しください。"
-        action={
-          <Button
-            variant="outline"
-            bg="bg.panel"
-            size="lg"
-            alignSelf="flex-start"
-            onClick={() => void refetch()}
-          >
-            再試行
-          </Button>
-        }
-      />
-    );
-    return <EventTabs index={chosen ?? 0} onChange={setChosen} ahead={notice} ended={notice} />;
-  }
-  const { ahead, recent, older } = splitEvents(data, today);
-  const props = { today, disabled, onCreate };
-  const [latestEnded, ...otherEnded] = [...recent, ...older];
-  if (ahead.length === 0 && latestEnded) {
-    return (
-      <VStack gap="2.5" alignItems="stretch">
-        <ColumnHead>
-          <Heading as="h2" fontSize="md" tabIndex={-1}>
-            前回のイベント
-          </Heading>
-          <Text fontSize="sm" color="fg.muted">
-            次回の日程は未発表です
-          </Text>
-        </ColumnHead>
-        <EventCards events={[latestEnded]} actionLabel="この条件で計算してみる" {...props} />
-        {otherEnded.length === 0 ? null : (
-          <OlderEvents
-            events={otherEnded}
-            label={`そのほかの終了したイベント（${otherEnded.length} 件）`}
-            {...props}
-          />
-        )}
-      </VStack>
-    );
-  }
-  return (
-    <EventTabs
-      index={chosen ?? 0}
-      onChange={setChosen}
-      ahead={
-        ahead.length === 0 ? (
-          <EventListNotice
-            icon={<CalendarXIcon color="fg.muted" />}
-            title="開催中・開催予定のイベントはまだありません"
-            description="新しいイベントが告知されると、ここに出ます。"
-          />
-        ) : (
-          <EventCards events={ahead} {...props} />
-        )
-      }
-      ended={
-        <VStack gap="2.5" alignItems="stretch">
-          {recent.length === 0 ? (
-            <EventListNotice
-              icon={<CalendarXIcon color="fg.muted" />}
-              title={`この ${RECENT_DAYS} 日に終わったイベントはありません`}
-              description={
-                older.length === 0
-                  ? "イベントが終わると、ここに出ます。"
-                  : "それより前のイベントは「もっと見る」から選べます。"
-              }
-            />
-          ) : (
-            <EventCards events={recent} {...props} />
-          )}
-          {older.length === 0 ? null : <OlderEvents events={older} label="もっと見る" {...props} />}
+    <Card.Root aria-hidden>
+      <Card.Body flexDirection="row" alignItems="center" gap="4">
+        <VStack flex="1" minW="0" gap="1" alignItems="stretch">
+          <Skeleton>
+            <Text fontWeight="bold">お買い物マラソン</Text>
+          </Skeleton>
+          <Skeleton>
+            <Text fontSize="sm">10/14（水） 〜 10/17（土）</Text>
+          </Skeleton>
         </VStack>
-      }
-    />
+        <Skeleton flexShrink="0">
+          <Button size="lg">プランを作る</Button>
+        </Skeleton>
+      </Card.Body>
+    </Card.Root>
   );
 }
 
@@ -344,16 +203,11 @@ function EventList({
 const yearMonth = (date: string) => `${date.slice(0, 4)}年${Number(date.slice(5, 7))}月`;
 
 /**
- * The button (`label`) and the drawer it opens: the ended events it is given, a panel for
- * each month they started in, the latest first. From the bottom on a phone, from the side otherwise.
+ * The button to the events that ended and the drawer it opens: a panel for each month they started
+ * in, the latest first. From the bottom on a phone, from the side otherwise.
  */
-function OlderEvents({
-  events,
-  label,
-  disabled,
-  onCreate,
-}: { events: OfficialEvent[]; label: string } & EventListProps) {
-  const [open, setOpen] = useState(false);
+function EndedEvents({ events, disabled, onCreate }: { events: OfficialEvent[] } & CreateProps) {
+  const { open, onOpen, onClose } = useDisclosure();
   const months = new Map<string, OfficialEvent[]>();
   for (const event of events) {
     const month = yearMonth(event.period.start);
@@ -361,24 +215,22 @@ function OlderEvents({
   }
   return (
     <>
-      <Button
-        variant="ghost"
-        colorScheme="link"
-        size="lg"
-        alignSelf="flex-start"
-        onClick={() => setOpen(true)}
-      >
-        {label}
+      <Button variant="ghost" colorScheme="link" size="sm" px="0" flexShrink="0" onClick={onOpen}>
+        終了したイベント（{events.length} 件）
       </Button>
       <Drawer.Root
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={onClose}
         placement={{ base: "inline-end", md: "block-end" }}
         size="lg"
       >
-        <Drawer.Content bg="bg.base" maxH={{ md: "calc(100dvh - 24px)" }} roundedTop={{ md: "l2" }}>
+        <Drawer.Content
+          bg="bg.base"
+          maxH={{ base: "none", md: "calc(100dvh - 24px)" }}
+          roundedTop={{ base: "0", md: "l2" }}
+        >
           <Drawer.Header bg="bg.panel" borderBottomWidth="1px">
-            <Drawer.Title fontSize="md">それより前のイベント</Drawer.Title>
+            <Drawer.Title fontSize="md">終了したイベント</Drawer.Title>
           </Drawer.Header>
           <Drawer.Body py="4" gap="5">
             {[...months].map(([month, monthEvents]) => (
@@ -404,9 +256,8 @@ function OlderEvents({
                             {monthDayWithWeekday(event.period.start)} 〜{" "}
                             {monthDayWithWeekday(event.period.end)}
                           </Text>
-                          {/* On a line of its own, without the dot that joins it to the period. */}
                           <Text fontSize="xs" color="fg.muted">
-                            {tiersSummary(event).replace(/^・/, "")}
+                            {tiersSummary(event)}
                           </Text>
                         </VStack>
                         <Button
@@ -415,7 +266,7 @@ function OlderEvents({
                           flexShrink="0"
                           disabled={disabled}
                           onClick={() => {
-                            setOpen(false);
+                            onClose();
                             onCreate(event);
                           }}
                         >
@@ -434,72 +285,188 @@ function OlderEvents({
   );
 }
 
-/**
- * Where the list goes while the events load: an event's card with its lines grayed, so the card
- * that comes after it, an event's or the error's, is as tall.
- */
-function EventListSkeleton() {
-  return (
-    <Card.Root aria-hidden>
-      <Card.Body>
-        <Skeleton>
-          <Text fontSize="md" fontWeight="bold">
-            お買い物マラソン
-          </Text>
-        </Skeleton>
-        <Skeleton>
-          <Text fontSize="sm">10/14（水） 〜 10/17（土）・買いまわり最大 +9倍</Text>
-        </Skeleton>
-        <Skeleton>
-          <Button size="lg">このイベントでプランを作る</Button>
-        </Skeleton>
-      </Card.Body>
-    </Card.Root>
-  );
-}
-
-/** The tab chosen, `undefined` until one is; kept by the page, which opens a tab itself too. */
-type EventTabChoice = {
-  chosen: number | undefined;
-  setChosen: (index: number) => void;
-};
-
-type EventSectionProps = EventTabChoice & {
-  /** Today in Japan as `YYYY-MM-DD`. */
+type EventSectionProps = CreateProps & {
+  /** Today in Japan as `YYYY-MM-DD`; `undefined` where nothing sets it, as in some tests. */
   today: string | undefined;
-  disabled: boolean;
-  onCreate: (event: OfficialEvent) => void;
   onCreateWithoutEvent: () => void;
+  /** That the plan started here could not be saved. */
+  failed: boolean;
 };
 
-/** The events, and the button that needs no event. */
+/**
+ * The events under the hero: the ones running and to come, or the latest that ended when none is
+ * ahead, and the rest of the ended ones behind a button. The heading and its button are on the
+ * left on a wide screen, above the cards on a phone. The cards are two to a row on a wide screen,
+ * so one card does not stretch across the page: with an odd number, the last place has the button
+ * that needs no event. A phone scrolls the cards sideways, so the section is as tall with two.
+ */
 export function EventSection({
   today,
   disabled,
   onCreate,
   onCreateWithoutEvent,
-  chosen,
-  setChosen,
+  failed,
 }: EventSectionProps) {
-  return (
-    <VStack as="section" id="events" gap="2.5" alignItems="stretch">
-      <EventList
-        today={today}
-        disabled={disabled}
-        onCreate={onCreate}
-        chosen={chosen}
-        setChosen={setChosen}
+  const headingId = useId();
+  const { data, isPending, isError, refetch } = useAtomValue(officialEventsQueryAtom);
+
+  const events = isPending || isError ? [] : data;
+  const ahead = today ? events.filter((event) => event.period.end >= today) : events;
+  const ended = today ? endedLatestFirst(events, today) : [];
+  const [latestEnded, ...earlier] = ended;
+  // With nothing ahead, the latest that ended takes the cards' place, under its own heading.
+  const showEnded = !isPending && !isError && ahead.length === 0 && latestEnded !== undefined;
+  const cards = showEnded ? [latestEnded] : ahead;
+  const behind = showEnded ? earlier : ended;
+
+  const withoutEvent = (
+    <Button
+      variant="outline"
+      bg="bg.panel"
+      size="lg"
+      disabled={disabled}
+      onClick={onCreateWithoutEvent}
+    >
+      イベントを選ばずにプランを作る
+    </Button>
+  );
+
+  let content: ReactNode;
+  if (isPending) {
+    content = <EventCardSkeleton />;
+  } else if (isError) {
+    content = (
+      <EventListNotice
+        tone="danger"
+        icon={<TriangleAlertIcon />}
+        title="イベントを読み込めませんでした"
+        description="通信状況をご確認の上再度お試しください。"
+        action={
+          <Button
+            variant="outline"
+            bg="bg.panel"
+            size="lg"
+            alignSelf="flex-start"
+            onClick={() => void refetch()}
+          >
+            再試行
+          </Button>
+        }
       />
-      <Button
-        variant="ghost"
-        colorScheme="link"
-        size="lg"
-        alignSelf="flex-start"
-        disabled={disabled}
-        onClick={onCreateWithoutEvent}
+    );
+  } else if (cards.length === 0) {
+    content = (
+      <EventListNotice
+        icon={<CalendarXIcon color="fg.muted" />}
+        title="開催中・開催予定のイベントはまだありません"
+        description="新しいイベントが告知されると、ここに出ます。"
+      />
+    );
+  } else {
+    const odd = cards.length % 2 === 1;
+    content = (
+      // The list lays its cards out in the box around it, so the card that needs no event takes the
+      // last place in the grid without being one of the events.
+      <Box
+        display={{ base: "grid", md: "flex" }}
+        gridTemplateColumns="repeat(2, minmax(0, 1fr))"
+        gap={{ base: "3", md: "2" }}
+        overflowX={{ base: "visible", md: "auto" }}
+        scrollSnapType={{ base: "none", md: "x mandatory" }}
+        // The cards scroll to the screen's edge on a phone.
+        me={{ base: "0", md: "-5" }}
+        pe={{ base: "0", md: "5" }}
       >
-        イベントを選ばずにプランを作る
-      </Button>
-    </VStack>
+        <List.Root aria-labelledby={headingId} display="contents">
+          {cards.map((event) => (
+            <List.Item
+              key={event.id}
+              flex={{ base: "initial", md: cards.length > 1 ? "0 0 88%" : "1 0 100%" }}
+              scrollSnapAlign={{ base: "none", md: "start" }}
+            >
+              <EventCard
+                event={event}
+                status={statusOf(event, today)}
+                actionLabel={showEnded ? "この条件で計算" : "プランを作る"}
+                disabled={disabled}
+                onCreate={onCreate}
+              />
+            </List.Item>
+          ))}
+        </List.Root>
+        {odd ? (
+          <Box display={{ base: "block", md: "none" }}>
+            <Card.Root h="full" variant="outline" bg="transparent" borderStyle="dashed">
+              <Card.Body flexDirection="row" alignItems="center" gap="4">
+                <VStack flex="1" minW="0" gap="1" alignItems="stretch">
+                  <Text fontWeight="bold">イベントのない買い物</Text>
+                  <Text fontSize="sm" color="fg.muted">
+                    買うものだけで計算できます
+                  </Text>
+                </VStack>
+                {withoutEvent}
+              </Card.Body>
+            </Card.Root>
+          </Box>
+        ) : null}
+      </Box>
+    );
+  }
+
+  const oddCards = cards.length % 2 === 1 && !isPending && !isError;
+
+  return (
+    <Box as="section" id="events" aria-labelledby={headingId}>
+      {/* Breakpoints here apply from that width down. */}
+      <Grid
+        maxW="1280px"
+        mx="auto"
+        px={{ base: "6", md: "5" }}
+        pt={{ base: "6", md: "5" }}
+        pb={{ base: "8", md: "4" }}
+        gridTemplateColumns={{ base: "160px minmax(0, 1fr)", md: "minmax(0, 1fr)" }}
+        columnGap="6"
+        rowGap="3"
+        alignItems="center"
+      >
+        <Flex
+          direction={{ base: "column", md: "row" }}
+          align={{ base: "flex-start", md: "center" }}
+          justify={{ base: "flex-start", md: "space-between" }}
+          gap="1"
+        >
+          <VStack gap="0.5" alignItems="stretch">
+            <Heading as="h2" id={headingId} fontSize="md" tabIndex={-1}>
+              {showEnded ? "前回のイベント" : "イベント"}
+            </Heading>
+            {showEnded ? (
+              <Text fontSize="xs" color="fg.muted">
+                次回の日程は未発表です
+              </Text>
+            ) : null}
+          </VStack>
+          {behind.length > 0 ? (
+            <EndedEvents events={behind} disabled={disabled} onCreate={onCreate} />
+          ) : null}
+        </Flex>
+        <VStack alignItems="stretch" gap="3" minW="0">
+          {content}
+          {/* Under the cards when the last place has no room for it, and always on a phone. */}
+          <Box display={oddCards ? { base: "none", md: "block" } : undefined}>
+            <Button
+              variant="ghost"
+              colorScheme="link"
+              size={{ base: "lg", md: "sm" }}
+              px={{ base: "4", md: "0" }}
+              disabled={disabled}
+              onClick={onCreateWithoutEvent}
+            >
+              イベントを選ばずにプランを作る
+            </Button>
+          </Box>
+          {failed ? <SaveFailed /> : null}
+        </VStack>
+      </Grid>
+    </Box>
   );
 }

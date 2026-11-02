@@ -28,7 +28,7 @@ import {
   useSaveOrderChange,
   useShopName,
 } from "../-order-shared";
-import { pointFill } from "./point-breakdown";
+import { pointFill } from "../../-point-breakdown";
 
 export type OrderCardProps = {
   planId: string;
