@@ -31,7 +31,7 @@ import { ChevronIcon, SlidersIcon } from "../../../ui/icons";
 import { OrderList } from "./order-list";
 import { OrderTable } from "./order-table";
 import { PlanPage } from "../-plan-page";
-import { PointBreakdown } from "./point-breakdown";
+import { PointBreakdown } from "../../-point-breakdown";
 import { ShopLadder } from "./shop-ladder";
 import { SummaryCard, countedAmount, effectiveRate } from "./summary-card";
 import { Warnings } from "../-warnings";
