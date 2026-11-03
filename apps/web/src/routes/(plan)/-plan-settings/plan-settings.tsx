@@ -9,6 +9,7 @@ import { PlanPage } from "../-plan-page";
 import { RouterButton, RouterIconButton } from "../../../ui/router-link";
 import { AccountPicker } from "./account-picker";
 import { CampaignToggles } from "./campaign-toggles";
+import { EventAttacher } from "./event-attacher";
 import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared";
 import { ShopAroundSettings } from "./shop-around-settings";
 import { SpendTiersSettings } from "./spend-tiers-settings";
@@ -57,6 +58,8 @@ function SettingsBody({ plan, onChangeSpu }: { plan: Plan; onChangeSpu: (month: 
       <CampaignToggles plan={plan} />
       <ShopAroundSettings plan={plan} />
       <SpendTiersSettings plan={plan} />
+      {/* Last, since it appears once the events load and would push the settings below it down. */}
+      <EventAttacher plan={plan} />
     </VStack>
   );
 }
