@@ -178,7 +178,6 @@ describe("the phone sheet", () => {
     );
     await expect.element(sheet.getByLabelText("金額（税込）")).toHaveValue("2160");
     await expect.element(shopField(sheet)).toHaveValue("ショップ4");
-    await sheet.getByText(/^詳細設定/).click();
     await expect.element(sheet.getByRole("spinbutton", { name: /^独自倍率/ })).toHaveValue("");
   });
 

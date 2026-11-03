@@ -24,7 +24,6 @@ import {
   Input,
   InputGroup,
   Modal,
-  NativeAccordion,
   NativeSelect,
   Separator,
   Switch,
@@ -423,60 +422,49 @@ function MainItemFields({
   );
 }
 
-function Details({ form, defaultOpen }: { form: OrderForm; defaultOpen: boolean }) {
+function Details({ form }: { form: OrderForm }) {
   return (
-    // The animated panel clips its content, which cuts the focus rings of the switch and the add
-    // button at its edges.
-    <NativeAccordion.Root animate={false}>
-      <NativeAccordion.Item open={defaultOpen}>
-        <NativeAccordion.Button>
-          詳細設定（数量・クーポン・保留・商品を追加）
-        </NativeAccordion.Button>
-        <NativeAccordion.Panel>
+    <OrderPart legend="詳細設定">
+      <ItemDetailFields form={form} index={0} withRate={false} />
+      <FormField of={form} path={["onHold"]}>
+        {(field) => (
+          <Switch
+            {...field.props}
+            checked={field.input === true}
+            colorScheme="primary"
+            reverse
+            justifyContent="space-between"
+            // The whole row is the switch's label: a 44px tap target.
+            minH="11"
+          >
+            保留（計算から外す）
+          </Switch>
+        )}
+      </FormField>
+      <FieldArray of={form} path={["items"]}>
+        {(items) => (
           <Flex direction="column" gap="2">
-            <ItemDetailFields form={form} index={0} withRate={false} />
-            <FormField of={form} path={["onHold"]}>
-              {(field) => (
-                <Switch
-                  {...field.props}
-                  checked={field.input === true}
-                  colorScheme="primary"
-                  reverse
-                  justifyContent="space-between"
-                  // The whole row is the switch's label: a 44px tap target.
-                  minH="11"
-                >
-                  保留（計算から外す）
-                </Switch>
-              )}
-            </FormField>
-            <FieldArray of={form} path={["items"]}>
-              {(items) => (
-                <Flex direction="column" gap="2">
-                  {items.items.map((key, index) =>
-                    index === 0 ? null : <ExtraItem key={key} form={form} index={index} />,
-                  )}
-                  {items.errors ? (
-                    <Text role="alert" fontSize="sm" color="danger.fg">
-                      {items.errors[0]}
-                    </Text>
-                  ) : null}
-                </Flex>
-              )}
-            </FieldArray>
-            <Button
-              type="button"
-              variant="ghost"
-              colorScheme="primary"
-              alignSelf="flex-start"
-              onClick={() => insert(form, { path: ["items"], initialInput: emptyItem() })}
-            >
-              ＋ 同じショップの商品を追加
-            </Button>
+            {items.items.map((key, index) =>
+              index === 0 ? null : <ExtraItem key={key} form={form} index={index} />,
+            )}
+            {items.errors ? (
+              <Text role="alert" fontSize="sm" color="danger.fg">
+                {items.errors[0]}
+              </Text>
+            ) : null}
           </Flex>
-        </NativeAccordion.Panel>
-      </NativeAccordion.Item>
-    </NativeAccordion.Root>
+        )}
+      </FieldArray>
+      <Button
+        type="button"
+        variant="ghost"
+        colorScheme="primary"
+        alignSelf="flex-start"
+        onClick={() => insert(form, { path: ["items"], initialInput: emptyItem() })}
+      >
+        ＋ 同じショップの商品を追加
+      </Button>
+    </OrderPart>
   );
 }
 
@@ -549,7 +537,8 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
             <Campaigns form={form} plan={plan} />
             <DraftPreview form={form} plan={plan} original={original} />
             {original ? null : <CapFlows plan={plan} form={form} />}
-            <Details form={form} defaultOpen={(original?.lineItems.length ?? 1) > 1} />
+            <Separator />
+            <Details form={form} />
           </Flex>
         </Form>
       </parts.Body>
