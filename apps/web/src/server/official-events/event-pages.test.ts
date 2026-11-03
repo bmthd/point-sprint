@@ -8,6 +8,8 @@ const fixture = (name: string) =>
   readFileSync(new URL(`event-pages/${name}`, import.meta.url), "utf8");
 const schedule = fixture("schedule-2026-10.html");
 const marathon = fixture("marathon-2026-10-14.html");
+// Fetched on 2026-11-03, while the schedule page still listed October's rounds.
+const marathonAhead = fixture("marathon-2026-11-04.html");
 
 test("reads the rounds of the month from the schedule page", () => {
   expect(readSchedule(schedule)).toEqual([
@@ -33,6 +35,14 @@ test("reads the round on the marathon page", () => {
   expect(readCurrentRound(marathon)).toEqual({
     campaignName: "お買い物マラソン",
     period: { start: "2026-10-14", end: "2026-10-17" },
+    times: { start: "20:00", end: "09:59" },
+    maxRate: 10,
+    cap: 7000,
+  });
+  expect(readCurrentRound(marathonAhead)).toEqual({
+    campaignName: "お買い物マラソン&ジャンル祭",
+    period: { start: "2026-11-04", end: "2026-11-11" },
+    times: { start: "20:00", end: "01:59" },
     maxRate: 10,
     cap: 7000,
   });

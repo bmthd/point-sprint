@@ -9,10 +9,12 @@ import {
 import {
   type Benefit,
   DEFAULT_ACCOUNT_ID,
+  type OfficialEvent,
   type Plan,
   type Profile,
   type SpuMonth,
   campaignTemplates,
+  createPlan,
   defaultAccount,
   spuIdsIn,
   spuMonthId,
@@ -73,7 +75,12 @@ const storedBenefit = async (label: string) =>
 const storedOn = async (label: string, month = "2026-10") =>
   spuIdsIn(await repository().spuMonths.list(), DEFAULT_ACCOUNT_ID, month).has(spuId(label));
 
-async function renderSettings(plan: Plan, profile?: Profile, spuMonths: SpuMonth[] = []) {
+async function renderSettings(
+  plan: Plan,
+  profile?: Profile,
+  spuMonths: SpuMonth[] = [],
+  events?: OfficialEvent[],
+) {
   currentRepository = createMemoryRepository({ shops, plans: [plan], profile, spuMonths });
   await cleanup();
   const root = createRootRoute({ component: Outlet });
@@ -97,7 +104,7 @@ async function renderSettings(plan: Plan, profile?: Profile, spuMonths: SpuMonth
     history: createMemoryHistory({ initialEntries: [`/plan/settings?id=${PLAN}`] }),
   });
   const screen = await render(
-    <Providers repository={currentRepository}>
+    <Providers repository={currentRepository} events={events}>
       <RouterProvider router={router} />
     </Providers>,
   );
@@ -588,4 +595,74 @@ test("the SPU is the month's: the settings show each month's rate, and 変更 op
   await expect.element(screen.getByRole("heading", { name: "月の SPU" })).toBeVisible();
   expect(screen.router.state.location.search).toEqual({ month: "2026-11" });
   expect(screen.router.state.location.state.spuFrom).toEqual({ planId: PLAN });
+});
+
+test("attaches a plan made without an event to an event, after saying what it replaces", async () => {
+  const event: OfficialEvent = {
+    id: "marathon-2026-10",
+    name: "お買い物マラソン",
+    period: { start: "2026-10-04", end: "2026-10-09" },
+    benefits: structuredClone(marathon),
+  };
+  const made = createPlan({
+    id: PLAN,
+    name: "自分の計画",
+    now: "2026-10-01T00:00:00.000Z",
+    newId: () => crypto.randomUUID(),
+  });
+  const [fixed, ...restFixed] = made.benefits;
+  if (!fixed) throw new Error("no fixed campaigns");
+  const outside = { ...order(1), date: "2026-10-15" };
+  const own: Plan = {
+    ...made,
+    period: { start: "2026-10-01", end: "2026-10-20" },
+    benefits: [{ ...fixed, enabled: true }, ...restFixed],
+    orders: [order(0), outside],
+  };
+  const screen = await renderSettings(own, undefined, [], [event]);
+
+  const section = screen.getByRole("region", { name: "公式イベント" });
+  const attach = section.getByRole("button", { name: "結びつける" });
+  await expect.element(attach).toBeDisabled();
+  const picker = section.getByRole("combobox", { name: "公式イベントに結びつける" });
+  await picker.selectOptions("お買い物マラソン（10/4〜10/9）");
+  await expect.element(picker).toHaveValue(event.id);
+  await attach.click();
+
+  const dialog = screen.getByRole("dialog", { name: "公式イベントに結びつけますか？" });
+  await expect
+    .element(dialog.getByText("期間を「お買い物マラソン」の 10/4〜10/9 にします。"))
+    .toBeVisible();
+  await expect.element(dialog.getByText(/期間の外になる注文が 1 件あります/)).toBeVisible();
+  await dialog.getByRole("button", { name: "キャンセル" }).click();
+  expect((await storedPlan()).officialEventId).toBeUndefined();
+
+  await attach.click();
+  await screen.getByRole("dialog").getByRole("button", { name: "結びつける" }).click();
+  await expect.poll(async () => (await storedPlan()).officialEventId).toBe(event.id);
+  const stored = await storedPlan();
+  expect(stored.period).toEqual(event.period);
+  expect(stored.benefits).toEqual([...event.benefits, { ...fixed, enabled: true }, ...restFixed]);
+  expect(stored.orders).toEqual(own.orders);
+  await expect.element(section).not.toBeInTheDocument();
+  await expect.element(screen.getByRole("button", { name: /お買い物マラソン/ })).toBeVisible();
+});
+
+test("a plan of an event has nothing to attach", async () => {
+  const event: OfficialEvent = {
+    id: "marathon-2026-10",
+    name: "お買い物マラソン",
+    period: { start: "2026-10-04", end: "2026-10-09" },
+    benefits: structuredClone(marathon),
+  };
+  const screen = await renderSettings(
+    { ...makePlan(structuredClone(marathon), []), officialEventId: event.id },
+    undefined,
+    [],
+    [event],
+  );
+  await expect.element(screen.getByRole("button", { name: /お買い物マラソン/ })).toBeVisible();
+  await expect
+    .element(screen.getByRole("region", { name: "公式イベント" }))
+    .not.toBeInTheDocument();
 });

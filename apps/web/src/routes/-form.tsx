@@ -38,9 +38,8 @@ export function errorsOf(field: FieldState) {
 }
 
 /**
- * Moves the focus to the first field marked invalid, in the order of the page, opening the
- * `details` it is in. Formisch focuses the first field of its schema, which may be in a closed
- * `details` and so cannot take the focus. Waits a frame for the errors to be drawn.
+ * Moves the focus to the first field marked invalid, in the order of the page. Formisch focuses
+ * the first field of its schema instead. Waits a frame for the errors to be drawn.
  */
 export async function focusFirstError(container: HTMLElement) {
   await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -49,8 +48,6 @@ export async function focusFirstError(container: HTMLElement) {
     ":is(input, select, textarea)[aria-invalid='true']",
   );
   if (!field) return;
-  const details = field.closest("details");
-  if (details) details.open = true;
   field.focus();
 }
 

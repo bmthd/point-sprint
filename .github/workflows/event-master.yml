@@ -33,8 +33,9 @@ jobs:
         run: |
           set -o pipefail
           node packages/domain/scripts/check-event-master.ts 2>&1 | tee "$RUNNER_TEMP/check.txt"
-      # A failure for any other reason also opens the issue, which links to this run's log.
-      - name: Open an issue
+      # A failure for any other reason also opens the issue, which links to this run's log. While the
+      # issue is open, each failed check is added to it as a comment, so it is not missed.
+      - name: Open an issue or comment on the open one
         if: ${{ steps.check.outcome == 'failure' }}
         env:
           GH_TOKEN: ${{ github.token }}
@@ -43,10 +44,15 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           DOC_URL: ${{ github.server_url }}/${{ github.repository }}/blob/main/docs/event-master.md
         run: |
-          open=$(gh issue list --state open --search "\"$TITLE\" in:title" --json title \
-            --jq '[.[] | select(.title == env.TITLE)] | length')
-          if [ "$open" != "0" ]; then
-            echo "An issue is already open."
+          open=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title \
+            --jq '[.[] | select(.title == env.TITLE)] | first | .number // empty')
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --body "$(cat <<EOF
+          $(cat "$RUNNER_TEMP/check.txt")
+
+          検知したワークフロー: $RUN_URL
+          EOF
+          )"
             exit 0
           fi
           gh issue create --title "$TITLE" --body "$(cat <<EOF

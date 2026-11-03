@@ -14,6 +14,7 @@ export type ScheduledRound = { title: string; period: Period; times?: OfficialEv
 export type CurrentRound = {
   campaignName: string;
   period: Period;
+  times?: OfficialEvent["times"];
   /** The most the shop-around pays, as on the page (10 for 「最大10倍」), the usual 1倍 included. */
   maxRate: number;
   /** 「獲得上限ポイント数」. */
@@ -89,7 +90,7 @@ export function readCurrentRound(html: string): CurrentRound | undefined {
   const periodGroup = detailGroup(page, "ポイントアップ期間");
   const benefitGroup = detailGroup(page, "キャンペーン特典");
   if (!campaignName || !periodGroup || !benefitGroup) return undefined;
-  const period = periodOf(textOf(periodGroup))?.period;
+  const { period, times } = periodOf(textOf(periodGroup)) ?? {};
   // 「購入ショップ数に応じ、ポイント倍率が2倍、3倍と最大10倍まで増加」
   const maxRate = toNumber(/ポイント倍率が2倍、3倍と最大(\d+)倍まで増加/.exec(benefitGroup)?.[1]);
   // 「獲得上限ポイント数」 and, in the paragraph after it, 「7,000ポイント(期間限定)」.
@@ -99,5 +100,5 @@ export function readCurrentRound(html: string): CurrentRound | undefined {
   // 「※11ショップ以上での購入も10倍です。」: no more than at 10 shops.
   const beyond = toNumber(/11ショップ以上での購入も(\d+)倍/.exec(benefitGroup)?.[1]);
   if (!period || maxRate === undefined || cap === undefined || beyond !== maxRate) return undefined;
-  return { campaignName, period, maxRate, cap };
+  return { campaignName, period, ...(times ? { times } : {}), maxRate, cap };
 }

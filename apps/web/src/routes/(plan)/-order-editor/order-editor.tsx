@@ -24,23 +24,13 @@ import {
   Input,
   InputGroup,
   Modal,
-  NativeAccordion,
   NativeSelect,
   Separator,
   Switch,
   Text,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { useDragControls } from "motion/react";
-import {
-  type PointerEvent,
-  type RefObject,
-  useDeferredValue,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } from "react";
 import { type FieldState, Form, bind, errorsOf } from "../../-form";
 import { shopsAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
@@ -432,60 +422,49 @@ function MainItemFields({
   );
 }
 
-function Details({ form, defaultOpen }: { form: OrderForm; defaultOpen: boolean }) {
+function Details({ form }: { form: OrderForm }) {
   return (
-    // The animated panel clips its content, which cuts the focus rings of the switch and the add
-    // button at its edges.
-    <NativeAccordion.Root animate={false}>
-      <NativeAccordion.Item open={defaultOpen}>
-        <NativeAccordion.Button>
-          詳細設定（数量・クーポン・保留・商品を追加）
-        </NativeAccordion.Button>
-        <NativeAccordion.Panel>
+    <OrderPart legend="詳細設定">
+      <ItemDetailFields form={form} index={0} withRate={false} />
+      <FormField of={form} path={["onHold"]}>
+        {(field) => (
+          <Switch
+            {...field.props}
+            checked={field.input === true}
+            colorScheme="primary"
+            reverse
+            justifyContent="space-between"
+            // The whole row is the switch's label: a 44px tap target.
+            minH="11"
+          >
+            保留（計算から外す）
+          </Switch>
+        )}
+      </FormField>
+      <FieldArray of={form} path={["items"]}>
+        {(items) => (
           <Flex direction="column" gap="2">
-            <ItemDetailFields form={form} index={0} withRate={false} />
-            <FormField of={form} path={["onHold"]}>
-              {(field) => (
-                <Switch
-                  {...field.props}
-                  checked={field.input === true}
-                  colorScheme="primary"
-                  reverse
-                  justifyContent="space-between"
-                  // The whole row is the switch's label: a 44px tap target.
-                  minH="11"
-                >
-                  保留（計算から外す）
-                </Switch>
-              )}
-            </FormField>
-            <FieldArray of={form} path={["items"]}>
-              {(items) => (
-                <Flex direction="column" gap="2">
-                  {items.items.map((key, index) =>
-                    index === 0 ? null : <ExtraItem key={key} form={form} index={index} />,
-                  )}
-                  {items.errors ? (
-                    <Text role="alert" fontSize="sm" color="danger.fg">
-                      {items.errors[0]}
-                    </Text>
-                  ) : null}
-                </Flex>
-              )}
-            </FieldArray>
-            <Button
-              type="button"
-              variant="ghost"
-              colorScheme="primary"
-              alignSelf="flex-start"
-              onClick={() => insert(form, { path: ["items"], initialInput: emptyItem() })}
-            >
-              ＋ 同じショップの商品を追加
-            </Button>
+            {items.items.map((key, index) =>
+              index === 0 ? null : <ExtraItem key={key} form={form} index={index} />,
+            )}
+            {items.errors ? (
+              <Text role="alert" fontSize="sm" color="danger.fg">
+                {items.errors[0]}
+              </Text>
+            ) : null}
           </Flex>
-        </NativeAccordion.Panel>
-      </NativeAccordion.Item>
-    </NativeAccordion.Root>
+        )}
+      </FieldArray>
+      <Button
+        type="button"
+        variant="ghost"
+        colorScheme="primary"
+        alignSelf="flex-start"
+        onClick={() => insert(form, { path: ["items"], initialInput: emptyItem() })}
+      >
+        ＋ 同じショップの商品を追加
+      </Button>
+    </OrderPart>
   );
 }
 
@@ -494,13 +473,11 @@ type EditorProps = {
   original: Order | undefined;
   layout: "sheet" | "dialog";
   amountRef: RefObject<HTMLInputElement | null>;
-  /** Starts dragging the sheet down from its header. WORKAROUND(yamada-drawer-drag) */
-  onDragStart: (event: PointerEvent) => void;
   onClose: () => void;
 };
 
 /** The header, fields and buttons inside the sheet or the dialog. */
-function EditorContent({ plan, original, layout, amountRef, onDragStart, onClose }: EditorProps) {
+function EditorContent({ plan, original, layout, amountRef, onClose }: EditorProps) {
   const shops = useAtomValue(shopsAtom);
   const [failed, setFailed] = useState(false);
   const saveDraft = useSaveOrderDraft(plan.id, setFailed);
@@ -533,18 +510,17 @@ function EditorContent({ plan, original, layout, amountRef, onDragStart, onClose
     });
   };
 
+  const header = (
+    <parts.Header display="flex" alignItems="center" justifyContent="space-between">
+      <parts.Title as="h2">{title}</parts.Title>
+      <IconButton aria-label="閉じる" onClick={onClose} icon={<CloseIcon />} variant="ghost" />
+    </parts.Header>
+  );
+
   return (
     <>
-      <parts.Header
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        // WORKAROUND(yamada-drawer-drag): the header is a handle of the sheet's drag.
-        {...(layout === "sheet" ? { touchAction: "none", onPointerDown: onDragStart } : {})}
-      >
-        <parts.Title as="h2">{title}</parts.Title>
-        <IconButton aria-label="閉じる" onClick={onClose} icon={<CloseIcon />} variant="ghost" />
-      </parts.Header>
+      {/* The header drags the sheet down, as the drag bar does. */}
+      {layout === "sheet" ? <Drawer.DragTrigger>{header}</Drawer.DragTrigger> : header}
       <parts.Body alignItems="stretch">
         <Form
           of={form}
@@ -561,7 +537,8 @@ function EditorContent({ plan, original, layout, amountRef, onDragStart, onClose
             <Campaigns form={form} plan={plan} />
             <DraftPreview form={form} plan={plan} original={original} />
             {original ? null : <CapFlows plan={plan} form={form} />}
-            <Details form={form} defaultOpen={(original?.lineItems.length ?? 1) > 1} />
+            <Separator />
+            <Details form={form} />
           </Flex>
         </Form>
       </parts.Body>
@@ -614,9 +591,6 @@ export function OrderEditor({
 }) {
   const amountRef = useRef<HTMLInputElement | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);
-  // WORKAROUND(yamada-drawer-drag): see the sheet's Drawer.Content below.
-  const dragControls = useDragControls();
-  const onDragStart = (event: PointerEvent) => dragControls.start(event);
   const original =
     target === undefined || target === NEW_ORDER
       ? undefined
@@ -629,7 +603,6 @@ export function OrderEditor({
       original={original}
       layout={layout}
       amountRef={amountRef}
-      onDragStart={onDragStart}
       onClose={onClose}
     />
   ) : null;
@@ -640,6 +613,8 @@ export function OrderEditor({
       onClose={onClose}
       placement="block-end"
       closeOnDrag
+      // Only the drag bar and the header drag the sheet, so the fields can be dragged to scroll.
+      dragHandleOnly
       withCloseButton={false}
       // On a phone a focused field would only bring up the keyboard over the sheet. The sheet
       // itself takes the focus, so Escape and Tab stay inside it.
@@ -647,23 +622,14 @@ export function OrderEditor({
       initialFocusRef={sheetRef}
       restoreFocus
     >
-      {/*
-        WORKAROUND(yamada-drawer-drag): Drawer's closeOnDrag makes the whole content draggable and
-        gives it `touch-action: pan-x`, so a swipe in the scrolling body drags the sheet instead:
-        up it only stretches, down it closes. Drawer has no prop to drag from a handle only, so
-        motion's own props are passed through, and the header and the drag bar start the drag.
-        Drop this when Drawer can scroll its body and close on drag together.
-      */}
       <Drawer.Content
         ref={sheetRef}
         tabIndex={-1}
         outline="none"
         maxH="calc(100dvh - 24px)"
         roundedTop="l2"
-        dragControls={dragControls}
-        dragListener={false}
       >
-        <Drawer.DragBar touchAction="none" onPointerDown={onDragStart} />
+        <Drawer.DragBar />
         {content}
       </Drawer.Content>
     </Drawer.Root>
