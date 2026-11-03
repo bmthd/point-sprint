@@ -124,9 +124,14 @@ const capOf = (event: OfficialEvent) => {
 const samePeriod = (a: ScheduledRound["period"], b: ScheduledRound["period"]) =>
   a.start === b.start && a.end === b.end;
 
+const overlaps = (a: ScheduledRound["period"], b: ScheduledRound["period"]) =>
+  a.start <= b.end && b.start <= a.end;
+
 /**
  * The rows to write for the rounds that have not ended by `today` (`YYYY-MM-DD` in Japan). A round
- * the marathon page does not show yet goes in with its period and the guide's rate, and no cap.
+ * the marathon page does not show yet goes in with its period and the guide's rate, and no cap. A
+ * round the marathon page shows before the schedule page lists it goes in under the campaign's name
+ * until the schedule page gives it one.
  */
 export function collectMarathon(input: {
   scheduleHtml: string;
@@ -150,6 +155,8 @@ export function collectMarathon(input: {
   }
 
   let current: CurrentRound | undefined;
+  /** The marathon page's round when the schedule page does not list it yet. */
+  let ahead: ScheduledRound | undefined;
   if ("error" in marathon) warn(`マラソンのページを取得できない（${marathon.error}）`);
   else {
     current = readCurrentRound(marathon.html);
@@ -159,15 +166,28 @@ export function collectMarathon(input: {
       warn(`マラソンのページのキャンペーン名が「${current.campaignName}」`);
       current = undefined;
     } else if (!rounds.some((round) => samePeriod(round.period, current!.period))) {
-      warn(
-        `マラソンのページの期間 ${current.period.start}〜${current.period.end} がスケジュールのページにない`,
-      );
-      current = undefined;
+      // The schedule page shows a month's rounds, and the marathon page may show the next month's
+      // first round before the schedule page moves on (2026-11-02). A round that overlaps one on
+      // the schedule page is more likely read wrong.
+      if (rounds.some((round) => overlaps(round.period, current!.period))) {
+        warn(
+          `マラソンのページの期間 ${current.period.start}〜${current.period.end} がスケジュールのページにない`,
+        );
+        current = undefined;
+      } else {
+        ahead = {
+          // marathonEvent names the round 「お買い物マラソン」 and its title, so this gives the
+          // campaign's name, such as 「お買い物マラソン&ジャンル祭」.
+          title: current.campaignName.slice("お買い物マラソン".length),
+          period: current.period,
+          ...(current.times ? { times: current.times } : {}),
+        };
+      }
     }
   }
 
   const writes: EventWrite[] = [];
-  for (const round of rounds) {
+  for (const round of ahead ? [...rounds, ahead] : rounds) {
     if (round.period.end < today) continue;
     const id = `marathon-${round.period.start}`;
     const existing = stored.get(id);
@@ -205,7 +225,12 @@ export function collectMarathon(input: {
     if (existing?.status === "published" && canonical(existing.event) === canonical(event))
       continue;
     writes.push({ event, status: "published", sourceUrl });
-    notes.push(`${id}: ${existing ? "更新" : "追加"}`);
+    const change = existing ? "更新" : "追加";
+    notes.push(
+      round === ahead
+        ? `${id}: スケジュールのページにまだない回を、マラソンのページから${change}`
+        : `${id}: ${change}`,
+    );
   }
   return { writes, outcome, notes };
 }
