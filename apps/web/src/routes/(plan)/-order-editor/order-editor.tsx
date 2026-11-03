@@ -31,16 +31,7 @@ import {
   Text,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { useDragControls } from "motion/react";
-import {
-  type PointerEvent,
-  type RefObject,
-  useDeferredValue,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } from "react";
 import { type FieldState, Form, bind, errorsOf } from "../../-form";
 import { shopsAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
@@ -494,13 +485,11 @@ type EditorProps = {
   original: Order | undefined;
   layout: "sheet" | "dialog";
   amountRef: RefObject<HTMLInputElement | null>;
-  /** Starts dragging the sheet down from its header. WORKAROUND(yamada-drawer-drag) */
-  onDragStart: (event: PointerEvent) => void;
   onClose: () => void;
 };
 
 /** The header, fields and buttons inside the sheet or the dialog. */
-function EditorContent({ plan, original, layout, amountRef, onDragStart, onClose }: EditorProps) {
+function EditorContent({ plan, original, layout, amountRef, onClose }: EditorProps) {
   const shops = useAtomValue(shopsAtom);
   const [failed, setFailed] = useState(false);
   const saveDraft = useSaveOrderDraft(plan.id, setFailed);
@@ -533,18 +522,17 @@ function EditorContent({ plan, original, layout, amountRef, onDragStart, onClose
     });
   };
 
+  const header = (
+    <parts.Header display="flex" alignItems="center" justifyContent="space-between">
+      <parts.Title as="h2">{title}</parts.Title>
+      <IconButton aria-label="閉じる" onClick={onClose} icon={<CloseIcon />} variant="ghost" />
+    </parts.Header>
+  );
+
   return (
     <>
-      <parts.Header
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        // WORKAROUND(yamada-drawer-drag): the header is a handle of the sheet's drag.
-        {...(layout === "sheet" ? { touchAction: "none", onPointerDown: onDragStart } : {})}
-      >
-        <parts.Title as="h2">{title}</parts.Title>
-        <IconButton aria-label="閉じる" onClick={onClose} icon={<CloseIcon />} variant="ghost" />
-      </parts.Header>
+      {/* The header drags the sheet down, as the drag bar does. */}
+      {layout === "sheet" ? <Drawer.DragTrigger>{header}</Drawer.DragTrigger> : header}
       <parts.Body alignItems="stretch">
         <Form
           of={form}
@@ -614,9 +602,6 @@ export function OrderEditor({
 }) {
   const amountRef = useRef<HTMLInputElement | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);
-  // WORKAROUND(yamada-drawer-drag): see the sheet's Drawer.Content below.
-  const dragControls = useDragControls();
-  const onDragStart = (event: PointerEvent) => dragControls.start(event);
   const original =
     target === undefined || target === NEW_ORDER
       ? undefined
@@ -629,7 +614,6 @@ export function OrderEditor({
       original={original}
       layout={layout}
       amountRef={amountRef}
-      onDragStart={onDragStart}
       onClose={onClose}
     />
   ) : null;
@@ -640,6 +624,8 @@ export function OrderEditor({
       onClose={onClose}
       placement="block-end"
       closeOnDrag
+      // Only the drag bar and the header drag the sheet, so the fields can be dragged to scroll.
+      dragHandleOnly
       withCloseButton={false}
       // On a phone a focused field would only bring up the keyboard over the sheet. The sheet
       // itself takes the focus, so Escape and Tab stay inside it.
@@ -647,23 +633,14 @@ export function OrderEditor({
       initialFocusRef={sheetRef}
       restoreFocus
     >
-      {/*
-        WORKAROUND(yamada-drawer-drag): Drawer's closeOnDrag makes the whole content draggable and
-        gives it `touch-action: pan-x`, so a swipe in the scrolling body drags the sheet instead:
-        up it only stretches, down it closes. Drawer has no prop to drag from a handle only, so
-        motion's own props are passed through, and the header and the drag bar start the drag.
-        Drop this when Drawer can scroll its body and close on drag together.
-      */}
       <Drawer.Content
         ref={sheetRef}
         tabIndex={-1}
         outline="none"
         maxH="calc(100dvh - 24px)"
         roundedTop="l2"
-        dragControls={dragControls}
-        dragListener={false}
       >
-        <Drawer.DragBar touchAction="none" onPointerDown={onDragStart} />
+        <Drawer.DragBar />
         {content}
       </Drawer.Content>
     </Drawer.Root>
