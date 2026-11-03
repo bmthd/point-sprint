@@ -1,4 +1,15 @@
-import { Badge, Box, Button, Grid, Heading, List, Text, VStack } from "@workspaces/ui";
+import {
+  ArrowRightIcon,
+  Badge,
+  Box,
+  Button,
+  Flex,
+  Grid,
+  Heading,
+  List,
+  Text,
+  VStack,
+} from "@workspaces/ui";
 import { type ReactNode, useId } from "react";
 import { ResultCard } from "./result-card";
 
@@ -35,9 +46,17 @@ export function SampleCard() {
   );
 }
 
+/**
+ * The catch's size beside the sample: its first line, ten characters, fills the column at most.
+ */
+const CATCH_SIZE = "min({fontSizes.6xl}, 4.2vw, calc((96vw - 528px) / 10.4))";
+
 const steps = ["イベントを選ぶ", "買うものを入れる", "ポイントと残りがわかる"];
 
-/** The three steps of using the tool on one line; the help has them in full. */
+/**
+ * The three steps of using the tool on one line, or one under another where the column holding
+ * them is too narrow for the line; the help has them in full.
+ */
 function StepLine() {
   return (
     <List.Root
@@ -50,15 +69,33 @@ function StepLine() {
       columnGap="2"
       fontSize="sm"
       fontWeight="bold"
+      _container={[
+        {
+          maxInlineSize: "520px",
+          css: {
+            flexDirection: "column",
+            alignItems: "flex-start",
+            // The arrows go on lines of their own, each where the first one is: in the middle of
+            // the second step, its number (24px), the gap (8px) and its eight characters.
+            "& > li": { flexWrap: "wrap", rowGap: "1" },
+            "& [data-step-arrow]": {
+              flexBasis: "100%",
+              boxSizing: "border-box",
+              paddingInlineEnd: "calc(100% - 32px - 8em)",
+              justifyContent: "center",
+            },
+            "& [data-step-arrow] svg": { transform: "rotate(90deg)" },
+          },
+        },
+      ]}
     >
       {steps.map((step, index) => (
-        <List.Item
-          key={step}
-          display="flex"
-          alignItems="center"
-          gap="2"
-          _notFirst={{ _before: { content: '"→"', color: "fg.subtle", fontWeight: "normal" } }}
-        >
+        <List.Item key={step} display="flex" alignItems="center" gap="2">
+          {index > 0 ? (
+            <Box as="span" aria-hidden data-step-arrow display="flex" color="fg.subtle">
+              <ArrowRightIcon fontSize="md" />
+            </Box>
+          ) : null}
           <Box
             aria-hidden
             display="flex"
@@ -68,6 +105,8 @@ function StepLine() {
             rounded="full"
             bg="primary"
             color="primary.contrast"
+            // The digit sits low in its line box; trimmed to its cap height, it centers in the circle.
+            css={{ textBoxTrim: "trim-both", textBoxEdge: "cap alphabetic" }}
           >
             {index + 1}
           </Box>
@@ -117,7 +156,8 @@ export function Hero({
         pt={{ base: "10", md: "6" }}
         pb={{ base: "10", md: "7" }}
         gridTemplateColumns={{
-          base: "minmax(0, 1fr) clamp(360px, 36vw, 520px)",
+          // The sample keeps 480px at least, where it would crowd its numbers; the heading gives way.
+          base: "minmax(0, 1fr) clamp(480px, 36vw, 520px)",
           lg: "minmax(0, 1fr)",
         }}
         gridTemplateAreas={{
@@ -133,8 +173,11 @@ export function Hero({
             楽天お買い物マラソンのポイント計算ツール
           </Heading>
           <Text
-            // Its first line, ten characters, fills the column beside the sample at most.
-            fontSize={{ base: "min({fontSizes.6xl}, 4.2vw)", lg: "5xl", md: "3xl" }}
+            fontSize={{
+              base: CATCH_SIZE,
+              lg: "5xl",
+              md: "3xl",
+            }}
             fontWeight="black"
             lineHeight="1.2"
           >
@@ -149,25 +192,41 @@ export function Hero({
             </Text>
           </Text>
         </VStack>
-        <Box gridArea="aside" minW="0">
+        <Box gridArea="aside" alignSelf="center" minW="0">
           {aside}
         </Box>
         <VStack gridArea="actions" alignSelf="start" alignItems="stretch" gap="0">
-          <Button
-            colorScheme="primary"
-            size="xl"
-            alignSelf={{ base: "flex-start", md: "stretch" }}
-            disabled={disabled}
-            onClick={onStart}
+          {/* Beside the sample, under the middle of the catch's first line, which is as wide as the
+              column on a narrow screen and narrower on a wide one; as wide as the column where the
+              sample is above it. */}
+          <Flex
+            direction="column"
+            align={{ base: "center", lg: "stretch" }}
+            maxW={{ base: `calc(${CATCH_SIZE} * 10)`, lg: "none" }}
           >
-            計算をはじめる
-          </Button>
+            <Button
+              colorScheme="primary"
+              size="xl"
+              // The one button the page asks a visitor to press.
+              minW={{ base: "18rem", lg: "auto" }}
+              disabled={disabled}
+              onClick={onStart}
+            >
+              計算をはじめる
+            </Button>
+          </Flex>
           {failed ? (
             <Box mt="3">
               <SaveFailed />
             </Box>
           ) : null}
-          <VStack display={{ base: "flex", md: "none" }} mt="8" gap="3" alignItems="stretch">
+          <VStack
+            display={{ base: "flex", md: "none" }}
+            mt="8"
+            gap="3"
+            alignItems="stretch"
+            containerType="inline-size"
+          >
             <StepLine />
             <Text fontSize="sm" color="fg.muted">
               無料・登録不要・入力はこのブラウザに保存
