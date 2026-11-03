@@ -369,7 +369,7 @@ export function EventSection({
       // last place in the grid without being one of the events.
       <Box
         display={{ base: "grid", md: "flex" }}
-        gridTemplateColumns="repeat(2, minmax(0, 1fr))"
+        gridTemplateColumns={{ base: "repeat(2, minmax(0, 1fr))", lg: "minmax(0, 1fr)" }}
         gap={{ base: "3", md: "2" }}
         overflowX={{ base: "visible", md: "auto" }}
         scrollSnapType={{ base: "none", md: "x mandatory" }}
@@ -396,10 +396,11 @@ export function EventSection({
           ))}
         </List.Root>
         {odd ? (
-          <Box display={{ base: "block", md: "none" }}>
+          <Box display={{ base: "block", lg: "none" }}>
             <Card.Root h="full" variant="outline" bg="transparent" borderStyle="dashed">
-              <Card.Body flexDirection="row" alignItems="center" gap="4">
-                <VStack flex="1" minW="0" gap="1" alignItems="stretch">
+              {/* Its button goes under the text when the card is too narrow for both. */}
+              <Card.Body flexDirection="row" flexWrap="wrap" alignItems="center" gap="4">
+                <VStack flex="1 1 10em" minW="0" gap="1" alignItems="stretch">
                   <Text fontWeight="bold">イベントのない買い物</Text>
                   <Text fontSize="sm" color="fg.muted">
                     買うものだけで計算できます
@@ -420,20 +421,20 @@ export function EventSection({
     <Box as="section" id="events" aria-labelledby={headingId}>
       {/* Breakpoints here apply from that width down. */}
       <Grid
-        maxW="1280px"
+        maxW={{ base: "1280px", lg: "672px", md: "full" }}
         mx="auto"
         px={{ base: "6", md: "5" }}
         pt={{ base: "6", md: "4" }}
         pb={{ base: "8", md: "4" }}
-        gridTemplateColumns={{ base: "160px minmax(0, 1fr)", md: "minmax(0, 1fr)" }}
+        gridTemplateColumns={{ base: "160px minmax(0, 1fr)", xl: "minmax(0, 1fr)" }}
         columnGap="6"
         rowGap="3"
         alignItems="center"
       >
         <Flex
-          direction={{ base: "column", md: "row" }}
-          align={{ base: "flex-start", md: "center" }}
-          justify={{ base: "flex-start", md: "space-between" }}
+          direction={{ base: "column", xl: "row" }}
+          align={{ base: "flex-start", xl: "center" }}
+          justify={{ base: "flex-start", xl: "space-between" }}
           gap="1"
         >
           <VStack gap="0.5" alignItems="stretch">
@@ -452,8 +453,8 @@ export function EventSection({
         </Flex>
         <VStack alignItems="stretch" gap="3" minW="0">
           {content}
-          {/* Under the cards when the last place has no room for it, and always on a phone. */}
-          <Box display={oddCards ? { base: "none", md: "block" } : undefined}>
+          {/* Under the cards when the last place has no room for it, and always in one column. */}
+          <Box display={oddCards ? { base: "none", lg: "block" } : undefined}>
             <Button
               variant="ghost"
               colorScheme="link"

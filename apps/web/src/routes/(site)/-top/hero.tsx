@@ -47,7 +47,7 @@ function StepLine() {
       flexWrap="wrap"
       alignItems="center"
       rowGap="1"
-      columnGap="3"
+      columnGap="2"
       fontSize="sm"
       fontWeight="bold"
     >
@@ -105,29 +105,39 @@ export function Hero({
       display="flex"
       alignItems="center"
     >
-      {/* Breakpoints here apply from that width down: two columns, one on a tablet or a phone,
-          where the sample comes between the heading and the button. */}
+      {/* Breakpoints here apply from that width down: two columns, which narrow with the screen,
+          and one on a tablet or a phone, where the sample comes between the heading and the
+          button. A property is given no value at both xl and lg: Yamada UI may write the xl one
+          after the lg one, which then never applies. */}
       <Grid
         w="full"
-        maxW="1280px"
+        maxW={{ base: "1280px", lg: "672px", md: "full" }}
         mx="auto"
         px={{ base: "6", md: "5" }}
         pt={{ base: "10", md: "6" }}
         pb={{ base: "10", md: "7" }}
-        gridTemplateColumns={{ base: "minmax(0, 1fr) 520px", lg: "minmax(0, 1fr)" }}
+        gridTemplateColumns={{
+          base: "minmax(0, 1fr) clamp(360px, 36vw, 520px)",
+          lg: "minmax(0, 1fr)",
+        }}
         gridTemplateAreas={{
           base: `"head aside" "actions aside"`,
           lg: `"head" "aside" "actions"`,
         }}
         alignContent="center"
-        columnGap="16"
+        columnGap="clamp({spaces.8}, 4vw, {spaces.16})"
         rowGap={{ base: "9", md: "6" }}
       >
         <VStack gridArea="head" alignSelf="end" alignItems="stretch" gap={{ base: "3", md: "1.5" }}>
           <Heading as="h1" id={headingId} fontSize={{ base: "sm", md: "xs" }} color="brand">
             楽天お買い物マラソンのポイント計算ツール
           </Heading>
-          <Text fontSize={{ base: "6xl", md: "3xl" }} fontWeight="black" lineHeight="1.2">
+          <Text
+            // Its first line, ten characters, fills the column beside the sample at most.
+            fontSize={{ base: "min({fontSizes.6xl}, 4.2vw)", lg: "5xl", md: "3xl" }}
+            fontWeight="black"
+            lineHeight="1.2"
+          >
             何店舗・いくら
             <Box as="br" display={{ base: "none", md: "inline" }} />
             買えば
