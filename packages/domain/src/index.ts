@@ -128,6 +128,7 @@ export {
   moveOrder,
 } from "./plan-ops/order-ops";
 export { orderPositions } from "./plan-ops/order-positions";
+export { attachToEvent } from "./plan-ops/attach-event";
 export {
   addBenefit,
   removeBenefit,

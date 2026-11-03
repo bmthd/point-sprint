@@ -1,12 +1,14 @@
 import {
   addBenefit,
   addOrder,
+  attachToEvent,
   type Benefit,
   clearOrders,
   copyOrder,
   enableSpu,
   moveOrder,
   newlyAchievedSpu,
+  type OfficialEvent,
   type Order,
   type Plan,
   removeBenefit,
@@ -169,3 +171,11 @@ export const updateBenefitAtom = planOperationAtom(
     (plan) =>
       updateBenefit(plan, benefitId, change),
 );
+/**
+ * Attaches the plan to an official event: its period and benefits become the event's, the fixed
+ * campaigns stay as they are, and the orders stay.
+ */
+export const attachToEventAtom = planOperationAtom(({ event }: { event: OfficialEvent }) => {
+  const newIds = repeatableIds();
+  return (plan) => attachToEvent(plan, event, newIds());
+});
