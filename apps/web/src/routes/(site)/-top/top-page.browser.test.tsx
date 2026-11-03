@@ -160,8 +160,13 @@ function Hydrate({
   return children;
 }
 
-const planRows = () =>
-  page.getByRole("region", { name: "自分のプラン", exact: true }).getByRole("listitem");
+/** Opens the list of all plans, where each has its delete button. */
+async function openAllPlans() {
+  await page.getByRole("button", { name: /^すべてのプラン/ }).click();
+  return page.getByRole("dialog", { name: "すべてのプラン" });
+}
+
+const planRows = () => page.getByRole("dialog", { name: "すべてのプラン" }).getByRole("listitem");
 
 /**
  * The screen runs in a router with a memory history, so links and `navigate` are the real ones
@@ -188,18 +193,13 @@ async function renderTopPage(
     path: "/plan",
     component: () => <p>プラン画面</p>,
   });
-  const helpRoute = createRoute({
-    getParentRoute: () => root,
-    path: "/help",
-    component: () => <p>ヘルプ画面</p>,
-  });
   const profileRoute = createRoute({
     getParentRoute: () => root,
     path: "/settings",
     component: () => <p>プロフィール画面</p>,
   });
   const router = createRouter({
-    routeTree: root.addChildren([index, planRoute, helpRoute, profileRoute]),
+    routeTree: root.addChildren([index, planRoute, profileRoute]),
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
   const screen = await render(
@@ -456,17 +456,24 @@ test("lists plans with their totals", async () => {
       plan(PLAN_B, "10月 お買い物マラソン", "2026-10-05T00:00:00.000Z", 2),
     ],
   });
-  const { screen, router } = await renderTopPage(repository);
+  const { router } = await renderTopPage(repository);
 
-  await expect.element(screen.getByRole("link", { name: /10月 お買い物マラソン/ })).toBeVisible();
-  // Most recently updated first. The shops load after the plans, so wait for the totals. Each
-  // order earns the shop's +1倍 and 通常ポイント, 100P each.
+  // The latest plan is in the sample's card. The shops load after the plans, so wait for the
+  // totals. Each order earns the shop's +1倍 and 通常ポイント, 100P each.
+  const latest = page.getByRole("region", { name: "自分のプラン", exact: true });
+  await expect.element(latest.getByRole("link", { name: "10月 お買い物マラソン" })).toBeVisible();
+  await expect.element(latest.getByText("400P", { exact: true })).toBeVisible();
+
+  // All of them, most recently updated first.
+  await openAllPlans();
   await expectTexts(planRows(), [
     "10月 お買い物マラソン10/1〜10/31・1店舗・2件400P",
     "10月の普段の買い物10/1〜10/31・1店舗・1件200P",
   ]);
 
-  await screen.getByRole("link", { name: /10月の普段の買い物/ }).click();
+  await planRows()
+    .getByRole("link", { name: /10月の普段の買い物/ })
+    .click();
   await expect.poll(() => router.state.location.pathname).toBe("/plan");
   expect(router.state.location.search).toEqual({ id: PLAN_A });
 });
@@ -477,16 +484,17 @@ test("deletes a plan after confirmation", async () => {
     plans: [plan(PLAN_A, "消すプラン", "2026-10-01T00:00:00.000Z", 1)],
   });
   const { screen } = await renderTopPage(repository);
+  const all = await openAllPlans();
 
-  await screen.getByRole("button", { name: "消すプランを削除" }).click();
+  await all.getByRole("button", { name: "消すプランを削除" }).click();
   await screen.getByRole("button", { name: "キャンセル" }).click();
   expect(await repository.plans.list()).toHaveLength(1);
-  await expect.element(screen.getByRole("link", { name: /消すプラン/ })).toBeVisible();
+  await expect.element(planRows().getByRole("link", { name: /消すプラン/ })).toBeVisible();
 
-  await screen.getByRole("button", { name: "消すプランを削除" }).click();
+  await all.getByRole("button", { name: "消すプランを削除" }).click();
   await screen.getByRole("button", { name: "削除する" }).click();
 
-  await expect.element(screen.getByRole("link", { name: /消すプラン/ })).not.toBeInTheDocument();
+  await expect.element(page.getByRole("link", { name: /消すプラン/ })).not.toBeInTheDocument();
   await expect.poll(async () => repository.plans.list()).toEqual([]);
   // The section goes with its last plan.
   await expect.element(page.getByRole("region", { name: "自分のプラン" })).not.toBeInTheDocument();
@@ -498,13 +506,6 @@ test("hides its plans section until there is a plan", async () => {
     .element(screen.getByRole("heading", { name: "イベント", exact: true }))
     .toBeVisible();
   await expect.element(page.getByRole("region", { name: "自分のプラン" })).not.toBeInTheDocument();
-});
-
-test("links to the steps for a first visit", async () => {
-  const { screen } = await renderTopPage(createMemoryRepository());
-  await expect
-    .element(screen.getByRole("link", { name: "はじめての方へ" }))
-    .toHaveAttribute("href", "/help");
 });
 
 test("shows an error and stays put when the plan cannot be saved", async () => {
@@ -529,19 +530,21 @@ test("deletes a plan with the keyboard only", async () => {
     plans: [plan(PLAN_A, "消すプラン", "2026-10-01T00:00:00.000Z", 1)],
   });
   const { screen } = await renderTopPage(repository);
-  const trash = screen.getByRole("button", { name: "消すプランを削除" });
+  const all = await openAllPlans();
+  const confirm = page.getByRole("dialog", { name: "プランを削除しますか？" });
+  const trash = all.getByRole("button", { name: "消すプランを削除" });
   await expect.element(trash).toBeVisible();
 
   (trash.element() as HTMLElement).focus();
   await userEvent.keyboard("{Enter}");
-  await expect.element(screen.getByRole("dialog")).toBeVisible();
+  await expect.element(confirm).toBeVisible();
   await userEvent.keyboard("{Escape}");
-  await expect.element(screen.getByRole("dialog")).not.toBeInTheDocument();
+  await expect.element(confirm).not.toBeInTheDocument();
   expect(await repository.plans.list()).toHaveLength(1);
 
   (trash.element() as HTMLElement).focus();
   await userEvent.keyboard("{Enter}");
-  await expect.element(screen.getByRole("dialog")).toBeVisible();
+  await expect.element(confirm).toBeVisible();
   (screen.getByRole("button", { name: "削除する" }).element() as HTMLElement).focus();
   await userEvent.keyboard("{Enter}");
 
@@ -586,6 +589,7 @@ test("shows each plan's account only once accounts are told apart", async () => 
   const off = createMemoryRepository({ shops: [shop], plans, profile });
   const { screen } = await renderTopPage(off);
   await expect.element(screen.getByRole("link", { name: /家族のプラン/ })).toBeVisible();
+  await openAllPlans();
   await expectTexts(planRows(), [
     "家族のプラン10/1〜10/31・1店舗・1件200P",
     "メインのプラン10/1〜10/31・1店舗・1件200P",
@@ -597,6 +601,7 @@ test("shows each plan's account only once accounts are told apart", async () => 
     profile: { ...profile, multiAccount: true },
   });
   await renderTopPage(on);
+  await openAllPlans();
   await expectTexts(planRows(), [
     "家族のプラン家族・10/1〜10/31・1店舗・1件200P",
     "メインのプランメイン・10/1〜10/31・1店舗・1件200P",

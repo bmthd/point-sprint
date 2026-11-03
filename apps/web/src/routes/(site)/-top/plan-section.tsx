@@ -1,7 +1,8 @@
 import { grouped } from "../../../ui/format";
 import { RouterLink } from "../../../ui/router-link";
-import type { Plan } from "@workspaces/domain";
+import { type Plan, capLines } from "@workspaces/domain";
 import {
+  Badge,
   Button,
   Drawer,
   Flex,
@@ -9,19 +10,19 @@ import {
   Heading,
   IconButton,
   List,
-  type ListItemProps,
   Modal,
   Text,
   VStack,
   useDisclosure,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { useId, useRef, useState } from "react";
+import { type ReactNode, useId, useMemo, useRef, useState } from "react";
 import { accountIdOf } from "../../../state/accounts";
-import { accountSettingsAtom, planResultAtom } from "../../../state/derived";
+import { accountSettingsAtom, calculatedPlanAtom, planResultAtom } from "../../../state/derived";
 import { deletePlanAtom } from "../../../state/mutations";
 import { plansAtom } from "../../../state/queries";
 import { formatPeriod } from "../../../ui/dates";
+import { ResultCard } from "./result-card";
 
 function TrashIcon() {
   return (
@@ -41,85 +42,117 @@ function TrashIcon() {
   );
 }
 
-/**
- * A plan's row, a link to it with its total, and its delete button. The `featured` one, the latest,
- * is the red card with its total large.
- */
-function PlanRow({
-  plan,
-  onDelete,
-  featured = false,
-  ...rest
-}: { plan: Plan; onDelete: (plan: Plan) => void; featured?: boolean } & ListItemProps) {
+/** 「メイン・10/1〜10/31・1店舗・2件」: the plan's account when accounts are told apart, its period and size. */
+function useMeta(plan: Plan): string {
   const result = useAtomValue(planResultAtom(plan.id));
   const settings = useAtomValue(accountSettingsAtom);
   const accountId = accountIdOf(plan, settings);
   const account = settings.enabled
     ? settings.accounts.find((candidate) => candidate.id === accountId)
     : undefined;
+  return `${account ? `${account.name}・` : ""}${formatPeriod(plan.period)}・${result?.shopCount ?? 0}店舗・${plan.orders.length}件`;
+}
+
+function DeleteButton({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => void }) {
   return (
-    <List.Item {...rest}>
-      <Card.Root
-        variant={featured ? "solid" : undefined}
-        colorScheme={featured ? "primary" : undefined}
-      >
+    <IconButton
+      variant="ghost"
+      colorScheme="danger"
+      size="lg"
+      aria-label={`${plan.name}を削除`}
+      onClick={() => onDelete(plan)}
+    >
+      <TrashIcon />
+    </IconButton>
+  );
+}
+
+/** A plan's row in the list of all plans: a link to it with its total, and its delete button. */
+function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => void }) {
+  const result = useAtomValue(planResultAtom(plan.id));
+  const meta = useMeta(plan);
+  return (
+    <List.Item>
+      <Card.Root>
         <Card.Body flexDirection="row" alignItems="center">
           <RouterLink
             to="/plan"
             search={{ id: plan.id }}
             colorScheme="mono"
-            color={featured ? "inherit" : undefined}
             flex="1"
             minW="0"
             display="flex"
-            alignItems={featured ? "flex-end" : "center"}
+            alignItems="center"
             gap="3"
           >
             <Flex flex="1" minW="0" direction="column" gap="0.5">
-              <Text fontSize={featured ? "sm" : "md"} fontWeight="bold" lineClamp={1}>
+              <Text fontWeight="bold" lineClamp={1}>
                 {plan.name}
               </Text>
-              <Text
-                fontSize="xs"
-                color={featured ? "primary.contrast/80" : "fg.muted"}
-                fontVariantNumeric="tabular-nums"
-              >
-                {account ? `${account.name}・` : null}
-                {formatPeriod(plan.period)}・{result?.shopCount ?? 0}店舗・{plan.orders.length}件
+              <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
+                {meta}
               </Text>
             </Flex>
-            <Text
-              fontSize={featured ? "4xl" : "lg"}
-              lineHeight={featured ? "1" : undefined}
-              fontWeight="bold"
-              fontVariantNumeric="tabular-nums"
-            >
+            <Text fontSize="lg" fontWeight="bold" fontVariantNumeric="tabular-nums">
               {grouped(result?.total ?? 0)}P
             </Text>
           </RouterLink>
-          <IconButton
-            variant="ghost"
-            colorScheme={featured ? "mono" : "danger"}
-            color={featured ? "primary.contrast" : undefined}
-            size="lg"
-            aria-label={`${plan.name}を削除`}
-            onClick={() => onDelete(plan)}
-          >
-            <TrashIcon />
-          </IconButton>
+          <DeleteButton plan={plan} onDelete={onDelete} />
         </Card.Body>
       </Card.Root>
     </List.Item>
   );
 }
 
-/** How many of the latest plans the top page lists on a wide screen; a phone lists the latest. */
-const SHOWN = 3;
+/** The latest plan, in the sample's card: what a visitor sees before having a plan. */
+function LatestPlan({
+  plan,
+  heading,
+  action,
+}: {
+  plan: Plan;
+  heading: ReactNode;
+  action: ReactNode;
+}) {
+  const result = useAtomValue(planResultAtom(plan.id));
+  const calculated = useAtomValue(calculatedPlanAtom(plan.id));
+  const meta = useMeta(plan);
+  const outlook = result?.shopAroundOutlook ?? null;
+  const capRemaining = useMemo(() => {
+    if (!result || !calculated || !outlook) return null;
+    const line = capLines(calculated, result).find(
+      (candidate) => candidate.benefit.id === outlook.benefitId,
+    );
+    return line ? line.remaining : null;
+  }, [calculated, outlook, result]);
+  return (
+    <ResultCard
+      label={heading}
+      title={
+        <RouterLink
+          to="/plan"
+          search={{ id: plan.id }}
+          colorScheme="mono"
+          display="block"
+          truncated
+        >
+          {plan.name}
+        </RouterLink>
+      }
+      meta={meta}
+      action={action}
+      total={result?.total ?? 0}
+      capRemaining={capRemaining}
+      totals={result?.groupTotals ?? { base: 0, spu: 0, marathon: 0, campaign: 0 }}
+      shopCount={outlook ? outlook.shopCount : null}
+      nextShopRate={outlook?.nextShop?.rateDelta ?? null}
+    />
+  );
+}
 
 /**
- * The visitor's plans, the latest first, in the sample's place beside the hero: the latest large,
- * the next ones under it, and all of them behind 「すべてのプラン」. Plans live on this device, so
- * this section only renders on the client.
+ * The visitor's latest plan, in the sample's place beside the hero, and all of them, each with its
+ * delete button, behind 「すべてのプラン」. Plans live on this device, so this section only renders on the client.
  */
 export function PlanSection() {
   const plans = useAtomValue(plansAtom);
@@ -133,8 +166,9 @@ export function PlanSection() {
 
   const sorted = [...plans].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
 
+  const latest = sorted[0];
   // Nothing to show until there is a plan: the sample takes its place.
-  if (sorted.length === 0) return null;
+  if (!latest) return null;
 
   const onDelete = (next: Plan) => {
     setTarget(next);
@@ -143,33 +177,30 @@ export function PlanSection() {
   };
 
   return (
-    <VStack as="section" aria-labelledby={headingId} gap="2.5" alignItems="stretch">
-      <Heading as="h2" id={headingId} fontSize="sm" ref={heading} tabIndex={-1}>
-        自分のプラン
-      </Heading>
-      <List.Root gap="2.5">
-        {sorted.slice(0, SHOWN).map((plan, index) => (
-          <PlanRow
-            key={plan.id}
-            plan={plan}
-            featured={index === 0}
-            // A phone lists the latest alone.
-            display={index === 0 ? undefined : { base: "list-item", md: "none" }}
-            onDelete={onDelete}
-          />
-        ))}
-      </List.Root>
-      {sorted.length > 1 ? (
-        <Button
-          variant="ghost"
-          colorScheme="link"
-          alignSelf="flex-end"
-          display={sorted.length > SHOWN ? undefined : { base: "none", md: "inline-flex" }}
-          onClick={all.onOpen}
-        >
-          すべてのプラン（{sorted.length} 件）
-        </Button>
-      ) : null}
+    <VStack as="section" aria-labelledby={headingId} alignItems="stretch">
+      <LatestPlan
+        plan={latest}
+        // Managing the plans, deleting one among them, is in the list of all of them.
+        action={
+          <Button
+            variant="ghost"
+            colorScheme="link"
+            size="xs"
+            flexShrink="0"
+            aria-label={`すべてのプラン（${sorted.length} 件）`}
+            onClick={all.onOpen}
+          >
+            すべて（{sorted.length} 件）
+          </Button>
+        }
+        heading={
+          <Badge colorScheme="mono" variant="solid" rounded="full">
+            <Heading as="h2" id={headingId} fontSize="inherit" ref={heading} tabIndex={-1}>
+              自分のプラン
+            </Heading>
+          </Badge>
+        }
+      />
       <Drawer.Root
         open={all.open}
         onClose={all.onClose}

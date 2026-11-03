@@ -383,6 +383,7 @@ export function EventSection({
               key={event.id}
               flex={{ base: "initial", md: cards.length > 1 ? "0 0 88%" : "1 0 100%" }}
               scrollSnapAlign={{ base: "none", md: "start" }}
+              minW="0"
             >
               <EventCard
                 event={event}
@@ -422,7 +423,7 @@ export function EventSection({
         maxW="1280px"
         mx="auto"
         px={{ base: "6", md: "5" }}
-        pt={{ base: "6", md: "5" }}
+        pt={{ base: "6", md: "4" }}
         pb={{ base: "8", md: "4" }}
         gridTemplateColumns={{ base: "160px minmax(0, 1fr)", md: "minmax(0, 1fr)" }}
         columnGap="6"

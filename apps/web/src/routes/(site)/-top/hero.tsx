@@ -1,7 +1,6 @@
-import { Badge, Box, Button, Card, Flex, Grid, Heading, List, Text, VStack } from "@workspaces/ui";
+import { Badge, Box, Button, Grid, Heading, List, Text, VStack } from "@workspaces/ui";
 import { type ReactNode, useId } from "react";
-import { RouterButton, RouterLink } from "../../../ui/router-link";
-import { PointBreakdown } from "../../-point-breakdown";
+import { ResultCard } from "./result-card";
 
 /** That a plan could not be saved; next to the button that started it. */
 export function SaveFailed() {
@@ -15,60 +14,24 @@ export function SaveFailed() {
 /** The sample's points by group: they add up to its total. */
 const sampleTotals = { base: 868, spu: 1060, marathon: 2218, campaign: 674 };
 
-/**
- * A fixed result, so a visitor sees what the tool answers; it is not computed. On a phone the
- * legend has the groups' names alone, and the shops are in the total's card.
- */
+/** A fixed result, so a visitor sees what the tool answers; it is not computed. */
 export function SampleCard() {
   return (
-    <Card.Root aria-hidden shadow="lg" overflow="visible" position="relative">
-      <Box position="absolute" top="-2.5" left="4">
+    <ResultCard
+      hidden
+      label={
         <Badge colorScheme="mono" variant="solid" rounded="full">
           計算結果の見本
         </Badge>
-      </Box>
-      <Card.Body gap={{ base: "4", md: "3" }} pt="6">
-        <Card.Root variant="solid" colorScheme="primary">
-          <Card.Body flexDirection="row" alignItems="flex-end" justifyContent="space-between">
-            <VStack gap="1" alignItems="stretch">
-              <Text fontSize="sm">獲得予定</Text>
-              <Text
-                fontSize={{ base: "5xl", md: "4xl" }}
-                fontWeight="bold"
-                lineHeight="1"
-                fontVariantNumeric="tabular-nums"
-              >
-                4,820P
-              </Text>
-            </VStack>
-            <Text fontSize="sm" textAlign="end" fontVariantNumeric="tabular-nums">
-              <Box as="span" display={{ base: "none", md: "inline" }}>
-                8 / 10 店舗
-              </Box>
-              <Box as="span" display={{ base: "inline", md: "none" }}>
-                上限まで
-              </Box>
-              <br />
-              <Text as="span" fontSize="lg" fontWeight="bold" whiteSpace="nowrap">
-                あと 2,180P
-              </Text>
-            </Text>
-          </Card.Body>
-        </Card.Root>
-        <Box display={{ base: "block", md: "none" }} w="full">
-          <PointBreakdown totals={sampleTotals} />
-        </Box>
-        <Box display={{ base: "none", md: "block" }} w="full">
-          <PointBreakdown totals={sampleTotals} legend="names" />
-        </Box>
-        <Flex display={{ base: "flex", md: "none" }} w="full" justify="space-between" fontSize="sm">
-          <Text fontWeight="bold" fontVariantNumeric="tabular-nums">
-            8 / 10 店舗
-          </Text>
-          <Text color="fg.muted">あと 2 店舗で +2倍</Text>
-        </Flex>
-      </Card.Body>
-    </Card.Root>
+      }
+      title="11月 お買い物マラソン"
+      meta="11/4〜11/11・8店舗・12件"
+      total={4820}
+      capRemaining={2180}
+      totals={sampleTotals}
+      shopCount={8}
+      nextShopRate={1}
+    />
   );
 }
 
@@ -149,8 +112,8 @@ export function Hero({
         maxW="1280px"
         mx="auto"
         px={{ base: "6", md: "5" }}
-        pt={{ base: "10", md: "5" }}
-        pb={{ base: "10", md: "6" }}
+        pt={{ base: "10", md: "6" }}
+        pb={{ base: "10", md: "7" }}
         gridTemplateColumns={{ base: "minmax(0, 1fr) 520px", lg: "minmax(0, 1fr)" }}
         gridTemplateAreas={{
           base: `"head aside" "actions aside"`,
@@ -158,7 +121,7 @@ export function Hero({
         }}
         alignContent="center"
         columnGap="16"
-        rowGap={{ base: "9", md: "5" }}
+        rowGap={{ base: "9", md: "6" }}
       >
         <VStack gridArea="head" alignSelf="end" alignItems="stretch" gap={{ base: "3", md: "1.5" }}>
           <Heading as="h1" id={headingId} fontSize={{ base: "sm", md: "xs" }} color="brand">
@@ -180,32 +143,15 @@ export function Hero({
           {aside}
         </Box>
         <VStack gridArea="actions" alignSelf="start" alignItems="stretch" gap="0">
-          <Flex
-            gap="4"
-            direction={{ base: "row", md: "column" }}
-            align={{ base: "center", md: "stretch" }}
+          <Button
+            colorScheme="primary"
+            size="xl"
+            alignSelf={{ base: "flex-start", md: "stretch" }}
+            disabled={disabled}
+            onClick={onStart}
           >
-            <Button colorScheme="primary" size="xl" disabled={disabled} onClick={onStart}>
-              計算をはじめる
-            </Button>
-            <RouterButton
-              to="/help"
-              variant="outline"
-              size="xl"
-              display={{ base: "inline-flex", md: "none" }}
-            >
-              はじめての方へ
-            </RouterButton>
-            <RouterLink
-              to="/help"
-              color="link"
-              fontWeight="bold"
-              alignSelf="center"
-              display={{ base: "none", md: "inline" }}
-            >
-              はじめての方へ
-            </RouterLink>
-          </Flex>
+            計算をはじめる
+          </Button>
           {failed ? (
             <Box mt="3">
               <SaveFailed />
