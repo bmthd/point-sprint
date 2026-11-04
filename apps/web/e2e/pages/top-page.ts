@@ -11,7 +11,8 @@ export class TopPage {
   constructor(readonly page: Page) {
     // When no event is ahead, the latest ended one is offered under its own label.
     this.createPlanButton = page
-      .getByRole("button", { name: /^(このイベントでプランを作る|この条件で計算してみる)$/ })
+      .locator("#events")
+      .getByRole("button", { name: /^(プランを作る|この条件で計算)$/ })
       .first();
     this.createPlanWithoutEventButton = page.getByRole("button", {
       name: "イベントを選ばずにプランを作る",
@@ -32,9 +33,9 @@ export class TopPage {
     return new Footer(this.page);
   }
 
-  /** The events, the first list on the page. */
+  /** The events' cards. */
   get events() {
-    return this.page.getByRole("main").getByRole("list").first().getByRole("listitem");
+    return this.page.locator("#events").getByRole("list").first().getByRole("listitem");
   }
 
   /** Creates a plan for the first event. */

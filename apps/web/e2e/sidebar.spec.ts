@@ -4,7 +4,7 @@ import { NoticesPage, SitePage } from "./pages";
 
 // The sidebar lists the guides changed most recently: on a wide screen beside the content of the
 // pages that read (the pages for working on a plan have none), on a phone in the header's menu on
-// every page. The notices are in full on /notices; the top page lists their headlines.
+// every page. The notices are in full on /notices.
 
 const latest = newestFirst(notices)[0]!;
 
@@ -23,8 +23,6 @@ test("the HTML rendered at build time has the recent guides on the pages that re
     const html = await (await request.get(path)).text();
     expect(html, path).not.toContain("最近更新された記事");
   }
-  const top = await (await request.get("/")).text();
-  expect(top).toContain(`href="/notices#${latest.id}"`);
 });
 
 test("a guide's page leaves itself out of the recent guides", async ({ page }) => {

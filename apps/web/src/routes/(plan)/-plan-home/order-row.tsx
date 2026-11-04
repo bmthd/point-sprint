@@ -52,7 +52,7 @@ import {
   useShopName,
 } from "../-order-shared";
 import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
-import { PointBreakdown } from "./point-breakdown";
+import { PointBreakdown } from "../../-point-breakdown";
 import type { DragStart } from "./use-order-drag";
 
 /** What the list shares with its rows without re-rendering them: refs and stable callbacks. */

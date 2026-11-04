@@ -45,15 +45,9 @@ test("a guide's OGP image is the thumbnail the build drew", async ({ request }) 
   expect(response.headers()["content-type"]).toBe("image/png");
 });
 
-test("the top page has its heading, its description and a guide in the HTML the Worker renders", async ({
-  request,
-}) => {
+test("the top page has its heading in the HTML the Worker renders", async ({ request }) => {
   const html = await (await request.get("/")).text();
   expect(html).toMatch(/<h1[^>]*>楽天お買い物マラソンのポイント計算ツール<\/h1>/);
-  expect(html).toContain("買うものを入れるだけで、");
-  expect(html).toContain(`href="${GUIDE}"`);
-  // The cards carry the guides' titles, not their text.
-  expect(html).not.toContain("自分用のおやつにも");
 });
 
 test("the sitemap lists the guide list and every guide", async ({ request }) => {

@@ -21,7 +21,6 @@ import { createMemoryRepository } from "../../../storage/memory-repository";
 import type { Repository } from "../../../storage/repository";
 import { expectTexts } from "../../../test-texts";
 import type { Notice } from "../../-notices/notices";
-import { NoticeHeadlines } from "../-top/notice-headlines";
 import { NoticesPage } from "./notices-page";
 
 const notice = (date: string, title: string): Notice => ({
@@ -40,7 +39,7 @@ const recentArticles: RecentArticle[] = [
   { slug: "buying-order", title: "買う順番", date: "2026-10-20" },
 ];
 
-/** `/` has the headlines alone, `/notices` the page, in a router with a memory history. */
+/** `/notices` in a router with a memory history. */
 async function renderAt(
   path: string,
   notices: Notice[],
@@ -48,18 +47,13 @@ async function renderAt(
 ) {
   await cleanup();
   const root = createRootRoute({ component: Outlet, loader: () => ({ recentArticles }) });
-  const index = createRoute({
-    getParentRoute: () => root,
-    path: "/",
-    component: () => <NoticeHeadlines notices={notices} />,
-  });
   const noticesRoute = createRoute({
     getParentRoute: () => root,
     path: "/notices",
     component: () => <NoticesPage notices={notices} />,
   });
   const router = createRouter({
-    routeTree: root.addChildren([index, noticesRoute]),
+    routeTree: root.addChildren([noticesRoute]),
     history: createMemoryHistory({ initialEntries: [path] }),
   });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -75,46 +69,6 @@ async function renderAt(
   return router;
 }
 
-const headlines = () => page.getByRole("region", { name: "お知らせ" });
-
-test("the headlines are the latest three, newest first, each a link to its notice", async () => {
-  const router = await renderAt(
-    "/",
-    ["2026-10-01", "2026-10-05", "2026-10-02", "2026-10-04", "2026-10-03"].map((date) =>
-      notice(date, `お知らせ ${date}`),
-    ),
-  );
-
-  const links = headlines().getByRole("listitem").getByRole("link");
-  await expectTexts(links, ["お知らせ 2026-10-05", "お知らせ 2026-10-04", "お知らせ 2026-10-03"]);
-  await expect.element(links.first()).toHaveAttribute("href", "/notices#notice-2026-10-05");
-  await expect.element(headlines().getByText("本文", { exact: false })).not.toBeInTheDocument();
-  const time = headlines().getByRole("time").first();
-  await expect.element(time).toHaveTextContent("2026年10月5日");
-  await expect.element(time).toHaveAttribute("datetime", "2026-10-05");
-
-  await headlines().getByRole("link", { name: "すべてのお知らせ" }).click();
-  await expect.poll(() => router.state.location.pathname).toBe("/notices");
-});
-
-test("the headlines say so when there is no notice", async () => {
-  await renderAt("/", []);
-  await expect.element(headlines().getByText("お知らせはありません。")).toBeVisible();
-  await expect.element(headlines().getByRole("link")).not.toBeInTheDocument();
-});
-
-test("the headlines tell the notices not read yet", async () => {
-  const repository = createMemoryRepository({
-    noticeReads: [{ id: "notice-2026-10-01", updatedAt: "2026-10-02T00:00:00.000Z" }],
-  });
-  await renderAt("/", [notice("2026-10-01", "読んだ"), notice("2026-10-05", "まだ")], repository);
-
-  await expect.element(headlines().getByRole("link", { name: "まだ（未読）" })).toBeVisible();
-  await expect
-    .element(headlines().getByRole("link", { name: "読んだ", exact: true }))
-    .toBeVisible();
-});
-
 test("opening /notices reads every notice on it, keeping when one was read first", async () => {
   const first = { id: "notice-2026-10-01", updatedAt: "2026-10-02T00:00:00.000Z" };
   const repository = createMemoryRepository({ noticeReads: [first] });
@@ -125,9 +79,6 @@ test("opening /notices reads every notice on it, keeping when one was read first
     .poll(async () => (await repository.noticeReads.list()).map((read) => read.id))
     .toEqual(["notice-2026-10-01", "notice-2026-10-05"]);
   expect((await repository.noticeReads.list())[0]).toEqual(first);
-
-  await renderAt("/", notices, repository);
-  await expect.element(headlines().getByRole("link", { name: "まだ", exact: true })).toBeVisible();
 });
 
 test("/notices shows every notice in full, newest first, and the recent articles beside", async () => {

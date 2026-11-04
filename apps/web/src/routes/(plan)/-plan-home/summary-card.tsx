@@ -6,7 +6,7 @@ import {
 } from "@workspaces/domain";
 import { Box, Card, Flex, NativeAccordion, Progress, Text } from "@workspaces/ui";
 import { grouped } from "../../../ui/format";
-import { PointBreakdown } from "./point-breakdown";
+import { PointBreakdown } from "../../-point-breakdown";
 import { ShopLadder } from "./shop-ladder";
 
 const SHOP_STEPS = 10;

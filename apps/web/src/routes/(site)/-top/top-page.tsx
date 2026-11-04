@@ -1,26 +1,19 @@
 import { ClientOnly, useHydrated, useNavigate } from "@tanstack/react-router";
 import { type OfficialEvent, type Plan, createPlan } from "@workspaces/domain";
-import { Box, Button, Modal, SimpleGrid, Text, VStack } from "@workspaces/ui";
+import { Box, Button, Flex, Modal, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { replacePlan, savePlanAtom } from "../../../state/mutations";
 import { plansAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
-import { NoticeHeadlines } from "./notice-headlines";
 import { ShareSection } from "../../-sidebar/share-section";
 import { monthOf, tokyoToday } from "../../../ui/dates";
 import { officialEventsQueryAtom } from "../../-official-events";
 import { useToday } from "../../-use-today";
 import { EventSection } from "./event-section";
-import type { GuideCard } from "../../../guides/guide-cards";
-import { GuideCards } from "./guide-cards";
-import { Hero, SaveFailed } from "./hero";
-import { HowTo } from "./how-to";
+import { Hero, SampleCard } from "./hero";
 import { PlanSection } from "./plan-section";
 import { startTarget } from "./start-target";
-
-/** The events' tab of the ones running and to come. */
-const AHEAD_TAB = 0;
 
 /** The button a plan was started from: the hero's, or one in the events. */
 type Origin = "hero" | "events";
@@ -30,17 +23,15 @@ type Origin = "hero" | "events";
  * Japan the Worker rendered the page for, which the page keeps until it runs.
  */
 export function TopPage({
-  articles,
   now = () => new Date(),
   renderedToday,
 }: {
-  articles: GuideCard[];
   now?: () => Date;
   renderedToday?: string;
 }) {
   const navigate = useNavigate();
   const today = useToday(now);
-  // The events' statuses and tabs start from the day the page was rendered for, so that they do not
+  // The events' statuses start from the day the page was rendered for, so that they do not
   // move as it hydrates, then follow the browser's today, should a page kept from the day before
   // reach it.
   const hydrated = useHydrated();
@@ -59,13 +50,10 @@ export function TopPage({
   const { data, isError } = useAtomValue(officialEventsQueryAtom);
   // Events kept from before a read that failed are not offered: the list says they cannot be read.
   const events = isError ? undefined : data;
-  // The events' tab, which the page opens itself when the visitor is to choose a running event.
-  const [chosenTab, setChosenTab] = useState<number>();
 
   const start = () => {
     const target = startTarget(events, shownToday);
     if (target.kind === "create") return request(target.event, "hero");
-    setChosenTab(AHEAD_TAB);
     const section = document.getElementById("events");
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     section?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
@@ -113,63 +101,68 @@ export function TopPage({
 
   return (
     <Box as="main">
-      <Hero onStart={start} disabled={!hydrated || creating} failed={failed === "hero"} />
-      <VStack alignItems="stretch" gap="6" maxW="1120px" mx="auto" px="md" pt="md" pb="16">
-        <ClientOnly fallback={null}>
-          <PlanSection />
-        </ClientOnly>
+      {/* The first screen: the hero and the events fill the screen under the header, so the footer
+          starts just below it. */}
+      <Flex direction="column" minH="calc(100dvh - {sizes.14} - 1px)">
+        <Hero
+          onStart={start}
+          disabled={!hydrated || creating}
+          failed={failed === "hero"}
+          aside={
+            <ClientOnly fallback={<SampleCard />}>
+              {plans.length === 0 ? <SampleCard /> : <PlanSection />}
+            </ClientOnly>
+          }
+        />
         <EventSection
           today={shownToday}
           disabled={!hydrated || creating}
           onCreate={(event) => request(event, "events")}
           onCreateWithoutEvent={() => request(undefined, "events")}
-          chosen={chosenTab}
-          setChosen={setChosenTab}
+          failed={failed === "events"}
         />
-        {failed === "events" ? <SaveFailed /> : null}
-        <HowTo />
-        <GuideCards articles={articles} />
-        <SimpleGrid columns={{ base: 2, md: 1 }} gap="6" alignItems="start">
-          <NoticeHeadlines />
+      </Flex>
+      <Box maxW="1280px" mx="auto" px={{ base: "6", md: "5" }} pb="10">
+        <Box maxW="sm" mx="auto">
           <ShareSection />
-        </SimpleGrid>
-        <Modal.Root open={duplicate !== undefined} onClose={() => setDuplicate(undefined)}>
-          <Modal.Content>
-            <Modal.Header>
-              <Modal.Title>同じ名前のプランがあります</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <Text>「{duplicate?.existing.name}」はすでにあります。</Text>
-            </Modal.Body>
-            {/* Side by side when they fit; stacked otherwise, with the main one on top. */}
-            <Modal.Footer flexWrap="wrap-reverse">
-              <Button
-                variant="outline"
-                size="lg"
-                flexGrow="1"
-                onClick={() => {
-                  if (!duplicate) return;
-                  setDuplicate(undefined);
-                  void create(duplicate.event, duplicate.origin);
-                }}
-              >
-                新しく作る
-              </Button>
-              <Button
-                colorScheme="primary"
-                size="lg"
-                flexGrow="1"
-                onClick={() => {
-                  if (duplicate)
-                    void navigate({ to: "/plan", search: { id: duplicate.existing.id } });
-                }}
-              >
-                既存のプランを開く
-              </Button>
-            </Modal.Footer>
-          </Modal.Content>
-        </Modal.Root>
-      </VStack>
+        </Box>
+      </Box>
+      <Modal.Root open={duplicate !== undefined} onClose={() => setDuplicate(undefined)}>
+        <Modal.Content>
+          <Modal.Header>
+            <Modal.Title>同じ名前のプランがあります</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Text>「{duplicate?.existing.name}」はすでにあります。</Text>
+          </Modal.Body>
+          {/* Side by side when they fit; stacked otherwise, with the main one on top. */}
+          <Modal.Footer flexWrap="wrap-reverse">
+            <Button
+              variant="outline"
+              size="lg"
+              flexGrow="1"
+              onClick={() => {
+                if (!duplicate) return;
+                setDuplicate(undefined);
+                void create(duplicate.event, duplicate.origin);
+              }}
+            >
+              新しく作る
+            </Button>
+            <Button
+              colorScheme="primary"
+              size="lg"
+              flexGrow="1"
+              onClick={() => {
+                if (duplicate)
+                  void navigate({ to: "/plan", search: { id: duplicate.existing.id } });
+              }}
+            >
+              既存のプランを開く
+            </Button>
+          </Modal.Footer>
+        </Modal.Content>
+      </Modal.Root>
     </Box>
   );
 }
