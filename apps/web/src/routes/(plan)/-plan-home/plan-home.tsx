@@ -309,7 +309,7 @@ function Home({ plan }: { plan: Plan }) {
           minW="0"
         >
           {desktop ? (
-            <OrderTable plan={plan} onEdit={editOrder} onSpu={changeSpu} />
+            <OrderTable plan={plan} onSpu={changeSpu} />
           ) : (
             <OrderList
               plan={plan}

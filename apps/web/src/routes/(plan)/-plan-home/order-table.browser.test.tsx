@@ -207,7 +207,7 @@ test("fits 1024px without horizontal scroll", async () => {
       .closest("label"),
     screen.getByRole("button", { name: `${long}の注文の詳細と編集` }).element(),
     ...Array.from(
-      list().element().querySelectorAll("input:not([type=checkbox]), select, button"),
+      list().element().querySelectorAll("input:not([type=checkbox]), select, button, summary"),
       // A date picker's box, and a tax rate's label over its hidden radio, are what is tapped.
       (control) =>
         control.closest(DATE_PICKER_FIELD) ??
@@ -216,7 +216,9 @@ test("fits 1024px without horizontal scroll", async () => {
     ).filter(
       // The rate's up and down buttons share the field's height; the rate is typed in the field,
       // which is pressed in full.
-      (control) => !control.closest(".ui-number-input__control"),
+      // Fields inside a shut 「詳細設定」 are not on screen.
+      (control) =>
+        !control.closest(".ui-number-input__control") && (control as Element).checkVisibility(),
     ),
   ];
   for (const control of controls) {
@@ -631,33 +633,47 @@ test("the add form and an opened row take turns, and the form keeps what was typ
   await expect.element(screen.getByRole("textbox", { name: /^商品名/ })).toHaveValue("あとで足す");
 });
 
-test("a row of several items does not edit their tax and shop rates inline", async () => {
+test("the add form adds an order with a quantity, a coupon and a second item", async () => {
+  const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
+
+  await openAddForm(screen);
+  const quantity = screen.getByRole("textbox", { name: "数量" });
+  await expect.element(quantity.first()).not.toBeInTheDocument();
+  await screen.getByText("詳細設定", { exact: true }).click();
+  await screen
+    .getByRole("textbox", { name: /^商品名/ })
+    .first()
+    .fill("フェイスタオル");
+  await screen.getByRole("textbox", { name: "金額（税込）" }).first().fill("1,000");
+  await quantity.first().fill("3");
+  await screen.getByRole("textbox", { name: "クーポン値引額（税込）" }).first().fill("200");
+  await screen.getByRole("button", { name: "＋ 同じショップの商品を追加" }).click();
+  const second = screen.getByRole("group", { name: "商品2" });
+  await second.getByRole("textbox", { name: "商品名" }).fill("バスタオル");
+  await second.getByRole("textbox", { name: "金額（税込）" }).fill("2,000");
+  await screen.getByRole("button", { name: "追加する" }).click();
+
+  await expect.poll(async () => (await stored())?.length).toBe(2);
+  expect((await stored())?.[1]?.lineItems).toMatchObject([
+    { name: "フェイスタオル", unitPrice: 1000, quantity: 3, discount: 200 },
+    { name: "バスタオル", unitPrice: 2000, quantity: 1 },
+  ]);
+});
+
+test("an opened row of several items edits each item in 詳細設定", async () => {
   const several = order(0, { items: 2 });
-  several.lineItems = several.lineItems.map((item, index) => ({
-    ...item,
-    taxRate: index === 0 ? 0.1 : 0.08,
-    shopPointRate: index === 0 ? 2 : 3,
-  }));
-  const screen = await renderWith(marathonPlan([several, order(1), order(2), order(3)]));
+  const screen = await renderWith(marathonPlan([several, order(1)]));
 
   await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
-  const panel = screen.getByRole("listitem").filter({ hasText: "商品を編集" });
-  await expect.element(panel.getByRole("button", { name: "商品を編集" })).toBeVisible();
-  await expect.element(panel.getByRole("radio", { name: "8%（食品）" })).not.toBeInTheDocument();
-  await expect
-    .element(panel.getByRole("spinbutton", { name: /^独自倍率/ }))
-    .not.toBeInTheDocument();
-  await expect.element(panel.getByText("商品ごとに異なります")).toHaveLength(2);
+  // Opened at first, since the order uses it.
+  const second = screen.getByRole("group", { name: "商品2" });
+  await expect.element(second).toBeVisible();
+  await second.getByRole("textbox", { name: "数量" }).fill("4");
+  await userEvent.keyboard("{Tab}");
+  await expect.poll(async () => (await stored())?.[0]?.lineItems[1]?.quantity).toBe(4);
 
-  // A change to the order's own fields leaves each item's rates as they were.
-  await tapCard(screen.getByRole("checkbox", { name: "リピート購入" }));
-  await expect.poll(async () => (await stored())?.[0]?.tags).toEqual(["repeat"]);
-  expect(
-    (await stored())?.[0]?.lineItems.map((item) => [item.taxRate, item.shopPointRate]),
-  ).toEqual([
-    [0.1, 2],
-    [0.08, 3],
-  ]);
+  await second.getByRole("button", { name: "商品2を削除" }).click();
+  await expect.poll(async () => (await stored())?.[0]?.lineItems).toHaveLength(1);
 });
 
 test("an opened row of a plan with brand day saves the order's brand day tag", async () => {
@@ -689,7 +705,6 @@ test("editing one order does not re-render the other rows", async () => {
   const plan = makePlan([baseBenefit, spuBenefit, campaignBenefit], [order(0), order(1)]);
   const memory = createMemoryRepository({ shops, plans: [plan] });
   let updateOrder: ((order: Order) => Promise<unknown>) | undefined;
-  const noop = () => {};
 
   function Loaded() {
     const plans = useAtomValue(plansQueryAtom);
@@ -699,7 +714,7 @@ test("editing one order does not re-render the other rows", async () => {
       updateOrder = (next) => update({ planId: PLAN, order: next });
     }, [update]);
     const loaded = plans.data?.find((p) => p.id === PLAN);
-    return loadedShops.isSuccess && loaded ? <OrderTable plan={loaded} onEdit={noop} /> : null;
+    return loadedShops.isSuccess && loaded ? <OrderTable plan={loaded} /> : null;
   }
 
   rowRenders.clear();

@@ -29,7 +29,7 @@ import {
   Field as UIField,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { type ReactNode, useId, useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import { type FieldState, bind, errorsOf } from "../-form";
 import { type ShopChange, changeShop, replaceShop } from "../../state/mutations";
 import { shopsAtom } from "../../state/queries";
@@ -89,29 +89,6 @@ export function Field({
     <UIField.Root label={label} invalid={error !== undefined} errorMessage={error} minW="0">
       {children}
     </UIField.Root>
-  );
-}
-
-/** A value that cannot be edited here, shown in place of its field. */
-export function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  const labelId = useId();
-  return (
-    <Flex direction="column" gap="1" minW="0">
-      <Text id={labelId} fontSize="xs" color="fg.muted">
-        {label}
-      </Text>
-      <Text
-        aria-labelledby={labelId}
-        role="group"
-        h="11"
-        display="flex"
-        alignItems="center"
-        fontSize="sm"
-        fontVariantNumeric="tabular-nums"
-      >
-        {value}
-      </Text>
-    </Flex>
   );
 }
 

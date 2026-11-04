@@ -532,15 +532,14 @@ test("closing the sheet saves nothing", async () => {
   expect(await stored()).toHaveLength(4);
 });
 
-test("on a desktop a multi-item order is edited in a dialog", async () => {
+test("on a desktop an edit= opens a multi-item order in a dialog", async () => {
   await page.viewport(1280, 900);
   const plan = makePlan(
     [baseBenefit, spuBenefit, ...marathon],
     [order(0, { items: 2 }), order(1), order(2), order(3)],
   );
-  const screen = await renderWith(plan);
-  await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
-  await screen.getByRole("button", { name: "商品を編集" }).click();
+  currentRepository = createMemoryRepository({ shops, plans: [plan] });
+  const screen = await renderPlanHome(currentRepository, `/plan?id=${PLAN}&edit=${orderId(0)}`);
 
   const dialog = screen.getByRole("dialog", { name: "注文を編集" });
   await expect.element(dialog).toBeVisible();

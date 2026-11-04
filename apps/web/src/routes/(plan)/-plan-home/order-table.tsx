@@ -19,11 +19,9 @@ const HOLD_HINT =
 
 export function OrderTable({
   plan,
-  onEdit,
   onSpu,
 }: {
   plan: Plan;
-  onEdit: (orderId: string) => void;
   /** Opens a month's SPU from the month's separator, when the orders are of more than one month. */
   onSpu?: ((month: string) => void) | undefined;
 }) {
@@ -117,7 +115,6 @@ export function OrderTable({
                   badge={order.onHold ? null : ++counted}
                   index={index}
                   count={orders.length}
-                  onEdit={onEdit}
                   onDelete={askDelete}
                 />
               )),
