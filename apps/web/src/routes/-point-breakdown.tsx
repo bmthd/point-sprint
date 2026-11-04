@@ -1,4 +1,4 @@
-import { grouped } from "../../../ui/format";
+import { grouped } from "../ui/format";
 import { POINT_GROUPS, type PointGroup } from "@workspaces/domain";
 import { Box, Flex, List, Text } from "@workspaces/ui";
 
@@ -20,7 +20,8 @@ export function pointFill(group: PointGroup, stripe: number) {
 
 /**
  * The four point groups as a stacked bar and a legend, always in the order 通常 → SPU → マラソン →
- * キャンペーン. The legend is a two-column grid, or one wrapping line for a table's expanded row.
+ * キャンペーン. The legend is a two-column grid, or one wrapping line for a table's expanded row, or
+ * the groups' names alone on one line, for a sample where the numbers would crowd it.
  */
 export function PointBreakdown({
   totals,
@@ -28,7 +29,7 @@ export function PointBreakdown({
   held = false,
 }: {
   totals: Record<PointGroup, number>;
-  legend?: "grid" | "line";
+  legend?: "grid" | "line" | "names";
   /** A held order's points, the ones it would get once counted: faded, and struck through. */
   held?: boolean;
 }) {
@@ -54,12 +55,13 @@ export function PointBreakdown({
         aria-label={held ? "購入決定にしたときの内訳" : "ポイントの内訳"}
         display={legend === "grid" ? "grid" : "flex"}
         flexDirection="row"
-        flexWrap="wrap"
+        flexWrap={legend === "names" ? "nowrap" : "wrap"}
+        justifyContent={legend === "names" ? "space-between" : undefined}
         gridTemplateColumns="repeat(2, minmax(0, 1fr))"
         rowGap={legend === "grid" ? "1.5" : "1"}
         columnGap={legend === "grid" ? "3" : "4"}
-        fontSize="sm"
-        color={held ? "fg.muted" : undefined}
+        fontSize={legend === "names" ? "xs" : "sm"}
+        color={held || legend === "names" ? "fg.muted" : undefined}
       >
         {POINT_GROUPS.map((group) => (
           <List.Item key={group} display="flex" alignItems="center" gap="1.5">
@@ -71,14 +73,16 @@ export function PointBreakdown({
               opacity={held ? 0.4 : undefined}
             />
             {labels[group]}
-            <Text
-              as={held ? "s" : "span"}
-              ms={legend === "grid" ? "auto" : undefined}
-              fontWeight={legend === "grid" ? undefined : "bold"}
-              fontVariantNumeric="tabular-nums"
-            >
-              {grouped(totals[group])}P
-            </Text>
+            {legend === "names" ? null : (
+              <Text
+                as={held ? "s" : "span"}
+                ms={legend === "grid" ? "auto" : undefined}
+                fontWeight={legend === "grid" ? undefined : "bold"}
+                fontVariantNumeric="tabular-nums"
+              >
+                {grouped(totals[group])}P
+              </Text>
+            )}
           </List.Item>
         ))}
       </List.Root>

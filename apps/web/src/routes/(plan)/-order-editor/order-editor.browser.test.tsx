@@ -387,24 +387,6 @@ test("a URL that is not a web address is an error, and nothing is saved", async 
   await expect.element(url).not.toHaveAttribute("aria-invalid");
 });
 
-test("an error in the closed details opens them and takes the focus", async () => {
-  const screen = await renderWith();
-  const sheet = await openAdd(screen);
-  await fillOrder(sheet, { shop: "ショップ4", amount: "1000" });
-  const details = sheet.getByText(/^詳細設定/);
-  await details.click();
-  const quantity = sheet.getByLabelText("数量");
-  await quantity.fill("0");
-  await details.click();
-  await expect.element(quantity).not.toBeVisible();
-  await sheet.getByRole("button", { name: "追加する" }).click();
-
-  await expect.element(quantity).toHaveAccessibleDescription("数量は1以上の整数で入れてください");
-  await expect.element(quantity).toHaveFocus();
-  await expect.element(quantity).toBeVisible();
-  expect(await stored()).toHaveLength(4);
-});
-
 test("editing an order shows its stored URL and keeps it", async () => {
   const url = "https://item.rakuten.co.jp/shop-one/item-9/";
   const withUrl = order(1);
@@ -429,8 +411,6 @@ test("details set quantity, coupon, shop rate, hold and another item", async () 
   const sheet = await openAdd(screen);
   await fillOrder(sheet, { shop: "ショップ4", amount: "1100", name: "洗剤" });
 
-  const details = sheet.getByText(/^詳細設定/);
-  await details.click();
   await sheet.getByLabelText("数量").fill("3");
   await sheet.getByLabelText("クーポン値引額（税込）").fill("300");
   await sheet.getByRole("spinbutton", { name: /^独自倍率/ }).fill("2");
@@ -469,7 +449,6 @@ test("an invalid amount of another item is described on its field", async () => 
   const screen = await renderWith();
   const sheet = await openAdd(screen);
   await fillOrder(sheet, { shop: "ショップ4", amount: "1000" });
-  await sheet.getByText(/^詳細設定/).click();
   await sheet.getByRole("button", { name: "＋ 同じショップの商品を追加" }).click();
   const second = sheet.getByRole("group", { name: "商品2" });
   await second.getByLabelText("金額（税込）").fill("12a");
@@ -486,7 +465,6 @@ test("a coupon larger than the item is not saved", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
   await fillOrder(sheet, { shop: "ショップ4", amount: "1000" });
-  await sheet.getByText(/^詳細設定/).click();
   await sheet.getByLabelText("クーポン値引額（税込）").fill("1001");
   await sheet.getByRole("button", { name: "追加する" }).click();
 
