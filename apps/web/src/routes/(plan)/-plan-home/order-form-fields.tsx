@@ -4,7 +4,16 @@
 
 import { Field as FormField, useField } from "@formisch/react";
 import type { Plan } from "@workspaces/domain";
-import { Box, Field, Flex, Input, InputGroup, Separator, Text } from "@workspaces/ui";
+import {
+  Box,
+  Field,
+  Flex,
+  Input,
+  InputGroup,
+  NativeAccordion,
+  Separator,
+  Text,
+} from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId } from "react";
 import { bind, errorsOf } from "../../-form";
@@ -22,7 +31,6 @@ import {
   CampaignCheck,
   ChannelField,
   OrderPart,
-  ReadOnlyField,
   ShopRateInput,
   TaxRateButtons,
   UrlLabel,
@@ -31,6 +39,7 @@ import {
 } from "../-order-fields";
 import { ShopAutocomplete } from "../-shop-autocomplete";
 import { FormDatePicker } from "../-date-picker-field";
+import { ExtraItems, ItemDetailFields } from "../-item-details";
 
 // The fields of an order in the desktop list, the same in 「＋ 注文を追加」 and in an opened row.
 
@@ -72,24 +81,7 @@ function UrlField({ form, autofill }: { form: OrderForm; autofill: Autofill }) {
   );
 }
 
-/** What an order of several items shows in place of its item fields: each item has its own. */
-export type SharedRates = { taxRate: string; shopPointRate: string };
-
-function ItemFields({
-  form,
-  sharedRates,
-}: {
-  form: OrderForm;
-  sharedRates: SharedRates | undefined;
-}) {
-  if (sharedRates) {
-    return (
-      <Flex wrap="wrap" gap="2.5" align="flex-start">
-        <ReadOnlyField label="税率" value={sharedRates.taxRate} />
-        <ReadOnlyField label="独自倍率" value={sharedRates.shopPointRate} />
-      </Flex>
-    );
-  }
+function ItemFields({ form }: { form: OrderForm }) {
   return (
     <Flex wrap="wrap" gap="2.5" align="flex-start">
       <Box flex="1 1 13rem" minW="0">
@@ -193,20 +185,54 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
 }
 
 /**
- * The URL, then the order in three parts: where it was bought, what was bought, and its
- * campaigns. An order of several items edits its items in 「商品を編集」, so it shows
- * `sharedRates` in place of their fields.
+ * Quantity, coupon and the items after the first one, under 「詳細設定」 that opens in place. Most
+ * orders need none of them, so it starts shut unless `defaultOpen`. Shut, its fields stay in the
+ * form.
+ */
+function Details({
+  form,
+  defaultOpen,
+  onItemRemoved,
+}: {
+  form: OrderForm;
+  defaultOpen: boolean;
+  onItemRemoved?: () => void;
+}) {
+  return (
+    // The animated panel clips its content, which cuts the focus rings at its edges.
+    <NativeAccordion.Root animate={false}>
+      <NativeAccordion.Item open={defaultOpen} borderWidth="0">
+        <NativeAccordion.Button px="0" minH="11" color="fg.muted">
+          詳細設定
+        </NativeAccordion.Button>
+        <NativeAccordion.Panel px="0" pt="0">
+          <Flex direction="column" gap="2" maxW="md">
+            <ItemDetailFields form={form} index={0} withRate={false} size="lg" />
+            <ExtraItems form={form} onRemove={onItemRemoved} size="lg" />
+          </Flex>
+        </NativeAccordion.Panel>
+      </NativeAccordion.Item>
+    </NativeAccordion.Root>
+  );
+}
+
+/**
+ * The URL, then the order in four parts: where it was bought, what was bought, its campaigns and
+ * its details. `detailsOpen` opens 「詳細設定」 at first; `onItemRemoved` runs once an item after
+ * the first one is removed.
  */
 export function OrderFormFields({
   form,
   plan,
   autofill,
-  sharedRates,
+  detailsOpen = false,
+  onItemRemoved,
 }: {
   form: OrderForm;
   plan: Plan;
   autofill: Autofill;
-  sharedRates?: SharedRates;
+  detailsOpen?: boolean;
+  onItemRemoved?: () => void;
 }) {
   return (
     <>
@@ -232,12 +258,14 @@ export function OrderFormFields({
       </OrderPart>
       <Separator />
       <OrderPart legend="商品">
-        <ItemFields form={form} sharedRates={sharedRates} />
+        <ItemFields form={form} />
       </OrderPart>
       <Separator />
       <OrderPart legend="キャンペーン">
         <TagChips form={form} plan={plan} />
       </OrderPart>
+      <Separator />
+      <Details form={form} defaultOpen={detailsOpen} onItemRemoved={onItemRemoved} />
     </>
   );
 }

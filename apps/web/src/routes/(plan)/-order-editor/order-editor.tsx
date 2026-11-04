@@ -2,16 +2,7 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import {
-  Field as FormField,
-  FieldArray,
-  focus,
-  insert,
-  remove,
-  reset,
-  useField,
-  useForm,
-} from "@formisch/react";
+import { Field as FormField, focus, reset, useField, useForm } from "@formisch/react";
 import type { Order, Plan } from "@workspaces/domain";
 import {
   Box,
@@ -19,19 +10,17 @@ import {
   Button,
   Drawer,
   Field,
-  Fieldset,
   IconButton,
   Input,
   InputGroup,
   Modal,
-  NativeSelect,
   Separator,
   Switch,
   Text,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } from "react";
-import { type FieldState, Form, bind, errorsOf } from "../../-form";
+import { Form, bind, errorsOf } from "../../-form";
 import { shopsAtom } from "../../../state/queries";
 import { useSingleFlight } from "../../../use-single-flight";
 import { CloseIcon } from "../../../ui/icons";
@@ -42,7 +31,6 @@ import {
   OrderPart,
   ShopRateInput,
   TaxRateButtons,
-  TaxRateOptions,
   UrlLabel,
   optionalMark,
   shopFromUrl,
@@ -59,7 +47,6 @@ import {
   draftOf,
   draftOfInput,
   emptyInput,
-  emptyItem,
   inputOf,
   rateOf,
   tagBonus,
@@ -75,139 +62,10 @@ import {
 } from "../-order-form-store";
 import { OrderPreviewBox } from "./order-preview";
 import { CapFlows } from "../-cap-flows";
+import { ExtraItems, ItemDetailFields } from "../-item-details";
 
 /** The editor's target in the URL (`edit=`): a new order, or the id of the order to edit. */
 export const NEW_ORDER = "new";
-
-/** A label on the left and a short field on the right (the details rows), the error under both. */
-function InlineField({
-  label,
-  field,
-  inputMode,
-  placeholder,
-}: {
-  label: string;
-  field: FieldState;
-  inputMode: "numeric" | "decimal";
-  placeholder?: string;
-}) {
-  return (
-    <Field.Root
-      label={label}
-      {...errorsOf(field)}
-      display="grid"
-      gridTemplateColumns="minmax(0, 1fr) auto"
-      alignItems="center"
-      columnGap="3"
-      errorMessageProps={{ gridColumn: "1 / -1" }}
-    >
-      <Input
-        w="24"
-        textAlign="end"
-        fontVariantNumeric="tabular-nums"
-        inputMode={inputMode}
-        placeholder={placeholder}
-        {...bind(field)}
-      />
-    </Field.Root>
-  );
-}
-
-/** Quantity, coupon and the shop's own rate of one item. */
-function ItemDetailFields({
-  form,
-  index,
-  withRate = true,
-}: {
-  form: OrderForm;
-  index: number;
-  /** The first item's rate is next to its amount, so it is left out here. */
-  withRate?: boolean;
-}) {
-  return (
-    <>
-      <FormField of={form} path={["items", index, "quantity"]}>
-        {(field) => <InlineField label="数量" field={field} inputMode="numeric" />}
-      </FormField>
-      <FormField of={form} path={["items", index, "discount"]}>
-        {(field) => (
-          <InlineField
-            label="クーポン値引額（税込）"
-            field={field}
-            inputMode="numeric"
-            placeholder="0"
-          />
-        )}
-      </FormField>
-      {withRate ? (
-        <FormField of={form} path={["items", index, "shopPointRate"]}>
-          {(field) => (
-            <InlineField
-              label="ショップ独自倍率"
-              field={field}
-              inputMode="decimal"
-              placeholder="1"
-            />
-          )}
-        </FormField>
-      ) : null}
-    </>
-  );
-}
-
-/** An item after the first one, added with 「同じショップの商品を追加」. */
-function ExtraItem({ form, index }: { form: OrderForm; index: number }) {
-  const label = `商品${index + 1}`;
-  return (
-    <Fieldset.Root legend={label} variant="outline" size="sm">
-      <FormField of={form} path={["items", index, "name"]}>
-        {(field) => (
-          <Field.Root label="商品名" {...errorsOf(field)}>
-            <Input {...bind(field)} />
-          </Field.Root>
-        )}
-      </FormField>
-      <Box
-        display="grid"
-        gridTemplateColumns="minmax(0, 1fr) minmax(0, 1fr)"
-        alignItems="start"
-        gap="2"
-      >
-        <FormField of={form} path={["items", index, "unitPrice"]}>
-          {(field) => (
-            <Field.Root label="金額（税込）" {...errorsOf(field)}>
-              <Input
-                textAlign="end"
-                fontVariantNumeric="tabular-nums"
-                inputMode="numeric"
-                {...bind(field)}
-              />
-            </Field.Root>
-          )}
-        </FormField>
-        <FormField of={form} path={["items", index, "taxRate"]}>
-          {(field) => (
-            <Field.Root label="税率" invalid={field.errors !== null}>
-              <NativeSelect.Root {...bind(field)}>
-                <TaxRateOptions />
-              </NativeSelect.Root>
-            </Field.Root>
-          )}
-        </FormField>
-      </Box>
-      <ItemDetailFields form={form} index={index} />
-      <Button
-        type="button"
-        variant="outline"
-        colorScheme="danger"
-        alignSelf="flex-start"
-        onClick={() => remove(form, { path: ["items"], at: index })}
-      >
-        {label}を削除
-      </Button>
-    </Fieldset.Root>
-  );
-}
 
 /** The points the order the form describes gets, in the editor. */
 function DraftPreview({ form, plan, original }: { form: OrderForm; plan: Plan; original?: Order }) {
@@ -441,29 +299,7 @@ function Details({ form }: { form: OrderForm }) {
           </Switch>
         )}
       </FormField>
-      <FieldArray of={form} path={["items"]}>
-        {(items) => (
-          <Flex direction="column" gap="2">
-            {items.items.map((key, index) =>
-              index === 0 ? null : <ExtraItem key={key} form={form} index={index} />,
-            )}
-            {items.errors ? (
-              <Text role="alert" fontSize="sm" color="danger.fg">
-                {items.errors[0]}
-              </Text>
-            ) : null}
-          </Flex>
-        )}
-      </FieldArray>
-      <Button
-        type="button"
-        variant="ghost"
-        colorScheme="primary"
-        alignSelf="flex-start"
-        onClick={() => insert(form, { path: ["items"], initialInput: emptyItem() })}
-      >
-        ＋ 同じショップの商品を追加
-      </Button>
+      <ExtraItems form={form} />
     </OrderPart>
   );
 }

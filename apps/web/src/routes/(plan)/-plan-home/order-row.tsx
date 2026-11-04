@@ -3,13 +3,7 @@
 "use no memo";
 
 import { getInput, reset, useField, useForm, validate } from "@formisch/react";
-import {
-  type LineItem,
-  type Order,
-  type Shop,
-  taxExcludedTarget,
-  taxIncludedTarget,
-} from "@workspaces/domain";
+import { type Order, type Shop, taxExcludedTarget, taxIncludedTarget } from "@workspaces/domain";
 import {
   Box,
   Collapse,
@@ -52,7 +46,6 @@ import {
   orderCardPointsAtom,
   orderTitle,
   taxLabel,
-  taxRateLabel,
   orderSaveFailedAtom,
   useSaveOrderChange,
   useSaveOrderDraft,
@@ -87,26 +80,13 @@ const useListContext = () => {
 /** The columns of a closed row. Only the middle one (shop, item, campaigns) grows and shrinks. */
 export const rowColumns = "24px 56px 36px minmax(0, 1fr) auto auto 44px";
 
-const VARIES = "商品ごとに異なります";
-
-/** The one value all items share, or 「商品ごとに異なります」. */
-const sharedValue = <T,>(
-  items: LineItem[],
-  of: (item: LineItem) => T,
-  label: (value: T) => string,
-) => {
-  const values = new Set(items.map(of));
-  return values.size === 1 ? label([...values][0] as T) : VARIES;
-};
-
 /**
- * Whether the item fields edit the order in place: one item, bought once with no coupon, so its
- * amount is its price. Any other order edits its items in 「商品を編集」.
+ * Whether the order uses 「詳細設定」: more than one item, or an item bought more than once or with
+ * a coupon. Its row opens with them shown.
  */
-const editsItemInPlace = (order: Order) => {
-  const [item, ...rest] = order.lineItems;
-  return item !== undefined && rest.length === 0 && item.quantity === 1 && !item.discount;
-};
+const hasDetails = (order: Order) =>
+  order.lineItems.length > 1 ||
+  order.lineItems.some((item) => item.quantity !== 1 || item.discount);
 
 /** The form's input as text, its keys sorted: the form and `inputOf` list them in different orders. */
 const inputKey = (input: unknown): string =>
@@ -132,15 +112,7 @@ function editInputOf(order: Order, shops: Shop[]): OrderFormInput {
  * The order's fields, edited in place with the add form's fields. A change is saved once it is
  * valid: a choice at once, typed text when its field is left or Enter is pressed.
  */
-function InlineOrderEditor({
-  planId,
-  order,
-  onEdit,
-}: {
-  planId: string;
-  order: Order;
-  onEdit: (orderId: string) => void;
-}) {
+function InlineOrderEditor({ planId, order }: { planId: string; order: Order }) {
   const plan = useAtomValue(planAtom(planId));
   const shops = useAtomValue(shopsAtom);
   const saveDraft = useSaveOrderDraft(planId, useSetAtom(orderSaveFailedAtom));
@@ -186,7 +158,7 @@ function InlineOrderEditor({
     void commitRef.current();
   }, [instantKey, commitRef, form]);
 
-  // A change saved elsewhere (in 「商品を編集」, or to the shop) comes into the fields.
+  // A change saved elsewhere (to the shop, or in another tab) comes into the fields.
   useEffect(() => {
     const next = editInputOf(order, shops);
     const json = inputKey(next);
@@ -196,16 +168,6 @@ function InlineOrderEditor({
   }, [order, shops, form]);
 
   if (!plan) return null;
-  const sharedRates = editsItemInPlace(order)
-    ? undefined
-    : {
-        taxRate: sharedValue(order.lineItems, (item) => item.taxRate, taxRateLabel),
-        shopPointRate: sharedValue(
-          order.lineItems,
-          (item) => item.shopPointRate,
-          (rate) => (rate === undefined ? "なし" : `${rate}倍`),
-        ),
-      };
 
   return (
     <Flex
@@ -220,18 +182,18 @@ function InlineOrderEditor({
         if (!(event.target instanceof HTMLInputElement)) return;
         void commit();
       }}
+      // An added item's tax rate is a choice, saved as soon as it is made.
+      onChange={(event) => {
+        if (event.target instanceof HTMLSelectElement) void commit();
+      }}
     >
-      <OrderFormFields form={form} plan={plan} autofill={autofill} sharedRates={sharedRates} />
-      {sharedRates ? (
-        <Text fontSize="xs" color="fg.muted">
-          商品名・金額・税率・ショップ独自倍率は「商品を編集」から変えられます。
-        </Text>
-      ) : null}
-      {sharedRates ? (
-        <Button variant="outline" size="lg" alignSelf="flex-start" onClick={() => onEdit(order.id)}>
-          商品を編集
-        </Button>
-      ) : null}
+      <OrderFormFields
+        form={form}
+        plan={plan}
+        autofill={autofill}
+        detailsOpen={hasDetails(order)}
+        onItemRemoved={() => void commit()}
+      />
     </Flex>
   );
 }
@@ -244,7 +206,6 @@ export type OrderRowProps = {
   index: number;
   /** How many orders the list has. */
   count: number;
-  onEdit: (orderId: string) => void;
   onDelete: (orderId: string) => void;
 };
 
@@ -441,7 +402,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
               {`税抜の基準額 ${yen(base)}`}
             </Text>
           </Flex>
-          <InlineOrderEditor planId={planId} order={order} onEdit={props.onEdit} />
+          <InlineOrderEditor planId={planId} order={order} />
           <Flex wrap="wrap" gap="2" justify="flex-end">
             <Button
               variant="outline"
