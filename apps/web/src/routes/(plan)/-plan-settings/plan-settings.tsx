@@ -158,7 +158,7 @@ function SettingsScreen({ plan }: { plan: Plan }) {
         position="fixed"
         insetX="0"
         bottom="0"
-        zIndex="docked"
+        zIndex="kurillin"
         bg="bg.panel"
         borderTopWidth="1px"
         borderColor="border"
