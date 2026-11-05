@@ -156,7 +156,7 @@ function SpuScreen({ month, account }: { month: string; account: string | undefi
         position="fixed"
         insetX="0"
         bottom="0"
-        zIndex="docked"
+        zIndex="kurillin"
         bg="bg.panel"
         borderTopWidth="1px"
         borderColor="border"
