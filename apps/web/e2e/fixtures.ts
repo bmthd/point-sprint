@@ -9,6 +9,15 @@ const RAKUTEN_API = "https://openapi.rakuten.co.jp/**";
 /** The images of Rakuten items, in the guides' lists. */
 const RAKUTEN_IMAGES = "https://thumbnail.image.rakuten.co.jp/**";
 
+/**
+ * The Rakuten Web Service credit in the footer, on every page. When Rakuten's server is slow, the
+ * page's `load`, which `page.goto` waits for, comes after the test's timeout.
+ */
+const RAKUTEN_CREDIT = "https://webservice.rakuten.co.jp/**";
+
+/** A transparent 1×1 GIF. */
+const emptyGif = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+
 /** Google Analytics and AdSense, which the production build loads on every page. */
 const GOOGLE_TAGS = /^https:\/\/(www\.googletagmanager\.com|pagead2\.googlesyndication\.com)\//;
 
@@ -30,13 +39,17 @@ const fakeTurnstile = `window.turnstile = {
 };`;
 
 /**
- * Cuts off the Rakuten API and its images, answers the Google tags with an empty script and stands
+ * Cuts off the Rakuten API, its images and its credit, answers the Google tags with an empty script and stands
  * in for Turnstile, on a page of any context: no test calls the real services or sends hits to the
  * real properties.
  */
 export async function standIn(page: Page): Promise<void> {
   await page.route(RAKUTEN_API, (route) => route.abort());
   await page.route(RAKUTEN_IMAGES, (route) => route.abort());
+  // Answered, not cut off, so the page logs no failed load.
+  await page.route(RAKUTEN_CREDIT, (route) =>
+    route.fulfill({ contentType: "image/gif", body: emptyGif }),
+  );
   await page.route(GOOGLE_TAGS, (route) =>
     route.fulfill({ contentType: "text/javascript", body: "" }),
   );
