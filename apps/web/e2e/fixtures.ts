@@ -16,6 +16,7 @@ const RAKUTEN_IMAGES = "https://thumbnail.image.rakuten.co.jp/**";
 const RAKUTEN_CREDIT = "https://webservice.rakuten.co.jp/**";
 
 /** A transparent 1×1 GIF. */
+// cspell:disable-next-line
 const emptyGif = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
 
 /** Google Analytics and AdSense, which the production build loads on every page. */
