@@ -8,7 +8,6 @@ import {
   type OrderRow,
   OrderRowSchema,
   PROFILE_ID,
-  type Plan,
   type PlanRow,
   PlanRowSchema,
   PlanSchema,
@@ -300,6 +299,289 @@ function deleteDatabase(name: string): Promise<void> {
   });
 }
 
+type Database = ReturnType<typeof openDatabase>;
+type OpenTransaction = { transaction: IDBTransaction; done: Promise<void> };
+
+/** How the stores reach an open database, shared by every part of the repository. */
+type Access = {
+  /** The database once moves to `quarantine` in flight are done. */
+  settled: () => Promise<Database>;
+  transaction: (stores: readonly string[], mode: IDBTransactionMode) => Promise<OpenTransaction>;
+  /** When a change is made, as an ISO string. */
+  now: () => string;
+};
+
+/** Runs `parse`, and aborts the transaction when it throws, so nothing in it is written. */
+async function parseOrAbort<T>({ transaction, done }: OpenTransaction, parse: () => T) {
+  try {
+    return parse();
+  } catch (error) {
+    transaction.abort();
+    await done.catch(() => {});
+    throw error;
+  }
+}
+
+/** Writes one row of a store that holds no plan's parts, with its mark to send. */
+async function putRow<T extends { updatedAt: string }>(
+  access: Access,
+  kind: Exclude<SyncKind, "plan" | "order">,
+  id: (row: T) => string,
+  row: T,
+) {
+  const parsed = v.parse(syncSchemas[kind], structuredClone(row)) as T;
+  const { transaction, done } = await access.transaction(
+    [syncStores[kind], "outbox", "tombstones"],
+    "readwrite",
+  );
+  writeRow(transaction, kind, id(parsed), parsed);
+  await done;
+}
+
+function planStore(access: Access): Repository["plans"] {
+  // The plan's row and the orders that changed, and the shop saved with them, are written with
+  // their marks to send in the transaction they were read in, so a change is never saved without
+  // being sent later, and a row received meanwhile is never taken for one the change removed.
+  const update: Repository["plans"]["update"] = async (id, change, shopChange) => {
+    const open = await access.transaction(
+      ["plans", "orders", "shops", "outbox", "tombstones"],
+      "readwrite",
+    );
+    const tx = open.transaction;
+    const [row, orders, storedShop] = await Promise.all([
+      request<PlanRow | undefined>(tx.objectStore("plans").get(id)),
+      request<OrderRow[]>(tx.objectStore("orders").index("planId").getAll(id)),
+      shopChange && request<Shop | undefined>(tx.objectStore("shops").get(shopChange.shopId)),
+    ]);
+    const before = row && joinPlan(row, orders);
+    const { after, shop } = await parseOrAbort(open, () => ({
+      after: v.parse(PlanSchema, structuredClone(change(before))),
+      shop:
+        shopChange && !(shopChange.onlyIfMissing && storedShop)
+          ? v.parse(ShopSchema, structuredClone(shopChange.change(storedShop)))
+          : undefined,
+    }));
+    if (shop) writeRow(tx, "shop", shop.id, shop);
+    const split = splitPlan(after, { row, orders });
+    if (split.row) writeRow(tx, "plan", after.id, split.row);
+    for (const order of split.orders) {
+      writeRow(tx, "order", orderRowId(after.id, order.id), order);
+    }
+    for (const removed of split.removedOrderIds) {
+      removeRow(tx, "order", orderRowId(after.id, removed), after.updatedAt);
+    }
+    await open.done;
+    return { before, after };
+  };
+
+  return {
+    list: async () => {
+      const db = await access.settled();
+      const [rows, orders] = await Promise.all([
+        db.stores.plans.getAll(),
+        db.stores.orders.getAll(),
+      ]);
+      return rows.map((row) => joinPlan(row, orders));
+    },
+    get: async (id) => {
+      const db = await access.settled();
+      const row = await db.stores.plans.get(id);
+      return row && joinPlan(row, await db.stores.orders.index("planId").getAll(id));
+    },
+    put: async (plan) => {
+      await update(plan.id, () => plan);
+    },
+    update,
+    delete: async (id) => {
+      const removedAt = access.now();
+      const { transaction: tx, done } = await access.transaction(
+        ["plans", "orders", "outbox", "tombstones"],
+        "readwrite",
+      );
+      const orders = await request<OrderRow[]>(tx.objectStore("orders").index("planId").getAll(id));
+      removeRow(tx, "plan", id, removedAt);
+      for (const order of orders) removeRow(tx, "order", orderRowId(id, order.id), removedAt);
+      await done;
+    },
+  };
+}
+
+function shopStore(access: Access): Repository["shops"] {
+  return {
+    list: async () => (await access.settled()).stores.shops.getAll(),
+    put: (shop) => putRow<Shop>(access, "shop", (row) => row.id, shop),
+    update: async (id, change) => {
+      const open = await access.transaction(["shops", "outbox", "tombstones"], "readwrite");
+      const stored = await request<Shop | undefined>(open.transaction.objectStore("shops").get(id));
+      const shop = await parseOrAbort(open, () =>
+        v.parse(ShopSchema, structuredClone(change(stored))),
+      );
+      writeRow(open.transaction, "shop", shop.id, shop);
+      await open.done;
+    },
+  };
+}
+
+function noticeReadStore(access: Access): Repository["noticeReads"] {
+  return {
+    list: async () => (await access.settled()).stores.noticeReads.getAll(),
+    markRead: async (ids) => {
+      const readAt = access.now();
+      const { transaction: tx, done } = await access.transaction(
+        ["noticeReads", "outbox", "tombstones"],
+        "readwrite",
+      );
+      const read = await Promise.all(
+        ids.map((id) => request<NoticeRead | undefined>(tx.objectStore("noticeReads").get(id))),
+      );
+      ids.forEach((id, index) => {
+        if (read[index]) return;
+        writeRow(tx, "noticeRead", id, v.parse(NoticeReadSchema, { id, updatedAt: readAt }));
+      });
+      await done;
+    },
+  };
+}
+
+/** The row as this device holds it for sync: removed, stored, or `undefined` when it has none. */
+async function localSyncRow(
+  transaction: IDBTransaction,
+  kind: SyncKind,
+  id: string,
+): Promise<SyncRow | undefined> {
+  const [tombstone, value] = await Promise.all([
+    request<SyncMark | undefined>(transaction.objectStore("tombstones").get(syncKey(kind, id))),
+    request<{ updatedAt: string } | undefined>(
+      transaction.objectStore(syncStores[kind]).get(rowKey(kind, id)),
+    ),
+  ]);
+  if (tombstone) return { kind, id, updatedAt: tombstone.updatedAt, deleted: true };
+  return value && { kind, id, updatedAt: value.updatedAt, deleted: false, value };
+}
+
+/** Writes a row received from another device if it wins, and tells whether it was written. */
+async function applySyncRow(transaction: IDBTransaction, row: SyncRow): Promise<boolean> {
+  const key = syncKey(row.kind, row.id);
+  if (!wins(row, await localSyncRow(transaction, row.kind, row.id))) return false;
+  if (row.deleted) {
+    removeRow(transaction, row.kind, row.id, row.updatedAt);
+    transaction.objectStore("outbox").delete(key);
+    return true;
+  }
+  const parsed = v.safeParse(syncSchemas[row.kind], row.value);
+  if (!parsed.success) {
+    transaction.objectStore("quarantine").add({
+      store: syncStores[row.kind],
+      value: row.value,
+      issues: plainIssues(parsed.issues),
+    });
+    return false;
+  }
+  writeRow(transaction, row.kind, row.id, parsed.output);
+  transaction.objectStore("outbox").delete(key);
+  return true;
+}
+
+/** Marks every stored row and every removal to send. */
+async function markAllPending(transaction: IDBTransaction) {
+  const outbox = transaction.objectStore("outbox");
+  const kinds = Object.keys(syncStores) as SyncKind[];
+  await Promise.all([
+    ...kinds.map(async (kind) => {
+      const rows = await request<{ id?: string; planId?: string; updatedAt: string }[]>(
+        transaction.objectStore(syncStores[kind]).getAll(),
+      );
+      for (const row of rows) {
+        const id = syncIdOf(kind, row);
+        outbox.put({ kind, id, updatedAt: row.updatedAt } satisfies SyncMark, syncKey(kind, id));
+      }
+    }),
+    request<SyncMark[]>(transaction.objectStore("tombstones").getAll()).then((marks) => {
+      for (const mark of marks) outbox.put(mark, syncKey(mark.kind, mark.id));
+    }),
+  ]);
+}
+
+function syncStore(access: Access): Repository["sync"] {
+  return {
+    pending: async () => {
+      const { transaction: tx, done } = await access.transaction(
+        [...ROW_STORES, "outbox", "tombstones"],
+        "readonly",
+      );
+      const marks = await request<SyncMark[]>(tx.objectStore("outbox").getAll());
+      const rows = await Promise.all(marks.map(({ kind, id }) => localSyncRow(tx, kind, id)));
+      await done;
+      return rows.filter((row) => row !== undefined);
+    },
+    acknowledge: async (rows) => {
+      const { transaction: tx, done } = await access.transaction(["outbox"], "readwrite");
+      const outbox = tx.objectStore("outbox");
+      await Promise.all(
+        rows.map(async ({ kind, id, updatedAt }) => {
+          const key = syncKey(kind, id);
+          const mark = await request<SyncMark | undefined>(outbox.get(key));
+          if (mark?.updatedAt === updatedAt) outbox.delete(key);
+        }),
+      );
+      await done;
+    },
+    apply: async (rows, accountId) => {
+      const { transaction: tx, done } = await access.transaction(
+        [...ROW_STORES, "outbox", "tombstones", "quarantine", "syncMeta"],
+        "readwrite",
+      );
+      // Checked in the transaction the rows are written in: a device that stopped syncing, or
+      // was reset, while the rows were on their way keeps none of them.
+      const meta = await request<SyncMeta | undefined>(
+        tx.objectStore("syncMeta").get(SYNC_META_KEY),
+      );
+      if (meta?.accountId !== accountId) {
+        await done;
+        return false;
+      }
+      const written = await Promise.all(rows.map((row) => applySyncRow(tx, row)));
+      await done;
+      return written.some(Boolean);
+    },
+    markAllPending: async () => {
+      const { transaction: tx, done } = await access.transaction(
+        [...ROW_STORES, "outbox", "tombstones"],
+        "readwrite",
+      );
+      await markAllPending(tx);
+      await done;
+    },
+    meta: {
+      get: async () => (await access.settled()).stores.syncMeta.get(SYNC_META_KEY),
+      put: async (meta) => {
+        const db = await access.settled();
+        if (meta) await db.stores.syncMeta.put(meta, SYNC_META_KEY);
+        else await db.stores.syncMeta.delete(SYNC_META_KEY);
+      },
+    },
+  };
+}
+
+function quarantineStore(access: Access): Repository["quarantine"] {
+  return {
+    // Rows and keys come from one transaction, so they always line up.
+    list: async () => {
+      const { transaction, done } = await access.transaction(["quarantine"], "readonly");
+      const store = transaction.objectStore("quarantine");
+      const rows = store.getAll();
+      const keys = store.getAllKeys();
+      await done;
+      return (rows.result as Omit<QuarantinedRow, "key">[]).map((row, index) => ({
+        ...row,
+        key: keys.result[index] as number,
+      }));
+    },
+    delete: async (key) => (await access.settled()).stores.quarantine.delete(key),
+    clear: async () => (await access.settled()).stores.quarantine.clear(),
+  };
+}
+
 export function createIndexedDbRepository(
   options: {
     name?: string;
@@ -311,11 +593,10 @@ export function createIndexedDbRepository(
 ): Repository {
   const name = options.name ?? "point-sprint";
   const migrations = options.migrations ?? domainMigrations;
-  const now = () => (options.now?.() ?? new Date()).toISOString();
   const version = schemaVersion(migrations);
   const state: OpenState = { moves: new Map(), migrationFailed: false };
   let reset = false;
-  let opened: Promise<ReturnType<typeof openDatabase>> | undefined;
+  let opened: Promise<Database> | undefined;
 
   // Opens lazily so that creating the repository touches no browser API. A failed migration
   // leaves the database on its old version with every access rejecting: start over empty.
@@ -348,296 +629,36 @@ export function createIndexedDbRepository(
     await Promise.all(state.moves.values());
     return db;
   };
-
-  const transaction = async (stores: readonly string[], mode: IDBTransactionMode) => {
-    const database = await (await settled())["~"].getDatabase();
-    const opened = database.transaction(stores, mode);
-    return { transaction: opened, done: completion(opened) };
-  };
-
-  /** Writes one row of a store that holds no plan's parts, with its mark to send. */
-  const putRow = async <T extends { updatedAt: string }>(
-    kind: Exclude<SyncKind, "plan" | "order">,
-    id: (row: T) => string,
-    row: T,
-  ) => {
-    const parsed = v.parse(syncSchemas[kind], structuredClone(row)) as T;
-    const { transaction: tx, done } = await transaction(
-      [syncStores[kind], "outbox", "tombstones"],
-      "readwrite",
-    );
-    writeRow(tx, kind, id(parsed), parsed);
-    await done;
-  };
-
-  // The plan's row and the orders that changed, and the shop saved with them, are written with
-  // their marks to send in the transaction they were read in, so a change is never saved without
-  // being sent later, and a row received meanwhile is never taken for one the change removed.
-  const update: Repository["plans"]["update"] = async (id, change, shopChange) => {
-    const { transaction: tx, done } = await transaction(
-      ["plans", "orders", "shops", "outbox", "tombstones"],
-      "readwrite",
-    );
-    const [row, orders, storedShop] = await Promise.all([
-      request<PlanRow | undefined>(tx.objectStore("plans").get(id)),
-      request<OrderRow[]>(tx.objectStore("orders").index("planId").getAll(id)),
-      shopChange && request<Shop | undefined>(tx.objectStore("shops").get(shopChange.shopId)),
-    ]);
-    const before = row && joinPlan(row, orders);
-    let after: Plan;
-    let shop: Shop | undefined;
-    try {
-      after = v.parse(PlanSchema, structuredClone(change(before)));
-      shop =
-        shopChange && !(shopChange.onlyIfMissing && storedShop)
-          ? v.parse(ShopSchema, structuredClone(shopChange.change(storedShop)))
-          : undefined;
-    } catch (error) {
-      tx.abort();
-      await done.catch(() => {});
-      throw error;
-    }
-    if (shop) writeRow(tx, "shop", shop.id, shop);
-    const split = splitPlan(after, { row, orders });
-    if (split.row) writeRow(tx, "plan", after.id, split.row);
-    for (const order of split.orders) {
-      writeRow(tx, "order", orderRowId(after.id, order.id), order);
-    }
-    for (const removed of split.removedOrderIds) {
-      removeRow(tx, "order", orderRowId(after.id, removed), after.updatedAt);
-    }
-    await done;
-    return { before, after };
+  const access: Access = {
+    settled,
+    transaction: async (stores, mode) => {
+      const database = await (await settled())["~"].getDatabase();
+      const transaction = database.transaction(stores, mode);
+      return { transaction, done: completion(transaction) };
+    },
+    now: () => (options.now?.() ?? new Date()).toISOString(),
   };
 
   return {
-    plans: {
-      list: async () => {
-        const db = await settled();
-        const [rows, orders] = await Promise.all([
-          db.stores.plans.getAll(),
-          db.stores.orders.getAll(),
-        ]);
-        return rows.map((row) => joinPlan(row, orders));
-      },
-      get: async (id) => {
-        const db = await settled();
-        const row = await db.stores.plans.get(id);
-        return row && joinPlan(row, await db.stores.orders.index("planId").getAll(id));
-      },
-      put: async (plan) => {
-        await update(plan.id, () => plan);
-      },
-      update,
-      delete: async (id) => {
-        const removedAt = now();
-        const { transaction: tx, done } = await transaction(
-          ["plans", "orders", "outbox", "tombstones"],
-          "readwrite",
-        );
-        const orders = await request<OrderRow[]>(
-          tx.objectStore("orders").index("planId").getAll(id),
-        );
-        removeRow(tx, "plan", id, removedAt);
-        for (const order of orders) removeRow(tx, "order", orderRowId(id, order.id), removedAt);
-        await done;
-      },
-    },
-    shops: {
-      list: async () => (await settled()).stores.shops.getAll(),
-      put: (shop) => putRow<Shop>("shop", (row) => row.id, shop),
-      update: async (id, change) => {
-        const { transaction: tx, done } = await transaction(
-          ["shops", "outbox", "tombstones"],
-          "readwrite",
-        );
-        const stored = await request<Shop | undefined>(tx.objectStore("shops").get(id));
-        let shop: Shop;
-        try {
-          shop = v.parse(ShopSchema, structuredClone(change(stored)));
-        } catch (error) {
-          tx.abort();
-          await done.catch(() => {});
-          throw error;
-        }
-        writeRow(tx, "shop", shop.id, shop);
-        await done;
-      },
-    },
+    plans: planStore(access),
+    shops: shopStore(access),
     profile: {
       get: async () => (await settled()).stores.profile.get(PROFILE_KEY),
-      put: (profile) => putRow<Profile>("profile", () => PROFILE_ID, profile),
+      put: (profile) => putRow<Profile>(access, "profile", () => PROFILE_ID, profile),
     },
     spuMonths: {
       list: async () => (await settled()).stores.spuMonths.getAll(),
-      put: (month) => putRow<SpuMonth>("spuMonth", (row) => row.id, month),
+      put: (month) => putRow<SpuMonth>(access, "spuMonth", (row) => row.id, month),
     },
-    noticeReads: {
-      list: async () => (await settled()).stores.noticeReads.getAll(),
-      markRead: async (ids) => {
-        const readAt = now();
-        const { transaction: tx, done } = await transaction(
-          ["noticeReads", "outbox", "tombstones"],
-          "readwrite",
-        );
-        const read = await Promise.all(
-          ids.map((id) => request<NoticeRead | undefined>(tx.objectStore("noticeReads").get(id))),
-        );
-        ids.forEach((id, index) => {
-          if (read[index]) return;
-          writeRow(tx, "noticeRead", id, v.parse(NoticeReadSchema, { id, updatedAt: readAt }));
-        });
-        await done;
-      },
-    },
-    sync: {
-      pending: async () => {
-        const { transaction: tx, done } = await transaction(
-          [...ROW_STORES, "outbox", "tombstones"],
-          "readonly",
-        );
-        const marks = await request<SyncMark[]>(tx.objectStore("outbox").getAll());
-        const rows = await Promise.all(
-          marks.map(async ({ kind, id }): Promise<SyncRow | undefined> => {
-            const [tombstone, value] = await Promise.all([
-              request<SyncMark | undefined>(tx.objectStore("tombstones").get(syncKey(kind, id))),
-              request<{ updatedAt: string } | undefined>(
-                tx.objectStore(syncStores[kind]).get(rowKey(kind, id)),
-              ),
-            ]);
-            if (tombstone) return { kind, id, updatedAt: tombstone.updatedAt, deleted: true };
-            return value && { kind, id, updatedAt: value.updatedAt, deleted: false, value };
-          }),
-        );
-        await done;
-        return rows.filter((row) => row !== undefined);
-      },
-      acknowledge: async (rows) => {
-        const { transaction: tx, done } = await transaction(["outbox"], "readwrite");
-        const outbox = tx.objectStore("outbox");
-        await Promise.all(
-          rows.map(async ({ kind, id, updatedAt }) => {
-            const key = syncKey(kind, id);
-            const mark = await request<SyncMark | undefined>(outbox.get(key));
-            if (mark?.updatedAt === updatedAt) outbox.delete(key);
-          }),
-        );
-        await done;
-      },
-      apply: async (rows, accountId) => {
-        const { transaction: tx, done } = await transaction(
-          [...ROW_STORES, "outbox", "tombstones", "quarantine", "syncMeta"],
-          "readwrite",
-        );
-        // Checked in the transaction the rows are written in: a device that stopped syncing, or
-        // was reset, while the rows were on their way keeps none of them.
-        const meta = await request<SyncMeta | undefined>(
-          tx.objectStore("syncMeta").get(SYNC_META_KEY),
-        );
-        if (meta?.accountId !== accountId) {
-          await done;
-          return false;
-        }
-        const written = await Promise.all(
-          rows.map(async (row) => {
-            const key = syncKey(row.kind, row.id);
-            const [tombstone, current] = await Promise.all([
-              request<SyncMark | undefined>(tx.objectStore("tombstones").get(key)),
-              request<{ updatedAt: string } | undefined>(
-                tx.objectStore(syncStores[row.kind]).get(rowKey(row.kind, row.id)),
-              ),
-            ]);
-            const here: SyncRow | undefined = tombstone
-              ? { ...tombstone, deleted: true }
-              : current && {
-                  kind: row.kind,
-                  id: row.id,
-                  updatedAt: current.updatedAt,
-                  deleted: false,
-                  value: current,
-                };
-            if (!wins(row, here)) return false;
-            if (row.deleted) {
-              removeRow(tx, row.kind, row.id, row.updatedAt);
-              tx.objectStore("outbox").delete(key);
-              return true;
-            }
-            const parsed = v.safeParse(syncSchemas[row.kind], row.value);
-            if (!parsed.success) {
-              tx.objectStore("quarantine").add({
-                store: syncStores[row.kind],
-                value: row.value,
-                issues: plainIssues(parsed.issues),
-              });
-              return false;
-            }
-            writeRow(tx, row.kind, row.id, parsed.output);
-            tx.objectStore("outbox").delete(key);
-            return true;
-          }),
-        );
-        await done;
-        return written.some(Boolean);
-      },
-      markAllPending: async () => {
-        const { transaction: tx, done } = await transaction(
-          [...ROW_STORES, "outbox", "tombstones"],
-          "readwrite",
-        );
-        const outbox = tx.objectStore("outbox");
-        const kinds = Object.keys(syncStores) as SyncKind[];
-        await Promise.all([
-          ...kinds.map(async (kind) => {
-            const rows = await request<{ id?: string; planId?: string; updatedAt: string }[]>(
-              tx.objectStore(syncStores[kind]).getAll(),
-            );
-            for (const row of rows) {
-              const id = syncIdOf(kind, row);
-              outbox.put(
-                { kind, id, updatedAt: row.updatedAt } satisfies SyncMark,
-                syncKey(kind, id),
-              );
-            }
-          }),
-          request<SyncMark[]>(tx.objectStore("tombstones").getAll()).then((marks) => {
-            for (const mark of marks) outbox.put(mark, syncKey(mark.kind, mark.id));
-          }),
-        ]);
-        await done;
-      },
-      meta: {
-        get: async () => (await settled()).stores.syncMeta.get(SYNC_META_KEY),
-        put: async (meta) => {
-          const db = await settled();
-          if (meta) await db.stores.syncMeta.put(meta, SYNC_META_KEY);
-          else await db.stores.syncMeta.delete(SYNC_META_KEY);
-        },
-      },
-    },
+    noticeReads: noticeReadStore(access),
+    sync: syncStore(access),
     clear: async () => {
-      const database = await (await settled())["~"].getDatabase();
-      const transaction = database.transaction(STORES, "readwrite");
+      const { transaction, done } = await access.transaction(STORES, "readwrite");
       for (const store of STORES) transaction.objectStore(store).clear();
-      await completion(transaction);
+      await done;
     },
     quarantined: async () => (await settled()).stores.quarantine.count(),
-    quarantine: {
-      // Rows and keys come from one transaction, so they always line up.
-      list: async () => {
-        const database = await (await settled())["~"].getDatabase();
-        const transaction = database.transaction("quarantine", "readonly");
-        const store = transaction.objectStore("quarantine");
-        const rows = store.getAll();
-        const keys = store.getAllKeys();
-        await completion(transaction);
-        return (rows.result as Omit<QuarantinedRow, "key">[]).map((row, index) => ({
-          ...row,
-          key: keys.result[index] as number,
-        }));
-      },
-      delete: async (key) => (await settled()).stores.quarantine.delete(key),
-      clear: async () => (await settled()).stores.quarantine.clear(),
-    },
+    quarantine: quarantineStore(access),
     wasReset: () => reset,
   };
 }
