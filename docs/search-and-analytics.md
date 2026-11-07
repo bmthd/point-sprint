@@ -9,6 +9,7 @@
 ### タグの入れ方
 
 - 測定 ID と AdSense のクライアント ID は、ルートの `.env.production` の `PUBLIC_GA_MEASUREMENT_ID` と `PUBLIC_ADSENSE_CLIENT_ID` に置く。本番のビルドだけが読み、`apps/web/src/google-tags/` が `<head>` に gtag.js を入れる。開発とテストのビルドには入らない
+- AdSense はアクセスが増えるまで止めている。`apps/web/src/google-tags/scripts.ts` の `adsensePaused` が `true` の間は、本番のビルドも AdSense のスクリプトと広告枠を入れない。`ads.txt` とクライアント ID は残してあるので、`false` に戻せば広告が再開する
 - Pull Request の Preview（`preview.yml`）は `PULL_REQUEST_PREVIEW=true` でビルドし、gtag.js を入れない。Preview のアクセスは本番の数字に混ざらない
 - 最初の表示の page_view は `gtag('config')` が送る。それ以降の画面の切り替えは、GA4 の拡張計測の「ブラウザの履歴イベントに基づくページの変更」が数える。アプリは自分で page_view を送らないので、この設定は GA4 のストリームの設定で必ずオンのままにする
 

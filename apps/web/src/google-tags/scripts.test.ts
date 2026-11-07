@@ -1,7 +1,10 @@
 import { expect, test } from "vitest";
 import { googleTagScripts, missingGoogleTagScripts } from "./scripts";
 
-const ids = { measurementId: "G-B6CYR6VF70", adsenseClientId: "ca-pub-8953986206743618" };
+const ids = {
+  measurementId: "G-B6CYR6VF70",
+  adsenseClientId: "ca-pub-8953986206743618",
+};
 
 test("loads gtag.js and AdSense asynchronously", () => {
   const scripts = googleTagScripts(ids);
@@ -28,10 +31,16 @@ test("loads nothing without IDs, as in development and tests", () => {
 
 test("names the scripts a built page lacks", () => {
   const html = `<script async src="https://www.googletagmanager.com/gtag/js?id=G-B6CYR6VF70"></script>`;
-  expect(missingGoogleTagScripts(html)).toEqual(["AdSense"]);
-  expect(missingGoogleTagScripts("<html></html>")).toEqual(["gtag.js", "AdSense"]);
+  expect(missingGoogleTagScripts(html, { ads: true })).toEqual(["AdSense"]);
+  expect(missingGoogleTagScripts("<html></html>", { ads: true })).toEqual(["gtag.js", "AdSense"]);
 });
 
 test("expects no gtag.js of a build without analytics", () => {
-  expect(missingGoogleTagScripts("<html></html>", { analytics: false })).toEqual(["AdSense"]);
+  expect(missingGoogleTagScripts("<html></html>", { analytics: false, ads: true })).toEqual([
+    "AdSense",
+  ]);
+});
+
+test("expects no AdSense of a build without ads", () => {
+  expect(missingGoogleTagScripts("<html></html>", { ads: false })).toEqual(["gtag.js"]);
 });
