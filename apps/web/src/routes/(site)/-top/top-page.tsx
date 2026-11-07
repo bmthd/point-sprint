@@ -102,8 +102,10 @@ export function TopPage({
   return (
     <Box as="main">
       {/* The first screen: the hero and the events fill the screen under the header, so the footer
-          starts just below it. */}
-      <Flex direction="column" minH="calc(100dvh - {sizes.14} - 1px)">
+          starts just below it. The height is the small viewport's (svh), which stays the same while
+          the browser's toolbar slides in and out on a scroll; with dvh it changed on every scroll
+          and moved everything under it. */}
+      <Flex direction="column" minH="calc(100svh - {sizes.14} - 1px)">
         <Hero
           onStart={start}
           disabled={!hydrated || creating}
