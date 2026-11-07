@@ -14,12 +14,14 @@ import {
 import type { ReactNode } from "react";
 import { grouped } from "../../../ui/format";
 import { formatPeriod } from "../../../ui/dates";
-import { RouterButton } from "../../../ui/router-link";
+import { RouterButton, RouterLink } from "../../../ui/router-link";
 import { GuideCard } from "../-guide-card";
 import { PageWithSidebar } from "../-page-with-sidebar";
+import { type FaqItem, marathonFaq } from "./marathon-faq";
 import {
   capReachingSpend,
   longPeriod,
+  marathonHeading,
   roundSentence,
   shopAroundOf,
   splitRounds,
@@ -27,6 +29,7 @@ import {
 
 const checkedTime = new Intl.DateTimeFormat("ja-JP", {
   timeZone: "Asia/Tokyo",
+  year: "numeric",
   month: "long",
   day: "numeric",
   hour: "2-digit",
@@ -113,6 +116,22 @@ function RoundCard({ round, today }: { round: OfficialEvent; today: string }) {
   );
 }
 
+/** The questions people search for, each answered in a sentence or two. */
+function Faq({ faq }: { faq: FaqItem[] }) {
+  return (
+    <VStack gap="4" alignItems="stretch">
+      {faq.map(({ question, answer }) => (
+        <VStack key={question} gap="1" alignItems="stretch">
+          <Heading as="h3" fontSize="sm">
+            {question}
+          </Heading>
+          <Text>{answer}</Text>
+        </VStack>
+      ))}
+    </VStack>
+  );
+}
+
 /** The rounds that have ended, the latest first, with their caps. */
 function PastRounds({ rounds }: { rounds: OfficialEvent[] }) {
   return (
@@ -168,16 +187,21 @@ export function MarathonPage({ today, rounds, checkedAt, guides }: MarathonPageP
       <VStack gap="8" alignItems="stretch">
         <VStack gap="3" alignItems="stretch">
           <Heading as="h1" fontSize="lg">
-            お買い物マラソンの日程と上限
+            {marathonHeading}
           </Heading>
           <Text>
             {next
               ? roundSentence(next, today)
               : "次のお買い物マラソンは、まだ発表されていません。楽天が告知すると、このページに日程が出ます。"}
+            自分の買い物で上限に届くかは、
+            <RouterLink to="/" color="link">
+              ポイント計算ツール
+            </RouterLink>
+            で確かめられます。
           </Text>
           <Text fontSize="sm" color="fg.muted">
+            {checkedAt ? `${checkedTime.format(new Date(checkedAt))}更新。` : ""}
             日程と上限は、楽天のお買い物マラソンの告知ページから1日4回集めています。
-            {checkedAt ? `最後に確かめたのは${checkedTime.format(new Date(checkedAt))}です。` : ""}
           </Text>
         </VStack>
         <Section title="開催中・開催予定の回">
@@ -194,6 +218,9 @@ export function MarathonPage({ today, rounds, checkedAt, guides }: MarathonPageP
           <RouterButton to="/" colorScheme="primary" size="lg" alignSelf="flex-start">
             計算ツールでプランを作る
           </RouterButton>
+        </Section>
+        <Section title="よくある質問">
+          <Faq faq={marathonFaq(rounds, today)} />
         </Section>
         {past.length === 0 ? null : (
           <Section title="これまでの回">
