@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { marathonFaq, marathonJsonLd } from "./-marathon/marathon-faq";
 import { MarathonPage } from "./-marathon/marathon-page";
 import { marathonDescription, marathonTitle, splitRounds } from "./-marathon/marathon-rounds";
 import { loadArticles } from "../../guides/articles";
@@ -20,11 +21,22 @@ export const Route = createFileRoute("/(site)/marathon")({
   head: ({ loaderData }) => {
     if (!loaderData) return {};
     const { ahead } = splitRounds(loaderData.rounds, loaderData.today);
-    return pageHead({
-      path: "/marathon",
-      title: marathonTitle(ahead),
-      description: marathonDescription(ahead, loaderData.today),
-    });
+    return {
+      ...pageHead({
+        path: "/marathon",
+        title: marathonTitle(ahead),
+        description: marathonDescription(ahead, loaderData.today),
+      }),
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: marathonJsonLd(
+            marathonFaq(loaderData.rounds, loaderData.today),
+            loaderData.checkedAt,
+          ),
+        },
+      ],
+    };
   },
   component: Marathon,
 });
