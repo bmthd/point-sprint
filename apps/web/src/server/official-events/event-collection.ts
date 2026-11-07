@@ -116,9 +116,9 @@ const canonical = (value: unknown): string =>
       : inner,
   );
 
-const capOf = (event: OfficialEvent) => {
-  const benefit = event.benefits.find((candidate) => candidate.kind === "shop-around");
-  return benefit?.kind === "shop-around" ? benefit.params.cap : undefined;
+const shopAroundOf = (event: OfficialEvent | undefined) => {
+  const benefit = event?.benefits.find((candidate) => candidate.kind === "shop-around");
+  return benefit?.kind === "shop-around" ? benefit : undefined;
 };
 
 const samePeriod = (a: ScheduledRound["period"], b: ScheduledRound["period"]) =>
@@ -126,6 +126,110 @@ const samePeriod = (a: ScheduledRound["period"], b: ScheduledRound["period"]) =>
 
 const overlaps = (a: ScheduledRound["period"], b: ScheduledRound["period"]) =>
   a.start <= b.end && b.start <= a.end;
+
+const MARATHON_NAME = "お買い物マラソン";
+
+/** The run's message so far: a warning is a note that also turns the outcome to `warning`. */
+type RunLog = { notes: string[]; outcome: RunOutcome };
+
+function warn(log: RunLog, note: string) {
+  log.notes.push(note);
+  log.outcome = "warning";
+}
+
+/**
+ * The round the marathon page shows, if it can be trusted, and `ahead` when the schedule page does
+ * not list that round yet.
+ */
+function readMarathonPage(
+  marathon: { html: string } | { error: string },
+  rounds: readonly ScheduledRound[],
+  log: RunLog,
+): { current?: CurrentRound; ahead?: ScheduledRound } {
+  if ("error" in marathon) {
+    warn(log, `マラソンのページを取得できない（${marathon.error}）`);
+    return {};
+  }
+  const current = readCurrentRound(marathon.html);
+  // Between rounds, the page says only 「終了しました」.
+  if (!current) {
+    log.notes.push("マラソンのページに開催中・開催直前の回がない");
+    return {};
+  }
+  if (!current.campaignName.startsWith(MARATHON_NAME)) {
+    warn(log, `マラソンのページのキャンペーン名が「${current.campaignName}」`);
+    return {};
+  }
+  if (rounds.some((round) => samePeriod(round.period, current.period))) return { current };
+  // The schedule page shows a month's rounds, and the marathon page may show the next month's
+  // first round before the schedule page moves on (2026-11-02). A round that overlaps one on the
+  // schedule page is more likely read wrong.
+  if (rounds.some((round) => overlaps(round.period, current.period))) {
+    warn(
+      log,
+      `マラソンのページの期間 ${current.period.start}〜${current.period.end} がスケジュールのページにない`,
+    );
+    return {};
+  }
+  const ahead: ScheduledRound = {
+    // marathonEvent names the round 「お買い物マラソン」 and its title, so this gives the
+    // campaign's name, such as 「お買い物マラソン&ジャンル祭」.
+    title: current.campaignName.slice(MARATHON_NAME.length),
+    period: current.period,
+    ...(current.times ? { times: current.times } : {}),
+  };
+  return { current, ahead };
+}
+
+/** The row to write for one round, or `undefined` when the stored row should stay. */
+function writeRound(
+  input: {
+    round: ScheduledRound;
+    /** The marathon page's reading of this round, when it shows it. */
+    shown: CurrentRound | undefined;
+    existing: StoredEvent | undefined;
+    /** Only on the marathon page, not yet on the schedule page. */
+    ahead: boolean;
+    newId: () => string;
+  },
+  log: RunLog,
+): EventWrite | undefined {
+  const { round, shown, existing, ahead, newId } = input;
+  const id = `marathon-${round.period.start}`;
+  if (existing?.locked || existing?.status === "rejected") {
+    log.notes.push(`${id}: ${existing.locked ? "固定" : "却下"}されているので更新しない`);
+    return undefined;
+  }
+  // The marathon page leaves at the round's end; the cap read while it showed the round stays.
+  const keepsCap =
+    existing &&
+    shopAroundOf(existing.event)?.params.cap !== undefined &&
+    samePeriod(existing.event.period, round.period);
+  if (!shown && keepsCap) return undefined;
+  const event = marathonEvent({
+    round,
+    maxRate: shown?.maxRate ?? GUIDE_MAX_RATE,
+    cap: shown?.cap,
+    benefitId: shopAroundOf(existing?.event)?.id ?? newId(),
+  });
+  const sourceUrl = shown ? MARATHON_URL : SCHEDULE_URL;
+  const problems = checkEvent(event);
+  if (problems.length > 0) {
+    warn(log, `${id}: ${problems.join("、")}`);
+    // The row already published stays; a new one waits for the operator.
+    return existing ? undefined : { event, status: "pending", sourceUrl };
+  }
+  if (existing?.status === "published" && canonical(existing.event) === canonical(event)) {
+    return undefined;
+  }
+  const change = existing ? "更新" : "追加";
+  log.notes.push(
+    ahead
+      ? `${id}: スケジュールのページにまだない回を、マラソンのページから${change}`
+      : `${id}: ${change}`,
+  );
+  return { event, status: "published", sourceUrl };
+}
 
 /**
  * The rows to write for the rounds that have not ended by `today` (`YYYY-MM-DD` in Japan). A round
@@ -142,95 +246,26 @@ export function collectMarathon(input: {
   newId: () => string;
 }): Collection {
   const { scheduleHtml, marathon, today, stored, newId } = input;
-  const notes: string[] = [];
-  let outcome: RunOutcome = "ok";
-  const warn = (note: string) => {
-    notes.push(note);
-    outcome = "warning";
-  };
-
   const rounds = readSchedule(scheduleHtml);
   if (rounds.length === 0) {
     return { writes: [], outcome: "failed", notes: ["スケジュールのページから回を読めない"] };
   }
-
-  let current: CurrentRound | undefined;
-  /** The marathon page's round when the schedule page does not list it yet. */
-  let ahead: ScheduledRound | undefined;
-  if ("error" in marathon) warn(`マラソンのページを取得できない（${marathon.error}）`);
-  else {
-    current = readCurrentRound(marathon.html);
-    // Between rounds, the page says only 「終了しました」.
-    if (!current) notes.push("マラソンのページに開催中・開催直前の回がない");
-    else if (!current.campaignName.startsWith("お買い物マラソン")) {
-      warn(`マラソンのページのキャンペーン名が「${current.campaignName}」`);
-      current = undefined;
-    } else if (!rounds.some((round) => samePeriod(round.period, current!.period))) {
-      // The schedule page shows a month's rounds, and the marathon page may show the next month's
-      // first round before the schedule page moves on (2026-11-02). A round that overlaps one on
-      // the schedule page is more likely read wrong.
-      if (rounds.some((round) => overlaps(round.period, current!.period))) {
-        warn(
-          `マラソンのページの期間 ${current.period.start}〜${current.period.end} がスケジュールのページにない`,
-        );
-        current = undefined;
-      } else {
-        ahead = {
-          // marathonEvent names the round 「お買い物マラソン」 and its title, so this gives the
-          // campaign's name, such as 「お買い物マラソン&ジャンル祭」.
-          title: current.campaignName.slice("お買い物マラソン".length),
-          period: current.period,
-          ...(current.times ? { times: current.times } : {}),
-        };
-      }
-    }
-  }
-
+  const log: RunLog = { notes: [], outcome: "ok" };
+  const { current, ahead } = readMarathonPage(marathon, rounds, log);
   const writes: EventWrite[] = [];
   for (const round of ahead ? [...rounds, ahead] : rounds) {
     if (round.period.end < today) continue;
-    const id = `marathon-${round.period.start}`;
-    const existing = stored.get(id);
-    if (existing?.locked || existing?.status === "rejected") {
-      notes.push(`${id}: ${existing.locked ? "固定" : "却下"}されているので更新しない`);
-      continue;
-    }
-    const shown = current && samePeriod(current.period, round.period) ? current : undefined;
-    // The marathon page leaves at the round's end; the cap read while it showed the round stays.
-    if (
-      !shown &&
-      existing &&
-      capOf(existing.event) !== undefined &&
-      samePeriod(existing.event.period, round.period)
-    ) {
-      continue;
-    }
-    const existingBenefit = existing?.event.benefits.find(
-      (benefit) => benefit.kind === "shop-around",
+    const write = writeRound(
+      {
+        round,
+        shown: current && samePeriod(current.period, round.period) ? current : undefined,
+        existing: stored.get(`marathon-${round.period.start}`),
+        ahead: round === ahead,
+        newId,
+      },
+      log,
     );
-    const event = marathonEvent({
-      round,
-      maxRate: shown?.maxRate ?? GUIDE_MAX_RATE,
-      cap: shown?.cap,
-      benefitId: existingBenefit?.id ?? newId(),
-    });
-    const sourceUrl = shown ? MARATHON_URL : SCHEDULE_URL;
-    const problems = checkEvent(event);
-    if (problems.length > 0) {
-      warn(`${id}: ${problems.join("、")}`);
-      // The row already published stays; a new one waits for the operator.
-      if (!existing) writes.push({ event, status: "pending", sourceUrl });
-      continue;
-    }
-    if (existing?.status === "published" && canonical(existing.event) === canonical(event))
-      continue;
-    writes.push({ event, status: "published", sourceUrl });
-    const change = existing ? "更新" : "追加";
-    notes.push(
-      round === ahead
-        ? `${id}: スケジュールのページにまだない回を、マラソンのページから${change}`
-        : `${id}: ${change}`,
-    );
+    if (write) writes.push(write);
   }
-  return { writes, outcome, notes };
+  return { writes, ...log };
 }
