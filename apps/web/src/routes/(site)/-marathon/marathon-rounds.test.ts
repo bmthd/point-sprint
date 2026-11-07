@@ -83,7 +83,7 @@ test("names the month of the next round in the title, and the round in the descr
   expect(marathonTitle([november])).toBe("お買い物マラソン 11月の日程と上限");
   expect(marathonTitle([])).toBe("お買い物マラソンの日程と上限");
   expect(marathonDescription([november], "2026-10-29")).toBe(
-    "お買い物マラソンは11月4日（水）20:00〜11月11日（水）1:59に開催されます。買いまわりは10ショップで最大10倍、獲得上限はまだ発表されていません。上限に届く金額と、これまでの回の日程・上限も載せています。",
+    "お買い物マラソンは2026年11月4日（水）20:00〜11月11日（水）1:59に開催されます。買いまわりは10ショップで最大10倍、獲得上限はまだ発表されていません。上限に届く金額と、これまでの回の日程・上限も載せています。",
   );
   expect(marathonDescription([], "2026-10-29")).toMatch(
     /^楽天市場のお買い物マラソンの日程と獲得上限。/,
@@ -92,6 +92,6 @@ test("names the month of the next round in the title, and the round in the descr
 
 test("says a round that has started is running", () => {
   expect(roundSentence(third, "2026-10-25")).toBe(
-    "お買い物マラソン第三弾が開催中です。期間は10月24日（土）20:00〜10月27日（火）1:59。買いまわりは10ショップで最大10倍、獲得上限は7,000ポイントです。",
+    "お買い物マラソン第三弾が開催中です。期間は2026年10月24日（土）20:00〜10月27日（火）1:59。買いまわりは10ショップで最大10倍、獲得上限は7,000ポイントです。",
   );
 });

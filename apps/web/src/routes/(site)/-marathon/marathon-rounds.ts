@@ -61,12 +61,18 @@ export function longPeriod(round: OfficialEvent): string {
   return `${longDate(round.period.start)}${time(round.times?.start)}〜${longDate(round.period.end)}${time(round.times?.end)}`;
 }
 
+/** `2026年11月4日（水）20:00〜11月11日（水）1:59`: the period with its year, for a sentence quoted alone. */
+export function datedPeriod(round: OfficialEvent): string {
+  return `${round.period.start.slice(0, 4)}年${longPeriod(round)}`;
+}
+
+/** The heading of `/marathon`, and its name in the structured data. */
+export const marathonHeading = "お買い物マラソンの日程と上限";
+
 /** The title of `/marathon`: the month of the round running or coming, when there is one. */
 export function marathonTitle(ahead: OfficialEvent[]): string {
   const next = ahead[0];
-  return next
-    ? `お買い物マラソン ${monthOf(next.period.start)}月の日程と上限`
-    : "お買い物マラソンの日程と上限";
+  return next ? `お買い物マラソン ${monthOf(next.period.start)}月の日程と上限` : marathonHeading;
 }
 
 /** One sentence of the round running or coming: its name, its period, its rate and its cap. */
@@ -74,8 +80,8 @@ export function roundSentence(round: OfficialEvent, today: string): string {
   const shopAround = shopAroundOf(round);
   const when =
     round.period.start <= today
-      ? `${round.name}が開催中です。期間は${longPeriod(round)}。`
-      : `${round.name}は${longPeriod(round)}に開催されます。`;
+      ? `${round.name}が開催中です。期間は${datedPeriod(round)}。`
+      : `${round.name}は${datedPeriod(round)}に開催されます。`;
   const rate =
     shopAround === undefined
       ? ""
