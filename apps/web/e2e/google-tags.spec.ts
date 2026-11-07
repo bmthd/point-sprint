@@ -1,5 +1,4 @@
-import { adsensePaused } from "../src/google-tags/scripts";
-import { type Page, expect, test } from "./fixtures";
+import { type Page, adsensePaused, expect, test } from "./fixtures";
 import { TopPage } from "./pages";
 
 // What gtag() pushed: the inline snippet queues each call's arguments in `dataLayer`.

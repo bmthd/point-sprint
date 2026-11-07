@@ -7,13 +7,6 @@ type HeadScript = {
   children?: string;
 };
 
-/**
- * AdSense is paused: the site has too few visits yet for ads to be worth showing. While it is
- * true, the production build loads no AdSense script and renders no ad unit; ads.txt and the
- * client ID stay, so setting it back to false resumes the ads with nothing else to change.
- */
-export const adsensePaused = true;
-
 const GTAG_SRC = "https://www.googletagmanager.com/gtag/js?id=";
 const ADSENSE_SRC = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=";
 
@@ -57,11 +50,11 @@ export function googleTagScripts({
 /**
  * Names of the Google tag scripts that a built HTML page does not load. A build without
  * `analytics`, a pull request's Preview, is not expected to load gtag.js, and one without `ads`,
- * while AdSense is paused, is not expected to load AdSense.
+ * while AdSense is paused (`isAdsensePaused` in env.ts), is not expected to load AdSense.
  */
 export function missingGoogleTagScripts(
   html: string,
-  { analytics = true, ads = !adsensePaused } = {},
+  { analytics = true, ads = true } = {},
 ): string[] {
   return [
     ...(analytics ? [{ name: "gtag.js", src: GTAG_SRC }] : []),

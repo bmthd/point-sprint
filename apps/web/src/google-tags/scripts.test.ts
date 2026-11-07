@@ -31,14 +31,12 @@ test("loads nothing without IDs, as in development and tests", () => {
 
 test("names the scripts a built page lacks", () => {
   const html = `<script async src="https://www.googletagmanager.com/gtag/js?id=G-B6CYR6VF70"></script>`;
-  expect(missingGoogleTagScripts(html, { ads: true })).toEqual(["AdSense"]);
-  expect(missingGoogleTagScripts("<html></html>", { ads: true })).toEqual(["gtag.js", "AdSense"]);
+  expect(missingGoogleTagScripts(html)).toEqual(["AdSense"]);
+  expect(missingGoogleTagScripts("<html></html>")).toEqual(["gtag.js", "AdSense"]);
 });
 
 test("expects no gtag.js of a build without analytics", () => {
-  expect(missingGoogleTagScripts("<html></html>", { analytics: false, ads: true })).toEqual([
-    "AdSense",
-  ]);
+  expect(missingGoogleTagScripts("<html></html>", { analytics: false })).toEqual(["AdSense"]);
 });
 
 test("expects no AdSense of a build without ads", () => {

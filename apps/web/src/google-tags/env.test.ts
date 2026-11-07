@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { parseGoogleTagsEnv } from "./env";
+import { isAdsensePaused, parseGoogleTagsEnv } from "./env";
 
 test("reads the measurement and AdSense client IDs", () => {
   expect(
@@ -23,4 +23,10 @@ test("rejects a value dotenvx left encrypted", () => {
       PUBLIC_ADSENSE_CLIENT_ID: "ca-pub-8953986206743618",
     }),
   ).toThrow(/PUBLIC_GA_MEASUREMENT_ID/);
+});
+
+test("pauses AdSense only when PUBLIC_ADSENSE_PAUSED is true", () => {
+  expect(isAdsensePaused({ PUBLIC_ADSENSE_PAUSED: "true" })).toBe(true);
+  expect(isAdsensePaused({ PUBLIC_ADSENSE_PAUSED: "false" })).toBe(false);
+  expect(isAdsensePaused({})).toBe(false);
 });
