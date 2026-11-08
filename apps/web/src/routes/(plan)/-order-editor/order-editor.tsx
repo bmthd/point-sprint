@@ -20,11 +20,11 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } from "react";
-import { Form, bind, errorsOf } from "../../-form";
-import { shopsAtom } from "../../../state/queries";
-import { useSingleFlight } from "../../../use-single-flight";
-import { CloseIcon } from "../../../ui/icons";
-import { AutofillStatus, type ItemAutofill } from "../-item-autofill";
+import { Form, bind, errorsOf } from "#/routes/-form.tsx";
+import { shopsAtom } from "#/state/queries.ts";
+import { useSingleFlight } from "#/use-single-flight.ts";
+import { CloseIcon } from "#/ui/icons.tsx";
+import { AutofillStatus, type ItemAutofill } from "#/routes/(plan)/-item-autofill.tsx";
 import {
   CampaignCheck,
   ChannelField,
@@ -34,10 +34,10 @@ import {
   UrlLabel,
   optionalMark,
   shopFromUrl,
-} from "../-order-fields";
-import { ShopAutocomplete } from "../-shop-autocomplete";
-import { CampaignChip, useSaveOrderDraft } from "../-order-shared";
-import { FormDatePicker } from "../-date-picker-field";
+} from "#/routes/(plan)/-order-fields.tsx";
+import { ShopAutocomplete } from "#/routes/(plan)/-shop-autocomplete.tsx";
+import { CampaignChip, useSaveOrderDraft } from "#/routes/(plan)/-order-shared.tsx";
+import { FormDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
 import {
   type OrderFormInput,
   OrderFormSchema,
@@ -50,7 +50,7 @@ import {
   inputOf,
   rateOf,
   tagBonus,
-} from "../-order-form";
+} from "#/routes/(plan)/-order-form.ts";
 import {
   AMOUNT_PATH,
   type OrderForm,
@@ -59,10 +59,10 @@ import {
   urlFromPastedText,
   useFormInput,
   useOrderAutofill,
-} from "../-order-form-store";
-import { OrderPreviewBox } from "./order-preview";
-import { CapFlows } from "../-cap-flows";
-import { ExtraItems, ItemDetailFields } from "../-item-details";
+} from "#/routes/(plan)/-order-form-store.ts";
+import { OrderPreviewBox } from "./order-preview.tsx";
+import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
+import { ExtraItems, ItemDetailFields } from "#/routes/(plan)/-item-details.tsx";
 
 /** The editor's target in the URL (`edit=`): a new order, or the id of the order to edit. */
 export const NEW_ORDER = "new";

@@ -1,16 +1,16 @@
 import { Card, Flex, Heading, Separator, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useEffect } from "react";
-import { markNoticesReadAtom } from "../../../state/mutations";
-import { PageWithSidebar } from "../-page-with-sidebar";
-import { NoticeDate } from "../../-notices/notice-date";
-import { ColumnHead } from "../../../ui/column-head";
+import { markNoticesReadAtom } from "#/state/mutations.ts";
+import { PageWithSidebar } from "#/routes/(site)/-page-with-sidebar.tsx";
+import { NoticeDate } from "#/routes/-notices/notice-date.tsx";
+import { ColumnHead } from "#/ui/column-head.tsx";
 import {
   type Notice,
   newestFirst,
   notices as allNotices,
   paragraphs,
-} from "../../-notices/notices";
+} from "#/routes/-notices/notices.ts";
 
 function NoticeArticle({ notice }: { notice: Notice }) {
   return (

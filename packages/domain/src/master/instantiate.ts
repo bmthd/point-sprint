@@ -1,8 +1,8 @@
-import type { Benefit } from "../model/benefit";
-import { type CampaignTemplate, comesWithPlan } from "../model/campaign-template";
-import type { Id, IsoDate, Period } from "../model/common";
-import type { Plan } from "../model/plan";
-import { campaignTemplates } from "./campaigns";
+import type { Benefit } from "#/model/benefit.ts";
+import { type CampaignTemplate, comesWithPlan } from "#/model/campaign-template.ts";
+import type { Id, IsoDate, Period } from "#/model/common.ts";
+import type { Plan } from "#/model/plan.ts";
+import { campaignTemplates } from "./campaigns.ts";
 
 /** What a campaign is made with, beside its id. */
 export type CampaignInput = Omit<Input, "id">;

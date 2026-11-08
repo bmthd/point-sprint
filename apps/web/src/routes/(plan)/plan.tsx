@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlanHome } from "./-plan-home/plan-home";
-import { PlanSearchSchema } from "./-plan-search";
-import { pageHead } from "../../page-head";
+import { PlanHome } from "./-plan-home/plan-home.tsx";
+import { PlanSearchSchema } from "./-plan-search.ts";
+import { pageHead } from "#/page-head.ts";
 
 export const Route = createFileRoute("/(plan)/plan")({
   head: () =>

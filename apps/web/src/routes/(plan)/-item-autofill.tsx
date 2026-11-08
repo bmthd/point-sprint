@@ -7,11 +7,11 @@ import {
   type ItemLookup,
   type ItemLookupResult,
   LONGEST_WAIT_MS,
-} from "../../rakuten/item-lookup";
-import type { ItemPage, RakutenItem } from "../../rakuten/item-search";
-import { useLatestRef } from "../../use-latest-ref";
+} from "#/rakuten/item-lookup.ts";
+import type { ItemPage, RakutenItem } from "#/rakuten/item-search.ts";
+import { useLatestRef } from "#/use-latest-ref.ts";
 
-import { workerItemLookup } from "./-worker-item-lookup";
+import { workerItemLookup } from "./-worker-item-lookup.ts";
 /** The item lookup through the Worker; tests replace it in their Jotai store. */
 export const itemLookupAtom = atom<{ lookup: ItemLookup | undefined }>({
   lookup: workerItemLookup,

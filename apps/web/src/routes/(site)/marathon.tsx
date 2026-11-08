@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { marathonFaq, marathonJsonLd } from "./-marathon/marathon-faq";
-import { MarathonPage } from "./-marathon/marathon-page";
-import { marathonDescription, marathonTitle, splitRounds } from "./-marathon/marathon-rounds";
-import { loadArticles } from "../../guides/articles";
-import { pageHead } from "../../page-head";
-import { getMarathonRounds } from "../../server/official-events/marathon-rounds.functions";
+import { marathonFaq, marathonJsonLd } from "./-marathon/marathon-faq.ts";
+import { MarathonPage } from "./-marathon/marathon-page.tsx";
+import { marathonDescription, marathonTitle, splitRounds } from "./-marathon/marathon-rounds.ts";
+import { loadArticles } from "#/guides/articles.ts";
+import { pageHead } from "#/page-head.ts";
+import { getMarathonRounds } from "#/server/official-events/marathon-rounds.functions.ts";
 
 /**
  * The marathon's schedule and caps. Rendered by the Worker on each request, not ahead of time, so

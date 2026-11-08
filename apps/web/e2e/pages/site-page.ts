@@ -1,8 +1,8 @@
 import { type Locator, type Page, expect } from "@playwright/test";
-import { InquiryPage } from "./inquiry-page";
-import { NoticesPage } from "./notices-page";
-import { SettingsPage } from "./settings-page";
-import { TopPage } from "./top-page";
+import { InquiryPage } from "./inquiry-page.ts";
+import { NoticesPage } from "./notices-page.ts";
+import { SettingsPage } from "./settings-page.ts";
+import { TopPage } from "./top-page.ts";
 
 /** Matches a URL that ends with `path`: the preview server answers a page's path with its directory (`/help/`). */
 export function endsWithPath(path: string) {

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { guideSlugs } from "./guides/files";
-import { getRouter } from "./router";
+import { guideSlugs } from "./guides/files.ts";
+import { getRouter } from "./router.tsx";
 import {
   guideItemListCount,
   missingHeadTags,
@@ -10,8 +10,8 @@ import {
   robotsTxt,
   sitemapEntry,
   sitemapXml,
-} from "./prerender-pages";
-import { siteUrl } from "./site-url";
+} from "./prerender-pages.ts";
+import { siteUrl } from "./site-url.ts";
 
 test("every route is prerendered or rendered on request, and a guide's route for each guide", () => {
   const slugs = guideSlugs();

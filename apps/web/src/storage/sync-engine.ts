@@ -1,8 +1,8 @@
 import { type SyncRow, migrateRow, syncStores } from "@workspaces/domain";
-import { LIMITS } from "../server/sync/sync-records";
-import type { Repository } from "./repository";
-import { decryptRecord, encryptRow } from "./sync-crypto";
-import type { SyncServer } from "./sync-passkey";
+import { LIMITS } from "#/server/sync/sync-records.ts";
+import type { Repository } from "./repository.ts";
+import { decryptRecord, encryptRow } from "./sync-crypto.ts";
+import type { SyncServer } from "./sync-passkey.ts";
 
 // One round of sync: read what the other devices wrote since the last round, keep the rows newer
 // than this device's, then send what this device wrote since.

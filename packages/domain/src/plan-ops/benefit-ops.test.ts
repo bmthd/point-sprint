@@ -3,15 +3,15 @@ import {
   BANK_CARD_ID as BANK_CARD,
   BANK_SALARY_ID as BANK_SALARY,
   standardSpu,
-} from "../master/spu";
-import type { Plan } from "../model/plan";
+} from "#/master/spu.ts";
+import type { Plan } from "#/model/plan.ts";
 import {
   addBenefit,
   removeBenefit,
   updateBenefit,
   toggleBenefit,
   toggleBenefits,
-} from "./benefit-ops";
+} from "./benefit-ops.ts";
 
 const idOf = (label: string): string => {
   const found = standardSpu.find((b) => b.label === label);

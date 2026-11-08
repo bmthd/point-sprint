@@ -1,4 +1,4 @@
-import type { Benefit } from "../model/benefit";
+import type { Benefit } from "#/model/benefit.ts";
 
 /** The four groups of the breakdown on screen (spec §2 `Benefit.category`). */
 export type PointGroup = "base" | "spu" | "marathon" | "campaign";

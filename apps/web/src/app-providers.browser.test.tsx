@@ -4,9 +4,9 @@ import { config, theme } from "@workspaces/ui/theme";
 import { useAtomValue } from "jotai";
 import { afterEach, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
-import { AppProviders } from "./app-providers";
-import { plansQueryAtom } from "./state/queries";
-import { createIndexedDbRepository } from "./storage/indexed-db-repository";
+import { AppProviders } from "./app-providers.tsx";
+import { plansQueryAtom } from "./state/queries.ts";
+import { createIndexedDbRepository } from "./storage/indexed-db-repository.ts";
 
 afterEach(
   () =>

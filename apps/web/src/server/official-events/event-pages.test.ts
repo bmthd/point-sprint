@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
-import { periodOf, readCurrentRound, readSchedule } from "./event-pages";
+import { periodOf, readCurrentRound, readSchedule } from "./event-pages.ts";
 
 // The parts of the pages it reads, cut out of them as fetched on 2026-10-17, while the marathon page
 // still showed the second round.

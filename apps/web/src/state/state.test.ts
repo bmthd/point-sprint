@@ -16,10 +16,10 @@ import { QueryClient } from "@tanstack/query-core";
 import { createStore } from "jotai";
 import { queryClientAtom } from "jotai-tanstack-query";
 import { afterEach, expect, test, vi } from "vitest";
-import { createIndexedDbRepository } from "../storage/indexed-db-repository";
-import { createMemoryRepository } from "../storage/memory-repository";
-import type { Repository } from "../storage/repository";
-import { calculationAtom, orderAtom, orderPointsAtom } from "./derived";
+import { createIndexedDbRepository } from "#/storage/indexed-db-repository.ts";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import type { Repository } from "#/storage/repository.ts";
+import { calculationAtom, orderAtom, orderPointsAtom } from "./derived.ts";
 import {
   changeShop,
   replacePlan,
@@ -28,15 +28,15 @@ import {
   savePlanAtom,
   saveShopAtom,
   saveSpuMonthAtom,
-} from "./mutations";
+} from "./mutations.ts";
 import {
   addOrderAtom,
   copyOrderAtom,
   saveOrderDraftAtom,
   updateOrderAtom,
-} from "./plan-operations";
-import { plansAtom, profileAtom, queryKeys, shopsAtom, spuMonthsAtom } from "./queries";
-import { repositoryAtom } from "./repository";
+} from "./plan-operations.ts";
+import { plansAtom, profileAtom, queryKeys, shopsAtom, spuMonthsAtom } from "./queries.ts";
+import { repositoryAtom } from "./repository.ts";
 
 const now = "2026-10-05T00:00:00.000Z";
 const SHOP = "a0000000-0000-4000-8000-000000000001";

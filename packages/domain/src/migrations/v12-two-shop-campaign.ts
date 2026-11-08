@@ -1,4 +1,4 @@
-import type { Migration } from "./runner";
+import type { Migration } from "./runner.ts";
 
 type Row = Record<string, unknown>;
 const isRow = (value: unknown): value is Row =>

@@ -5,7 +5,7 @@ import {
   SettingsSaveFailureProvider,
   useSaveSettingsChange,
   useSettingsSaveFailurePlanId,
-} from "./settings-shared";
+} from "./settings-shared.ts";
 
 test("records the plan whose settings save failed", async () => {
   function Example() {

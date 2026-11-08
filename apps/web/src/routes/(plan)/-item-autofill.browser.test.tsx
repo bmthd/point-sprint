@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { type Locator, page, userEvent } from "vitest/browser";
-import type { ItemLookup, ItemLookupFailure, ItemLookupResult } from "../../rakuten/item-lookup";
-import type { RakutenItem } from "../../rakuten/item-search";
-import { createMemoryRepository } from "../../storage/memory-repository";
+import type { ItemLookup, ItemLookupFailure, ItemLookupResult } from "#/rakuten/item-lookup.ts";
+import type { RakutenItem } from "#/rakuten/item-search.ts";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import {
   PLAN,
   marathonPlan,
@@ -11,7 +11,7 @@ import {
   renderPlanHome,
   shopField,
   shops,
-} from "./-test-fixtures";
+} from "./-test-fixtures.tsx";
 
 // The Rakuten API is never called here: every test gives the editor a lookup of its own.
 

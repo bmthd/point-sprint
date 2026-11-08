@@ -1,6 +1,6 @@
 import type { LinkProps } from "@tanstack/react-router";
 import { Box, Flex, Text } from "@workspaces/ui";
-import { RouterLink } from "../../ui/router-link";
+import { RouterLink } from "#/ui/router-link.tsx";
 
 /** The footer's links. */
 export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [

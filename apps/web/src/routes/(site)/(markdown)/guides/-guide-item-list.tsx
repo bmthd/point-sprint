@@ -1,7 +1,7 @@
 import { Badge, Box, Card, HStack, Image, LinkBox, List, Text } from "@workspaces/ui";
-import { grouped } from "../../../../ui/format";
-import { insetCardProps } from "../-markdown-body";
-import type { GuideItem } from "../../../../guides/guide-items";
+import { grouped } from "#/ui/format.ts";
+import { insetCardProps } from "#/routes/(site)/(markdown)/-markdown-body.tsx";
+import type { GuideItem } from "#/guides/guide-items.ts";
 
 /** "2026年10月8日": the day in Japan, the same on the server and in the browser. */
 const japanDay = new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", dateStyle: "long" });

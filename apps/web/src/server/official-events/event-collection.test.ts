@@ -1,6 +1,11 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
-import { type StoredEvent, checkEvent, collectMarathon, marathonEvent } from "./event-collection";
+import {
+  type StoredEvent,
+  checkEvent,
+  collectMarathon,
+  marathonEvent,
+} from "./event-collection.ts";
 
 const fixture = (name: string) =>
   readFileSync(new URL(`event-pages/${name}`, import.meta.url), "utf8");

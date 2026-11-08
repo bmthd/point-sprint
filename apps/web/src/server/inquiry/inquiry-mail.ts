@@ -1,4 +1,4 @@
-import type { InquiryInput } from "./inquiry-input";
+import type { InquiryInput } from "./inquiry-input.ts";
 
 // The inquiry as a raw MIME message, for `EmailMessage` of `cloudflare:email`.
 

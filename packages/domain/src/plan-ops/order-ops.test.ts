@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import type { Order } from "../model/order";
-import type { Plan } from "../model/plan";
+import type { Order } from "#/model/order.ts";
+import type { Plan } from "#/model/plan.ts";
 import {
   addOrder,
   updateOrder,
@@ -9,7 +9,7 @@ import {
   toggleHold,
   copyOrder,
   moveOrder,
-} from "./order-ops";
+} from "./order-ops.ts";
 
 const SHOP = "a0000000-0000-4000-8000-000000000001";
 const ORDER_IDS = [1, 2, 3].map((n) => `0${n}000000-0000-4000-8000-000000000000`);

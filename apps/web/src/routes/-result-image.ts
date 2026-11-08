@@ -1,6 +1,6 @@
 import { render } from "takumi-js";
 import fonts from "virtual:og-fonts";
-import { type ResultFigures, cardFontFamily, imageSize, resultCard } from "./-share/result-card";
+import { type ResultFigures, cardFontFamily, imageSize, resultCard } from "./-share/result-card.ts";
 
 const decode = (base64: string) => Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 

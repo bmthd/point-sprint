@@ -1,6 +1,6 @@
-import { type Page, expect, test, fixDate } from "./fixtures";
-import { SitePage, TopPage } from "./pages";
-import { endsWithPath } from "./pages/site-page";
+import { type Page, expect, test, fixDate } from "./fixtures.ts";
+import { SitePage, TopPage } from "./pages/index.ts";
+import { endsWithPath } from "./pages/site-page.ts";
 
 // The header and the footer are on every page, and their links go where they say.
 

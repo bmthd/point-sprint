@@ -27,17 +27,22 @@ import {
   useMemo,
   useRef,
 } from "react";
-import { grouped, pointsText, rateText, yen } from "../../../ui/format";
-import { orderAtom, planAtom } from "../../../state/derived";
-import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "../../../state/plan-operations";
-import { shopsAtom } from "../../../state/queries";
-import { openOrderIdAtom } from "../-ui";
-import { useLatestRef } from "../../../use-latest-ref";
-import { monthDayWithWeekday } from "../../../ui/dates";
-import { ChevronIcon, GripIcon } from "../../../ui/icons";
-import { OrderFormSchema, type OrderFormInput, draftOf, inputOf } from "../-order-form";
-import { useOrderAutofill } from "../-order-form-store";
-import { NEW_SHOP } from "../-order-fields";
+import { grouped, pointsText, rateText, yen } from "#/ui/format.ts";
+import { orderAtom, planAtom } from "#/state/derived.ts";
+import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "#/state/plan-operations.ts";
+import { shopsAtom } from "#/state/queries.ts";
+import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
+import { useLatestRef } from "#/use-latest-ref.ts";
+import { monthDayWithWeekday } from "#/ui/dates.ts";
+import { ChevronIcon, GripIcon } from "#/ui/icons.tsx";
+import {
+  OrderFormSchema,
+  type OrderFormInput,
+  draftOf,
+  inputOf,
+} from "#/routes/(plan)/-order-form.ts";
+import { useOrderAutofill } from "#/routes/(plan)/-order-form-store.ts";
+import { NEW_SHOP } from "#/routes/(plan)/-order-fields.tsx";
 import {
   CampaignChip,
   OrderBadge,
@@ -50,10 +55,10 @@ import {
   useSaveOrderChange,
   useSaveOrderDraft,
   useShopName,
-} from "../-order-shared";
-import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
-import { PointBreakdown } from "../../-point-breakdown";
-import type { DragStart } from "./use-order-drag";
+} from "#/routes/(plan)/-order-shared.tsx";
+import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields.tsx";
+import { PointBreakdown } from "#/routes/-point-breakdown.tsx";
+import type { DragStart } from "./use-order-drag.ts";
 
 /** What the list shares with its rows without re-rendering them: refs and stable callbacks. */
 export type OrderListContext = {

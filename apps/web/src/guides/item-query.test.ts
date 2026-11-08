@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { itemQueriesIn, itemQueryKey, parseItemsLine } from "./item-query";
+import { itemQueriesIn, itemQueryKey, parseItemsLine } from "./item-query.ts";
 
 test("reads quoted and bare values, and turns numbers into numbers", () => {
   expect(

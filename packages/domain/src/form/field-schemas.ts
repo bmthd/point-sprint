@@ -5,7 +5,7 @@ import {
   NumberInputSchema,
   OptionalTextInputSchema,
   TextInputSchema,
-} from "./normalize";
+} from "./normalize.ts";
 
 // The schemas of what is typed into the forms, shared by every form. Each first makes the field's
 // text a value (normalize.ts), then checks it here. A message names the field and says what to

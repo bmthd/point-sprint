@@ -1,5 +1,5 @@
-import { tierRate, type ShopAroundTier } from "../benefit-kinds/shop-around";
-import type { Benefit } from "../model/benefit";
+import { tierRate, type ShopAroundTier } from "#/benefit-kinds/shop-around.ts";
+import type { Benefit } from "#/model/benefit.ts";
 
 export type ShopAroundOutlookRow = {
   shops: number;

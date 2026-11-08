@@ -1,7 +1,7 @@
 import { Box, Card, Grid } from "@workspaces/ui";
 import type { ReactNode } from "react";
-import { SiteSidebar } from "../-sidebar/sidebar";
-import { COLUMN_HEAD_HEIGHT } from "../../ui/column-head";
+import { SiteSidebar } from "#/routes/-sidebar/sidebar.tsx";
+import { COLUMN_HEAD_HEIGHT } from "#/ui/column-head.tsx";
 
 /** The right column's width on a wide screen. */
 const SIDEBAR_WIDTH = "320px";

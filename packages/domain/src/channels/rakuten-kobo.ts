@@ -1,4 +1,4 @@
-import type { ChannelDef } from "./types";
+import type { ChannelDef } from "./types.ts";
 
 export const rakutenKobo: ChannelDef = {
   id: "rakuten-kobo",

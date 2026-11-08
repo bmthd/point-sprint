@@ -1,5 +1,5 @@
 import { type Locator, type Page, expect } from "@playwright/test";
-import { type NavigationOptions, SitePage, endsWithPath } from "./site-page";
+import { type NavigationOptions, SitePage, endsWithPath } from "./site-page.ts";
 
 /** 共通設定 (the settings): the SPU of each month, the shops and the advanced settings. */
 export class SettingsPage {

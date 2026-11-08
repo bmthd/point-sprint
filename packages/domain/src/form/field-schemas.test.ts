@@ -14,7 +14,7 @@ import {
   PointsSchema,
   RateSchema,
   YenSchema,
-} from "./field-schemas";
+} from "./field-schemas.ts";
 
 /** The value a schema gives for `input`, or the message of its first error. */
 function parse<T>(schema: v.GenericSchema<string, T>, input: string) {

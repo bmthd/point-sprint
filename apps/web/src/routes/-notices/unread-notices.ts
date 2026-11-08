@@ -1,7 +1,7 @@
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
-import { noticeReadsQueryAtom } from "../../state/queries";
-import { type Notice, notices as allNotices } from "./notices";
+import { noticeReadsQueryAtom } from "#/state/queries.ts";
+import { type Notice, notices as allNotices } from "./notices.ts";
 
 /**
  * The ids of the notices not read yet. Empty until the notices read have been read from storage,

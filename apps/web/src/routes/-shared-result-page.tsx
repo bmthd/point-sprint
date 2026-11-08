@@ -1,11 +1,11 @@
 import { Box, Heading, Image, Text, VStack } from "@workspaces/ui";
-import { RouterButton } from "../ui/router-link";
+import { RouterButton } from "#/ui/router-link.tsx";
 import {
   type ResultFigures,
   imageSize,
   resultImagePath,
   resultSummary,
-} from "./-share/result-card";
+} from "./-share/result-card.ts";
 
 /**
  * The page a result is shared as, at `/share`. It shows the figures the link carries and leads to

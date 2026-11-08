@@ -1,13 +1,13 @@
 import type { OfficialEvent } from "@workspaces/domain";
-import { grouped } from "../../../ui/format";
-import { siteUrl } from "../../../site-url";
+import { grouped } from "#/ui/format.ts";
+import { siteUrl } from "#/site-url.ts";
 import {
   capReachingSpend,
   datedPeriod,
   marathonHeading,
   shopAroundOf,
   splitRounds,
-} from "./marathon-rounds";
+} from "./marathon-rounds.ts";
 
 // The questions people search for about the marathon, answered from the rounds in the event
 // master. The page shows them and marks them up from this one list, so the two never disagree.

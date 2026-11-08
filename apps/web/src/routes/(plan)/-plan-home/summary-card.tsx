@@ -5,9 +5,9 @@ import {
   taxIncludedTarget,
 } from "@workspaces/domain";
 import { Box, Card, Flex, NativeAccordion, Progress, Text } from "@workspaces/ui";
-import { grouped } from "../../../ui/format";
-import { PointBreakdown } from "../../-point-breakdown";
-import { ShopLadder } from "./shop-ladder";
+import { grouped } from "#/ui/format.ts";
+import { PointBreakdown } from "#/routes/-point-breakdown.tsx";
+import { ShopLadder } from "./shop-ladder.tsx";
 
 const SHOP_STEPS = 10;
 

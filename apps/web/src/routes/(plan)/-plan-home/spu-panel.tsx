@@ -4,11 +4,11 @@ import { Box, Button, Drawer, IconButton, SegmentedControl, Text } from "@worksp
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as v from "valibot";
-import { accountIdOf } from "../../../state/accounts";
-import { accountSettingsAtom } from "../../../state/derived";
-import { CloseIcon } from "../../../ui/icons";
-import { useToday } from "../../-use-today";
-import { SpuMonthEditor, spuMonthText } from "../-spu-month/spu-month-editor";
+import { accountIdOf } from "#/state/accounts.ts";
+import { accountSettingsAtom } from "#/state/derived.ts";
+import { CloseIcon } from "#/ui/icons.tsx";
+import { useToday } from "#/routes/-use-today.ts";
+import { SpuMonthEditor, spuMonthText } from "#/routes/(plan)/-spu-month/spu-month-editor.tsx";
 
 /**
  * The month whose SPU is open in the side panel, while the URL has `spu=` (`YYYY-MM`), so the back

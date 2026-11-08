@@ -1,4 +1,4 @@
-import type { ChannelId, Conditions, DateRule, OrderTag, ShopTag } from "../model/common";
+import type { ChannelId, Conditions, DateRule, OrderTag, ShopTag } from "#/model/common.ts";
 
 export interface ConditionContext {
   /** `null` when the order's shop is not in the shop registry. */

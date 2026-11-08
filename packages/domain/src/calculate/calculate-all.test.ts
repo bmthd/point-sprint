@@ -1,11 +1,11 @@
 import { describe, expect, test } from "vitest";
-import type { Benefit } from "../model/benefit";
-import type { LineItem, Order } from "../model/order";
-import { DEFAULT_ACCOUNT_ID } from "../model/account";
-import type { Plan } from "../model/plan";
-import type { Shop } from "../model/shop";
-import { calculate, calculateAll } from "./calculate";
-import type { CalculationResult } from "./types";
+import type { Benefit } from "#/model/benefit.ts";
+import type { LineItem, Order } from "#/model/order.ts";
+import { DEFAULT_ACCOUNT_ID } from "#/model/account.ts";
+import type { Plan } from "#/model/plan.ts";
+import type { Shop } from "#/model/shop.ts";
+import { calculate, calculateAll } from "./calculate.ts";
+import type { CalculationResult } from "./types.ts";
 
 const SHOP_A = "a0000000-0000-4000-8000-000000000001";
 const SHOP_B = "b0000000-0000-4000-8000-000000000002";

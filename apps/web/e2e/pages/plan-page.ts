@@ -1,5 +1,5 @@
 import { type Locator, type Page, expect } from "@playwright/test";
-import { Footer, Header } from "./site-page";
+import { Footer, Header } from "./site-page.ts";
 
 /** The form that adds an order, at the end of the list on a wide screen. */
 export class AddOrderForm {

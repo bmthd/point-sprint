@@ -1,8 +1,8 @@
 import type { Benefit, Plan } from "@workspaces/domain";
 import { beforeEach, expect, test } from "vitest";
 import { page } from "vitest/browser";
-import { createMemoryRepository } from "../../storage/memory-repository";
-import { PLAN, baseBenefit, enterShop, order, renderPlanHome, shops } from "./-test-fixtures";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import { PLAN, baseBenefit, enterShop, order, renderPlanHome, shops } from "./-test-fixtures.tsx";
 
 /** +1倍, at most 70P in the plan. */
 const campaign: Benefit = {

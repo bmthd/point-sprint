@@ -1,6 +1,6 @@
 import { parseMarkdown } from "@tanstack/markdown/parser";
 import { expect, test } from "vitest";
-import { guideExtensions, rakutenAffiliateUrl } from "./markdown";
+import { guideExtensions, rakutenAffiliateUrl } from "./markdown.ts";
 
 const parse = (source: string) => parseMarkdown(source, { extensions: guideExtensions });
 

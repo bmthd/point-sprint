@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import markdown from "./-markdown/privacy.md?raw";
-import { pageHead } from "../../../page-head";
-import { MarkdownBody } from "./-markdown-body";
+import { pageHead } from "#/page-head.ts";
+import { MarkdownBody } from "./-markdown-body.tsx";
 
 export const Route = createFileRoute("/(site)/(markdown)/privacy")({
   context: () => ({ markdown }),

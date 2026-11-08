@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { expect, test } from "vitest";
 import { render } from "vitest-browser-react";
-import { useSingleFlight } from "./use-single-flight";
+import { useSingleFlight } from "./use-single-flight.ts";
 
 test("runs only the first operation while it is pending", async () => {
   let finish: (() => void) | undefined;

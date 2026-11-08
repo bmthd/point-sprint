@@ -1,5 +1,5 @@
-import type { Benefit } from "../model/benefit";
-import type { DateRule } from "../model/common";
+import type { Benefit } from "#/model/benefit.ts";
+import type { DateRule } from "#/model/common.ts";
 
 /**
  * Key of the group whose raw points share one cap (see spec §3 "上限の共有範囲"). Caps shared

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { CURRENT_SCHEMA_VERSION, type Migration, migrateRow, seedRows } from "./index";
+import { CURRENT_SCHEMA_VERSION, type Migration, migrateRow, seedRows } from "./index.ts";
 
 const list: Migration[] = [
   { to: 2, stores: { plans: (r) => ({ ...(r as object), a: 1 }) } },

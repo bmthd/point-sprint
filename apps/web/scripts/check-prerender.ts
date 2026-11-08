@@ -6,8 +6,8 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { loadEnv } from "vite";
-import { isAdsensePaused, isPullRequestPreview } from "../src/google-tags/env.ts";
-import { missingGoogleTagScripts } from "../src/google-tags/scripts.ts";
+import { isAdsensePaused, isPullRequestPreview } from "#/google-tags/env.ts";
+import { missingGoogleTagScripts } from "#/google-tags/scripts.ts";
 import {
   guideItemListCount,
   indexedPagesRenderedOnRequest,
@@ -16,9 +16,9 @@ import {
   prerenderedPages,
   sitemapEntry,
   sitemapXml,
-} from "../src/prerender-pages.ts";
-import { readRakutenConfig } from "../src/rakuten/config.ts";
-import { siteUrl } from "../src/site-url.ts";
+} from "#/prerender-pages.ts";
+import { readRakutenConfig } from "#/rakuten/config.ts";
+import { siteUrl } from "#/site-url.ts";
 
 // The `PUBLIC_` values the build read (vite.config.ts): the environment's over `.env.production`'s.
 const publicEnv = loadEnv("production", join(import.meta.dirname, "../../.."), "PUBLIC_");

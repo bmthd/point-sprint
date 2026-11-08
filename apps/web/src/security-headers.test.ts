@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
-import { securityHeaders, setSecurityHeaders } from "./security-headers";
+import { securityHeaders, setSecurityHeaders } from "./security-headers.ts";
 
 test("public/_headers sets the security headers on every static file", () => {
   const text = readFileSync(join(import.meta.dirname, "../public/_headers"), "utf8");

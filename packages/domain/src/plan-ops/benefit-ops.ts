@@ -1,5 +1,5 @@
-import type { Benefit } from "../model/benefit";
-import type { Plan } from "../model/plan";
+import type { Benefit } from "#/model/benefit.ts";
+import type { Plan } from "#/model/plan.ts";
 
 /**
  * Returns the benefits with the benefit's `enabled` flipped. The given list is not changed.

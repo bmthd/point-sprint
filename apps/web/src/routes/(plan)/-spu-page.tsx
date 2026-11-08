@@ -18,12 +18,12 @@ import {
   VStack,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { accountIdOf } from "../../state/accounts";
-import { accountSettingsAtom, planAtom } from "../../state/derived";
-import { BackIcon, ForwardIcon } from "../../ui/icons";
-import { RouterButton, RouterIconButton } from "../../ui/router-link";
-import { useToday } from "../-use-today";
-import { SpuMonthEditor, spuMonthText } from "./-spu-month/spu-month-editor";
+import { accountIdOf } from "#/state/accounts.ts";
+import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
+import { BackIcon, ForwardIcon } from "#/ui/icons.tsx";
+import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
+import { useToday } from "#/routes/-use-today.ts";
+import { SpuMonthEditor, spuMonthText } from "./-spu-month/spu-month-editor.tsx";
 
 const now = () => new Date();
 

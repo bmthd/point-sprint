@@ -10,11 +10,11 @@ import { DEFAULT_ACCOUNT_ID, standardSpu } from "@workspaces/domain";
 import { beforeEach, expect, onTestFinished, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
-import { createIndexedDbRepository } from "../../../storage/indexed-db-repository";
-import { createMemoryRepository } from "../../../storage/memory-repository";
-import type { Repository } from "../../../storage/repository";
-import { Providers, shops } from "../-test-fixtures";
-import { Settings } from "./settings";
+import { createIndexedDbRepository } from "#/storage/indexed-db-repository.ts";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import type { Repository } from "#/storage/repository.ts";
+import { Providers, shops } from "#/routes/(plan)/-test-fixtures.tsx";
+import { Settings } from "./settings.tsx";
 
 beforeEach(async () => {
   await page.viewport(390, 844);

@@ -13,12 +13,12 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useRef, useState } from "react";
-import { CommitField } from "../-form/commit-field";
+import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
 import { AccountNameSchema } from "@workspaces/domain";
-import { accountSettingsAtom } from "../../../state/derived";
-import { saveProfileAtom } from "../../../state/mutations";
-import { profileQueryAtom } from "../../../state/queries";
-import { CloseIcon } from "../../../ui/icons";
+import { accountSettingsAtom } from "#/state/derived.ts";
+import { saveProfileAtom } from "#/state/mutations.ts";
+import { profileQueryAtom } from "#/state/queries.ts";
+import { CloseIcon } from "#/ui/icons.tsx";
 
 /** The profile with its accounts changed; the default account is kept even when not stored yet. */
 const withAccounts = (profile: Profile, change: (accounts: Account[]) => Account[]): Profile => ({

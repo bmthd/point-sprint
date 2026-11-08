@@ -5,7 +5,7 @@ import type {
   verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import { describe, expect, test } from "vitest";
-import { memoryD1 } from "../shared/memory-d1";
+import { memoryD1 } from "#/server/shared/memory-d1.ts";
 import {
   type SyncAuthDeps,
   authenticate,
@@ -16,7 +16,7 @@ import {
   sessionAccount,
   setPrfWrap,
   reissueRecovery,
-} from "./sync-auth";
+} from "./sync-auth.ts";
 
 // The WebAuthn checks are stood in for: a response passes when it carries the challenge it was
 // given in `clientDataJSON`. The real checks run in the E2E tests, against a virtual authenticator.

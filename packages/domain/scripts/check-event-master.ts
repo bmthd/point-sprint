@@ -1,8 +1,8 @@
 // Fails when no official event the site serves is still running a week from today in Japan, or when
 // the site does not serve them, so the Event master workflow opens an issue: the collection from
 // Rakuten's pages has stopped working (docs/event-master.md). Run by Node, which strips the types.
-import { eventMasterRunsOut } from "../src/master/event-coverage.ts";
-import type { OfficialEvent } from "../src/model/official-event.ts";
+import { eventMasterRunsOut } from "#/master/event-coverage.ts";
+import type { OfficialEvent } from "#/model/official-event.ts";
 
 const url = process.env.EVENTS_URL ?? "https://point-sprint.bmth.dev/events.json";
 const leadDays = 7;

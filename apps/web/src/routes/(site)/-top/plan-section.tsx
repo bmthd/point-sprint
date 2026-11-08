@@ -1,5 +1,5 @@
-import { grouped } from "../../../ui/format";
-import { RouterLink } from "../../../ui/router-link";
+import { grouped } from "#/ui/format.ts";
+import { RouterLink } from "#/ui/router-link.tsx";
 import { type Plan, capLines } from "@workspaces/domain";
 import {
   Badge,
@@ -17,12 +17,12 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type ReactNode, useId, useMemo, useRef, useState } from "react";
-import { accountIdOf } from "../../../state/accounts";
-import { accountSettingsAtom, calculatedPlanAtom, planResultAtom } from "../../../state/derived";
-import { deletePlanAtom } from "../../../state/mutations";
-import { plansAtom } from "../../../state/queries";
-import { formatPeriod } from "../../../ui/dates";
-import { ResultCard } from "./result-card";
+import { accountIdOf } from "#/state/accounts.ts";
+import { accountSettingsAtom, calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
+import { deletePlanAtom } from "#/state/mutations.ts";
+import { plansAtom } from "#/state/queries.ts";
+import { formatPeriod } from "#/ui/dates.ts";
+import { ResultCard } from "./result-card.tsx";
 
 function TrashIcon() {
   return (

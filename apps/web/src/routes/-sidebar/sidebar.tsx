@@ -1,6 +1,6 @@
 import { type StackProps, VStack } from "@workspaces/ui";
-import { RecentArticles } from "./recent-articles";
-import { ShareSection } from "./share-section";
+import { RecentArticles } from "./recent-articles.tsx";
+import { ShareSection } from "./share-section.tsx";
 
 /**
  * The sections of the sidebar, top to bottom. Each one is a `SidebarSection` (or, for an ad slot,

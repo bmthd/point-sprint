@@ -1,5 +1,5 @@
 import type { D1Database } from "cloudflare:workers";
-import { applyMigrations } from "./migrations";
+import { applyMigrations } from "./migrations.ts";
 
 // `pnpm dev` migrates the local databases only as it starts. A dev server left running while a
 // pull adds a migration, or one started with `vite dev`, would read tables it lacks: so its Worker

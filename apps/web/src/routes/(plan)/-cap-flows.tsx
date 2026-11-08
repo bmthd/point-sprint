@@ -7,12 +7,12 @@ import { type Plan, capFlows } from "@workspaces/domain";
 import { Button, List, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useDeferredValue, useMemo } from "react";
-import { grouped, yen } from "../../ui/format";
-import { asCalculatedAtom } from "../../state/derived";
-import { plansAtom, shopsAtom } from "../../state/queries";
-import { scopeText } from "./-cap-lines";
-import { draftOfInput } from "./-order-form";
-import { AMOUNT_PATH, type OrderForm, useFormInput } from "./-order-form-store";
+import { grouped, yen } from "#/ui/format.ts";
+import { asCalculatedAtom } from "#/state/derived.ts";
+import { plansAtom, shopsAtom } from "#/state/queries.ts";
+import { scopeText } from "./-cap-lines.ts";
+import { draftOfInput } from "./-order-form.ts";
+import { AMOUNT_PATH, type OrderForm, useFormInput } from "./-order-form-store.ts";
 
 /**
  * Under a new order's fields: how many of its points the order receives from each cap and how

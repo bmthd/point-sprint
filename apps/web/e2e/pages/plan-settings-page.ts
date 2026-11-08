@@ -1,5 +1,5 @@
 import { type Page } from "@playwright/test";
-import { Header } from "./site-page";
+import { Header } from "./site-page.ts";
 
 /** A plan's settings, on their own page. */
 export class PlanSettingsPage {

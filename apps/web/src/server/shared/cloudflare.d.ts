@@ -16,7 +16,7 @@ declare module "cloudflare:workers" {
     RAKUTEN_ACCESS_KEY?: string;
     /** Not in a Preview (`cloudflare.config.ts`). */
     RAKUTEN_RATE_GATE?: DurableObjectNamespace<
-      import("../item-lookup/rakuten-rate-gate.worker").RakutenRateGate
+      import("#/server/item-lookup/rakuten-rate-gate.worker.ts").RakutenRateGate
     >;
     /** The official event master (src/server/official-events/event-store.ts). */
     EVENTS_DB: D1Database;

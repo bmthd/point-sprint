@@ -1,4 +1,4 @@
-import type { LineItem } from "../model/order";
+import type { LineItem } from "#/model/order.ts";
 
 export function taxIncludedTarget(item: LineItem): number {
   return item.unitPrice * item.quantity - item.discount;

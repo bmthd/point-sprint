@@ -1,10 +1,10 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
-import { BenefitSchema } from "../model/benefit";
-import { CampaignTemplateSchema } from "../model/campaign-template";
-import { campaignTemplates } from "./campaigns";
-import { instantiateCampaign } from "./instantiate";
-import { standardSpu } from "./spu";
+import { BenefitSchema } from "#/model/benefit.ts";
+import { CampaignTemplateSchema } from "#/model/campaign-template.ts";
+import { campaignTemplates } from "./campaigns.ts";
+import { instantiateCampaign } from "./instantiate.ts";
+import { standardSpu } from "./spu.ts";
 
 test("standard SPU parses", () => {
   for (const benefit of standardSpu) {

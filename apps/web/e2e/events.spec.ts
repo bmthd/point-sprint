@@ -1,5 +1,5 @@
-import { expect, test, fixDate } from "./fixtures";
-import { TopPage } from "./pages";
+import { expect, test, fixDate } from "./fixtures.ts";
+import { TopPage } from "./pages/index.ts";
 
 // The top page reads the events from the Worker, which serves them from the event master in D1.
 // The E2E tests start it from the migrations (playwright.config.ts).

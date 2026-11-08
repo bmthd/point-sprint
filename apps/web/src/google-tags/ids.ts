@@ -1,4 +1,4 @@
-import type { GoogleTagIds } from "./env";
+import type { GoogleTagIds } from "./env.ts";
 
 /** Filled in by vite.config.ts for production builds; undefined in development and tests. */
 export const googleTagIds: GoogleTagIds = {

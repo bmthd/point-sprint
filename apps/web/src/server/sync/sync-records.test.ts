@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { memoryD1 } from "../shared/memory-d1";
-import { type RemoteRecord, LIMITS, deleteAccount, pull, push } from "./sync-records";
+import { memoryD1 } from "#/server/shared/memory-d1.ts";
+import { type RemoteRecord, LIMITS, deleteAccount, pull, push } from "./sync-records.ts";
 
 const ACCOUNT = "account-1";
 const now = new Date("2026-10-25T00:00:00.000Z");

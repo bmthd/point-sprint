@@ -1,7 +1,7 @@
 import { type Page, test as base } from "@playwright/test";
 import { join } from "node:path";
 import { loadEnv } from "vite";
-import { isAdsensePaused } from "../src/google-tags/env";
+import { isAdsensePaused } from "#/google-tags/env.ts";
 
 export { expect } from "@playwright/test";
 export type { Locator, Page } from "@playwright/test";

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { resultShareTarget, shareLinks, shareMessage, siteShareTarget } from "./share-target";
-import { siteUrl } from "../../site-url";
+import { resultShareTarget, shareLinks, shareMessage, siteShareTarget } from "./share-target.ts";
+import { siteUrl } from "#/site-url.ts";
 
 const query = (href: string) => Object.fromEntries(new URL(href).searchParams);
 

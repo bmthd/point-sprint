@@ -23,8 +23,8 @@ import {
 import { beforeEach, expect, onTestFinished, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
-import { createMemoryRepository } from "../../../storage/memory-repository";
-import { misalignedFields } from "../../../test-layout";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import { misalignedFields } from "#/test-layout.ts";
 import {
   PLAN,
   Providers,
@@ -34,8 +34,8 @@ import {
   renderPlanHome,
   shops,
   tapCard,
-} from "../-test-fixtures";
-import { PlanSettings } from "./plan-settings";
+} from "#/routes/(plan)/-test-fixtures.tsx";
+import { PlanSettings } from "./plan-settings.tsx";
 
 beforeEach(async () => {
   await page.viewport(390, 844);

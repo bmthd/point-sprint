@@ -1,5 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
-import { FAKE_RAKUTEN_API_PORT } from "./e2e/fake-rakuten-api";
+import { FAKE_RAKUTEN_API_PORT } from "./e2e/fake-rakuten-api.ts";
 
 const PORT = 4173;
 

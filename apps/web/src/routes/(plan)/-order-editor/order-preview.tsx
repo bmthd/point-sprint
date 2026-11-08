@@ -12,11 +12,11 @@ import {
 import { Flex, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
-import { percent, pointsText, rateText, yen } from "../../../ui/format";
-import { asCalculatedAtom, calculationAtom } from "../../../state/derived";
-import { plansAtom, shopsAtom } from "../../../state/queries";
-import { orderPointRows } from "../-order-shared";
-import type { OrderDraft } from "../-order-form";
+import { percent, pointsText, rateText, yen } from "#/ui/format.ts";
+import { asCalculatedAtom, calculationAtom } from "#/state/derived.ts";
+import { plansAtom, shopsAtom } from "#/state/queries.ts";
+import { orderPointRows } from "#/routes/(plan)/-order-shared.tsx";
+import type { OrderDraft } from "#/routes/(plan)/-order-form.ts";
 
 export type OrderPreview = {
   /** The plan's shop count with the draft, when the draft makes it grow. */

@@ -7,24 +7,28 @@ import { type Plan, calculateAll } from "@workspaces/domain";
 import { Collapse, Flex, Button, List, Text } from "@workspaces/ui";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { type KeyboardEvent, useDeferredValue, useId, useMemo, useState } from "react";
-import { pointsText } from "../../../ui/format";
-import { Form } from "../../-form";
-import { asCalculatedAtom, calculationAtom } from "../../../state/derived";
-import { plansAtom, shopsAtom } from "../../../state/queries";
-import { openOrderIdAtom } from "../-ui";
-import { useSingleFlight } from "../../../use-single-flight";
+import { pointsText } from "#/ui/format.ts";
+import { Form } from "#/routes/-form.tsx";
+import { asCalculatedAtom, calculationAtom } from "#/state/derived.ts";
+import { plansAtom, shopsAtom } from "#/state/queries.ts";
+import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
+import { useSingleFlight } from "#/use-single-flight.ts";
 import {
   OrderFormSchema,
   type OrderFormOutput,
   draftOf,
   draftOfInput,
   emptyInput,
-} from "../-order-form";
-import { type OrderForm, useFormInput, useOrderAutofill } from "../-order-form-store";
-import { ChevronIcon, PlusIcon } from "../../../ui/icons";
-import { orderSaveFailedAtom, useSaveOrderDraft } from "../-order-shared";
-import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
-import { CapFlows } from "../-cap-flows";
+} from "#/routes/(plan)/-order-form.ts";
+import {
+  type OrderForm,
+  useFormInput,
+  useOrderAutofill,
+} from "#/routes/(plan)/-order-form-store.ts";
+import { ChevronIcon, PlusIcon } from "#/ui/icons.tsx";
+import { orderSaveFailedAtom, useSaveOrderDraft } from "#/routes/(plan)/-order-shared.tsx";
+import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields.tsx";
+import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
 
 const sumOfTotals = (results: Map<string, { total: number }>) =>
   [...results.values()].reduce((sum, result) => sum + result.total, 0);

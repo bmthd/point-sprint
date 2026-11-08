@@ -1,8 +1,8 @@
 import { expect, test, vi } from "vitest";
-import { readRakutenConfig } from "./config";
-import { type ItemLookup, type ItemLookupResult, cachedLookup } from "./item-lookup";
-import { type ItemPage, type LookupResult, searchItemPage, searchItems } from "./item-search";
-import { siteUrl } from "../site-url";
+import { readRakutenConfig } from "./config.ts";
+import { type ItemLookup, type ItemLookupResult, cachedLookup } from "./item-lookup.ts";
+import { type ItemPage, type LookupResult, searchItemPage, searchItems } from "./item-search.ts";
+import { siteUrl } from "#/site-url.ts";
 
 const page: ItemPage = { shopCode: "shop-a", itemManageNumber: "item-1" };
 

@@ -3,8 +3,8 @@ import { expect, test } from "vitest";
 import help from "./-markdown/help.md?raw";
 import privacy from "./-markdown/privacy.md?raw";
 import terms from "./-markdown/terms.md?raw";
-import { headingIds } from "./-markdown-body";
-import { markdownExtensions } from "./-markdown-extensions";
+import { headingIds } from "./-markdown-body.tsx";
+import { markdownExtensions } from "./-markdown-extensions.ts";
 
 test.each([
   { name: "利用規約", source: terms },

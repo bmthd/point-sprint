@@ -1,7 +1,7 @@
 import { useRouter } from "@tanstack/react-router";
 import { Button, HStack, TriangleAlertIcon } from "@workspaces/ui";
-import { RouterButton } from "../../ui/router-link";
-import { StatusPage } from "./status-page";
+import { RouterButton } from "#/ui/router-link.tsx";
+import { StatusPage } from "./status-page.tsx";
 
 /** What a page shows when it fails to render or load. The error itself is not shown. */
 export function ErrorPage() {

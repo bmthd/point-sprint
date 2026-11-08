@@ -5,10 +5,10 @@ import {
   resultImagePath,
   ResultSearchSchema,
   resultSummary,
-} from "./-share/result-card";
-import { SharedResultPage } from "./-shared-result-page";
-import { pageHead } from "../page-head";
-import { siteUrl } from "../site-url";
+} from "./-share/result-card.ts";
+import { SharedResultPage } from "./-shared-result-page.tsx";
+import { pageHead } from "#/page-head.ts";
+import { siteUrl } from "#/site-url.ts";
 
 /**
  * A shared result. Rendered by the Worker on each request, not ahead of time, so that its OGP tags

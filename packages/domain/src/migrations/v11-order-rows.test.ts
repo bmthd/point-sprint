@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { migrateRow, seedRows } from "./index";
+import { migrateRow, seedRows } from "./index.ts";
 
 const plan = (orders: unknown[]) => ({
   id: "p",

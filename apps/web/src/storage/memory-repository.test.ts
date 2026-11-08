@@ -7,9 +7,9 @@ import {
   type SpuMonth,
 } from "@workspaces/domain";
 import { expect, test } from "vitest";
-import { createIndexedDbRepository } from "./indexed-db-repository";
-import { createMemoryRepository } from "./memory-repository";
-import type { Repository } from "./repository";
+import { createIndexedDbRepository } from "./indexed-db-repository.ts";
+import { createMemoryRepository } from "./memory-repository.ts";
+import type { Repository } from "./repository.ts";
 
 const now = "2026-10-05T00:00:00.000Z";
 const planA: Plan = {

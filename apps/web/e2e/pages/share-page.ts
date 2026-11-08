@@ -1,5 +1,5 @@
 import { type Page, expect } from "@playwright/test";
-import { TopPage } from "./top-page";
+import { TopPage } from "./top-page.ts";
 
 /** The page of a shared result, at `/share` with its figures in the query. */
 export class SharePage {

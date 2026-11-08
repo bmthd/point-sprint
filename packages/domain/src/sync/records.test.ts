@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { type SyncRow, wins } from "./records";
+import { type SyncRow, wins } from "./records.ts";
 
 const row = (updatedAt: string, value: unknown = { name: "a" }): SyncRow => ({
   kind: "shop",

@@ -3,7 +3,7 @@ import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { expect, test } from "vitest";
 import { render } from "vitest-browser-react";
-import { markdownComponents } from "./-markdown-body";
+import { markdownComponents } from "./-markdown-body.tsx";
 
 test("an image line is a lazily loaded image with the Markdown's alternative text", async () => {
   const screen = await render(

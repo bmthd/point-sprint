@@ -16,17 +16,17 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId } from "react";
-import { bind, errorsOf } from "../../-form";
-import { shopsAtom } from "../../../state/queries";
-import { AutofillStatus } from "../-item-autofill";
+import { bind, errorsOf } from "#/routes/-form.tsx";
+import { shopsAtom } from "#/state/queries.ts";
+import { AutofillStatus } from "#/routes/(plan)/-item-autofill.tsx";
 import {
   AMOUNT_PATH,
   type OrderForm,
   applyShop,
   autofillUrlHandlers,
   type useOrderAutofill,
-} from "../-order-form-store";
-import { hasOrderTagCampaign } from "../-order-form";
+} from "#/routes/(plan)/-order-form-store.ts";
+import { hasOrderTagCampaign } from "#/routes/(plan)/-order-form.ts";
 import {
   CampaignCheck,
   ChannelField,
@@ -36,10 +36,10 @@ import {
   UrlLabel,
   optionalMark,
   shopFromUrl,
-} from "../-order-fields";
-import { ShopAutocomplete } from "../-shop-autocomplete";
-import { FormDatePicker } from "../-date-picker-field";
-import { ExtraItems, ItemDetailFields } from "../-item-details";
+} from "#/routes/(plan)/-order-fields.tsx";
+import { ShopAutocomplete } from "#/routes/(plan)/-shop-autocomplete.tsx";
+import { FormDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
+import { ExtraItems, ItemDetailFields } from "#/routes/(plan)/-item-details.tsx";
 
 // The fields of an order in the desktop list, the same in 「＋ 注文を追加」 and in an opened row.
 

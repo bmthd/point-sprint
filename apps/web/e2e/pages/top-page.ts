@@ -1,6 +1,6 @@
 import { type Locator, type Page, expect } from "@playwright/test";
-import { PlanPage } from "./plan-page";
-import { Footer, Header } from "./site-page";
+import { PlanPage } from "./plan-page.ts";
+import { Footer, Header } from "./site-page.ts";
 
 /** The top page: the events that have not ended, and the plans. */
 export class TopPage {

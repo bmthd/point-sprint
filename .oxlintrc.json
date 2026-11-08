@@ -1,10 +1,18 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "unicorn", "oxc"],
+  "plugins": ["typescript", "unicorn", "oxc", "import"],
   "categories": {
     "correctness": "error"
   },
-  "rules": {},
+  "rules": {
+    "import/extensions": [
+      "error",
+      "always",
+      {
+        "ignorePackages": true
+      }
+    ]
+  },
   "overrides": [
     {
       "files": ["apps/web/src/**"],
@@ -25,6 +33,22 @@
         "react/static-components": "error",
         "react/unsupported-syntax": "error",
         "react/use-memo": "error"
+      }
+    },
+    {
+      "files": ["apps/web/src/**", "packages/domain/src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["../**"],
+                "message": "親ディレクトリのモジュールは `#/`（package.json の imports）から読み込む。"
+              }
+            ]
+          }
+        ]
       }
     }
   ],

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { orderPositions } from "./order-positions";
+import { orderPositions } from "./order-positions.ts";
 
 const changedIds = (previous: ReadonlyMap<string, number>, next: ReadonlyMap<string, number>) =>
   [...next].filter(([id, position]) => previous.get(id) !== position).map(([id]) => id);

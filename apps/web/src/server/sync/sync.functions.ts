@@ -1,8 +1,8 @@
 import type { AuthenticationResponseJSON, RegistrationResponseJSON } from "@simplewebauthn/server";
 import { createServerFn } from "@tanstack/react-start";
 import * as v from "valibot";
-import type { SyncAuthenticationOptions, SyncRegistrationOptions } from "./sync-auth";
-import type { PullResult, PushResult, RemoteRecord } from "./sync-records";
+import type { SyncAuthenticationOptions, SyncRegistrationOptions } from "./sync-auth.ts";
+import type { PullResult, PushResult, RemoteRecord } from "./sync-records.ts";
 
 // The server functions of sync, run by the Worker.
 
@@ -38,8 +38,8 @@ export const syncStartOptions = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<SyncRegistrationOptions | undefined> => {
     // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, turnstileVerifier }, { registrationOptions }] = await Promise.all([
-      import("./sync.worker"),
-      import("./sync-auth"),
+      import("./sync.worker.ts"),
+      import("./sync-auth.ts"),
     ]);
     return registrationOptions(await syncDeps(), {
       turnstileToken: data.turnstileToken,
@@ -52,8 +52,8 @@ export const syncAddPasskeyOptions = createServerFn({ method: "POST" }).handler(
   async (): Promise<SyncRegistrationOptions | SignedOut> => {
     // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, sessionOf }, { registrationOptions }] = await Promise.all([
-      import("./sync.worker"),
-      import("./sync-auth"),
+      import("./sync.worker.ts"),
+      import("./sync-auth.ts"),
     ]);
     const deps = await syncDeps();
     const accountId = await sessionOf(deps);
@@ -80,8 +80,8 @@ export const syncRegister = createServerFn({ method: "POST", strict: { input: fa
   .handler(async ({ data }) => {
     // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, setSessionCookie }, { register }] = await Promise.all([
-      import("./sync.worker"),
-      import("./sync-auth"),
+      import("./sync.worker.ts"),
+      import("./sync-auth.ts"),
     ]);
     const session = await register(await syncDeps(), {
       challengeId: data.challengeId,
@@ -98,8 +98,8 @@ export const syncLoginOptions = createServerFn({ method: "POST" }).handler(
   async (): Promise<SyncAuthenticationOptions> => {
     // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps }, { authenticationOptions }] = await Promise.all([
-      import("./sync.worker"),
-      import("./sync-auth"),
+      import("./sync.worker.ts"),
+      import("./sync-auth.ts"),
     ]);
     return authenticationOptions(await syncDeps());
   },
@@ -111,8 +111,8 @@ export const syncLogin = createServerFn({ method: "POST", strict: { input: false
   .handler(async ({ data }) => {
     // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, setSessionCookie }, { authenticate }] = await Promise.all([
-      import("./sync.worker"),
-      import("./sync-auth"),
+      import("./sync.worker.ts"),
+      import("./sync-auth.ts"),
     ]);
     const login = await authenticate(await syncDeps(), {
       challengeId: data.challengeId,
@@ -130,8 +130,8 @@ export const syncRecoveryLogin = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, setSessionCookie }, { loginWithRecovery }] = await Promise.all([
-      import("./sync.worker"),
-      import("./sync-auth"),
+      import("./sync.worker.ts"),
+      import("./sync-auth.ts"),
     ]);
     const login = await loginWithRecovery(await syncDeps(), data.verifier);
     if (!login) return undefined;
@@ -145,8 +145,8 @@ export const syncSetPrfWrap = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<boolean> => {
     // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, sessionOf }, { setPrfWrap }] = await Promise.all([
-      import("./sync.worker"),
-      import("./sync-auth"),
+      import("./sync.worker.ts"),
+      import("./sync-auth.ts"),
     ]);
     const deps = await syncDeps();
     const accountId = await sessionOf(deps);
@@ -158,8 +158,8 @@ export const syncPush = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<PushResult | SignedOut> => {
     // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, sessionOf }, { push }] = await Promise.all([
-      import("./sync.worker"),
-      import("./sync-records"),
+      import("./sync.worker.ts"),
+      import("./sync-records.ts"),
     ]);
     const deps = await syncDeps();
     const accountId = await sessionOf(deps);
@@ -172,8 +172,8 @@ export const syncPull = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<({ ok: true } & PullResult) | SignedOut> => {
     // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, sessionOf }, { pull }] = await Promise.all([
-      import("./sync.worker"),
-      import("./sync-records"),
+      import("./sync.worker.ts"),
+      import("./sync-records.ts"),
     ]);
     const deps = await syncDeps();
     const accountId = await sessionOf(deps);
@@ -186,8 +186,8 @@ export const syncStop = createServerFn({ method: "POST" }).handler(
   async (): Promise<{ ok: true } | SignedOut> => {
     // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, sessionOf, clearSessionCookie }, { deleteAccount }] = await Promise.all([
-      import("./sync.worker"),
-      import("./sync-records"),
+      import("./sync.worker.ts"),
+      import("./sync-records.ts"),
     ]);
     const deps = await syncDeps();
     const accountId = await sessionOf(deps);
@@ -209,8 +209,8 @@ export const syncReissueRecovery = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<boolean> => {
     // Handler imports: see ../../../../../docs/server-imports.md.
     const [{ syncDeps, sessionOf }, { reissueRecovery }] = await Promise.all([
-      import("./sync.worker"),
-      import("./sync-auth"),
+      import("./sync.worker.ts"),
+      import("./sync-auth.ts"),
     ]);
     const deps = await syncDeps();
     const accountId = await sessionOf(deps);

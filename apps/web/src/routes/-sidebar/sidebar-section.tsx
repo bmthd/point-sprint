@@ -1,6 +1,6 @@
 import { Card, Heading, VStack } from "@workspaces/ui";
 import { type ReactNode, useId } from "react";
-import { ColumnHead } from "../../ui/column-head";
+import { ColumnHead } from "#/ui/column-head.tsx";
 
 type SidebarSectionProps = {
   title: string;

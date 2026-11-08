@@ -11,8 +11,8 @@
 // conditions で表せないため、ユーザーが自分の達成状況に合わせて enabled を切り替える。
 // 旧サイトになかった新しい4サービスのアイコンは、上記の公式SPUページが配信する画像を
 // 2026-10-05に取得した（楽天でんき、楽天Kドリームス、楽天ラクマ、楽天ポイントカード）。
-import type { Benefit } from "../model/benefit";
-import type { ChannelId } from "../model/common";
+import type { Benefit } from "#/model/benefit.ts";
+import type { ChannelId } from "#/model/common.ts";
 
 type AmountBasis = Benefit["amountBasis"];
 type CapScope = Benefit["capScope"];

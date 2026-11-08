@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { largestRemainder } from "./largest-remainder";
+import { largestRemainder } from "./largest-remainder.ts";
 
 describe("largestRemainder", () => {
   test("splits 10 by 1:1:1 as 4,3,3", () => {

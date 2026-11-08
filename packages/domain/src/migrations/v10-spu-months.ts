@@ -1,6 +1,6 @@
-import { DEFAULT_ACCOUNT_ID } from "../model/account";
-import { monthsOf } from "../model/common";
-import type { Migration } from "./runner";
+import { DEFAULT_ACCOUNT_ID } from "#/model/account.ts";
+import { monthsOf } from "#/model/common.ts";
+import type { Migration } from "./runner.ts";
 
 // The SPU items as the master defined them at version 10.
 const CARD_BONUS_ID = "864f3f89-dacc-4313-a528-dac222c383cc";

@@ -1,8 +1,8 @@
-import { missingGoogleTagScripts } from "../src/google-tags/scripts";
-import { indexedPagesRenderedOnRequest, missingHeadTags } from "../src/prerender-pages";
-import { siteUrl } from "../src/site-url";
-import { adsensePaused, expect, test, fixDate } from "./fixtures";
-import { PlanSettingsPage, SitePage, TopPage } from "./pages";
+import { missingGoogleTagScripts } from "#/google-tags/scripts.ts";
+import { indexedPagesRenderedOnRequest, missingHeadTags } from "#/prerender-pages.ts";
+import { siteUrl } from "#/site-url.ts";
+import { adsensePaused, expect, test, fixDate } from "./fixtures.ts";
+import { PlanSettingsPage, SitePage, TopPage } from "./pages/index.ts";
 
 // The prerendered HTML holds each page's title; a plan's pages put the plan's name in once loaded.
 

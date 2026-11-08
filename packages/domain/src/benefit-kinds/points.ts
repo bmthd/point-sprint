@@ -1,5 +1,5 @@
-import { largestRemainder } from "../allocation/largest-remainder";
-import type { EligibleItem, RoundingUnit } from "./types";
+import { largestRemainder } from "#/allocation/largest-remainder.ts";
+import type { EligibleItem, RoundingUnit } from "./types.ts";
 
 function floorPoints(amount: number, rate: number): number {
   const rateBp = Math.round(rate * 100);

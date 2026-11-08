@@ -9,14 +9,14 @@ import {
 import { Box, Card, Flex, Heading, IconButton, Image, List, Switch, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
-import { rateText } from "../../../ui/format";
-import { toggleBenefitAtom } from "../../../state/plan-operations";
-import { PencilIcon } from "../../../ui/icons";
-import { imageUrl } from "../-order-shared";
-import { CampaignAddButtons } from "./campaign-adder";
-import { CampaignEditor } from "./campaign-editor";
-import { useDeleteCampaign } from "./delete-campaign";
-import { useSaveSettingsChange, whenText } from "./settings-shared";
+import { rateText } from "#/ui/format.ts";
+import { toggleBenefitAtom } from "#/state/plan-operations.ts";
+import { PencilIcon } from "#/ui/icons.tsx";
+import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
+import { CampaignAddButtons } from "./campaign-adder.tsx";
+import { CampaignEditor } from "./campaign-editor.tsx";
+import { useDeleteCampaign } from "./delete-campaign.tsx";
+import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
 
 const fixedKeys = new Set(
   campaignTemplates.filter(comesWithPlan).map((template) => template.benefit.sharedKey),

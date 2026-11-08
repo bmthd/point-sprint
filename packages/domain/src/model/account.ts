@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { IdSchema } from "./common";
+import { IdSchema } from "./common.ts";
 
 /**
  * A Rakuten account the user buys with, so that caps shared across plans are counted per account.

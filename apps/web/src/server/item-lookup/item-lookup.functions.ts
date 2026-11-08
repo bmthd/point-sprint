@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { LookupItemInputSchema } from "../../rakuten/item-lookup";
+import { LookupItemInputSchema } from "#/rakuten/item-lookup.ts";
 
 /**
  * The item on an item page, looked up by the Worker, which alone holds the Rakuten API's keys.
@@ -9,6 +9,6 @@ export const lookupItem = createServerFn({ method: "POST" })
   .validator(LookupItemInputSchema)
   .handler(async ({ data }) => {
     // Handler imports: see ../../../../../docs/server-imports.md.
-    const { lookupItemInWorker } = await import("./item-lookup.worker");
+    const { lookupItemInWorker } = await import("./item-lookup.worker.ts");
     return lookupItemInWorker(data);
   });

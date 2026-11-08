@@ -1,5 +1,5 @@
 import { type Page, type Response, expect } from "@playwright/test";
-import { TopPage } from "./top-page";
+import { TopPage } from "./top-page.ts";
 
 /** The page for a URL no route matches. */
 export class NotFoundPage {

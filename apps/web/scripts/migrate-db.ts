@@ -8,7 +8,7 @@ import { readFileSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { EVENTS_DB, PREVIEW_EVENTS_DB, PREVIEW_SYNC_DB, SYNC_DB } from "../cloudflare.config.ts";
-import { applyMigrations } from "../src/server/shared/migrations.ts";
+import { applyMigrations } from "#/server/shared/migrations.ts";
 import { localStateDir } from "./local-state-dir.ts";
 
 const args = new Set(process.argv.slice(2));

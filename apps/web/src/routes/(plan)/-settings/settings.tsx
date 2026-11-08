@@ -2,16 +2,16 @@ import { ClientOnly, useCanGoBack, useRouter } from "@tanstack/react-router";
 import { Alert, Box, Flex, Heading, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
-import { storageHealthQueryAtom } from "../../../state/queries";
-import { BackIcon } from "../../../ui/icons";
-import { RouterIconButton } from "../../../ui/router-link";
-import { QuarantineNotice } from "../-quarantine-notice";
-import { StorageHealthFailure, storageMessages } from "../-warnings";
-import { ResetDataButton } from "../../-reset-data";
-import { AccountSettings } from "./account-settings";
-import { ShopRegistry } from "./shop-registry";
-import { SpuMonthsCard } from "./spu-months-card";
-import { SyncSettings } from "./sync-settings";
+import { storageHealthQueryAtom } from "#/state/queries.ts";
+import { BackIcon } from "#/ui/icons.tsx";
+import { RouterIconButton } from "#/ui/router-link.tsx";
+import { QuarantineNotice } from "#/routes/(plan)/-quarantine-notice.tsx";
+import { StorageHealthFailure, storageMessages } from "#/routes/(plan)/-warnings.tsx";
+import { ResetDataButton } from "#/routes/-reset-data.tsx";
+import { AccountSettings } from "./account-settings.tsx";
+import { ShopRegistry } from "./shop-registry.tsx";
+import { SpuMonthsCard } from "./spu-months-card.tsx";
+import { SyncSettings } from "./sync-settings.tsx";
 
 function StorageNotice() {
   const { data } = useAtomValue(storageHealthQueryAtom);

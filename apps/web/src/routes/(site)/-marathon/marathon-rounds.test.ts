@@ -8,7 +8,7 @@ import {
   roundSentence,
   shopAroundOf,
   splitRounds,
-} from "./marathon-rounds";
+} from "./marathon-rounds.ts";
 
 const round = (
   id: string,

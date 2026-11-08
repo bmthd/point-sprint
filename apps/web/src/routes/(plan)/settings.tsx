@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Settings } from "./-settings/settings";
-import { pageHead } from "../../page-head";
+import { Settings } from "./-settings/settings.tsx";
+import { pageHead } from "#/page-head.ts";
 
 export const Route = createFileRoute("/(plan)/settings")({
   head: () =>

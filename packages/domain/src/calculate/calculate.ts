@@ -1,19 +1,19 @@
-import { largestRemainder } from "../allocation/largest-remainder";
-import { taxExcludedTarget, taxIncludedTarget } from "../amounts/target-amount";
-import { benefitKinds, pointsFor, type EligibleItem } from "../benefit-kinds";
-import { tierRate } from "../benefit-kinds/shop-around";
-import { spendTierRate } from "../benefit-kinds/spend-tiers";
-import { channels } from "../channels";
-import { matchesConditions } from "../conditions/matches";
-import { type Benefit, isTwoShopCampaign } from "../model/benefit";
-import type { ChannelId, OrderTag, ShopTag } from "../model/common";
-import { type LineItem, hasShop, orderShopContext } from "../model/order";
-import { type Plan, planAccountId } from "../model/plan";
-import type { Shop } from "../model/shop";
-import { capGroupKey, resolveGroupCap } from "./cap-groups";
-import { shopAroundOutlook, type ShopAroundOutlook } from "./outlook";
-import { POINT_GROUPS, pointGroupOf, type PointGroup } from "./point-group";
-import { countShops } from "./shop-count";
+import { largestRemainder } from "#/allocation/largest-remainder.ts";
+import { taxExcludedTarget, taxIncludedTarget } from "#/amounts/target-amount.ts";
+import { benefitKinds, pointsFor, type EligibleItem } from "#/benefit-kinds/index.ts";
+import { tierRate } from "#/benefit-kinds/shop-around.ts";
+import { spendTierRate } from "#/benefit-kinds/spend-tiers.ts";
+import { channels } from "#/channels/index.ts";
+import { matchesConditions } from "#/conditions/matches.ts";
+import { type Benefit, isTwoShopCampaign } from "#/model/benefit.ts";
+import type { ChannelId, OrderTag, ShopTag } from "#/model/common.ts";
+import { type LineItem, hasShop, orderShopContext } from "#/model/order.ts";
+import { type Plan, planAccountId } from "#/model/plan.ts";
+import type { Shop } from "#/model/shop.ts";
+import { capGroupKey, resolveGroupCap } from "./cap-groups.ts";
+import { shopAroundOutlook, type ShopAroundOutlook } from "./outlook.ts";
+import { POINT_GROUPS, pointGroupOf, type PointGroup } from "./point-group.ts";
+import { countShops } from "./shop-count.ts";
 import type {
   BenefitTotal,
   BreakdownRow,
@@ -22,7 +22,7 @@ import type {
   CalculationWarning,
   EligibleLineItem,
   HeldEstimate,
-} from "./types";
+} from "./types.ts";
 
 type OrderContext = {
   orderId: string;

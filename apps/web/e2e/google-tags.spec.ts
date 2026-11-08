@@ -1,5 +1,5 @@
-import { type Page, adsensePaused, expect, test } from "./fixtures";
-import { TopPage } from "./pages";
+import { type Page, adsensePaused, expect, test } from "./fixtures.ts";
+import { TopPage } from "./pages/index.ts";
 
 // What gtag() pushed: the inline snippet queues each call's arguments in `dataLayer`.
 const gtagCalls = (page: Page) =>

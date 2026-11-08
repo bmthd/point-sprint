@@ -3,17 +3,17 @@ import { Alert, Button, Checkbox, Field, Input, Text, Textarea, VStack } from "@
 import { atom, useAtomValue } from "jotai";
 import { type ComponentType, useState } from "react";
 import * as v from "valibot";
-import { Form, bind, errorsOf } from "../../-form";
-import type { InquiryResult } from "../../../server/inquiry/inquiry";
-import { InquiryInputSchema, type InquiryRequest } from "../../../server/inquiry/inquiry-input";
-import { TurnstileWidget, type TurnstileWidgetProps } from "../../-turnstile-widget";
+import { Form, bind, errorsOf } from "#/routes/-form.tsx";
+import type { InquiryResult } from "#/server/inquiry/inquiry.ts";
+import { InquiryInputSchema, type InquiryRequest } from "#/server/inquiry/inquiry-input.ts";
+import { TurnstileWidget, type TurnstileWidgetProps } from "#/routes/-turnstile-widget.tsx";
 
 export type SendInquiry = (request: InquiryRequest) => Promise<InquiryResult>;
 
 /** The inquiry sender; tests replace it in their Jotai store. */
 export const inquirySenderAtom = atom<{ send: SendInquiry }>({
   send: async (request) => {
-    const { submitInquiry } = await import("../../../server/inquiry/inquiry.functions");
+    const { submitInquiry } = await import("#/server/inquiry/inquiry.functions.ts");
     return submitInquiry({ data: request });
   },
 });

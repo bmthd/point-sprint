@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { IdSchema, MonthSchema, TimestampSchema } from "./common";
+import { IdSchema, MonthSchema, TimestampSchema } from "./common.ts";
 
 /**
  * The SPU one account achieved in one month: the ids of the `standardSpu` items that are on. 楽天

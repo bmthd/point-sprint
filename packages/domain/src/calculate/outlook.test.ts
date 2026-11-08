@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
-import type { Benefit } from "../model/benefit";
-import type { Order } from "../model/order";
-import type { Plan } from "../model/plan";
-import type { Shop } from "../model/shop";
-import { calculate, calculateAll } from "./calculate";
-import { shopAroundOutlook } from "./outlook";
+import type { Benefit } from "#/model/benefit.ts";
+import type { Order } from "#/model/order.ts";
+import type { Plan } from "#/model/plan.ts";
+import type { Shop } from "#/model/shop.ts";
+import { calculate, calculateAll } from "./calculate.ts";
+import { shopAroundOutlook } from "./outlook.ts";
 
 const TIERS = [2, 3, 4, 5, 6, 7, 8, 9, 10].map((minShops) => ({ minShops, rate: minShops - 1 }));
 const BENEFIT_ID = "5a000000-0000-4000-8000-000000000001";

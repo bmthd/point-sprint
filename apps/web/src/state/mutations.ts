@@ -1,4 +1,4 @@
-import type { Repository } from "../storage/repository";
+import type { Repository } from "#/storage/repository.ts";
 import {
   type Plan,
   type Profile,
@@ -9,8 +9,8 @@ import {
 } from "@workspaces/domain";
 import type { QueryClient } from "@tanstack/query-core";
 import { atomWithMutation, queryClientAtom } from "jotai-tanstack-query";
-import { defaultProfile, queryKeys } from "./queries";
-import { repositoryAtom } from "./repository";
+import { defaultProfile, queryKeys } from "./queries.ts";
+import { repositoryAtom } from "./repository.ts";
 
 const timestamps = new WeakMap<object, string>();
 

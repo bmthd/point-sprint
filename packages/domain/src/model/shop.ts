@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { ChannelIdSchema, IdSchema, ShopTagSchema, TimestampSchema } from "./common";
+import { ChannelIdSchema, IdSchema, ShopTagSchema, TimestampSchema } from "./common.ts";
 
 export const ShopSchema = v.object({
   id: IdSchema,

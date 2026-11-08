@@ -11,8 +11,8 @@ export const Route = createFileRoute("/events.json")({
         // Handler imports: see ../../../../docs/server-imports.md.
         const [{ env }, { publishedEvents }, { devMigrated }] = await Promise.all([
           import("cloudflare:workers"),
-          import("../server/official-events/event-store"),
-          import("../server/shared/dev-migrations.worker"),
+          import("#/server/official-events/event-store.ts"),
+          import("#/server/shared/dev-migrations.worker.ts"),
         ]);
         return Response.json(await publishedEvents(await devMigrated(env.EVENTS_DB)), {
           // The cron changes the rows a few times a day at most.

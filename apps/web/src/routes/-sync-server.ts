@@ -1,8 +1,8 @@
 import { atom } from "jotai";
-import type { SyncServer } from "../storage/sync-passkey";
+import type { SyncServer } from "#/storage/sync-passkey.ts";
 
 // Load on demand so browser tests can replace the atom without loading the server runtime.
-const functions = () => import("../server/sync/sync.functions");
+const functions = () => import("#/server/sync/sync.functions.ts");
 
 /** The sync server functions; tests replace them in their Jotai store. */
 export const syncServerAtom = atom<SyncServer>({

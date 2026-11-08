@@ -1,4 +1,4 @@
-import { type Article, newestFirst, parseArticle } from "./article";
+import { type Article, newestFirst, parseArticle } from "./article.ts";
 
 // The guides for the pages. Each file is loaded only when a page needs it.
 

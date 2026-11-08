@@ -12,12 +12,12 @@ import {
 import { Button, Flex, Image, List, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import type { Ref } from "react";
-import { addBenefitAtom } from "../../../state/plan-operations";
-import { tokyoToday } from "../../../ui/dates";
-import { PlusIcon } from "../../../ui/icons";
-import { imageUrl } from "../-order-shared";
-import { PLACEHOLDER_CAP, SPECS } from "./campaign-form";
-import { useSaveSettingsChange } from "./settings-shared";
+import { addBenefitAtom } from "#/state/plan-operations.ts";
+import { tokyoToday } from "#/ui/dates.ts";
+import { PlusIcon } from "#/ui/icons.tsx";
+import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
+import { PLACEHOLDER_CAP, SPECS } from "./campaign-form.ts";
+import { useSaveSettingsChange } from "./settings-shared.ts";
 
 /** The templates the user adds with dates or a period of their own, in the master's order. */
 export const addableTemplates = campaignTemplates.filter(

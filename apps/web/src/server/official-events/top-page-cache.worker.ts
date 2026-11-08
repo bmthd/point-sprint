@@ -1,8 +1,8 @@
 import { type ExecutionContext, env } from "cloudflare:workers";
-import { tokyoToday } from "../../ui/dates";
-import { publishedEvents } from "./event-store";
-import { devMigrated } from "../shared/dev-migrations.worker";
-import { type TopPageSnapshot, cachedTopPage } from "./top-page-cache";
+import { tokyoToday } from "#/ui/dates.ts";
+import { publishedEvents } from "./event-store.ts";
+import { devMigrated } from "#/server/shared/dev-migrations.worker.ts";
+import { type TopPageSnapshot, cachedTopPage } from "./top-page-cache.ts";
 
 /**
  * The top page through the data center's cache (top-page-cache.ts). The dev server renders it each

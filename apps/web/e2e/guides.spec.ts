@@ -1,7 +1,7 @@
-import { expect, test } from "./fixtures";
-import { GUIDE_ITEM_NAME } from "./fake-rakuten-api";
-import { GuidePage, GuidesPage } from "./pages";
-import { siteUrl } from "../src/site-url";
+import { expect, test } from "./fixtures.ts";
+import { GUIDE_ITEM_NAME } from "./fake-rakuten-api.ts";
+import { GuidePage, GuidesPage } from "./pages/index.ts";
+import { siteUrl } from "#/site-url.ts";
 
 // The E2E build searches the guides' items in the stand-in for the Rakuten API
 // (`scripts/build-e2e.ts`), which finds the same item for every list.

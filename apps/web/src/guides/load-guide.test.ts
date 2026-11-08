@@ -1,8 +1,8 @@
 import { expect, test, vi } from "vitest";
-import type { GuideItem, GuideItemSearch } from "./guide-items";
-import { loadArticle } from "./articles";
-import { itemQueriesIn, itemQueryKey } from "./item-query";
-import { loadGuide } from "./load-guide";
+import type { GuideItem, GuideItemSearch } from "./guide-items.ts";
+import { loadArticle } from "./articles.ts";
+import { itemQueriesIn, itemQueryKey } from "./item-query.ts";
+import { loadGuide } from "./load-guide.ts";
 
 const item: GuideItem = {
   itemCode: "shop-a:1",

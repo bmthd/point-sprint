@@ -1,9 +1,9 @@
-import { campaignTemplates } from "../master/campaigns";
-import { instantiateCampaign } from "../master/instantiate";
-import { comesWithPlan } from "../model/campaign-template";
-import type { Id } from "../model/common";
-import type { OfficialEvent } from "../model/official-event";
-import type { Plan } from "../model/plan";
+import { campaignTemplates } from "#/master/campaigns.ts";
+import { instantiateCampaign } from "#/master/instantiate.ts";
+import { comesWithPlan } from "#/model/campaign-template.ts";
+import type { Id } from "#/model/common.ts";
+import type { OfficialEvent } from "#/model/official-event.ts";
+import type { Plan } from "#/model/plan.ts";
 
 /**
  * Returns the plan attached to an official event, as `createPlan` would have made it from the

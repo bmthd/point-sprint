@@ -1,5 +1,5 @@
 import { createRouter } from "@tanstack/react-router";
-import { routeTree } from "./routeTree.gen";
+import { routeTree } from "./routeTree.gen.ts";
 
 export function getRouter() {
   // "root": a URL under a layout route (`/help/x`) gets the same not-found page, in the root's head.

@@ -1,6 +1,6 @@
 import { Card, Image, type ImageProps, LinkBox } from "@workspaces/ui";
-import type { Article } from "../../guides/article";
-import { thumbnailPath, thumbnailSize } from "../../guides/thumbnail";
+import type { Article } from "#/guides/article.ts";
+import { thumbnailPath, thumbnailSize } from "#/guides/thumbnail.ts";
 
 /**
  * A guide's thumbnail, at its own proportions whatever width it is given. Its text is the guide's

@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
-import { ShopSchema } from "./shop";
+import { ShopSchema } from "./shop.ts";
 
 const shop = {
   id: "9b8a7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",

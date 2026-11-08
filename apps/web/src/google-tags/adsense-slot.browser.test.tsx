@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
-import { AdsenseSlot } from "./adsense-slot";
+import { AdsenseSlot } from "./adsense-slot.tsx";
 
 afterEach(async () => {
   await cleanup();

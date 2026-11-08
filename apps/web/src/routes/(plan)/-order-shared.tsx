@@ -14,16 +14,11 @@ import { atom, useAtomValue, useSetAtom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
 import { type ReactNode, type RefObject, useCallback, useRef, useState } from "react";
-import {
-  orderAtom,
-  orderPointsAtom,
-  calculatedPlanAtom,
-  planResultAtom,
-} from "../../state/derived";
-import { clearOrdersAtom, removeOrderAtom, saveOrderDraftAtom } from "../../state/plan-operations";
-import { shopsAtom } from "../../state/queries";
-import { openOrderIdAtom } from "./-ui";
-import type { OrderDraft } from "./-order-form";
+import { orderAtom, orderPointsAtom, calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
+import { clearOrdersAtom, removeOrderAtom, saveOrderDraftAtom } from "#/state/plan-operations.ts";
+import { shopsAtom } from "#/state/queries.ts";
+import { openOrderIdAtom } from "./-ui.ts";
+import type { OrderDraft } from "./-order-form.ts";
 
 // What the phone's order cards and the desktop's order list have in common.
 

@@ -7,7 +7,7 @@ import {
   type ScheduledRound,
   readCurrentRound,
   readSchedule,
-} from "./event-pages";
+} from "./event-pages.ts";
 
 // Turns the marathon pages into rows of the event master (event-store.ts). A row is published only
 // when it passes the checks below; otherwise the row already published stays as it is, and the

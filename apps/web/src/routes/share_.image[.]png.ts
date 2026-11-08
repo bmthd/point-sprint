@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as v from "valibot";
-import { renderResultImage } from "./-result-image";
-import { resultFigures, ResultSearchSchema } from "./-share/result-card";
+import { renderResultImage } from "./-result-image.ts";
+import { resultFigures, ResultSearchSchema } from "./-share/result-card.ts";
 
 /** The OGP image of a shared result, drawn by the Worker from the figures in the query string. */
 export const Route = createFileRoute("/share_/image.png")({

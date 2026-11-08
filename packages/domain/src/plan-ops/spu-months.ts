@@ -1,9 +1,9 @@
-import { CARRIED_SPU_IDS, NORMAL_POINT_ID, standardSpu } from "../master/spu";
-import type { Benefit } from "../model/benefit";
-import { monthsOf } from "../model/common";
-import { type Plan, planAccountId } from "../model/plan";
-import type { SpuMonth } from "../model/spu-month";
-import { toggleBenefits } from "./benefit-ops";
+import { CARRIED_SPU_IDS, NORMAL_POINT_ID, standardSpu } from "#/master/spu.ts";
+import type { Benefit } from "#/model/benefit.ts";
+import { monthsOf } from "#/model/common.ts";
+import { type Plan, planAccountId } from "#/model/plan.ts";
+import type { SpuMonth } from "#/model/spu-month.ts";
+import { toggleBenefits } from "./benefit-ops.ts";
 
 /**
  * The ids of the SPU that are on for `accountId` in `month` (`YYYY-MM`). A month not stored yet

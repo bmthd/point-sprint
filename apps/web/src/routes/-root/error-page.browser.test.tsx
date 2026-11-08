@@ -10,7 +10,7 @@ import { config, theme } from "@workspaces/ui/theme";
 import { expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { ErrorPage } from "./error-page";
+import { ErrorPage } from "./error-page.tsx";
 
 test("shows the error page without the error, and reloads the page", async () => {
   let fail = true;

@@ -1,7 +1,16 @@
 import { describe, expect, test, vi } from "vitest";
-import { type InquiryDeps, handleInquiry } from "./inquiry";
-import { INQUIRY_FROM, INQUIRY_SUBJECT, buildInquiryMail, encodeHeaderValue } from "./inquiry-mail";
-import { SITEVERIFY_ENDPOINT, type TurnstileResult, verifyTurnstile } from "../shared/turnstile";
+import { type InquiryDeps, handleInquiry } from "./inquiry.ts";
+import {
+  INQUIRY_FROM,
+  INQUIRY_SUBJECT,
+  buildInquiryMail,
+  encodeHeaderValue,
+} from "./inquiry-mail.ts";
+import {
+  SITEVERIFY_ENDPOINT,
+  type TurnstileResult,
+  verifyTurnstile,
+} from "#/server/shared/turnstile.ts";
 
 // Neither `siteverify` nor the `send_email` binding is reached: both are stood in for here.
 

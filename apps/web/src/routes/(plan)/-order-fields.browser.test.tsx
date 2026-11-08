@@ -1,6 +1,6 @@
 import type { Shop } from "@workspaces/domain";
 import { expect, test } from "vitest";
-import { NEW_SHOP, type ShopChoice, shopToSave } from "./-order-fields";
+import { NEW_SHOP, type ShopChoice, shopToSave } from "./-order-fields.tsx";
 
 const shop = (fields: Partial<Shop> & Pick<Shop, "id" | "name">): Shop => ({
   channel: "rakuten-ichiba",

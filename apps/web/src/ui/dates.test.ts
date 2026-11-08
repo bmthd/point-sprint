@@ -5,7 +5,7 @@ import {
   monthOf,
   msUntilTokyoMidnight,
   tokyoToday,
-} from "./dates";
+} from "./dates.ts";
 
 test("tokyoToday uses the Japanese calendar day", () => {
   expect(tokyoToday(new Date("2026-09-30T16:00:00Z"))).toBe("2026-10-01");

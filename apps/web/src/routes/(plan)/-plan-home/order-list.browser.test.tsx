@@ -4,10 +4,10 @@ import { type ReactNode, useEffect } from "react";
 import { expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { updateOrderAtom } from "../../../state/plan-operations";
-import { plansQueryAtom, shopsQueryAtom } from "../../../state/queries";
-import { createMemoryRepository } from "../../../storage/memory-repository";
-import { OrderList } from "./order-list";
+import { updateOrderAtom } from "#/state/plan-operations.ts";
+import { plansQueryAtom, shopsQueryAtom } from "#/state/queries.ts";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import { OrderList } from "./order-list.tsx";
 import {
   PLAN,
   Providers,
@@ -18,14 +18,14 @@ import {
   orderId,
   shops,
   spuBenefit,
-} from "../-test-fixtures";
+} from "#/routes/(plan)/-test-fixtures.tsx";
 
 const cardRenders = vi.hoisted(() => new Map<string, number>());
 
 // Every card is wrapped in a Profiler that counts its commits by order id. The wrapper keeps the
 // card's own `memo` (and its comparison), so the list renders cards exactly as it does in the app.
-vi.mock("./order-card", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./order-card")>();
+vi.mock("./order-card.tsx", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./order-card.tsx")>();
   const { createElement, memo, Profiler: ProfilerComponent } = await import("react");
   type Props = Parameters<typeof actual.OrderCard>[0];
   const card = actual.OrderCard as unknown as {

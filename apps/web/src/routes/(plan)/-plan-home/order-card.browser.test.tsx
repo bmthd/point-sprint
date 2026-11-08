@@ -11,11 +11,11 @@ import { Profiler, type ReactNode, useEffect } from "react";
 import { expect, test } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
-import { updateOrderAtom } from "../../../state/plan-operations";
-import { plansQueryAtom, shopsQueryAtom } from "../../../state/queries";
-import { createMemoryRepository } from "../../../storage/memory-repository";
-import { expectTexts } from "../../../test-texts";
-import { OrderCard } from "./order-card";
+import { updateOrderAtom } from "#/state/plan-operations.ts";
+import { plansQueryAtom, shopsQueryAtom } from "#/state/queries.ts";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import { expectTexts } from "#/test-texts.ts";
+import { OrderCard } from "./order-card.tsx";
 import {
   PLAN,
   Providers,
@@ -32,7 +32,7 @@ import {
   shops,
   spuBenefit,
   summary,
-} from "../-test-fixtures";
+} from "#/routes/(plan)/-test-fixtures.tsx";
 
 const list = () => page.getByRole("list", { name: "注文", exact: true });
 // The open card also lists its items, which do not hold a shop's name.

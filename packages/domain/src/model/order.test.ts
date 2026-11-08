@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
-import { LineItemSchema, OrderSchema, withShop } from "./order";
+import { LineItemSchema, OrderSchema, withShop } from "./order.ts";
 
 const validItem = {
   id: "3f2b8c1e-5d4a-4e7b-9a10-1c2d3e4f5a6b",

@@ -11,7 +11,7 @@ import {
   recoveryVerifier,
   unwrapSecret,
   wrapSecret,
-} from "./sync-crypto";
+} from "./sync-crypto.ts";
 
 const row: SyncRow = {
   kind: "shop",

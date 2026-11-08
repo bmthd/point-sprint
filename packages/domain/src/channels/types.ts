@@ -1,4 +1,4 @@
-import type { ChannelId } from "../model/common";
+import type { ChannelId } from "#/model/common.ts";
 
 export type ParsedUrl = { channel: ChannelId; shopCode?: string; itemManageNumber?: string };
 

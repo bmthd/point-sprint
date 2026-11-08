@@ -1,6 +1,6 @@
 import type { OfficialEvent } from "@workspaces/domain";
 import { expect, test } from "vitest";
-import { endedLatestFirst, startTarget } from "./start-target";
+import { endedLatestFirst, startTarget } from "./start-target.ts";
 
 const TODAY = "2026-10-05";
 

@@ -1,5 +1,5 @@
-import { CARD_BONUS_ID, CARD_NORMAL_ID, PREMIUM_CARD_BONUS_ID } from "../master/spu";
-import type { Migration } from "./runner";
+import { CARD_BONUS_ID, CARD_NORMAL_ID, PREMIUM_CARD_BONUS_ID } from "#/master/spu.ts";
+import type { Migration } from "./runner.ts";
 
 const CARD_BONUS_IDS = new Set([CARD_BONUS_ID, PREMIUM_CARD_BONUS_ID]);
 

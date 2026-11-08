@@ -1,15 +1,15 @@
 import * as v from "valibot";
-import { ConditionsSchema, IdSchema } from "../model/common";
-import { rateBonus } from "./rate-bonus";
-import { shopAround } from "./shop-around";
-import { spendTiers } from "./spend-tiers";
-import type { BenefitKindDef } from "./types";
+import { ConditionsSchema, IdSchema } from "#/model/common.ts";
+import { rateBonus } from "./rate-bonus.ts";
+import { shopAround } from "./shop-around.ts";
+import { spendTiers } from "./spend-tiers.ts";
+import type { BenefitKindDef } from "./types.ts";
 
-export { pointsFor } from "./points";
-export { rateBonus } from "./rate-bonus";
-export { shopAround } from "./shop-around";
-export { spendTiers } from "./spend-tiers";
-export type { BenefitKindDef, EligibleItem, RoundingUnit } from "./types";
+export { pointsFor } from "./points.ts";
+export { rateBonus } from "./rate-bonus.ts";
+export { shopAround } from "./shop-around.ts";
+export { spendTiers } from "./spend-tiers.ts";
+export type { BenefitKindDef, EligibleItem, RoundingUnit } from "./types.ts";
 
 export const benefitKinds = {
   "rate-bonus": rateBonus,

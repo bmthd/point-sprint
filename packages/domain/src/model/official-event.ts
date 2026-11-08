@@ -1,6 +1,6 @@
 import * as v from "valibot";
-import { BenefitSchema } from "./benefit";
-import { IsoTimeSchema, PeriodSchema } from "./common";
+import { BenefitSchema } from "./benefit.ts";
+import { IsoTimeSchema, PeriodSchema } from "./common.ts";
 
 export const OfficialEventSchema = v.object({
   id: v.string(),

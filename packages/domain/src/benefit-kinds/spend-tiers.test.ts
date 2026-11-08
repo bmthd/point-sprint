@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
-import { spendTierRate, spendTiers } from "./spend-tiers";
+import { spendTierRate, spendTiers } from "./spend-tiers.ts";
 
 const tiers = [
   { minAmount: 5000, rate: 1 },

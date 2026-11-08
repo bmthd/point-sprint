@@ -1,5 +1,5 @@
-import { googleTagIds } from "./ids";
-import { googleTagScripts } from "./scripts";
+import { googleTagIds } from "./ids.ts";
+import { googleTagScripts } from "./scripts.ts";
 
 /**
  * The Google tags, rendered straight into the document head rather than through the route's

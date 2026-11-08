@@ -1,9 +1,9 @@
 import { renderHtml } from "@tanstack/markdown/html";
 import { expect, test } from "vitest";
-import { loadArticles } from "../../../guides/articles";
-import { guideExtensions } from "../../../guides/markdown";
-import { guideSections, splitIntroduction } from "./-guide-toc";
-import { headingIds } from "./-markdown-body";
+import { loadArticles } from "#/guides/articles.ts";
+import { guideExtensions } from "#/guides/markdown.ts";
+import { guideSections, splitIntroduction } from "./-guide-toc.tsx";
+import { headingIds } from "./-markdown-body.tsx";
 
 test("each guide's contents link to the `##` headings it has, in order", async () => {
   for (const { body } of await loadArticles()) {

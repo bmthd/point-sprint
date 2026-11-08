@@ -3,8 +3,8 @@ import { Box, Button, Card, Fieldset, Flex, IconButton, Text } from "@workspaces
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useId, useRef, useState } from "react";
 import * as v from "valibot";
-import { grouped, rateText, yen } from "../../../ui/format";
-import { CommitField } from "../-form/commit-field";
+import { grouped, rateText, yen } from "#/ui/format.ts";
+import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
 import {
   END_BEFORE_START,
   MAX_RATE,
@@ -15,13 +15,13 @@ import {
   RequiredTextSchema,
   YenSchema,
 } from "@workspaces/domain";
-import { planResultAtom } from "../../../state/derived";
-import { updateBenefitAtom } from "../../../state/plan-operations";
-import { ChevronIcon, CloseIcon, PlusIcon } from "../../../ui/icons";
-import { CommitDatePicker } from "../-date-picker-field";
-import { isAddedCampaign, isFixedCampaign } from "./campaign-toggles";
-import { useDeleteCampaign } from "./delete-campaign";
-import { useSaveSettingsChange, whenText } from "./settings-shared";
+import { planResultAtom } from "#/state/derived.ts";
+import { updateBenefitAtom } from "#/state/plan-operations.ts";
+import { ChevronIcon, CloseIcon, PlusIcon } from "#/ui/icons.tsx";
+import { CommitDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
+import { isAddedCampaign, isFixedCampaign } from "./campaign-toggles.tsx";
+import { useDeleteCampaign } from "./delete-campaign.tsx";
+import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
 
 type SpendTiersBenefit = Extract<Benefit, { kind: "spend-tiers" }>;
 

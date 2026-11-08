@@ -1,18 +1,18 @@
 import { describe, expect, test } from "vitest";
-import { calculateAll } from "../calculate/calculate";
-import type { Benefit } from "../model/benefit";
-import type { CampaignTemplate } from "../model/campaign-template";
-import type { OrderTag } from "../model/common";
-import type { Plan } from "../model/plan";
-import type { Shop } from "../model/shop";
-import { campaignTemplates } from "./campaigns";
+import { calculateAll } from "#/calculate/calculate.ts";
+import type { Benefit } from "#/model/benefit.ts";
+import type { CampaignTemplate } from "#/model/campaign-template.ts";
+import type { OrderTag } from "#/model/common.ts";
+import type { Plan } from "#/model/plan.ts";
+import type { Shop } from "#/model/shop.ts";
+import { campaignTemplates } from "./campaigns.ts";
 import {
   campaignInputOf,
   editCampaign,
   hasCampaignOccurrence,
   instantiateCampaign,
   templateOfCampaign,
-} from "./instantiate";
+} from "./instantiate.ts";
 
 const NEW_ID = "99999999-9999-4999-8999-999999999999";
 const SHOP = "a0000000-0000-4000-8000-000000000001";

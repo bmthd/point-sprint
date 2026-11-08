@@ -18,11 +18,11 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type ReactNode, useId } from "react";
-import { grouped } from "../../../ui/format";
-import { monthDay, monthDayWithWeekday } from "../../../ui/dates";
-import { officialEventsQueryAtom } from "../../-official-events";
-import { SaveFailed } from "./hero";
-import { endedLatestFirst } from "./start-target";
+import { grouped } from "#/ui/format.ts";
+import { monthDay, monthDayWithWeekday } from "#/ui/dates.ts";
+import { officialEventsQueryAtom } from "#/routes/-official-events.ts";
+import { SaveFailed } from "./hero.tsx";
+import { endedLatestFirst } from "./start-target.ts";
 
 /**
  * The highest rate and the cap of each shop-around and spend-tiers benefit, e.g.

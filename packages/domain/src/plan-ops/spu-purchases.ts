@@ -1,10 +1,10 @@
-import { taxIncludedTarget } from "../amounts/target-amount";
-import { spuPurchaseRules } from "../master/spu";
-import { orderShopContext, hasShop } from "../model/order";
-import { type Plan, planAccountId } from "../model/plan";
-import type { Shop } from "../model/shop";
-import type { SpuMonth } from "../model/spu-month";
-import { spuIdsIn } from "./spu-months";
+import { taxIncludedTarget } from "#/amounts/target-amount.ts";
+import { spuPurchaseRules } from "#/master/spu.ts";
+import { orderShopContext, hasShop } from "#/model/order.ts";
+import { type Plan, planAccountId } from "#/model/plan.ts";
+import type { Shop } from "#/model/shop.ts";
+import type { SpuMonth } from "#/model/spu-month.ts";
+import { spuIdsIn } from "./spu-months.ts";
 
 /** An SPU item that an order achieves for an account in a month. */
 export type SpuAchievement = { accountId: string; month: string; benefitId: string };

@@ -6,11 +6,11 @@ import {
   orderRowId,
 } from "@workspaces/domain";
 import { describe, expect, test } from "vitest";
-import { createMemoryRepository } from "./memory-repository";
-import { encryptRow } from "./sync-crypto";
-import { createSyncRunner, syncOnce } from "./sync-engine";
-import { signIn, startSync } from "./sync-passkey";
-import { createTestBackend, createTestPasskeys, prfOutput } from "./sync-test-server";
+import { createMemoryRepository } from "./memory-repository.ts";
+import { encryptRow } from "./sync-crypto.ts";
+import { createSyncRunner, syncOnce } from "./sync-engine.ts";
+import { signIn, startSync } from "./sync-passkey.ts";
+import { createTestBackend, createTestPasskeys, prfOutput } from "./sync-test-server.ts";
 
 const PLAN_ID = "00000000-0000-4000-8000-000000000001";
 const SHOP_ID = "00000000-0000-4000-8000-000000000002";

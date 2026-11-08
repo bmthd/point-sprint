@@ -1,9 +1,9 @@
 import { describe, expect, test } from "vitest";
-import type { Benefit } from "../model/benefit";
-import type { Plan } from "../model/plan";
-import type { Shop } from "../model/shop";
-import { calculate } from "./calculate";
-import { pointGroupOf } from "./point-group";
+import type { Benefit } from "#/model/benefit.ts";
+import type { Plan } from "#/model/plan.ts";
+import type { Shop } from "#/model/shop.ts";
+import { calculate } from "./calculate.ts";
+import { pointGroupOf } from "./point-group.ts";
 
 const SHOP_1 = "a0000000-0000-4000-8000-000000000001";
 const SHOP_2 = "a0000000-0000-4000-8000-000000000002";

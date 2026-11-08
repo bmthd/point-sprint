@@ -1,7 +1,7 @@
-import { ALLOWED_ORIGIN, ITEM_SEARCH_ENDPOINT, type RakutenConfig } from "../../rakuten/config";
-import type { ItemLookupResult, LookupItemInput } from "../../rakuten/item-lookup";
-import { searchItemPage } from "../../rakuten/item-search";
-import type { Turn } from "./rate-gate";
+import { ALLOWED_ORIGIN, ITEM_SEARCH_ENDPOINT, type RakutenConfig } from "#/rakuten/config.ts";
+import type { ItemLookupResult, LookupItemInput } from "#/rakuten/item-lookup.ts";
+import { searchItemPage } from "#/rakuten/item-search.ts";
+import type { Turn } from "./rate-gate.ts";
 
 export type ItemLookupDeps = {
   /** The Worker's Rakuten settings; `undefined` when it has none. */
