@@ -1,7 +1,10 @@
 import { expect, test } from "vitest";
 import { googleTagScripts, missingGoogleTagScripts } from "./scripts";
 
-const ids = { measurementId: "G-B6CYR6VF70", adsenseClientId: "ca-pub-8953986206743618" };
+const ids = {
+  measurementId: "G-B6CYR6VF70",
+  adsenseClientId: "ca-pub-8953986206743618",
+};
 
 test("loads gtag.js and AdSense asynchronously", () => {
   const scripts = googleTagScripts(ids);
@@ -34,4 +37,8 @@ test("names the scripts a built page lacks", () => {
 
 test("expects no gtag.js of a build without analytics", () => {
   expect(missingGoogleTagScripts("<html></html>", { analytics: false })).toEqual(["AdSense"]);
+});
+
+test("expects no AdSense of a build without ads", () => {
+  expect(missingGoogleTagScripts("<html></html>", { ads: false })).toEqual(["gtag.js"]);
 });

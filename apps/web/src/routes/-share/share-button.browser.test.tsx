@@ -121,8 +121,9 @@ test("every button and link is at least 44px tall and works from the keyboard", 
 
   const controls = page.getByRole("button").or(page.getByRole("link"));
   await expect.element(controls).toHaveLength(5);
-  // Sizes are read from the elements: no matcher measures them.
+  // Sizes are read from the elements: no matcher measures them. Rounded, as layout can leave a
+  // 44px control a hair under 44.
   for (const control of controls.elements()) {
-    expect(control.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    expect(Math.round(control.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
   }
 });

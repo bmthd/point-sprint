@@ -12,6 +12,15 @@ const GoogleTagsEnvSchema = v.object({
   ),
 });
 
+/**
+ * AdSense turned off for now with `PUBLIC_ADSENSE_PAUSED="true"` in `.env.production` or the
+ * environment: the build then loads no AdSense script and renders no ad unit. The client ID and
+ * ads.txt stay, so removing the variable resumes the ads.
+ */
+export function isAdsensePaused(env: Record<string, string | undefined>): boolean {
+  return env.PUBLIC_ADSENSE_PAUSED === "true";
+}
+
 /** A pull request's Preview (preview.yml), whose visits are kept out of Google Analytics. */
 export function isPullRequestPreview(env: Record<string, string | undefined>): boolean {
   return env.PULL_REQUEST_PREVIEW === "true";

@@ -4,7 +4,11 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { guideThumbnails } from "./guide-thumbnails-plugin.ts";
 import { ogFonts } from "./og-fonts-plugin.ts";
-import { isPullRequestPreview, parseGoogleTagsEnv } from "./src/google-tags/env.ts";
+import {
+  isAdsensePaused,
+  isPullRequestPreview,
+  parseGoogleTagsEnv,
+} from "./src/google-tags/env.ts";
 import { prerenderedPages, robotsTxt } from "./src/prerender-pages.ts";
 import { localStateDir } from "./scripts/local-state-dir.ts";
 import { readRakutenConfig } from "./src/rakuten/config.ts";
@@ -30,6 +34,8 @@ export default defineConfig(({ command, mode, isPreview }) => {
   // A pull request's Preview loads no Google Analytics, so that its visits, mostly crawlers', stay
   // out of production's figures.
   const measurementId = isPullRequestPreview(process.env) ? undefined : googleTagIds?.measurementId;
+  // While AdSense is paused (PUBLIC_ADSENSE_PAUSED), no build loads it or renders an ad unit.
+  const adsenseClientId = isAdsensePaused(publicEnv) ? undefined : googleTagIds?.adsenseClientId;
   return {
     plugins: [
       cloudflare({
@@ -41,8 +47,15 @@ export default defineConfig(({ command, mode, isPreview }) => {
       tanstackStart({
         router: { routeFileIgnorePattern: "\\.test\\." },
         // Only the listed pages: `/share` is rendered on each request, for the figures in its query.
-        prerender: { enabled: true, crawlLinks: false, autoStaticPathsDiscovery: false },
-        pages: prerenderedPages.map(({ path }) => ({ path, prerender: { enabled: true } })),
+        prerender: {
+          enabled: true,
+          crawlLinks: false,
+          autoStaticPathsDiscovery: false,
+        },
+        pages: prerenderedPages.map(({ path }) => ({
+          path,
+          prerender: { enabled: true },
+        })),
       }),
       viteReact({ compiler: true }),
       ogFonts(),
@@ -51,7 +64,11 @@ export default defineConfig(({ command, mode, isPreview }) => {
         name: "robots-txt",
         applyToEnvironment: (environment) => environment.name === "client",
         generateBundle() {
-          this.emitFile({ type: "asset", fileName: "robots.txt", source: robotsTxt });
+          this.emitFile({
+            type: "asset",
+            fileName: "robots.txt",
+            source: robotsTxt,
+          });
         },
       },
     ],
@@ -77,7 +94,7 @@ export default defineConfig(({ command, mode, isPreview }) => {
         publicEnv.PUBLIC_TURNSTILE_SITE_KEY?.trim() || null,
       ),
       "import.meta.env.GA_MEASUREMENT_ID": JSON.stringify(measurementId),
-      "import.meta.env.ADSENSE_CLIENT_ID": JSON.stringify(googleTagIds?.adsenseClientId),
+      "import.meta.env.ADSENSE_CLIENT_ID": JSON.stringify(adsenseClientId),
     },
     build: {
       // Yamada UI and Emotion put the shared chunk just over Vite's 500 kB default; splitting them

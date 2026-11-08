@@ -1,6 +1,11 @@
 // Also imported by scripts/check-prerender.ts, which Node runs directly: keep this file free of imports.
 
-type HeadScript = { src?: string; async?: boolean; crossOrigin?: "anonymous"; children?: string };
+type HeadScript = {
+  src?: string;
+  async?: boolean;
+  crossOrigin?: "anonymous";
+  children?: string;
+};
 
 const GTAG_SRC = "https://www.googletagmanager.com/gtag/js?id=";
 const ADSENSE_SRC = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=";
@@ -44,12 +49,16 @@ export function googleTagScripts({
 
 /**
  * Names of the Google tag scripts that a built HTML page does not load. A build without
- * `analytics`, a pull request's Preview, is not expected to load gtag.js.
+ * `analytics`, a pull request's Preview, is not expected to load gtag.js, and one without `ads`,
+ * while AdSense is paused (`isAdsensePaused` in env.ts), is not expected to load AdSense.
  */
-export function missingGoogleTagScripts(html: string, { analytics = true } = {}): string[] {
+export function missingGoogleTagScripts(
+  html: string,
+  { analytics = true, ads = true } = {},
+): string[] {
   return [
     ...(analytics ? [{ name: "gtag.js", src: GTAG_SRC }] : []),
-    { name: "AdSense", src: ADSENSE_SRC },
+    ...(ads ? [{ name: "AdSense", src: ADSENSE_SRC }] : []),
   ]
     .filter(({ src }) => !html.includes(src))
     .map(({ name }) => name);

@@ -1,7 +1,7 @@
 import { missingGoogleTagScripts } from "../src/google-tags/scripts";
 import { indexedPagesRenderedOnRequest, missingHeadTags } from "../src/prerender-pages";
 import { siteUrl } from "../src/site-url";
-import { expect, test, fixDate } from "./fixtures";
+import { adsensePaused, expect, test, fixDate } from "./fixtures";
 import { PlanSettingsPage, SitePage, TopPage } from "./pages";
 
 // The prerendered HTML holds each page's title; a plan's pages put the plan's name in once loaded.
@@ -31,7 +31,7 @@ test("the pages rendered on request have every head tag and the Google tags", as
   for (const path of indexedPagesRenderedOnRequest) {
     const html = await (await request.get(path)).text();
     expect(missingHeadTags(html), path).toEqual([]);
-    expect(missingGoogleTagScripts(html), path).toEqual([]);
+    expect(missingGoogleTagScripts(html, { ads: !adsensePaused }), path).toEqual([]);
   }
 });
 

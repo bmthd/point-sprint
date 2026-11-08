@@ -1,4 +1,4 @@
-import { type Page, expect, test } from "./fixtures";
+import { type Page, adsensePaused, expect, test } from "./fixtures";
 import { TopPage } from "./pages";
 
 // What gtag() pushed: the inline snippet queues each call's arguments in `dataLayer`.
@@ -9,7 +9,7 @@ const gtagCalls = (page: Page) =>
     ),
   );
 
-test("loads gtag.js and AdSense and configures GA once without manual page views", async ({
+test("loads gtag.js, and AdSense unless paused, and configures GA once without manual page views", async ({
   page,
 }) => {
   const problems: string[] = [];
@@ -29,7 +29,11 @@ test("loads gtag.js and AdSense and configures GA once without manual page views
 
   // Each script was loaded once, and navigating did not load or run them again.
   expect(googleRequests.toSorted()).toEqual([
-    "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8953986206743618",
+    ...(adsensePaused
+      ? []
+      : [
+          "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8953986206743618",
+        ]),
     "https://www.googletagmanager.com/gtag/js?id=G-B6CYR6VF70",
   ]);
   // The config call counts the first load. Later page views come from GA4 Enhanced measurement

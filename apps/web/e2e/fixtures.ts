@@ -1,4 +1,7 @@
 import { type Page, test as base } from "@playwright/test";
+import { join } from "node:path";
+import { loadEnv } from "vite";
+import { isAdsensePaused } from "../src/google-tags/env";
 
 export { expect } from "@playwright/test";
 export type { Locator, Page } from "@playwright/test";
@@ -18,6 +21,11 @@ const RAKUTEN_CREDIT = "https://webservice.rakuten.co.jp/**";
 /** A transparent 1×1 GIF. */
 // cspell:disable-next-line
 const emptyGif = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+
+/** Whether the build under test left AdSense out (PUBLIC_ADSENSE_PAUSED, as in vite.config.ts). */
+export const adsensePaused = isAdsensePaused(
+  loadEnv("production", join(import.meta.dirname, "../../.."), "PUBLIC_"),
+);
 
 /** Google Analytics and AdSense, which the production build loads on every page. */
 const GOOGLE_TAGS = /^https:\/\/(www\.googletagmanager\.com|pagead2\.googlesyndication\.com)\//;
