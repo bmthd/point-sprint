@@ -1,6 +1,6 @@
 import { Box, Link, VStack } from "@workspaces/ui";
 import { useEffect, useState } from "react";
-import { SidebarSection } from "../../-sidebar/sidebar-section";
+import { SidebarSection } from "#/routes/-sidebar/sidebar-section.tsx";
 
 /** A section heading counts as the one being read once its top is this far from the window's top. */
 const READING_LINE = 96;

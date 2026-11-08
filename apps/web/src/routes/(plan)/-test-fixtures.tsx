@@ -23,11 +23,11 @@ import type { ReactNode } from "react";
 import { expect } from "vitest";
 import { type Locator, page } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
-import type { ItemLookup } from "../../rakuten/item-lookup";
-import { officialEventsSourceAtom } from "../-official-events";
-import { repositoryAtom } from "../../state/repository";
+import type { ItemLookup } from "#/rakuten/item-lookup.ts";
+import { officialEventsSourceAtom } from "#/routes/-official-events.ts";
+import { repositoryAtom } from "#/state/repository.ts";
 import { itemLookupAtom } from "./-item-autofill";
-import type { Repository } from "../../storage/repository";
+import type { Repository } from "#/storage/repository.ts";
 import { PlanHome } from "./-plan-home/plan-home";
 
 // Plans, shops and a rendered plan home shared by the plan home's browser tests.

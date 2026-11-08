@@ -3,10 +3,14 @@ import { Box, Heading, Link } from "@workspaces/ui";
 import type { ReactNode } from "react";
 import { ArticleDates } from "./-article-dates";
 import { GuideItemList } from "./-guide-item-list";
-import type { Guide } from "../../../../guides/load-guide";
-import { guideExtensions, rakutenAffiliateUrl } from "../../../../guides/markdown";
-import { GuideToc, guideSections, splitIntroduction } from "../-guide-toc";
-import { headingIds, markdownComponents } from "../-markdown-body";
+import type { Guide } from "#/guides/load-guide.ts";
+import { guideExtensions, rakutenAffiliateUrl } from "#/guides/markdown.ts";
+import {
+  GuideToc,
+  guideSections,
+  splitIntroduction,
+} from "#/routes/(site)/(markdown)/-guide-toc.tsx";
+import { headingIds, markdownComponents } from "#/routes/(site)/(markdown)/-markdown-body.tsx";
 
 /**
  * A shopping guide: its title, its dates, and its Markdown with the lists of items. On a narrow

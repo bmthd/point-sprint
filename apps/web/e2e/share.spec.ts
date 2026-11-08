@@ -1,6 +1,6 @@
 import { type Page, expect, test, fixDate } from "./fixtures";
 import { SharePage, SitePage, TopPage } from "./pages";
-import { siteUrl } from "../src/site-url";
+import { siteUrl } from "#/site-url.ts";
 
 // Where the share buttons are, and what they share. The tests take the Web Share API away, so the
 // buttons open the links that every browser has.

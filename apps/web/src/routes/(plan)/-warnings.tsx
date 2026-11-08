@@ -9,12 +9,12 @@ import {
 } from "@workspaces/domain";
 import { Alert, Button, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { grouped } from "../../ui/format";
+import { grouped } from "#/ui/format.ts";
 import { QuarantineNotice } from "./-quarantine-notice";
-import { officialEventsAtom } from "../-official-events";
-import { withEffectiveAccount } from "../../state/accounts";
-import { accountSettingsAtom } from "../../state/derived";
-import { shopsAtom, spuMonthsAtom, storageHealthQueryAtom } from "../../state/queries";
+import { officialEventsAtom } from "#/routes/-official-events.ts";
+import { withEffectiveAccount } from "#/state/accounts.ts";
+import { accountSettingsAtom } from "#/state/derived.ts";
+import { shopsAtom, spuMonthsAtom, storageHealthQueryAtom } from "#/state/queries.ts";
 
 /** `2026-10-11` → `10/11`. */
 export function monthDay(date: string) {

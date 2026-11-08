@@ -11,8 +11,8 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useState } from "react";
-import { attachToEventAtom } from "../../../state/plan-operations";
-import { officialEventsAtom } from "../../-official-events";
+import { attachToEventAtom } from "#/state/plan-operations.ts";
+import { officialEventsAtom } from "#/routes/-official-events.ts";
 import { useSaveSettingsChange, whenText } from "./settings-shared";
 
 const periodText = (event: OfficialEvent) => whenText({ type: "range", ...event.period });

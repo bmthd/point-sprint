@@ -1,4 +1,4 @@
-import { grouped } from "../ui/format";
+import { grouped } from "#/ui/format.ts";
 import { POINT_GROUPS, type PointGroup } from "@workspaces/domain";
 import { Box, Flex, List, Text } from "@workspaces/ui";
 

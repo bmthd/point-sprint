@@ -3,8 +3,8 @@ import {
   BANK_CARD_ID as BANK_CARD,
   BANK_SALARY_ID as BANK_SALARY,
   standardSpu,
-} from "../master/spu";
-import type { Plan } from "../model/plan";
+} from "#/master/spu.ts";
+import type { Plan } from "#/model/plan.ts";
 import {
   addBenefit,
   removeBenefit,

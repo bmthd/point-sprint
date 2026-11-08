@@ -2,10 +2,10 @@ import { QueryClient, HydrationBoundary, dehydrate } from "@tanstack/react-query
 import { createFileRoute } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { TopPage } from "./-top/top-page";
-import { pageHead, siteName } from "../../page-head";
-import { siteUrl } from "../../site-url";
-import { queryKeys } from "../../state/queries";
-import type { TopPageSnapshot } from "../../server/official-events/top-page-cache";
+import { pageHead, siteName } from "#/page-head.ts";
+import { siteUrl } from "#/site-url.ts";
+import { queryKeys } from "#/state/queries.ts";
+import type { TopPageSnapshot } from "#/server/official-events/top-page-cache.ts";
 
 export const Route = createFileRoute("/(site)/")({
   head: () => ({

@@ -4,8 +4,13 @@ import { useCallback, useId, useMemo, useRef, useState } from "react";
 import { OrderAddForm } from "./order-add-form";
 import { withMonthSeparators } from "./order-months";
 import { OrderListContext, OrderRow, rowColumns } from "./order-row";
-import { HeaderButton, OrdersHeading, SaveFailedAlert, useOrderConfirm } from "../-order-shared";
-import { ColumnHead } from "../../../ui/column-head";
+import {
+  HeaderButton,
+  OrdersHeading,
+  SaveFailedAlert,
+  useOrderConfirm,
+} from "#/routes/(plan)/-order-shared.tsx";
+import { ColumnHead } from "#/ui/column-head.tsx";
 import { useOrderDrag } from "./use-order-drag";
 
 /**

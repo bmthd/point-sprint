@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { OfficialEvent } from "../model/official-event";
+import type { OfficialEvent } from "#/model/official-event.ts";
 import { eventMasterRunsOut } from "./event-coverage";
 
 function event(start: string, end: string): OfficialEvent {

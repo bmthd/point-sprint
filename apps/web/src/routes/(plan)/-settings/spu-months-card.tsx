@@ -3,12 +3,12 @@ import { DEFAULT_ACCOUNT_ID, addMonths } from "@workspaces/domain";
 import { Card, Field, Heading, NativeSelect, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId, useState } from "react";
-import { accountSettingsAtom } from "../../../state/derived";
-import { spuMonthsAtom } from "../../../state/queries";
-import { ForwardIcon } from "../../../ui/icons";
-import { RouterLink } from "../../../ui/router-link";
-import { useToday } from "../../-use-today";
-import { SpuMonthRows, unsetNote } from "../-spu-month/spu-month-rows";
+import { accountSettingsAtom } from "#/state/derived.ts";
+import { spuMonthsAtom } from "#/state/queries.ts";
+import { ForwardIcon } from "#/ui/icons.tsx";
+import { RouterLink } from "#/ui/router-link.tsx";
+import { useToday } from "#/routes/-use-today.ts";
+import { SpuMonthRows, unsetNote } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
 
 const now = () => new Date();
 

@@ -1,4 +1,4 @@
-import { siteUrl } from "../../site-url.ts";
+import { siteUrl } from "#/site-url.ts";
 
 /**
  * Every letter the result's OGP image (`resultCard`) can draw. The fonts are cut down to these at

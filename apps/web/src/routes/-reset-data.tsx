@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Button, Modal, Text, VStack, useDisclosure } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
-import { clearDataAtom } from "../state/mutations";
+import { clearDataAtom } from "#/state/mutations.ts";
 
 /**
  * 「データを初期化」: after a confirmation, removes the plans, the shops and the profile, and goes to

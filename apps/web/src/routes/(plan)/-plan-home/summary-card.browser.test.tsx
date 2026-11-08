@@ -17,12 +17,12 @@ import type { ReactNode } from "react";
 import { expect, test } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { repositoryAtom } from "../../../state/repository";
-import { createMemoryRepository } from "../../../storage/memory-repository";
-import type { Repository } from "../../../storage/repository";
-import { TestColorMode } from "../../../test-color-mode";
-import { expectTexts } from "../../../test-texts";
-import { marathon } from "../-test-fixtures";
+import { repositoryAtom } from "#/state/repository.ts";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import type { Repository } from "#/storage/repository.ts";
+import { TestColorMode } from "#/test-color-mode.tsx";
+import { expectTexts } from "#/test-texts.ts";
+import { marathon } from "#/routes/(plan)/-test-fixtures.tsx";
 import { PlanHome } from "./plan-home";
 
 const PLAN = "f0000000-0000-4000-8000-00000000000a";

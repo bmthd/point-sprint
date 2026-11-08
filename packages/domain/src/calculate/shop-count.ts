@@ -1,9 +1,9 @@
-import { taxIncludedTarget } from "../amounts/target-amount";
-import { channels } from "../channels";
-import { inDateRule } from "../conditions/matches";
-import type { DateRule } from "../model/common";
-import { type Order, hasShop } from "../model/order";
-import type { Shop } from "../model/shop";
+import { taxIncludedTarget } from "#/amounts/target-amount.ts";
+import { channels } from "#/channels/index.ts";
+import { inDateRule } from "#/conditions/matches.ts";
+import type { DateRule } from "#/model/common.ts";
+import { type Order, hasShop } from "#/model/order.ts";
+import type { Shop } from "#/model/shop.ts";
 
 /** Minimum tax-included target amount per shop to count toward shop-around (inclusive). */
 export const SHOP_AROUND_MIN_AMOUNT = 1000;

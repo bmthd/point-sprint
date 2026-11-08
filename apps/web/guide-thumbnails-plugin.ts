@@ -2,15 +2,15 @@ import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { render } from "takumi-js";
 import type { Plugin } from "vite";
-import { parseArticle } from "./src/guides/article.ts";
-import { guideSlugs } from "./src/guides/files.ts";
+import { parseArticle } from "#/guides/article.ts";
+import { guideSlugs } from "#/guides/files.ts";
 import {
   thumbnail,
   thumbnailFontFamily,
   thumbnailFontWeights,
   thumbnailPath,
   thumbnailSize,
-} from "./src/guides/thumbnail.ts";
+} from "#/guides/thumbnail.ts";
 
 const weightNames = { 700: "700Bold", 900: "900Black" } as const;
 

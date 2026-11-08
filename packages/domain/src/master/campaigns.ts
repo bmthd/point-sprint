@@ -2,8 +2,8 @@
 // ユーザーが instantiateCampaign で自分のプランに取り込む。
 // 出典: 設計書 3節「計算が従う楽天の規則」に書いた値と出典 URL を使う（各テンプレートのコメントに要点を再掲する）。
 // 確認日: 2026-10-04
-import type { CampaignTemplate } from "../model/campaign-template";
-import type { ChannelId } from "../model/common";
+import type { CampaignTemplate } from "#/model/campaign-template.ts";
+import type { ChannelId } from "#/model/common.ts";
 
 const CHANNELS: ChannelId[] = ["rakuten-ichiba", "rakuten-books"];
 

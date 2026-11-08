@@ -5,7 +5,7 @@ import type {
   verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import { describe, expect, test } from "vitest";
-import { memoryD1 } from "../shared/memory-d1";
+import { memoryD1 } from "#/server/shared/memory-d1.ts";
 import {
   type SyncAuthDeps,
   authenticate,

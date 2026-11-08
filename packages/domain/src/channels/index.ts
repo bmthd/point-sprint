@@ -1,4 +1,4 @@
-import type { ChannelId } from "../model/common";
+import type { ChannelId } from "#/model/common.ts";
 import { rakutenBooks } from "./rakuten-books";
 import { rakutenIchiba } from "./rakuten-ichiba";
 import { rakutenKobo } from "./rakuten-kobo";

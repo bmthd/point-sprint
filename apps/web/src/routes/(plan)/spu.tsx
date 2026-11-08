@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { MonthSchema } from "@workspaces/domain";
 import * as v from "valibot";
 import { SpuPage } from "./-spu-page";
-import { pageHead } from "../../page-head";
+import { pageHead } from "#/page-head.ts";
 
 /** `month` is the month shown (`YYYY-MM`), this month when left out; `account` the account's id. */
 const SpuSearchSchema = v.object({

@@ -12,7 +12,7 @@ import {
   useClipboard,
 } from "@workspaces/ui";
 import { useId, useState } from "react";
-import { ShareIcon } from "../../ui/icons";
+import { ShareIcon } from "#/ui/icons.tsx";
 import facebookLogo from "./facebook-logo.svg";
 import lineLogo from "./line-logo.svg";
 import xLogo from "./x-logo.svg";

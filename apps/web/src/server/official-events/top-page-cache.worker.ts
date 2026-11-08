@@ -1,7 +1,7 @@
 import { type ExecutionContext, env } from "cloudflare:workers";
-import { tokyoToday } from "../../ui/dates";
+import { tokyoToday } from "#/ui/dates.ts";
 import { publishedEvents } from "./event-store";
-import { devMigrated } from "../shared/dev-migrations.worker";
+import { devMigrated } from "#/server/shared/dev-migrations.worker.ts";
 import { type TopPageSnapshot, cachedTopPage } from "./top-page-cache";
 
 /**

@@ -1,13 +1,13 @@
 import { useHydrateAtoms } from "jotai/utils";
-import { syncServerAtom } from "../../-sync-server";
+import { syncServerAtom } from "#/routes/-sync-server.ts";
 import { expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
-import { createMemoryRepository } from "../../../storage/memory-repository";
-import { deriveKeys, generateMasterSecret } from "../../../storage/sync-crypto";
-import type { Repository } from "../../../storage/repository";
-import type { Passkeys, SyncServer } from "../../../storage/sync-passkey";
-import type { TurnstileWidgetProps } from "../../-turnstile-widget";
-import { Providers } from "../-test-fixtures";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import { deriveKeys, generateMasterSecret } from "#/storage/sync-crypto.ts";
+import type { Repository } from "#/storage/repository.ts";
+import type { Passkeys, SyncServer } from "#/storage/sync-passkey.ts";
+import type { TurnstileWidgetProps } from "#/routes/-turnstile-widget.tsx";
+import { Providers } from "#/routes/(plan)/-test-fixtures.tsx";
 import { SyncSettings } from "./sync-settings";
 
 // The passkeys, Turnstile and the server are stood in for: what is tested is what the section

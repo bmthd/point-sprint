@@ -5,8 +5,8 @@
 import { setInput, useField } from "@formisch/react";
 import { Autocomplete, Field } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { errorsOf } from "../-form";
-import { shopsAtom } from "../../state/queries";
+import { errorsOf } from "#/routes/-form.tsx";
+import { shopsAtom } from "#/state/queries.ts";
 import type { OrderForm } from "./-order-form-store";
 import { NEW_SHOP, optionalMark, useSortedShops } from "./-order-fields";
 

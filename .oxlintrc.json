@@ -26,6 +26,22 @@
         "react/unsupported-syntax": "error",
         "react/use-memo": "error"
       }
+    },
+    {
+      "files": ["apps/web/src/**", "packages/domain/src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["../**"],
+                "message": "親ディレクトリのモジュールは `#/`（package.json の imports）から読み込む。"
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "env": {

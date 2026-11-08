@@ -3,10 +3,10 @@ import type { Plan } from "@workspaces/domain";
 import { Button, Heading, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
-import { useClientTitle } from "../../page-head";
-import { planAtom } from "../../state/derived";
-import { plansQueryAtom, shopsQueryAtom } from "../../state/queries";
-import { RouterLink } from "../../ui/router-link";
+import { useClientTitle } from "#/page-head.ts";
+import { planAtom } from "#/state/derived.ts";
+import { plansQueryAtom, shopsQueryAtom } from "#/state/queries.ts";
+import { RouterLink } from "#/ui/router-link.tsx";
 
 function NotFound() {
   return (

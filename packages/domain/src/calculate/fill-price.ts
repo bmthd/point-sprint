@@ -1,6 +1,6 @@
-import { taxExcludedTarget, taxIncludedTarget } from "../amounts/target-amount";
-import type { Benefit } from "../model/benefit";
-import type { LineItem } from "../model/order";
+import { taxExcludedTarget, taxIncludedTarget } from "#/amounts/target-amount.ts";
+import type { Benefit } from "#/model/benefit.ts";
+import type { LineItem } from "#/model/order.ts";
 
 export type TaxRate = LineItem["taxRate"];
 

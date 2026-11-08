@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { memoryD1 } from "../shared/memory-d1";
+import { memoryD1 } from "#/server/shared/memory-d1.ts";
 import { type RemoteRecord, LIMITS, deleteAccount, pull, push } from "./sync-records";
 
 const ACCOUNT = "account-1";

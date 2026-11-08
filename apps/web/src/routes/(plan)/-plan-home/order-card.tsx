@@ -12,12 +12,12 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { memo, useId, useMemo, useRef } from "react";
-import { pointsText, rateText, yen } from "../../../ui/format";
-import { orderAtom } from "../../../state/derived";
-import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "../../../state/plan-operations";
-import { openOrderIdAtom, reorderModeAtom } from "../-ui";
-import { monthDayWithWeekday } from "../../../ui/dates";
-import { ArrowIcon, ChevronIcon } from "../../../ui/icons";
+import { pointsText, rateText, yen } from "#/ui/format.ts";
+import { orderAtom } from "#/state/derived.ts";
+import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "#/state/plan-operations.ts";
+import { openOrderIdAtom, reorderModeAtom } from "#/routes/(plan)/-ui.ts";
+import { monthDayWithWeekday } from "#/ui/dates.ts";
+import { ArrowIcon, ChevronIcon } from "#/ui/icons.tsx";
 import {
   CampaignChip,
   OrderBadge,
@@ -27,8 +27,8 @@ import {
   taxLabel,
   useSaveOrderChange,
   useShopName,
-} from "../-order-shared";
-import { pointFill } from "../../-point-breakdown";
+} from "#/routes/(plan)/-order-shared.tsx";
+import { pointFill } from "#/routes/-point-breakdown.tsx";
 
 export type OrderCardProps = {
   planId: string;

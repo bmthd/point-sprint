@@ -1,7 +1,7 @@
 import { renderHtml } from "@tanstack/markdown/html";
 import { expect, test } from "vitest";
-import { loadArticles } from "../../../guides/articles";
-import { guideExtensions } from "../../../guides/markdown";
+import { loadArticles } from "#/guides/articles.ts";
+import { guideExtensions } from "#/guides/markdown.ts";
 import { guideSections, splitIntroduction } from "./-guide-toc";
 import { headingIds } from "./-markdown-body";
 

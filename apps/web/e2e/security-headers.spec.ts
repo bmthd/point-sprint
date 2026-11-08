@@ -1,4 +1,4 @@
-import { securityHeaders } from "../src/security-headers";
+import { securityHeaders } from "#/security-headers.ts";
 import { expect, test } from "./fixtures";
 
 // Prerendered pages and files get them from `public/_headers`; pages the Worker renders, its 404

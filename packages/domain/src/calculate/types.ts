@@ -1,5 +1,5 @@
-import type { EligibleItem } from "../benefit-kinds";
-import type { Id } from "../model/common";
+import type { EligibleItem } from "#/benefit-kinds/index.ts";
+import type { Id } from "#/model/common.ts";
 import type { ShopAroundOutlook } from "./outlook";
 import type { PointGroup } from "./point-group";
 

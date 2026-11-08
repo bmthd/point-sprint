@@ -1,5 +1,5 @@
 import { Text } from "@workspaces/ui";
-import { type Article, japaneseDate } from "../../../../guides/article";
+import { type Article, japaneseDate } from "#/guides/article.ts";
 
 /** The days an article was published and last changed. The latter only once it has been changed. */
 export function ArticleDates({ article }: { article: Article }) {

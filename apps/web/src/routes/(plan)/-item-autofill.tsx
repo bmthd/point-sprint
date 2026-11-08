@@ -7,9 +7,9 @@ import {
   type ItemLookup,
   type ItemLookupResult,
   LONGEST_WAIT_MS,
-} from "../../rakuten/item-lookup";
-import type { ItemPage, RakutenItem } from "../../rakuten/item-search";
-import { useLatestRef } from "../../use-latest-ref";
+} from "#/rakuten/item-lookup.ts";
+import type { ItemPage, RakutenItem } from "#/rakuten/item-search.ts";
+import { useLatestRef } from "#/use-latest-ref.ts";
 
 import { workerItemLookup } from "./-worker-item-lookup";
 /** The item lookup through the Worker; tests replace it in their Jotai store. */

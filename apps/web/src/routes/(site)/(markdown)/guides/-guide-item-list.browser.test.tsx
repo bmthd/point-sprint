@@ -2,7 +2,7 @@ import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { expect, test } from "vitest";
 import { render } from "vitest-browser-react";
-import type { GuideItem } from "../../../../guides/guide-items";
+import type { GuideItem } from "#/guides/guide-items.ts";
 import { GuideItemList } from "./-guide-item-list";
 
 const AFFILIATE_URL =

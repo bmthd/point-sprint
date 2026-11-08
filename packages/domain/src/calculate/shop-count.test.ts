@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import type { LineItem, Order } from "../model/order";
-import type { Shop } from "../model/shop";
+import type { LineItem, Order } from "#/model/order.ts";
+import type { Shop } from "#/model/shop.ts";
 import { countShops as countShopsIn } from "./shop-count";
 
 const PERIOD = { start: "2026-10-01", end: "2026-10-07" };

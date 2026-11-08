@@ -1,8 +1,8 @@
 import type { PointGroup } from "@workspaces/domain";
 import { Box, Card, Flex, Text, VStack } from "@workspaces/ui";
 import type { ReactNode } from "react";
-import { grouped } from "../../../ui/format";
-import { PointBreakdown } from "../../-point-breakdown";
+import { grouped } from "#/ui/format.ts";
+import { PointBreakdown } from "#/routes/-point-breakdown.tsx";
 
 /** How many shops the marathon counts up to. */
 const SHOP_STEPS = 10;

@@ -31,15 +31,15 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId, useState } from "react";
-import { grouped, pointsText, rateText, rounded } from "../../../ui/format";
-import { withEffectiveAccount } from "../../../state/accounts";
-import { accountSettingsAtom, planResultAtom } from "../../../state/derived";
-import { saveSpuMonthAtom } from "../../../state/mutations";
-import { plansAtom, spuMonthsAtom } from "../../../state/queries";
-import { ExternalIcon, ForwardIcon } from "../../../ui/icons";
-import { RouterButton } from "../../../ui/router-link";
-import { imageUrl } from "../-order-shared";
-import { monthDay, monthText, useSpuOffMessages } from "../-warnings";
+import { grouped, pointsText, rateText, rounded } from "#/ui/format.ts";
+import { withEffectiveAccount } from "#/state/accounts.ts";
+import { accountSettingsAtom, planResultAtom } from "#/state/derived.ts";
+import { saveSpuMonthAtom } from "#/state/mutations.ts";
+import { plansAtom, spuMonthsAtom } from "#/state/queries.ts";
+import { ExternalIcon, ForwardIcon } from "#/ui/icons.tsx";
+import { RouterButton } from "#/ui/router-link.tsx";
+import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
+import { monthDay, monthText, useSpuOffMessages } from "#/routes/(plan)/-warnings.tsx";
 
 /** Rakuten's page where users check their own SPU. */
 const SPU_PAGE_URL = "https://event.rakuten.co.jp/campaign/point-up/everyday/point/";

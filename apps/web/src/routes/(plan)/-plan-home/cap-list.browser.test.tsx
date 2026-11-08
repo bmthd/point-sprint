@@ -1,7 +1,7 @@
 import type { Benefit, Order, Plan } from "@workspaces/domain";
 import { beforeEach, expect, test } from "vitest";
 import { page } from "vitest/browser";
-import { createMemoryRepository } from "../../../storage/memory-repository";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import {
   PLAN,
   baseBenefit,
@@ -10,7 +10,7 @@ import {
   shopId,
   shops,
   summary,
-} from "../-test-fixtures";
+} from "#/routes/(plan)/-test-fixtures.tsx";
 
 const FIRST = "f0000000-0000-4000-8000-0000000000f1";
 

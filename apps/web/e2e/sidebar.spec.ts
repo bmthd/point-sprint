@@ -1,4 +1,4 @@
-import { newestFirst, notices } from "../src/routes/-notices/notices";
+import { newestFirst, notices } from "#/routes/-notices/notices.ts";
 import { expect, test } from "./fixtures";
 import { NoticesPage, SitePage } from "./pages";
 

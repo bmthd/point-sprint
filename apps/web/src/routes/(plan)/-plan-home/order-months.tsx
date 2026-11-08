@@ -2,13 +2,13 @@ import { type Order, type Plan, spuIdsIn } from "@workspaces/domain";
 import { Box, Button, Flex, List, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
-import { rounded } from "../../../ui/format";
-import { accountIdOf } from "../../../state/accounts";
-import { accountSettingsAtom } from "../../../state/derived";
-import { spuMonthsAtom } from "../../../state/queries";
-import { ForwardIcon } from "../../../ui/icons";
-import { monthText } from "../-warnings";
-import { spuMonthRate } from "../-spu-month/spu-month-editor";
+import { rounded } from "#/ui/format.ts";
+import { accountIdOf } from "#/state/accounts.ts";
+import { accountSettingsAtom } from "#/state/derived.ts";
+import { spuMonthsAtom } from "#/state/queries.ts";
+import { ForwardIcon } from "#/ui/icons.tsx";
+import { monthText } from "#/routes/(plan)/-warnings.tsx";
+import { spuMonthRate } from "#/routes/(plan)/-spu-month/spu-month-editor.tsx";
 
 const monthOf = (order: Order) => order.date.slice(0, 7);
 

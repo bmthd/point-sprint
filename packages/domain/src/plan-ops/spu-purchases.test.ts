@@ -1,11 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { BOOKS_SPU_ID, KOBO_SPU_ID } from "../master/spu";
-import { DEFAULT_ACCOUNT_ID } from "../model/account";
-import type { ChannelId } from "../model/common";
-import type { Order } from "../model/order";
-import type { Plan } from "../model/plan";
-import type { Shop } from "../model/shop";
-import { type SpuMonth, spuMonthId } from "../model/spu-month";
+import { BOOKS_SPU_ID, KOBO_SPU_ID } from "#/master/spu.ts";
+import { DEFAULT_ACCOUNT_ID } from "#/model/account.ts";
+import type { ChannelId } from "#/model/common.ts";
+import type { Order } from "#/model/order.ts";
+import type { Plan } from "#/model/plan.ts";
+import type { Shop } from "#/model/shop.ts";
+import { type SpuMonth, spuMonthId } from "#/model/spu-month.ts";
 import {
   disabledAchievedSpu,
   lostSpuPurchases,

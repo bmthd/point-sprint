@@ -1,6 +1,6 @@
 import { type OfficialEvent, priceToFill } from "@workspaces/domain";
-import { grouped } from "../../../ui/format";
-import { monthOf } from "../../../ui/dates";
+import { grouped } from "#/ui/format.ts";
+import { monthOf } from "#/ui/dates.ts";
 
 // What `/marathon` says about the rounds in the event master: the one running or coming, and the
 // ones before it. Everything is read from the rounds, so the page changes when collection does.

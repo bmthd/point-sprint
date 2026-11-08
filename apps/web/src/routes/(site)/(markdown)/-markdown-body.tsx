@@ -20,9 +20,9 @@ import {
   useDisclosure,
 } from "@workspaces/ui";
 import type { ReactNode } from "react";
-import type { FileRoutesById } from "../../../routeTree.gen";
+import type { FileRoutesById } from "#/routeTree.gen.ts";
 import { markdownExtensions } from "./-markdown-extensions";
-import { ColumnHead } from "../../../ui/column-head";
+import { ColumnHead } from "#/ui/column-head.tsx";
 
 /**
  * A box inside the page's card, as the steps and the lists of items are: sunk a step on a light

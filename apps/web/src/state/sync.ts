@@ -3,10 +3,10 @@ import { CURRENT_SCHEMA_VERSION } from "@workspaces/domain";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { atomWithQuery, queryClientAtom } from "jotai-tanstack-query";
 import { useEffect } from "react";
-import { type SyncOutcome, createSyncRunner, syncOnce } from "../storage/sync-engine";
-import type { SyncServer } from "../storage/sync-passkey";
-import { useLatestRef } from "../use-latest-ref";
-import { OutdatedDatabaseError } from "../storage/repository";
+import { type SyncOutcome, createSyncRunner, syncOnce } from "#/storage/sync-engine.ts";
+import type { SyncServer } from "#/storage/sync-passkey.ts";
+import { useLatestRef } from "#/use-latest-ref.ts";
+import { OutdatedDatabaseError } from "#/storage/repository.ts";
 import { repositoryAtom } from "./repository";
 
 export type SyncStatus =

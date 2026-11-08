@@ -2,12 +2,17 @@ import type { Plan } from "@workspaces/domain";
 import { Flex, Button, List, Text } from "@workspaces/ui";
 import { useAtom } from "jotai";
 import { useRef } from "react";
-import { reorderModeAtom } from "../-ui";
-import { PlusIcon } from "../../../ui/icons";
+import { reorderModeAtom } from "#/routes/(plan)/-ui.ts";
+import { PlusIcon } from "#/ui/icons.tsx";
 import { withMonthSeparators } from "./order-months";
 import { OrderCard } from "./order-card";
-import { HeaderButton, OrdersHeading, SaveFailedAlert, useOrderConfirm } from "../-order-shared";
-import { ColumnHead } from "../../../ui/column-head";
+import {
+  HeaderButton,
+  OrdersHeading,
+  SaveFailedAlert,
+  useOrderConfirm,
+} from "#/routes/(plan)/-order-shared.tsx";
+import { ColumnHead } from "#/ui/column-head.tsx";
 
 /**
  * The plan's orders as cards (the phone layout). Counted orders are numbered in list order; held

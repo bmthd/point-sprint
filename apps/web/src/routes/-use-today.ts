@@ -1,6 +1,6 @@
 import { useCallback, useSyncExternalStore } from "react";
-import { msUntilTokyoMidnight, tokyoToday } from "../ui/dates";
-import { useLatestRef } from "../use-latest-ref";
+import { msUntilTokyoMidnight, tokyoToday } from "#/ui/dates.ts";
+import { useLatestRef } from "#/use-latest-ref.ts";
 
 /**
  * Today in Japan on the client. The HTML rendered ahead of time has the day of the build, which the

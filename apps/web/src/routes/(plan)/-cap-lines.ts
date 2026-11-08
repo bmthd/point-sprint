@@ -12,8 +12,8 @@ import {
 } from "@workspaces/domain";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
-import { calculatedPlanAtom, planResultAtom } from "../../state/derived";
-import { yen } from "../../ui/format";
+import { calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
+import { yen } from "#/ui/format.ts";
 
 /** The tax rates a cap's fill price can be shown at. */
 export const CAP_TAX_RATES: TaxRate[] = [0.1, 0.08, 0];

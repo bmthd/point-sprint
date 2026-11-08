@@ -1,6 +1,6 @@
 import { Box, Card, Heading, LinkBox, List, Text, VStack } from "@workspaces/ui";
-import type { Article } from "../../../../guides/article";
-import { GuideThumbnail } from "../../-guide-card";
+import type { Article } from "#/guides/article.ts";
+import { GuideThumbnail } from "#/routes/(site)/-guide-card.tsx";
 import { ArticleDates } from "./-article-dates";
 
 /** Every shopping guide, newest first. */

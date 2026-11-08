@@ -4,7 +4,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { ShareButton } from "./share-button";
-import { siteUrl } from "../../site-url";
+import { siteUrl } from "#/site-url.ts";
 
 const target = { text: "獲得予定 2,600P", url: `${siteUrl}/` };
 

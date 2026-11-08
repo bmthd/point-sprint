@@ -1,4 +1,4 @@
-import type { OfficialEvent } from "../model/official-event";
+import type { OfficialEvent } from "#/model/official-event.ts";
 
 function addDays(date: string, days: number): string {
   const [year = 0, month = 1, day = 1] = date.split("-").map(Number);

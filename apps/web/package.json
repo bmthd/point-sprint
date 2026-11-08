@@ -2,6 +2,9 @@
   "name": "web",
   "private": true,
   "type": "module",
+  "imports": {
+    "#/*": "./src/*"
+  },
   "scripts": {
     "dev": "node scripts/migrate-db.ts --local && dotenvx run -q -f ../../.env.development -- vite dev",
     "build": "dotenvx run -q -f ../../.env.development -- vite build && node scripts/check-prerender.ts",

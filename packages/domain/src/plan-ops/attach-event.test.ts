@@ -1,12 +1,12 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
-import { calculate } from "../calculate/calculate";
-import { createPlan } from "../master/create-plan";
-import type { Benefit } from "../model/benefit";
-import type { OfficialEvent } from "../model/official-event";
-import type { Order } from "../model/order";
-import { type Plan, PlanSchema } from "../model/plan";
-import type { Shop } from "../model/shop";
+import { calculate } from "#/calculate/calculate.ts";
+import { createPlan } from "#/master/create-plan.ts";
+import type { Benefit } from "#/model/benefit.ts";
+import type { OfficialEvent } from "#/model/official-event.ts";
+import type { Order } from "#/model/order.ts";
+import { type Plan, PlanSchema } from "#/model/plan.ts";
+import type { Shop } from "#/model/shop.ts";
 import { attachToEvent } from "./attach-event";
 
 const SHOP_A = "a0000000-0000-4000-8000-000000000001";

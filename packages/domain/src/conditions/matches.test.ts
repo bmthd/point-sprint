@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { Conditions } from "../model/common";
+import type { Conditions } from "#/model/common.ts";
 import { matchesConditions, type ConditionContext } from "./matches";
 
 const ctx: ConditionContext = {

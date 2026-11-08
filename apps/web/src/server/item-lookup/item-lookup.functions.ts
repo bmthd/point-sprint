@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { LookupItemInputSchema } from "../../rakuten/item-lookup";
+import { LookupItemInputSchema } from "#/rakuten/item-lookup.ts";
 
 /**
  * The item on an item page, looked up by the Worker, which alone holds the Rakuten API's keys.

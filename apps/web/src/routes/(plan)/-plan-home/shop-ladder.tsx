@@ -1,4 +1,4 @@
-import { grouped } from "../../../ui/format";
+import { grouped } from "#/ui/format.ts";
 import type { ShopAroundOutlook, ShopAroundOutlookRow } from "@workspaces/domain";
 import {
   Box,

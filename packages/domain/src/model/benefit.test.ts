@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
-import { BenefitSchema } from "../benefit-kinds";
+import { BenefitSchema } from "#/benefit-kinds/index.ts";
 
 test("benefit defaults amountBasis and capScope", () => {
   const benefit = v.parse(BenefitSchema, {

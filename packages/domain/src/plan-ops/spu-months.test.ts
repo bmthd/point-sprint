@@ -6,12 +6,12 @@ import {
   CARD_BONUS_ID,
   CARD_NORMAL_ID,
   NORMAL_POINT_ID,
-} from "../master/spu";
-import { calculate } from "../calculate/calculate";
-import { capLines } from "../calculate/cap-lines";
-import type { Order } from "../model/order";
-import type { Plan } from "../model/plan";
-import { type SpuMonth, spuMonthId } from "../model/spu-month";
+} from "#/master/spu.ts";
+import { calculate } from "#/calculate/calculate.ts";
+import { capLines } from "#/calculate/cap-lines.ts";
+import type { Order } from "#/model/order.ts";
+import type { Plan } from "#/model/plan.ts";
+import { type SpuMonth, spuMonthId } from "#/model/spu-month.ts";
 import {
   enableSpu,
   planWithSpu,

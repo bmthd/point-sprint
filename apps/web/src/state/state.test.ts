@@ -16,9 +16,9 @@ import { QueryClient } from "@tanstack/query-core";
 import { createStore } from "jotai";
 import { queryClientAtom } from "jotai-tanstack-query";
 import { afterEach, expect, test, vi } from "vitest";
-import { createIndexedDbRepository } from "../storage/indexed-db-repository";
-import { createMemoryRepository } from "../storage/memory-repository";
-import type { Repository } from "../storage/repository";
+import { createIndexedDbRepository } from "#/storage/indexed-db-repository.ts";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import type { Repository } from "#/storage/repository.ts";
 import { calculationAtom, orderAtom, orderPointsAtom } from "./derived";
 import {
   changeShop,

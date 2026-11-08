@@ -4,7 +4,7 @@ import { config, theme } from "@workspaces/ui/theme";
 import { expect, test } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import type { Locator } from "vitest/browser";
-import { expectTexts } from "../../../test-texts";
+import { expectTexts } from "#/test-texts.ts";
 import { ShopLadder } from "./shop-ladder";
 
 const tiers = Array.from({ length: 9 }, (_, index) => ({ minShops: index + 2, rate: index + 1 }));

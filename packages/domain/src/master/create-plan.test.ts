@@ -1,8 +1,8 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
-import { comesWithPlan } from "../model/campaign-template";
-import type { OfficialEvent } from "../model/official-event";
-import { PlanSchema } from "../model/plan";
+import { comesWithPlan } from "#/model/campaign-template.ts";
+import type { OfficialEvent } from "#/model/official-event.ts";
+import { PlanSchema } from "#/model/plan.ts";
 import { campaignTemplates } from "./campaigns";
 import { createPlan } from "./create-plan";
 

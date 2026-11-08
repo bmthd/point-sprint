@@ -30,10 +30,10 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type ReactNode, useMemo } from "react";
-import { type FieldState, bind, errorsOf } from "../-form";
-import { type ShopChange, changeShop, replaceShop } from "../../state/mutations";
-import { shopsAtom } from "../../state/queries";
-import type { RakutenItem } from "../../rakuten/item-search";
+import { type FieldState, bind, errorsOf } from "#/routes/-form.tsx";
+import { type ShopChange, changeShop, replaceShop } from "#/state/mutations.ts";
+import { shopsAtom } from "#/state/queries.ts";
+import type { RakutenItem } from "#/rakuten/item-search.ts";
 import { imageUrl, taxRateLabel, taxRateSegmentsStyle } from "./-order-shared";
 import type { OrderForm } from "./-order-form-store";
 

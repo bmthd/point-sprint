@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import type { Benefit } from "../model/benefit";
-import type { Plan } from "../model/plan";
-import type { Shop } from "../model/shop";
+import type { Benefit } from "#/model/benefit.ts";
+import type { Plan } from "#/model/plan.ts";
+import type { Shop } from "#/model/shop.ts";
 import { calculate } from "./calculate";
 import { pointGroupOf } from "./point-group";
 

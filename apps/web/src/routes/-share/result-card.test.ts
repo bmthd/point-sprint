@@ -13,7 +13,7 @@ import {
   ResultSearchSchema,
   resultSummary,
 } from "./result-card";
-import { siteUrl } from "../../site-url";
+import { siteUrl } from "#/site-url.ts";
 
 const breakdown = { base: 100, spu: 500, marathon: 1000, campaign: 1000 };
 

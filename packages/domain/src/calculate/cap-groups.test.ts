@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { Benefit } from "../model/benefit";
+import type { Benefit } from "#/model/benefit.ts";
 import { capGroupKey } from "./cap-groups";
 
 const PLAN_ID = "f0000000-0000-4000-8000-000000000001";

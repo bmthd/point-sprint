@@ -1,9 +1,9 @@
 import { DEFAULT_ACCOUNT_ID, type Plan } from "@workspaces/domain";
 import { Card, Field, NativeSelect, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { accountIdOf } from "../../../state/accounts";
-import { accountSettingsAtom } from "../../../state/derived";
-import { savePlanAtom } from "../../../state/mutations";
+import { accountIdOf } from "#/state/accounts.ts";
+import { accountSettingsAtom } from "#/state/derived.ts";
+import { savePlanAtom } from "#/state/mutations.ts";
 import { useSaveSettingsChange } from "./settings-shared";
 
 /** The plan with `accountId` as its account; the default account is left out, as on a new plan. */

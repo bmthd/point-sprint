@@ -12,8 +12,8 @@ import {
   useDisclosure,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { deleteQuarantinedAtom } from "../../state/mutations";
-import { quarantineQueryAtom, storageHealthQueryAtom } from "../../state/queries";
+import { deleteQuarantinedAtom } from "#/state/mutations.ts";
+import { quarantineQueryAtom, storageHealthQueryAtom } from "#/state/queries.ts";
 
 const storeLabels: Record<StoreName, string> = {
   plans: "プラン",

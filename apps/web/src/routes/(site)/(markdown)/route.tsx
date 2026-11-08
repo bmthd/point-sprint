@@ -1,7 +1,7 @@
 import { Outlet, createFileRoute, useChildMatches } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { GuideToc, guideSections } from "./-guide-toc";
-import { PageWithSidebar } from "../-page-with-sidebar";
+import { PageWithSidebar } from "#/routes/(site)/-page-with-sidebar.tsx";
 
 /**
  * The frame of the pages written in Markdown: each is on a card, but the list of the shopping

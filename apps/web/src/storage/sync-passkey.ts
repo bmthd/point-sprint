@@ -6,7 +6,7 @@ import {
   startAuthentication,
   startRegistration,
 } from "@simplewebauthn/browser";
-import type { PullResult, PushResult } from "../server/sync/sync-records";
+import type { PullResult, PushResult } from "#/server/sync/sync-records.ts";
 import type { Repository } from "./repository";
 import {
   PRF_SALT,

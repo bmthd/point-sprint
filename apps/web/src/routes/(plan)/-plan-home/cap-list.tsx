@@ -8,10 +8,10 @@ import {
 } from "@workspaces/domain";
 import { Badge, Box, Flex, Heading, List, SegmentedControl, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { grouped, yen } from "../../../ui/format";
-import { plansAtom } from "../../../state/queries";
-import { CAP_TAX_RATES, conditionText, scopeText, sharedText } from "../-cap-lines";
-import { taxRateLabel, taxRateSegmentsStyle } from "../-order-shared";
+import { grouped, yen } from "#/ui/format.ts";
+import { plansAtom } from "#/state/queries.ts";
+import { CAP_TAX_RATES, conditionText, scopeText, sharedText } from "#/routes/(plan)/-cap-lines.ts";
+import { taxRateLabel, taxRateSegmentsStyle } from "#/routes/(plan)/-order-shared.tsx";
 
 /**
  * How full the cap is, in two colors: what other plans used, then what this plan used.

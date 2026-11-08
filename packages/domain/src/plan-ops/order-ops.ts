@@ -1,6 +1,6 @@
-import type { Id } from "../model/common";
-import type { Order } from "../model/order";
-import type { Plan } from "../model/plan";
+import type { Id } from "#/model/common.ts";
+import type { Order } from "#/model/order.ts";
+import type { Plan } from "#/model/plan.ts";
 
 function indexOfOrder(plan: Plan, orderId: string): number {
   const index = plan.orders.findIndex((order) => order.id === orderId);

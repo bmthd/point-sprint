@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { type Locator, page, userEvent } from "vitest/browser";
-import type { ItemLookup, ItemLookupFailure, ItemLookupResult } from "../../rakuten/item-lookup";
-import type { RakutenItem } from "../../rakuten/item-search";
-import { createMemoryRepository } from "../../storage/memory-repository";
+import type { ItemLookup, ItemLookupFailure, ItemLookupResult } from "#/rakuten/item-lookup.ts";
+import type { RakutenItem } from "#/rakuten/item-search.ts";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import {
   PLAN,
   marathonPlan,

@@ -1,4 +1,4 @@
-import { queryKeys } from "../state/queries";
+import { queryKeys } from "#/state/queries.ts";
 import { type OfficialEvent, OfficialEventSchema } from "@workspaces/domain";
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";

@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
-import { BenefitSchema } from "../model/benefit";
-import { CampaignTemplateSchema } from "../model/campaign-template";
+import { BenefitSchema } from "#/model/benefit.ts";
+import { CampaignTemplateSchema } from "#/model/campaign-template.ts";
 import { campaignTemplates } from "./campaigns";
 import { instantiateCampaign } from "./instantiate";
 import { standardSpu } from "./spu";

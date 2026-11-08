@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { orderPositions } from "../plan-ops/order-positions";
+import { orderPositions } from "#/plan-ops/order-positions.ts";
 import { IdSchema, TimestampSchema } from "./common";
 import { OrderSchema, type Order } from "./order";
 import { type Plan, PlanSchema } from "./plan";

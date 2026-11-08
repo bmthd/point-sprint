@@ -4,15 +4,11 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { guideThumbnails } from "./guide-thumbnails-plugin.ts";
 import { ogFonts } from "./og-fonts-plugin.ts";
-import {
-  isAdsensePaused,
-  isPullRequestPreview,
-  parseGoogleTagsEnv,
-} from "./src/google-tags/env.ts";
-import { prerenderedPages, robotsTxt } from "./src/prerender-pages.ts";
+import { isAdsensePaused, isPullRequestPreview, parseGoogleTagsEnv } from "#/google-tags/env.ts";
+import { prerenderedPages, robotsTxt } from "#/prerender-pages.ts";
 import { localStateDir } from "./scripts/local-state-dir.ts";
-import { readRakutenConfig } from "./src/rakuten/config.ts";
-import { tokyoToday } from "./src/ui/dates.ts";
+import { readRakutenConfig } from "#/rakuten/config.ts";
+import { tokyoToday } from "#/ui/dates.ts";
 
 export default defineConfig(({ command, mode, isPreview }) => {
   // Only the `PUBLIC_` values reach the browser. They are plain text in `.env.development` and

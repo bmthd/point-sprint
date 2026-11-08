@@ -12,11 +12,11 @@ import {
   VStack,
 } from "@workspaces/ui";
 import type { ReactNode } from "react";
-import { grouped } from "../../../ui/format";
-import { formatPeriod } from "../../../ui/dates";
-import { RouterButton, RouterLink } from "../../../ui/router-link";
-import { GuideCard } from "../-guide-card";
-import { PageWithSidebar } from "../-page-with-sidebar";
+import { grouped } from "#/ui/format.ts";
+import { formatPeriod } from "#/ui/dates.ts";
+import { RouterButton, RouterLink } from "#/ui/router-link.tsx";
+import { GuideCard } from "#/routes/(site)/-guide-card.tsx";
+import { PageWithSidebar } from "#/routes/(site)/-page-with-sidebar.tsx";
 import { type FaqItem, marathonFaq } from "./marathon-faq";
 import {
   capReachingSpend,

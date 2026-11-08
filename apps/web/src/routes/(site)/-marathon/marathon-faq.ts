@@ -1,6 +1,6 @@
 import type { OfficialEvent } from "@workspaces/domain";
-import { grouped } from "../../../ui/format";
-import { siteUrl } from "../../../site-url";
+import { grouped } from "#/ui/format.ts";
+import { siteUrl } from "#/site-url.ts";
 import {
   capReachingSpend,
   datedPeriod,

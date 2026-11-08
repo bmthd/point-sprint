@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { ConditionsSchema, IdSchema } from "../model/common";
+import { ConditionsSchema, IdSchema } from "#/model/common.ts";
 import { rateBonus } from "./rate-bonus";
 import { shopAround } from "./shop-around";
 import { spendTiers } from "./spend-tiers";

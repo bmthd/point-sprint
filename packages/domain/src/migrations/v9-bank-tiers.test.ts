@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
-import { BANK_CARD_ID, BANK_SALARY_ID, standardSpu } from "../master/spu";
-import { BenefitSchema } from "../model/benefit";
+import { BANK_CARD_ID, BANK_SALARY_ID, standardSpu } from "#/master/spu.ts";
+import { BenefitSchema } from "#/model/benefit.ts";
 import { migrateRow, migrations } from "./index";
 
 // Version 10 moves the SPU out of plans and profiles; these tests look at the rows before it.

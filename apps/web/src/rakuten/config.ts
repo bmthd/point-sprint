@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { siteUrl } from "../site-url.ts";
+import { siteUrl } from "#/site-url.ts";
 
 // The Rakuten API settings, read only by the server: the Worker's item lookup and the build's
 // guide item lists.

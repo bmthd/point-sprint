@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { BenefitSchema } from "../benefit-kinds";
+import { BenefitSchema } from "#/benefit-kinds/index.ts";
 
 export const CampaignTemplateSchema = v.object({
   id: v.string(),

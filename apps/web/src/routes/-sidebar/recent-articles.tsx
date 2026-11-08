@@ -1,8 +1,8 @@
 import { getRouteApi, useMatch } from "@tanstack/react-router";
 import { List, Text } from "@workspaces/ui";
-import { japaneseDate } from "../../guides/article";
-import { RECENT_SHOWN } from "../../guides/recent-articles";
-import { RouterLink } from "../../ui/router-link";
+import { japaneseDate } from "#/guides/article.ts";
+import { RECENT_SHOWN } from "#/guides/recent-articles.ts";
+import { RouterLink } from "#/ui/router-link.tsx";
 import { SidebarSection } from "./sidebar-section";
 
 const root = getRouteApi("__root__");

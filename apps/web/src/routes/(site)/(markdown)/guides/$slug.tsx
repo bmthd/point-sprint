@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getGuide } from "../../../../guides/guide.functions";
-import { thumbnailAlt, thumbnailPath } from "../../../../guides/thumbnail";
-import { pageHead } from "../../../../page-head";
+import { getGuide } from "#/guides/guide.functions.ts";
+import { thumbnailAlt, thumbnailPath } from "#/guides/thumbnail.ts";
+import { pageHead } from "#/page-head.ts";
 import { GuideArticle } from "./-guide-article";
 
 export const Route = createFileRoute("/(site)/(markdown)/guides/$slug")({

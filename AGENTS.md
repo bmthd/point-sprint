@@ -60,6 +60,7 @@
 - export する関数は `function` 宣言にする。atom や `createServerFn` など、関数呼び出しの結果は `export const` に置く
 - valibot のスキーマとスキーマを作る関数は `PascalCase` にする
 - ルートの `component` は名前付きの関数を参照する。ルート固有の関数はファイルの下に置き、props を渡さない部品は直接参照する
+- 親ディレクトリにあるモジュールは、`package.json` の `imports` に置いた `#/`（その package の `src/`）から拡張子つきで import する。例: `import { tokyoToday } from "#/ui/dates.ts"`。同じディレクトリとその下は `./` の相対パスで書く。`src/` の外（`scripts/`、`e2e/`、設定ファイル）から `src/` を読むときも `#/` を使う
 - `siteUrl` は `site-url.ts` から直接 import する
 - query key は `apps/web/src/state/queries.ts` の `queryKeys` に集める
 - `packages/domain/src/index.ts` は、公開する名前を列挙して export する

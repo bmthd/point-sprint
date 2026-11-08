@@ -1,11 +1,11 @@
 import { type Shop, channels } from "@workspaces/domain";
 import { Card, Flex, Heading, List, Switch, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { CommitField } from "../-form/commit-field";
+import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
 import { ShopNameSchema } from "@workspaces/domain";
-import { changeShop, saveShopAtom } from "../../../state/mutations";
-import { shopsAtom } from "../../../state/queries";
-import { withTag } from "../-order-fields";
+import { changeShop, saveShopAtom } from "#/state/mutations.ts";
+import { shopsAtom } from "#/state/queries.ts";
+import { withTag } from "#/routes/(plan)/-order-fields.tsx";
 
 const is39 = (shop: Shop) => shop.tags.includes("39shop");
 

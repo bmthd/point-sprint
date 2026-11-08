@@ -4,7 +4,7 @@ import { expect, test } from "vitest";
 import { collectEvents } from "./collect-events";
 import { MARATHON_URL, SCHEDULE_URL } from "./event-pages";
 import { d1EventStore, lastCheckedAt, publishedEvents } from "./event-store";
-import { memoryD1 } from "../shared/memory-d1";
+import { memoryD1 } from "#/server/shared/memory-d1.ts";
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 

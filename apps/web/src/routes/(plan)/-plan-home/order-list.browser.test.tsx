@@ -4,9 +4,9 @@ import { type ReactNode, useEffect } from "react";
 import { expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page } from "vitest/browser";
-import { updateOrderAtom } from "../../../state/plan-operations";
-import { plansQueryAtom, shopsQueryAtom } from "../../../state/queries";
-import { createMemoryRepository } from "../../../storage/memory-repository";
+import { updateOrderAtom } from "#/state/plan-operations.ts";
+import { plansQueryAtom, shopsQueryAtom } from "#/state/queries.ts";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import { OrderList } from "./order-list";
 import {
   PLAN,
@@ -18,7 +18,7 @@ import {
   orderId,
   shops,
   spuBenefit,
-} from "../-test-fixtures";
+} from "#/routes/(plan)/-test-fixtures.tsx";
 
 const cardRenders = vi.hoisted(() => new Map<string, number>());
 

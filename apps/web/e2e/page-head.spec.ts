@@ -1,6 +1,6 @@
-import { missingGoogleTagScripts } from "../src/google-tags/scripts";
-import { indexedPagesRenderedOnRequest, missingHeadTags } from "../src/prerender-pages";
-import { siteUrl } from "../src/site-url";
+import { missingGoogleTagScripts } from "#/google-tags/scripts.ts";
+import { indexedPagesRenderedOnRequest, missingHeadTags } from "#/prerender-pages.ts";
+import { siteUrl } from "#/site-url.ts";
 import { adsensePaused, expect, test, fixDate } from "./fixtures";
 import { PlanSettingsPage, SitePage, TopPage } from "./pages";
 

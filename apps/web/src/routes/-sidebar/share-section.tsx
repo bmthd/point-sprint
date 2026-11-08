@@ -1,5 +1,5 @@
-import { ShareLinks } from "../-share/share-button";
-import { siteShareTarget } from "../-share/share-target";
+import { ShareLinks } from "#/routes/-share/share-button.tsx";
+import { siteShareTarget } from "#/routes/-share/share-target.ts";
 import { SidebarSection } from "./sidebar-section";
 
 /** Sharing the site: the links to each service are out from the start, nothing to open first. */

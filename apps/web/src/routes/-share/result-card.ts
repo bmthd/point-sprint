@@ -1,9 +1,9 @@
 import { POINT_GROUPS, type PointGroup } from "@workspaces/domain";
 import type { Node } from "takumi-js";
 import * as v from "valibot";
-import { fixedPercent, grouped, pointsText } from "../../ui/format";
-import { siteName } from "../../page-head";
-import { siteUrl } from "../../site-url";
+import { fixedPercent, grouped, pointsText } from "#/ui/format.ts";
+import { siteName } from "#/page-head.ts";
+import { siteUrl } from "#/site-url.ts";
 
 /** The kinds of event a shared result names, by the prefix of the official event's id. */
 export const EVENT_KINDS = ["marathon", "brand-day"] as const;

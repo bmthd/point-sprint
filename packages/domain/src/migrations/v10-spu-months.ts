@@ -1,5 +1,5 @@
-import { DEFAULT_ACCOUNT_ID } from "../model/account";
-import { monthsOf } from "../model/common";
+import { DEFAULT_ACCOUNT_ID } from "#/model/account.ts";
+import { monthsOf } from "#/model/common.ts";
 import type { Migration } from "./runner";
 
 // The SPU items as the master defined them at version 10.

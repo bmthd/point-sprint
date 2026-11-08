@@ -1,9 +1,9 @@
 import { describe, expect, test } from "vitest";
-import type { Benefit } from "../model/benefit";
-import type { LineItem, Order } from "../model/order";
-import { DEFAULT_ACCOUNT_ID } from "../model/account";
-import type { Plan } from "../model/plan";
-import type { Shop } from "../model/shop";
+import type { Benefit } from "#/model/benefit.ts";
+import type { LineItem, Order } from "#/model/order.ts";
+import { DEFAULT_ACCOUNT_ID } from "#/model/account.ts";
+import type { Plan } from "#/model/plan.ts";
+import type { Shop } from "#/model/shop.ts";
 import { calculate, calculateAll } from "./calculate";
 import type { CalculationResult } from "./types";
 

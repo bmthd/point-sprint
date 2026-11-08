@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { tokyoToday } from "../../ui/dates";
+import { tokyoToday } from "#/ui/dates.ts";
 
 /**
  * The published marathon rounds, the earliest first, with today in Japan and when collection last
@@ -11,7 +11,7 @@ export const getMarathonRounds = createServerFn({ method: "GET" }).handler(async
   const [{ env }, { lastCheckedAt, publishedEvents }, { devMigrated }] = await Promise.all([
     import("cloudflare:workers"),
     import("./event-store"),
-    import("../shared/dev-migrations.worker"),
+    import("#/server/shared/dev-migrations.worker.ts"),
   ]);
   const db = await devMigrated(env.EVENTS_DB);
   const [events, checkedAt] = await Promise.all([publishedEvents(db), lastCheckedAt(db)]);

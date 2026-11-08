@@ -1,5 +1,5 @@
 import { expect, test, vi } from "vitest";
-import type { RakutenItem, SearchResult } from "../rakuten/item-search";
+import type { RakutenItem, SearchResult } from "#/rakuten/item-search.ts";
 import { type ItemSearch, guideItemSearch } from "./guide-items";
 import type { ItemQuery } from "./item-query";
 

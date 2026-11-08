@@ -1,7 +1,7 @@
 import type { Benefit, Plan } from "@workspaces/domain";
 import { beforeEach, expect, test } from "vitest";
 import { page } from "vitest/browser";
-import { createMemoryRepository } from "../../storage/memory-repository";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import { PLAN, baseBenefit, enterShop, order, renderPlanHome, shops } from "./-test-fixtures";
 
 /** +1倍, at most 70P in the plan. */

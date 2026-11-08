@@ -1,4 +1,4 @@
-import type { Repository } from "../storage/repository";
+import type { Repository } from "#/storage/repository.ts";
 import {
   type Plan,
   type Profile,

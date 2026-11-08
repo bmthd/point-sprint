@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { calculateAll } from "../calculate/calculate";
-import type { Benefit } from "../model/benefit";
-import type { CampaignTemplate } from "../model/campaign-template";
-import type { OrderTag } from "../model/common";
-import type { Plan } from "../model/plan";
-import type { Shop } from "../model/shop";
+import { calculateAll } from "#/calculate/calculate.ts";
+import type { Benefit } from "#/model/benefit.ts";
+import type { CampaignTemplate } from "#/model/campaign-template.ts";
+import type { OrderTag } from "#/model/common.ts";
+import type { Plan } from "#/model/plan.ts";
+import type { Shop } from "#/model/shop.ts";
 import { campaignTemplates } from "./campaigns";
 import {
   campaignInputOf,

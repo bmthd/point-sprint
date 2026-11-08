@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
-import type { Benefit } from "../model/benefit";
-import type { LineItem, Order } from "../model/order";
-import type { Plan } from "../model/plan";
-import type { Shop } from "../model/shop";
+import type { Benefit } from "#/model/benefit.ts";
+import type { LineItem, Order } from "#/model/order.ts";
+import type { Plan } from "#/model/plan.ts";
+import type { Shop } from "#/model/shop.ts";
 import { calculate } from "./calculate";
 import type { CalculationResult } from "./types";
 

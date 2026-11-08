@@ -13,12 +13,12 @@ import {
   useSystemColorMode,
 } from "@workspaces/ui";
 import type { ReactNode } from "react";
-import { RouterLink } from "../../ui/router-link";
-import { CloseIcon } from "../../ui/icons";
-import { ResetDataButton } from "../-reset-data";
-import { UnreadDot } from "../-notices/unread-dot";
-import { useUnreadNoticeIds } from "../-notices/unread-notices";
-import { SiteSidebar } from "../-sidebar/sidebar";
+import { RouterLink } from "#/ui/router-link.tsx";
+import { CloseIcon } from "#/ui/icons.tsx";
+import { ResetDataButton } from "#/routes/-reset-data.tsx";
+import { UnreadDot } from "#/routes/-notices/unread-dot.tsx";
+import { useUnreadNoticeIds } from "#/routes/-notices/unread-notices.ts";
+import { SiteSidebar } from "#/routes/-sidebar/sidebar.tsx";
 
 function CommonSettingsLink() {
   return (

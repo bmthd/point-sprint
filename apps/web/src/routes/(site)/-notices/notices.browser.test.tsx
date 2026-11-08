@@ -15,12 +15,12 @@ import type { ReactNode } from "react";
 import { expect, test } from "vitest";
 import { page } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
-import type { RecentArticle } from "../../../guides/recent-articles";
-import { repositoryAtom } from "../../../state/repository";
-import { createMemoryRepository } from "../../../storage/memory-repository";
-import type { Repository } from "../../../storage/repository";
-import { expectTexts } from "../../../test-texts";
-import type { Notice } from "../../-notices/notices";
+import type { RecentArticle } from "#/guides/recent-articles.ts";
+import { repositoryAtom } from "#/state/repository.ts";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import type { Repository } from "#/storage/repository.ts";
+import { expectTexts } from "#/test-texts.ts";
+import type { Notice } from "#/routes/-notices/notices.ts";
 import { NoticesPage } from "./notices-page";
 
 const notice = (date: string, title: string): Notice => ({

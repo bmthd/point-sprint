@@ -16,13 +16,13 @@ import type { ReactNode } from "react";
 import { page, userEvent } from "vitest/browser";
 import { expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
-import { repositoryAtom } from "../../../state/repository";
-import { createMemoryRepository } from "../../../storage/memory-repository";
-import type { Repository } from "../../../storage/repository";
-import { TestColorMode } from "../../../test-color-mode";
-import { expectTexts } from "../../../test-texts";
-import { officialEventsSourceAtom } from "../../-official-events";
-import { useToday } from "../../-use-today";
+import { repositoryAtom } from "#/state/repository.ts";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import type { Repository } from "#/storage/repository.ts";
+import { TestColorMode } from "#/test-color-mode.tsx";
+import { expectTexts } from "#/test-texts.ts";
+import { officialEventsSourceAtom } from "#/routes/-official-events.ts";
+import { useToday } from "#/routes/-use-today.ts";
 import { TopPage } from "./top-page";
 
 // 2026-10-05 12:00 in Japan: the October marathon (10/4〜10/9) is running.

@@ -4,11 +4,11 @@ import { type ReactNode, useEffect } from "react";
 import { beforeEach, expect, onTestFinished, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
-import { updateOrderAtom } from "../../../state/plan-operations";
-import { plansQueryAtom, shopsQueryAtom } from "../../../state/queries";
-import { createMemoryRepository } from "../../../storage/memory-repository";
-import { DATE_PICKER_FIELD, misalignedFields, tapArea } from "../../../test-layout";
-import { expectTexts } from "../../../test-texts";
+import { updateOrderAtom } from "#/state/plan-operations.ts";
+import { plansQueryAtom, shopsQueryAtom } from "#/state/queries.ts";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import { DATE_PICKER_FIELD, misalignedFields, tapArea } from "#/test-layout.ts";
+import { expectTexts } from "#/test-texts.ts";
 import { OrderTable } from "./order-table";
 import {
   PLAN,
@@ -30,7 +30,7 @@ import {
   summary,
   tapCard,
   chooseTaxRate,
-} from "../-test-fixtures";
+} from "#/routes/(plan)/-test-fixtures.tsx";
 
 const rowRenders = vi.hoisted(() => new Map<string, number>());
 

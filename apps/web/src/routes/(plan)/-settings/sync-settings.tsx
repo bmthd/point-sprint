@@ -1,4 +1,4 @@
-import { queryKeys } from "../../../state/queries";
+import { queryKeys } from "#/state/queries.ts";
 import {
   Alert,
   Button,
@@ -14,13 +14,13 @@ import {
 import { useAtomValue } from "jotai";
 import { queryClientAtom } from "jotai-tanstack-query";
 import { type ComponentType, useState } from "react";
-import { repositoryAtom } from "../../../state/repository";
+import { repositoryAtom } from "#/state/repository.ts";
 import {
   type SyncStatus,
   requestSyncAtom,
   syncEnabledQueryAtom,
   syncStatusAtom,
-} from "../../../state/sync";
+} from "#/state/sync.ts";
 import {
   type Locked,
   type Passkeys,
@@ -32,9 +32,9 @@ import {
   startSync,
   stopSync,
   unlockWithRecoveryCode,
-} from "../../../storage/sync-passkey";
-import { syncServerAtom } from "../../-sync-server";
-import { TurnstileWidget, type TurnstileWidgetProps } from "../../-turnstile-widget";
+} from "#/storage/sync-passkey.ts";
+import { syncServerAtom } from "#/routes/-sync-server.ts";
+import { TurnstileWidget, type TurnstileWidgetProps } from "#/routes/-turnstile-widget.tsx";
 import { RecoveryCodeDialog, RecoveryCodeEntry } from "./recovery-code-dialog";
 
 /** A step the user took, for Google Analytics: how many start and how many get through. */

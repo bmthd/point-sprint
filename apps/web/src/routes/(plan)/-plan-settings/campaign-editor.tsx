@@ -10,9 +10,9 @@ import {
 import { Box, Button, Flex, Image, RadioCard, RadioCardGroup, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import * as v from "valibot";
-import { optionalGrouped } from "../../../ui/format";
-import { CommitField } from "../-form/commit-field";
-import { CommitDatePicker } from "../-date-picker-field";
+import { optionalGrouped } from "#/ui/format.ts";
+import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
+import { CommitDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
 import {
   END_BEFORE_START,
   START_AFTER_END,
@@ -23,8 +23,8 @@ import {
   RequiredTextSchema,
   YenSchema,
 } from "@workspaces/domain";
-import { updateBenefitAtom } from "../../../state/plan-operations";
-import { imageUrl } from "../-order-shared";
+import { updateBenefitAtom } from "#/state/plan-operations.ts";
+import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
 import { SPECS } from "./campaign-form";
 import { useSaveSettingsChange } from "./settings-shared";
 

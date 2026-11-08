@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { page } from "vitest/browser";
-import { createMemoryRepository } from "../../storage/memory-repository";
+import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import { PLAN, marathon, marathonPlan, order, renderPlanHome, shops } from "./-test-fixtures";
 
 test("offers a retry when the stored data cannot be checked", async () => {

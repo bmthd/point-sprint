@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { CARD_BONUS_ID, CARD_NORMAL_ID, PREMIUM_CARD_BONUS_ID } from "../master/spu";
+import { CARD_BONUS_ID, CARD_NORMAL_ID, PREMIUM_CARD_BONUS_ID } from "#/master/spu.ts";
 import { migrateRow, migrations } from "./index";
 
 // Version 10 moves the SPU out of plans and profiles; these tests look at the rows before it.

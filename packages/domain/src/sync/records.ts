@@ -1,11 +1,11 @@
 import * as v from "valibot";
-import { ProfileSchema } from "../model/plan";
-import { NoticeReadSchema } from "../model/notice-read";
-import { ShopSchema } from "../model/shop";
-import { SpuMonthSchema } from "../model/spu-month";
-import { OrderRowSchema, PlanRowSchema } from "../model/stored-plan";
-import type { StoreName } from "../migrations/runner";
-import { stableJson } from "../model/stored-plan";
+import { ProfileSchema } from "#/model/plan.ts";
+import { NoticeReadSchema } from "#/model/notice-read.ts";
+import { ShopSchema } from "#/model/shop.ts";
+import { SpuMonthSchema } from "#/model/spu-month.ts";
+import { OrderRowSchema, PlanRowSchema } from "#/model/stored-plan.ts";
+import type { StoreName } from "#/migrations/runner.ts";
+import { stableJson } from "#/model/stored-plan.ts";
 
 // What two devices send each other: one row of a store, or the mark that it was removed. The later
 // `updatedAt` wins row by row.

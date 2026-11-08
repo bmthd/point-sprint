@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { NoticesPage } from "./-notices/notices-page";
-import { pageHead } from "../../page-head";
+import { pageHead } from "#/page-head.ts";
 
 export const Route = createFileRoute("/(site)/notices")({
   head: () =>

@@ -1,5 +1,5 @@
 import { Box, Heading, Image, Text, VStack } from "@workspaces/ui";
-import { RouterButton } from "../ui/router-link";
+import { RouterButton } from "#/ui/router-link.tsx";
 import {
   type ResultFigures,
   imageSize,

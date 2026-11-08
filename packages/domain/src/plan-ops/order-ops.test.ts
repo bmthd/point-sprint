@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import type { Order } from "../model/order";
-import type { Plan } from "../model/plan";
+import type { Order } from "#/model/order.ts";
+import type { Plan } from "#/model/plan.ts";
 import {
   addOrder,
   updateOrder,

@@ -3,17 +3,17 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { Box, Flex, ColorModeScript, UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import type { ReactNode } from "react";
-import { AppProviders } from "../app-providers";
+import { AppProviders } from "#/app-providers.tsx";
 import { SiteFooter } from "./-root/site-footer";
 import { SiteHeader } from "./-root/site-header";
 import { ViewportMeta } from "./-root/viewport-meta";
 import { ErrorPage } from "./-root/error-page";
 import { NotFoundPage, notFoundTitle } from "./-root/not-found-page";
-import { FormControlDefaults } from "../ui/form-control-defaults";
-import { GoogleTagScripts } from "../google-tags/google-tag-scripts";
-import { defaultDescription, defaultTitle, pageTitle, siteName } from "../page-head";
-import { siteUrl } from "../site-url";
-import { getRecentArticles } from "../guides/recent-articles.functions";
+import { FormControlDefaults } from "#/ui/form-control-defaults.tsx";
+import { GoogleTagScripts } from "#/google-tags/google-tag-scripts.tsx";
+import { defaultDescription, defaultTitle, pageTitle, siteName } from "#/page-head.ts";
+import { siteUrl } from "#/site-url.ts";
+import { getRecentArticles } from "#/guides/recent-articles.functions.ts";
 
 export const Route = createRootRoute({
   head: ({ match }) => ({

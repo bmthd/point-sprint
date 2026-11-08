@@ -1,8 +1,8 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
-import { calculate } from "../calculate/calculate";
-import { PlanSchema } from "../model/plan";
-import { syncSchemas } from "../sync/records";
+import { calculate } from "#/calculate/calculate.ts";
+import { PlanSchema } from "#/model/plan.ts";
+import { syncSchemas } from "#/sync/records.ts";
 import { migrateRow } from "./index";
 
 const benefit = {

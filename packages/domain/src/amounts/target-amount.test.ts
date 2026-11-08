@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { LineItem } from "../model/order";
+import type { LineItem } from "#/model/order.ts";
 import { taxExcludedTarget, taxIncludedTarget } from "./target-amount";
 
 const item = (over: Partial<LineItem>): LineItem => ({

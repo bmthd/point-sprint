@@ -2,11 +2,11 @@ import { type Plan, type SpuMonth, spuIdsIn, spuMonthsOfPlan } from "@workspaces
 import { Button, Card, Flex, Heading, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
-import { rounded } from "../../../ui/format";
-import { accountIdOf } from "../../../state/accounts";
-import { accountSettingsAtom } from "../../../state/derived";
-import { spuMonthsAtom } from "../../../state/queries";
-import { monthText } from "../-warnings";
+import { rounded } from "#/ui/format.ts";
+import { accountIdOf } from "#/state/accounts.ts";
+import { accountSettingsAtom } from "#/state/derived.ts";
+import { spuMonthsAtom } from "#/state/queries.ts";
+import { monthText } from "#/routes/(plan)/-warnings.tsx";
 import { spuMonthRate } from "./spu-month-editor";
 
 /**

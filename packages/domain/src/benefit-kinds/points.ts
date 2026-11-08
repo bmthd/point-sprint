@@ -1,4 +1,4 @@
-import { largestRemainder } from "../allocation/largest-remainder";
+import { largestRemainder } from "#/allocation/largest-remainder.ts";
 import type { EligibleItem, RoundingUnit } from "./types";
 
 function floorPoints(amount: number, rate: number): number {
