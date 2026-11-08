@@ -1,5 +1,5 @@
 import type { RakutenItem, SearchResult } from "#/rakuten/item-search.ts";
-import { type ItemQuery, itemQueryKey } from "./item-query";
+import { type ItemQuery, itemQueryKey } from "./item-query.ts";
 
 // The items of the guides' `:::items{…}` lists, searched by the server function while the build
 // prerenders the guides.

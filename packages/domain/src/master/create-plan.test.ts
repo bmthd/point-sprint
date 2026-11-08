@@ -3,8 +3,8 @@ import { expect, test } from "vitest";
 import { comesWithPlan } from "#/model/campaign-template.ts";
 import type { OfficialEvent } from "#/model/official-event.ts";
 import { PlanSchema } from "#/model/plan.ts";
-import { campaignTemplates } from "./campaigns";
-import { createPlan } from "./create-plan";
+import { campaignTemplates } from "./campaigns.ts";
+import { createPlan } from "./create-plan.ts";
 
 const now = "2026-10-04T12:34:56.000Z";
 const event: OfficialEvent = {

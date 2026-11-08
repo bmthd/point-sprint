@@ -8,7 +8,7 @@ import type { Repository } from "#/storage/repository.ts";
 import type { Passkeys, SyncServer } from "#/storage/sync-passkey.ts";
 import type { TurnstileWidgetProps } from "#/routes/-turnstile-widget.tsx";
 import { Providers } from "#/routes/(plan)/-test-fixtures.tsx";
-import { SyncSettings } from "./sync-settings";
+import { SyncSettings } from "./sync-settings.tsx";
 
 // The passkeys, Turnstile and the server are stood in for: what is tested is what the section
 // asks of the user.

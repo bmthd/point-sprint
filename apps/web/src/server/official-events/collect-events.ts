@@ -3,8 +3,8 @@ import {
   type RunOutcome,
   type StoredEvent,
   collectMarathon,
-} from "./event-collection";
-import { MARATHON_URL, SCHEDULE_URL } from "./event-pages";
+} from "./event-collection.ts";
+import { MARATHON_URL, SCHEDULE_URL } from "./event-pages.ts";
 
 /** Where the collection keeps the event master (event-store.ts for D1). */
 export type EventStore = {

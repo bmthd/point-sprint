@@ -9,8 +9,8 @@ import {
   standardSpu,
 } from "@workspaces/domain";
 import { expect, test, vi } from "vitest";
-import { createIndexedDbRepository } from "./indexed-db-repository";
-import { OutdatedDatabaseError } from "./repository";
+import { createIndexedDbRepository } from "./indexed-db-repository.ts";
+import { OutdatedDatabaseError } from "./repository.ts";
 
 const now = "2026-10-05T00:00:00.000Z";
 const plan: Plan = {

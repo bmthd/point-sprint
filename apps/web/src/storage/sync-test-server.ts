@@ -5,7 +5,7 @@ import type {
 import { memoryD1 } from "#/server/shared/memory-d1.ts";
 import * as auth from "#/server/sync/sync-auth.ts";
 import * as records from "#/server/sync/sync-records.ts";
-import type { Asserted, Created, Passkeys, SyncServer } from "./sync-passkey";
+import type { Asserted, Created, Passkeys, SyncServer } from "./sync-passkey.ts";
 
 // Tests only: the sync's server functions over a D1 in memory, with stand-ins for the WebAuthn
 // checks, and passkeys whose PRF each test decides. Each device has a cookie of its own.

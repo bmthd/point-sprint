@@ -6,9 +6,9 @@ import { type FormStore, getInput, setInput, useField } from "@formisch/react";
 import { useAtomValue } from "jotai";
 import type { ChangeEvent, FocusEvent, KeyboardEvent } from "react";
 import { shopsAtom } from "#/state/queries.ts";
-import { type ItemAutofill, useItemAutofill } from "./-item-autofill";
-import { NEW_SHOP, type ShopFromUrl, fieldsFromItem, shopFromItem } from "./-order-fields";
-import type { OrderFormSchema } from "./-order-form";
+import { type ItemAutofill, useItemAutofill } from "./-item-autofill.tsx";
+import { NEW_SHOP, type ShopFromUrl, fieldsFromItem, shopFromItem } from "./-order-fields.tsx";
+import type { OrderFormSchema } from "./-order-form.ts";
 
 // What the order editor and the desktop list's add form do with the same order form.
 

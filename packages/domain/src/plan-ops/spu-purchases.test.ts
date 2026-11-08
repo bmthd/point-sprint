@@ -11,7 +11,7 @@ import {
   lostSpuPurchases,
   newlyAchievedSpu,
   spuAchievements,
-} from "./spu-purchases";
+} from "./spu-purchases.ts";
 
 const OTHER_ACCOUNT = "acc00000-0000-4000-8000-000000000001";
 const BOOKS_SHOP = "b0000000-0000-4000-8000-000000000001";

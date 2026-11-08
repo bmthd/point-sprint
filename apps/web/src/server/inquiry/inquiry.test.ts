@@ -1,6 +1,11 @@
 import { describe, expect, test, vi } from "vitest";
-import { type InquiryDeps, handleInquiry } from "./inquiry";
-import { INQUIRY_FROM, INQUIRY_SUBJECT, buildInquiryMail, encodeHeaderValue } from "./inquiry-mail";
+import { type InquiryDeps, handleInquiry } from "./inquiry.ts";
+import {
+  INQUIRY_FROM,
+  INQUIRY_SUBJECT,
+  buildInquiryMail,
+  encodeHeaderValue,
+} from "./inquiry-mail.ts";
 import {
   SITEVERIFY_ENDPOINT,
   type TurnstileResult,

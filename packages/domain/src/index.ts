@@ -1,10 +1,15 @@
-export { AccountSchema, type Account, DEFAULT_ACCOUNT_ID, defaultAccount } from "./model/account";
-export { BenefitSchema, type Benefit, isTwoShopCampaign } from "./model/benefit";
+export {
+  AccountSchema,
+  type Account,
+  DEFAULT_ACCOUNT_ID,
+  defaultAccount,
+} from "./model/account.ts";
+export { BenefitSchema, type Benefit, isTwoShopCampaign } from "./model/benefit.ts";
 export {
   CampaignTemplateSchema,
   type CampaignTemplate,
   comesWithPlan,
-} from "./model/campaign-template";
+} from "./model/campaign-template.ts";
 export {
   IdSchema,
   type Id,
@@ -30,8 +35,8 @@ export {
   type DateRule,
   ConditionsSchema,
   type Conditions,
-} from "./model/common";
-export { OfficialEventSchema, type OfficialEvent } from "./model/official-event";
+} from "./model/common.ts";
+export { OfficialEventSchema, type OfficialEvent } from "./model/official-event.ts";
 export {
   LineItemSchema,
   type LineItem,
@@ -42,7 +47,7 @@ export {
   withShop,
   hasShop,
   orderShopContext,
-} from "./model/order";
+} from "./model/order.ts";
 export {
   PlanSchema,
   type Plan,
@@ -50,10 +55,10 @@ export {
   type Profile,
   planAccountId,
   accountsOf,
-} from "./model/plan";
-export { NoticeReadSchema, type NoticeRead } from "./model/notice-read";
-export { ShopSchema, type Shop } from "./model/shop";
-export { SpuMonthSchema, type SpuMonth, spuMonthId } from "./model/spu-month";
+} from "./model/plan.ts";
+export { NoticeReadSchema, type NoticeRead } from "./model/notice-read.ts";
+export { ShopSchema, type Shop } from "./model/shop.ts";
+export { SpuMonthSchema, type SpuMonth, spuMonthId } from "./model/spu-month.ts";
 export {
   PlanRowSchema,
   type PlanRow,
@@ -62,27 +67,33 @@ export {
   stableJson,
   splitPlan,
   joinPlan,
-} from "./model/stored-plan";
-export { taxIncludedTarget, taxExcludedTarget } from "./amounts/target-amount";
-export { largestRemainder } from "./allocation/largest-remainder";
-export { type ChannelDef, type ParsedUrl, channels, parseUrl } from "./channels";
-export { type ConditionContext, matchesConditions, inDateRule } from "./conditions/matches";
-export { benefitKinds, pointsFor, rateBonus, shopAround, spendTiers } from "./benefit-kinds";
-export { tierRate, type ShopAroundTier } from "./benefit-kinds/shop-around";
-export { spendTierRate, type SpendTier } from "./benefit-kinds/spend-tiers";
-export type { BenefitKindDef, EligibleItem, RoundingUnit } from "./benefit-kinds";
-export { SHOP_AROUND_MIN_AMOUNT, countShops } from "./calculate/shop-count";
-export { calculate, calculateAll } from "./calculate/calculate";
-export { capGroupKey } from "./calculate/cap-groups";
-export { POINT_GROUPS, pointGroupOf, type PointGroup } from "./calculate/point-group";
+} from "./model/stored-plan.ts";
+export { taxIncludedTarget, taxExcludedTarget } from "./amounts/target-amount.ts";
+export { largestRemainder } from "./allocation/largest-remainder.ts";
+export { type ChannelDef, type ParsedUrl, channels, parseUrl } from "./channels/index.ts";
+export { type ConditionContext, matchesConditions, inDateRule } from "./conditions/matches.ts";
+export {
+  benefitKinds,
+  pointsFor,
+  rateBonus,
+  shopAround,
+  spendTiers,
+} from "./benefit-kinds/index.ts";
+export { tierRate, type ShopAroundTier } from "./benefit-kinds/shop-around.ts";
+export { spendTierRate, type SpendTier } from "./benefit-kinds/spend-tiers.ts";
+export type { BenefitKindDef, EligibleItem, RoundingUnit } from "./benefit-kinds/index.ts";
+export { SHOP_AROUND_MIN_AMOUNT, countShops } from "./calculate/shop-count.ts";
+export { calculate, calculateAll } from "./calculate/calculate.ts";
+export { capGroupKey } from "./calculate/cap-groups.ts";
+export { POINT_GROUPS, pointGroupOf, type PointGroup } from "./calculate/point-group.ts";
 export {
   shopAroundOutlook,
   type ShopAroundOutlook,
   type ShopAroundOutlookRow,
-} from "./calculate/outlook";
-export { capFlows, type CapFlow } from "./calculate/cap-flows";
-export { capLines, capRows, fillPrice, type CapLine, type CapRow } from "./calculate/cap-lines";
-export { pointsForPrice, priceToFill, type TaxRate } from "./calculate/fill-price";
+} from "./calculate/outlook.ts";
+export { capFlows, type CapFlow } from "./calculate/cap-flows.ts";
+export { capLines, capRows, fillPrice, type CapLine, type CapRow } from "./calculate/cap-lines.ts";
+export { pointsForPrice, priceToFill, type TaxRate } from "./calculate/fill-price.ts";
 export type {
   BenefitTotal,
   BreakdownRow,
@@ -90,7 +101,7 @@ export type {
   CapGroupUsage,
   CalculationWarning,
   HeldEstimate,
-} from "./calculate/types";
+} from "./calculate/types.ts";
 export {
   type Migration,
   type SeedSource,
@@ -99,7 +110,7 @@ export {
   migrations,
   migrateRow,
   seedRows,
-} from "./migrations";
+} from "./migrations/index.ts";
 export {
   BOOKS_SPU_ID,
   CARRIED_SPU_IDS,
@@ -107,8 +118,8 @@ export {
   NORMAL_POINT_ID,
   spuPurchaseRules,
   standardSpu,
-} from "./master/spu";
-export { campaignTemplates } from "./master/campaigns";
+} from "./master/spu.ts";
+export { campaignTemplates } from "./master/campaigns.ts";
 export {
   type CampaignInput,
   campaignInputOf,
@@ -116,8 +127,8 @@ export {
   hasCampaignOccurrence,
   instantiateCampaign,
   templateOfCampaign,
-} from "./master/instantiate";
-export { createPlan } from "./master/create-plan";
+} from "./master/instantiate.ts";
+export { createPlan } from "./master/create-plan.ts";
 export {
   addOrder,
   updateOrder,
@@ -126,23 +137,23 @@ export {
   toggleHold,
   copyOrder,
   moveOrder,
-} from "./plan-ops/order-ops";
-export { orderPositions } from "./plan-ops/order-positions";
-export { attachToEvent } from "./plan-ops/attach-event";
+} from "./plan-ops/order-ops.ts";
+export { orderPositions } from "./plan-ops/order-positions.ts";
+export { attachToEvent } from "./plan-ops/attach-event.ts";
 export {
   addBenefit,
   removeBenefit,
   updateBenefit,
   toggleBenefit,
   toggleBenefits,
-} from "./plan-ops/benefit-ops";
+} from "./plan-ops/benefit-ops.ts";
 export {
   disabledAchievedSpu,
   lostSpuPurchases,
   newlyAchievedSpu,
   spuAchievements,
   type SpuAchievement,
-} from "./plan-ops/spu-purchases";
+} from "./plan-ops/spu-purchases.ts";
 export {
   enableSpu,
   planWithSpu,
@@ -151,7 +162,7 @@ export {
   spuIdsIn,
   spuMonthsOfPlan,
   toggleSpu,
-} from "./plan-ops/spu-months";
+} from "./plan-ops/spu-months.ts";
 export {
   SYNC_KINDS,
   type SyncKind,
@@ -163,8 +174,8 @@ export {
   orderRowId,
   syncKey,
   wins,
-} from "./sync/records";
-export { deepEqual } from "./deep-equal";
+} from "./sync/records.ts";
+export { deepEqual } from "./deep-equal.ts";
 export {
   MAX_AMOUNT,
   MAX_QUANTITY,
@@ -189,11 +200,11 @@ export {
   ItemUrlSchema,
   ShopNameSchema,
   AccountNameSchema,
-} from "./form/field-schemas";
+} from "./form/field-schemas.ts";
 export {
   type NumberUnit,
   NumberInputSchema,
   DateInputSchema,
   TextInputSchema,
   OptionalTextInputSchema,
-} from "./form/normalize";
+} from "./form/normalize.ts";

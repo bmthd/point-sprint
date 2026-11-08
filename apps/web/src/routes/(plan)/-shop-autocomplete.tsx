@@ -7,8 +7,8 @@ import { Autocomplete, Field } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { errorsOf } from "#/routes/-form.tsx";
 import { shopsAtom } from "#/state/queries.ts";
-import type { OrderForm } from "./-order-form-store";
-import { NEW_SHOP, optionalMark, useSortedShops } from "./-order-fields";
+import type { OrderForm } from "./-order-form-store.ts";
+import { NEW_SHOP, optionalMark, useSortedShops } from "./-order-fields.tsx";
 
 /** The label of the choice that makes a shop of the typed name. */
 const createLabel = (name: string) => `「${name}」を新しく作る`;

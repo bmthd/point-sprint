@@ -2,8 +2,8 @@ import { comesWithPlan } from "#/model/campaign-template.ts";
 import type { Id } from "#/model/common.ts";
 import type { OfficialEvent } from "#/model/official-event.ts";
 import type { Plan } from "#/model/plan.ts";
-import { campaignTemplates } from "./campaigns";
-import { instantiateCampaign } from "./instantiate";
+import { campaignTemplates } from "./campaigns.ts";
+import { instantiateCampaign } from "./instantiate.ts";
 
 const tokyoDate = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Tokyo",

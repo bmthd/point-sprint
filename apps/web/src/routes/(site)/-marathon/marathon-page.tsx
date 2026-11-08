@@ -17,7 +17,7 @@ import { formatPeriod } from "#/ui/dates.ts";
 import { RouterButton, RouterLink } from "#/ui/router-link.tsx";
 import { GuideCard } from "#/routes/(site)/-guide-card.tsx";
 import { PageWithSidebar } from "#/routes/(site)/-page-with-sidebar.tsx";
-import { type FaqItem, marathonFaq } from "./marathon-faq";
+import { type FaqItem, marathonFaq } from "./marathon-faq.ts";
 import {
   capReachingSpend,
   longPeriod,
@@ -25,7 +25,7 @@ import {
   roundSentence,
   shopAroundOf,
   splitRounds,
-} from "./marathon-rounds";
+} from "./marathon-rounds.ts";
 
 const checkedTime = new Intl.DateTimeFormat("ja-JP", {
   timeZone: "Asia/Tokyo",

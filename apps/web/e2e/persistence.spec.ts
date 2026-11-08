@@ -1,5 +1,5 @@
-import { expect, test, fixDate } from "./fixtures";
-import { SettingsPage, TopPage } from "./pages";
+import { expect, test, fixDate } from "./fixtures.ts";
+import { SettingsPage, TopPage } from "./pages/index.ts";
 
 // Each change is saved to IndexedDB and is still there after a reload.
 

@@ -1,23 +1,23 @@
-import { animations } from "./animations";
-import { aspectRatios } from "./aspect-ratios";
-import { blurs } from "./blurs";
-import { borders } from "./borders";
-import { breakpoints } from "./breakpoints";
-import { colors } from "./colors";
-import { durations } from "./durations";
-import { easings } from "./easings";
-import { fontSizes } from "./font-sizes";
-import { fontWeights } from "./font-weights";
-import { fonts } from "./fonts";
-import { gradients } from "./gradients";
-import { keyframes } from "./keyframes";
-import { letterSpacings } from "./letter-spacings";
-import { lineHeights } from "./line-heights";
-import { radii } from "./radii";
-import { shadows } from "./shadows";
-import { sizes } from "./sizes";
-import { spaces } from "./spaces";
-import { zIndices } from "./z-indices";
+import { animations } from "./animations.ts";
+import { aspectRatios } from "./aspect-ratios.ts";
+import { blurs } from "./blurs.ts";
+import { borders } from "./borders.ts";
+import { breakpoints } from "./breakpoints.ts";
+import { colors } from "./colors.ts";
+import { durations } from "./durations.ts";
+import { easings } from "./easings.ts";
+import { fontSizes } from "./font-sizes.ts";
+import { fontWeights } from "./font-weights.ts";
+import { fonts } from "./fonts.ts";
+import { gradients } from "./gradients.ts";
+import { keyframes } from "./keyframes.ts";
+import { letterSpacings } from "./letter-spacings.ts";
+import { lineHeights } from "./line-heights.ts";
+import { radii } from "./radii.ts";
+import { shadows } from "./shadows.ts";
+import { sizes } from "./sizes.ts";
+import { spaces } from "./spaces.ts";
+import { zIndices } from "./z-indices.ts";
 
 export const tokens = {
   animations,

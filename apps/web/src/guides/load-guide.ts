@@ -1,7 +1,7 @@
-import type { Article } from "./article";
-import { loadArticle } from "./articles";
-import type { GuideItem, GuideItemSearch } from "./guide-items";
-import { itemQueriesIn, itemQueryKey } from "./item-query";
+import type { Article } from "./article.ts";
+import { loadArticle } from "./articles.ts";
+import type { GuideItem, GuideItemSearch } from "./guide-items.ts";
+import { itemQueriesIn, itemQueryKey } from "./item-query.ts";
 
 export type Guide = {
   article: Article;

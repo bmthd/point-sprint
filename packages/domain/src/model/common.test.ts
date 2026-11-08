@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { addMonths, closestDateInPeriod } from "./common";
+import { addMonths, closestDateInPeriod } from "./common.ts";
 
 test.each([
   {

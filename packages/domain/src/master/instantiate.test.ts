@@ -5,14 +5,14 @@ import type { CampaignTemplate } from "#/model/campaign-template.ts";
 import type { OrderTag } from "#/model/common.ts";
 import type { Plan } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
-import { campaignTemplates } from "./campaigns";
+import { campaignTemplates } from "./campaigns.ts";
 import {
   campaignInputOf,
   editCampaign,
   hasCampaignOccurrence,
   instantiateCampaign,
   templateOfCampaign,
-} from "./instantiate";
+} from "./instantiate.ts";
 
 const NEW_ID = "99999999-9999-4999-8999-999999999999";
 const SHOP = "a0000000-0000-4000-8000-000000000001";

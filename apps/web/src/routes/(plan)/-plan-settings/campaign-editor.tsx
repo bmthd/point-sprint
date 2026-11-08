@@ -25,8 +25,8 @@ import {
 } from "@workspaces/domain";
 import { updateBenefitAtom } from "#/state/plan-operations.ts";
 import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
-import { SPECS } from "./campaign-form";
-import { useSaveSettingsChange } from "./settings-shared";
+import { SPECS } from "./campaign-form.ts";
+import { useSaveSettingsChange } from "./settings-shared.ts";
 
 /** The images of 勝ったら倍's two choices: one team won, or both did. */
 const SPORTS_CHOICES = [

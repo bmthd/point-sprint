@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { NoticesPage } from "./-notices/notices-page";
+import { NoticesPage } from "./-notices/notices-page.tsx";
 import { pageHead } from "#/page-head.ts";
 
 export const Route = createFileRoute("/(site)/notices")({

@@ -3,7 +3,7 @@ import { config, theme } from "@workspaces/ui/theme";
 import { expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 import type { GuideItem } from "#/guides/guide-items.ts";
-import { GuideItemList } from "./-guide-item-list";
+import { GuideItemList } from "./-guide-item-list.tsx";
 
 const AFFILIATE_URL =
   "https://hb.afl.rakuten.co.jp/hgc/x/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fshop-a%2Fitem-1%2F";

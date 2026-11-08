@@ -3,7 +3,7 @@ import type { Benefit } from "#/model/benefit.ts";
 import type { LineItem, Order } from "#/model/order.ts";
 import type { Plan } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
-import { capFlows } from "./cap-flows";
+import { capFlows } from "./cap-flows.ts";
 
 const SHOP_A = "a0000000-0000-4000-8000-000000000001";
 const SHOP_B = "b0000000-0000-4000-8000-000000000002";

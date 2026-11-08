@@ -6,8 +6,8 @@ import {
   IsoDateSchema,
   OrderTagSchema,
   ShopTagSchema,
-} from "./common";
-import type { Shop } from "./shop";
+} from "./common.ts";
+import type { Shop } from "./shop.ts";
 
 export const LineItemSchema = v.pipe(
   v.object({

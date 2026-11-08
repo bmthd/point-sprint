@@ -23,7 +23,7 @@ import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
 import { BackIcon, ForwardIcon } from "#/ui/icons.tsx";
 import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
 import { useToday } from "#/routes/-use-today.ts";
-import { SpuMonthEditor, spuMonthText } from "./-spu-month/spu-month-editor";
+import { SpuMonthEditor, spuMonthText } from "./-spu-month/spu-month-editor.tsx";
 
 const now = () => new Date();
 

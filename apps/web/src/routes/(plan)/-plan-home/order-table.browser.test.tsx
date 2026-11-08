@@ -9,7 +9,7 @@ import { plansQueryAtom, shopsQueryAtom } from "#/state/queries.ts";
 import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import { DATE_PICKER_FIELD, misalignedFields, tapArea } from "#/test-layout.ts";
 import { expectTexts } from "#/test-texts.ts";
-import { OrderTable } from "./order-table";
+import { OrderTable } from "./order-table.tsx";
 import {
   PLAN,
   Providers,
@@ -36,8 +36,8 @@ const rowRenders = vi.hoisted(() => new Map<string, number>());
 
 // Every row is wrapped in a Profiler that counts its commits by order id. The wrapper keeps the
 // row's own `memo` (and its comparison), so the list renders rows exactly as it does in the app.
-vi.mock("./order-row", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./order-row")>();
+vi.mock("./order-row.tsx", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./order-row.tsx")>();
   const { createElement, memo, Profiler: ProfilerComponent } = await import("react");
   type Props = Parameters<typeof actual.OrderRow>[0];
   const row = actual.OrderRow as unknown as {

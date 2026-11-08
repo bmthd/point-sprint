@@ -21,7 +21,7 @@ import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import type { Repository } from "#/storage/repository.ts";
 import { expectTexts } from "#/test-texts.ts";
 import type { Notice } from "#/routes/-notices/notices.ts";
-import { NoticesPage } from "./notices-page";
+import { NoticesPage } from "./notices-page.tsx";
 
 const notice = (date: string, title: string): Notice => ({
   id: `notice-${date}`,

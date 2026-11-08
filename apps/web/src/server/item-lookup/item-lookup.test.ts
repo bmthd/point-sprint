@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { ALLOWED_ORIGIN } from "#/rakuten/config.ts";
-import { type ItemLookupDeps, handleItemLookup } from "./item-lookup";
-import { type Turn, takeTurn } from "./rate-gate";
+import { type ItemLookupDeps, handleItemLookup } from "./item-lookup.ts";
+import { type Turn, takeTurn } from "./rate-gate.ts";
 
 // Neither the Durable Object nor the Rakuten API is reached: both are stood in for here.
 

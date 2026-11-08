@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { CARD_BONUS_ID, CARD_NORMAL_ID, PREMIUM_CARD_BONUS_ID } from "#/master/spu.ts";
-import { migrateRow, migrations } from "./index";
+import { migrateRow, migrations } from "./index.ts";
 
 // Version 10 moves the SPU out of plans and profiles; these tests look at the rows before it.
 const beforeSpuMonths = migrations.filter((migration) => migration.to < 10);

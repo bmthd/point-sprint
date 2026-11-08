@@ -3,7 +3,7 @@ import { config, theme } from "@workspaces/ui/theme";
 import { expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { userEvent } from "vitest/browser";
-import { CommitField } from "./commit-field";
+import { CommitField } from "./commit-field.tsx";
 import { AmountSchema } from "@workspaces/domain";
 
 function renderField(onCommit: (amount: number) => Promise<unknown>) {

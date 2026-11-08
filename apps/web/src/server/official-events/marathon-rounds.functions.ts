@@ -10,7 +10,7 @@ export const getMarathonRounds = createServerFn({ method: "GET" }).handler(async
   // Handler imports: see ../../../../../docs/server-imports.md.
   const [{ env }, { lastCheckedAt, publishedEvents }, { devMigrated }] = await Promise.all([
     import("cloudflare:workers"),
-    import("./event-store"),
+    import("./event-store.ts"),
     import("#/server/shared/dev-migrations.worker.ts"),
   ]);
   const db = await devMigrated(env.EVENTS_DB);

@@ -1,5 +1,5 @@
-import { type Page, expect, test, fixDate } from "./fixtures";
-import { SharePage, SitePage, TopPage } from "./pages";
+import { type Page, expect, test, fixDate } from "./fixtures.ts";
+import { SharePage, SitePage, TopPage } from "./pages/index.ts";
 import { siteUrl } from "#/site-url.ts";
 
 // Where the share buttons are, and what they share. The tests take the Web Share API away, so the

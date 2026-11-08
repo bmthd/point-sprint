@@ -1,4 +1,4 @@
-import type { Article } from "./article";
+import type { Article } from "./article.ts";
 
 /** How many articles the sidebar lists. */
 export const RECENT_SHOWN = 3;

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { isAdsensePaused, parseGoogleTagsEnv } from "./env";
+import { isAdsensePaused, parseGoogleTagsEnv } from "./env.ts";
 
 test("reads the measurement and AdSense client IDs", () => {
   expect(

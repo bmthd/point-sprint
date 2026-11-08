@@ -1,4 +1,4 @@
-import type { Migration } from "./runner";
+import type { Migration } from "./runner.ts";
 
 const BANK_CARD_ID = "1933c19c-0aa3-4052-8d5e-c0d07859a0a9";
 const BANK_SALARY_ID = "3a7c47bd-3404-4dcb-9569-54989e63f077";

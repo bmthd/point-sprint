@@ -1,6 +1,6 @@
 import * as v from "valibot";
-import { pointsFor } from "./points";
-import type { BenefitKindDef, RoundingUnit } from "./types";
+import { pointsFor } from "./points.ts";
+import type { BenefitKindDef, RoundingUnit } from "./types.ts";
 
 const RoundingUnitSchema = v.picklist(["item", "order"]);
 const CapSchema = v.pipe(v.number(), v.integer(), v.minValue(0));

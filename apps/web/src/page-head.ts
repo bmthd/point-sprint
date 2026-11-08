@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { siteUrl } from "./site-url";
+import { siteUrl } from "./site-url.ts";
 
 export const siteName = "ポイントスプリント";
 /**

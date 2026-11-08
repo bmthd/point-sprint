@@ -56,9 +56,9 @@ import {
   useSaveOrderDraft,
   useShopName,
 } from "#/routes/(plan)/-order-shared.tsx";
-import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
+import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields.tsx";
 import { PointBreakdown } from "#/routes/-point-breakdown.tsx";
-import type { DragStart } from "./use-order-drag";
+import type { DragStart } from "./use-order-drag.ts";
 
 /** What the list shares with its rows without re-rendering them: refs and stable callbacks. */
 export type OrderListContext = {

@@ -1,6 +1,6 @@
 import { newestFirst, notices } from "#/routes/-notices/notices.ts";
-import { expect, test } from "./fixtures";
-import { NoticesPage, SitePage } from "./pages";
+import { expect, test } from "./fixtures.ts";
+import { NoticesPage, SitePage } from "./pages/index.ts";
 
 // The sidebar lists the guides changed most recently: on a wide screen beside the content of the
 // pages that read (the pages for working on a plan have none), on a phone in the header's menu on

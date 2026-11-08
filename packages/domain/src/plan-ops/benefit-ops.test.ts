@@ -11,7 +11,7 @@ import {
   updateBenefit,
   toggleBenefit,
   toggleBenefits,
-} from "./benefit-ops";
+} from "./benefit-ops.ts";
 
 const idOf = (label: string): string => {
   const found = standardSpu.find((b) => b.label === label);

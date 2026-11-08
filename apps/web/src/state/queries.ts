@@ -1,7 +1,7 @@
 import type { Plan, Profile, Shop, SpuMonth } from "@workspaces/domain";
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
-import { repositoryAtom } from "./repository";
+import { repositoryAtom } from "./repository.ts";
 
 export const queryKeys = {
   syncEnabled: ["sync-enabled"],

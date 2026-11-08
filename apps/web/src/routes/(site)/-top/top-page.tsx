@@ -10,10 +10,10 @@ import { ShareSection } from "#/routes/-sidebar/share-section.tsx";
 import { monthOf, tokyoToday } from "#/ui/dates.ts";
 import { officialEventsQueryAtom } from "#/routes/-official-events.ts";
 import { useToday } from "#/routes/-use-today.ts";
-import { EventSection } from "./event-section";
-import { Hero, SampleCard } from "./hero";
-import { PlanSection } from "./plan-section";
-import { startTarget } from "./start-target";
+import { EventSection } from "./event-section.tsx";
+import { Hero, SampleCard } from "./hero.tsx";
+import { PlanSection } from "./plan-section.tsx";
+import { startTarget } from "./start-target.ts";
 
 /** The button a plan was started from: the hero's, or one in the events. */
 type Origin = "hero" | "events";

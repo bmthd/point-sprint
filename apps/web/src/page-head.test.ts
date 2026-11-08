@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { defaultDescription, defaultTitle, pageHead } from "./page-head";
-import { siteUrl } from "./site-url";
+import { defaultDescription, defaultTitle, pageHead } from "./page-head.ts";
+import { siteUrl } from "./site-url.ts";
 
 test("a page's title follows the site's format, and its OGP repeats it", () => {
   expect(pageHead({ path: "/settings", title: "プロフィール", description: "説明" })).toEqual({

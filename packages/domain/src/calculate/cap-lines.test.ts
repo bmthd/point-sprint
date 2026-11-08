@@ -3,8 +3,8 @@ import type { Benefit } from "#/model/benefit.ts";
 import type { Order } from "#/model/order.ts";
 import type { Plan } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
-import { calculateAll } from "./calculate";
-import { capLines, capRows, fillPrice } from "./cap-lines";
+import { calculateAll } from "./calculate.ts";
+import { capLines, capRows, fillPrice } from "./cap-lines.ts";
 
 const SHOP = "a0000000-0000-4000-8000-000000000001";
 const FIRST = "f0000000-0000-4000-8000-000000000001";

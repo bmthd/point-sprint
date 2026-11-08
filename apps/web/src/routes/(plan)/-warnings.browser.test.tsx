@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { page } from "vitest/browser";
 import { createMemoryRepository } from "#/storage/memory-repository.ts";
-import { PLAN, marathon, marathonPlan, order, renderPlanHome, shops } from "./-test-fixtures";
+import { PLAN, marathon, marathonPlan, order, renderPlanHome, shops } from "./-test-fixtures.tsx";
 
 test("offers a retry when the stored data cannot be checked", async () => {
   await page.viewport(1280, 800);

@@ -1,6 +1,6 @@
 import { parseMarkdown } from "@tanstack/markdown/parser";
 import { expect, test } from "vitest";
-import { markdownExtensions } from "./-markdown-extensions";
+import { markdownExtensions } from "./-markdown-extensions.ts";
 
 const parse = (source: string) => parseMarkdown(source, { extensions: markdownExtensions });
 

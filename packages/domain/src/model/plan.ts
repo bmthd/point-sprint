@@ -1,8 +1,8 @@
 import * as v from "valibot";
-import { type Account, AccountSchema, DEFAULT_ACCOUNT_ID, defaultAccount } from "./account";
-import { BenefitSchema } from "./benefit";
-import { IdSchema, PeriodSchema, TimestampSchema } from "./common";
-import { OrderSchema } from "./order";
+import { type Account, AccountSchema, DEFAULT_ACCOUNT_ID, defaultAccount } from "./account.ts";
+import { BenefitSchema } from "./benefit.ts";
+import { IdSchema, PeriodSchema, TimestampSchema } from "./common.ts";
+import { OrderSchema } from "./order.ts";
 
 export const PlanSchema = v.object({
   id: IdSchema,

@@ -2,8 +2,8 @@ import { getRequest } from "@tanstack/react-start/server";
 import { ALLOWED_ORIGIN, ITEM_SEARCH_ENDPOINT } from "#/rakuten/config.ts";
 import { searchItems } from "#/rakuten/item-search.ts";
 import { workerRakutenConfig } from "#/server/shared/rakuten-config.worker.ts";
-import { type GuideItemSearch, guideItemSearch } from "./guide-items";
-import { loadGuide } from "./load-guide";
+import { type GuideItemSearch, guideItemSearch } from "./guide-items.ts";
+import { loadGuide } from "./load-guide.ts";
 
 let search: GuideItemSearch | undefined;
 

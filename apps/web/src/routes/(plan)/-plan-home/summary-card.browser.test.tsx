@@ -23,7 +23,7 @@ import type { Repository } from "#/storage/repository.ts";
 import { TestColorMode } from "#/test-color-mode.tsx";
 import { expectTexts } from "#/test-texts.ts";
 import { marathon } from "#/routes/(plan)/-test-fixtures.tsx";
-import { PlanHome } from "./plan-home";
+import { PlanHome } from "./plan-home.tsx";
 
 const PLAN = "f0000000-0000-4000-8000-00000000000a";
 const OTHER_PLAN = "f0000000-0000-4000-8000-00000000000b";

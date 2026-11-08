@@ -13,10 +13,10 @@ import { rateText } from "#/ui/format.ts";
 import { toggleBenefitAtom } from "#/state/plan-operations.ts";
 import { PencilIcon } from "#/ui/icons.tsx";
 import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
-import { CampaignAddButtons } from "./campaign-adder";
-import { CampaignEditor } from "./campaign-editor";
-import { useDeleteCampaign } from "./delete-campaign";
-import { useSaveSettingsChange, whenText } from "./settings-shared";
+import { CampaignAddButtons } from "./campaign-adder.tsx";
+import { CampaignEditor } from "./campaign-editor.tsx";
+import { useDeleteCampaign } from "./delete-campaign.tsx";
+import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
 
 const fixedKeys = new Set(
   campaignTemplates.filter(comesWithPlan).map((template) => template.benefit.sharedKey),

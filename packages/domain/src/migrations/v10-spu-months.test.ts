@@ -12,7 +12,7 @@ import {
 import { DEFAULT_ACCOUNT_ID } from "#/model/account.ts";
 import { ProfileSchema } from "#/model/plan.ts";
 import { SpuMonthSchema } from "#/model/spu-month.ts";
-import { migrateRow, migrations, seedRows } from "./index";
+import { migrateRow, migrations, seedRows } from "./index.ts";
 
 const throughSpuMonths = migrations.filter((migration) => migration.to <= 10);
 

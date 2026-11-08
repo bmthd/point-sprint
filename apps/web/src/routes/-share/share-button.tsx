@@ -16,7 +16,7 @@ import { ShareIcon } from "#/ui/icons.tsx";
 import facebookLogo from "./facebook-logo.svg";
 import lineLogo from "./line-logo.svg";
 import xLogo from "./x-logo.svg";
-import { type ShareTarget, shareLinks, shareMessage } from "./share-target";
+import { type ShareTarget, shareLinks, shareMessage } from "./share-target.ts";
 
 /** Whether the device's own share sheet can post `target`. */
 const canShareNatively = (target: ShareTarget) =>

@@ -34,8 +34,8 @@ import { type FieldState, bind, errorsOf } from "#/routes/-form.tsx";
 import { type ShopChange, changeShop, replaceShop } from "#/state/mutations.ts";
 import { shopsAtom } from "#/state/queries.ts";
 import type { RakutenItem } from "#/rakuten/item-search.ts";
-import { imageUrl, taxRateLabel, taxRateSegmentsStyle } from "./-order-shared";
-import type { OrderForm } from "./-order-form-store";
+import { imageUrl, taxRateLabel, taxRateSegmentsStyle } from "./-order-shared.tsx";
+import type { OrderForm } from "./-order-form-store.ts";
 
 // Fields shared by the desktop list's edit grid, its add form and the order editor.
 

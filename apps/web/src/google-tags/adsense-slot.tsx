@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { googleTagIds } from "./ids";
+import { googleTagIds } from "./ids.ts";
 
 type Props = {
   /** The ad unit ID from the AdSense console. */

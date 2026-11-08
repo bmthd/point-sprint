@@ -1,5 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-import { type Turn, takeTurn } from "./rate-gate";
+import { type Turn, takeTurn } from "./rate-gate.ts";
 
 /**
  * Hands out the turns at the Rakuten API (`takeTurn`). The Worker uses one of it for every user

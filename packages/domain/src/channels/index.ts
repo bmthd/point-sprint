@@ -1,10 +1,10 @@
 import type { ChannelId } from "#/model/common.ts";
-import { rakutenBooks } from "./rakuten-books";
-import { rakutenIchiba } from "./rakuten-ichiba";
-import { rakutenKobo } from "./rakuten-kobo";
-import type { ChannelDef, ParsedUrl } from "./types";
+import { rakutenBooks } from "./rakuten-books.ts";
+import { rakutenIchiba } from "./rakuten-ichiba.ts";
+import { rakutenKobo } from "./rakuten-kobo.ts";
+import type { ChannelDef, ParsedUrl } from "./types.ts";
 
-export type { ChannelDef, ParsedUrl } from "./types";
+export type { ChannelDef, ParsedUrl } from "./types.ts";
 
 export const channels: Record<ChannelId, ChannelDef> = {
   "rakuten-ichiba": rakutenIchiba,

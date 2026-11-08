@@ -21,7 +21,7 @@ import {
 } from "@workspaces/ui";
 import type { ReactNode } from "react";
 import type { FileRoutesById } from "#/routeTree.gen.ts";
-import { markdownExtensions } from "./-markdown-extensions";
+import { markdownExtensions } from "./-markdown-extensions.ts";
 import { ColumnHead } from "#/ui/column-head.tsx";
 
 /**

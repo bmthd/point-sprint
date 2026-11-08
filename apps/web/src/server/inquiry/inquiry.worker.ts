@@ -1,7 +1,7 @@
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { env } from "cloudflare:workers";
 import { EmailMessage } from "cloudflare:email";
-import { type InquiryResult, handleInquiry } from "./inquiry";
+import { type InquiryResult, handleInquiry } from "./inquiry.ts";
 import { verifyTurnstile } from "#/server/shared/turnstile.ts";
 
 /** `handleInquiry` with the Worker's secrets, its `send_email` binding and the real siteverify. */

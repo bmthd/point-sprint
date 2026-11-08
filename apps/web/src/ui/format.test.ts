@@ -8,7 +8,7 @@ import {
   rateText,
   rounded,
   yen,
-} from "./format";
+} from "./format.ts";
 
 test("groups numbers without rounding them to two decimal places", () => {
   expect(grouped(1234567)).toBe("1,234,567");

@@ -1,4 +1,4 @@
-import { queryKeys } from "./queries";
+import { queryKeys } from "./queries.ts";
 import { CURRENT_SCHEMA_VERSION } from "@workspaces/domain";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { atomWithQuery, queryClientAtom } from "jotai-tanstack-query";
@@ -7,7 +7,7 @@ import { type SyncOutcome, createSyncRunner, syncOnce } from "#/storage/sync-eng
 import type { SyncServer } from "#/storage/sync-passkey.ts";
 import { useLatestRef } from "#/use-latest-ref.ts";
 import { OutdatedDatabaseError } from "#/storage/repository.ts";
-import { repositoryAtom } from "./repository";
+import { repositoryAtom } from "./repository.ts";
 
 export type SyncStatus =
   | { state: "off" }

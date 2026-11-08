@@ -4,7 +4,7 @@ import { useAtomValue } from "jotai";
 import { accountIdOf } from "#/state/accounts.ts";
 import { accountSettingsAtom } from "#/state/derived.ts";
 import { savePlanAtom } from "#/state/mutations.ts";
-import { useSaveSettingsChange } from "./settings-shared";
+import { useSaveSettingsChange } from "./settings-shared.ts";
 
 /** The plan with `accountId` as its account; the default account is left out, as on a new plan. */
 const withAccount = (plan: Plan, accountId: string): Plan => {

@@ -22,7 +22,7 @@ import { accountSettingsAtom, calculatedPlanAtom, planResultAtom } from "#/state
 import { deletePlanAtom } from "#/state/mutations.ts";
 import { plansAtom } from "#/state/queries.ts";
 import { formatPeriod } from "#/ui/dates.ts";
-import { ResultCard } from "./result-card";
+import { ResultCard } from "./result-card.tsx";
 
 function TrashIcon() {
   return (

@@ -7,7 +7,7 @@ import type { OfficialEvent } from "#/model/official-event.ts";
 import type { Order } from "#/model/order.ts";
 import { type Plan, PlanSchema } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
-import { attachToEvent } from "./attach-event";
+import { attachToEvent } from "./attach-event.ts";
 
 const SHOP_A = "a0000000-0000-4000-8000-000000000001";
 const SHOP_B = "b0000000-0000-4000-8000-000000000002";

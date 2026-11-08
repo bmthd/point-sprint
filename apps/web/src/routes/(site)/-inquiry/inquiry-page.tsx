@@ -1,6 +1,6 @@
 import { Card, Heading, Text } from "@workspaces/ui";
 import { PageWithSidebar } from "#/routes/(site)/-page-with-sidebar.tsx";
-import { InquiryForm } from "./inquiry-form";
+import { InquiryForm } from "./inquiry-form.tsx";
 import { ColumnHead } from "#/ui/column-head.tsx";
 
 /** The inquiry page at `/inquiry`. */

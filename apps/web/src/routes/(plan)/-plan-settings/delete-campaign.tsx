@@ -3,7 +3,7 @@ import { Modal, Text, useDisclosure } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { type RefObject, useRef, useState } from "react";
 import { removeBenefitAtom } from "#/state/plan-operations.ts";
-import { useSaveSettingsChange } from "./settings-shared";
+import { useSaveSettingsChange } from "./settings-shared.ts";
 
 /**
  * The confirmation before deleting a campaign the user added. After deleting, focus goes to

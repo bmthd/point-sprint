@@ -7,7 +7,7 @@ import {
   startRegistration,
 } from "@simplewebauthn/browser";
 import type { PullResult, PushResult } from "#/server/sync/sync-records.ts";
-import type { Repository } from "./repository";
+import type { Repository } from "./repository.ts";
 import {
   PRF_SALT,
   type RemoteRecord,
@@ -21,7 +21,7 @@ import {
   toBase64Url,
   unwrapSecret,
   wrapSecret,
-} from "./sync-crypto";
+} from "./sync-crypto.ts";
 
 // Starting to sync, logging in on another device, and opening the data's secret there: with the
 // passkey's PRF where it gives the output it wrapped the secret with, else with the recovery code.

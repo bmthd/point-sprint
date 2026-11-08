@@ -4,7 +4,7 @@ import { calculate } from "#/calculate/calculate.ts";
 import { PlanSchema } from "#/model/plan.ts";
 import { ShopSchema } from "#/model/shop.ts";
 import type { Benefit } from "#/model/benefit.ts";
-import { BANK_CARD_ID, BANK_SALARY_ID, standardSpu } from "./spu";
+import { BANK_CARD_ID, BANK_SALARY_ID, standardSpu } from "./spu.ts";
 
 const shops = [
   v.parse(ShopSchema, {

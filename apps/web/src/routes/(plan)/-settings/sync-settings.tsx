@@ -35,7 +35,7 @@ import {
 } from "#/storage/sync-passkey.ts";
 import { syncServerAtom } from "#/routes/-sync-server.ts";
 import { TurnstileWidget, type TurnstileWidgetProps } from "#/routes/-turnstile-widget.tsx";
-import { RecoveryCodeDialog, RecoveryCodeEntry } from "./recovery-code-dialog";
+import { RecoveryCodeDialog, RecoveryCodeEntry } from "./recovery-code-dialog.tsx";
 
 /** A step the user took, for Google Analytics: how many start and how many get through. */
 function track(event: string) {

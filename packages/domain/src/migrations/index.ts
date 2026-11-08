@@ -4,15 +4,15 @@ import {
   type StoreName,
   migrateRow as runMigrations,
   seedRows as runSeeds,
-} from "./runner";
-import { cardRequiresMigration } from "./v2-card-requires";
-import { dayToOccurrenceMigration } from "./v3-day-to-occurrence";
-import { bankTiersMigration } from "./v9-bank-tiers";
-import { spuMonthsMigration } from "./v10-spu-months";
-import { orderRowsMigration } from "./v11-order-rows";
-import { twoShopCampaignMigration } from "./v12-two-shop-campaign";
+} from "./runner.ts";
+import { cardRequiresMigration } from "./v2-card-requires.ts";
+import { dayToOccurrenceMigration } from "./v3-day-to-occurrence.ts";
+import { bankTiersMigration } from "./v9-bank-tiers.ts";
+import { spuMonthsMigration } from "./v10-spu-months.ts";
+import { orderRowsMigration } from "./v11-order-rows.ts";
+import { twoShopCampaignMigration } from "./v12-two-shop-campaign.ts";
 
-export type { Migration, SeedSource, StoreName } from "./runner";
+export type { Migration, SeedSource, StoreName } from "./runner.ts";
 
 // 4 is skipped: databases that lacked the `quarantine` store were bumped to 4 when it was created.
 // 5–8 needed no row transforms: 5 added the old-tab guard (#148), 6 added spend-tiers (#169),

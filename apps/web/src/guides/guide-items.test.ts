@@ -1,7 +1,7 @@
 import { expect, test, vi } from "vitest";
 import type { RakutenItem, SearchResult } from "#/rakuten/item-search.ts";
-import { type ItemSearch, guideItemSearch } from "./guide-items";
-import type { ItemQuery } from "./item-query";
+import { type ItemSearch, guideItemSearch } from "./guide-items.ts";
+import type { ItemQuery } from "./item-query.ts";
 
 const item = (fields: Partial<RakutenItem> = {}): RakutenItem => ({
   itemCode: "shop-a:10000001",

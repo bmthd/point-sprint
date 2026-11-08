@@ -1,9 +1,9 @@
 import "fake-indexeddb/auto";
 import { type Order, type Plan, type Shop, type SyncRow, orderRowId } from "@workspaces/domain";
 import { describe, expect, test } from "vitest";
-import { createIndexedDbRepository } from "./indexed-db-repository";
-import { createMemoryRepository } from "./memory-repository";
-import type { Repository } from "./repository";
+import { createIndexedDbRepository } from "./indexed-db-repository.ts";
+import { createMemoryRepository } from "./memory-repository.ts";
+import type { Repository } from "./repository.ts";
 
 // The rows to send and the rows received, the same in both repositories.
 

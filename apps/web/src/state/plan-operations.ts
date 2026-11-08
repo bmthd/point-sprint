@@ -20,10 +20,10 @@ import {
   updateOrder,
 } from "@workspaces/domain";
 import { atom, type Getter } from "jotai";
-import { withEffectiveAccount } from "./accounts";
-import { accountSettingsAtom } from "./derived";
-import { type SavedPlans, type ShopChange, savePlanAtom, saveSpuMonthAtom } from "./mutations";
-import { shopsAtom } from "./queries";
+import { withEffectiveAccount } from "./accounts.ts";
+import { accountSettingsAtom } from "./derived.ts";
+import { type SavedPlans, type ShopChange, savePlanAtom, saveSpuMonthAtom } from "./mutations.ts";
+import { shopsAtom } from "./queries.ts";
 
 /**
  * New ids that come out the same each time the returned function is called again, so a change

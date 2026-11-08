@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { japaneseDate, newestFirst, parseArticle } from "./article";
-import { loadArticle, loadArticles } from "./articles";
+import { japaneseDate, newestFirst, parseArticle } from "./article.ts";
+import { loadArticle, loadArticles } from "./articles.ts";
 
 const source = (frontmatter: string) => `---\n${frontmatter}\n---\n\n本文の段落\n`;
 

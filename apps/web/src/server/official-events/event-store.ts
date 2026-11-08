@@ -1,8 +1,8 @@
 import { type OfficialEvent, OfficialEventSchema } from "@workspaces/domain";
 import * as v from "valibot";
 import type { D1Database } from "cloudflare:workers";
-import type { EventStore } from "./collect-events";
-import type { EventStatus, StoredEvent } from "./event-collection";
+import type { EventStore } from "./collect-events.ts";
+import type { EventStatus, StoredEvent } from "./event-collection.ts";
 
 // The event master in D1 (migrations/0001_official_events.sql).
 

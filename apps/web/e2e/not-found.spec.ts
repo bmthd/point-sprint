@@ -1,5 +1,5 @@
-import { expect, test } from "./fixtures";
-import { NotFoundPage } from "./pages";
+import { expect, test } from "./fixtures.ts";
+import { NotFoundPage } from "./pages/index.ts";
 
 // A URL no route matches gets the not-found page from the Worker, with a 404, not a prerendered page.
 

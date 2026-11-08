@@ -1,5 +1,5 @@
-import { expect, test } from "./fixtures";
-import { InquiryPage, TopPage } from "./pages";
+import { expect, test } from "./fixtures.ts";
+import { InquiryPage, TopPage } from "./pages/index.ts";
 
 // The preview's Worker has no inquiry destination (`playwright.config.ts`), so the server function
 // stops before it calls siteverify or sends a mail: what is tested is the way there and back.

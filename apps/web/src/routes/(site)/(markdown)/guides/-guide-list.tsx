@@ -1,7 +1,7 @@
 import { Box, Card, Heading, LinkBox, List, Text, VStack } from "@workspaces/ui";
 import type { Article } from "#/guides/article.ts";
 import { GuideThumbnail } from "#/routes/(site)/-guide-card.tsx";
-import { ArticleDates } from "./-article-dates";
+import { ArticleDates } from "./-article-dates.tsx";
 
 /** Every shopping guide, newest first. */
 export function GuideList({ articles }: { articles: Article[] }) {

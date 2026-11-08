@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { pointsForPrice, priceToFill } from "./fill-price";
+import { pointsForPrice, priceToFill } from "./fill-price.ts";
 
 describe("priceToFill", () => {
   test.each([

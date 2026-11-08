@@ -1,8 +1,8 @@
 import { Markdown } from "@tanstack/markdown/react";
 import { Box, Heading, Link } from "@workspaces/ui";
 import type { ReactNode } from "react";
-import { ArticleDates } from "./-article-dates";
-import { GuideItemList } from "./-guide-item-list";
+import { ArticleDates } from "./-article-dates.tsx";
+import { GuideItemList } from "./-guide-item-list.tsx";
 import type { Guide } from "#/guides/load-guide.ts";
 import { guideExtensions, rakutenAffiliateUrl } from "#/guides/markdown.ts";
 import {

@@ -5,8 +5,8 @@ import {
   resultImagePath,
   ResultSearchSchema,
   resultSummary,
-} from "./-share/result-card";
-import { SharedResultPage } from "./-shared-result-page";
+} from "./-share/result-card.ts";
+import { SharedResultPage } from "./-shared-result-page.tsx";
 import { pageHead } from "#/page-head.ts";
 import { siteUrl } from "#/site-url.ts";
 

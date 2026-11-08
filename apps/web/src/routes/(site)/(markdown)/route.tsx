@@ -1,6 +1,6 @@
 import { Outlet, createFileRoute, useChildMatches } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { GuideToc, guideSections } from "./-guide-toc";
+import { GuideToc, guideSections } from "./-guide-toc.tsx";
 import { PageWithSidebar } from "#/routes/(site)/-page-with-sidebar.tsx";
 
 /**

@@ -5,7 +5,7 @@ import {
   NumberInputSchema,
   OptionalTextInputSchema,
   TextInputSchema,
-} from "./normalize";
+} from "./normalize.ts";
 
 test("a number drops full-width forms, commas, spaces and its unit's signs", () => {
   expect(v.parse(NumberInputSchema("yen"), " ¥１１，０００ ")).toBe(11000);

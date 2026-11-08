@@ -4,7 +4,7 @@ import { orderShopContext, hasShop } from "#/model/order.ts";
 import { type Plan, planAccountId } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
 import type { SpuMonth } from "#/model/spu-month.ts";
-import { spuIdsIn } from "./spu-months";
+import { spuIdsIn } from "./spu-months.ts";
 
 /** An SPU item that an order achieves for an account in a month. */
 export type SpuAchievement = { accountId: string; month: string; benefitId: string };

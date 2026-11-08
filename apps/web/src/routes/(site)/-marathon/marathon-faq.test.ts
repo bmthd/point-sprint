@@ -1,6 +1,6 @@
 import type { OfficialEvent } from "@workspaces/domain";
 import { expect, test } from "vitest";
-import { marathonFaq, marathonJsonLd } from "./marathon-faq";
+import { marathonFaq, marathonJsonLd } from "./marathon-faq.ts";
 
 const round = (
   start: string,

@@ -7,7 +7,7 @@ import { accountIdOf } from "#/state/accounts.ts";
 import { accountSettingsAtom } from "#/state/derived.ts";
 import { spuMonthsAtom } from "#/state/queries.ts";
 import { monthText } from "#/routes/(plan)/-warnings.tsx";
-import { spuMonthRate } from "./spu-month-editor";
+import { spuMonthRate } from "./spu-month-editor.tsx";
 
 /**
  * 「未設定・10月から引き継ぎ」 for a month the account has no SPU stored for: it takes over the

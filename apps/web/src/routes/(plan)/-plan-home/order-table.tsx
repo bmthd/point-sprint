@@ -1,9 +1,9 @@
 import type { Plan } from "@workspaces/domain";
 import { Box, Flex, Card, List, Text, Tooltip, VisuallyHidden } from "@workspaces/ui";
 import { useCallback, useId, useMemo, useRef, useState } from "react";
-import { OrderAddForm } from "./order-add-form";
-import { withMonthSeparators } from "./order-months";
-import { OrderListContext, OrderRow, rowColumns } from "./order-row";
+import { OrderAddForm } from "./order-add-form.tsx";
+import { withMonthSeparators } from "./order-months.tsx";
+import { OrderListContext, OrderRow, rowColumns } from "./order-row.tsx";
 import {
   HeaderButton,
   OrdersHeading,
@@ -11,7 +11,7 @@ import {
   useOrderConfirm,
 } from "#/routes/(plan)/-order-shared.tsx";
 import { ColumnHead } from "#/ui/column-head.tsx";
-import { useOrderDrag } from "./use-order-drag";
+import { useOrderDrag } from "./use-order-drag.ts";
 
 /**
  * The plan's orders on a wide screen: one row per order that opens into its breakdown and edit

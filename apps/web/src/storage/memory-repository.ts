@@ -19,7 +19,7 @@ import {
   wins,
 } from "@workspaces/domain";
 import * as v from "valibot";
-import type { QuarantinedRow, Repository, SyncMeta } from "./repository";
+import type { QuarantinedRow, Repository, SyncMeta } from "./repository.ts";
 
 const byId = (a: { id: string }, b: { id: string }) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 

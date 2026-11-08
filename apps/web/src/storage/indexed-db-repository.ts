@@ -37,7 +37,7 @@ import {
   type QuarantinedRow,
   type Repository,
   type SyncMeta,
-} from "./repository";
+} from "./repository.ts";
 
 const PROFILE_KEY = "profile";
 const SYNC_META_KEY = "meta";

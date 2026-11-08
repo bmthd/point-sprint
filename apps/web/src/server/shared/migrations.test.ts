@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
 import { expect, test } from "vitest";
-import { memoryD1 } from "./memory-d1";
-import { applyMigrations } from "./migrations";
+import { memoryD1 } from "./memory-d1.ts";
+import { applyMigrations } from "./migrations.ts";
 
 const first = {
   "0001_official_events.sql": readFileSync(

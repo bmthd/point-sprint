@@ -5,7 +5,7 @@ import {
   imageSize,
   resultImagePath,
   resultSummary,
-} from "./-share/result-card";
+} from "./-share/result-card.ts";
 
 /**
  * The page a result is shared as, at `/share`. It shows the figures the link carries and leads to

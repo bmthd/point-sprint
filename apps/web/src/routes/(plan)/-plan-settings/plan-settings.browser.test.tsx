@@ -35,7 +35,7 @@ import {
   shops,
   tapCard,
 } from "#/routes/(plan)/-test-fixtures.tsx";
-import { PlanSettings } from "./plan-settings";
+import { PlanSettings } from "./plan-settings.tsx";
 
 beforeEach(async () => {
   await page.viewport(390, 844);

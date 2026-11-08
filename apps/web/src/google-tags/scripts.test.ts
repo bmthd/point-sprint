@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { googleTagScripts, missingGoogleTagScripts } from "./scripts";
+import { googleTagScripts, missingGoogleTagScripts } from "./scripts.ts";
 
 const ids = {
   measurementId: "G-B6CYR6VF70",

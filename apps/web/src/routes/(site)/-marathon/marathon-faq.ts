@@ -7,7 +7,7 @@ import {
   marathonHeading,
   shopAroundOf,
   splitRounds,
-} from "./marathon-rounds";
+} from "./marathon-rounds.ts";
 
 // The questions people search for about the marathon, answered from the rounds in the event
 // master. The page shows them and marks them up from this one list, so the two never disagree.

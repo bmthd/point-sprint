@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
-import { cardGlyphs } from "./card-glyphs";
+import { cardGlyphs } from "./card-glyphs.ts";
 import {
   EVENT_KINDS,
   eventKindOf,
@@ -12,7 +12,7 @@ import {
   resultPageUrl,
   ResultSearchSchema,
   resultSummary,
-} from "./result-card";
+} from "./result-card.ts";
 import { siteUrl } from "#/site-url.ts";
 
 const breakdown = { base: 100, spu: 500, marathon: 1000, campaign: 1000 };

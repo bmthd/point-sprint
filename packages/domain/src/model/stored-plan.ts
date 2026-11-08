@@ -1,8 +1,8 @@
 import * as v from "valibot";
 import { orderPositions } from "#/plan-ops/order-positions.ts";
-import { IdSchema, TimestampSchema } from "./common";
-import { OrderSchema, type Order } from "./order";
-import { type Plan, PlanSchema } from "./plan";
+import { IdSchema, TimestampSchema } from "./common.ts";
+import { OrderSchema, type Order } from "./order.ts";
+import { type Plan, PlanSchema } from "./plan.ts";
 
 // A plan is stored as a row of its own and one row per order, so that two devices that change
 // different orders of a plan keep both changes: the later `updatedAt` wins per row, not per plan.

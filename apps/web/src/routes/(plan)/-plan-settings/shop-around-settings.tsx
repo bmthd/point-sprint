@@ -10,9 +10,9 @@ import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
 import { CommitDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
 import { END_BEFORE_START, START_AFTER_END, DateSchema, PointsSchema } from "@workspaces/domain";
 import { officialEventsAtom } from "#/routes/-official-events.ts";
-import { isAddedCampaign } from "./campaign-toggles";
-import { useDeleteCampaign } from "./delete-campaign";
-import { useSaveSettingsChange, whenText } from "./settings-shared";
+import { isAddedCampaign } from "./campaign-toggles.tsx";
+import { useDeleteCampaign } from "./delete-campaign.tsx";
+import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
 
 type ShopAroundBenefit = Extract<Benefit, { kind: "shop-around" }>;
 

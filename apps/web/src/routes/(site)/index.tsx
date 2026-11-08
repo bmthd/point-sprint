@@ -1,7 +1,7 @@
 import { QueryClient, HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
-import { TopPage } from "./-top/top-page";
+import { TopPage } from "./-top/top-page.tsx";
 import { pageHead, siteName } from "#/page-head.ts";
 import { siteUrl } from "#/site-url.ts";
 import { queryKeys } from "#/state/queries.ts";

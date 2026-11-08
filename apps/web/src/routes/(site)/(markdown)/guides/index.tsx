@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { GuideList } from "./-guide-list";
+import { GuideList } from "./-guide-list.tsx";
 import { loadArticles } from "#/guides/articles.ts";
 import { pageHead } from "#/page-head.ts";
 

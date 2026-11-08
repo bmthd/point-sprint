@@ -41,7 +41,7 @@ export default defineConfig(({ command, mode, isPreview }) => {
         persistState: { path: localStateDir(process.env) },
       }),
       tanstackStart({
-        router: { routeFileIgnorePattern: "\\.test\\." },
+        router: { routeFileIgnorePattern: "\\.test\\.", addExtensions: true },
         // Only the listed pages: `/share` is rendered on each request, for the figures in its query.
         prerender: {
           enabled: true,

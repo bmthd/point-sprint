@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import type { ItemPage, LookupFailure, RakutenItem } from "./item-search";
+import type { ItemPage, LookupFailure, RakutenItem } from "./item-search.ts";
 
 // The item lookup as the browser asks the Worker for it (`src/server/item-lookup/item-lookup.functions.ts`).
 

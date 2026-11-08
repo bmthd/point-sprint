@@ -7,12 +7,12 @@ import { accountSettingsAtom, planResultAtom } from "#/state/derived.ts";
 import { BackIcon, CloseIcon, PencilIcon } from "#/ui/icons.tsx";
 import { PlanPage } from "#/routes/(plan)/-plan-page.tsx";
 import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
-import { AccountPicker } from "./account-picker";
-import { CampaignToggles } from "./campaign-toggles";
-import { EventAttacher } from "./event-attacher";
-import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared";
-import { ShopAroundSettings } from "./shop-around-settings";
-import { SpendTiersSettings } from "./spend-tiers-settings";
+import { AccountPicker } from "./account-picker.tsx";
+import { CampaignToggles } from "./campaign-toggles.tsx";
+import { EventAttacher } from "./event-attacher.tsx";
+import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared.ts";
+import { ShopAroundSettings } from "./shop-around-settings.tsx";
+import { SpendTiersSettings } from "./spend-tiers-settings.tsx";
 import { spuPageFromPlan } from "#/routes/(plan)/-spu-month/spu-from.ts";
 import { SpuSettingsCard } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
 

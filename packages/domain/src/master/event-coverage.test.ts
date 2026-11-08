@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { OfficialEvent } from "#/model/official-event.ts";
-import { eventMasterRunsOut } from "./event-coverage";
+import { eventMasterRunsOut } from "./event-coverage.ts";
 
 function event(start: string, end: string): OfficialEvent {
   return { id: `event-${start}`, name: "event", period: { start, end }, benefits: [] };

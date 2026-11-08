@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { createMemoryRepository } from "./memory-repository";
-import { toBase64Url, parseRecoveryCode } from "./sync-crypto";
+import { createMemoryRepository } from "./memory-repository.ts";
+import { toBase64Url, parseRecoveryCode } from "./sync-crypto.ts";
 import {
   SyncError,
   recoverWithCode,
@@ -9,8 +9,8 @@ import {
   startSync,
   stopSync,
   unlockWithRecoveryCode,
-} from "./sync-passkey";
-import { createTestBackend, createTestPasskeys, prfOutput } from "./sync-test-server";
+} from "./sync-passkey.ts";
+import { createTestBackend, createTestPasskeys, prfOutput } from "./sync-test-server.ts";
 
 function setUp({ turnstile = true } = {}) {
   const backend = createTestBackend({ turnstile });
@@ -192,7 +192,7 @@ test("rotation preserves encrypted records and works without PRF", async () => {
   await startSync(phone, "token");
   const meta = await phone.repository.sync.meta.get();
   if (!meta) throw new Error("no keys");
-  const { encryptRow, decryptRecord } = await import("./sync-crypto");
+  const { encryptRow, decryptRecord } = await import("./sync-crypto.ts");
   const record = await encryptRow(
     meta,
     {

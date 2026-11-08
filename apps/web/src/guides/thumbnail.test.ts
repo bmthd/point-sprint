@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { figureRuns, figureSize, thumbnailAlt } from "./thumbnail";
+import { figureRuns, figureSize, thumbnailAlt } from "./thumbnail.ts";
 
 test("a figure's digits are drawn large and the words around them small", () => {
   expect(figureRuns("税抜77,778円")).toEqual([

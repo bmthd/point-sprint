@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import { calculate } from "#/calculate/calculate.ts";
 import { PlanSchema } from "#/model/plan.ts";
 import { syncSchemas } from "#/sync/records.ts";
-import { migrateRow } from "./index";
+import { migrateRow } from "./index.ts";
 
 const benefit = {
   id: "10000000-0000-4000-8000-000000000001",

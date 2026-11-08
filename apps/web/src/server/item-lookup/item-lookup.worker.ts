@@ -2,7 +2,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { env } from "cloudflare:workers";
 import { ITEM_SEARCH_ENDPOINT } from "#/rakuten/config.ts";
 import type { ItemLookupResult, LookupItemInput } from "#/rakuten/item-lookup.ts";
-import { handleItemLookup } from "./item-lookup";
+import { handleItemLookup } from "./item-lookup.ts";
 import { workerRakutenConfig } from "#/server/shared/rakuten-config.worker.ts";
 
 /** `handleItemLookup` with the Worker's secrets and the one rate gate every lookup shares. */

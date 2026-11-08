@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import type { Article } from "./article";
-import { recentArticles } from "./recent-articles";
+import type { Article } from "./article.ts";
+import { recentArticles } from "./recent-articles.ts";
 
 const article = (slug: string, published: string, updated?: string): Article => ({
   slug,

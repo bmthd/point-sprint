@@ -1,8 +1,8 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
-import { DateRuleSchema } from "./common";
-import { DEFAULT_ACCOUNT_ID } from "./account";
-import { PlanSchema, ProfileSchema, accountsOf, planAccountId } from "./plan";
+import { DateRuleSchema } from "./common.ts";
+import { DEFAULT_ACCOUNT_ID } from "./account.ts";
+import { PlanSchema, ProfileSchema, accountsOf, planAccountId } from "./plan.ts";
 
 describe("DateRuleSchema", () => {
   test("rejects a date rule with day 32", () => {

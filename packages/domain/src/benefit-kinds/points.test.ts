@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { pointsFor } from "./points";
+import { pointsFor } from "./points.ts";
 
 const item = (lineItemId: string, orderId: string, amount: number) => ({
   lineItemId,

@@ -23,7 +23,7 @@ import { TestColorMode } from "#/test-color-mode.tsx";
 import { expectTexts } from "#/test-texts.ts";
 import { officialEventsSourceAtom } from "#/routes/-official-events.ts";
 import { useToday } from "#/routes/-use-today.ts";
-import { TopPage } from "./top-page";
+import { TopPage } from "./top-page.tsx";
 
 // 2026-10-05 12:00 in Japan: the October marathon (10/4〜10/9) is running.
 const now = () => new Date("2026-10-05T03:00:00Z");

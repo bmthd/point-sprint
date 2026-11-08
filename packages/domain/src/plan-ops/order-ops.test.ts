@@ -9,7 +9,7 @@ import {
   toggleHold,
   copyOrder,
   moveOrder,
-} from "./order-ops";
+} from "./order-ops.ts";
 
 const SHOP = "a0000000-0000-4000-8000-000000000001";
 const ORDER_IDS = [1, 2, 3].map((n) => `0${n}000000-0000-4000-8000-000000000000`);

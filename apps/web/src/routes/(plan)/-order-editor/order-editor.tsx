@@ -60,7 +60,7 @@ import {
   useFormInput,
   useOrderAutofill,
 } from "#/routes/(plan)/-order-form-store.ts";
-import { OrderPreviewBox } from "./order-preview";
+import { OrderPreviewBox } from "./order-preview.tsx";
 import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
 import { ExtraItems, ItemDetailFields } from "#/routes/(plan)/-item-details.tsx";
 

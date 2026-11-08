@@ -27,7 +27,7 @@ import {
 } from "#/routes/(plan)/-order-form-store.ts";
 import { ChevronIcon, PlusIcon } from "#/ui/icons.tsx";
 import { orderSaveFailedAtom, useSaveOrderDraft } from "#/routes/(plan)/-order-shared.tsx";
-import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields";
+import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields.tsx";
 import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
 
 const sumOfTotals = (results: Map<string, { total: number }>) =>

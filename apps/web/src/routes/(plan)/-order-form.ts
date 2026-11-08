@@ -25,7 +25,7 @@ import {
   ShopRateSchema,
 } from "@workspaces/domain";
 import { tokyoToday } from "#/ui/dates.ts";
-import { NEW_SHOP, TAX_RATES, shopToSave, taxRateValue } from "./-order-fields";
+import { NEW_SHOP, TAX_RATES, shopToSave, taxRateValue } from "./-order-fields.tsx";
 
 // The fields are in the order the editor shows them, so a submit focuses the first error on screen.
 

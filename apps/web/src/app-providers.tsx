@@ -4,12 +4,12 @@ import { useAtomValue } from "jotai";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
 import { useHydrateAtoms } from "jotai/utils";
 import { type ReactNode, useState } from "react";
-import { repositoryAtom } from "./state/repository";
-import { useSync } from "./state/sync";
-import { syncServerAtom } from "./routes/-sync-server";
-import { createIndexedDbRepository } from "./storage/indexed-db-repository";
-import { createMemoryRepository } from "./storage/memory-repository";
-import { OutdatedDatabaseError } from "./storage/repository";
+import { repositoryAtom } from "./state/repository.ts";
+import { useSync } from "./state/sync.ts";
+import { syncServerAtom } from "./routes/-sync-server.ts";
+import { createIndexedDbRepository } from "./storage/indexed-db-repository.ts";
+import { createMemoryRepository } from "./storage/memory-repository.ts";
+import { OutdatedDatabaseError } from "./storage/repository.ts";
 
 /** Device data stays out of the HTML rendered ahead of time: the server gets an empty repository. */
 function HydrateRepository({ children }: { children: ReactNode }) {

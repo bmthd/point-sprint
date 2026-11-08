@@ -26,9 +26,9 @@ import { cleanup, render } from "vitest-browser-react";
 import type { ItemLookup } from "#/rakuten/item-lookup.ts";
 import { officialEventsSourceAtom } from "#/routes/-official-events.ts";
 import { repositoryAtom } from "#/state/repository.ts";
-import { itemLookupAtom } from "./-item-autofill";
+import { itemLookupAtom } from "./-item-autofill.tsx";
 import type { Repository } from "#/storage/repository.ts";
-import { PlanHome } from "./-plan-home/plan-home";
+import { PlanHome } from "./-plan-home/plan-home.tsx";
 
 // Plans, shops and a rendered plan home shared by the plan home's browser tests.
 

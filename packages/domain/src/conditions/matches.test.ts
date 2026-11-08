@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Conditions } from "#/model/common.ts";
-import { matchesConditions, type ConditionContext } from "./matches";
+import { matchesConditions, type ConditionContext } from "./matches.ts";
 
 const ctx: ConditionContext = {
   channel: "rakuten-ichiba",

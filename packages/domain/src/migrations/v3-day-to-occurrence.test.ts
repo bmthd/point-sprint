@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { migrateRow } from "./index";
+import { migrateRow } from "./index.ts";
 
 test("moves the day caps of a plan saved at version 2 to occurrence caps", () => {
   const saved = {

@@ -19,8 +19,8 @@ import { beforeEach, expect, onTestFinished, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import { createMemoryRepository } from "#/storage/memory-repository.ts";
-import { PLAN, Providers, makePlan, order, shops, tapCard } from "./-test-fixtures";
-import { SpuPage } from "./-spu-page";
+import { PLAN, Providers, makePlan, order, shops, tapCard } from "./-test-fixtures.tsx";
+import { SpuPage } from "./-spu-page.tsx";
 
 beforeEach(async () => {
   await page.viewport(390, 844);

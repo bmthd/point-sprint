@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-start/server";
 import { env } from "cloudflare:workers";
 import { devMigrated } from "#/server/shared/dev-migrations.worker.ts";
-import { type SyncAuthDeps, sessionAccount } from "./sync-auth";
+import { type SyncAuthDeps, sessionAccount } from "./sync-auth.ts";
 import { verifyTurnstile } from "#/server/shared/turnstile.ts";
 
 // The Worker's side of the sync's server functions: the database, the site's origin, the session's

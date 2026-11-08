@@ -1,7 +1,7 @@
 import type { EligibleItem } from "#/benefit-kinds/index.ts";
 import type { Id } from "#/model/common.ts";
-import type { ShopAroundOutlook } from "./outlook";
-import type { PointGroup } from "./point-group";
+import type { ShopAroundOutlook } from "./outlook.ts";
+import type { PointGroup } from "./point-group.ts";
 
 export type BreakdownRow = {
   lineItemId: string;

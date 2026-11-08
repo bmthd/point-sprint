@@ -4,8 +4,8 @@ import { useAtom } from "jotai";
 import { useRef } from "react";
 import { reorderModeAtom } from "#/routes/(plan)/-ui.ts";
 import { PlusIcon } from "#/ui/icons.tsx";
-import { withMonthSeparators } from "./order-months";
-import { OrderCard } from "./order-card";
+import { withMonthSeparators } from "./order-months.tsx";
+import { OrderCard } from "./order-card.tsx";
 import {
   HeaderButton,
   OrdersHeading,

@@ -14,7 +14,7 @@ import { createIndexedDbRepository } from "#/storage/indexed-db-repository.ts";
 import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import type { Repository } from "#/storage/repository.ts";
 import { Providers, shops } from "#/routes/(plan)/-test-fixtures.tsx";
-import { Settings } from "./settings";
+import { Settings } from "./settings.tsx";
 
 beforeEach(async () => {
   await page.viewport(390, 844);

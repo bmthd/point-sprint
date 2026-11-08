@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
-import { InquiryInputSchema } from "./inquiry-input";
+import { InquiryInputSchema } from "./inquiry-input.ts";
 
 const valid = { name: "", email: "user@example.com", wantsReply: true, body: "質問です" };
 

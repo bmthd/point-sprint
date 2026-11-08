@@ -1,5 +1,5 @@
 import { type Page } from "@playwright/test";
-import { Sidebar } from "./site-page";
+import { Sidebar } from "./site-page.ts";
 
 /** /notices: every notice in full. */
 export class NoticesPage {

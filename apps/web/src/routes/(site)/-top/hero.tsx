@@ -11,7 +11,7 @@ import {
   VStack,
 } from "@workspaces/ui";
 import { type ReactNode, useId } from "react";
-import { ResultCard } from "./result-card";
+import { ResultCard } from "./result-card.tsx";
 
 /** That a plan could not be saved; next to the button that started it. */
 export function SaveFailed() {

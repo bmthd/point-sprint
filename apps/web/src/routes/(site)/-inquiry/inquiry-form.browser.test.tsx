@@ -4,7 +4,7 @@ import { config, theme } from "@workspaces/ui/theme";
 import { describe, expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import type { InquiryResult } from "#/server/inquiry/inquiry.ts";
-import { InquiryForm, inquirySenderAtom, type SendInquiry } from "./inquiry-form";
+import { InquiryForm, inquirySenderAtom, type SendInquiry } from "./inquiry-form.tsx";
 import type { TurnstileWidgetProps } from "#/routes/-turnstile-widget.tsx";
 
 // Turnstile's script is not loaded and nothing is sent: the widget and the server function are

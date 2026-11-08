@@ -19,9 +19,9 @@ import { planResultAtom } from "#/state/derived.ts";
 import { updateBenefitAtom } from "#/state/plan-operations.ts";
 import { ChevronIcon, CloseIcon, PlusIcon } from "#/ui/icons.tsx";
 import { CommitDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
-import { isAddedCampaign, isFixedCampaign } from "./campaign-toggles";
-import { useDeleteCampaign } from "./delete-campaign";
-import { useSaveSettingsChange, whenText } from "./settings-shared";
+import { isAddedCampaign, isFixedCampaign } from "./campaign-toggles.tsx";
+import { useDeleteCampaign } from "./delete-campaign.tsx";
+import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
 
 type SpendTiersBenefit = Extract<Benefit, { kind: "spend-tiers" }>;
 

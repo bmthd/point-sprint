@@ -19,7 +19,7 @@ import {
   spuBenefitsOf,
   spuIdsIn,
   toggleSpu,
-} from "./spu-months";
+} from "./spu-months.ts";
 
 const ACCOUNT = "acc00000-0000-4000-8000-000000000000";
 const OTHER = "acc00000-0000-4000-8000-000000000001";

@@ -10,10 +10,10 @@ import type { ChannelId, OrderTag, ShopTag } from "#/model/common.ts";
 import { type LineItem, hasShop, orderShopContext } from "#/model/order.ts";
 import { type Plan, planAccountId } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
-import { capGroupKey, resolveGroupCap } from "./cap-groups";
-import { shopAroundOutlook, type ShopAroundOutlook } from "./outlook";
-import { POINT_GROUPS, pointGroupOf, type PointGroup } from "./point-group";
-import { countShops } from "./shop-count";
+import { capGroupKey, resolveGroupCap } from "./cap-groups.ts";
+import { shopAroundOutlook, type ShopAroundOutlook } from "./outlook.ts";
+import { POINT_GROUPS, pointGroupOf, type PointGroup } from "./point-group.ts";
+import { countShops } from "./shop-count.ts";
 import type {
   BenefitTotal,
   BreakdownRow,
@@ -22,7 +22,7 @@ import type {
   CalculationWarning,
   EligibleLineItem,
   HeldEstimate,
-} from "./types";
+} from "./types.ts";
 
 type OrderContext = {
   orderId: string;

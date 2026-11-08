@@ -1,4 +1,4 @@
-import type { ChannelDef } from "./types";
+import type { ChannelDef } from "./types.ts";
 
 const SHOP_CODE_PATTERN = /^[a-z0-9_-]+$/i;
 

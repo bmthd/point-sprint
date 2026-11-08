@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { channels, parseUrl } from "./index";
+import { channels, parseUrl } from "./index.ts";
 
 test("parses an Ichiba item URL", () => {
   expect(parseUrl("https://item.rakuten.co.jp/shop-a/item-123/")).toEqual({

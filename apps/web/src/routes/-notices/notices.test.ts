@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { type Notice, newestFirst, notices, paragraphs } from "./notices";
+import { type Notice, newestFirst, notices, paragraphs } from "./notices.ts";
 
 const notice = (date: string, title: string): Notice => ({ id: title, date, title, body: "" });
 

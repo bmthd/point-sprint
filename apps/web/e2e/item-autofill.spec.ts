@@ -1,6 +1,6 @@
-import { expect, test, fixDate } from "./fixtures";
-import { FAKE_RAKUTEN_API_PORT, type FakeCall } from "./fake-rakuten-api";
-import { TopPage } from "./pages";
+import { expect, test, fixDate } from "./fixtures.ts";
+import { FAKE_RAKUTEN_API_PORT, type FakeCall } from "./fake-rakuten-api.ts";
+import { TopPage } from "./pages/index.ts";
 import { siteUrl } from "#/site-url.ts";
 
 // The Worker looks up the item, calling the fake API (e2e/fake-rakuten-api.ts) with the stand-in

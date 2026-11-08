@@ -11,7 +11,7 @@ import {
   renderPlanHome,
   shopField,
   shops,
-} from "./-test-fixtures";
+} from "./-test-fixtures.tsx";
 
 // The Rakuten API is never called here: every test gives the editor a lookup of its own.
 

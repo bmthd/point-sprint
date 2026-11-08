@@ -1,4 +1,4 @@
-import type { Migration } from "./runner";
+import type { Migration } from "./runner.ts";
 
 /**
  * Moves the day caps saved before version 3 to occurrence caps; `day` is gone. Only 勝ったら倍 had

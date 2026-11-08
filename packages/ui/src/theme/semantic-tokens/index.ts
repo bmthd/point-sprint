@@ -1,8 +1,8 @@
-import { colorSchemes } from "./color-schemes";
-import { colors } from "./colors";
-import { radii } from "./radii";
-import { sizes } from "./sizes";
-import { spaces } from "./spaces";
+import { colorSchemes } from "./color-schemes.ts";
+import { colors } from "./colors.ts";
+import { radii } from "./radii.ts";
+import { sizes } from "./sizes.ts";
+import { spaces } from "./spaces.ts";
 
 export const semanticTokens = {
   colors,

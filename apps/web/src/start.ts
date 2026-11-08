@@ -1,5 +1,5 @@
 import { createCsrfMiddleware, createMiddleware, createStart } from "@tanstack/react-start";
-import { setSecurityHeaders } from "./security-headers";
+import { setSecurityHeaders } from "./security-headers.ts";
 
 // Start drops its default CSRF check on server functions once `start.ts` exists, so it is listed.
 const csrfMiddleware = createCsrfMiddleware({ filter: (ctx) => ctx.handlerType === "serverFn" });

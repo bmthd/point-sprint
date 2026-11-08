@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { render } from "vitest-browser-react";
-import { GoogleTagScripts } from "./google-tag-scripts";
+import { GoogleTagScripts } from "./google-tag-scripts.tsx";
 
 test("renders no Google tag scripts in tests, which build without the IDs", async () => {
   const before = document.scripts.length;

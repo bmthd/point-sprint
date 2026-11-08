@@ -1,6 +1,6 @@
 import type { OfficialEvent } from "@workspaces/domain";
 import { expect, test } from "vitest";
-import { type PageCache, cachedTopPage } from "./top-page-cache";
+import { type PageCache, cachedTopPage } from "./top-page-cache.ts";
 
 const marathon: OfficialEvent = {
   id: "marathon-2026-10-14",

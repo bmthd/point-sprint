@@ -9,8 +9,8 @@ import {
 import { atom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
-import { type AccountSettings, accountSettingsOf, withEffectiveAccount } from "./accounts";
-import { plansAtom, profileAtom, shopsAtom, spuMonthsAtom } from "./queries";
+import { type AccountSettings, accountSettingsOf, withEffectiveAccount } from "./accounts.ts";
+import { plansAtom, profileAtom, shopsAtom, spuMonthsAtom } from "./queries.ts";
 
 /**
  * Whether the user tells accounts apart, and the accounts. Only the parts of the profile the

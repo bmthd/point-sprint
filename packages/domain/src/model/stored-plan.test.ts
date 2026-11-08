@@ -1,8 +1,8 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
-import type { Order } from "./order";
-import type { Plan } from "./plan";
-import { OrderRowSchema, joinPlan, splitPlan } from "./stored-plan";
+import type { Order } from "./order.ts";
+import type { Plan } from "./plan.ts";
+import { OrderRowSchema, joinPlan, splitPlan } from "./stored-plan.ts";
 
 const PLAN_ID = "4d5e6f7a-8b9c-4d0e-8f1a-2b3c4d5e6f7a";
 const SHOP_ID = "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b";

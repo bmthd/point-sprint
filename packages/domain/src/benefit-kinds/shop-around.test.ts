@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { shopAround } from "./shop-around";
+import { shopAround } from "./shop-around.ts";
 
 const tiers = [
   { minShops: 2, rate: 1 },

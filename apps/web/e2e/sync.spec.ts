@@ -1,6 +1,6 @@
 import type { CDPSession } from "@playwright/test";
-import { type Page, expect, standIn, test, fixDate } from "./fixtures";
-import { PlanPage, SettingsPage, SyncSection, TopPage } from "./pages";
+import { type Page, expect, standIn, test, fixDate } from "./fixtures.ts";
+import { PlanPage, SettingsPage, SyncSection, TopPage } from "./pages/index.ts";
 
 // Two devices, each a browser context with a virtual authenticator: the passkey made on the first
 // is copied to the second, as a password manager syncs it. A copied passkey gives another PRF
