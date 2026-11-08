@@ -416,9 +416,10 @@ test("details set quantity, coupon, shop rate, hold and another item", async () 
   await sheet.getByRole("spinbutton", { name: /^独自倍率/ }).fill("2");
   const hold = sheet.getByRole("switch", { name: "保留（計算から外す）" });
   // The whole row is the switch's label, so the tap target is the row's height. Sizes are read
-  // from the elements: no matcher measures them.
+  // from the elements: no matcher measures them, and rounded, as layout can leave a 44px row a
+  // hair under 44.
   const row = hold.element().closest("label");
-  expect(row?.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+  expect(Math.round(row?.getBoundingClientRect().height ?? 0)).toBeGreaterThanOrEqual(44);
   await sheet.getByText("保留（計算から外す）").click();
   await expect.element(hold).toBeChecked();
   (hold.element() as HTMLElement).focus();
