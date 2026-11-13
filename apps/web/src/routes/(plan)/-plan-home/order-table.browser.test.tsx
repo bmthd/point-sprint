@@ -10,6 +10,7 @@ import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import { DATE_PICKER_FIELD, misalignedFields, tapArea } from "#/test-layout.ts";
 import { expectTexts } from "#/test-texts.ts";
 import { OrderTable } from "./order-table.tsx";
+import { ENTRY_MODE_KEY } from "#/routes/(plan)/-ui.ts";
 import {
   PLAN,
   Providers,
@@ -30,6 +31,8 @@ import {
   summary,
   tapCard,
   chooseTaxRate,
+  enterByUrl,
+  openConditions,
 } from "#/routes/(plan)/-test-fixtures.tsx";
 
 const rowRenders = vi.hoisted(() => new Map<string, number>());
@@ -249,7 +252,9 @@ test("enter in the add form adds an order and refocuses the first field", async 
 
   await expect.element(rows()).toHaveLength(1);
   await openAddForm(screen);
-  const url = screen.getByRole("textbox", { name: /^URLから自動入力/ });
+  const amount = screen.getByRole("textbox", { name: "金額（税込）" });
+  // Opening the form puts the focus on the amount, which is entered first.
+  await expect.element(amount).toHaveFocus();
   await enterShop(screen, "ショップ4");
   await screen.getByRole("textbox", { name: /^商品名/ }).fill("フェイスタオル");
   await screen.getByRole("textbox", { name: "金額（税込）" }).fill("11,000");
@@ -263,7 +268,7 @@ test("enter in the add form adds an order and refocuses the first field", async 
 
   await expectShopsInOrder(rows(), ["ショップ0", "ショップ4"]);
   await expect.element(rowOf("ショップ4")).toMatchTextContent("¥11,000");
-  await expect.element(url).toHaveFocus();
+  await expect.element(amount).toHaveFocus();
   await expect
     .element(screen.getByRole("button", { name: /注文を追加/ }))
     .toHaveAttribute("aria-expanded", "true");
@@ -304,6 +309,7 @@ test("an error under one field leaves the other fields of its row in place", asy
   await expect.element(rows()).toHaveLength(1);
   await openAddForm(screen);
   // Its error takes two lines, the tallest under the add form's fields.
+  await openConditions(screen);
   await screen.getByRole("spinbutton", { name: /^独自倍率/ }).fill("0.5");
   await userEvent.keyboard("{Enter}");
   await expect
@@ -372,10 +378,12 @@ test("a pasted URL picks the shop, or starts a new one", async () => {
   const screen = await renderWith(marathonPlan([]), withCodes);
 
   await openAddForm(screen);
-  const url = screen.getByRole("textbox", { name: /^URLから自動入力/ });
+  const url = await enterByUrl(screen);
+  await expect.element(url).toHaveFocus();
   const shop = shopField(screen);
   await url.fill("https://item.rakuten.co.jp/shop-four/item-1/");
   await expect.element(shop).toHaveValue("ショップ4");
+  await openConditions(screen);
   await expect.element(screen.getByRole("checkbox", { name: "39ショップ" })).toBeChecked();
 
   await url.fill("https://item.rakuten.co.jp/coffee-beans/item-2/");
@@ -391,6 +399,31 @@ test("a pasted URL picks the shop, or starts a new one", async () => {
   expect(saved).toMatchObject({ channel: "rakuten-ichiba", shopCode: "coffee-beans", tags: [] });
   await expect.poll(async () => (await stored())?.[0]?.shopId).toBe(saved?.id);
   expect((await stored())?.[0]?.tags).toEqual(["repeat"]);
+});
+
+test("an order entered by its URL keeps the add form on the URL, and a URL pasted into the amount switches to it", async () => {
+  const screen = await renderWith(marathonPlan([]));
+
+  await openAddForm(screen);
+  const amount = screen.getByRole("textbox", { name: "金額（税込）" });
+  // A paste of the URL, as from the clipboard.
+  const data = new DataTransfer();
+  data.setData("text/plain", "https://item.rakuten.co.jp/shop-four/item-1/");
+  amount
+    .element()
+    .dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true }));
+  const url = screen.getByRole("textbox", { name: "商品ページのURL" });
+  await expect.element(url).toHaveValue("https://item.rakuten.co.jp/shop-four/item-1/");
+  await expect.element(amount).toHaveValue("");
+  await expect.element(shopField(screen)).toHaveValue("shop-four");
+
+  await amount.fill("1,000");
+  await userEvent.keyboard("{Enter}");
+  await expect.poll(async () => (await stored())?.length).toBe(1);
+  // The next order starts the same way, on this device too.
+  await expect.element(url).toHaveValue("");
+  await expect.element(url).toHaveFocus();
+  expect(localStorage.getItem(ENTRY_MODE_KEY)).toBe(JSON.stringify("url"));
 });
 
 test("keyboard reorder with the handle", async () => {
@@ -640,7 +673,7 @@ test("the add form adds an order with a quantity, a coupon and a second item", a
   await openAddForm(screen);
   const quantity = screen.getByRole("textbox", { name: "数量" });
   await expect.element(quantity.first()).not.toBeInTheDocument();
-  await screen.getByText("詳細設定", { exact: true }).click();
+  await openConditions(screen);
   await screen
     .getByRole("textbox", { name: /^商品名/ })
     .first()
@@ -697,6 +730,7 @@ test("an opened row of a plan with brand day saves the order's brand day tag", a
   );
 
   await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
+  await openConditions(screen);
   await tapCard(screen.getByRole("checkbox", { name: "ブランドデー対象" }));
   await expect.poll(async () => (await stored())?.[0]?.tags).toEqual(["brand-day"]);
 });

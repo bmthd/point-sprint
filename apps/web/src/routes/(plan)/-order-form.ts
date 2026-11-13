@@ -119,6 +119,14 @@ export function emptyInput(period: Period): OrderFormInput {
 }
 
 /** The editor's fields for an order that is already saved. */
+/** Whether an order has anything only 「条件」's last fields hold: another item, a quantity or a coupon. */
+export function hasDetails(order: Order) {
+  return (
+    order.lineItems.length > 1 ||
+    order.lineItems.some((item) => item.quantity !== 1 || item.discount)
+  );
+}
+
 export function inputOf(order: Order, shops: Shop[]): OrderFormInput {
   const shop = shops.find((other) => other.id === order.shopId);
   const context = orderShopContext(order, shop);

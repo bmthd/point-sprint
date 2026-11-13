@@ -18,7 +18,7 @@ export class AddOrderForm {
     this.root = orders.locator("form");
     // Typed to find a saved shop, or to name a new one.
     this.shop = this.root.getByRole("textbox", { name: /^ショップ/ });
-    this.itemUrl = this.root.getByRole("textbox", { name: /^URLから自動入力/ });
+    this.itemUrl = this.root.getByRole("textbox", { name: "商品ページのURL" });
     this.itemName = this.root.getByRole("textbox", { name: /^商品名/ });
     this.price = this.root.getByRole("textbox", { name: "金額（税込）" });
     this.shopRate = this.root.getByRole("spinbutton", { name: /^独自倍率/ });
@@ -30,8 +30,22 @@ export class AddOrderForm {
     await this.shop.fill(name);
   }
 
+  /** Switches the form to 「URLで入れる」, where the URL field is. */
+  async byUrl() {
+    if (await this.itemUrl.isVisible()) return;
+    await this.root.getByText("URLで入れる", { exact: true }).click();
+  }
+
+  /** Opens 「条件」, which holds the shop rate, the date, the campaigns and the details. */
+  async openConditions() {
+    const label = this.root.getByText("条件", { exact: true });
+    if (await this.shopRate.isVisible()) return;
+    await label.click();
+  }
+
   /** Pastes `url` into the item's URL field from the clipboard. */
   async pasteItemUrl(url: string) {
+    await this.byUrl();
     await this.itemUrl.focus();
     await this.page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
     await this.page.evaluate((value) => navigator.clipboard.writeText(value), url);
@@ -40,6 +54,7 @@ export class AddOrderForm {
 
   /** Types `url` into the item's URL field and leaves it. */
   async typeItemUrl(url: string) {
+    await this.byUrl();
     await this.itemUrl.fill(url);
     await this.itemUrl.blur();
   }

@@ -39,6 +39,7 @@ import {
   OrderFormSchema,
   type OrderFormInput,
   draftOf,
+  hasDetails,
   inputOf,
 } from "#/routes/(plan)/-order-form.ts";
 import { useOrderAutofill } from "#/routes/(plan)/-order-form-store.ts";
@@ -57,6 +58,7 @@ import {
   useShopName,
 } from "#/routes/(plan)/-order-shared.tsx";
 import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields.tsx";
+import { useEntryMode } from "#/routes/(plan)/-order-entry.tsx";
 import { PointBreakdown } from "#/routes/-point-breakdown.tsx";
 import type { DragStart } from "./use-order-drag.ts";
 
@@ -89,10 +91,6 @@ export const rowColumns = "24px 56px 36px minmax(0, 1fr) auto auto 44px";
  * Whether the order uses 「詳細設定」: more than one item, or an item bought more than once or with
  * a coupon. Its row opens with them shown.
  */
-const hasDetails = (order: Order) =>
-  order.lineItems.length > 1 ||
-  order.lineItems.some((item) => item.quantity !== 1 || item.discount);
-
 /** The form's input as text, its keys sorted: the form and `inputOf` list them in different orders. */
 const inputKey = (input: unknown): string =>
   JSON.stringify(input, (_key, value: unknown) =>
@@ -144,6 +142,7 @@ function InlineOrderEditor({ planId, order }: { planId: string; order: Order }) 
   };
   const commitRef = useLatestRef(commit);
   const autofill = useOrderAutofill(form, () => void commitRef.current());
+  const [mode, setMode] = useEntryMode(false, order.lineItems[0]?.url ? "url" : "amount");
 
   // A choice is saved as soon as it is made; typed text when its field is left or Enter is pressed.
   const instantKey = JSON.stringify([
@@ -196,6 +195,9 @@ function InlineOrderEditor({ planId, order }: { planId: string; order: Order }) 
         form={form}
         plan={plan}
         autofill={autofill}
+        mode={mode}
+        onModeChange={setMode}
+        showSwitch={false}
         detailsOpen={hasDetails(order)}
         onItemRemoved={() => void commit()}
       />

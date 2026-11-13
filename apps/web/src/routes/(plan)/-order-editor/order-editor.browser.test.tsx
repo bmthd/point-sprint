@@ -27,6 +27,9 @@ import {
   spuBenefit,
   tapCard,
   chooseTaxRate,
+  enterByUrl,
+  openConditions,
+  urlField,
 } from "#/routes/(plan)/-test-fixtures.tsx";
 
 beforeEach(async () => {
@@ -64,6 +67,7 @@ async function fillOrder(
   values: { shop?: string; amount: string; name?: string },
 ) {
   if (values.shop) await enterShop(sheet, values.shop);
+  await openConditions(sheet);
   await sheet.getByLabelText("注文日").fill("2026/10/05");
   await amountOf(sheet).fill(values.amount);
   if (values.name) await sheet.getByRole("textbox", { name: /^商品名/ }).fill(values.name);
@@ -92,6 +96,7 @@ test("adds unnamed orders without adding shop choices", async () => {
 test("an unnamed order can choose Kobo without creating a shop", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
+  await openConditions(sheet);
   await sheet.getByLabelText("購入先", { exact: true }).selectOptions("rakuten-kobo");
   await fillOrder(sheet, { amount: "1500" });
   await sheet.getByRole("button", { name: "追加する" }).click();
@@ -108,6 +113,7 @@ test("clearing a registered shop clears its 39shop mark", async () => {
   const screen = await renderWith(marathonPlan(), marked);
   const sheet = await openAdd(screen);
   await enterShop(sheet, "ショップ0");
+  await openConditions(sheet);
   await expect.element(sheet.getByRole("checkbox", { name: "39ショップ" })).toBeChecked();
   await enterShop(sheet, "");
   await expect.element(sheet.getByRole("checkbox", { name: "39ショップ" })).not.toBeChecked();
@@ -246,6 +252,7 @@ const brandDayBenefit: Benefit = {
 test("brand day is asked only in a plan that has it, and its tag is kept beside the repeat one", async () => {
   const without = await renderWith(makePlan([baseBenefit, repeatBenefit], []));
   const plain = await openAdd(without);
+  await openConditions(plain);
   await expect.element(plain.getByRole("checkbox", { name: /^リピート購入/ })).toBeVisible();
   await expect
     .element(plain.getByRole("checkbox", { name: /^ブランドデー対象/ }))
@@ -332,16 +339,16 @@ test("pasting an Ichiba URL selects the matching shop", async () => {
         "ichiba\nhttps://item.rakuten.co.jp/shop-four/item-1/",
     );
 
+  await enterByUrl(sheet);
   await sheet.getByRole("button", { name: "貼り付け" }).click();
-  await expect
-    .element(sheet.getByLabelText(/^URLから自動入力/))
-    .toHaveValue("https://item.rakuten.co.jp/shop-four/item-1/");
+  await expect.element(urlField(sheet)).toHaveValue("https://item.rakuten.co.jp/shop-four/item-1/");
   await expect.element(shopField(sheet)).toHaveValue("ショップ4");
+  await openConditions(sheet);
   await expect.element(sheet.getByRole("checkbox", { name: /^39ショップ/ })).toBeChecked();
   readText.mockRestore();
 
   // A code that is not in the registry starts a new shop with that code.
-  await sheet.getByLabelText(/^URLから自動入力/).fill("https://item.rakuten.co.jp/coffee-beans/x/");
+  await urlField(sheet).fill("https://item.rakuten.co.jp/coffee-beans/x/");
   // A shop no one has saved: its name is in the shop field, to be kept or changed.
   await expect.element(shopField(sheet)).toHaveValue("coffee-beans");
   await expect.element(sheet.getByLabelText("購入先")).toHaveValue("rakuten-ichiba");
@@ -361,7 +368,7 @@ test("pasting an Ichiba URL selects the matching shop", async () => {
 test("a URL that names no shop is described and does not mark the field invalid", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
-  const url = sheet.getByLabelText(/^URLから自動入力/);
+  const url = await enterByUrl(sheet);
   await url.fill("https://example.com/item");
   await expect.element(url).toHaveAccessibleDescription("このURLからはショップを選べません");
   await expect.element(url).not.toHaveAttribute("aria-invalid");
@@ -371,7 +378,7 @@ test("a URL that is not a web address is an error, and nothing is saved", async 
   const screen = await renderWith();
   const sheet = await openAdd(screen);
   await fillOrder(sheet, { shop: "ショップ4", amount: "1000" });
-  const url = sheet.getByLabelText(/^URLから自動入力/);
+  const url = await enterByUrl(sheet);
   await url.fill("item.rakuten.co.jp/shop/item/");
   await sheet.getByRole("button", { name: "追加する" }).click();
 
@@ -399,7 +406,7 @@ test("editing an order shows its stored URL and keeps it", async () => {
   await card.getByRole("button", { name: "編集" }).click();
 
   const sheet = screen.getByRole("dialog", { name: "注文を編集" });
-  await expect.element(sheet.getByLabelText(/^URLから自動入力/)).toHaveValue(url);
+  await expect.element(urlField(sheet)).toHaveValue(url);
   await amountOf(sheet).fill("5500");
   await sheet.getByRole("button", { name: "保存する" }).click();
   await expect.poll(async () => (await stored())[1]?.lineItems[0]?.unitPrice).toBe(5500);
@@ -507,6 +514,7 @@ test("editing an order from its card saves the changes", async () => {
 test("dragging the fields scrolls the sheet, and only the header drags it closed", async () => {
   const screen = await renderWith();
   const sheet = await openAdd(screen);
+  await openConditions(sheet);
   await userEvent.dragAndDrop(
     sheet.getByRole("group", { name: "税率" }),
     sheet.getByRole("button", { name: "追加する" }),
@@ -571,6 +579,7 @@ const storedSpu = async () =>
 test("a Books order of 3,000円 or more turns the Books SPU on for the month", async () => {
   const screen = await renderWith(makePlan([...marathon], []));
   const sheet = await openAdd(screen);
+  await openConditions(sheet);
   await sheet.getByLabelText("購入先", { exact: true }).selectOptions("rakuten-books");
   await fillOrder(sheet, { amount: "3000" });
   await sheet.getByRole("button", { name: "追加する" }).click();

@@ -2,134 +2,29 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import { Field as FormField, useField } from "@formisch/react";
+import { useField } from "@formisch/react";
 import type { Plan } from "@workspaces/domain";
-import {
-  Box,
-  Field,
-  Flex,
-  Input,
-  InputGroup,
-  NativeAccordion,
-  Separator,
-  Text,
-} from "@workspaces/ui";
+import { Flex, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { useId } from "react";
-import { bind, errorsOf } from "#/routes/-form.tsx";
+import { type ReactNode, useId } from "react";
 import { shopsAtom } from "#/state/queries.ts";
-import { AutofillStatus } from "#/routes/(plan)/-item-autofill.tsx";
-import {
-  AMOUNT_PATH,
-  type OrderForm,
-  applyShop,
-  autofillUrlHandlers,
-  type useOrderAutofill,
-} from "#/routes/(plan)/-order-form-store.ts";
+import type { useOrderAutofill, OrderForm } from "#/routes/(plan)/-order-form-store.ts";
 import { hasOrderTagCampaign } from "#/routes/(plan)/-order-form.ts";
+import { CampaignCheck, OrderPart } from "#/routes/(plan)/-order-fields.tsx";
 import {
-  CampaignCheck,
-  ChannelField,
-  OrderPart,
-  ShopRateInput,
-  TaxRateButtons,
-  UrlLabel,
-  optionalMark,
-  shopFromUrl,
-} from "#/routes/(plan)/-order-fields.tsx";
-import { ShopAutocomplete } from "#/routes/(plan)/-shop-autocomplete.tsx";
-import { FormDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
+  AmountField,
+  Conditions,
+  EntryModeSwitch,
+  ShopAndName,
+  UrlField,
+  useEnterUrl,
+} from "#/routes/(plan)/-order-entry.tsx";
+import type { EntryMode } from "#/routes/(plan)/-ui.ts";
 import { ExtraItems, ItemDetailFields } from "#/routes/(plan)/-item-details.tsx";
 
 // The fields of an order in the desktop list, the same in 「＋ 注文を追加」 and in an opened row.
 
 type Autofill = ReturnType<typeof useOrderAutofill>;
-
-function UrlField({ form, autofill }: { form: OrderForm; autofill: Autofill }) {
-  const shops = useAtomValue(shopsAtom);
-  const url = useField(form, { path: ["url"] });
-  const text = typeof url.input === "string" ? url.input.trim() : "";
-  // Not an error: the order can still be saved with a URL no shop is chosen from.
-  const unknown = url.errors === null && text !== "" && shopFromUrl(text, shops) === null;
-
-  return (
-    <Field.Root
-      label={<UrlLabel />}
-      optionalIndicator={optionalMark}
-      {...errorsOf(url)}
-      helperMessage={unknown ? "このURLからはショップを選べません" : undefined}
-      minW="0"
-    >
-      <Input
-        size="lg"
-        type="url"
-        placeholder="https://item.rakuten.co.jp/…"
-        {...bind(url)}
-        // The shop of the URL is chosen at once, and stays when the item cannot be looked up.
-        {...autofillUrlHandlers(
-          autofill,
-          (value) => {
-            url.onChange(value);
-            const found = shopFromUrl(value, shops);
-            if (found) applyShop(form, found);
-          },
-          url.props.onBlur,
-        )}
-      />
-      <AutofillStatus autofill={autofill} />
-    </Field.Root>
-  );
-}
-
-function ItemFields({ form }: { form: OrderForm }) {
-  return (
-    <Flex wrap="wrap" gap="2.5" align="flex-start">
-      <Box flex="1 1 13rem" minW="0">
-        <FormField of={form} path={["items", 0, "name"]}>
-          {(field) => (
-            <Field.Root
-              label="商品名"
-              optionalIndicator={optionalMark}
-              {...errorsOf(field)}
-              minW="0"
-            >
-              <Input size="lg" placeholder="例：洗濯洗剤" {...bind(field)} />
-            </Field.Root>
-          )}
-        </FormField>
-      </Box>
-      <Box w="48" flex="none">
-        <FormField of={form} path={AMOUNT_PATH}>
-          {(field) => (
-            <Field.Root label="金額（税込）" {...errorsOf(field)} minW="0">
-              <InputGroup.Root size="lg">
-                <InputGroup.Addon aria-hidden="true">¥</InputGroup.Addon>
-                <Input
-                  inputMode="numeric"
-                  placeholder="0"
-                  textAlign="end"
-                  fontVariantNumeric="tabular-nums"
-                  {...bind(field)}
-                />
-              </InputGroup.Root>
-            </Field.Root>
-          )}
-        </FormField>
-      </Box>
-      {/* The rates go to the next line together, so neither is left there alone. */}
-      <Flex gap="2.5" align="flex-start" flex="none">
-        <FormField of={form} path={["items", 0, "taxRate"]}>
-          {(field) => <TaxRateButtons field={field} size="lg" />}
-        </FormField>
-        <Box w="40" flex="none">
-          <FormField of={form} path={["items", 0, "shopPointRate"]}>
-            {(field) => <ShopRateInput field={field} size="lg" />}
-          </FormField>
-        </Box>
-      </Flex>
-    </Flex>
-  );
-}
 
 function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
   const shops = useAtomValue(shopsAtom);
@@ -185,87 +80,75 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
 }
 
 /**
- * Quantity, coupon and the items after the first one, under 「詳細設定」 that opens in place. Most
- * orders need none of them, so it starts shut unless `defaultOpen`. Shut, its fields stay in the
- * form.
- */
-function Details({
-  form,
-  defaultOpen,
-  onItemRemoved,
-}: {
-  form: OrderForm;
-  defaultOpen: boolean;
-  onItemRemoved?: () => void;
-}) {
-  return (
-    // The animated panel clips its content, which cuts the focus rings at its edges.
-    <NativeAccordion.Root animate={false}>
-      <NativeAccordion.Item open={defaultOpen} borderWidth="0">
-        <NativeAccordion.Button px="0" minH="11" color="fg.muted">
-          詳細設定
-        </NativeAccordion.Button>
-        <NativeAccordion.Panel px="0" pt="0">
-          <Flex direction="column" gap="2" maxW="md">
-            <ItemDetailFields form={form} index={0} withRate={false} size="lg" />
-            <ExtraItems form={form} onRemove={onItemRemoved} size="lg" />
-          </Flex>
-        </NativeAccordion.Panel>
-      </NativeAccordion.Item>
-    </NativeAccordion.Root>
-  );
-}
-
-/**
- * The URL, then the order in four parts: where it was bought, what was bought, its campaigns and
- * its details. `detailsOpen` opens 「詳細設定」 at first; `onItemRemoved` runs once an item after
- * the first one is removed.
+ * The order's fields. By its amount: the amount, then the shop and the item's name. By its URL:
+ * the URL, then the shop and name it fills in, then the amount. Everything else is in 「条件」.
+ * `onModeChange` shows the switch between the two; without it, a URL pasted into the amount still
+ * turns the fields to the URL's. `estimate` sits beside the amount. `detailsOpen` opens 「条件」 at
+ * first; `onItemRemoved` runs once an item after the first one is removed.
  */
 export function OrderFormFields({
   form,
   plan,
   autofill,
+  mode,
+  onModeChange,
+  showSwitch = true,
+  estimate,
   detailsOpen = false,
   onItemRemoved,
 }: {
   form: OrderForm;
   plan: Plan;
   autofill: Autofill;
+  mode: EntryMode;
+  onModeChange: (mode: EntryMode) => void;
+  showSwitch?: boolean;
+  estimate?: ReactNode;
   detailsOpen?: boolean;
   onItemRemoved?: () => void;
 }) {
+  const enterUrl = useEnterUrl(form, autofill);
+  const amount = (
+    <AmountField
+      form={form}
+      aside={estimate}
+      onUrlPasted={(url) => {
+        onModeChange("url");
+        enterUrl(url);
+      }}
+    />
+  );
   return (
     <>
-      <UrlField form={form} autofill={autofill} />
-      <OrderPart legend="購入">
-        <Flex wrap="wrap" gap="2.5" align="flex-start">
-          <Box flex="1 1 13rem" minW="0">
-            <ShopAutocomplete form={form} size="lg" />
-          </Box>
-          <Box w="40" flex="none">
-            <ChannelField form={form} size="lg" />
-          </Box>
-          <Box w="44" flex="none">
-            <FormField of={form} path={["date"]}>
-              {(field) => (
-                <Field.Root label="注文日" {...errorsOf(field)} minW="0">
-                  <FormDatePicker size="lg" field={field} period={plan.period} />
-                </Field.Root>
-              )}
-            </FormField>
-          </Box>
+      {showSwitch ? <EntryModeSwitch mode={mode} onChange={onModeChange} /> : null}
+      {mode === "url" ? (
+        <>
+          <UrlField form={form} autofill={autofill} size="lg" />
+          <ShopAndName form={form} size="lg" />
+          {amount}
+        </>
+      ) : (
+        <>
+          {amount}
+          <ShopAndName form={form} size="lg" />
+        </>
+      )}
+      <Conditions
+        form={form}
+        plan={plan}
+        size="lg"
+        defaultOpen={detailsOpen}
+        campaigns={
+          <OrderPart legend="キャンペーン">
+            <TagChips form={form} plan={plan} />
+          </OrderPart>
+        }
+      >
+        <Flex direction="column" gap="2" maxW="md">
+          <ItemDetailFields form={form} index={0} withRate={false} size="lg" />
+          <ExtraItems form={form} onRemove={onItemRemoved} size="lg" />
         </Flex>
-      </OrderPart>
-      <Separator />
-      <OrderPart legend="商品">
-        <ItemFields form={form} />
-      </OrderPart>
-      <Separator />
-      <OrderPart legend="キャンペーン">
-        <TagChips form={form} plan={plan} />
-      </OrderPart>
-      <Separator />
-      <Details form={form} defaultOpen={detailsOpen} onItemRemoved={onItemRemoved} />
+      </Conditions>
     </>
   );
 }

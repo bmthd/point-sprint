@@ -20,17 +20,21 @@ import { config, theme } from "@workspaces/ui/theme";
 import { QueryClientAtomProvider } from "jotai-tanstack-query/react";
 import { useHydrateAtoms } from "jotai/utils";
 import type { ReactNode } from "react";
-import { expect } from "vitest";
+import { beforeEach, expect } from "vitest";
 import { type Locator, page } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import type { ItemLookup } from "#/rakuten/item-lookup.ts";
 import { officialEventsSourceAtom } from "#/routes/-official-events.ts";
 import { repositoryAtom } from "#/state/repository.ts";
 import { itemLookupAtom } from "./-item-autofill.tsx";
+import { ENTRY_MODE_KEY } from "./-ui.ts";
 import type { Repository } from "#/storage/repository.ts";
 import { PlanHome } from "./-plan-home/plan-home.tsx";
 
 // Plans, shops and a rendered plan home shared by the plan home's browser tests.
+
+// Every test starts from 「金額で入れる」, whatever the test before it entered its order by.
+beforeEach(() => localStorage.removeItem(ENTRY_MODE_KEY));
 
 export const PLAN = "f0000000-0000-4000-8000-00000000000a";
 
@@ -243,6 +247,29 @@ export function enterShop(scope: Pick<Locator, "getByRole">, name: string) {
 }
 
 /** Chooses the item's tax rate by its label (「10%」, 「8%（食品）」 or 「非課税」), as a tap does. */
-export function chooseTaxRate(scope: Pick<Locator, "getByRole">, label: string) {
-  return scope.getByRole("radiogroup").getByText(label, { exact: true }).click();
+export async function chooseTaxRate(
+  scope: Pick<Locator, "getByRole" | "getByText">,
+  label: string,
+) {
+  await openConditions(scope);
+  await scope.getByRole("group", { name: "税率" }).getByText(label, { exact: true }).click();
+}
+
+/** Opens 「条件」 of the order being entered: its date, tax rate, campaigns and details. */
+export async function openConditions(scope: Pick<Locator, "getByText">) {
+  const label = scope.getByText("条件", { exact: true });
+  await expect.element(label).toBeVisible();
+  if (label.element().closest("details")?.open) return;
+  await label.click();
+}
+
+/** Switches the order being entered to 「URLで入れる」 and returns its URL field. */
+export async function enterByUrl(scope: Pick<Locator, "getByRole" | "getByText">) {
+  await scope.getByText("URLで入れる", { exact: true }).click();
+  return urlField(scope);
+}
+
+/** The URL field of the order being entered by its URL. */
+export function urlField(scope: Pick<Locator, "getByRole">) {
+  return scope.getByRole("textbox", { name: "商品ページのURL" });
 }

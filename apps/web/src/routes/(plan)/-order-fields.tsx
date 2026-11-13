@@ -15,17 +15,14 @@ import {
 import {
   Badge,
   CheckboxCard,
-  CircleQuestionMarkIcon,
   Fieldset,
   Flex,
-  IconButton,
   Image,
   InputGroup,
   NativeSelect,
   NumberInput,
   SegmentedControl,
   Text,
-  Tooltip,
   Field as UIField,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
@@ -141,17 +138,6 @@ export function OrderPart({ legend, children }: { legend: string; children: Reac
 /** A Formisch field that is set by a value, not by an input's event. */
 type ValueField<T = string> = FieldState & { onChange: (value: T) => void };
 
-/**
- * Pressed in a 44px square around a control drawn smaller, or taller where it is wider: a
- * pseudo-element from inside its border reaches the rest. Percentages here are of the control's
- * own box, so any size gets 44px.
- */
-const TAP_44 = {
-  position: "relative",
-  overflow: "visible",
-  _before: { content: '""', position: "absolute", inset: "min(0px, calc((100% - 44px) / 2))" },
-} as const;
-
 /** The item's tax rate: three choices of one width on a gray track, the chosen one raised. */
 export function TaxRateButtons({
   field,
@@ -184,30 +170,6 @@ export const optionalMark = (
     任意
   </Badge>
 );
-
-/** What the URL field does, shown when its ? is pointed at or pressed. */
-const URL_HELP =
-  "URLで楽天のAPIに問い合わせて商品情報を自動入力します。入力項目は、ショップ・商品名・金額・ショップ独自倍率です。楽天ブックス・楽天KoboのURLは、問い合わせずにショップだけ選びます。";
-
-/** The URL field's label, with its ? that explains what it fills in. */
-export function UrlLabel() {
-  return (
-    <>
-      URLから自動入力
-      <Tooltip content={URL_HELP}>
-        <IconButton
-          variant="ghost"
-          size="xs"
-          colorScheme="gray"
-          ms="0.5"
-          {...TAP_44}
-          aria-label="詳しく"
-          icon={<CircleQuestionMarkIcon />}
-        />
-      </Tooltip>
-    </>
-  );
-}
 
 /** The item's shop rate, stepped up and down by 1 with the buttons or the arrow keys. */
 export function ShopRateInput({ field, size }: { field: ValueField; size?: "lg" }) {
