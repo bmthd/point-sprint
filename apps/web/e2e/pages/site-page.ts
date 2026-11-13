@@ -133,8 +133,8 @@ export class Footer {
     return new SitePage(this.page);
   }
 
-  async goToInquiry(options?: NavigationOptions) {
-    await this.goTo("お問い合わせ", "/inquiry", options);
+  async goToInquiry() {
+    await this.goTo("お問い合わせ", "/inquiry");
     return new InquiryPage(this.page);
   }
 }
