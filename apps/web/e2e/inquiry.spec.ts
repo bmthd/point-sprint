@@ -5,10 +5,13 @@ import { InquiryPage, TopPage } from "./pages/index.ts";
 // stops before it calls siteverify or sends a mail: what is tested is the way there and back.
 
 test("the inquiry page is reached from the footer", async ({ page }) => {
-  const top = await TopPage.open(page);
-  const inquiry = await top.footer.goToInquiry();
+  // Retried from the page: a click while the page hydrates can do nothing.
+  let inquiry: InquiryPage | undefined;
+  await expect(async () => {
+    inquiry = await (await TopPage.open(page)).footer.goToInquiry({ timeout: 2000 });
+  }).toPass();
   await expect(page).toHaveTitle("お問い合わせ | ポイントスプリント");
-  await expect(inquiry.heading).toBeVisible();
+  await expect(inquiry!.heading).toBeVisible();
 });
 
 test("a failed send says so and keeps the input", async ({ page }) => {
