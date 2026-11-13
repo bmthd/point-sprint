@@ -25,6 +25,7 @@ test("a pasted Ichiba URL fills in the order from the Worker's lookup", async ({
   await expect(form.itemName).toHaveValue("ブレンドコーヒー豆 500g");
   await expect(form.price).toHaveValue("2160");
   await expect(form.shop).toHaveValue("コーヒー豆の店");
+  await form.openConditions();
   await expect(form.shopRate).toHaveValue("3");
 
   const calls: FakeCall[] = await (

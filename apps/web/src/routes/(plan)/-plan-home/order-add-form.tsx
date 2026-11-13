@@ -2,7 +2,7 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import { focus, reset, useForm } from "@formisch/react";
+import { reset, useForm } from "@formisch/react";
 import { type Plan, calculateAll } from "@workspaces/domain";
 import { Collapse, Flex, Button, List, Text } from "@workspaces/ui";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -28,6 +28,7 @@ import {
 import { ChevronIcon, PlusIcon } from "#/ui/icons.tsx";
 import { orderSaveFailedAtom, useSaveOrderDraft } from "#/routes/(plan)/-order-shared.tsx";
 import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields.tsx";
+import { focusFirstField, useEntryMode } from "#/routes/(plan)/-order-entry.tsx";
 import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
 
 const sumOfTotals = (results: Map<string, { total: number }>) =>
@@ -61,34 +62,39 @@ function AddedPointsEstimate({ plan, form }: { plan: Plan; form: OrderForm }) {
   }, [deferred, plans, shops, before, asCalculated, plan.id]);
 
   return (
-    <Text
-      as="span"
-      flex="1"
-      minW="200px"
-      fontSize="sm"
+    <Flex
+      direction="column"
+      justify="center"
+      gap="0.5"
+      minH="full"
+      ps={{ base: "0", sm: "4" }}
+      borderStartWidth={{ base: "0", sm: "1px" }}
       fontVariantNumeric="tabular-nums"
       role="status"
       aria-label="ポイントの目安"
     >
       {preview ? (
         <>
-          この注文で{preview.shop ? `（${preview.shop}店舗目）` : ""}{" "}
-          <Text as="b" color="primary.fg">
+          <Text as="span" fontSize="sm">
+            この注文で{preview.shop ? `（${preview.shop}店舗目）` : ""}{" "}
+          </Text>
+          <Text as="b" fontSize="2xl" lineHeight="short" color="primary.fg">
             約 +{pointsText(preview.points)}
           </Text>
         </>
       ) : (
-        <Text as="span" color="fg.muted">
+        <Text as="span" fontSize="sm" color="fg.muted">
           金額を入れると、増えるポイントの目安が出ます
         </Text>
       )}
-    </Text>
+    </Flex>
   );
 }
 
 /**
  * 「＋ 注文を追加」 at the end of the desktop list. Enter in any field adds the order when it is
- * valid, then empties the form and puts the focus back on its first field.
+ * valid, then empties the form and puts the focus back on its first field: the amount, or the URL
+ * when the order is entered by its URL.
  */
 export function OrderAddForm({ plan }: { plan: Plan }) {
   const shops = useAtomValue(shopsAtom);
@@ -100,6 +106,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
   if (open && openOrderId !== null) setOpen(false);
   const form = useForm({ schema: OrderFormSchema, initialInput: emptyInput(plan.period) });
   const autofill = useOrderAutofill(form);
+  const [mode, setMode] = useEntryMode(true);
   const formId = useId();
 
   const add = (output: OrderFormOutput) =>
@@ -107,8 +114,8 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
       // Not saved, the typed order stays in the form so it can be added again.
       if (!(await saveDraft(draftOf(output, shops, undefined), true))) return;
       reset(form, { initialInput: emptyInput(plan.period) });
-      focus(form, { path: ["url"] });
-      // After the focus moves: leaving the URL field would look up the URL it still shows.
+      focusFirstField(form, mode);
+      // Leaving the URL field would look up the URL it still showed.
       autofill.reset();
     });
 
@@ -130,7 +137,10 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
         aria-expanded={open}
         aria-controls={formId}
         onClick={() => {
-          if (!open) setOpenOrderId(null);
+          if (!open) {
+            setOpenOrderId(null);
+            focusFirstField(form, mode);
+          }
           setOpen(!open);
         }}
         w="full"
@@ -151,9 +161,18 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
       <Collapse open={open} unmountOnExit>
         <Form of={form} id={formId} onKeyDown={onKeyDown} onSubmit={add}>
           <Flex direction="column" gap="3" borderTopWidth="1px" pt="3.5" pb="4" px="4">
-            <OrderFormFields form={form} plan={plan} autofill={autofill} />
-            <Flex wrap="wrap" align="center" gap="2">
-              <AddedPointsEstimate plan={plan} form={form} />
+            <OrderFormFields
+              form={form}
+              plan={plan}
+              autofill={autofill}
+              mode={mode}
+              onModeChange={(next) => {
+                setMode(next);
+                focusFirstField(form, next);
+              }}
+              estimate={<AddedPointsEstimate plan={plan} form={form} />}
+            />
+            <Flex justify="flex-end">
               <Button type="submit" colorScheme="primary" size="lg" minW={ACTION_BUTTON_WIDTH}>
                 追加する
               </Button>

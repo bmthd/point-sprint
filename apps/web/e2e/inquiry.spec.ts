@@ -6,6 +6,8 @@ import { InquiryPage, TopPage } from "./pages/index.ts";
 
 test("the inquiry page is reached from the footer", async ({ page }) => {
   const top = await TopPage.open(page);
+  // A click while the page hydrates can do nothing.
+  await top.hydrated();
   const inquiry = await top.footer.goToInquiry();
   await expect(page).toHaveTitle("お問い合わせ | ポイントスプリント");
   await expect(inquiry.heading).toBeVisible();

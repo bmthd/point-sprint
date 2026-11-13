@@ -2,42 +2,17 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import { Field as FormField, focus, reset, useField, useForm } from "@formisch/react";
+import { Field as FormField, reset, useField, useForm } from "@formisch/react";
 import type { Order, Plan } from "@workspaces/domain";
-import {
-  Box,
-  Flex,
-  Button,
-  Drawer,
-  Field,
-  IconButton,
-  Input,
-  InputGroup,
-  Modal,
-  Separator,
-  Switch,
-  Text,
-} from "@workspaces/ui";
+import { Box, Flex, Button, Drawer, IconButton, Modal, Switch, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } from "react";
-import { Form, bind, errorsOf } from "#/routes/-form.tsx";
+import { Form } from "#/routes/-form.tsx";
 import { shopsAtom } from "#/state/queries.ts";
 import { useSingleFlight } from "#/use-single-flight.ts";
 import { CloseIcon } from "#/ui/icons.tsx";
-import { AutofillStatus, type ItemAutofill } from "#/routes/(plan)/-item-autofill.tsx";
-import {
-  CampaignCheck,
-  ChannelField,
-  OrderPart,
-  ShopRateInput,
-  TaxRateButtons,
-  UrlLabel,
-  optionalMark,
-  shopFromUrl,
-} from "#/routes/(plan)/-order-fields.tsx";
-import { ShopAutocomplete } from "#/routes/(plan)/-shop-autocomplete.tsx";
+import { CampaignCheck, OrderPart } from "#/routes/(plan)/-order-fields.tsx";
 import { CampaignChip, useSaveOrderDraft } from "#/routes/(plan)/-order-shared.tsx";
-import { FormDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
 import {
   type OrderFormInput,
   OrderFormSchema,
@@ -47,19 +22,26 @@ import {
   draftOf,
   draftOfInput,
   emptyInput,
+  hasDetails,
   inputOf,
   rateOf,
   tagBonus,
 } from "#/routes/(plan)/-order-form.ts";
 import {
-  AMOUNT_PATH,
   type OrderForm,
-  applyShop,
-  autofillUrlHandlers,
-  urlFromPastedText,
   useFormInput,
   useOrderAutofill,
 } from "#/routes/(plan)/-order-form-store.ts";
+import {
+  AmountField,
+  Conditions,
+  EntryModeSwitch,
+  ShopAndName,
+  UrlField,
+  focusFirstField,
+  useEnterUrl,
+  useEntryMode,
+} from "#/routes/(plan)/-order-entry.tsx";
 import { OrderPreviewBox } from "./order-preview.tsx";
 import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
 import { ExtraItems, ItemDetailFields } from "#/routes/(plan)/-item-details.tsx";
@@ -143,146 +125,10 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
   );
 }
 
-function ShopFields({
-  form,
-  plan,
-  urlId,
-  autofill,
-}: {
-  form: OrderForm;
-  plan: Plan;
-  urlId: string;
-  autofill: ItemAutofill;
-}) {
-  const shops = useAtomValue(shopsAtom);
-  const url = useField(form, { path: ["url"] });
-
-  // The shop of the URL is chosen at once, and stays when the item cannot be looked up.
-  const onUrl = (text: string) => {
-    url.onChange(text);
-    const found = shopFromUrl(text, shops);
-    if (found) applyShop(form, found);
-  };
-
-  const paste = async () => {
-    try {
-      const text = urlFromPastedText(await navigator.clipboard.readText());
-      onUrl(text);
-      autofill.onUrlChange(text, true);
-    } catch {
-      // Reading the clipboard was not allowed; the URL can still be pasted into the field.
-      document.getElementById(urlId)?.focus();
-    }
-  };
-
-  const urlText = typeof url.input === "string" ? url.input.trim() : "";
-  // Not an error: the order can still be saved with a URL no shop is chosen from.
-  const urlUnknown = url.errors === null && urlText !== "" && shopFromUrl(urlText, shops) === null;
-  const hintId = useId();
-
-  return (
-    <>
-      <Field.Root
-        id={urlId}
-        label={<UrlLabel />}
-        optionalIndicator={optionalMark}
-        {...errorsOf(url)}
-        helperMessage={urlUnknown ? "このURLからはショップを選べません" : undefined}
-        helperMessageProps={{ id: hintId }}
-      >
-        <Flex gap="2">
-          <Input
-            {...bind(url)}
-            flex="1"
-            type="url"
-            inputMode="url"
-            placeholder="https://item.rakuten.co.jp/…"
-            // Field links a helper message only when the field's invalid state changes, and this
-            // one comes and goes while the field stays valid.
-            {...(url.errors === null
-              ? { "aria-describedby": urlUnknown ? hintId : undefined }
-              : {})}
-            {...autofillUrlHandlers(autofill, onUrl, url.props.onBlur)}
-          />
-          <Button type="button" variant="outline" flex="none" onClick={() => void paste()}>
-            貼り付け
-          </Button>
-        </Flex>
-        <AutofillStatus autofill={autofill} />
-      </Field.Root>
-      <OrderPart legend="購入">
-        <ShopAutocomplete form={form} />
-        <Box
-          display="grid"
-          gridTemplateColumns="repeat(2, minmax(0, 1fr))"
-          alignItems="start"
-          gap="2"
-        >
-          <ChannelField form={form} />
-          <FormField of={form} path={["date"]}>
-            {(field) => (
-              <Field.Root label="注文日" {...errorsOf(field)}>
-                <FormDatePicker field={field} period={plan.period} />
-              </Field.Root>
-            )}
-          </FormField>
-        </Box>
-      </OrderPart>
-    </>
-  );
-}
-
-function MainItemFields({
-  form,
-  amountRef,
-}: {
-  form: OrderForm;
-  amountRef: RefObject<HTMLInputElement | null>;
-}) {
-  return (
-    <OrderPart legend="商品">
-      <FormField of={form} path={["items", 0, "name"]}>
-        {(field) => (
-          <Field.Root label="商品名" optionalIndicator={optionalMark} {...errorsOf(field)}>
-            <Input placeholder="例：洗濯洗剤 詰め替え" {...bind(field)} />
-          </Field.Root>
-        )}
-      </FormField>
-      <Box display="grid" gridTemplateColumns="minmax(0, 1fr) 150px" alignItems="start" gap="2">
-        <FormField of={form} path={AMOUNT_PATH}>
-          {(field) => (
-            <Field.Root label="金額（税込）" {...errorsOf(field)}>
-              <InputGroup.Root>
-                <InputGroup.Addon aria-hidden="true">¥</InputGroup.Addon>
-                <Input
-                  {...bind(field)}
-                  ref={(element: HTMLInputElement | null) => {
-                    field.props.ref(element);
-                    amountRef.current = element;
-                  }}
-                  inputMode="numeric"
-                  placeholder="0"
-                  textAlign="end"
-                  fontVariantNumeric="tabular-nums"
-                />
-              </InputGroup.Root>
-            </Field.Root>
-          )}
-        </FormField>
-        <FormField of={form} path={["items", 0, "shopPointRate"]}>
-          {(field) => <ShopRateInput field={field} />}
-        </FormField>
-      </Box>
-      <FormField of={form} path={["items", 0, "taxRate"]}>
-        {(field) => <TaxRateButtons field={field} fill />}
-      </FormField>
-    </OrderPart>
-  );
-}
-
+/** Quantity, coupon, the items after the first one and 保留, last in 「条件」. */
 function Details({ form }: { form: OrderForm }) {
   return (
-    <OrderPart legend="詳細設定">
+    <>
       <ItemDetailFields form={form} index={0} withRate={false} />
       <FormField of={form} path={["onHold"]}>
         {(field) => (
@@ -300,7 +146,7 @@ function Details({ form }: { form: OrderForm }) {
         )}
       </FormField>
       <ExtraItems form={form} />
-    </OrderPart>
+    </>
   );
 }
 
@@ -319,7 +165,6 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
   const saveDraft = useSaveOrderDraft(plan.id, setFailed);
   const run = useSingleFlight();
   const formId = useId();
-  const urlId = useId();
   const keepOpenId = useId();
   // The fields start from the order as it was when the editor opened.
   const [initialInput] = useState<OrderFormInput>(() =>
@@ -327,6 +172,14 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
   );
   const form = useForm({ schema: OrderFormSchema, initialInput });
   const autofill = useOrderAutofill(form);
+  const enterUrl = useEnterUrl(form, autofill);
+  // A new order starts the way the last one was entered; an order being edited, by its URL if it
+  // has one.
+  const [mode, setMode] = useEntryMode(!original, original?.lineItems[0]?.url ? "url" : "amount");
+  // On a phone the focus would only bring up the keyboard over the sheet.
+  const focusFirst = (next: typeof mode) => {
+    if (layout === "dialog") focusFirstField(form, next);
+  };
   const parts = layout === "sheet" ? Drawer : Modal;
   const title = original ? "注文を編集" : "注文を追加";
 
@@ -336,15 +189,26 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
       if (!(await saveDraft(draftOf(output, shops, original), !original))) return;
       if (keepOpen) {
         reset(form, { initialInput: emptyInput(plan.period) });
-        // On a phone the focus would only bring up the keyboard over the sheet.
-        if (layout === "dialog") focus(form, { path: AMOUNT_PATH });
-        // After the focus moves: leaving the URL field would look up the URL it still shows.
+        focusFirst(mode);
+        // Leaving the URL field would look up the URL it still showed.
         autofill.reset();
       } else {
         onClose();
       }
     });
   };
+
+  const amount = (
+    <AmountField
+      form={form}
+      inputRef={amountRef}
+      aside={<DraftPreview form={form} plan={plan} original={original} />}
+      onUrlPasted={(url) => {
+        setMode("url");
+        enterUrl(url);
+      }}
+    />
+  );
 
   const header = (
     <parts.Header display="flex" alignItems="center" justifyContent="space-between">
@@ -366,15 +230,37 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
           }
         >
           <Flex direction="column" gap="3.5">
-            <ShopFields form={form} plan={plan} urlId={urlId} autofill={autofill} />
-            <Separator />
-            <MainItemFields form={form} amountRef={amountRef} />
-            <Separator />
-            <Campaigns form={form} plan={plan} />
-            <DraftPreview form={form} plan={plan} original={original} />
+            {original ? null : (
+              <EntryModeSwitch
+                mode={mode}
+                fill={layout === "sheet"}
+                onChange={(next) => {
+                  setMode(next);
+                  focusFirst(next);
+                }}
+              />
+            )}
+            {mode === "url" ? (
+              <>
+                <UrlField form={form} autofill={autofill} withPaste={layout === "sheet"} />
+                <ShopAndName form={form} />
+                {amount}
+              </>
+            ) : (
+              <>
+                {amount}
+                <ShopAndName form={form} />
+              </>
+            )}
+            <Conditions
+              form={form}
+              plan={plan}
+              defaultOpen={original ? hasDetails(original) : false}
+              campaigns={<Campaigns form={form} plan={plan} />}
+            >
+              <Details form={form} />
+            </Conditions>
             {original ? null : <CapFlows plan={plan} form={form} />}
-            <Separator />
-            <Details form={form} />
           </Flex>
         </Form>
       </parts.Body>

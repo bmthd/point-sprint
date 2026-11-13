@@ -25,6 +25,11 @@ export class TopPage {
     return new TopPage(page);
   }
 
+  /** Waits until the page has hydrated: its buttons are disabled until then. */
+  async hydrated() {
+    await expect(this.startButton).toBeEnabled();
+  }
+
   get header() {
     return new Header(this.page);
   }
