@@ -83,8 +83,10 @@ export function EntryModeSwitch({
       size="lg"
       // Each choice is pressed 44px, as a tax rate's is.
       css={{ "& label::before": taxRateSegmentsStyle.css["& label::before"] }}
-      w={fill ? "full" : "xs"}
-      // Its large size is at least 24rem wide, wider than a phone's sheet.
+      // As wide as its choices, or the row's width. Its large size is otherwise at least 24rem
+      // wide, wider than a phone's sheet, and narrower widths leave the chosen one's mark behind.
+      w={fill ? "full" : "auto"}
+      alignSelf={fill ? "stretch" : "flex-start"}
       minW="0"
       maxW="full"
       items={[
