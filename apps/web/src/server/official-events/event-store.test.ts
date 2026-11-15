@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
 import { expect, test } from "vitest";
 import { collectEvents } from "./collect-events.ts";
-import { MARATHON_URL, SCHEDULE_URL } from "./event-pages.ts";
+import { BLACK_FRIDAY_URL, MARATHON_URL, SCHEDULE_URL } from "./event-pages.ts";
 import { d1EventStore, lastCheckedAt, publishedEvents } from "./event-store.ts";
 import { memoryD1 } from "#/server/shared/memory-d1.ts";
 
@@ -12,6 +12,8 @@ const pages: Record<string, string> = {
   [SCHEDULE_URL]: read("event-pages/schedule-2026-10.html"),
   [MARATHON_URL]: read("event-pages/marathon-2026-10-14.html"),
 };
+/** What every run here notes: the Black Friday page is not served. */
+const NO_BLACK_FRIDAY = "ブラックフライデーのページを取得できない（HTTP 503）";
 const fetchPages = (async (url: string) =>
   pages[url] === undefined
     ? new Response("", { status: 503 })
@@ -40,14 +42,17 @@ test("a run confirms the round on the marathon page and logs what it did", async
   const now = () => new Date("2026-10-15T03:00:00Z");
   expect(await collectEvents({ store: d1EventStore(db), fetch: fetchPages, now })).toBe("ok");
   // The second round already had the cap the page shows, and the third keeps the one it had.
-  expect(runs(sqlite)).toEqual([{ outcome: "ok", message: "変更なし" }]);
+  expect(runs(sqlite)).toEqual([{ outcome: "ok", message: NO_BLACK_FRIDAY }]);
 
   sqlite.exec(
     `UPDATE official_events SET benefits_json = replace(benefits_json, '"cap":7000', '"cap":5000')
      WHERE id = 'marathon-2026-10-14'`,
   );
   await collectEvents({ store: d1EventStore(db), fetch: fetchPages, now });
-  expect(runs(sqlite).at(-1)).toEqual({ outcome: "ok", message: "marathon-2026-10-14: 更新" });
+  expect(runs(sqlite).at(-1)).toEqual({
+    outcome: "ok",
+    message: `marathon-2026-10-14: 更新\n${NO_BLACK_FRIDAY}`,
+  });
   const row = sqlite
     .prepare("SELECT source_url, fetched_at, status FROM official_events WHERE id = ?")
     .get("marathon-2026-10-14");
@@ -60,6 +65,24 @@ test("a run confirms the round on the marathon page and logs what it did", async
   expect(second?.benefits[0]).toMatchObject({
     id: "fc7a45a2-5bd9-49ee-a9e7-6104109bd30d",
     params: { cap: 7000 },
+  });
+});
+
+test("a run publishes Black Friday from its page", async () => {
+  const { db, sqlite } = memoryD1();
+  const withBlackFriday = (async (url: string) =>
+    url === BLACK_FRIDAY_URL
+      ? new Response(read("event-pages/black-friday-2026-11-19.html"))
+      : fetchPages(url)) as typeof fetch;
+  // 2026-11-15 12:00 in Japan: October's rounds have ended.
+  const now = () => new Date("2026-11-15T03:00:00Z");
+  expect(await collectEvents({ store: d1EventStore(db), fetch: withBlackFriday, now })).toBe("ok");
+  expect(runs(sqlite).at(-1)).toEqual({ outcome: "ok", message: "black-friday-2026-11-19: 追加" });
+  const event = (await publishedEvents(db)).find((each) => each.id === "black-friday-2026-11-19");
+  expect(event).toMatchObject({
+    name: "楽天市場のブラックフライデー",
+    period: { start: "2026-11-19", end: "2026-11-25" },
+    url: BLACK_FRIDAY_URL,
   });
 });
 

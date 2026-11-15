@@ -3,8 +3,10 @@ import { expect, test } from "vitest";
 import {
   type StoredEvent,
   checkEvent,
+  collectBlackFriday,
   collectMarathon,
   marathonEvent,
+  shopAroundEvent,
 } from "./event-collection.ts";
 
 const fixture = (name: string) =>
@@ -286,4 +288,84 @@ test("checks the period, the rate and the cap", () => {
   expect(
     checkEvent(marathonEvent({ round: second, maxRate: 30, cap: 500, benefitId: KEPT })),
   ).toEqual(["倍率が最大 30 倍", "上限が 500"]);
+});
+
+// On 2026-11-15 the Black Friday page showed the campaign that began on 2026-11-19.
+const blackFridayHtml = fixture("black-friday-2026-11-19.html");
+const blackFridayEvent = (benefitId: string) =>
+  shopAroundEvent({
+    id: "black-friday-2026-11-19",
+    name: "楽天市場のブラックフライデー",
+    period: { start: "2026-11-19", end: "2026-11-25" },
+    times: { start: "20:00", end: "01:59" },
+    maxRate: 10,
+    cap: 7000,
+    benefitId,
+  });
+
+const collectFriday = (
+  options: {
+    page?: { html: string } | { error: string };
+    today?: string;
+    stored?: Map<string, StoredEvent>;
+  } = {},
+) =>
+  collectBlackFriday({
+    page: options.page ?? { html: blackFridayHtml },
+    today: options.today ?? "2026-11-15",
+    stored: options.stored ?? new Map(),
+    newId: idSequence(),
+  });
+
+test("publishes Black Friday with the page's period, rate and cap", () => {
+  const { writes, outcome, notes } = collectFriday();
+  expect(outcome).toBe("ok");
+  expect(writes).toEqual([
+    {
+      event: blackFridayEvent("00000000-0000-4000-8000-000000000001"),
+      status: "published",
+      sourceUrl: "https://event.rakuten.co.jp/campaign/point-up/blackfriday/",
+    },
+  ]);
+  expect(notes).toEqual(["black-friday-2026-11-19: 追加"]);
+});
+
+test("keeps Black Friday's ids, and writes nothing when the page shows what is stored", () => {
+  const stored = new Map([["black-friday-2026-11-19", published(blackFridayEvent(KEPT))]]);
+  expect(collectFriday({ stored }).writes).toEqual([]);
+  const html = blackFridayHtml.replace(">7,000ポイント(期間限定)", ">5,000ポイント(期間限定)");
+  const { writes } = collectFriday({ page: { html }, stored });
+  expect(writes).toMatchObject([{ event: { benefits: [{ id: KEPT, params: { cap: 5000 } }] } }]);
+});
+
+test("leaves Black Friday when the operator fixed it", () => {
+  const stored = new Map([
+    [
+      "black-friday-2026-11-19",
+      { event: blackFridayEvent(KEPT), status: "published", locked: true },
+    ],
+  ] satisfies [string, StoredEvent][]);
+  const { writes, notes } = collectFriday({ stored });
+  expect(writes).toEqual([]);
+  expect(notes).toContain("black-friday-2026-11-19: 固定されているので更新しない");
+});
+
+test("writes nothing, without a warning, the rest of the year", () => {
+  for (const page of [{ error: "HTTP 404" }, { html: "<p>終了しました</p>" }]) {
+    const { writes, outcome } = collectFriday({ page });
+    expect(writes).toEqual([]);
+    expect(outcome).toBe("ok");
+  }
+  expect(collectFriday({ today: "2026-11-26" }).writes).toEqual([]);
+});
+
+test("holds back what the Black Friday page shows under another campaign's name", () => {
+  const html = blackFridayHtml.replace(
+    "キャンペーン名：楽天市場のブラックフライデー",
+    "キャンペーン名：楽天スーパーSALE",
+  );
+  const { writes, outcome, notes } = collectFriday({ page: { html } });
+  expect(writes).toEqual([]);
+  expect(outcome).toBe("warning");
+  expect(notes).toEqual(["ブラックフライデーのページのキャンペーン名が「楽天スーパーSALE」"]);
 });
