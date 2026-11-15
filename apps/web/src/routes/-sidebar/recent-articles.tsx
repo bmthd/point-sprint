@@ -3,7 +3,7 @@ import { List, Text } from "@workspaces/ui";
 import { japaneseDate } from "#/guides/article.ts";
 import { RECENT_SHOWN } from "#/guides/recent-articles.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
-import { SidebarSection } from "./sidebar-section.tsx";
+import { SidebarSection, useInMenu } from "./sidebar-section.tsx";
 
 const root = getRouteApi("__root__");
 
@@ -18,6 +18,7 @@ export function RecentArticles() {
     shouldThrow: false,
     select: (match) => match.params.slug,
   });
+  const inMenu = useInMenu();
   const shown = articles.filter((article) => article.slug !== current).slice(0, RECENT_SHOWN);
   if (shown.length === 0) return null;
   return (
@@ -38,7 +39,8 @@ export function RecentArticles() {
               to="/guides/$slug"
               params={{ slug: article.slug }}
               fontSize="sm"
-              color="link"
+              // In the menu the titles are in the text's color, as the menu's other links are.
+              color={inMenu ? "fg" : "link"}
             >
               {article.title}
             </RouterLink>

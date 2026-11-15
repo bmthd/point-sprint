@@ -90,6 +90,8 @@ test("on a phone the sidebar is in the header's menu, on every page", async ({ p
     await expect(menu.noticesLink).toBeVisible();
     await expect(menu.recentArticles.getByRole("link").first()).toBeVisible();
     await expect(menu.shareSite).toBeVisible();
+    // データを初期化 is on the 共通設定 page only.
+    await expect(menu.root.getByRole("button", { name: "データを初期化" })).toHaveCount(0);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth,
     );
