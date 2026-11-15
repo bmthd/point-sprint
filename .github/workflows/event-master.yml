@@ -1,6 +1,6 @@
-# Opens an issue when the site serves no official event that runs a week from now: the Worker's cron
-# collects them from Rakuten's pages, so the collection has stopped or held a round back
-# (docs/event-master.md).
+# Opens an issue when the site serves no official event that runs a week from now, or lacks a yearly
+# event by its due date: the Worker's cron collects them from Rakuten's pages, so the collection has
+# stopped, held a round back or cannot read a page (docs/event-master.md).
 name: Event master
 
 on:
@@ -58,7 +58,7 @@ jobs:
           gh issue create --title "$TITLE" --body "$(cat <<EOF
           $(cat "$RUNNER_TEMP/check.txt")
 
-          トップページは終了していないイベントだけを出すため、このままでは「開催中・開催予定のイベント」が空になります。収集が止まっているか、検査を通らずに保留になっているおそれがあります。[docs/event-master.md]($DOC_URL) の手順で収集の記録を確かめ、必要なら行を直してください。
+          収集が止まっているか、検査を通らずに保留になっているか、告知ページを読めていないおそれがあります。[docs/event-master.md]($DOC_URL) の手順で収集の記録を確かめ、必要なら行を直すか足してください。
 
           検知したワークフロー: $RUN_URL
           EOF
