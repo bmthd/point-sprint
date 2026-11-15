@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-// The reason in about.md for making the site is a stand-in, until じょうげん writes it (#300).
 import markdown from "./-markdown/about.md?raw";
 import { pageHead } from "#/page-head.ts";
 import { AboutPage } from "./-about/about-page.tsx";
