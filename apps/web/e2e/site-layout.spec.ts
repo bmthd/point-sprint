@@ -17,6 +17,7 @@ const pages = (id: string) => [
   { name: "プラン", path: `/plan?id=${id}` },
   { name: "プランの設定", path: `/plan/settings?id=${id}` },
   { name: "月ごとの SPU", path: "/spu?month=2026-10" },
+  { name: "このサイトについて", path: "/about" },
   { name: "使い方・注意事項", path: "/help" },
   { name: "利用規約", path: "/terms" },
   { name: "プライバシーポリシー", path: "/privacy" },
