@@ -1,6 +1,7 @@
 import { type Benefit, type OfficialEvent, OfficialEventSchema } from "@workspaces/domain";
 import * as v from "valibot";
 import {
+  BLACK_FRIDAY_URL,
   MARATHON_URL,
   SCHEDULE_URL,
   type CurrentRound,
@@ -9,7 +10,7 @@ import {
   readSchedule,
 } from "./event-pages.ts";
 
-// Turns the marathon pages into rows of the event master (event-store.ts). A row is published only
+// Turns the marathon pages and the Black Friday page into rows of the event master (event-store.ts). A row is published only
 // when it passes the checks below; otherwise the row already published stays as it is, and the
 // reason goes into the run's message, where the operator finds it (docs/event-master.md).
 
@@ -68,17 +69,19 @@ export function checkEvent(event: OfficialEvent): string[] {
 }
 
 /**
- * The marathon round as an event: 2〜10 shops pay 2〜10倍 when `maxRate` is 10, and the shop-around
- * keeps `benefitId` across updates.
+ * A shop-around campaign as an event: 2〜10 shops pay 2〜10倍 when `maxRate` is 10, and the
+ * shop-around keeps `benefitId` across updates.
  */
-export function marathonEvent(input: {
-  round: ScheduledRound;
+function shopAroundEvent(input: {
+  id: string;
+  name: string;
+  period: OfficialEvent["period"];
+  times?: OfficialEvent["times"];
   maxRate: number;
   cap: number | undefined;
   benefitId: string;
 }): OfficialEvent {
-  const { round, maxRate, cap, benefitId } = input;
-  const id = `marathon-${round.period.start}`;
+  const { id, name, period, times, maxRate, cap, benefitId } = input;
   const shopAround: Benefit = {
     id: benefitId,
     kind: "shop-around",
@@ -88,7 +91,7 @@ export function marathonEvent(input: {
     amountBasis: "tax-excluded",
     capScope: "campaign",
     sharedKey: id,
-    conditions: { dateRule: { type: "range", ...round.period } },
+    conditions: { dateRule: { type: "range", ...period } },
     params: {
       // 「購入ショップ数に応じ、ポイント倍率が2倍、3倍と最大10倍まで増加」, less the usual 1倍.
       tiers: Array.from({ length: maxRate - 1 }, (_, index) => ({
@@ -101,11 +104,28 @@ export function marathonEvent(input: {
   };
   return {
     id,
-    name: `お買い物マラソン${round.title}`,
-    period: { ...round.period },
-    ...(round.times ? { times: { ...round.times } } : {}),
+    name,
+    period: { ...period },
+    ...(times ? { times: { ...times } } : {}),
     benefits: [shopAround],
   };
+}
+
+/** The marathon round as an event, named 「お買い物マラソン」 and its title. */
+export function marathonEvent(input: {
+  round: ScheduledRound;
+  maxRate: number;
+  cap: number | undefined;
+  benefitId: string;
+}): OfficialEvent {
+  const { round, ...rest } = input;
+  return shopAroundEvent({
+    id: `marathon-${round.period.start}`,
+    name: `お買い物マラソン${round.title}`,
+    period: round.period,
+    ...(round.times ? { times: round.times } : {}),
+    ...rest,
+  });
 }
 
 /** JSON with the keys of each object sorted, so two events built differently compare equal. */
@@ -181,6 +201,41 @@ function readMarathonPage(
   return { current, ahead };
 }
 
+/** Whether the operator fixed or turned down the stored row, which collection then leaves alone. */
+function heldByOperator(id: string, existing: StoredEvent | undefined, log: RunLog): boolean {
+  if (!existing?.locked && existing?.status !== "rejected") return false;
+  log.notes.push(`${id}: ${existing.locked ? "固定" : "却下"}されているので更新しない`);
+  return true;
+}
+
+/**
+ * The row to write for `event`, or `undefined` when the stored row should stay: the stored row is
+ * the same, or `event` fails the checks and a row is already stored. `noted` words the note for
+ * 「追加」 or 「更新」.
+ */
+function checkedWrite(
+  input: {
+    event: OfficialEvent;
+    existing: StoredEvent | undefined;
+    sourceUrl: string;
+    noted: (change: string) => string;
+  },
+  log: RunLog,
+): EventWrite | undefined {
+  const { event, existing, sourceUrl, noted } = input;
+  const problems = checkEvent(event);
+  if (problems.length > 0) {
+    warn(log, `${event.id}: ${problems.join("、")}`);
+    // The row already published stays; a new one waits for the operator.
+    return existing ? undefined : { event, status: "pending", sourceUrl };
+  }
+  if (existing?.status === "published" && canonical(existing.event) === canonical(event)) {
+    return undefined;
+  }
+  log.notes.push(noted(existing ? "更新" : "追加"));
+  return { event, status: "published", sourceUrl };
+}
+
 /** The row to write for one round, or `undefined` when the stored row should stay. */
 function writeRound(
   input: {
@@ -196,10 +251,7 @@ function writeRound(
 ): EventWrite | undefined {
   const { round, shown, existing, ahead, newId } = input;
   const id = `marathon-${round.period.start}`;
-  if (existing?.locked || existing?.status === "rejected") {
-    log.notes.push(`${id}: ${existing.locked ? "固定" : "却下"}されているので更新しない`);
-    return undefined;
-  }
+  if (heldByOperator(id, existing, log)) return undefined;
   // The marathon page leaves at the round's end; the cap read while it showed the round stays.
   const keepsCap =
     existing &&
@@ -212,23 +264,18 @@ function writeRound(
     cap: shown?.cap,
     benefitId: shopAroundOf(existing?.event)?.id ?? newId(),
   });
-  const sourceUrl = shown ? MARATHON_URL : SCHEDULE_URL;
-  const problems = checkEvent(event);
-  if (problems.length > 0) {
-    warn(log, `${id}: ${problems.join("、")}`);
-    // The row already published stays; a new one waits for the operator.
-    return existing ? undefined : { event, status: "pending", sourceUrl };
-  }
-  if (existing?.status === "published" && canonical(existing.event) === canonical(event)) {
-    return undefined;
-  }
-  const change = existing ? "更新" : "追加";
-  log.notes.push(
-    ahead
-      ? `${id}: スケジュールのページにまだない回を、マラソンのページから${change}`
-      : `${id}: ${change}`,
+  return checkedWrite(
+    {
+      event,
+      existing,
+      sourceUrl: shown ? MARATHON_URL : SCHEDULE_URL,
+      noted: (change) =>
+        ahead
+          ? `${id}: スケジュールのページにまだない回を、マラソンのページから${change}`
+          : `${id}: ${change}`,
+    },
+    log,
   );
-  return { event, status: "published", sourceUrl };
 }
 
 /**
@@ -268,4 +315,53 @@ export function collectMarathon(input: {
     if (write) writes.push(write);
   }
   return { writes, ...log };
+}
+
+const BLACK_FRIDAY_NAME = "ブラックフライデー";
+
+/**
+ * The row to write for the Black Friday the page shows, from its entry until its end, under the
+ * campaign's name (「楽天市場のブラックフライデー」). The rest of the year the page shows none, or
+ * cannot be fetched, and that is no warning.
+ */
+export function collectBlackFriday(input: {
+  /** The Black Friday page, or why it could not be fetched. */
+  page: { html: string } | { error: string };
+  today: string;
+  stored: ReadonlyMap<string, StoredEvent>;
+  newId: () => string;
+}): Collection {
+  const { page, today, stored, newId } = input;
+  const log: RunLog = { notes: [], outcome: "ok" };
+  if ("error" in page) {
+    log.notes.push(`ブラックフライデーのページを取得できない（${page.error}）`);
+    return { writes: [], ...log };
+  }
+  const shown = readCurrentRound(page.html);
+  if (!shown) {
+    log.notes.push("ブラックフライデーのページに開催中・開催直前の回がない");
+    return { writes: [], ...log };
+  }
+  if (!shown.campaignName.includes(BLACK_FRIDAY_NAME)) {
+    warn(log, `ブラックフライデーのページのキャンペーン名が「${shown.campaignName}」`);
+    return { writes: [], ...log };
+  }
+  if (shown.period.end < today) return { writes: [], ...log };
+  const id = `black-friday-${shown.period.start}`;
+  const existing = stored.get(id);
+  if (heldByOperator(id, existing, log)) return { writes: [], ...log };
+  const event = shopAroundEvent({
+    id,
+    name: shown.campaignName,
+    period: shown.period,
+    ...(shown.times ? { times: shown.times } : {}),
+    maxRate: shown.maxRate,
+    cap: shown.cap,
+    benefitId: shopAroundOf(existing?.event)?.id ?? newId(),
+  });
+  const write = checkedWrite(
+    { event, existing, sourceUrl: BLACK_FRIDAY_URL, noted: (change) => `${id}: ${change}` },
+    log,
+  );
+  return { writes: write ? [write] : [], ...log };
 }
