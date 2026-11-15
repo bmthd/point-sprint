@@ -57,3 +57,14 @@ export function rakutenAffiliateUrl(page: string, affiliateId: string | null | u
 
 /** The syntax a guide may use: that of the other Markdown pages, the item lists, and the links to Rakuten. */
 export const guideExtensions = [...markdownExtensions, items, rakutenLink];
+
+/**
+ * Whether an article has links that pay: a list of items (each item links to Rakuten as an
+ * affiliate) or a `:rakuten[…](…)` link. Such an article says so at its top.
+ */
+export function hasAffiliateLinks(body: string) {
+  return (
+    body.split("\n").some((line) => parseItemsLine(line) !== undefined) ||
+    body.includes(":rakuten[")
+  );
+}

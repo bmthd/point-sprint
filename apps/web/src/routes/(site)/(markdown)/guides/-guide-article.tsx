@@ -1,10 +1,10 @@
 import { Markdown } from "@tanstack/markdown/react";
-import { Box, Heading, Link } from "@workspaces/ui";
+import { Box, Heading, Link, Text } from "@workspaces/ui";
 import type { ReactNode } from "react";
 import { ArticleDates } from "./-article-dates.tsx";
 import { GuideItemList } from "./-guide-item-list.tsx";
 import type { Guide } from "#/guides/load-guide.ts";
-import { guideExtensions, rakutenAffiliateUrl } from "#/guides/markdown.ts";
+import { guideExtensions, hasAffiliateLinks, rakutenAffiliateUrl } from "#/guides/markdown.ts";
 import {
   GuideToc,
   guideSections,
@@ -47,6 +47,11 @@ export function GuideArticle({ guide: { article, lists, fetchedAt } }: { guide: 
           {article.title}
         </Heading>
         <ArticleDates article={article} />
+        {hasAffiliateLinks(article.body) && (
+          <Text fontSize="sm" color="fg.muted" mt="1">
+            この記事には、楽天市場のアフィリエイトのリンクを含みます。
+          </Text>
+        )}
       </Box>
       {markdown(introduction)}
       <Box display={{ base: "none", lg: "block" }} my="lg">

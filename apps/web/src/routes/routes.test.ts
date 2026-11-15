@@ -44,7 +44,7 @@ test("a page that exists is not marked as not found", async () => {
   router.update({ ...router.options, history: createMemoryHistory({ initialEntries: ["/help"] }) });
   await router.load();
   const meta = router.state.matches.flatMap((match) => match.meta ?? []);
-  expect(meta.findLast((m) => m?.title)?.title).toBe("使い方・注意事項 | ポイントスプリント");
+  expect(meta.findLast((m) => m?.title)?.title).toBe("使い方 | ポイントスプリント");
 });
 
 test("共通設定, which holds this device's settings, asks search engines not to index it", async () => {

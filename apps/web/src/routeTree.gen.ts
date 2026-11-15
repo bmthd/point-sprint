@@ -21,6 +21,7 @@ import { Route as siteMarathonRouteImport } from './routes/(site)/marathon.tsx'
 import { Route as siteNoticesRouteImport } from './routes/(site)/notices.tsx'
 import { Route as ShareImageDotpngRouteImport } from './routes/share_.image[.]png.ts'
 import { Route as planPlanSettingsRouteImport } from './routes/(plan)/plan_.settings.tsx'
+import { Route as sitemarkdownAboutRouteImport } from './routes/(site)/(markdown)/about.tsx'
 import { Route as sitemarkdownHelpRouteImport } from './routes/(site)/(markdown)/help.tsx'
 import { Route as sitemarkdownPrivacyRouteImport } from './routes/(site)/(markdown)/privacy.tsx'
 import { Route as sitemarkdownTermsRouteImport } from './routes/(site)/(markdown)/terms.tsx'
@@ -86,6 +87,11 @@ const planPlanSettingsRoute = planPlanSettingsRouteImport.update({
   path: '/plan/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const sitemarkdownAboutRoute = sitemarkdownAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => sitemarkdownRouteRoute,
+} as any)
 const sitemarkdownHelpRoute = sitemarkdownHelpRouteImport.update({
   id: '/help',
   path: '/help',
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/share/image.png': typeof ShareImageDotpngRoute
   '/': typeof siteIndexRoute
   '/plan/settings': typeof planPlanSettingsRoute
+  '/about': typeof sitemarkdownAboutRoute
   '/help': typeof sitemarkdownHelpRoute
   '/privacy': typeof sitemarkdownPrivacyRoute
   '/terms': typeof sitemarkdownTermsRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/share/image.png': typeof ShareImageDotpngRoute
   '/': typeof siteIndexRoute
   '/plan/settings': typeof planPlanSettingsRoute
+  '/about': typeof sitemarkdownAboutRoute
   '/help': typeof sitemarkdownHelpRoute
   '/privacy': typeof sitemarkdownPrivacyRoute
   '/terms': typeof sitemarkdownTermsRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/share_/image.png': typeof ShareImageDotpngRoute
   '/(site)/': typeof siteIndexRoute
   '/(plan)/plan_/settings': typeof planPlanSettingsRoute
+  '/(site)/(markdown)/about': typeof sitemarkdownAboutRoute
   '/(site)/(markdown)/help': typeof sitemarkdownHelpRoute
   '/(site)/(markdown)/privacy': typeof sitemarkdownPrivacyRoute
   '/(site)/(markdown)/terms': typeof sitemarkdownTermsRoute
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
     | '/share/image.png'
     | '/'
     | '/plan/settings'
+    | '/about'
     | '/help'
     | '/privacy'
     | '/terms'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/share/image.png'
     | '/'
     | '/plan/settings'
+    | '/about'
     | '/help'
     | '/privacy'
     | '/terms'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/share_/image.png'
     | '/(site)/'
     | '/(plan)/plan_/settings'
+    | '/(site)/(markdown)/about'
     | '/(site)/(markdown)/help'
     | '/(site)/(markdown)/privacy'
     | '/(site)/(markdown)/terms'
@@ -327,6 +339,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof planPlanSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(site)/(markdown)/about': {
+      id: '/(site)/(markdown)/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof sitemarkdownAboutRouteImport
+      parentRoute: typeof sitemarkdownRouteRoute
+    }
     '/(site)/(markdown)/help': {
       id: '/(site)/(markdown)/help'
       path: '/help'
@@ -366,6 +385,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface sitemarkdownRouteRouteChildren {
+  sitemarkdownAboutRoute: typeof sitemarkdownAboutRoute
   sitemarkdownHelpRoute: typeof sitemarkdownHelpRoute
   sitemarkdownPrivacyRoute: typeof sitemarkdownPrivacyRoute
   sitemarkdownTermsRoute: typeof sitemarkdownTermsRoute
@@ -374,6 +394,7 @@ interface sitemarkdownRouteRouteChildren {
 }
 
 const sitemarkdownRouteRouteChildren: sitemarkdownRouteRouteChildren = {
+  sitemarkdownAboutRoute: sitemarkdownAboutRoute,
   sitemarkdownHelpRoute: sitemarkdownHelpRoute,
   sitemarkdownPrivacyRoute: sitemarkdownPrivacyRoute,
   sitemarkdownTermsRoute: sitemarkdownTermsRoute,

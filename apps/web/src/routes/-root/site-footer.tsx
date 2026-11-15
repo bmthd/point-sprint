@@ -1,15 +1,20 @@
 import type { LinkProps } from "@tanstack/react-router";
-import { Box, Flex, Text } from "@workspaces/ui";
+import { Box, Flex, Link, Text, VStack, Wrap } from "@workspaces/ui";
+import { operatorName } from "#/page-head.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
 
-/** The footer's links. */
-export const footerLinks: readonly { to: LinkProps["to"]; label: string }[] = [
-  { to: "/marathon", label: "マラソンの日程と上限" },
-  { to: "/notices", label: "お知らせ" },
-  { to: "/help", label: "使い方・注意事項" },
+type FooterLink = { to: LinkProps["to"]; label: string } | { href: string; label: string };
+
+/**
+ * The footer's links: who makes the site and its rules. The pages a reader comes back to are in the
+ * header instead.
+ */
+const footerLinks: readonly FooterLink[] = [
+  { to: "/about", label: "このサイトについて" },
+  { href: "https://github.com/bmthd/point-sprint", label: "ソースコード" },
+  { to: "/inquiry", label: "お問い合わせ" },
   { to: "/terms", label: "利用規約" },
   { to: "/privacy", label: "プライバシーポリシー" },
-  { to: "/inquiry", label: "お問い合わせ" },
 ];
 
 /**
@@ -21,7 +26,8 @@ const rakutenCredit = `<!-- Rakuten Web Services Attribution Snippet FROM HERE -
 <!-- Rakuten Web Services Attribution Snippet TO HERE -->`;
 
 /**
- * The footer on every page: the links and where the data is kept (it applies to every page).
+ * The footer on every page: the links about the site, where the data is kept (it applies to every
+ * page) and who makes the site.
  */
 export function SiteFooter() {
   return (
@@ -34,17 +40,16 @@ export function SiteFooter() {
         "body:has([data-bottom-bar]) &": { pb: "calc(8rem + env(safe-area-inset-bottom))" },
       }}
     >
-      <Flex maxW="1280px" mx="auto" px="4" py="6" direction="column" gap="2">
-        {footerLinks.length > 0 ? (
-          <Flex
-            as="nav"
-            aria-label="サイトの案内"
-            justify="center"
-            columnGap="4"
-            wrap="wrap"
-            fontSize="sm"
-          >
-            {footerLinks.map((link) => (
+      <Flex maxW="1280px" mx="auto" px="4" py="6" direction="column" gap="md">
+        <Wrap
+          as="nav"
+          aria-label="サイトの情報"
+          justifyContent="center"
+          columnGap="lg"
+          fontSize="sm"
+        >
+          {footerLinks.map((link) =>
+            "to" in link ? (
               <RouterLink
                 key={link.label}
                 to={link.to}
@@ -55,12 +60,29 @@ export function SiteFooter() {
               >
                 {link.label}
               </RouterLink>
-            ))}
-          </Flex>
-        ) : null}
+            ) : (
+              <Link
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener"
+                color="link"
+                minH="11"
+                display="flex"
+                alignItems="center"
+              >
+                {link.label}
+              </Link>
+            ),
+          )}
+        </Wrap>
         <Text fontSize="xs" color="fg.muted" textAlign="center">
           入力した内容はこのブラウザの中に保存されます。ほかの端末と同期すると、運営者にも読めない暗号にしてから送ります。
         </Text>
+        <VStack gap="0" fontSize="xs" color="fg.muted" textAlign="center">
+          <Text>ポイントスプリントは個人開発のサイトです。</Text>
+          <Text>© 2026 {operatorName}</Text>
+        </VStack>
         <Box
           display="flex"
           justifyContent="center"

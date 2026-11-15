@@ -10,6 +10,7 @@ export const prerenderedPages = [
   "/plan/settings",
   "/settings",
   "/spu",
+  "/about",
   "/help",
   "/terms",
   "/privacy",

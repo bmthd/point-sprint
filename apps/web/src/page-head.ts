@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { siteUrl } from "./site-url.ts";
 
 export const siteName = "ポイントスプリント";
+/** Who runs the site: the about page tells more. */
+export const operatorName = "じょうげん";
 /**
  * The top page's title, and the one shared on social media for the whole site. It leads with the
  * words people search for, as search results show the site's name on a line of its own.

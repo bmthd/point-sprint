@@ -1,7 +1,12 @@
 import { Text } from "@workspaces/ui";
 import { type Article, japaneseDate } from "#/guides/article.ts";
+import { operatorName } from "#/page-head.ts";
+import { RouterLink } from "#/ui/router-link.tsx";
 
-/** The days an article was published and last changed. The latter only once it has been changed. */
+/**
+ * The days an article was published and last changed, the latter only once it has been changed,
+ * and who wrote it.
+ */
 export function ArticleDates({ article }: { article: Article }) {
   return (
     <Text fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
@@ -12,6 +17,11 @@ export function ArticleDates({ article }: { article: Article }) {
           更新日 <time dateTime={article.updated}>{japaneseDate(article.updated)}</time>
         </>
       )}
+      {"・"}
+      書いた人{" "}
+      <RouterLink to="/about" color="link">
+        {operatorName}
+      </RouterLink>
     </Text>
   );
 }

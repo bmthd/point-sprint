@@ -17,8 +17,11 @@ export class Header {
   readonly root: Locator;
   readonly topLink: Locator;
   readonly settingsLink: Locator;
+  /** On a wide screen, the name of a menu: the link that opens it. */
+  readonly marathonLink: Locator;
+  /** On a wide screen, the name of a menu: the link that opens it. */
   readonly guidesLink: Locator;
-  readonly phoneGuidesLink: Locator;
+  /** In the ガイド menu, on a wide screen. */
   readonly helpLink: Locator;
   /** Named `お知らせ（未読あり）` while a notice has not been read. */
   readonly noticesLink: Locator;
@@ -30,9 +33,9 @@ export class Header {
     this.root = page.getByRole("banner");
     this.topLink = this.root.getByRole("link", { name: "ポイントスプリント" });
     this.settingsLink = this.root.getByRole("link", { name: "共通設定", exact: true });
-    this.guidesLink = this.root.getByRole("link", { name: "買い物ガイド", exact: true });
-    this.phoneGuidesLink = this.root.getByRole("link", { name: "ガイド", exact: true });
-    this.helpLink = this.root.getByRole("link", { name: "ヘルプ", exact: true });
+    this.marathonLink = this.root.getByRole("link", { name: "お買い物マラソン", exact: true });
+    this.guidesLink = this.root.getByRole("link", { name: "ガイド", exact: true });
+    this.helpLink = this.root.getByRole("link", { name: "使い方", exact: true });
     this.noticesLink = this.root.getByRole("link", { name: /^お知らせ/ });
     this.menuButton = this.root.getByRole("button", { name: /^メニュー/ });
     this.colorModeButton = this.root.getByRole("button", { name: /^カラーモード/ });
@@ -71,21 +74,23 @@ export class Header {
   }
 }
 
-/** The header's menu, on a phone: 共通設定, ヘルプ, お知らせ and the sidebar. */
+/** The header's menu, on a phone: 共通設定, お知らせ and the sidebar, which starts with サイトの案内. */
 export class Menu {
   readonly root: Locator;
   readonly settingsLink: Locator;
-  readonly helpLink: Locator;
   /** Named `お知らせ（未読あり）` while a notice has not been read. */
   readonly noticesLink: Locator;
+  readonly siteGuide: Locator;
+  readonly helpLink: Locator;
   readonly recentArticles: Locator;
   readonly shareSite: Locator;
 
   constructor(readonly page: Page) {
     this.root = page.getByRole("dialog", { name: "メニュー" });
     this.settingsLink = this.root.getByRole("link", { name: "共通設定", exact: true });
-    this.helpLink = this.root.getByRole("link", { name: "ヘルプ", exact: true });
     this.noticesLink = this.root.getByRole("link", { name: /^お知らせ/ });
+    this.siteGuide = this.root.getByRole("region", { name: "サイトの案内" });
+    this.helpLink = this.siteGuide.getByRole("link", { name: "使い方", exact: true });
     this.recentArticles = this.root.getByRole("region", { name: "最近更新された記事" });
     this.shareSite = this.root.getByRole("region", { name: "このサイトをシェア" });
   }
@@ -111,11 +116,11 @@ export class Footer {
     this.root = page.getByRole("contentinfo");
   }
 
-  /** The `href` of every link to a page of the site (not the Rakuten credit, which leaves it). */
+  /** The `href` of every link to a page of the site (not the source code or the Rakuten credit, which leave it). */
   linkTargets() {
     return this.root
-      .getByRole("navigation", { name: "サイトの案内" })
-      .getByRole("link")
+      .getByRole("navigation", { name: "サイトの情報" })
+      .locator('a[href^="/"]')
       .evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
   }
 

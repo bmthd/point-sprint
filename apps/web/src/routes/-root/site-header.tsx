@@ -1,8 +1,11 @@
+import type { LinkProps } from "@tanstack/react-router";
 import {
   Box,
+  ChevronDownIcon,
   Drawer,
   Flex,
   IconButton,
+  List,
   MenuIcon,
   MoonIcon,
   SettingsIcon,
@@ -11,6 +14,7 @@ import {
   useColorMode,
   useDisclosure,
   useSystemColorMode,
+  VStack,
 } from "@workspaces/ui";
 import type { ReactNode } from "react";
 import { RouterLink } from "#/ui/router-link.tsx";
@@ -19,6 +23,34 @@ import { ResetDataButton } from "#/routes/-reset-data.tsx";
 import { UnreadDot } from "#/routes/-notices/unread-dot.tsx";
 import { useUnreadNoticeIds } from "#/routes/-notices/unread-notices.ts";
 import { SiteSidebar } from "#/routes/-sidebar/sidebar.tsx";
+import { SidebarSection } from "#/routes/-sidebar/sidebar-section.tsx";
+
+type HeaderMenu = {
+  to: LinkProps["to"];
+  label: string;
+  /** `fullLabel`: the label in サイトの案内, where the menu's name is not above it. */
+  links: readonly { to: LinkProps["to"]; label: string; fullLabel?: string }[];
+};
+
+/** The pages a reader comes back to: the header's menus on a wide screen, サイトの案内 in the menu below it. */
+const headerMenus: readonly HeaderMenu[] = [
+  {
+    to: "/marathon",
+    label: "お買い物マラソン",
+    links: [
+      { to: "/marathon", label: "日程と上限", fullLabel: "お買い物マラソンの日程と上限" },
+      { to: "/spu", label: "月ごとの SPU" },
+    ],
+  },
+  {
+    to: "/guides",
+    label: "ガイド",
+    links: [
+      { to: "/guides", label: "買い物ガイド" },
+      { to: "/help", label: "使い方" },
+    ],
+  },
+];
 
 function CommonSettingsLink() {
   return (
@@ -46,7 +78,7 @@ function HeaderTextLink({
   children,
   ...rest
 }: {
-  to: "/guides" | "/help" | "/notices";
+  to: "/guides" | "/notices";
   children: ReactNode;
   "aria-label"?: string;
 }) {
@@ -79,6 +111,98 @@ function NoticesLink() {
   );
 }
 
+/**
+ * One of the header's menus on a wide screen. Its name goes to its main page; pointing at it, or
+ * reaching it with the keyboard, opens its links below. It opens by CSS, before the page hydrates too.
+ */
+function HeaderMenuLinks({ menu }: { menu: HeaderMenu }) {
+  return (
+    <Box
+      position="relative"
+      css={{
+        "&:hover > [data-header-menu], &:focus-within > [data-header-menu]": { display: "flex" },
+      }}
+    >
+      <RouterLink
+        to={menu.to}
+        minH="11"
+        display="flex"
+        alignItems="center"
+        gap="0.5"
+        px="2"
+        fontSize="sm"
+        color="fg"
+        _current={{ fontWeight: "bold" }}
+      >
+        {menu.label}
+        <ChevronDownIcon aria-hidden fontSize="md" color="fg.muted" />
+      </RouterLink>
+      <VStack
+        data-header-menu
+        display="none"
+        position="absolute"
+        top="full"
+        left="0"
+        zIndex="kurillin"
+        minW="44"
+        gap="0"
+        alignItems="stretch"
+        py="1"
+        bg="bg.panel"
+        borderWidth="1px"
+        borderColor="border"
+        rounded="l2"
+        shadow="md"
+      >
+        {menu.links.map((link) => (
+          <RouterLink
+            key={link.label}
+            to={link.to}
+            // The menu's own page is in it too: only the link that says it is the current page.
+            activeOptions={{ exact: true }}
+            minH="11"
+            display="flex"
+            alignItems="center"
+            px="3"
+            fontSize="sm"
+            color="fg"
+            _hover={{ bg: "bg.muted", textDecoration: "none" }}
+            _current={{ fontWeight: "bold" }}
+          >
+            {link.label}
+          </RouterLink>
+        ))}
+      </VStack>
+    </Box>
+  );
+}
+
+/** サイトの案内, first in the sidebar of the menu: the links of the header's menus, one per line. */
+function SiteGuideSection() {
+  return (
+    <SidebarSection title="サイトの案内">
+      <List.Root gap="0">
+        {headerMenus
+          .flatMap((menu) => menu.links)
+          .map((link) => (
+            <List.Item key={link.label}>
+              <RouterLink
+                to={link.to}
+                minH="11"
+                display="flex"
+                alignItems="center"
+                fontSize="sm"
+                color="link"
+              >
+                {link.fullLabel ?? link.label}
+              </RouterLink>
+            </List.Item>
+          ))}
+      </List.Root>
+    </SidebarSection>
+  );
+}
+
 const colorModeLabels = { light: "ライト", dark: "ダーク" } as const;
 
 /**
@@ -104,7 +228,8 @@ function ColorModeButton() {
 }
 
 /**
- * The header on every page: the site name (to the top) and 共通設定. The router marks the link
+ * The header on every page: the site name (to the top), the menus of the pages a reader comes back
+ * to, お知らせ and 共通設定. The router marks the link
  * to the page being shown with `aria-current="page"`. The color mode switch is on every width, left of
  * the 共通設定 link or the menu. The 共通設定 link spells out its name: it moves to a page, unlike
  * the icon buttons that act in place. At the `lg` breakpoint and below the site name leaves no room
@@ -138,8 +263,9 @@ export function SiteHeader() {
           ポイントスプリント
         </RouterLink>
         <Flex flex="1" align="center" gap="1" display={{ base: "flex", lg: "none" }}>
-          <HeaderTextLink to="/guides">買い物ガイド</HeaderTextLink>
-          <HeaderTextLink to="/help">ヘルプ</HeaderTextLink>
+          {headerMenus.map((menu) => (
+            <HeaderMenuLinks key={menu.label} menu={menu} />
+          ))}
           <NoticesLink />
         </Flex>
         <Flex align="center" gap="1">
@@ -158,7 +284,8 @@ export function SiteHeader() {
 }
 
 /**
- * The menu at the `lg` breakpoint and below: 共通設定, ヘルプ, お知らせ and the sidebar. Its button
+ * The menu at the `lg` breakpoint and below: 共通設定, お知らせ and the sidebar, which starts with
+ * サイトの案内 (the header's menus on a wide screen). Its button
  * has the dot of the お知らせ link too. It closes
  * on a link: one in the site moves to its page, one to a service opens in a new tab.
  */
@@ -201,9 +328,10 @@ function SiteMenu() {
             }}
           >
             <CommonSettingsLink />
-            <HeaderTextLink to="/help">ヘルプ</HeaderTextLink>
             <NoticesLink />
-            <SiteSidebar />
+            <SiteSidebar>
+              <SiteGuideSection />
+            </SiteSidebar>
             <ResetDataButton onDone={onClose} />
           </Drawer.Body>
         </Drawer.Content>
