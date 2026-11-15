@@ -61,13 +61,7 @@ function ProfileCard({ profile }: { profile: Profile }) {
             </Text>
             <Wrap columnGap="md" rowGap="1" fontSize="sm">
               {profileLinks(profile).map((link) => (
-                <Link
-                  key={link.url}
-                  href={link.url}
-                  target="_blank"
-                  rel="me noopener"
-                  color="link"
-                >
+                <Link key={link.url} href={link.url} target="_blank" rel="me noopener" color="link">
                   {link.label}
                 </Link>
               ))}

@@ -4,8 +4,8 @@ import { otherWorks, parseProfile, profileLinks } from "./profile.ts";
 /** What https://links.bmth.dev/profile.json serves, cut down. */
 const fixture = {
   version: 1,
-  name: { ja: "じょうげん", en: "Jougen" },
-  bio: { ja: "フルスタック趣味人", en: "Full-stack hobbyist" },
+  name: { ja: "じょうげん" },
+  bio: { ja: "フルスタック趣味人" },
   url: "https://links.bmth.dev/",
   avatar: [
     {
@@ -22,23 +22,23 @@ const fixture = {
       id: "sns",
       heading: null,
       items: [
-        { label: { ja: "X", en: "X" }, url: "https://x.com/j_ktwr", me: true },
-        { label: { ja: "GitHub", en: "GitHub" }, url: "https://github.com/bmthd", me: true },
-        { label: { ja: "Zenn", en: "Zenn" }, url: "https://zenn.dev/bmth", me: true },
-        { label: { ja: "Blog", en: "Blog" }, url: "https://blog.bmth.dev/", me: true },
+        { label: { ja: "X" }, url: "https://x.com/j_ktwr", me: true },
+        { label: { ja: "GitHub" }, url: "https://github.com/bmthd", me: true },
+        { label: { ja: "Zenn" }, url: "https://zenn.dev/bmth", me: true },
+        { label: { ja: "Blog" }, url: "https://blog.bmth.dev/", me: true },
       ],
     },
     {
       id: "works",
-      heading: { ja: "WORKS", en: "WORKS" },
+      heading: { ja: "WORKS" },
       items: [
         {
-          label: { ja: "コミケお品書きまとめ", en: "Comiket Item List Roundup" },
+          label: { ja: "コミケお品書きまとめ" },
           url: "https://oshinagaki.bmth.dev/",
           me: false,
         },
         {
-          label: { ja: "楽天市場ポイント計算", en: "Rakuten Ichiba Point Calculator" },
+          label: { ja: "楽天市場ポイント計算" },
           url: "https://point-sprint.bmth.dev/",
           me: false,
         },

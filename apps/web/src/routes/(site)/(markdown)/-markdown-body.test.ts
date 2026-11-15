@@ -14,7 +14,10 @@ test.each([
   { name: "プライバシーポリシー", source: privacy },
   { name: "このサイトについて", source: about },
 ])("$name starts with its title and links only to sections it has", ({ name, source }) => {
-  const html = renderHtml(source, { headingIds, extensions: [...markdownExtensions, aboutExtension] });
+  const html = renderHtml(source, {
+    headingIds,
+    extensions: [...markdownExtensions, aboutExtension],
+  });
   expect(html).toMatch(new RegExp(`^<h1 id="${name}">${name}</h1>`));
   const ids = [...html.matchAll(/<h\d id="([^"]+)"/g)].map(([, id]) => id);
   const anchors = [...html.matchAll(/href="#([^"]+)"/g)].map(([, id]) => id);

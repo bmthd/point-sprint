@@ -46,7 +46,7 @@ function HeaderTextLink({
   children,
   ...rest
 }: {
-  to: "/guides" | "/help" | "/notices";
+  to: "/guides" | "/help" | "/about" | "/notices";
   children: ReactNode;
   "aria-label"?: string;
 }) {

@@ -1,6 +1,6 @@
 import { parseMarkdown } from "@tanstack/markdown/parser";
 import { expect, test } from "vitest";
-import { guideExtensions, rakutenAffiliateUrl } from "./markdown.ts";
+import { guideExtensions, hasAffiliateLinks, rakutenAffiliateUrl } from "./markdown.ts";
 
 const parse = (source: string) => parseMarkdown(source, { extensions: guideExtensions });
 
@@ -39,4 +39,10 @@ test("an affiliate link carries the page in pc and m; without an affiliate id, i
   expect(url.searchParams.get("pc")).toBe(page);
   expect(url.searchParams.get("m")).toBe(page);
   expect(rakutenAffiliateUrl(page, null)).toBe(page);
+});
+
+test("an article with a list of items or a Rakuten link has affiliate links", () => {
+  expect(hasAffiliateLinks('前置き\n\n:::items{keyword="コーヒー" hits=6}\n')).toBe(true);
+  expect(hasAffiliateLinks(":rakuten[楽天ブックス](https://books.rakuten.co.jp/)なら")).toBe(true);
+  expect(hasAffiliateLinks("ふつうの [リンク](https://example.com/)")).toBe(false);
 });
