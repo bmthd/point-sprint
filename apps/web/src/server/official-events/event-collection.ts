@@ -72,7 +72,7 @@ export function checkEvent(event: OfficialEvent): string[] {
  * A shop-around campaign as an event: 2〜10 shops pay 2〜10倍 when `maxRate` is 10, and the
  * shop-around keeps `benefitId` across updates.
  */
-export function shopAroundEvent(input: {
+function shopAroundEvent(input: {
   id: string;
   name: string;
   period: OfficialEvent["period"];
