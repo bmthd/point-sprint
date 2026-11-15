@@ -27,7 +27,7 @@ function SidebarRouterLink({ href = "/", ...rest }: ComponentProps<"a">) {
  * The header's menu below the `lg` breakpoint, in Yamada UI's `Sidebar`: 共通設定 and お知らせ at
  * the top, then サイトの案内 (`guideLinks`, the header's menus on a wide screen), the guides
  * changed most recently and sharing the site. The page being shown is the selected item. The
- * items are 44px high, to be tapped, and a line is above each group.
+ * items are 44px high, to be tapped, and a line parts each group from the next.
  */
 export function MenuSidebar({
   guideLinks,
@@ -52,26 +52,34 @@ export function MenuSidebar({
         position="static"
         h="auto"
         withHandle={false}
-        // A line above each group parts it from what is before it.
-        groupProps={{ borderTopWidth: "1px", borderColor: "border", mt: "2", pt: "3" }}
         linkProps={{ as: SidebarRouterLink }}
       >
-        <Sidebar.Content px="0">
-          <Sidebar.Item label="共通設定" value="/settings" startElement={<SettingsIcon />} />
-          <Sidebar.Item
-            label="お知らせ"
-            value="/notices"
-            // The dot is on the bell, outside the label, which cuts off what is outside its line.
-            startElement={
-              <UnreadDot unread={unread} offset="0.5" lineHeight="1">
-                <BellIcon />
-              </UnreadDot>
-            }
-            linkProps={{
-              "aria-label": unread ? "お知らせ（未読あり）" : "お知らせ",
-              overflow: "visible",
-            }}
-          />
+        <Sidebar.Content
+          px="0"
+          // A line under each group but the last, as in Yamada UI's example of separators.
+          css={{
+            "& > li:not(:last-of-type)": {
+              _after: { borderBottomWidth: "1px", mt: "{side-panel-space}" },
+            },
+          }}
+        >
+          <Sidebar.Group>
+            <Sidebar.Item label="共通設定" value="/settings" startElement={<SettingsIcon />} />
+            <Sidebar.Item
+              label="お知らせ"
+              value="/notices"
+              // The dot is on the bell, outside the label, which cuts off what is outside its line.
+              startElement={
+                <UnreadDot unread={unread} offset="0.5" lineHeight="1">
+                  <BellIcon />
+                </UnreadDot>
+              }
+              linkProps={{
+                "aria-label": unread ? "お知らせ（未読あり）" : "お知らせ",
+                overflow: "visible",
+              }}
+            />
+          </Sidebar.Group>
           <Sidebar.Group role="group" aria-label="サイトの案内" label="サイトの案内">
             {guideLinks.map((link) => (
               <Sidebar.Item
