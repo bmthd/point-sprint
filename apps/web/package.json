@@ -32,7 +32,7 @@
     "valibot": "1.5.0"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "2.0.0-beta.sha-52b0dc0e9",
+    "@cloudflare/vite-plugin": "2.0.0-beta.v.17",
     "@expo-google-fonts/noto-sans-jp": "0.4.4",
     "@playwright/test": "1.63.0",
     "@types/node": "26.6.4",
