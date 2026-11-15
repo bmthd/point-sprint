@@ -5,7 +5,6 @@ import {
   Drawer,
   Flex,
   IconButton,
-  List,
   MenuIcon,
   MoonIcon,
   SettingsIcon,
@@ -21,8 +20,7 @@ import { RouterLink } from "#/ui/router-link.tsx";
 import { CloseIcon } from "#/ui/icons.tsx";
 import { UnreadDot } from "#/routes/-notices/unread-dot.tsx";
 import { useUnreadNoticeIds } from "#/routes/-notices/unread-notices.ts";
-import { SiteSidebar } from "#/routes/-sidebar/sidebar.tsx";
-import { SidebarSection } from "#/routes/-sidebar/sidebar-section.tsx";
+import { MenuSidebar } from "./menu-sidebar.tsx";
 
 type HeaderMenu = {
   to: LinkProps["to"];
@@ -51,8 +49,7 @@ const headerMenus: readonly HeaderMenu[] = [
   },
 ];
 
-/** `inMenu`: in the menu, its text starts on the line of the menu's other links. */
-function CommonSettingsLink({ inMenu = false }: { inMenu?: boolean }) {
+function CommonSettingsLink() {
   return (
     <RouterLink
       to="/settings"
@@ -60,7 +57,7 @@ function CommonSettingsLink({ inMenu = false }: { inMenu?: boolean }) {
       display="flex"
       alignItems="center"
       gap="1"
-      px={inMenu ? "0" : "2"}
+      px="2"
       color="fg"
       _current={{ fontWeight: "bold" }}
     >
@@ -72,15 +69,13 @@ function CommonSettingsLink({ inMenu = false }: { inMenu?: boolean }) {
   );
 }
 
-/** A link of the header that spells its name, like `CommonSettingsLink`, with its `inMenu`. */
+/** A link of the header that spells its name, like `CommonSettingsLink`. */
 function HeaderTextLink({
   to,
-  inMenu = false,
   children,
   ...rest
 }: {
   to: "/guides" | "/notices";
-  inMenu?: boolean;
   children: ReactNode;
   "aria-label"?: string;
 }) {
@@ -91,7 +86,7 @@ function HeaderTextLink({
       minH="11"
       display="flex"
       alignItems="center"
-      px={inMenu ? "0" : "2"}
+      px="2"
       fontSize="sm"
       color="fg"
       _current={{ fontWeight: "bold" }}
@@ -102,14 +97,10 @@ function HeaderTextLink({
 }
 
 /** The link to `/notices`, with a dot while a notice there has not been read. */
-function NoticesLink({ inMenu = false }: { inMenu?: boolean }) {
+function NoticesLink() {
   const unread = useUnreadNoticeIds().size > 0;
   return (
-    <HeaderTextLink
-      to="/notices"
-      inMenu={inMenu}
-      aria-label={unread ? "お知らせ（未読あり）" : undefined}
-    >
+    <HeaderTextLink to="/notices" aria-label={unread ? "お知らせ（未読あり）" : undefined}>
       <UnreadDot unread={unread} offset="-0.5">
         お知らせ
       </UnreadDot>
@@ -180,33 +171,6 @@ function HeaderMenuLinks({ menu }: { menu: HeaderMenu }) {
         ))}
       </VStack>
     </Box>
-  );
-}
-
-/** サイトの案内, first in the sidebar of the menu: the links of the header's menus, one per line. */
-function SiteGuideSection() {
-  return (
-    <SidebarSection title="サイトの案内">
-      <List.Root gap="0">
-        {headerMenus
-          .flatMap((menu) => menu.links)
-          .map((link) => (
-            <List.Item key={link.label}>
-              <RouterLink
-                to={link.to}
-                minH="11"
-                display="flex"
-                alignItems="center"
-                fontSize="sm"
-                color="fg"
-                _current={{ fontWeight: "bold" }}
-              >
-                {link.fullLabel ?? link.label}
-              </RouterLink>
-            </List.Item>
-          ))}
-      </List.Root>
-    </SidebarSection>
   );
 }
 
@@ -291,9 +255,8 @@ export function SiteHeader() {
 }
 
 /**
- * The menu at the `lg` breakpoint and below: 共通設定 and お知らせ at the top, then the sidebar,
- * which starts with サイトの案内 (the header's menus on a wide screen). データを初期化 is on the
- * 共通設定 page, not here. Its button
+ * The menu at the `lg` breakpoint and below: `MenuSidebar`. データを初期化 is on the 共通設定 page,
+ * not here. Its button
  * has the dot of the お知らせ link too. It closes
  * on a link: one in the site moves to its page, one to a service opens in a new tab.
  */
@@ -335,13 +298,7 @@ function SiteMenu() {
               if (event.target instanceof Element && event.target.closest("a")) onClose();
             }}
           >
-            <VStack gap="0" alignItems="stretch">
-              <CommonSettingsLink inMenu />
-              <NoticesLink inMenu />
-            </VStack>
-            <SiteSidebar inMenu>
-              <SiteGuideSection />
-            </SiteSidebar>
+            <MenuSidebar guideLinks={headerMenus.flatMap((menu) => menu.links)} />
           </Drawer.Body>
         </Drawer.Content>
       </Drawer.Root>

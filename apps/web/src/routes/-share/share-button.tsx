@@ -5,9 +5,7 @@ import {
   HStack,
   IconButton,
   Image,
-  Link,
   LinkIcon,
-  List,
   type StackProps,
   Text,
   VStack,
@@ -75,7 +73,7 @@ export function ShareButton({
  * corners. The files are the logos' paths: X's on a square of its black, Facebook's and LINE's
  * with the circle or the rounded square under them made the full square.
  */
-const serviceLogos = { X: xLogo, Facebook: facebookLogo, LINE: lineLogo };
+export const serviceLogos = { X: xLogo, Facebook: facebookLogo, LINE: lineLogo };
 
 /**
  * The links to X, Facebook and LINE and a copy button: a row of icons, named for a screen reader,
@@ -122,45 +120,5 @@ export function ShareLinks({ target }: { target: ShareTarget }) {
         {copied ? "文面とリンクをコピーしました" : ""}
       </Text>
     </VStack>
-  );
-}
-
-/**
- * The links to X, Facebook and LINE and a copy button, one per line: the logo small, before the
- * name, as the other lines of the header's menu are.
- */
-export function ShareLinkRows({ target }: { target: ShareTarget }) {
-  const { copied, onCopy } = useClipboard();
-  const rowProps = {
-    colorScheme: "mono",
-    minH: "11",
-    display: "flex",
-    alignItems: "center",
-    gap: "2.5",
-    fontSize: "sm",
-  } as const;
-
-  return (
-    <List.Root gap="0">
-      {shareLinks(target).map((link) => (
-        <List.Item key={link.service}>
-          <Link href={link.href} target="_blank" rel="noopener noreferrer" {...rowProps}>
-            <Image src={serviceLogos[link.service]} alt="" boxSize="5" rounded="xs" />
-            {link.label}
-          </Link>
-        </List.Item>
-      ))}
-      <List.Item>
-        <Link as="button" type="button" onClick={() => onCopy(shareMessage(target))} {...rowProps}>
-          <Center boxSize="5" rounded="xs" bg="bg.muted" color="fg">
-            <LinkIcon fontSize="sm" />
-          </Center>
-          文面とリンクをコピー
-        </Link>
-      </List.Item>
-      <List.Item role="status" fontSize="sm" color="fg.muted" _empty={{ display: "none" }}>
-        {copied ? "文面とリンクをコピーしました" : ""}
-      </List.Item>
-    </List.Root>
   );
 }
