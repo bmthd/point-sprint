@@ -1,11 +1,13 @@
 import type { OfficialEvent, Period } from "@workspaces/domain";
 
-// Reads Rakuten's marathon pages, which its CMS writes. Each reader looks for the few labels and
+// Reads Rakuten's marathon pages and its Black Friday page, which its CMS writes. Each reader looks for the few labels and
 // class names the facts sit under, and gives `undefined` for what it cannot find: the pages change
 // without notice, and a page read wrong must not reach the master (event-collection.ts).
 
 export const SCHEDULE_URL = "https://event.rakuten.co.jp/campaign/point-up/marathon/schedule/";
 export const MARATHON_URL = "https://event.rakuten.co.jp/campaign/point-up/marathon/";
+/** Shows Black Friday, a shop-around like the marathon's, in the same campaign details. */
+export const BLACK_FRIDAY_URL = "https://event.rakuten.co.jp/campaign/point-up/blackfriday/";
 
 /** A round on the schedule page, as 「第二弾」 and its period. */
 export type ScheduledRound = { title: string; period: Period; times?: OfficialEvent["times"] };

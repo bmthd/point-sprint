@@ -18,3 +18,27 @@ export function eventMasterRunsOut(
   const horizon = addDays(today, leadDays);
   return events.every((event) => event.period.end < horizon);
 }
+
+/**
+ * An event Rakuten holds once a year, which the collection is meant to pick up from its page by
+ * `due` (`MM-DD`), its `id` starting with `idPrefix`.
+ */
+export type YearlyEvent = { name: string; idPrefix: string; due: string; until: string };
+
+/**
+ * The yearly events that the master lacks this year, from their `due` to their `until` (`MM-DD`,
+ * both in `today`'s year): the collection did not pick them up, and the operator has to add them.
+ */
+export function missingYearlyEvents(
+  events: OfficialEvent[],
+  yearly: readonly YearlyEvent[],
+  today: string,
+): YearlyEvent[] {
+  const year = today.slice(0, 4);
+  return yearly.filter(
+    ({ idPrefix, due, until }) =>
+      `${year}-${due}` <= today &&
+      today <= `${year}-${until}` &&
+      !events.some((event) => event.id.startsWith(idPrefix) && event.period.start.startsWith(year)),
+  );
+}
