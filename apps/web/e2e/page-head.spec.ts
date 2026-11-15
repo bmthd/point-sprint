@@ -83,5 +83,23 @@ test("the top page names the site for search results", async ({ request }) => {
     "@type": "WebSite",
     name: "ポイントスプリント",
     url: `${siteUrl}/`,
+    publisher: { "@type": "Person", name: "じょうげん", url: `${siteUrl}/about` },
+  });
+});
+
+test("the about page and a guide name the operator for search results", async ({ request }) => {
+  const jsonLd = async (path: string) => {
+    const html = await (await request.get(path)).text();
+    return JSON.parse(
+      /<script type="application\/ld\+json">(.*?)<\/script>/.exec(html)?.[1] ?? "null",
+    );
+  };
+  expect(await jsonLd("/about")).toMatchObject({
+    "@type": "AboutPage",
+    mainEntity: { "@type": "Person", name: "じょうげん", url: "https://links.bmth.dev/" },
+  });
+  expect(await jsonLd("/guides/how-much-to-buy")).toMatchObject({
+    "@type": "Article",
+    author: { "@type": "Person", name: "じょうげん", url: `${siteUrl}/about` },
   });
 });
