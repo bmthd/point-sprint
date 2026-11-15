@@ -18,7 +18,7 @@ const pages = (id: string) => [
   { name: "プランの設定", path: `/plan/settings?id=${id}` },
   { name: "月ごとの SPU", path: "/spu?month=2026-10" },
   { name: "このサイトについて", path: "/about" },
-  { name: "使い方・注意事項", path: "/help" },
+  { name: "使い方", path: "/help" },
   { name: "利用規約", path: "/terms" },
   { name: "プライバシーポリシー", path: "/privacy" },
   { name: "お問い合わせ", path: "/inquiry" },
@@ -83,7 +83,7 @@ test("the header links to the guides and the help", async ({ page }) => {
 
   await header.helpLink.click();
   await expect(page).toHaveURL(endsWithPath("/help"));
-  await expect(new SitePage(page).heading("使い方・注意事項")).toBeVisible();
+  await expect(new SitePage(page).heading("使い方")).toBeVisible();
   await expect(header.helpLink).toHaveAttribute("aria-current", "page");
 });
 
@@ -106,7 +106,7 @@ test("on a phone the header has the site name, the guides, the color mode and th
 
   await (await header.openMenu()).helpLink.click();
   await expect(page).toHaveURL(endsWithPath("/help"));
-  await expect(new SitePage(page).heading("使い方・注意事項")).toBeVisible();
+  await expect(new SitePage(page).heading("使い方")).toBeVisible();
 });
 
 for (const width of [390, 1280]) {
@@ -144,6 +144,8 @@ for (const { name } of pages("")) {
     const path = pages(id).find((p) => p.name === name)?.path ?? "";
     const { footer } = await openReady(page, path);
     await expect(footer.root).toContainText("このブラウザの中に保存されます");
+    await expect(footer.root).toContainText("ポイントスプリントは個人開発のサイトです。");
+    await expect(footer.root).toContainText("© 2026 じょうげん");
     // No link to an anchor that is not on the page, or to a page that does not exist yet.
     await expect(footer.root.locator('a[href^="#"]')).toHaveCount(0);
 
@@ -162,7 +164,8 @@ test("the footer links to each page that tells about the site", async ({ page })
   for (const { label, path, heading } of [
     { label: "マラソンの日程と上限", path: "/marathon", heading: "お買い物マラソンの日程と上限" },
     { label: "お知らせ", path: "/notices", heading: "お知らせ" },
-    { label: "使い方・注意事項", path: "/help", heading: "使い方・注意事項" },
+    { label: "使い方", path: "/help", heading: "使い方" },
+    { label: "運営者", path: "/about", heading: "このサイトについて" },
     { label: "利用規約", path: "/terms", heading: "利用規約" },
     { label: "プライバシーポリシー", path: "/privacy", heading: "プライバシーポリシー" },
   ]) {

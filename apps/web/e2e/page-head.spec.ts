@@ -15,7 +15,7 @@ test("each page has its own title", async ({ page }) => {
     { path: "/settings", title: "共通設定 | ポイントスプリント" },
     { path: "/spu", title: "月ごとの SPU | ポイントスプリント" },
     { path: "/about", title: "このサイトについて | ポイントスプリント" },
-    { path: "/help", title: "使い方・注意事項 | ポイントスプリント" },
+    { path: "/help", title: "使い方 | ポイントスプリント" },
     { path: "/terms", title: "利用規約 | ポイントスプリント" },
     { path: "/privacy", title: "プライバシーポリシー | ポイントスプリント" },
   ];

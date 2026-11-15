@@ -32,7 +32,7 @@ export class Header {
     this.settingsLink = this.root.getByRole("link", { name: "共通設定", exact: true });
     this.guidesLink = this.root.getByRole("link", { name: "買い物ガイド", exact: true });
     this.phoneGuidesLink = this.root.getByRole("link", { name: "ガイド", exact: true });
-    this.helpLink = this.root.getByRole("link", { name: "ヘルプ", exact: true });
+    this.helpLink = this.root.getByRole("link", { name: "使い方", exact: true });
     this.noticesLink = this.root.getByRole("link", { name: /^お知らせ/ });
     this.menuButton = this.root.getByRole("button", { name: /^メニュー/ });
     this.colorModeButton = this.root.getByRole("button", { name: /^カラーモード/ });
@@ -71,7 +71,7 @@ export class Header {
   }
 }
 
-/** The header's menu, on a phone: 共通設定, ヘルプ, お知らせ and the sidebar. */
+/** The header's menu, on a phone: 共通設定, 使い方, このサイトについて, お知らせ and the sidebar. */
 export class Menu {
   readonly root: Locator;
   readonly settingsLink: Locator;
@@ -84,7 +84,7 @@ export class Menu {
   constructor(readonly page: Page) {
     this.root = page.getByRole("dialog", { name: "メニュー" });
     this.settingsLink = this.root.getByRole("link", { name: "共通設定", exact: true });
-    this.helpLink = this.root.getByRole("link", { name: "ヘルプ", exact: true });
+    this.helpLink = this.root.getByRole("link", { name: "使い方", exact: true });
     this.noticesLink = this.root.getByRole("link", { name: /^お知らせ/ });
     this.recentArticles = this.root.getByRole("region", { name: "最近更新された記事" });
     this.shareSite = this.root.getByRole("region", { name: "このサイトをシェア" });
@@ -111,11 +111,11 @@ export class Footer {
     this.root = page.getByRole("contentinfo");
   }
 
-  /** The `href` of every link to a page of the site (not the Rakuten credit, which leaves it). */
+  /** The `href` of every link to a page of the site (not the source code or the Rakuten credit, which leave it). */
   linkTargets() {
     return this.root
       .getByRole("navigation", { name: "サイトの案内" })
-      .getByRole("link")
+      .locator('a[href^="/"]')
       .evaluateAll((links) => links.map((link) => link.getAttribute("href") ?? ""));
   }
 

@@ -139,7 +139,7 @@ export function SiteHeader() {
         </RouterLink>
         <Flex flex="1" align="center" gap="1" display={{ base: "flex", lg: "none" }}>
           <HeaderTextLink to="/guides">買い物ガイド</HeaderTextLink>
-          <HeaderTextLink to="/help">ヘルプ</HeaderTextLink>
+          <HeaderTextLink to="/help">使い方</HeaderTextLink>
           <NoticesLink />
         </Flex>
         <Flex align="center" gap="1">
@@ -158,7 +158,7 @@ export function SiteHeader() {
 }
 
 /**
- * The menu at the `lg` breakpoint and below: 共通設定, ヘルプ, お知らせ and the sidebar. Its button
+ * The menu at the `lg` breakpoint and below: 共通設定, 使い方, このサイトについて, お知らせ and the sidebar. Its button
  * has the dot of the お知らせ link too. It closes
  * on a link: one in the site moves to its page, one to a service opens in a new tab.
  */
@@ -201,7 +201,8 @@ function SiteMenu() {
             }}
           >
             <CommonSettingsLink />
-            <HeaderTextLink to="/help">ヘルプ</HeaderTextLink>
+            <HeaderTextLink to="/help">使い方</HeaderTextLink>
+            <HeaderTextLink to="/about">このサイトについて</HeaderTextLink>
             <NoticesLink />
             <SiteSidebar />
             <ResetDataButton onDone={onClose} />
