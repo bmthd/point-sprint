@@ -1,42 +1,20 @@
 import type { LinkProps } from "@tanstack/react-router";
-import { Box, Flex, Grid, Heading, Link, Text, VStack } from "@workspaces/ui";
+import { Box, Flex, Link, Text, VStack, Wrap } from "@workspaces/ui";
 import { operatorName } from "#/page-head.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
 
 type FooterLink = { to: LinkProps["to"]; label: string } | { href: string; label: string };
 
-/** The footer's links, in groups by what a reader comes for. */
-export const footerGroups: readonly { heading: string; links: readonly FooterLink[] }[] = [
-  {
-    heading: "使う",
-    links: [
-      { to: "/marathon", label: "マラソンの日程と上限" },
-      { to: "/spu", label: "SPU" },
-    ],
-  },
-  {
-    heading: "読む",
-    links: [
-      { to: "/guides", label: "買い物ガイド" },
-      { to: "/notices", label: "お知らせ" },
-      { to: "/help", label: "使い方" },
-    ],
-  },
-  {
-    heading: "このサイトについて",
-    links: [
-      { to: "/about", label: "運営者" },
-      { href: "https://github.com/bmthd/point-sprint", label: "ソースコード" },
-      { to: "/inquiry", label: "お問い合わせ" },
-    ],
-  },
-  {
-    heading: "決まりごと",
-    links: [
-      { to: "/terms", label: "利用規約" },
-      { to: "/privacy", label: "プライバシーポリシー" },
-    ],
-  },
+/**
+ * The footer's links: who makes the site and its rules. The pages a reader comes back to are in the
+ * header instead.
+ */
+const footerLinks: readonly FooterLink[] = [
+  { to: "/about", label: "このサイトについて" },
+  { href: "https://github.com/bmthd/point-sprint", label: "ソースコード" },
+  { to: "/inquiry", label: "お問い合わせ" },
+  { to: "/terms", label: "利用規約" },
+  { to: "/privacy", label: "プライバシーポリシー" },
 ];
 
 /**
@@ -48,7 +26,7 @@ const rakutenCredit = `<!-- Rakuten Web Services Attribution Snippet FROM HERE -
 <!-- Rakuten Web Services Attribution Snippet TO HERE -->`;
 
 /**
- * The footer on every page: the links in their groups, where the data is kept (it applies to every
+ * The footer on every page: the links about the site, where the data is kept (it applies to every
  * page) and who makes the site.
  */
 export function SiteFooter() {
@@ -63,51 +41,41 @@ export function SiteFooter() {
       }}
     >
       <Flex maxW="1280px" mx="auto" px="4" py="6" direction="column" gap="md">
-        <Grid
+        <Wrap
           as="nav"
-          aria-label="サイトの案内"
-          templateColumns={{ base: "repeat(4, minmax(0, 1fr))", md: "repeat(2, minmax(0, 1fr))" }}
-          gap="md"
-          maxW="960px"
-          w="full"
-          mx="auto"
+          aria-label="サイトの情報"
+          justifyContent="center"
+          columnGap="lg"
           fontSize="sm"
         >
-          {footerGroups.map((group) => (
-            <VStack key={group.heading} as="section" gap="0" alignItems="start">
-              <Heading as="h2" fontSize="xs" color="fg.muted" mb="1">
-                {group.heading}
-              </Heading>
-              {group.links.map((link) =>
-                "to" in link ? (
-                  <RouterLink
-                    key={link.label}
-                    to={link.to}
-                    color="link"
-                    minH="11"
-                    display="flex"
-                    alignItems="center"
-                  >
-                    {link.label}
-                  </RouterLink>
-                ) : (
-                  <Link
-                    key={link.label}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener"
-                    color="link"
-                    minH="11"
-                    display="flex"
-                    alignItems="center"
-                  >
-                    {link.label}
-                  </Link>
-                ),
-              )}
-            </VStack>
-          ))}
-        </Grid>
+          {footerLinks.map((link) =>
+            "to" in link ? (
+              <RouterLink
+                key={link.label}
+                to={link.to}
+                color="link"
+                minH="11"
+                display="flex"
+                alignItems="center"
+              >
+                {link.label}
+              </RouterLink>
+            ) : (
+              <Link
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener"
+                color="link"
+                minH="11"
+                display="flex"
+                alignItems="center"
+              >
+                {link.label}
+              </Link>
+            ),
+          )}
+        </Wrap>
         <Text fontSize="xs" color="fg.muted" textAlign="center">
           入力した内容はこのブラウザの中に保存されます。ほかの端末と同期すると、運営者にも読めない暗号にしてから送ります。
         </Text>

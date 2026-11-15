@@ -68,10 +68,20 @@ test("the header marks the page being shown", async ({ page }) => {
   }
 });
 
-test("the header links to the guides and the help", async ({ page }) => {
+test("on a wide screen the header's menus open on a pointer and on the keyboard, and their names go to their pages", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   const { header } = await openReady(page, "/");
-  await expect(header.phoneGuidesLink).toBeHidden();
+  await expect(header.root.getByRole("link", { name: "月ごとの SPU" })).toBeHidden();
+  await header.marathonLink.hover();
+  await expect(header.root.getByRole("link", { name: "日程と上限" })).toBeVisible();
+  await expect(header.root.getByRole("link", { name: "月ごとの SPU" })).toBeVisible();
+
+  await header.guidesLink.focus();
+  await expect(header.helpLink).toBeVisible();
+  await expect(header.root.getByRole("link", { name: "買い物ガイド" })).toBeVisible();
+
   // Retried: a click before the page hydrates loads the page as a new document.
   await expect(async () => {
     await header.guidesLink.click();
@@ -79,23 +89,22 @@ test("the header links to the guides and the help", async ({ page }) => {
   }).toPass();
   await expect(new SitePage(page).heading("買い物ガイド")).toBeVisible();
   await expect(header.guidesLink).toHaveAttribute("aria-current", "page");
-  await expect(header.helpLink).not.toHaveAttribute("aria-current");
 
+  await header.guidesLink.hover();
   await header.helpLink.click();
   await expect(page).toHaveURL(endsWithPath("/help"));
   await expect(new SitePage(page).heading("使い方")).toBeVisible();
   await expect(header.helpLink).toHaveAttribute("aria-current", "page");
 });
 
-test("on a phone the header has the site name, the guides, the color mode and the menu, which has 共通設定 and the help", async ({
+test("on a phone the header has the site name, the guides, the color mode and the menu, which has 共通設定 and サイトの案内", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const { header } = await openReady(page, "/help");
   await expect(header.settingsLink).toBeHidden();
-  await expect(header.guidesLink).toBeHidden();
-  await expect(header.helpLink).toBeHidden();
-  await expect(header.phoneGuidesLink).toBeVisible();
+  await expect(header.marathonLink).toBeHidden();
+  await expect(header.guidesLink).toBeVisible();
   await expect(header.colorModeButton).toBeVisible();
   const box = (await header.topLink.boundingBox())!;
   expect(box.height).toBeLessThanOrEqual(44);
@@ -104,9 +113,20 @@ test("on a phone the header has the site name, the guides, the color mode and th
   await menu.goToSettings();
   await expect(menu.root).toHaveCount(0);
 
-  await (await header.openMenu()).helpLink.click();
-  await expect(page).toHaveURL(endsWithPath("/help"));
-  await expect(new SitePage(page).heading("使い方")).toBeVisible();
+  for (const { name, path, heading } of [
+    {
+      name: "お買い物マラソンの日程と上限",
+      path: "/marathon",
+      heading: "お買い物マラソンの日程と上限",
+    },
+    { name: "月ごとの SPU", path: "/spu", heading: undefined },
+    { name: "買い物ガイド", path: "/guides", heading: "買い物ガイド" },
+    { name: "使い方", path: "/help", heading: "使い方" },
+  ]) {
+    await (await header.openMenu()).siteGuide.getByRole("link", { name, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${path}/?(\\?.*)?$`));
+    if (heading) await expect(new SitePage(page).heading(heading)).toBeVisible();
+  }
 });
 
 for (const width of [390, 1280]) {
@@ -162,10 +182,8 @@ for (const { name } of pages("")) {
 
 test("the footer links to each page that tells about the site", async ({ page }) => {
   for (const { label, path, heading } of [
-    { label: "マラソンの日程と上限", path: "/marathon", heading: "お買い物マラソンの日程と上限" },
-    { label: "お知らせ", path: "/notices", heading: "お知らせ" },
-    { label: "使い方", path: "/help", heading: "使い方" },
-    { label: "運営者", path: "/about", heading: "このサイトについて" },
+    { label: "このサイトについて", path: "/about", heading: "このサイトについて" },
+    { label: "お問い合わせ", path: "/inquiry", heading: "お問い合わせ" },
     { label: "利用規約", path: "/terms", heading: "利用規約" },
     { label: "プライバシーポリシー", path: "/privacy", heading: "プライバシーポリシー" },
   ]) {
