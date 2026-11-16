@@ -58,9 +58,11 @@ jobs:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
+      # Also installs the development tools in mise.dev.toml, at the versions pinned there.
       - uses: $/.github/actions/setup
         with:
           cache: true
+          mise-env: dev
       - run: pnpm install --frozen-lockfile
       - parallel:
           # Only formatting and spelling read the Markdown at the root and .github.
@@ -77,10 +79,16 @@ jobs:
           - name: Build
             if: needs.changes.outputs.app == 'true'
             run: pnpm build
-      # Checks the workflows with shellcheck, which the runner has, even when a step above failed.
+      # Checks the workflows, and their scripts with shellcheck, at the versions in mise.dev.toml, even
+      # when a step above failed.
+      - id: jactionlint
+        if: ${{ !cancelled() }}
+        run: echo "path=$(mise which jactionlint)" >> "$GITHUB_OUTPUT"
       - name: Check workflows
         if: ${{ !cancelled() }}
         uses: jdx/jactionlint@v2.3.0
+        with:
+          executable: ${{ steps.jactionlint.outputs.path }}
 
   # A skipped job passes the ruleset's required check.
   test:

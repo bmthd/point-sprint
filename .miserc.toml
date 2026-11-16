@@ -1,0 +1,4 @@
+# mise reads this before any other config file. Selects the dev environment by default, so
+# `mise install` locally also installs the development tools in mise.dev.toml. MISE_ENV overrides
+# it: .github/actions/setup sets MISE_ENV=production, so builds and deploys get only mise.toml.
+env = ["dev"]

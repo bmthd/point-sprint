@@ -1,0 +1,5 @@
+# Tools for development only: checks that run locally and in CI's Quality job, never in a build or
+# a deploy. mise reads this file only in the dev environment, which .miserc.toml selects by default.
+[tools]
+"github:jdx/jactionlint" = "2.6.0"
+shellcheck = "0.11.0"
