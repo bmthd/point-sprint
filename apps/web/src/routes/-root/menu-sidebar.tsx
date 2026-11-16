@@ -43,6 +43,8 @@ export function MenuSidebar({
     <Sidebar.Root
       breakpoint={false}
       selectedValue={pathname}
+      variant="surface"
+      colorScheme="primary"
       flexDirection="column"
       minH="0"
       css={{ "--side-panel-item-size": "sizes.11", "--side-panel-expanded-width": "100%" }}
@@ -56,8 +58,13 @@ export function MenuSidebar({
       >
         <Sidebar.Content
           px="0"
-          // A line under each group but the last, as in Yamada UI's example of separators.
+          // A line under each group but the last, as in Yamada UI's example of separators. A row
+          // darkens while it is pressed: on a phone there is no hover to show the tap landed.
           css={{
+            "& a, & button": {
+              _active: { bg: "bg.muted" },
+              _selected: { fontWeight: "bold", _active: { bg: "colorScheme.muted" } },
+            },
             "& > li:not(:last-of-type)": {
               _after: { borderBottomWidth: "1px", mt: "{side-panel-space}" },
             },

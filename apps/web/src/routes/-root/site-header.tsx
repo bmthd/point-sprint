@@ -5,7 +5,7 @@ import {
   Drawer,
   Flex,
   IconButton,
-  MenuIcon,
+  PanelRightIcon,
   MoonIcon,
   SettingsIcon,
   SunIcon,
@@ -273,7 +273,7 @@ function SiteMenu() {
           variant="ghost"
           color="fg"
           _hover={{ bg: "bg.muted" }}
-          icon={<MenuIcon />}
+          icon={<PanelRightIcon />}
           onClick={onOpen}
         />
       </UnreadDot>
@@ -284,7 +284,13 @@ function SiteMenu() {
         withCloseButton={false}
         restoreFocus
       >
-        <Drawer.Content bg="bg" roundedLeft="l2">
+        <Drawer.Content
+          bg="bg"
+          roundedLeft="l2"
+          // Never the whole width: the page shows on the left, and a tap there closes the menu.
+          w="calc(100% - {spaces.16})"
+          maxW="sm"
+        >
           <Drawer.Header justifyContent="space-between">
             <Drawer.Title as="h2">メニュー</Drawer.Title>
             <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>
