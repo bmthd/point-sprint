@@ -54,6 +54,9 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Also installs the development tools in mise.dev.toml, at the versions pinned there.
+    env:
+      MISE_ENV: dev
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -77,10 +80,16 @@ jobs:
           - name: Build
             if: needs.changes.outputs.app == 'true'
             run: pnpm build
-      # Checks the workflows with shellcheck, which the runner has, even when a step above failed.
+      # Checks the workflows, and their scripts with shellcheck, at the versions in mise.dev.toml, even
+      # when a step above failed.
+      - id: jactionlint
+        if: ${{ !cancelled() }}
+        run: echo "path=$(mise which jactionlint)" >> "$GITHUB_OUTPUT"
       - name: Check workflows
         if: ${{ !cancelled() }}
         uses: jdx/jactionlint@v2.3.0
+        with:
+          executable: ${{ steps.jactionlint.outputs.path }}
 
   # A skipped job passes the ruleset's required check.
   test:

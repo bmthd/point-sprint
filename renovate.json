@@ -6,6 +6,9 @@
   "internalChecksFilter": "strict",
   "rangeStrategy": "bump",
   "platformAutomerge": false,
+  "mise": {
+    "managerFilePatterns": ["/(^|/)mise\\.dev\\.toml$/"]
+  },
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true,
