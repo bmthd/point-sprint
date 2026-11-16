@@ -146,8 +146,7 @@ export function Hero({
     >
       {/* Breakpoints here apply from that width down: two columns, which narrow with the screen,
           and one on a tablet or a phone, where the sample comes between the heading and the
-          button. A property is given no value at both xl and lg: Yamada UI may write the xl one
-          after the lg one, which then never applies. */}
+          button. */}
       <Grid
         w="full"
         maxW={{ base: "1280px", lg: "672px", md: "full" }}
