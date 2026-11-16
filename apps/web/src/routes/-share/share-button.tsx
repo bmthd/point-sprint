@@ -69,15 +69,11 @@ export function ShareButton({
 }
 
 /**
- * Each service's logo from its brand resources on a 40px square of its color, all with the same
+ * Each service's logo from its brand resources, on a square of its color, all with the same
  * corners. The files are the logos' paths: X's on a square of its black, Facebook's and LINE's
  * with the circle or the rounded square under them made the full square.
  */
-const serviceIcons = {
-  X: <Image src={xLogo} alt="" boxSize="10" rounded="sm" />,
-  Facebook: <Image src={facebookLogo} alt="" boxSize="10" rounded="sm" />,
-  LINE: <Image src={lineLogo} alt="" boxSize="10" rounded="sm" />,
-};
+export const serviceLogos = { X: xLogo, Facebook: facebookLogo, LINE: lineLogo };
 
 /**
  * The links to X, Facebook and LINE and a copy button: a row of icons, named for a screen reader,
@@ -99,7 +95,7 @@ export function ShareLinks({ target }: { target: ShareTarget }) {
             variant="ghost"
             size="xl"
             aria-label={link.label}
-            icon={serviceIcons[link.service]}
+            icon={<Image src={serviceLogos[link.service]} alt="" boxSize="10" rounded="sm" />}
           />
         ))}
         <IconButton
