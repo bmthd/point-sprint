@@ -316,8 +316,8 @@ importers:
         specifier: 11.14.1
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2)
       '@yamada-ui/react':
-        specifier: 2.3.1
-        version: 2.3.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@types/react@19.3.0)(motion@14.0.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react-is@16.13.1)(react@19.3.0)(redux@5.0.1)(supports-color@10.2.2)
+        specifier: 2.3.3
+        version: 2.3.3(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@types/react@19.3.0)(motion@14.0.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react-is@16.13.1)(react@19.3.0)(redux@5.0.1)(supports-color@10.2.2)
       motion:
         specifier: 14.0.0
         version: 14.0.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -2218,8 +2218,8 @@ packages:
   '@vitest/utils@5.0.3':
     resolution: {integrity: sha512-77fDTZv8eu1CzlIfgPU2yrl5MXSUaUAOvgdZEeVm3X3WIxUubIX2SforqS6176lT32HCF6uBVMYVqfHxw7o6eg==}
 
-  '@yamada-ui/react@2.3.1':
-    resolution: {integrity: sha512-3eU8kXdHczaynm9tbz3xB/r4DDKHUYFGAEDJnbXfLCyMn6PZfr/c41vgS74eSmFDVWSNHRJ2ntRTtdjsbBVQ4A==}
+  '@yamada-ui/react@2.3.3':
+    resolution: {integrity: sha512-6Ta+IXE0DCuN92vXcaiSqJ2SNY/+fik6e8g5yQR8y/ZK8InZrNJcTbzowXw41/jsMLSm0STXdJbIp/4xkSXgnQ==}
     peerDependencies:
       '@emotion/react': '>=11'
       '@emotion/styled': '>=11'
@@ -2227,8 +2227,8 @@ packages:
       react: '>=19'
       react-dom: '>=19'
 
-  '@yamada-ui/utils@2.2.0':
-    resolution: {integrity: sha512-vVly1x516USkrJVq3ZP8w0iGK08FoxSRisdLLh38y1uVm3MOISGx+fZpgN711L/Zwj1ukveqoTaXWptKXRXt5g==}
+  '@yamada-ui/utils@2.3.0':
+    resolution: {integrity: sha512-R9g3C62RF98vKTNUnQiaUV5XdX5I50B6jzBdC04I29VndTCxtkncRVpgvUCjhcLpY/9Jzqrefsj6cmWEt7gb3A==}
     peerDependencies:
       react: '>=19'
 
@@ -2853,8 +2853,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@1.61.0:
-    resolution: {integrity: sha512-v2SQPPPNjnr+BlhL9Spuzmo5yR+hLkftfuE4E3jaxdNPgSH0hJKPcLJBP7yAta87jQNPsSERS59PJjCJ/CorBA==}
+  lucide-react@1.66.0:
+    resolution: {integrity: sha512-8zjbi/Us+ETXqfBwmXF/FHrWGIqOdE6zT1yUdRJLQVoptomSkB0zdFWVIM667t9K8djWDaXdkBkqi2qVTuDNiw==}
     peerDependencies:
       '@types/react': '*'
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -5358,7 +5358,7 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.2.0
 
-  '@yamada-ui/react@2.3.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@types/react@19.3.0)(motion@14.0.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react-is@16.13.1)(react@19.3.0)(redux@5.0.1)(supports-color@10.2.2)':
+  '@yamada-ui/react@2.3.3(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@types/react@19.3.0)(motion@14.0.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react-is@16.13.1)(react@19.3.0)(redux@5.0.1)(supports-color@10.2.2)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@10.2.2)
       '@emotion/react': 11.14.0(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2)
@@ -5369,7 +5369,7 @@ snapshots:
       '@emotion/utils': 1.4.2
       '@floating-ui/react-dom': 2.1.9(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@tanstack/react-table': 8.21.3(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@yamada-ui/utils': 2.2.0(react@19.3.0)
+      '@yamada-ui/utils': 2.3.0(react@19.3.0)
       copy-to-clipboard: 3.3.3
       csstype: 3.2.3
       dayjs: 1.11.23
@@ -5378,7 +5378,7 @@ snapshots:
       file-selector: 2.1.2
       framesync: 6.1.2
       intl-messageformat: 11.2.15
-      lucide-react: 1.61.0(@types/react@19.3.0)(react@19.3.0)
+      lucide-react: 1.66.0(@types/react@19.3.0)(react@19.3.0)
       motion: 14.0.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
@@ -5397,7 +5397,7 @@ snapshots:
       - redux
       - supports-color
 
-  '@yamada-ui/utils@2.2.0(react@19.3.0)':
+  '@yamada-ui/utils@2.3.0(react@19.3.0)':
     dependencies:
       color2k: 2.0.4
       react: 19.3.0
@@ -5950,7 +5950,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@1.61.0(@types/react@19.3.0)(react@19.3.0):
+  lucide-react@1.66.0(@types/react@19.3.0)(react@19.3.0):
     dependencies:
       react: 19.3.0
     optionalDependencies:
