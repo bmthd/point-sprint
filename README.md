@@ -37,7 +37,7 @@ pnpm --filter web exec playwright install chromium
 
 ### ワークフローの検査
 
-`.github` のワークフローは、CI の Quality が [jactionlint](https://github.com/jdx/jactionlint) で確かめます。npm にはないので、`pnpm check:all` には入れていません。jactionlint と、`run:` のスクリプトを確かめる shellcheck は、開発用のツールとして `mise.dev.toml` に版を固定しています。mise は `MISE_ENV=dev` のときだけこのファイルを読むので、本番のビルドとデプロイには入りません。手元では `MISE_ENV=dev mise install` で入れ、リポジトリのルートで `MISE_ENV=dev mise x -- jactionlint` を実行します。CI の Quality も同じ版を使います。
+`.github` のワークフローは、CI の Quality が [jactionlint](https://github.com/jdx/jactionlint) で確かめます。npm にはないので、`pnpm check:all` には入れていません。jactionlint と、`run:` のスクリプトを確かめる shellcheck は、開発用のツールとして `mise.dev.toml` に版を固定しています。このファイルは mise の dev 環境で読まれ、`.miserc.toml` が dev を既定にしているので、手元では `mise install` で一緒に入ります（`.miserc.toml` を読む新しい mise が要ります）。リポジトリのルートで `mise x -- jactionlint` を実行します。CI は `.github/actions/setup` で `MISE_ENV=production` にして、ビルドとデプロイには入れません。Quality だけが dev にして、同じ版で確かめます。
 
 ### E2E のポート
 

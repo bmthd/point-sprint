@@ -5,10 +5,20 @@ inputs:
   cache:
     description: Whether to restore the pnpm store, keyed on the lockfile, and save it after the job.
     default: "false"
+  mise-env:
+    description: >-
+      The mise environment, which overrides the dev in .miserc.toml. "production" installs only the
+      tools in mise.toml, and "dev" also those in mise.dev.toml.
+    default: production
 
 runs:
   using: composite
   steps:
+    # Through GITHUB_ENV, so mise in the later steps of the job reads the same files.
+    - shell: bash
+      run: echo "MISE_ENV=$MISE_ENV_INPUT" >> "$GITHUB_ENV"
+      env:
+        MISE_ENV_INPUT: ${{ inputs.mise-env }}
     - uses: jdx/mise-action@v5.2.4
     - id: store
       if: inputs.cache == 'true'

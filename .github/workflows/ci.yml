@@ -54,16 +54,15 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Also installs the development tools in mise.dev.toml, at the versions pinned there.
-    env:
-      MISE_ENV: dev
     steps:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
+      # Also installs the development tools in mise.dev.toml, at the versions pinned there.
       - uses: $/.github/actions/setup
         with:
           cache: true
+          mise-env: dev
       - run: pnpm install --frozen-lockfile
       - parallel:
           # Only formatting and spelling read the Markdown at the root and .github.
