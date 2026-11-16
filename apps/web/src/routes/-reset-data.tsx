@@ -6,9 +6,9 @@ import { clearDataAtom } from "#/state/mutations.ts";
 
 /**
  * 「データを初期化」: after a confirmation, removes the plans, the shops and the profile, and goes to
- * the top as on a first visit. `onDone` runs once the data is gone, before moving.
+ * the top as on a first visit.
  */
-export function ResetDataButton({ onDone }: { onDone?: () => void }) {
+export function ResetDataButton() {
   const { open, onOpen, onClose } = useDisclosure();
   const { mutateAsync: clearData, isPending } = useAtomValue(clearDataAtom);
   const navigate = useNavigate();
@@ -41,7 +41,6 @@ export function ResetDataButton({ onDone }: { onDone?: () => void }) {
           clearData()
             .then(() => {
               onClose();
-              onDone?.();
               return navigate({ to: "/" });
             })
             .catch(() => {

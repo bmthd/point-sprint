@@ -5,7 +5,6 @@ import {
   Drawer,
   Flex,
   IconButton,
-  List,
   MenuIcon,
   MoonIcon,
   SettingsIcon,
@@ -19,11 +18,9 @@ import {
 import type { ReactNode } from "react";
 import { RouterLink } from "#/ui/router-link.tsx";
 import { CloseIcon } from "#/ui/icons.tsx";
-import { ResetDataButton } from "#/routes/-reset-data.tsx";
 import { UnreadDot } from "#/routes/-notices/unread-dot.tsx";
 import { useUnreadNoticeIds } from "#/routes/-notices/unread-notices.ts";
-import { SiteSidebar } from "#/routes/-sidebar/sidebar.tsx";
-import { SidebarSection } from "#/routes/-sidebar/sidebar-section.tsx";
+import { MenuSidebar } from "./menu-sidebar.tsx";
 
 type HeaderMenu = {
   to: LinkProps["to"];
@@ -177,32 +174,6 @@ function HeaderMenuLinks({ menu }: { menu: HeaderMenu }) {
   );
 }
 
-/** サイトの案内, first in the sidebar of the menu: the links of the header's menus, one per line. */
-function SiteGuideSection() {
-  return (
-    <SidebarSection title="サイトの案内">
-      <List.Root gap="0">
-        {headerMenus
-          .flatMap((menu) => menu.links)
-          .map((link) => (
-            <List.Item key={link.label}>
-              <RouterLink
-                to={link.to}
-                minH="11"
-                display="flex"
-                alignItems="center"
-                fontSize="sm"
-                color="link"
-              >
-                {link.fullLabel ?? link.label}
-              </RouterLink>
-            </List.Item>
-          ))}
-      </List.Root>
-    </SidebarSection>
-  );
-}
-
 const colorModeLabels = { light: "ライト", dark: "ダーク" } as const;
 
 /**
@@ -284,8 +255,8 @@ export function SiteHeader() {
 }
 
 /**
- * The menu at the `lg` breakpoint and below: 共通設定, お知らせ and the sidebar, which starts with
- * サイトの案内 (the header's menus on a wide screen). Its button
+ * The menu at the `lg` breakpoint and below: `MenuSidebar`. データを初期化 is on the 共通設定 page,
+ * not here. Its button
  * has the dot of the お知らせ link too. It closes
  * on a link: one in the site moves to its page, one to a service opens in a new tab.
  */
@@ -327,12 +298,7 @@ function SiteMenu() {
               if (event.target instanceof Element && event.target.closest("a")) onClose();
             }}
           >
-            <CommonSettingsLink />
-            <NoticesLink />
-            <SiteSidebar>
-              <SiteGuideSection />
-            </SiteSidebar>
-            <ResetDataButton onDone={onClose} />
+            <MenuSidebar guideLinks={headerMenus.flatMap((menu) => menu.links)} />
           </Drawer.Body>
         </Drawer.Content>
       </Drawer.Root>

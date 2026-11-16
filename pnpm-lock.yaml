@@ -222,14 +222,14 @@ importers:
         specifier: workspace:*
         version: link:../../packages/ui
       jotai:
-        specifier: 3.0.1
-        version: 3.0.1(@types/react@19.3.0)(react@19.3.0)
+        specifier: 3.0.2
+        version: 3.0.2(@types/react@19.3.0)(react@19.3.0)
       jotai-family:
         specifier: 1.1.0
-        version: 1.1.0(jotai@3.0.1(@types/react@19.3.0)(react@19.3.0))
+        version: 1.1.0(jotai@3.0.2(@types/react@19.3.0)(react@19.3.0))
       jotai-tanstack-query:
         specifier: 0.11.0
-        version: 0.11.0(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.3.0))(jotai@3.0.1(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 0.11.0(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.3.0))(jotai@3.0.2(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       ky:
         specifier: 2.1.0
         version: 2.1.0
@@ -280,8 +280,8 @@ importers:
         specifier: 1.0.0-beta.12
         version: 1.0.0-beta.12(@types/node@26.6.4)
       fake-indexeddb:
-        specifier: 6.2.5
-        version: 6.2.5
+        specifier: 6.2.8
+        version: 6.2.8
       miniflare:
         specifier: 5.20260930.0-alpha
         version: 5.20260930.0-alpha(@types/node@26.6.4)
@@ -2553,8 +2553,8 @@ packages:
   exsolve@1.1.3:
     resolution: {integrity: sha512-kuzL9zherLQoqDeQaS55AiiIg1kb4KYXaSusTtgZTPlvKP2gGCI82LNmBNh5RjDVUXIcmgx+/Mx7vPwRzBbhJA==}
 
-  fake-indexeddb@6.2.5:
-    resolution: {integrity: sha512-CGnyrvbhPlWYMngksqrSSUT1BAVP49dZocrHuK0SvtR0D5TMs5wP0o3j7jexDJW01KSadjBp1M/71o/KR3nD1w==}
+  fake-indexeddb@6.2.8:
+    resolution: {integrity: sha512-mpVW/HLUqwKXJ6F/s0hMgdK1eQfM4ncTHDioNGHWL0WKV3VcZCoZq1NKgboBbAge07aRCO7L48yziKssL59XEQ==}
     engines: {node: '>=18'}
 
   fast-equals@6.1.0:
@@ -2723,8 +2723,8 @@ packages:
       react:
         optional: true
 
-  jotai@3.0.1:
-    resolution: {integrity: sha512-6tS7wY9otdiNp26Wqb/1ds3OuVJVoV+tJlN4hpLrYmfFf/t9bauVt+zKBNSpS5qSl5h6GieVQ+OknVraZX+udQ==}
+  jotai@3.0.2:
+    resolution: {integrity: sha512-1h+H6BQN+D048zv8hRGVeNxghxRLFZCB+l2WhFe7RhRiF0JlC8516G2BtRUXhPvMQTGB9OHst2N/BW9aNpp5aA==}
     engines: {node: '>=22.12.0'}
     peerDependencies:
       '@types/react': '>=18.0.0'
@@ -5731,7 +5731,7 @@ snapshots:
 
   exsolve@1.1.3: {}
 
-  fake-indexeddb@6.2.5: {}
+  fake-indexeddb@6.2.8: {}
 
   fast-equals@6.1.0: {}
 
@@ -5853,19 +5853,19 @@ snapshots:
 
   jiti@2.7.0: {}
 
-  jotai-family@1.1.0(jotai@3.0.1(@types/react@19.3.0)(react@19.3.0)):
+  jotai-family@1.1.0(jotai@3.0.2(@types/react@19.3.0)(react@19.3.0)):
     dependencies:
-      jotai: 3.0.1(@types/react@19.3.0)(react@19.3.0)
+      jotai: 3.0.2(@types/react@19.3.0)(react@19.3.0)
 
-  jotai-tanstack-query@0.11.0(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.3.0))(jotai@3.0.1(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  jotai-tanstack-query@0.11.0(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.3.0))(jotai@3.0.2(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       '@tanstack/query-core': 5.104.1
-      jotai: 3.0.1(@types/react@19.3.0)(react@19.3.0)
+      jotai: 3.0.2(@types/react@19.3.0)(react@19.3.0)
     optionalDependencies:
       '@tanstack/react-query': 5.104.1(react@19.3.0)
       react: 19.3.0
 
-  jotai@3.0.1(@types/react@19.3.0)(react@19.3.0):
+  jotai@3.0.2(@types/react@19.3.0)(react@19.3.0):
     optionalDependencies:
       '@types/react': 19.3.0
       react: 19.3.0

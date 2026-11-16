@@ -74,7 +74,7 @@ export class Header {
   }
 }
 
-/** The header's menu, on a phone: 共通設定, お知らせ and the sidebar, which starts with サイトの案内. */
+/** The header's menu, on a phone: 共通設定, お知らせ, then the groups of its `Sidebar`, which start with サイトの案内. */
 export class Menu {
   readonly root: Locator;
   readonly settingsLink: Locator;
@@ -89,10 +89,10 @@ export class Menu {
     this.root = page.getByRole("dialog", { name: "メニュー" });
     this.settingsLink = this.root.getByRole("link", { name: "共通設定", exact: true });
     this.noticesLink = this.root.getByRole("link", { name: /^お知らせ/ });
-    this.siteGuide = this.root.getByRole("region", { name: "サイトの案内" });
+    this.siteGuide = this.root.getByRole("group", { name: "サイトの案内" });
     this.helpLink = this.siteGuide.getByRole("link", { name: "使い方", exact: true });
-    this.recentArticles = this.root.getByRole("region", { name: "最近更新された記事" });
-    this.shareSite = this.root.getByRole("region", { name: "このサイトをシェア" });
+    this.recentArticles = this.root.getByRole("group", { name: "最近更新された記事" });
+    this.shareSite = this.root.getByRole("group", { name: "このサイトをシェア" });
   }
 
   async goToSettings() {

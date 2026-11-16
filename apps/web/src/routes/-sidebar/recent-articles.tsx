@@ -7,18 +7,20 @@ import { SidebarSection } from "./sidebar-section.tsx";
 
 const root = getRouteApi("__root__");
 
-/**
- * The shopping guides changed most recently: the day and the title, each a link to the guide. On
- * a guide's page, that guide is left out.
- */
-export function RecentArticles() {
+/** The shopping guides changed most recently, as many as are shown. On a guide's page, that guide is left out. */
+export function useRecentArticles() {
   const articles = root.useLoaderData({ select: (data) => data.recentArticles });
   const current = useMatch({
     from: "/(site)/(markdown)/guides/$slug",
     shouldThrow: false,
     select: (match) => match.params.slug,
   });
-  const shown = articles.filter((article) => article.slug !== current).slice(0, RECENT_SHOWN);
+  return articles.filter((article) => article.slug !== current).slice(0, RECENT_SHOWN);
+}
+
+/** The shopping guides changed most recently: the day and the title, each a link to the guide. */
+export function RecentArticles() {
+  const shown = useRecentArticles();
   if (shown.length === 0) return null;
   return (
     <SidebarSection title="最近更新された記事">
