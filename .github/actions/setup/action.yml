@@ -14,12 +14,10 @@ inputs:
 runs:
   using: composite
   steps:
-    # Through GITHUB_ENV, so mise in the later steps of the job reads the same files.
-    - shell: bash
-      run: echo "MISE_ENV=$MISE_ENV_INPUT" >> "$GITHUB_ENV"
-      env:
-        MISE_ENV_INPUT: ${{ inputs.mise-env }}
+    # Only for this step: the PATH it exports carries the tools of that environment to the later steps.
     - uses: jdx/mise-action@v5.2.4
+      env:
+        MISE_ENV: ${{ inputs.mise-env }}
     - id: store
       if: inputs.cache == 'true'
       shell: bash
