@@ -222,14 +222,14 @@ importers:
         specifier: workspace:*
         version: link:../../packages/ui
       jotai:
-        specifier: 3.0.1
-        version: 3.0.1(@types/react@19.3.0)(react@19.3.0)
+        specifier: 3.0.2
+        version: 3.0.2(@types/react@19.3.0)(react@19.3.0)
       jotai-family:
         specifier: 1.1.0
-        version: 1.1.0(jotai@3.0.1(@types/react@19.3.0)(react@19.3.0))
+        version: 1.1.0(jotai@3.0.2(@types/react@19.3.0)(react@19.3.0))
       jotai-tanstack-query:
         specifier: 0.11.0
-        version: 0.11.0(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.3.0))(jotai@3.0.1(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 0.11.0(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.3.0))(jotai@3.0.2(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       ky:
         specifier: 2.1.0
         version: 2.1.0
@@ -2723,8 +2723,8 @@ packages:
       react:
         optional: true
 
-  jotai@3.0.1:
-    resolution: {integrity: sha512-6tS7wY9otdiNp26Wqb/1ds3OuVJVoV+tJlN4hpLrYmfFf/t9bauVt+zKBNSpS5qSl5h6GieVQ+OknVraZX+udQ==}
+  jotai@3.0.2:
+    resolution: {integrity: sha512-1h+H6BQN+D048zv8hRGVeNxghxRLFZCB+l2WhFe7RhRiF0JlC8516G2BtRUXhPvMQTGB9OHst2N/BW9aNpp5aA==}
     engines: {node: '>=22.12.0'}
     peerDependencies:
       '@types/react': '>=18.0.0'
@@ -5853,19 +5853,19 @@ snapshots:
 
   jiti@2.7.0: {}
 
-  jotai-family@1.1.0(jotai@3.0.1(@types/react@19.3.0)(react@19.3.0)):
+  jotai-family@1.1.0(jotai@3.0.2(@types/react@19.3.0)(react@19.3.0)):
     dependencies:
-      jotai: 3.0.1(@types/react@19.3.0)(react@19.3.0)
+      jotai: 3.0.2(@types/react@19.3.0)(react@19.3.0)
 
-  jotai-tanstack-query@0.11.0(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.3.0))(jotai@3.0.1(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  jotai-tanstack-query@0.11.0(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.3.0))(jotai@3.0.2(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       '@tanstack/query-core': 5.104.1
-      jotai: 3.0.1(@types/react@19.3.0)(react@19.3.0)
+      jotai: 3.0.2(@types/react@19.3.0)(react@19.3.0)
     optionalDependencies:
       '@tanstack/react-query': 5.104.1(react@19.3.0)
       react: 19.3.0
 
-  jotai@3.0.1(@types/react@19.3.0)(react@19.3.0):
+  jotai@3.0.2(@types/react@19.3.0)(react@19.3.0):
     optionalDependencies:
       '@types/react': 19.3.0
       react: 19.3.0

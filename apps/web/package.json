@@ -21,7 +21,7 @@
     "@tanstack/react-start": "1.169.5",
     "@workspaces/domain": "workspace:*",
     "@workspaces/ui": "workspace:*",
-    "jotai": "3.0.1",
+    "jotai": "3.0.2",
     "jotai-family": "1.1.0",
     "jotai-tanstack-query": "0.11.0",
     "ky": "2.1.0",
