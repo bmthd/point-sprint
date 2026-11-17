@@ -48,7 +48,7 @@ const pointsOf = (result: CalculationResult | undefined, order: Order | undefine
 export function previewOf(input: {
   plans: Plan[];
   /** Turns plans into the plans as they are calculated (`asCalculatedAtom`). */
-  asCalculated: (plans: Plan[], shops?: Shop[]) => Plan[];
+  asCalculated: (plans: Plan[], shops: Shop[]) => Plan[];
   shops: Shop[];
   before: Map<string, CalculationResult>;
   planId: string;

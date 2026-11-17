@@ -536,12 +536,9 @@ const booksOn = async (repository: Repository) =>
 
 test("a held plan's SPU is on only in its own calculation", async () => {
   const held: Plan = { ...plan, onHold: true, orders: [booksOrder(ORDER_A)] };
-  // The other plan's books order is held, so the other plan does not achieve the SPU itself.
-  const other: Plan = {
-    ...plan,
-    id: OTHER_PLAN,
-    orders: [{ ...booksOrder(ORDER_B), onHold: true }],
-  };
+  // The other plan's Ichiba order gets the books SPU's points when it is on, but does not achieve
+  // it, so the SPU stays off in the other plan unless the held plan's trial leaks into it.
+  const other: Plan = { ...plan, id: OTHER_PLAN, orders: [order(ORDER_B, 1000)] };
   const repository = createMemoryRepository({ plans: [held, other], shops: [shop] });
   const store = setup(repository);
   unsubscribes.push(store.sub(spuMonthsAtom, () => {}));
