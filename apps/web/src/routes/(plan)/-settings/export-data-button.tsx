@@ -1,7 +1,5 @@
 import { Button, Text, VStack } from "@workspaces/ui";
-import { atom, useAtomValue } from "jotai";
-import { useAtomCallback } from "jotai/utils";
-import { useCallback } from "react";
+import { atom, useAtomValue, useSetAtom } from "jotai";
 import { calculatedPlansAtom, calculationAtom } from "#/state/derived.ts";
 import {
   plansAtom,
@@ -29,38 +27,36 @@ export const saveFileAtom = atom<{ save: (name: string, text: string) => void }>
   save: downloadJson,
 });
 
+/** Whether the stored rows are read: before that the plans and shops are empty, and so would the file be. */
+const exportReadyAtom = atom((get) =>
+  [get(plansQueryAtom), get(shopsQueryAtom), get(profileQueryAtom), get(spuMonthsQueryAtom)].every(
+    (query) => query.isSuccess,
+  ),
+);
+
+/** Saves every stored row and the points calculated as one JSON file. */
+const exportDataAtom = atom(null, (get) => {
+  const exportedAt = new Date();
+  const data = exportData({
+    plans: get(plansAtom),
+    shops: get(shopsAtom),
+    profile: get(profileAtom),
+    spuMonths: get(spuMonthsAtom),
+    calculatedPlans: get(calculatedPlansAtom),
+    results: get(calculationAtom),
+    exportedAt,
+  });
+  get(saveFileAtom).save(exportFileName(exportedAt), JSON.stringify(data, null, 2));
+});
+
 /** 「データを書き出す」: saves every stored row and the points calculated as one JSON file. */
 export function ExportDataButton() {
-  // Before the stored rows are read, the plans and shops are empty and so would the file be.
-  const loaded = [
-    useAtomValue(plansQueryAtom),
-    useAtomValue(shopsQueryAtom),
-    useAtomValue(profileQueryAtom),
-    useAtomValue(spuMonthsQueryAtom),
-  ].every((query) => query.isSuccess);
-  const { save } = useAtomValue(saveFileAtom);
-  const exportAll = useAtomCallback(
-    useCallback(
-      (get) => {
-        const exportedAt = new Date();
-        const data = exportData({
-          plans: get(plansAtom),
-          shops: get(shopsAtom),
-          profile: get(profileAtom),
-          spuMonths: get(spuMonthsAtom),
-          calculatedPlans: get(calculatedPlansAtom),
-          results: get(calculationAtom),
-          exportedAt,
-        });
-        save(exportFileName(exportedAt), JSON.stringify(data, null, 2));
-      },
-      [save],
-    ),
-  );
+  const ready = useAtomValue(exportReadyAtom);
+  const exportAll = useSetAtom(exportDataAtom);
 
   return (
     <VStack gap="2" alignItems="stretch">
-      <Button variant="outline" disabled={!loaded} onClick={exportAll}>
+      <Button variant="outline" disabled={!ready} onClick={() => exportAll()}>
         データを書き出す
       </Button>
       <Text fontSize="sm" color="fg.muted">
