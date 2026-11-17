@@ -1,6 +1,6 @@
 import { channels, parseUrl } from "@workspaces/domain";
 import { Box, Button, HStack, Link, Text, VStack } from "@workspaces/ui";
-import { atom, useAtomValue } from "jotai";
+import { atom, useSetAtom } from "jotai";
 import { useEffect, useRef, useState } from "react";
 import {
   FIRST_MAX_WAIT_MS,
@@ -16,6 +16,9 @@ import { workerItemLookup } from "./-worker-item-lookup.ts";
 export const itemLookupAtom = atom<{ lookup: ItemLookup | undefined }>({
   lookup: workerItemLookup,
 });
+
+/** The lookup that the store holds now, read when an item is looked up. */
+const currentLookupAtom = atom(null, (get) => get(itemLookupAtom).lookup);
 
 /** What the lookup of the URL's item is doing, as the status under the URL field shows it. */
 export type AutofillState =
@@ -59,7 +62,7 @@ function failedState(result: Extract<ItemLookupResult, { ok: false }>): Autofill
  * not looked up again. Only the URL in the field counts: an answer for an earlier one is dropped.
  */
 export function useItemAutofill(apply: (item: RakutenItem) => void) {
-  const { lookup } = useAtomValue(itemLookupAtom);
+  const currentLookup = useSetAtom(currentLookupAtom);
   const [state, setState] = useState<AutofillState>(IDLE);
   const request = useRef(0);
   const controller = useRef<AbortController>(undefined);
@@ -77,6 +80,7 @@ export function useItemAutofill(apply: (item: RakutenItem) => void) {
   useEffect(() => abandon, []);
 
   const start = (page: ItemPage, maxWaitMs: number, waiting: AutofillState) => {
+    const lookup = currentLookup();
     if (!lookup) return;
     abandon();
     const id = request.current;
@@ -94,7 +98,7 @@ export function useItemAutofill(apply: (item: RakutenItem) => void) {
   /** Looks up the URL's item unless it was the last one looked up. Says whether it did. */
   const lookUp = (url: string) => {
     const page = itemPageOf(url);
-    if (!lookup || !page || keyOf(page) === keyOf(current.current ?? null)) return false;
+    if (!currentLookup() || !page || keyOf(page) === keyOf(current.current ?? null)) return false;
     current.current = page;
     start(page, FIRST_MAX_WAIT_MS, { kind: "loading" });
     return true;

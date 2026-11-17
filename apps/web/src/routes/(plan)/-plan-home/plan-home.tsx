@@ -11,10 +11,9 @@ import {
   useDisclosure,
   useMediaQuery,
 } from "@workspaces/ui";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
-import { accountIdOf } from "#/state/accounts.ts";
-import { accountSettingsAtom, planResultAtom } from "#/state/derived.ts";
+import { planResultAtom } from "#/state/derived.ts";
 import { plansAtom } from "#/state/queries.ts";
 import { NEW_ORDER, OrderEditor } from "#/routes/(plan)/-order-editor/order-editor.tsx";
 import { SettingsPanelButton } from "#/routes/(plan)/-plan-settings/plan-settings.tsx";
@@ -37,7 +36,7 @@ import { SummaryCard, countedAmount, effectiveRate } from "./summary-card.tsx";
 import { Warnings } from "#/routes/(plan)/-warnings.tsx";
 import { useSpuLossNotice } from "./spu-loss-notice.tsx";
 import { SpuPanel, useSpuPanelTarget } from "./spu-panel.tsx";
-import { spuPageFromPlan } from "#/routes/(plan)/-spu-month/spu-from.ts";
+import { spuPageFromPlanAtom } from "#/routes/(plan)/-spu-month/spu-from.ts";
 import { SpuSettingsCard } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
 
 /** Same as the `lg` breakpoint: from here the summary is a column to the right of the orders. */
@@ -203,13 +202,12 @@ function Home({ plan }: { plan: Plan }) {
   const editor = useOrderEditorTarget(plan);
   const spuPanel = useSpuPanelTarget(plan.id);
   const navigate = useNavigate();
-  const settings = useAtomValue(accountSettingsAtom);
+  const spuPage = useSetAtom(spuPageFromPlanAtom);
   // On a desktop a month's SPU opens in a side panel over the plan; elsewhere it is its own page.
   const changeSpu = (month: string) => {
     if (desktop) spuPanel.open(month);
     else {
-      const account = settings.enabled ? accountIdOf(plan, settings) : undefined;
-      void navigate(spuPageFromPlan(plan.id, month, account));
+      void navigate(spuPage(plan, month));
     }
   };
   const { open: editOrder } = editor;

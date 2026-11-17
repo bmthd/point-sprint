@@ -1,9 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
 import type { Plan } from "@workspaces/domain";
 import { Box, Flex, Button, Drawer, Heading, IconButton, Text, VStack } from "@workspaces/ui";
-import { useAtomValue } from "jotai";
-import { accountIdOf } from "#/state/accounts.ts";
-import { accountSettingsAtom, planResultAtom } from "#/state/derived.ts";
+import { useAtomValue, useSetAtom } from "jotai";
+import { planResultAtom } from "#/state/derived.ts";
 import { BackIcon, CloseIcon, PencilIcon } from "#/ui/icons.tsx";
 import { PlanPage } from "#/routes/(plan)/-plan-page.tsx";
 import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
@@ -13,7 +12,7 @@ import { EventAttacher } from "./event-attacher.tsx";
 import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared.ts";
 import { ShopAroundSettings } from "./shop-around-settings.tsx";
 import { SpendTiersSettings } from "./spend-tiers-settings.tsx";
-import { spuPageFromPlan } from "#/routes/(plan)/-spu-month/spu-from.ts";
+import { spuPageFromPlanAtom } from "#/routes/(plan)/-spu-month/spu-from.ts";
 import { SpuSettingsCard } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
 
 /** 「保存して計算に反映」, in the drawer's footer and in the page's bottom bar. */
@@ -129,8 +128,7 @@ export function SettingsPanelButton({
 
 function SettingsScreen({ plan }: { plan: Plan }) {
   const navigate = useNavigate();
-  const settings = useAtomValue(accountSettingsAtom);
-  const account = settings.enabled ? accountIdOf(plan, settings) : undefined;
+  const spuPage = useSetAtom(spuPageFromPlanAtom);
   return (
     <>
       {/* 戻る goes back to this plan, which the site header has no link to. */}
@@ -148,10 +146,7 @@ function SettingsScreen({ plan }: { plan: Plan }) {
         </Heading>
       </Flex>
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="32">
-        <SettingsContent
-          plan={plan}
-          onChangeSpu={(month) => void navigate(spuPageFromPlan(plan.id, month, account))}
-        />
+        <SettingsContent plan={plan} onChangeSpu={(month) => void navigate(spuPage(plan, month))} />
       </Box>
       <Box
         data-bottom-bar

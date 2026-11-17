@@ -1,6 +1,6 @@
 import { Field as FormField, useForm } from "@formisch/react";
 import { Alert, Button, Checkbox, Field, Input, Text, Textarea, VStack } from "@workspaces/ui";
-import { atom, useAtomValue } from "jotai";
+import { atom, useSetAtom } from "jotai";
 import { type ComponentType, useState } from "react";
 import * as v from "valibot";
 import { Form, bind, errorsOf } from "#/routes/-form.tsx";
@@ -17,6 +17,11 @@ export const inquirySenderAtom = atom<{ send: SendInquiry }>({
     return submitInquiry({ data: request });
   },
 });
+
+/** Sends the inquiry through the sender that the store holds now. */
+const sendInquiryAtom = atom(null, (get, _set, request: InquiryRequest) =>
+  get(inquirySenderAtom).send(request),
+);
 
 /**
  * Only this answer means the mail went out. The server can answer something else, such as an
@@ -38,7 +43,7 @@ type Props = {
  * passed. A failed send keeps what was written, to be sent again.
  */
 export function InquiryForm({ siteKey, widget: Widget = TurnstileWidget }: Props) {
-  const { send } = useAtomValue(inquirySenderAtom);
+  const send = useSetAtom(sendInquiryAtom);
   const form = useForm({ schema: InquiryInputSchema, initialInput: emptyInput });
   const [token, setToken] = useState<string | undefined>(undefined);
   const [resetKey, setResetKey] = useState(0);

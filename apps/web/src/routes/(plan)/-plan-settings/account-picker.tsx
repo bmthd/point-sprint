@@ -1,9 +1,9 @@
 import { DEFAULT_ACCOUNT_ID, type Plan } from "@workspaces/domain";
 import { Card, Field, NativeSelect, Text } from "@workspaces/ui";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { accountIdOf } from "#/state/accounts.ts";
 import { accountSettingsAtom } from "#/state/derived.ts";
-import { savePlanAtom } from "#/state/mutations.ts";
+import { runSavePlanAtom } from "#/state/mutations.ts";
 import { useSaveSettingsChange } from "./settings-shared.ts";
 
 /** The plan with `accountId` as its account; the default account is left out, as on a new plan. */
@@ -15,7 +15,7 @@ const withAccount = (plan: Plan, accountId: string): Plan => {
 /** The account the plan is bought with. Shown only once the user tells accounts apart. */
 export function AccountPicker({ plan }: { plan: Plan }) {
   const settings = useAtomValue(accountSettingsAtom);
-  const { mutateAsync: savePlan } = useAtomValue(savePlanAtom);
+  const savePlan = useSetAtom(runSavePlanAtom);
   const save = useSaveSettingsChange(plan.id);
   if (!settings.enabled) return null;
   return (
