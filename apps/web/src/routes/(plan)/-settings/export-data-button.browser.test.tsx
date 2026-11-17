@@ -1,47 +1,52 @@
-import { useHydrateAtoms } from "jotai/utils";
-import type { ReactNode } from "react";
-import { expect, test, vi } from "vitest";
+import { expect, onTestFinished, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import type { Repository } from "#/storage/repository.ts";
 import { PLAN, Providers, marathonPlan, shops } from "#/routes/(plan)/-test-fixtures.tsx";
-import { ExportDataButton, saveFileAtom } from "./export-data-button.tsx";
-
-function HydrateSave({
-  save,
-  children,
-}: {
-  save: (name: string, text: string) => void;
-  children: ReactNode;
-}) {
-  useHydrateAtoms([[saveFileAtom, { save }]]);
-  return children;
-}
+import { ExportDataButton } from "./export-data-button.tsx";
 
 async function renderButton(repository: Repository) {
   await cleanup();
-  const save = vi.fn<(name: string, text: string) => void>();
-  const screen = await render(
+  return render(
     <Providers repository={repository}>
-      <HydrateSave save={save}>
-        <ExportDataButton />
-      </HydrateSave>
+      <ExportDataButton />
     </Providers>,
   );
-  return Object.assign(screen, { save });
+}
+
+/** The files the page downloads, by name, instead of downloading them. */
+function catchDownloads() {
+  const blobs = new Map<string, Blob>();
+  const files: { name: string; blob: Blob | undefined }[] = [];
+  const createObjectURL = vi.spyOn(URL, "createObjectURL").mockImplementation((blob) => {
+    const url = `blob:test/${blobs.size}`;
+    blobs.set(url, blob as Blob);
+    return url;
+  });
+  const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    files.push({ name: this.download, blob: blobs.get(this.href) });
+  });
+  onTestFinished(() => {
+    createObjectURL.mockRestore();
+    click.mockRestore();
+  });
+  return files;
 }
 
 test("saves the stored plans with the points the app calculates", async () => {
   const plan = marathonPlan();
+  const files = catchDownloads();
   const screen = await renderButton(createMemoryRepository({ plans: [plan], shops }));
   const button = screen.getByRole("button", { name: "データを書き出す" });
   await expect.element(button).toBeEnabled();
   await button.click();
 
-  expect(screen.save).toHaveBeenCalledOnce();
-  const [name, text] = screen.save.mock.calls[0] ?? [];
-  expect(name).toMatch(/^point-sprint-\d{4}-\d{2}-\d{2}\.json$/);
-  const data = JSON.parse(text ?? "");
+  expect(files).toHaveLength(1);
+  const [file] = files;
+  expect(file?.name).toMatch(/^point-sprint-\d{4}-\d{2}-\d{2}\.json$/);
+  const data = JSON.parse((await file?.blob?.text()) ?? "");
   expect(data.plans).toEqual([plan]);
   expect(data.shops).toHaveLength(shops.length);
   const calculation = data.calculations.find((entry: { planId: string }) => entry.planId === PLAN);
