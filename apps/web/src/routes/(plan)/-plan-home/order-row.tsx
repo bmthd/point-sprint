@@ -235,6 +235,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   const { startDrag, focusAfterMoveRef, announce, handleHintId, holdHintId } = useListContext();
   const detailId = useId();
   const handleRef = useRef<HTMLButtonElement>(null);
+  const itemRef = useRef<HTMLLIElement>(null);
 
   // Moving an order can take its row out of the document for a moment, which drops the focus.
   useEffect(() => {
@@ -267,7 +268,11 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   const amount = order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0);
 
   return (
-    <List.Item data-order-id={orderId} borderTopWidth={index === 0 ? undefined : "1px"}>
+    <List.Item
+      ref={itemRef}
+      data-order-id={orderId}
+      borderTopWidth={index === 0 ? undefined : "1px"}
+    >
       <Box
         // Painted, so a dragged row covers the rows it passes.
         bg="bg.panel"
@@ -401,7 +406,15 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
         </Box>
       </Box>
       {/* It slides open and shut, so a press shows which order the fields below belong to. */}
-      <Collapse open={open} unmountOnExit id={detailId}>
+      {/* Once open, the window scrolls only if part of the row is off it, as little as it can. */}
+      <Collapse
+        open={open}
+        unmountOnExit
+        id={detailId}
+        onAnimationComplete={() => {
+          if (open) itemRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }}
+      >
         <Flex direction="column" gap="3.5" borderTopWidth="1px" pt="3.5" pb="4" px="4">
           <Flex direction="column" gap="2">
             <PointBreakdown totals={groupTotalsOf(points.rows)} legend="line" held={held} />
