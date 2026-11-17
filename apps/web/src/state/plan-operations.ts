@@ -16,6 +16,7 @@ import {
   type SpuAchievement,
   toggleBenefit,
   toggleHold,
+  togglePlanHold,
   updateBenefit,
   updateOrder,
 } from "@workspaces/domain";
@@ -150,6 +151,11 @@ export const toggleHoldAtom = planOperationAtom(
     (plan) =>
       toggleHold(plan, orderId),
 );
+/**
+ * Holds the plan or releases it. Releasing turns on the SPU its orders achieve; holding leaves the
+ * months' SPU as they are.
+ */
+export const togglePlanHoldAtom = planOperationAtom<object>(() => togglePlanHold);
 export const toggleBenefitAtom = planOperationAtom(
   ({ benefitId }: { benefitId: string }) =>
     (plan) =>

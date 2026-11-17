@@ -32,12 +32,13 @@ export function CapFlows({ plan, form }: { plan: Plan; form: OrderForm }) {
   );
   const flows = useMemo(() => {
     if (!draft || draft.order.onHold) return [];
+    const withShop = draft.shop
+      ? [...shops.filter((shop) => shop.id !== draft.shop?.id), draft.shop]
+      : shops;
     return capFlows({
       plans,
-      asCalculated,
-      shops: draft.shop
-        ? [...shops.filter((shop) => shop.id !== draft.shop?.id), draft.shop]
-        : shops,
+      asCalculated: (changed) => asCalculated(changed, withShop),
+      shops: withShop,
       planId: plan.id,
       order: draft.order,
     });

@@ -33,6 +33,7 @@ import {
   addOrderAtom,
   copyOrderAtom,
   saveOrderDraftAtom,
+  togglePlanHoldAtom,
   updateOrderAtom,
 } from "./plan-operations.ts";
 import { plansAtom, profileAtom, queryKeys, shopsAtom, spuMonthsAtom } from "./queries.ts";
@@ -528,6 +529,71 @@ test("an SPU is achieved by what is saved, not by an earlier operation that fail
   expect((await repository.plans.get(OTHER_PLAN))?.orders.map((o) => o.id)).toEqual([ORDER_B]);
   const months = await repository.spuMonths.list();
   expect(spuIdsIn(months, DEFAULT_ACCOUNT_ID, "2026-10").has(BOOKS_SPU_ID)).toBe(true);
+});
+
+const booksOn = async (repository: Repository) =>
+  spuIdsIn(await repository.spuMonths.list(), DEFAULT_ACCOUNT_ID, "2026-10").has(BOOKS_SPU_ID);
+
+test("a held plan's SPU is on only in its own calculation", async () => {
+  const held: Plan = { ...plan, onHold: true, orders: [booksOrder(ORDER_A)] };
+  // The other plan's books order is held, so the other plan does not achieve the SPU itself.
+  const other: Plan = {
+    ...plan,
+    id: OTHER_PLAN,
+    orders: [{ ...booksOrder(ORDER_B), onHold: true }],
+  };
+  const repository = createMemoryRepository({ plans: [held, other], shops: [shop] });
+  const store = setup(repository);
+  unsubscribes.push(store.sub(spuMonthsAtom, () => {}));
+  await vi.waitFor(() => expect(store.get(plansAtom)).toHaveLength(2));
+
+  await vi.waitFor(() => expect(booksPoints(store, PLAN)).toBe(15));
+  expect(booksPoints(store, OTHER_PLAN)).toBeUndefined();
+  expect(await booksOn(repository)).toBe(false);
+});
+
+test("an order added to a held plan does not turn its SPU on", async () => {
+  const held: Plan = { ...plan, onHold: true, orders: [] };
+  const repository = createMemoryRepository({ plans: [held], shops: [shop] });
+  const store = setup(repository);
+  unsubscribes.push(store.sub(spuMonthsAtom, () => {}));
+  await loaded(store);
+
+  await store.set(addOrderAtom, { planId: PLAN, order: booksOrder(ORDER_A) });
+
+  expect(await booksOn(repository)).toBe(false);
+  await vi.waitFor(() => expect(booksPoints(store, PLAN)).toBe(15));
+});
+
+test("releasing a plan from hold turns on the SPU its orders achieve", async () => {
+  const held: Plan = { ...plan, onHold: true, orders: [booksOrder(ORDER_A)] };
+  const repository = createMemoryRepository({ plans: [held], shops: [shop] });
+  const store = setup(repository);
+  unsubscribes.push(store.sub(spuMonthsAtom, () => {}));
+  await loaded(store);
+
+  await store.set(togglePlanHoldAtom, { planId: PLAN });
+
+  expect((await repository.plans.get(PLAN))?.onHold).toBeUndefined();
+  expect(await booksOn(repository)).toBe(true);
+});
+
+test("holding a plan leaves the month's SPU as it is", async () => {
+  const first: Plan = { ...plan, orders: [booksOrder(ORDER_A)] };
+  const repository = createMemoryRepository({ plans: [first], shops: [shop] });
+  const store = setup(repository);
+  unsubscribes.push(store.sub(spuMonthsAtom, () => {}));
+  await loaded(store);
+  await store.get(saveSpuMonthAtom).mutateAsync({
+    accountId: DEFAULT_ACCOUNT_ID,
+    month: "2026-10",
+    change: (ids) => toggleSpu(ids, BOOKS_SPU_ID),
+  });
+
+  await store.set(togglePlanHoldAtom, { planId: PLAN });
+
+  expect((await repository.plans.get(PLAN))?.onHold).toBe(true);
+  expect(await booksOn(repository)).toBe(true);
 });
 
 for (const kind of ["memory", "indexed-db"] as const) {

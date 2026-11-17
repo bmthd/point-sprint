@@ -49,7 +49,7 @@ function AddedPointsEstimate({ plan, form }: { plan: Plan; form: OrderForm }) {
     const withOrder = plans.map((other) =>
       other.id === plan.id ? { ...other, orders: [...other.orders, draft.order] } : other,
     );
-    const after = calculateAll(asCalculated(withOrder), withShop);
+    const after = calculateAll(asCalculated(withOrder, withShop), withShop);
     const shopCountBefore = before.get(plan.id)?.shopCount ?? 0;
     const shopCountAfter = after.get(plan.id)?.shopCount ?? 0;
     return {
