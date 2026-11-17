@@ -457,20 +457,58 @@ function heldEstimate(
   };
 }
 
-/** Calculates every plan at once, because caps can be shared across plans. Keyed by plan ID. */
-export function calculateAll(plans: Plan[], shops: Shop[]): Map<string, CalculationResult> {
-  const core = calculateCore(plans, shops);
+function withHeldEstimates(
+  world: Plan[],
+  shops: Shop[],
+  plan: Plan,
+  core: Map<string, CoreResult>,
+): CalculationResult | undefined {
+  const result = core.get(plan.id);
+  if (!result) return undefined;
   const before = sumOfTotals(core);
+  const heldEstimates = plan.orders
+    .filter((order) => order.onHold)
+    .map((order) => heldEstimate(world, shops, plan, order.id, before));
+  return { ...result, heldEstimates };
+}
+
+/**
+ * Calculates every plan at once, because caps can be shared across plans. Keyed by plan ID, in the
+ * order of `plans`.
+ *
+ * Held plans (`onHold`) are left out of the other plans' calculation. Each held plan is calculated
+ * on its own on top of every plan that is not held, so held plans never count each other; its held
+ * orders are estimated in that same world.
+ */
+export function calculateAll(plans: Plan[], shops: Shop[]): Map<string, CalculationResult> {
+  const active = plans.filter((plan) => !plan.onHold);
+  const core = calculateCore(active, shops);
   return new Map(
     plans.flatMap((plan) => {
-      const result = core.get(plan.id);
-      if (!result) return [];
-      const heldEstimates = plan.orders
-        .filter((order) => order.onHold)
-        .map((order) => heldEstimate(plans, shops, plan, order.id, before));
-      return [[plan.id, { ...result, heldEstimates }] as const];
+      const world = plan.onHold ? [...active, plan] : active;
+      const result = withHeldEstimates(
+        world,
+        shops,
+        plan,
+        plan.onHold ? calculateCore(world, shops) : core,
+      );
+      return result ? [[plan.id, result] as const] : [];
     }),
   );
+}
+
+/**
+ * The sum of the totals of the plans counted when `planId` is calculated: every plan that is not
+ * held, plus `planId` itself when it is held.
+ */
+export function totalCountedWith(
+  results: Map<string, CalculationResult>,
+  plans: Plan[],
+  planId: string,
+): number {
+  return plans
+    .filter((plan) => !plan.onHold || plan.id === planId)
+    .reduce((sum, plan) => sum + (results.get(plan.id)?.total ?? 0), 0);
 }
 
 export function calculate(plan: Plan, shops: Shop[]): CalculationResult {

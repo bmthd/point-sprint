@@ -5,10 +5,12 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { planResultAtom } from "#/state/derived.ts";
 import { BackIcon, CloseIcon, PencilIcon } from "#/ui/icons.tsx";
 import { PlanPage } from "#/routes/(plan)/-plan-page.tsx";
+import { useSpuLossNotice } from "#/routes/(plan)/-spu-loss-notice.tsx";
 import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
 import { AccountPicker } from "./account-picker.tsx";
 import { CampaignToggles } from "./campaign-toggles.tsx";
 import { EventAttacher } from "./event-attacher.tsx";
+import { PlanHoldSwitch } from "./plan-hold-switch.tsx";
 import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared.ts";
 import { ShopAroundSettings } from "./shop-around-settings.tsx";
 import { SpendTiersSettings } from "./spend-tiers-settings.tsx";
@@ -48,6 +50,7 @@ function SettingsBody({ plan, onChangeSpu }: { plan: Plan; onChangeSpu: (month: 
         </Text>
       ) : null}
       <AccountPicker plan={plan} />
+      <PlanHoldSwitch plan={plan} />
       <SpuSettingsCard
         plan={plan}
         title="SPU"
@@ -127,6 +130,7 @@ export function SettingsPanelButton({
 }
 
 function SettingsScreen({ plan }: { plan: Plan }) {
+  useSpuLossNotice(plan);
   const navigate = useNavigate();
   const spuPage = useSetAtom(spuPageFromPlanAtom);
   return (

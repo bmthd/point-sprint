@@ -13,15 +13,16 @@ const keyOf = ({ accountId, month, benefitId }: SpuAchievement) =>
   `${accountId}|${month}|${benefitId}`;
 
 /**
- * The SPU that the orders of `plans` achieve: an order that is not held, bought on the rule's
- * channel, of at least the rule's amount, achieves the rule's item for its plan's account in the
- * order's month. Orders whose shop is not in `shops` achieve none. `plans` must have the accounts
- * they are calculated with.
+ * The SPU that the orders of `plans` achieve: a plan that is held achieves none; an order that is
+ * not held, bought on the rule's channel, of at least the rule's amount, achieves the rule's item
+ * for its plan's account in the order's month. Orders whose shop is not in `shops` achieve none.
+ * `plans` must have the accounts they are calculated with.
  */
 export function spuAchievements(plans: Plan[], shops: Shop[]): SpuAchievement[] {
   const shopsById = new Map(shops.map((shop) => [shop.id, shop]));
   const achieved = new Map<string, SpuAchievement>();
   for (const plan of plans) {
+    if (plan.onHold) continue;
     for (const order of plan.orders) {
       if (order.onHold) continue;
       const shop = hasShop(order) ? shopsById.get(order.shopId) : undefined;
@@ -39,6 +40,14 @@ export function spuAchievements(plans: Plan[], shops: Shop[]): SpuAchievement[] 
     }
   }
   return [...achieved.values()];
+}
+
+/**
+ * The SPU a held `plan` would achieve if it were not held: the ones its own calculation turns on
+ * (`planWithSpu`) without changing the stored months. A plan that is not held gives none.
+ */
+export function trialSpuAchievements(plan: Plan, shops: Shop[]): SpuAchievement[] {
+  return plan.onHold ? spuAchievements([{ ...plan, onHold: false }], shops) : [];
 }
 
 /** The achievements of `after` that `before` does not have. */

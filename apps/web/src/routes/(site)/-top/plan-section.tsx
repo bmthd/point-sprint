@@ -1,5 +1,6 @@
 import { grouped } from "#/ui/format.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
+import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { type Plan, capLines } from "@workspaces/domain";
 import {
   Badge,
@@ -86,9 +87,12 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
             gap="3"
           >
             <Flex flex="1" minW="0" direction="column" gap="0.5">
-              <Text fontWeight="bold" lineClamp={1}>
-                {plan.name}
-              </Text>
+              <Flex align="center" gap="2">
+                <Text fontWeight="bold" lineClamp={1} minW="0">
+                  {plan.name}
+                </Text>
+                <PlanHoldBadge plan={plan} />
+              </Flex>
               <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
                 {meta}
               </Text>
@@ -129,15 +133,19 @@ function LatestPlan({
     <ResultCard
       label={heading}
       title={
-        <RouterLink
-          to="/plan"
-          search={{ id: plan.id }}
-          colorScheme="mono"
-          display="block"
-          truncated
-        >
-          {plan.name}
-        </RouterLink>
+        <Flex as="span" align="center" gap="2">
+          <RouterLink
+            to="/plan"
+            search={{ id: plan.id }}
+            colorScheme="mono"
+            display="block"
+            minW="0"
+            truncated
+          >
+            {plan.name}
+          </RouterLink>
+          <PlanHoldBadge plan={plan} />
+        </Flex>
       }
       meta={meta}
       action={action}

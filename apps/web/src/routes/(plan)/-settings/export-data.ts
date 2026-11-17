@@ -15,6 +15,7 @@ const about = [
   "plans は買い物の計画で、orders が注文、benefits がプランに入れたキャンペーンです。注文の shopId は shops の id を指します。",
   "spuMonths はアカウントと月ごとに達成した SPU で、enabledIds は spuCatalog の id を指します。",
   "calculations はプランごとの計算で、benefits は SPU を組み込んだ計算用の特典、result はアプリが計算した獲得ポイントです。result の benefitId や source は benefits の id を、lineItemId は注文の lineItems の id を指します。",
+  "plans の onHold が true のプランは保留中で、ほかのプランの上限や SPU に数えません。その calculations の result は、保留でないプランに重ねて試算した結果です。",
   "このファイルの形はアプリの版（schemaVersion）によって変わります。",
 ].join("\n");
 

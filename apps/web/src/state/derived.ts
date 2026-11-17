@@ -1,10 +1,12 @@
 import {
   type BreakdownRow,
   type Plan,
+  type Shop,
   type SpuMonth,
   calculateAll,
   deepEqual,
   planWithSpu,
+  trialSpuAchievements,
 } from "@workspaces/domain";
 import { atom } from "jotai";
 import { atomFamily } from "jotai-family";
@@ -19,18 +21,26 @@ import { plansAtom, profileAtom, shopsAtom, spuMonthsAtom } from "./queries.ts";
  */
 export const accountSettingsAtom = selectAtom(profileAtom, accountSettingsOf, deepEqual);
 
-/** The plan as it is calculated: with the account it is bought with and the SPU of its months. */
-const toCalculated = (plan: Plan, settings: AccountSettings, months: SpuMonth[]) =>
-  planWithSpu(withEffectiveAccount(plan, settings), months);
+/**
+ * The plan as it is calculated: with the account it is bought with and the SPU of its months. A
+ * held plan also has on the SPU its own orders achieve, which are not saved to its months.
+ */
+const toCalculated = (plan: Plan, settings: AccountSettings, months: SpuMonth[], shops: Shop[]) => {
+  const effective = withEffectiveAccount(plan, settings);
+  return planWithSpu(effective, months, trialSpuAchievements(effective, shops));
+};
 
 /**
  * Turns plans into the plans as they are calculated, for calculating plans with a change not
  * saved yet. Apply it after the change, so an order of a month the plan did not have gets its SPU.
+ * `shops` defaults to the saved shops; pass the shops with the change when it adds or edits one.
  */
 export const asCalculatedAtom = atom((get) => {
   const settings = get(accountSettingsAtom);
   const months = get(spuMonthsAtom);
-  return (plans: Plan[]) => plans.map((plan) => toCalculated(plan, settings, months));
+  const savedShops = get(shopsAtom);
+  return (plans: Plan[], shops: Shop[] = savedShops) =>
+    plans.map((plan) => toCalculated(plan, settings, months, shops));
 });
 
 /** Every plan as it is calculated. */

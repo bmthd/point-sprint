@@ -18,8 +18,9 @@ export type { Migration, SeedSource, StoreName } from "./runner.ts";
 // 5–8 needed no row transforms: 5 added the old-tab guard (#148), 6 added spend-tiers (#169),
 // 7 added order tags for official events (#181), and 8 added the 24h order tag (#185).
 // 13 added the `noticeReads` store, which needs no row transforms either.
+// 14 added the plan's `onHold`.
 // The version bumps keep older tabs from reading or overwriting values they do not understand.
-export const CURRENT_SCHEMA_VERSION = 13;
+export const CURRENT_SCHEMA_VERSION = 14;
 
 export const migrations: Migration[] = [
   cardRequiresMigration,
