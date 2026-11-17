@@ -13,7 +13,7 @@ const storedPlanWithoutOnHold = {
 };
 const plan: Plan = v.parse(PlanSchema, storedPlanWithoutOnHold);
 
-test("togglePlanHold holds a plan and unholding drops the field", () => {
+test("togglePlanHold holds a plan and releasing the hold drops the field", () => {
   const held = togglePlanHold(plan);
   expect(held.onHold).toBe(true);
   expect("onHold" in togglePlanHold(held)).toBe(false);

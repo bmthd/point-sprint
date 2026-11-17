@@ -8,6 +8,7 @@ import {
   calculateAll,
   capLines,
   taxExcludedTarget,
+  totalCountedWith,
 } from "@workspaces/domain";
 import { Flex, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
@@ -34,9 +35,6 @@ export type OrderPreview = {
   /** How many points every other order (in every plan) gains or loses. */
   othersGain: number;
 };
-
-const sumOfTotals = (results: Map<string, CalculationResult>) =>
-  [...results.values()].reduce((sum, result) => sum + result.total, 0);
 
 const pointsOf = (result: CalculationResult | undefined, order: Order | undefined) => {
   const ids = new Set(order?.lineItems.map((item) => item.id));
@@ -98,7 +96,10 @@ export function previewOf(input: {
     shopAroundRateGain:
       (planAfter?.shopAroundOutlook?.currentRate ?? 0) -
       (planBefore?.shopAroundOutlook?.currentRate ?? 0),
-    othersGain: sumOfTotals(after) - points - (sumOfTotals(before) - originalPoints),
+    othersGain:
+      totalCountedWith(after, withDraft, planId) -
+      points -
+      (totalCountedWith(before, plans, planId) - originalPoints),
   };
 }
 
