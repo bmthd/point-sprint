@@ -3,7 +3,7 @@
 "use no memo";
 
 import { reset, useForm } from "@formisch/react";
-import { type Plan, calculateAll } from "@workspaces/domain";
+import { type Plan, calculateAll, totalCountedWith } from "@workspaces/domain";
 import { Collapse, Flex, Button, List, Text } from "@workspaces/ui";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { type KeyboardEvent, useDeferredValue, useId, useMemo, useState } from "react";
@@ -31,9 +31,6 @@ import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields.tsx";
 import { focusFirstField, useEntryMode } from "#/routes/(plan)/-order-entry.tsx";
 import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
 
-const sumOfTotals = (results: Map<string, { total: number }>) =>
-  [...results.values()].reduce((sum, result) => sum + result.total, 0);
-
 /** 「この注文で（5店舗目） 約 +120P」 while the form is valid. */
 function AddedPointsEstimate({ plan, form }: { plan: Plan; form: OrderForm }) {
   const plans = useAtomValue(plansAtom);
@@ -56,7 +53,8 @@ function AddedPointsEstimate({ plan, form }: { plan: Plan; form: OrderForm }) {
     const shopCountBefore = before.get(plan.id)?.shopCount ?? 0;
     const shopCountAfter = after.get(plan.id)?.shopCount ?? 0;
     return {
-      points: sumOfTotals(after) - sumOfTotals(before),
+      points:
+        totalCountedWith(after, withOrder, plan.id) - totalCountedWith(before, plans, plan.id),
       shop: shopCountAfter > shopCountBefore ? shopCountAfter : undefined,
     };
   }, [deferred, plans, shops, before, asCalculated, plan.id]);
