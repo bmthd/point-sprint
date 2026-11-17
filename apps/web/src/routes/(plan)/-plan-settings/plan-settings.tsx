@@ -6,6 +6,7 @@ import { accountIdOf } from "#/state/accounts.ts";
 import { accountSettingsAtom, planResultAtom } from "#/state/derived.ts";
 import { BackIcon, CloseIcon, PencilIcon } from "#/ui/icons.tsx";
 import { PlanPage } from "#/routes/(plan)/-plan-page.tsx";
+import { useSpuLossNotice } from "#/routes/(plan)/-spu-loss-notice.tsx";
 import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
 import { AccountPicker } from "./account-picker.tsx";
 import { CampaignToggles } from "./campaign-toggles.tsx";
@@ -130,6 +131,7 @@ export function SettingsPanelButton({
 }
 
 function SettingsScreen({ plan }: { plan: Plan }) {
+  useSpuLossNotice(plan);
   const navigate = useNavigate();
   const settings = useAtomValue(accountSettingsAtom);
   const account = settings.enabled ? accountIdOf(plan, settings) : undefined;

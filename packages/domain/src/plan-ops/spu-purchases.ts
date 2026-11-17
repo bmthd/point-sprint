@@ -13,10 +13,10 @@ const keyOf = ({ accountId, month, benefitId }: SpuAchievement) =>
   `${accountId}|${month}|${benefitId}`;
 
 /**
- * The SPU that the orders of `plans` achieve: a plan that is held achieves none; an order that is not held, bought on the rule's
- * channel, of at least the rule's amount, achieves the rule's item for its plan's account in the
- * order's month. Orders whose shop is not in `shops` achieve none. `plans` must have the accounts
- * they are calculated with.
+ * The SPU that the orders of `plans` achieve: a plan that is held achieves none; an order that is
+ * not held, bought on the rule's channel, of at least the rule's amount, achieves the rule's item
+ * for its plan's account in the order's month. Orders whose shop is not in `shops` achieve none.
+ * `plans` must have the accounts they are calculated with.
  */
 export function spuAchievements(plans: Plan[], shops: Shop[]): SpuAchievement[] {
   const shopsById = new Map(shops.map((shop) => [shop.id, shop]));

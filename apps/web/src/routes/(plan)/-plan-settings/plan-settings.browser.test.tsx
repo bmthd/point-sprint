@@ -12,6 +12,7 @@ import {
   type OfficialEvent,
   type Plan,
   type Profile,
+  type Shop,
   type SpuMonth,
   campaignTemplates,
   createPlan,
@@ -80,8 +81,14 @@ async function renderSettings(
   profile?: Profile,
   spuMonths: SpuMonth[] = [],
   events?: OfficialEvent[],
+  shopList: Shop[] = shops,
 ) {
-  currentRepository = createMemoryRepository({ shops, plans: [plan], profile, spuMonths });
+  currentRepository = createMemoryRepository({
+    shops: shopList,
+    plans: [plan],
+    profile,
+    spuMonths,
+  });
   await cleanup();
   const root = createRootRoute({ component: Outlet });
   const home = createRoute({
@@ -676,4 +683,23 @@ test("the hold switch holds the plan and releases it", async () => {
 
   await tapCard(hold);
   await vi.waitFor(async () => expect(await storedPlan()).not.toHaveProperty("onHold"));
+});
+
+test("holding the only Books order from the settings page tells that the month's Books SPU may be lost", async () => {
+  const withBooks = shops.map((shop, index) =>
+    index === 0 ? { ...shop, channel: "rakuten-books" as const } : shop,
+  );
+  const screen = await renderSettings(
+    makePlan([], [order(0)]),
+    undefined,
+    [spuMonth(["楽天ブックス"])],
+    undefined,
+    withBooks,
+  );
+
+  await tapCard(screen.getByRole("switch", { name: "このプランを保留にする" }));
+
+  await expect
+    .element(page.getByText("10月の SPU の楽天ブックスの対象外になるかもしれません"))
+    .toBeVisible();
 });

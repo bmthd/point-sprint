@@ -1,6 +1,6 @@
-import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { grouped } from "#/ui/format.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
+import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { type Plan, capLines } from "@workspaces/domain";
 import {
   Badge,
