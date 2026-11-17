@@ -2,6 +2,7 @@ import {
   DatePickerPropsContext,
   InputPropsContext,
   NativeSelectPropsContext,
+  SegmentedControlPropsContext,
   TextareaPropsContext,
 } from "@workspaces/ui";
 import type { ReactNode } from "react";
@@ -21,12 +22,35 @@ const fieldStyle = {
   _invalid: { borderColor: "border.error" },
 } as const;
 
+/**
+ * The look of every segmented control, as in docs/design-system.md: Yamada UI's white choice on a
+ * gray track, the track darker so the chosen one stands out on a white card, its label bold and the
+ * others faint.
+ *
+ * For now only, as `fieldStyle` is.
+ */
+const segmentStyle = {
+  bg: "bg.emphasized",
+  indicatorProps: {
+    bg: "bg.panel",
+    boxShadow: "sm",
+    // Yamada UI 2.2.8 gives the indicator `layoutDependency: false`, with which motion never
+    // measures it, and the chosen one jumps instead of sliding. Drop this once it slides without.
+    layoutDependency: undefined,
+  },
+  itemProps: { color: "fg.muted", _checked: { color: "fg", fontWeight: "bold" } },
+} as const;
+
 export function FormControlDefaults({ children }: { children: ReactNode }) {
   return (
     <InputPropsContext value={fieldStyle}>
       <TextareaPropsContext value={fieldStyle}>
         <NativeSelectPropsContext value={fieldStyle}>
-          <DatePickerPropsContext value={fieldStyle}>{children}</DatePickerPropsContext>
+          <DatePickerPropsContext value={fieldStyle}>
+            <SegmentedControlPropsContext value={segmentStyle}>
+              {children}
+            </SegmentedControlPropsContext>
+          </DatePickerPropsContext>
         </NativeSelectPropsContext>
       </TextareaPropsContext>
     </InputPropsContext>

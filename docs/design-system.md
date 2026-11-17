@@ -107,7 +107,7 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 文中の追加ボタン（同じショップの商品を追加） | `Button variant="ghost" colorScheme="primary"` |
 | 削除ボタン | `Button variant="outline" colorScheme="danger"`。プラン画面の注文の削除は `size="lg"` で、実行前に確認を挟む。注文の編集の「商品Nを削除」は既定の size。プラン一覧では `IconButton variant="ghost" colorScheme="danger" size="lg"`、プラン設定の並びでは `IconButton variant="ghost"` を使う |
 | 画像で選ぶ選択肢（勝ったら倍の +1倍／+2倍） | `RadioCardGroup.Root colorScheme="primary" size="sm" withIndicator={false}` を2列に並べ、各 `RadioCard.Root` に画像、倍率（`RadioCard.Label`）、どんな日か（`RadioCard.Description`）を縦に置く |
-| セグメントコントロール | 税率（注文の入力欄と「上限までの残り」）は `SegmentedControl.Root` に `taxRateSegmentsStyle`。入力欄と同じく地 `bg.panel`・枠 `border.emphasized`、選んだものは地 `primary.subtle`・枠 `primary.outline`・文字 `primary.fg`。Yamada UI の既定（灰の溝に白い札）は周りの入力欄から浮くため使わない |
+| セグメントコントロール | すべての `SegmentedControl.Root` に `src/ui/form-control-defaults.tsx` の既定値を当てる。Yamada UI の形（灰の溝に白い札）のまま、溝を `bg.emphasized` に濃くし、選んだものは白い札 `bg.panel`・太字 `fg`、選ばないものは `fg.muted`。既定の溝は白いカードの上で薄く、選んだ札が地に溶けるため。税率と注文の入れ方は、押せる高さを 44px にする `segmentPressArea` も当てる |
 | 選べるチップ | `Button colorScheme="mono" size="lg" aria-pressed`。未選択は `variant="outline"`、選択中は `variant="solid"` とチェックの印 |
 | SPU のタイル | `CheckboxCard colorScheme="primary" size="sm" withIndicator={false}`（既定の surface）。名前は `Button variant="ghost" size="xs"` で、上限と条件のダイアログを開く |
 | キャンペーンの ON / OFF | `CheckboxCard colorScheme="primary" size="sm"`（既定の surface とチェックの印） |

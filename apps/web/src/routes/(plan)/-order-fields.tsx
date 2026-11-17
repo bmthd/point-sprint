@@ -31,7 +31,7 @@ import { type FieldState, bind, errorsOf } from "#/routes/-form.tsx";
 import { type ShopChange, changeShop, replaceShop } from "#/state/mutations.ts";
 import { shopsAtom } from "#/state/queries.ts";
 import type { RakutenItem } from "#/rakuten/item-search.ts";
-import { imageUrl, taxRateLabel, taxRateSegmentsStyle } from "./-order-shared.tsx";
+import { imageUrl, segmentPressArea, taxRateLabel } from "./-order-shared.tsx";
 import type { OrderForm } from "./-order-form-store.ts";
 
 // Fields shared by the desktop list's edit grid, its add form and the order editor.
@@ -158,7 +158,7 @@ export function TaxRateButtons({
         items={TAX_RATES.map((rate) => ({ label: TAX_LABELS[rate], value: rate }))}
         value={typeof field.input === "string" ? (field.input as TaxRateValue) : undefined}
         onChange={(value) => field.onChange(value as TaxRateValue)}
-        {...taxRateSegmentsStyle}
+        css={segmentPressArea}
       />
     </Fieldset.Root>
   );
