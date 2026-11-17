@@ -17,7 +17,7 @@ import {
   Text,
 } from "@workspaces/ui";
 import { useAtom, useAtomValue } from "jotai";
-import { type ClipboardEvent, type ReactNode, type Ref, useId, useState } from "react";
+import { type ClipboardEvent, type ReactNode, type Ref, useId, useRef, useState } from "react";
 import { bind, errorsOf } from "#/routes/-form.tsx";
 import { shopsAtom } from "#/state/queries.ts";
 import { type EntryMode, entryModeAtom } from "./-ui.ts";
@@ -37,7 +37,7 @@ import {
   autofillUrlHandlers,
   urlFromPastedText,
 } from "./-order-form-store.ts";
-import { taxRateSegmentsStyle } from "./-order-shared.tsx";
+import { revealBottom, taxRateSegmentsStyle } from "./-order-shared.tsx";
 import { ShopAutocomplete } from "./-shop-autocomplete.tsx";
 
 // The parts of an order's form that the desktop list and the phone's sheet share: whether the
@@ -410,11 +410,14 @@ export function Conditions({
   campaigns: ReactNode;
   children?: ReactNode;
 }) {
+  const pressed = useRef(false);
   return (
-    // The animated panel clips its content, which cuts the focus rings at its edges.
-    <NativeAccordion.Root animate={false}>
+    <NativeAccordion.Root>
       <NativeAccordion.Item open={defaultOpen} borderWidth="0">
         <NativeAccordion.Button
+          onClick={() => {
+            pressed.current = true;
+          }}
           minH="11"
           px="3"
           py="2"
@@ -430,15 +433,33 @@ export function Conditions({
             <ConditionsSummary form={form} />
           </Box>
         </NativeAccordion.Button>
+        {/* It slides and fades as an order's row opens. Its padding is inside the box that clips
+            the sliding fields, so their focus rings show whole. */}
         <NativeAccordion.Panel
-          px="3"
-          pt="3"
-          pb="3"
+          px="0"
+          pb="0"
           borderWidth="1px"
           borderTopWidth="0"
           roundedBottom="l2"
+          opacity="0"
+          transition="grid-template-rows 0.3s ease, opacity 0.4s ease"
+          _groupOpen={{ pb: "0", opacity: "1", _startingStyle: { opacity: "0" } }}
+          // Opened by a press, the window then scrolls only if part of 「条件」 is off it, as little
+          // as it can. One drawn open stays where it is.
+          onTransitionEnd={(event) => {
+            if (event.target !== event.currentTarget) return;
+            if (event.propertyName !== "grid-template-rows") return;
+            const item = event.currentTarget.closest("details");
+            const scroll = pressed.current && item?.open;
+            pressed.current = false;
+            if (!scroll) return;
+            // In a list, down to the buttons under it: 「追加する」, or 「複製」 and 「削除」.
+            const listItem = item.closest("li");
+            if (listItem) revealBottom(listItem, item);
+            else item.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }}
         >
-          <Flex direction="column" gap="3.5">
+          <Flex direction="column" gap="3.5" p="3">
             <Box
               display="grid"
               gridTemplateColumns="repeat(auto-fit, minmax(10rem, 1fr))"

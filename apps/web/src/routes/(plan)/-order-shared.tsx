@@ -182,6 +182,16 @@ export function useSaveOrderChange() {
 }
 
 /**
+ * Scrolls the window down as little as it can to show the bottom of `element`, where an opened
+ * order keeps its buttons. It never scrolls the top of `top` off the window.
+ */
+export function revealBottom(element: Element, top: Element = element) {
+  const below = element.getBoundingClientRect().bottom - window.innerHeight;
+  if (below <= 0) return;
+  const room = Math.max(top.getBoundingClientRect().top, 0);
+  window.scrollBy({ top: Math.min(below, room), behavior: "smooth" });
+}
+/**
  * Saves the order a form describes with its shop (`saveOrderDraftAtom`), and resolves to whether
  * it was saved. `setFailed` shows a failure where the screen shows it: the editor in place, the
  * desktop list above its orders (`orderSaveFailedAtom`). A draft that is `undefined` (the form is
