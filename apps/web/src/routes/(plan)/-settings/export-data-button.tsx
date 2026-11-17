@@ -22,6 +22,11 @@ function downloadJson(name: string, text: string) {
   URL.revokeObjectURL(url);
 }
 
+/** Saves a file on the user's device; tests replace it in their Jotai store. */
+export const saveFileAtom = atom<{ save: (name: string, text: string) => void }>({
+  save: downloadJson,
+});
+
 /** Whether the stored rows are read: before that the plans and shops are empty, and so would the file be. */
 const exportReadyAtom = atom((get) =>
   [get(plansQueryAtom), get(shopsQueryAtom), get(profileQueryAtom), get(spuMonthsQueryAtom)].every(
@@ -41,7 +46,7 @@ const exportDataAtom = atom(null, (get) => {
     results: get(calculationAtom),
     exportedAt,
   });
-  downloadJson(exportFileName(exportedAt), JSON.stringify(data, null, 2));
+  get(saveFileAtom).save(exportFileName(exportedAt), JSON.stringify(data, null, 2));
 });
 
 /** 「データを書き出す」: saves every stored row and the points calculated as one JSON file. */
