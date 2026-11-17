@@ -412,20 +412,8 @@ export function Conditions({
 }) {
   const pressed = useRef(false);
   return (
-    // The animated panel clips its content, which cuts the focus rings at its edges.
-    <NativeAccordion.Root animate={false}>
-      <NativeAccordion.Item
-        open={defaultOpen}
-        borderWidth="0"
-        // Opened by a press, the window scrolls only if part of 「条件」 is off it, as little as it
-        // can. One drawn open fires the event too, and stays where it is.
-        onToggle={(event) => {
-          const item = event.currentTarget;
-          if (!pressed.current || !item.open) return;
-          pressed.current = false;
-          item.scrollIntoView({ block: "nearest", behavior: "smooth" });
-        }}
-      >
+    <NativeAccordion.Root>
+      <NativeAccordion.Item open={defaultOpen} borderWidth="0">
         <NativeAccordion.Button
           onClick={() => {
             pressed.current = true;
@@ -445,15 +433,29 @@ export function Conditions({
             <ConditionsSummary form={form} />
           </Box>
         </NativeAccordion.Button>
+        {/* It slides and fades as an order's row opens. Its padding is inside the box that clips
+            the sliding fields, so their focus rings show whole. */}
         <NativeAccordion.Panel
-          px="3"
-          pt="3"
-          pb="3"
+          px="0"
+          pb="0"
           borderWidth="1px"
           borderTopWidth="0"
           roundedBottom="l2"
+          opacity="0"
+          transition="grid-template-rows 0.3s ease, opacity 0.4s ease"
+          _groupOpen={{ pb: "0", opacity: "1", _startingStyle: { opacity: "0" } }}
+          // Opened by a press, the window then scrolls only if part of 「条件」 is off it, as little
+          // as it can. One drawn open stays where it is.
+          onTransitionEnd={(event) => {
+            if (event.target !== event.currentTarget) return;
+            if (event.propertyName !== "grid-template-rows") return;
+            const item = event.currentTarget.closest("details");
+            const scroll = pressed.current && item?.open;
+            pressed.current = false;
+            if (scroll) item.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }}
         >
-          <Flex direction="column" gap="3.5">
+          <Flex direction="column" gap="3.5" p="3">
             <Box
               display="grid"
               gridTemplateColumns="repeat(auto-fit, minmax(10rem, 1fr))"

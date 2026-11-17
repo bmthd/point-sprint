@@ -259,8 +259,11 @@ export async function chooseTaxRate(
 export async function openConditions(scope: Pick<Locator, "getByText">) {
   const label = scope.getByText("条件", { exact: true });
   await expect.element(label).toBeVisible();
-  if (label.element().closest("details")?.open) return;
+  const details = label.element().closest("details");
+  if (details?.open) return;
   await label.click();
+  // It slides open, moving the fields under it until it stops.
+  await Promise.all(details?.getAnimations({ subtree: true }).map((a) => a.finished) ?? []);
 }
 
 /** Switches the order being entered to 「URLで入れる」 and returns its URL field. */
