@@ -11,12 +11,12 @@ import {
   Text,
   useDisclosure,
 } from "@workspaces/ui";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useRef, useState } from "react";
 import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
 import { AccountNameSchema } from "@workspaces/domain";
 import { accountSettingsAtom } from "#/state/derived.ts";
-import { saveProfileAtom } from "#/state/mutations.ts";
+import { runSaveProfileAtom } from "#/state/mutations.ts";
 import { profileQueryAtom } from "#/state/queries.ts";
 import { CloseIcon } from "#/ui/icons.tsx";
 
@@ -71,7 +71,7 @@ function AccountRow({
 export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => void }) {
   const { enabled, accounts } = useAtomValue(accountSettingsAtom);
   const { isSuccess } = useAtomValue(profileQueryAtom);
-  const { mutateAsync: saveProfile } = useAtomValue(saveProfileAtom);
+  const saveProfile = useSetAtom(runSaveProfileAtom);
   const { open, onOpen, onClose } = useDisclosure();
   const [target, setTarget] = useState<Account>();
   const finalFocus = useRef<HTMLElement | null>(null);

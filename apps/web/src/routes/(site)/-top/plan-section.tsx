@@ -15,11 +15,11 @@ import {
   VStack,
   useDisclosure,
 } from "@workspaces/ui";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useId, useMemo, useRef, useState } from "react";
 import { accountIdOf } from "#/state/accounts.ts";
 import { accountSettingsAtom, calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
-import { deletePlanAtom } from "#/state/mutations.ts";
+import { runDeletePlanAtom } from "#/state/mutations.ts";
 import { plansAtom } from "#/state/queries.ts";
 import { formatPeriod } from "#/ui/dates.ts";
 import { ResultCard } from "./result-card.tsx";
@@ -156,7 +156,7 @@ function LatestPlan({
  */
 export function PlanSection() {
   const plans = useAtomValue(plansAtom);
-  const { mutate: deletePlan } = useAtomValue(deletePlanAtom);
+  const deletePlan = useSetAtom(runDeletePlanAtom);
   const { open, onOpen, onClose } = useDisclosure();
   const all = useDisclosure();
   const [target, setTarget] = useState<Plan>();

@@ -11,7 +11,7 @@ import {
   VStack,
   useDisclosure,
 } from "@workspaces/ui";
-import { useAtomValue } from "jotai";
+import { atom, useAtomValue, useSetAtom } from "jotai";
 import { queryClientAtom } from "jotai-tanstack-query";
 import { type ComponentType, useState } from "react";
 import { repositoryAtom } from "#/state/repository.ts";
@@ -23,6 +23,7 @@ import {
 } from "#/state/sync.ts";
 import {
   type Locked,
+  type PasskeyDeps,
   type Passkeys,
   SyncError,
   browserPasskeys,
@@ -77,6 +78,24 @@ function statusText(status: SyncStatus): {
   }
 }
 
+/** Reads again whether this device syncs, after starting or stopping. */
+const refreshSyncEnabledAtom = atom(null, (get) =>
+  get(queryClientAtom).invalidateQueries({ queryKey: queryKeys.syncEnabled }),
+);
+
+/** What the passkey steps work with: the server and the repository that the store holds now. */
+const passkeyDepsAtom = atom(null, (get, _set, passkeys: Passkeys): PasskeyDeps => ({
+  passkeys,
+  server: get(syncServerAtom),
+  repository: get(repositoryAtom),
+}));
+
+/** Once this device syncs: reads that it does, then sends and receives at once. */
+const syncedAtom = atom(null, async (get, set) => {
+  await set(refreshSyncEnabledAtom);
+  void get(requestSyncAtom).request();
+});
+
 type Props = {
   siteKey: string | undefined;
   /** Tests only: stand-ins for the browser's passkeys and the Turnstile widget. */
@@ -93,13 +112,12 @@ export function SyncSettings({
   passkeys = browserPasskeys,
   widget: Widget = TurnstileWidget,
 }: Props) {
-  const server = useAtomValue(syncServerAtom);
-  const repository = useAtomValue(repositoryAtom);
-  const client = useAtomValue(queryClientAtom);
+  const passkeyDeps = useSetAtom(passkeyDepsAtom);
+  const refreshSyncEnabled = useSetAtom(refreshSyncEnabledAtom);
   const { data: enabled } = useAtomValue(syncEnabledQueryAtom);
   const status = useAtomValue(syncStatusAtom);
-  const { request } = useAtomValue(requestSyncAtom);
-  const deps = { passkeys, server, repository };
+  const synced = useSetAtom(syncedAtom);
+  const deps = () => passkeyDeps(passkeys);
 
   const [error, setError] = useState<string>();
   /** What happened that is not a failure. */
@@ -114,10 +132,6 @@ export function SyncSettings({
   const stopping = useDisclosure();
   const reissuing = useDisclosure();
 
-  const synced = async () => {
-    await client.invalidateQueries({ queryKey: queryKeys.syncEnabled });
-    void request();
-  };
   const run = async (action: () => Promise<void>) => {
     setError(undefined);
     setNotice(undefined);
@@ -135,7 +149,7 @@ export function SyncSettings({
     run(async () => {
       if (!token) return;
       try {
-        const result = await startSync(deps, token);
+        const result = await startSync(deps(), token);
         track("sync_start_done");
         setStarting(false);
         setStarted({ code: result.recoveryCode, withoutPrf: !result.prf });
@@ -148,7 +162,7 @@ export function SyncSettings({
   const logIn = () =>
     run(async () => {
       track("sync_login_click");
-      const result = await signIn(deps);
+      const result = await signIn(deps());
       if (result.status === "unlocked") {
         track("sync_login_done");
         await synced();
@@ -275,7 +289,7 @@ export function SyncSettings({
           onClose={() => setLocked(undefined)}
           onSubmit={async (code) => {
             if (!locked) return false;
-            const opened = await unlockWithRecoveryCode(deps, locked, code);
+            const opened = await unlockWithRecoveryCode(deps(), locked, code);
             if (opened) {
               track("sync_login_done");
               await synced();
@@ -289,7 +303,7 @@ export function SyncSettings({
           description="同期を始めたときに控えた復元用のコードを入れてください。開けたら、この端末で新しいパスキーを作ります。"
           onClose={() => setRecovering(false)}
           onSubmit={async (code) => {
-            const recovered = await recoverWithCode(deps, code);
+            const recovered = await recoverWithCode(deps(), code);
             if (!recovered) return false;
             await synced();
             if (!recovered.passkey) {
@@ -318,7 +332,7 @@ export function SyncSettings({
           onSuccess={() =>
             void run(async () => {
               try {
-                const code = await reissueRecoveryCode(deps);
+                const code = await reissueRecoveryCode(deps());
                 setStarted({ code, withoutPrf: false });
               } finally {
                 reissuing.onClose();
@@ -341,8 +355,8 @@ export function SyncSettings({
           onSuccess={() =>
             void run(async () => {
               try {
-                const { removed } = await stopSync(deps);
-                await client.invalidateQueries({ queryKey: queryKeys.syncEnabled });
+                const { removed } = await stopSync(deps());
+                await refreshSyncEnabled();
                 if (!removed) {
                   setNotice(
                     "この端末の同期をやめました。ログインが切れていたため、サーバーのデータは消していません。ほかの端末ですでに同期をやめていれば、消えています。",

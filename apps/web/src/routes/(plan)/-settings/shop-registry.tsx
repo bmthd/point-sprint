@@ -1,9 +1,9 @@
 import { type Shop, channels } from "@workspaces/domain";
 import { Card, Flex, Heading, List, Switch, Text } from "@workspaces/ui";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
 import { ShopNameSchema } from "@workspaces/domain";
-import { changeShop, saveShopAtom } from "#/state/mutations.ts";
+import { changeShop, runSaveShopAtom } from "#/state/mutations.ts";
 import { shopsAtom } from "#/state/queries.ts";
 import { withTag } from "#/routes/(plan)/-order-fields.tsx";
 
@@ -62,7 +62,7 @@ function ShopRow({
 /** The shop registry: every shop with its channel and shop code, and its name and 39ショップ mark editable. */
 export function ShopRegistry({ onFailed }: { onFailed: (failed: boolean) => void }) {
   const shops = useAtomValue(shopsAtom);
-  const { mutateAsync: saveShop } = useAtomValue(saveShopAtom);
+  const saveShop = useSetAtom(runSaveShopAtom);
   const sorted = [...shops].sort((a, b) => a.name.localeCompare(b.name, "ja"));
   const save = (shopId: string, change: (shop: Shop) => Shop) => {
     onFailed(false);

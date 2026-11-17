@@ -8,6 +8,7 @@ import {
   spuMonthId,
 } from "@workspaces/domain";
 import type { QueryClient } from "@tanstack/query-core";
+import { type Atom, atom } from "jotai";
 import { atomWithMutation, queryClientAtom } from "jotai-tanstack-query";
 import { defaultProfile, queryKeys } from "./queries.ts";
 import { repositoryAtom } from "./repository.ts";
@@ -294,4 +295,23 @@ export const deleteQuarantinedAtom = atomWithMutation<void, number | undefined>(
       await client.invalidateQueries({ queryKey: queryKeys.storageHealth });
     },
   };
+});
+
+/**
+ * A write-only atom that runs the mutation. A component that only calls the mutation sets this one
+ * with `useSetAtom`, and is not drawn again each time the mutation's state changes.
+ */
+function runAtom<TData, TVariables>(
+  mutation: Atom<{ mutateAsync: (variables: TVariables) => Promise<TData> }>,
+) {
+  return atom(null, (get, _set, variables: TVariables) => get(mutation).mutateAsync(variables));
+}
+
+export const runSavePlanAtom = runAtom(savePlanAtom);
+export const runSaveShopAtom = runAtom(saveShopAtom);
+export const runSaveProfileAtom = runAtom(saveProfileAtom);
+export const runSaveSpuMonthAtom = runAtom(saveSpuMonthAtom);
+/** Deletes the plan. A failure only puts the plan back, as `mutate` does: it is not thrown. */
+export const runDeletePlanAtom = atom(null, (get, _set, id: string) => {
+  get(deletePlanAtom).mutate(id);
 });
