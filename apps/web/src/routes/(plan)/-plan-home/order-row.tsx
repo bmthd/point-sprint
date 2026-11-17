@@ -85,8 +85,13 @@ const useListContext = () => {
   return context;
 };
 
-/** The columns of a closed row. Only the middle one (shop, item, campaigns) grows and shrinks. */
-export const rowColumns = "24px 56px 36px minmax(0, 1fr) auto auto 44px";
+/**
+ * The columns of a closed row. Only the middle one (shop, item, campaigns) grows and shrinks. The
+ * amount and the points are as wide in every row up to ¥999,999 and 99,999P, so their right edges
+ * line up down the table.
+ */
+export const rowColumns =
+  "24px 56px 36px minmax(0, 1fr) minmax(4rem, auto) minmax(4.25rem, auto) 44px";
 
 /**
  * Whether the order uses 「詳細設定」: more than one item, or an item bought more than once or with

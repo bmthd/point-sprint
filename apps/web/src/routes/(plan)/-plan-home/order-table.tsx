@@ -84,9 +84,11 @@ export function OrderTable({
             <Text as="span" gridColumn="4">
               注文
             </Text>
-            {/* Each row sizes its amount and points to its own text, so one heading spans both. */}
-            <Text as="span" gridColumn="5 / 7" justifySelf="end">
-              金額・ポイント
+            <Text as="span" gridColumn="5" justifySelf="end">
+              金額
+            </Text>
+            <Text as="span" gridColumn="6" justifySelf="end">
+              ポイント
             </Text>
           </Box>
         ) : null}
