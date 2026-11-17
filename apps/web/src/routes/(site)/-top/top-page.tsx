@@ -2,10 +2,9 @@ import { ClientOnly, useHydrated, useNavigate } from "@tanstack/react-router";
 import { type OfficialEvent, type Plan, createPlan } from "@workspaces/domain";
 import { Box, Button, Flex, Modal, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { replacePlan, savePlanAtom } from "#/state/mutations.ts";
-import { plansAtom } from "#/state/queries.ts";
-import { useSingleFlight } from "#/use-single-flight.ts";
+import { plansAtom, plansQueryAtom } from "#/state/queries.ts";
 import { ShareSection } from "#/routes/-sidebar/share-section.tsx";
 import { monthOf, tokyoToday } from "#/ui/dates.ts";
 import { officialEventsQueryAtom } from "#/routes/-official-events.ts";
@@ -37,16 +36,23 @@ export function TopPage({
   const hydrated = useHydrated();
   const shownToday = hydrated ? today : renderedToday;
   const { mutateAsync: savePlan } = useAtomValue(savePlanAtom);
-  const [creating, setCreating] = useState(false);
+  // The plan being made: the page stays and its button loads until the plan is saved and open.
+  const [creating, startCreating] = useTransition();
+  const [started, setStarted] = useState<{ event?: OfficialEvent; origin: Origin }>();
   // Where the plan that could not be saved was started, so the error shows next to that button.
   const [failed, setFailed] = useState<Origin>();
   const plans = useAtomValue(plansAtom);
+  // A plan is started only once the saved ones have been read: before that the list is empty, and
+  // a plan whose name is taken would be made again without asking.
+  const { isSuccess: plansLoaded } = useAtomValue(plansQueryAtom);
+  const disabled = !hydrated || !plansLoaded || creating;
+  const startedFrom = (origin: Origin) =>
+    creating && started?.origin === origin ? started : undefined;
   const [duplicate, setDuplicate] = useState<{
     existing: Plan;
     event?: OfficialEvent;
     origin: Origin;
   }>();
-  const run = useSingleFlight();
   const { data, isError } = useAtomValue(officialEventsQueryAtom);
   // Events kept from before a read that failed are not offered: the list says they cannot be read.
   const events = isError ? undefined : data;
@@ -69,13 +75,13 @@ export function TopPage({
     const name = nameOf(event, now());
     const existing = plans.find((plan) => plan.name === name);
     if (existing) setDuplicate({ existing, event, origin });
-    else void create(event, origin);
+    else create(event, origin);
   };
 
-  const create = (event: OfficialEvent | undefined, origin: Origin) =>
-    run(async () => {
-      setCreating(true);
-      setFailed(undefined);
+  const create = (event: OfficialEvent | undefined, origin: Origin) => {
+    setStarted({ event, origin });
+    setFailed(undefined);
+    startCreating(async () => {
       const date = now();
       const id = crypto.randomUUID();
       const name = nameOf(event, date);
@@ -94,10 +100,9 @@ export function TopPage({
         await navigate({ to: "/plan", search: { id } });
       } catch {
         setFailed(origin);
-      } finally {
-        setCreating(false);
       }
     });
+  };
 
   return (
     <Box as="main">
@@ -108,7 +113,8 @@ export function TopPage({
       <Flex direction="column" minH="calc(100svh - {sizes.14} - 1px)">
         <Hero
           onStart={start}
-          disabled={!hydrated || creating}
+          disabled={disabled}
+          loading={startedFrom("hero") !== undefined}
           failed={failed === "hero"}
           aside={
             <ClientOnly fallback={<SampleCard />}>
@@ -118,7 +124,8 @@ export function TopPage({
         />
         <EventSection
           today={shownToday}
-          disabled={!hydrated || creating}
+          disabled={disabled}
+          starting={startedFrom("events")}
           onCreate={(event) => request(event, "events")}
           onCreateWithoutEvent={() => request(undefined, "events")}
           failed={failed === "events"}
@@ -146,7 +153,7 @@ export function TopPage({
               onClick={() => {
                 if (!duplicate) return;
                 setDuplicate(undefined);
-                void create(duplicate.event, duplicate.origin);
+                create(duplicate.event, duplicate.origin);
               }}
             >
               新しく作る

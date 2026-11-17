@@ -645,6 +645,61 @@ test("asks before starting a plan whose name is taken", async () => {
   expect(await repository.plans.list()).toHaveLength(1);
 });
 
+test("waits for the saved plans before starting one, so a taken name is asked about", async () => {
+  const repository = createMemoryRepository({
+    plans: [plan(PLAN_A, "10月 お買い物マラソン&ジャンル祭", "2026-10-01T00:00:00.000Z", 0)],
+  });
+  const list = repository.plans.list;
+  let load = () => {};
+  const loaded = new Promise<void>((resolve) => {
+    load = resolve;
+  });
+  repository.plans.list = async () => {
+    await loaded;
+    return list();
+  };
+  const { screen } = await renderTopPage(repository);
+  await expect.element(screen.getByText("開催中")).toBeVisible();
+
+  const start = screen.getByRole("button", { name: "計算をはじめる" });
+  await expect.element(start).toBeDisabled();
+
+  load();
+  await start.click();
+
+  await expect
+    .element(screen.getByRole("dialog", { name: "同じ名前のプランがあります" }))
+    .toBeVisible();
+  expect(await repository.plans.list()).toHaveLength(1);
+});
+
+test("stays on the page with the buttons held until the plan is saved", async () => {
+  const repository = createMemoryRepository();
+  const update = repository.plans.update;
+  let save = () => {};
+  const saved = new Promise<void>((resolve) => {
+    save = resolve;
+  });
+  repository.plans.update = async (...args) => {
+    await saved;
+    return update(...args);
+  };
+  const { screen, router } = await renderTopPage(repository);
+  await expect.element(screen.getByText("開催中")).toBeVisible();
+
+  const start = screen.getByRole("button", { name: "計算をはじめる" });
+  await start.click();
+
+  await expect.element(start).toBeDisabled();
+  await expect
+    .element(screen.getByRole("button", { name: "イベントを選ばずにプランを作る" }))
+    .toBeDisabled();
+  expect(router.state.location.pathname).toBe("/");
+
+  save();
+  await expect.poll(() => router.state.location.pathname).toBe("/plan");
+});
+
 test("takes the visitor to the events when two are running", async () => {
   const repository = createMemoryRepository();
   const second = marathon({
