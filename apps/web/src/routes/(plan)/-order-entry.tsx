@@ -17,7 +17,7 @@ import {
   Text,
 } from "@workspaces/ui";
 import { useAtom, useAtomValue } from "jotai";
-import { type ClipboardEvent, type ReactNode, type Ref, useId, useState } from "react";
+import { type ClipboardEvent, type ReactNode, type Ref, useId, useRef, useState } from "react";
 import { bind, errorsOf } from "#/routes/-form.tsx";
 import { shopsAtom } from "#/state/queries.ts";
 import { type EntryMode, entryModeAtom } from "./-ui.ts";
@@ -410,11 +410,26 @@ export function Conditions({
   campaigns: ReactNode;
   children?: ReactNode;
 }) {
+  const pressed = useRef(false);
   return (
     // The animated panel clips its content, which cuts the focus rings at its edges.
     <NativeAccordion.Root animate={false}>
-      <NativeAccordion.Item open={defaultOpen} borderWidth="0">
+      <NativeAccordion.Item
+        open={defaultOpen}
+        borderWidth="0"
+        // Opened by a press, the window scrolls only if part of 「条件」 is off it, as little as it
+        // can. One drawn open fires the event too, and stays where it is.
+        onToggle={(event) => {
+          const item = event.currentTarget;
+          if (!pressed.current || !item.open) return;
+          pressed.current = false;
+          item.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }}
+      >
         <NativeAccordion.Button
+          onClick={() => {
+            pressed.current = true;
+          }}
           minH="11"
           px="3"
           py="2"
