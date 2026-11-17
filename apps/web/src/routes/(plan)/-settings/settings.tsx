@@ -9,6 +9,7 @@ import { QuarantineNotice } from "#/routes/(plan)/-quarantine-notice.tsx";
 import { StorageHealthFailure, storageMessages } from "#/routes/(plan)/-warnings.tsx";
 import { ResetDataButton } from "#/routes/-reset-data.tsx";
 import { AccountSettings } from "./account-settings.tsx";
+import { ExportDataButton } from "./export-data-button.tsx";
 import { ShopRegistry } from "./shop-registry.tsx";
 import { SpuMonthsCard } from "./spu-months-card.tsx";
 import { SyncSettings } from "./sync-settings.tsx";
@@ -44,6 +45,7 @@ function SettingsContent() {
       <SyncSettings siteKey={import.meta.env.TURNSTILE_SITE_KEY ?? undefined} />
       <ShopRegistry onFailed={setFailed} />
       <AccountSettings onFailed={setFailed} />
+      <ExportDataButton />
       <ResetDataButton />
     </VStack>
   );
