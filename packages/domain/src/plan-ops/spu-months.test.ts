@@ -120,6 +120,24 @@ describe("planWithSpu", () => {
     expect(books[0]?.points).toBe(50);
   });
 
+  test("a trial SPU is turned on only for its month and account, even one the user turned off", () => {
+    const months = [month(ACCOUNT, "2026-10", []), month(ACCOUNT, "2026-11", [])];
+    const october = "00000000-0000-4000-8000-000000000001";
+    const november = "00000000-0000-4000-8000-000000000002";
+    const held = plan({ orders: [order(october, "2026-10-30"), order(november, "2026-11-01")] });
+    const trial = [
+      { accountId: ACCOUNT, month: "2026-10", benefitId: BOOKS_SPU_ID },
+      { accountId: OTHER, month: "2026-11", benefitId: BOOKS_SPU_ID },
+    ];
+    const booksBenefit = planWithSpu(held, months, trial).benefits.find(
+      (benefit) => benefit.id === BOOKS_SPU_ID,
+    );
+    expect(booksBenefit?.conditions.months).toEqual(["2026-10"]);
+    expect(planWithSpu(held, months).benefits.find((b) => b.id === BOOKS_SPU_ID)?.enabled).toBe(
+      false,
+    );
+  });
+
   test("an order outside the period gets the SPU of its month", () => {
     const months = [month(ACCOUNT, "2026-12", [BOOKS_SPU_ID])];
     const id = "00000000-0000-4000-8000-000000000003";

@@ -154,6 +154,7 @@ export {
   newlyAchievedSpu,
   spuAchievements,
   type SpuAchievement,
+  trialSpuAchievements,
 } from "./plan-ops/spu-purchases.ts";
 export {
   enableSpu,

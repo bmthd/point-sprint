@@ -11,6 +11,7 @@ import {
   lostSpuPurchases,
   newlyAchievedSpu,
   spuAchievements,
+  trialSpuAchievements,
 } from "./spu-purchases.ts";
 
 const OTHER_ACCOUNT = "acc00000-0000-4000-8000-000000000001";
@@ -165,4 +166,23 @@ test("disabledAchievedSpu: achieved by the plan's orders but off in the month", 
   const achieving = plan([order(3000, { channel: "rakuten-books" })]);
   expect(disabledAchievedSpu(achieving, shops, [october([])])).toEqual([books()]);
   expect(disabledAchievedSpu(achieving, shops, [october([BOOKS_SPU_ID])])).toEqual([]);
+});
+
+describe("held plans", () => {
+  const booksPlan = () => plan([order(3000, { shopId: BOOKS_SHOP })]);
+
+  test("a held plan achieves no SPU", () => {
+    expect(spuAchievements([{ ...booksPlan(), onHold: true }], shops)).toEqual([]);
+  });
+
+  test("a plan that stops being held newly achieves its SPU", () => {
+    const current = booksPlan();
+    expect(newlyAchievedSpu([{ ...current, onHold: true }], [current], shops)).toEqual([books()]);
+  });
+
+  test("trialSpuAchievements gives a held plan's SPU and none for a plan that is not held", () => {
+    const current = booksPlan();
+    expect(trialSpuAchievements({ ...current, onHold: true }, shops)).toEqual([books()]);
+    expect(trialSpuAchievements(current, shops)).toEqual([]);
+  });
 });
