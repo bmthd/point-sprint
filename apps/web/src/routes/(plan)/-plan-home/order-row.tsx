@@ -53,6 +53,7 @@ import {
   orderTitle,
   taxLabel,
   orderSaveFailedAtom,
+  revealBottom,
   useSaveOrderChange,
   useSaveOrderDraft,
   useShopName,
@@ -406,13 +407,13 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
         </Box>
       </Box>
       {/* It slides open and shut, so a press shows which order the fields below belong to. */}
-      {/* Once open, the window scrolls only if part of the row is off it, as little as it can. */}
+      {/* Once open, the window scrolls only if 「複製」 and 「削除」 are off it, as little as it can. */}
       <Collapse
         open={open}
         unmountOnExit
         id={detailId}
         onAnimationComplete={() => {
-          if (open) itemRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          if (open && itemRef.current) revealBottom(itemRef.current);
         }}
       >
         <Flex direction="column" gap="3.5" borderTopWidth="1px" pt="3.5" pb="4" px="4">

@@ -37,7 +37,7 @@ import {
   autofillUrlHandlers,
   urlFromPastedText,
 } from "./-order-form-store.ts";
-import { taxRateSegmentsStyle } from "./-order-shared.tsx";
+import { revealBottom, taxRateSegmentsStyle } from "./-order-shared.tsx";
 import { ShopAutocomplete } from "./-shop-autocomplete.tsx";
 
 // The parts of an order's form that the desktop list and the phone's sheet share: whether the
@@ -452,7 +452,11 @@ export function Conditions({
             const item = event.currentTarget.closest("details");
             const scroll = pressed.current && item?.open;
             pressed.current = false;
-            if (scroll) item.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            if (!scroll) return;
+            // In a list, down to the buttons under it: 「追加する」, or 「複製」 and 「削除」.
+            const listItem = item.closest("li");
+            if (listItem) revealBottom(listItem, item);
+            else item.scrollIntoView({ block: "nearest", behavior: "smooth" });
           }}
         >
           <Flex direction="column" gap="3.5" p="3">
