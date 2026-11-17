@@ -138,6 +138,7 @@ export {
   copyOrder,
   moveOrder,
 } from "./plan-ops/order-ops.ts";
+export { togglePlanHold } from "./plan-ops/plan-hold.ts";
 export { orderPositions } from "./plan-ops/order-positions.ts";
 export { attachToEvent } from "./plan-ops/attach-event.ts";
 export {
