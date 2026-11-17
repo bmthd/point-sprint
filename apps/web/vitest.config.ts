@@ -5,6 +5,6 @@ export default defineConfig({
   plugins: [ogFonts()],
   test: {
     name: "web",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "lint/**/*.test.ts"],
   },
 });

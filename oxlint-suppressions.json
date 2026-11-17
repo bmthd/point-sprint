@@ -1,0 +1,62 @@
+{
+  "apps/web/src/routes/(plan)/-item-autofill.tsx": {
+    "jotai/no-callback-only-subscription": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-order-entry.tsx": {
+    "jotai/no-callback-only-subscription": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-plan-home/order-add-form.tsx": {
+    "jotai/no-callback-only-subscription": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-plan-home/plan-home.tsx": {
+    "jotai/no-callback-only-subscription": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-plan-settings/account-picker.tsx": {
+    "jotai/no-callback-only-subscription": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-settings/account-settings.tsx": {
+    "jotai/no-callback-only-subscription": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-settings/shop-registry.tsx": {
+    "jotai/no-callback-only-subscription": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-settings/sync-settings.tsx": {
+    "jotai/no-callback-only-subscription": {
+      "count": 2
+    }
+  },
+  "apps/web/src/routes/(plan)/-spu-month/spu-month-editor.tsx": {
+    "jotai/no-callback-only-subscription": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(site)/-inquiry/inquiry-form.tsx": {
+    "jotai/no-callback-only-subscription": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(site)/-top/plan-section.tsx": {
+    "jotai/no-callback-only-subscription": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(site)/-top/top-page.tsx": {
+    "jotai/no-callback-only-subscription": {
+      "count": 1
+    }
+  }
+}
