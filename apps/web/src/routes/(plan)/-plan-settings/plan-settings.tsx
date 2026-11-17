@@ -10,6 +10,7 @@ import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
 import { AccountPicker } from "./account-picker.tsx";
 import { CampaignToggles } from "./campaign-toggles.tsx";
 import { EventAttacher } from "./event-attacher.tsx";
+import { PlanHoldSwitch } from "./plan-hold-switch.tsx";
 import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared.ts";
 import { ShopAroundSettings } from "./shop-around-settings.tsx";
 import { SpendTiersSettings } from "./spend-tiers-settings.tsx";
@@ -49,6 +50,7 @@ function SettingsBody({ plan, onChangeSpu }: { plan: Plan; onChangeSpu: (month: 
         </Text>
       ) : null}
       <AccountPicker plan={plan} />
+      <PlanHoldSwitch plan={plan} />
       <SpuSettingsCard
         plan={plan}
         title="SPU"

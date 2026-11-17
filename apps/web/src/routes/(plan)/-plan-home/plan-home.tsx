@@ -1,3 +1,4 @@
+import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import type { Plan, TaxRate } from "@workspaces/domain";
 import {
@@ -56,6 +57,7 @@ function PlanSwitcher({ plan }: { plan: Plan }) {
       <Heading as="h1" fontSize="md" lineClamp={1}>
         {plan.name}
       </Heading>
+      <PlanHoldBadge plan={plan} />
       <Menu.Root>
         <Menu.Trigger>
           <Button

@@ -666,3 +666,14 @@ test("a plan of an event has nothing to attach", async () => {
     .element(screen.getByRole("region", { name: "公式イベント" }))
     .not.toBeInTheDocument();
 });
+
+test("the hold switch holds the plan and releases it", async () => {
+  const screen = await renderSettings(makePlan([], [order(0)]));
+  const hold = screen.getByRole("switch", { name: "このプランを保留にする" });
+
+  await tapCard(hold);
+  await vi.waitFor(async () => expect((await storedPlan()).onHold).toBe(true));
+
+  await tapCard(hold);
+  await vi.waitFor(async () => expect(await storedPlan()).not.toHaveProperty("onHold"));
+});
