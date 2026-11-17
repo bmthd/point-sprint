@@ -79,6 +79,8 @@ function StatusBadge({ status }: { status: Status }) {
 
 type CreateProps = {
   disabled: boolean;
+  /** The plan being made from here: `event` is unset for the one without an event. */
+  starting?: { event?: OfficialEvent };
   onCreate: (event: OfficialEvent) => void;
 };
 
@@ -90,6 +92,7 @@ function EventCard({
   event,
   status,
   disabled,
+  starting,
   onCreate,
   actionLabel,
 }: { event: OfficialEvent; status: Status | undefined; actionLabel: string } & CreateProps) {
@@ -131,6 +134,7 @@ function EventCard({
           size={{ base: "lg", md: "md" }}
           flexShrink="0"
           disabled={disabled}
+          loading={starting?.event?.id === event.id}
           onClick={() => onCreate(event)}
         >
           {actionLabel}
@@ -303,6 +307,7 @@ type EventSectionProps = CreateProps & {
 export function EventSection({
   today,
   disabled,
+  starting,
   onCreate,
   onCreateWithoutEvent,
   failed,
@@ -325,6 +330,7 @@ export function EventSection({
       bg="bg.panel"
       size="lg"
       disabled={disabled}
+      loading={starting !== undefined && starting.event === undefined}
       onClick={onCreateWithoutEvent}
     >
       イベントを選ばずにプランを作る
@@ -390,6 +396,7 @@ export function EventSection({
                 status={statusOf(event, today)}
                 actionLabel={showEnded ? "この条件で計算" : "プランを作る"}
                 disabled={disabled}
+                starting={starting}
                 onCreate={onCreate}
               />
             </List.Item>

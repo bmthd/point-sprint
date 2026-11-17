@@ -35,7 +35,13 @@ import { grouped, pointsText, rateText, rounded } from "#/ui/format.ts";
 import { withEffectiveAccount } from "#/state/accounts.ts";
 import { accountSettingsAtom, planResultAtom } from "#/state/derived.ts";
 import { saveSpuMonthAtom } from "#/state/mutations.ts";
-import { plansAtom, spuMonthsAtom } from "#/state/queries.ts";
+import {
+  plansAtom,
+  plansQueryAtom,
+  profileQueryAtom,
+  spuMonthsAtom,
+  spuMonthsQueryAtom,
+} from "#/state/queries.ts";
 import { ExternalIcon, ForwardIcon } from "#/ui/icons.tsx";
 import { RouterButton } from "#/ui/router-link.tsx";
 import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
@@ -112,11 +118,13 @@ const COLUMN_MIN_WIDTH = { base: "96px", sm: "72px" };
 function Tile({
   benefit,
   capped,
+  disabled,
   onToggle,
   onDetail,
 }: {
   benefit: RateBenefit;
   capped: boolean;
+  disabled: boolean;
   onToggle: () => void;
   onDetail: () => void;
 }) {
@@ -127,6 +135,7 @@ function Tile({
     <Flex direction="column" align="center" gap="1" minW="0">
       <CheckboxCard.Root
         checked={on}
+        disabled={disabled}
         onChange={onToggle}
         colorScheme="primary"
         size="sm"
@@ -261,6 +270,7 @@ function TileGroup({
   tiles,
   benefits,
   capped,
+  disabled,
   onToggle,
 }: {
   title: string;
@@ -268,6 +278,7 @@ function TileGroup({
   tiles: RateBenefit[];
   benefits: Benefit[];
   capped: ReadonlySet<string>;
+  disabled: boolean;
   onToggle: (benefitId: string) => void;
 }) {
   const detail = useDisclosure();
@@ -296,6 +307,7 @@ function TileGroup({
             key={benefit.id}
             benefit={benefit}
             capped={capped.has(benefit.id)}
+            disabled={disabled}
             onToggle={() => onToggle(benefit.id)}
             onDetail={() => {
               setDetailId(benefit.id);
@@ -437,6 +449,14 @@ export function SpuMonthEditor({
 }) {
   const stored = useAtomValue(spuMonthsAtom);
   const plans = useAtomValue(plansAtom);
+  // A tile turns its item over from what is stored, so it waits for the stored SPU: before that
+  // every item shows off, and a tap on one that is on would turn it off. The account the page
+  // shows comes from the profile and the plan, so it waits for them too.
+  const loaded = [
+    useAtomValue(spuMonthsQueryAtom),
+    useAtomValue(profileQueryAtom),
+    useAtomValue(plansQueryAtom),
+  ].every((query) => query.isSuccess);
   const result = useAtomValue(planResultAtom(planId ?? ""));
   const { mutateAsync: saveMonth } = useAtomValue(saveSpuMonthAtom);
   const [failed, setFailed] = useState(false);
@@ -456,7 +476,7 @@ export function SpuMonthEditor({
       setFailed(true),
     );
   };
-  const group = { benefits, capped, onToggle: toggle };
+  const group = { benefits, capped, disabled: !loaded, onToggle: toggle };
 
   return (
     // On a phone the smaller card leaves more width to the tiles.

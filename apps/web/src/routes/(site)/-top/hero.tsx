@@ -120,16 +120,19 @@ function StepLine() {
 /**
  * The top page's first screen: what the tool is, how to start, and beside them `aside` (the sample,
  * or the visitor's plans). On a wide screen it grows to the height the page leaves it and keeps its
- * content in the middle. `failed` shows that the plan its button started could not be saved.
+ * content in the middle. `loading` shows that the plan its button started is being made, and
+ * `failed` that it could not be saved.
  */
 export function Hero({
   onStart,
   disabled,
+  loading,
   failed,
   aside,
 }: {
   onStart: () => void;
   disabled: boolean;
+  loading: boolean;
   failed: boolean;
   aside: ReactNode;
 }) {
@@ -209,6 +212,7 @@ export function Hero({
               // The one button the page asks a visitor to press.
               minW={{ base: "18rem", lg: "auto" }}
               disabled={disabled}
+              loading={loading}
               onClick={onStart}
             >
               計算をはじめる
