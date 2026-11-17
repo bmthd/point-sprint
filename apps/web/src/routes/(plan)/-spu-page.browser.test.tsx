@@ -70,8 +70,23 @@ async function renderSpu({
   plans = [],
   spuMonths = [],
   fromPlan = false,
-}: { month?: string; plans?: Plan[]; spuMonths?: SpuMonth[]; fromPlan?: boolean } = {}) {
+  read,
+}: {
+  month?: string;
+  plans?: Plan[];
+  spuMonths?: SpuMonth[];
+  fromPlan?: boolean;
+  /** Holds the reading of the stored SPU until it settles. */
+  read?: Promise<void>;
+} = {}) {
   currentRepository = createMemoryRepository({ shops, plans, spuMonths });
+  if (read) {
+    const list = currentRepository.spuMonths.list;
+    currentRepository.spuMonths.list = async () => {
+      await read;
+      return list();
+    };
+  }
   await cleanup();
   const root = createRootRoute({ component: Outlet });
   const routes = [
@@ -135,6 +150,21 @@ test("a tile toggles the month's SPU and the rate", async () => {
   await userEvent.keyboard(" ");
   await expect.element(mobile).not.toBeChecked();
   await expect.poll(() => storedOn("楽天モバイル")).toBe(false);
+});
+
+test("a tile waits for the stored SPU, so a tap does not undo an item that is on", async () => {
+  let load = () => {};
+  const read = new Promise<void>((resolve) => {
+    load = resolve;
+  });
+  const screen = await renderSpu({ spuMonths: [spuMonth(["楽天モバイル"])], read });
+  const mobile = screen.getByRole("checkbox", { name: "楽天モバイル +4倍" });
+  await expect.element(mobile).toBeDisabled();
+
+  load();
+
+  await expect.element(mobile).toBeChecked();
+  expect(await storedOn("楽天モバイル")).toBe(true);
 });
 
 test("the items are grouped into those carried to the next month and those met each month", async () => {
