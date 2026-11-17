@@ -34,6 +34,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "2.0.0-beta.v.17",
     "@expo-google-fonts/noto-sans-jp": "0.4.4",
+    "@oxlint/plugins": "1.86.0",
     "@playwright/test": "1.63.0",
     "@types/node": "26.6.4",
     "@types/react": "19.3.0",

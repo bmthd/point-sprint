@@ -53,6 +53,7 @@ import {
   orderTitle,
   taxLabel,
   orderSaveFailedAtom,
+  revealBottom,
   useSaveOrderChange,
   useSaveOrderDraft,
   useShopName,
@@ -84,8 +85,13 @@ const useListContext = () => {
   return context;
 };
 
-/** The columns of a closed row. Only the middle one (shop, item, campaigns) grows and shrinks. */
-export const rowColumns = "24px 56px 36px minmax(0, 1fr) auto auto 44px";
+/**
+ * The columns of a closed row. Only the middle one (shop, item, campaigns) grows and shrinks. The
+ * amount and the points are as wide in every row up to ¥999,999 and 99,999P, so their right edges
+ * line up down the table.
+ */
+export const rowColumns =
+  "24px 56px 36px minmax(0, 1fr) minmax(4rem, auto) minmax(4.25rem, auto) 44px";
 
 /**
  * Whether the order uses 「詳細設定」: more than one item, or an item bought more than once or with
@@ -235,6 +241,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   const { startDrag, focusAfterMoveRef, announce, handleHintId, holdHintId } = useListContext();
   const detailId = useId();
   const handleRef = useRef<HTMLButtonElement>(null);
+  const itemRef = useRef<HTMLLIElement>(null);
 
   // Moving an order can take its row out of the document for a moment, which drops the focus.
   useEffect(() => {
@@ -267,7 +274,11 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   const amount = order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0);
 
   return (
-    <List.Item data-order-id={orderId} borderTopWidth={index === 0 ? undefined : "1px"}>
+    <List.Item
+      ref={itemRef}
+      data-order-id={orderId}
+      borderTopWidth={index === 0 ? undefined : "1px"}
+    >
       <Box
         // Painted, so a dragged row covers the rows it passes.
         bg="bg.panel"
@@ -401,7 +412,15 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
         </Box>
       </Box>
       {/* It slides open and shut, so a press shows which order the fields below belong to. */}
-      <Collapse open={open} unmountOnExit id={detailId}>
+      {/* Once open, the window scrolls only if 「複製」 and 「削除」 are off it, as little as it can. */}
+      <Collapse
+        open={open}
+        unmountOnExit
+        id={detailId}
+        onAnimationComplete={() => {
+          if (open && itemRef.current) revealBottom(itemRef.current);
+        }}
+      >
         <Flex direction="column" gap="3.5" borderTopWidth="1px" pt="3.5" pb="4" px="4">
           <Flex direction="column" gap="2">
             <PointBreakdown totals={groupTotalsOf(points.rows)} legend="line" held={held} />

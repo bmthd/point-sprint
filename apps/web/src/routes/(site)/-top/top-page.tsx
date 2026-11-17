@@ -1,9 +1,9 @@
 import { ClientOnly, useHydrated, useNavigate } from "@tanstack/react-router";
 import { type OfficialEvent, type Plan, createPlan } from "@workspaces/domain";
 import { Box, Button, Flex, Modal, Text } from "@workspaces/ui";
-import { useAtomValue } from "jotai";
+import { atom, useAtomValue, useSetAtom } from "jotai";
 import { useState, useTransition } from "react";
-import { replacePlan, savePlanAtom } from "#/state/mutations.ts";
+import { replacePlan, runSavePlanAtom } from "#/state/mutations.ts";
 import { plansAtom, plansQueryAtom } from "#/state/queries.ts";
 import { ShareSection } from "#/routes/-sidebar/share-section.tsx";
 import { monthOf, tokyoToday } from "#/ui/dates.ts";
@@ -16,6 +16,13 @@ import { startTarget } from "./start-target.ts";
 
 /** The button a plan was started from: the hero's, or one in the events. */
 type Origin = "hero" | "events";
+
+/** Where the hero's start button goes, by the events read when it is pressed. */
+const startTargetAtom = atom(null, (get, _set, today: string | undefined) => {
+  const { data, isError } = get(officialEventsQueryAtom);
+  // Events kept from before a read that failed are not offered: the list says they cannot be read.
+  return startTarget(isError ? undefined : data, today);
+});
 
 /**
  * What `now` is overridden by in tests; the default is the real clock. `renderedToday` is the day in
@@ -35,7 +42,7 @@ export function TopPage({
   // reach it.
   const hydrated = useHydrated();
   const shownToday = hydrated ? today : renderedToday;
-  const { mutateAsync: savePlan } = useAtomValue(savePlanAtom);
+  const savePlan = useSetAtom(runSavePlanAtom);
   // The plan being made: the page stays and its button loads until the plan is saved and open.
   const [creating, startCreating] = useTransition();
   const [started, setStarted] = useState<{ event?: OfficialEvent; origin: Origin }>();
@@ -53,12 +60,10 @@ export function TopPage({
     event?: OfficialEvent;
     origin: Origin;
   }>();
-  const { data, isError } = useAtomValue(officialEventsQueryAtom);
-  // Events kept from before a read that failed are not offered: the list says they cannot be read.
-  const events = isError ? undefined : data;
+  const startTargetOf = useSetAtom(startTargetAtom);
 
   const start = () => {
-    const target = startTarget(events, shownToday);
+    const target = startTargetOf(shownToday);
     if (target.kind === "create") return request(target.event, "hero");
     const section = document.getElementById("events");
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

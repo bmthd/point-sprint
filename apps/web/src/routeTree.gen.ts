@@ -121,6 +121,7 @@ const sitemarkdownGuidesSlugRoute = sitemarkdownGuidesSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/events.json': typeof EventsDotjsonRoute
   '/share': typeof ShareRoute
+  '/': typeof siteIndexRoute
   '/plan': typeof planPlanRoute
   '/settings': typeof planSettingsRoute
   '/spu': typeof planSpuRoute
@@ -128,7 +129,6 @@ export interface FileRoutesByFullPath {
   '/marathon': typeof siteMarathonRoute
   '/notices': typeof siteNoticesRoute
   '/share/image.png': typeof ShareImageDotpngRoute
-  '/': typeof siteIndexRoute
   '/plan/settings': typeof planPlanSettingsRoute
   '/about': typeof sitemarkdownAboutRoute
   '/help': typeof sitemarkdownHelpRoute
@@ -140,6 +140,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/events.json': typeof EventsDotjsonRoute
   '/share': typeof ShareRoute
+  '/': typeof siteIndexRoute
   '/plan': typeof planPlanRoute
   '/settings': typeof planSettingsRoute
   '/spu': typeof planSpuRoute
@@ -147,7 +148,6 @@ export interface FileRoutesByTo {
   '/marathon': typeof siteMarathonRoute
   '/notices': typeof siteNoticesRoute
   '/share/image.png': typeof ShareImageDotpngRoute
-  '/': typeof siteIndexRoute
   '/plan/settings': typeof planPlanSettingsRoute
   '/about': typeof sitemarkdownAboutRoute
   '/help': typeof sitemarkdownHelpRoute
@@ -182,6 +182,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/events.json'
     | '/share'
+    | '/'
     | '/plan'
     | '/settings'
     | '/spu'
@@ -189,7 +190,6 @@ export interface FileRouteTypes {
     | '/marathon'
     | '/notices'
     | '/share/image.png'
-    | '/'
     | '/plan/settings'
     | '/about'
     | '/help'
@@ -201,6 +201,7 @@ export interface FileRouteTypes {
   to:
     | '/events.json'
     | '/share'
+    | '/'
     | '/plan'
     | '/settings'
     | '/spu'
@@ -208,7 +209,6 @@ export interface FileRouteTypes {
     | '/marathon'
     | '/notices'
     | '/share/image.png'
-    | '/'
     | '/plan/settings'
     | '/about'
     | '/help'
@@ -300,7 +300,7 @@ declare module '@tanstack/react-router' {
     '/(site)/(markdown)': {
       id: '/(site)/(markdown)'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof sitemarkdownRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
