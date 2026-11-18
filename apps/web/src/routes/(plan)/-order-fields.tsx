@@ -31,7 +31,7 @@ import { type FieldState, bind, errorsOf } from "#/routes/-form.tsx";
 import { type ShopChange, changeShop, replaceShop } from "#/state/mutations.ts";
 import { shopsAtom } from "#/state/queries.ts";
 import type { RakutenItem } from "#/rakuten/item-search.ts";
-import { imageUrl, taxRateLabel, taxRateSegmentsStyle } from "./-order-shared.tsx";
+import { imageUrl, segmentPressArea, taxRateLabel } from "./-order-shared.tsx";
 import type { OrderForm } from "./-order-form-store.ts";
 
 // Fields shared by the desktop list's edit grid, its add form and the order editor.
@@ -151,14 +151,24 @@ export function TaxRateButtons({
 }) {
   return (
     // Its legend sits above the choices as a field's label does above its input.
-    <Fieldset.Root legend="税率" minW="0" gap="1" legendProps={{ fontSize: "sm" }}>
+    <Fieldset.Root
+      legend="税率"
+      minW="0"
+      // Filling a row, it keeps the width its labels read well at, and takes the row alone when
+      // the row is narrower than that. Beside the shop rate it takes nearly all the room left.
+      flex={fill ? `1000 1 ${size === "lg" ? "19rem" : "16rem"}` : undefined}
+      gap="1"
+      legendProps={{ fontSize: "sm" }}
+    >
       <SegmentedControl.Root
         size={size}
         w={fill ? "full" : "xs"}
+        // Yamada UI's least width for its size is wider than a phone's sheet leaves it.
+        minW="0"
         items={TAX_RATES.map((rate) => ({ label: TAX_LABELS[rate], value: rate }))}
         value={typeof field.input === "string" ? (field.input as TaxRateValue) : undefined}
         onChange={(value) => field.onChange(value as TaxRateValue)}
-        {...taxRateSegmentsStyle}
+        css={segmentPressArea}
       />
     </Fieldset.Root>
   );
@@ -175,7 +185,14 @@ export const optionalMark = (
 export function ShopRateInput({ field, size }: { field: ValueField; size?: "lg" }) {
   const { name, ref, onBlur } = field.props;
   return (
-    <UIField.Root label="独自倍率" optionalIndicator={optionalMark} {...errorsOf(field)} minW="0">
+    // A shop rate is at most two digits, so beside the tax rate the field is as narrow as that and
+    // its label allow. On a row of its own it fills the row.
+    <UIField.Root
+      label="独自倍率"
+      optionalIndicator={optionalMark}
+      {...errorsOf(field)}
+      flex={`1 0 ${size === "lg" ? "9rem" : "8rem"}`}
+    >
       {/* The rate is on the price before tax, as Rakuten's shop rates are: 倍, not %. */}
       <InputGroup.Root size={size}>
         <NumberInput

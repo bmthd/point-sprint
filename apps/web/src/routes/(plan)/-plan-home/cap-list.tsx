@@ -11,7 +11,7 @@ import { useAtomValue } from "jotai";
 import { grouped, yen } from "#/ui/format.ts";
 import { plansAtom } from "#/state/queries.ts";
 import { CAP_TAX_RATES, conditionText, scopeText, sharedText } from "#/routes/(plan)/-cap-lines.ts";
-import { taxRateLabel, taxRateSegmentsStyle } from "#/routes/(plan)/-order-shared.tsx";
+import { segmentPressArea, taxRateLabel } from "#/routes/(plan)/-order-shared.tsx";
 
 /**
  * How full the cap is, in two colors: what other plans used, then what this plan used.
@@ -134,7 +134,7 @@ export function CapList({
           items={CAP_TAX_RATES.map((rate) => ({ label: taxRateLabel(rate), value: String(rate) }))}
           value={String(taxRate)}
           onChange={(value) => onTaxRate(Number(value) as TaxRate)}
-          {...taxRateSegmentsStyle}
+          css={segmentPressArea}
         />
       </Flex>
       {open.length > 0 ? list(open) : null}

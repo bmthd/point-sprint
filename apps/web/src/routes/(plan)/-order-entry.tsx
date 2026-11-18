@@ -37,7 +37,7 @@ import {
   autofillUrlHandlers,
   urlFromPastedText,
 } from "./-order-form-store.ts";
-import { revealBottom, taxRateSegmentsStyle } from "./-order-shared.tsx";
+import { revealBottom, segmentPressArea } from "./-order-shared.tsx";
 import { ShopAutocomplete } from "./-shop-autocomplete.tsx";
 
 // The parts of an order's form that the desktop list and the phone's sheet share: whether the
@@ -82,7 +82,7 @@ export function EntryModeSwitch({
       aria-label="入れ方"
       size="lg"
       // Each choice is pressed 44px, as a tax rate's is.
-      css={{ "& label::before": taxRateSegmentsStyle.css["& label::before"] }}
+      css={segmentPressArea}
       // As wide as its choices, or the row's width. Its large size is otherwise at least 24rem
       // wide, wider than a phone's sheet, and narrower widths leave the chosen one's mark behind.
       w={fill ? "full" : "auto"}
@@ -478,19 +478,16 @@ export function Conditions({
                 )}
               </FormField>
             </Box>
-            <Box
-              display="grid"
-              gridTemplateColumns="repeat(auto-fit, minmax(10rem, 1fr))"
-              alignItems="start"
-              gap="2.5"
-            >
+            {/* The shop rate keeps its narrow width beside the tax rate, and goes under it, as wide
+                as the row, when the tax rate's choices would not fit beside it. */}
+            <Flex wrap="wrap" align="flex-start" gap="2.5">
               <FormField of={form} path={["items", 0, "taxRate"]}>
                 {(field) => <TaxRateButtons field={field} size={size} fill />}
               </FormField>
               <FormField of={form} path={["items", 0, "shopPointRate"]}>
                 {(field) => <ShopRateInput field={field} size={size} />}
               </FormField>
-            </Box>
+            </Flex>
             {campaigns}
             {children}
           </Flex>
