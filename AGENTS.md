@@ -36,6 +36,16 @@
 - 見た目は部品の `variant`、`size`、`colorScheme` で選び、色はテーマのトークンで指定する（`docs/design-system.md`）
 - Yamada UI にない部品を作ったときは、探した部品の名前と、使わなかった理由を PR に書く
 
+## Markdown の独自構文
+
+Markdown のページと記事に足す構文は、CommonMark の Generic directives 提案（remark-directive と同じ形）で書く。コロンの数で、子を持つかを表す。
+
+- 子を持つブロック（container）: `:::name[label]{attrs}` で開き、`:::` だけの行で閉じる。例: `:::details[保留]` … `:::`
+- 子を持たないブロック（leaf）: `::name[label]{attrs}` の 1 行で完結する。例: `::items{keyword="…" hits=6}`
+- 文中の要素（text）: `:name[label]{attrs}`。例: `:rakuten[楽天ブックス]{href="https://books.rakuten.co.jp/"}`
+
+見出しや文言は `[label]` に、それ以外の値は `{attrs}` に渡す。名前の後に空白で値を続けない。
+
 ## 外部とのやりとりの差し替え
 
 外部とのやりとりは、本番の処理を初期値に持つ jotai の atom に置き、使う部品で `useAtomValue` から読む。関数はオブジェクトに包む。テストでは専用の store を用意し、`store.set` または `useHydrateAtoms` で atom を差し替える。

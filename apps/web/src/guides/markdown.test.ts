@@ -4,8 +4,8 @@ import { guideExtensions, hasAffiliateLinks, rakutenAffiliateUrl } from "./markd
 
 const parse = (source: string) => parseMarkdown(source, { extensions: guideExtensions });
 
-test(":::items is a list of items, named by its query", () => {
-  const nodes = parse('前の段落\n\n:::items{keyword="洗剤" hits=3}\n\n後の段落').children;
+test("::items is a list of items, named by its query", () => {
+  const nodes = parse('前の段落\n\n::items{keyword="洗剤" hits=3}\n\n後の段落').children;
   expect(nodes.map((node) => node.type)).toEqual(["paragraph", "component", "paragraph"]);
   expect(nodes[1]).toMatchObject({
     tagName: "md-items",
@@ -13,9 +13,9 @@ test(":::items is a list of items, named by its query", () => {
   });
 });
 
-test(":rakuten[…](…) is a link to a Rakuten page, its label kept", () => {
+test(":rakuten[…]{href} is a link to a Rakuten page, its label kept", () => {
   const [paragraph] = parse(
-    "対象は:rakuten[楽天ブックス](https://books.rakuten.co.jp/)です。",
+    '対象は:rakuten[楽天ブックス]{href="https://books.rakuten.co.jp/"}です。',
   ).children;
   expect(paragraph).toMatchObject({
     type: "paragraph",
@@ -42,7 +42,9 @@ test("an affiliate link carries the page in pc and m; without an affiliate id, i
 });
 
 test("an article with a list of items or a Rakuten link has affiliate links", () => {
-  expect(hasAffiliateLinks('前置き\n\n:::items{keyword="コーヒー" hits=6}\n')).toBe(true);
-  expect(hasAffiliateLinks(":rakuten[楽天ブックス](https://books.rakuten.co.jp/)なら")).toBe(true);
+  expect(hasAffiliateLinks('前置き\n\n::items{keyword="コーヒー" hits=6}\n')).toBe(true);
+  expect(hasAffiliateLinks(':rakuten[楽天ブックス]{href="https://books.rakuten.co.jp/"}なら')).toBe(
+    true,
+  );
   expect(hasAffiliateLinks("ふつうの [リンク](https://example.com/)")).toBe(false);
 });

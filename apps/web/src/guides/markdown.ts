@@ -2,7 +2,7 @@ import type { MarkdownExtension } from "@tanstack/markdown";
 import { markdownExtensions } from "#/routes/(site)/(markdown)/-markdown-extensions.ts";
 import { itemQueryKey, parseItemsLine } from "./item-query.ts";
 
-/** `:::items{keyword="…" hits=6}` on a line of its own: a list of Rakuten items found by the build. */
+/** `::items{keyword="…" hits=6}` on a line of its own: a list of Rakuten items found by the build. */
 const items: MarkdownExtension = {
   name: "items",
   parseBlock(context) {
@@ -20,7 +20,7 @@ const items: MarkdownExtension = {
   },
 };
 
-/** `:rakuten[楽天ブックス](https://books.rakuten.co.jp/)`: a link to a Rakuten page that pays as an affiliate link. */
+/** `:rakuten[楽天ブックス]{href="https://books.rakuten.co.jp/"}`: a link to a Rakuten page that pays as an affiliate link. */
 const rakutenLink: MarkdownExtension = {
   name: "rakuten-link",
   inlineParser: {
@@ -28,7 +28,7 @@ const rakutenLink: MarkdownExtension = {
     parse(context) {
       const link = context.source
         .slice(context.index)
-        .match(/^:rakuten\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/);
+        .match(/^:rakuten\[([^\]]+)\]\{href="(https:\/\/[^"\s]+)"\}/);
       if (!link?.[1] || !link[2]) return undefined;
       return {
         node: {
@@ -60,7 +60,7 @@ export const guideExtensions = [...markdownExtensions, items, rakutenLink];
 
 /**
  * Whether an article has links that pay: a list of items (each item links to Rakuten as an
- * affiliate) or a `:rakuten[…](…)` link. Such an article says so at its top.
+ * affiliate) or a `:rakuten[…]{href="…"}` link. Such an article says so at its top.
  */
 export function hasAffiliateLinks(body: string) {
   return (
