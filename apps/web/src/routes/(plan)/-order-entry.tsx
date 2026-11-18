@@ -475,8 +475,8 @@ export function Conditions({
                 )}
               </FormField>
             </Box>
-            {/* The shop rate keeps its narrow width beside the tax rate, and goes under it when
-                the tax rate's choices would not fit beside it. */}
+            {/* The shop rate keeps its narrow width beside the tax rate, and goes under it, as wide
+                as the row, when the tax rate's choices would not fit beside it. */}
             <Flex wrap="wrap" align="flex-start" gap="2.5">
               <FormField of={form} path={["items", 0, "taxRate"]}>
                 {(field) => <TaxRateButtons field={field} size={size} fill />}

@@ -155,8 +155,8 @@ export function TaxRateButtons({
       legend="税率"
       minW="0"
       // Filling a row, it keeps the width its labels read well at, and takes the row alone when
-      // the row is narrower than that.
-      flex={fill ? `1 1 ${size === "lg" ? "19rem" : "16rem"}` : undefined}
+      // the row is narrower than that. Beside the shop rate it takes nearly all the room left.
+      flex={fill ? `1000 1 ${size === "lg" ? "19rem" : "16rem"}` : undefined}
       gap="1"
       legendProps={{ fontSize: "sm" }}
     >
@@ -185,13 +185,13 @@ export const optionalMark = (
 export function ShopRateInput({ field, size }: { field: ValueField; size?: "lg" }) {
   const { name, ref, onBlur } = field.props;
   return (
-    // A shop rate is at most two digits, so the field is as narrow as that and its label allow.
+    // A shop rate is at most two digits, so beside the tax rate the field is as narrow as that and
+    // its label allow. On a row of its own it fills the row.
     <UIField.Root
       label="独自倍率"
       optionalIndicator={optionalMark}
       {...errorsOf(field)}
-      flex="none"
-      w={size === "lg" ? "9rem" : "8rem"}
+      flex={`1 0 ${size === "lg" ? "9rem" : "8rem"}`}
     >
       {/* The rate is on the price before tax, as Rakuten's shop rates are: 倍, not %. */}
       <InputGroup.Root size={size}>
