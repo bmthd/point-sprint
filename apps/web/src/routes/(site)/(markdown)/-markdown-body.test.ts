@@ -21,5 +21,8 @@ test.each([
   expect(html).toMatch(new RegExp(`^<h1 id="${name}">${name}</h1>`));
   const ids = [...html.matchAll(/<h\d id="([^"]+)"/g)].map(([, id]) => id);
   const anchors = [...html.matchAll(/href="#([^"]+)"/g)].map(([, id]) => id);
-  for (const anchor of anchors) expect(ids).toContain(anchor);
+  for (const anchor of anchors) {
+    expect(anchor).toBeDefined();
+    if (anchor !== undefined) expect(ids).toContain(decodeURIComponent(anchor));
+  }
 });

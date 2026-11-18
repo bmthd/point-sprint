@@ -13,6 +13,7 @@ export default defineConfig({
       "@formisch/react",
       "@simplewebauthn/browser",
       "@tanstack/markdown/react",
+      "@tanstack/markdown/parser",
       "@tanstack/react-query",
       "jotai",
       "jotai/utils",
