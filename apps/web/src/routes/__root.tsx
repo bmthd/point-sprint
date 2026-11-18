@@ -94,7 +94,9 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body suppressHydrationWarning>
         <ColorModeScript defaultValue={config.defaultColorMode} />
-        <UIProvider theme={theme} config={config} storage={colorModeStorage}>
+        {/* The site is in Japanese only: the server, which has no browser's language, writes the
+            components' own words in Japanese too, as the browser does. */}
+        <UIProvider theme={theme} config={config} storage={colorModeStorage} locale="ja-JP">
           <FormControlDefaults>
             <AppProviders>{children}</AppProviders>
           </FormControlDefaults>

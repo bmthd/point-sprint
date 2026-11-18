@@ -50,7 +50,15 @@ import { ExtraItems, ItemDetailFields } from "#/routes/(plan)/-item-details.tsx"
 export const NEW_ORDER = "new";
 
 /** The points the order the form describes gets, in the editor. */
-function DraftPreview({ form, plan, original }: { form: OrderForm; plan: Plan; original?: Order }) {
+export function DraftPreview({
+  form,
+  plan,
+  original,
+}: {
+  form: OrderForm;
+  plan: Plan;
+  original?: Order;
+}) {
   const shops = useAtomValue(shopsAtom);
   const current = useFormInput(form);
   const key = JSON.stringify(current);
@@ -63,7 +71,7 @@ function DraftPreview({ form, plan, original }: { form: OrderForm; plan: Plan; o
   return <OrderPreviewBox planId={plan.id} draft={draft} original={original} />;
 }
 
-function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
+export function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
   const is39 = useField(form, { path: ["is39"] });
   const repeat = useField(form, { path: ["repeat"] });
   const brandDay = useField(form, { path: ["brandDay"] });
@@ -126,7 +134,7 @@ function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
 }
 
 /** Quantity, coupon, the items after the first one and 保留, last in 「条件」. */
-function Details({ form }: { form: OrderForm }) {
+export function Details({ form }: { form: OrderForm }) {
   return (
     <>
       <ItemDetailFields form={form} index={0} withRate={false} />

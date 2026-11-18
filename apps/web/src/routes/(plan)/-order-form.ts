@@ -98,20 +98,23 @@ export function emptyItem(): ItemInput {
   };
 }
 
-const emptyInputForDate = (date: string): OrderFormInput => ({
-  url: "",
-  shop: "",
-  newShopName: "",
-  channel: DEFAULT_ORDER_CHANNEL,
-  shopCode: "",
-  date,
-  is39: false,
-  repeat: false,
-  brandDay: false,
-  is24h: false,
-  onHold: false,
-  items: [emptyItem()],
-});
+/** The editor's fields for a new order on `date`. */
+export function emptyInputForDate(date: string): OrderFormInput {
+  return {
+    url: "",
+    shop: "",
+    newShopName: "",
+    channel: DEFAULT_ORDER_CHANNEL,
+    shopCode: "",
+    date,
+    is39: false,
+    repeat: false,
+    brandDay: false,
+    is24h: false,
+    onHold: false,
+    items: [emptyItem()],
+  };
+}
 
 /** The editor's fields for a new order in this plan. */
 export function emptyInput(period: Period): OrderFormInput {

@@ -1,3 +1,4 @@
+import type { MarkdownExtension } from "@tanstack/markdown";
 import { Markdown, type MarkdownComponents } from "@tanstack/markdown/react";
 import { useRouteContext } from "@tanstack/react-router";
 import {
@@ -241,15 +242,24 @@ const everyRouteHasMarkdown: [RoutesWithoutMarkdown] extends [never]
   : RoutesWithoutMarkdown = true;
 void everyRouteHasMarkdown;
 
-/** The Markdown that the route put in its context, as the page's content. */
-export function MarkdownBody() {
+/**
+ * The Markdown that the route put in its context, as the page's content. A page with syntax of its
+ * own passes its extensions and the components they draw.
+ */
+export function MarkdownBody({
+  extensions = [],
+  components = {},
+}: {
+  extensions?: MarkdownExtension[];
+  components?: MarkdownComponents;
+} = {}) {
   const markdown = useRouteContext({ strict: false, select: (context) => context.markdown });
   // Unreachable while `everyRouteHasMarkdown` type-checks.
   if (markdown === undefined) throw new Error("This route has no Markdown in its context.");
   return (
     <Markdown
-      components={markdownComponents}
-      extensions={markdownExtensions}
+      components={{ ...markdownComponents, ...components }}
+      extensions={[...markdownExtensions, ...extensions]}
       headingIds={headingIds}
     >
       {markdown}
