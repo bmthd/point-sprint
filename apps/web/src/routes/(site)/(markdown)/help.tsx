@@ -10,7 +10,7 @@ export const Route = createFileRoute("/(site)/(markdown)/help")({
       path: "/help",
       title: "使い方",
       description:
-        "ポイントスプリントの使い方です。プラン、注文、保留、月ごとの SPU の考え方と、ほかの端末との同期、計算の誤差を説明します。",
+        "ポイントスプリントの使い方です。プラン、注文、上限、保留、月ごとの SPU の考え方と、ほかの端末との同期、計算の誤差を説明します。",
     }),
   component: MarkdownBody,
 });
