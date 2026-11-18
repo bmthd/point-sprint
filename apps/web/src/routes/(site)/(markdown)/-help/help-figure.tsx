@@ -98,7 +98,7 @@ function markStyles(marks: HelpFigureMark[]): CSSObject {
 
 /**
  * The app's own components drawing a sample plan, as a picture: shrunk like a phone's screenshot,
- * not pressable, and read as one image by its label. Numbered marks point at its parts.
+ * with interaction disabled, and read as one image by its label. Numbered marks point at its parts.
  */
 function FigureFrame({ spec }: { spec: HelpFigureSpec }) {
   const Render = spec.render;
