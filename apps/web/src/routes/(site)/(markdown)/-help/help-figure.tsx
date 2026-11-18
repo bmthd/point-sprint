@@ -1,7 +1,8 @@
 import { Box, type CSSObject, Grid, List, SystemProvider, Text } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { Children, type ReactNode } from "react";
-import { type HelpFigureMark, type HelpFigureSpec, helpFigures } from "./figures.tsx";
+import { type HelpFigureSpec, helpFigures } from "./figures.tsx";
+import type { HelpFigureMark } from "./figure-marks.ts";
 import { SampleProviders } from "./sample-providers.tsx";
 
 /** The width of a phone the figure is drawn at, before it is shrunk into its column. */
@@ -100,7 +101,7 @@ function markStyles(marks: HelpFigureMark[]): CSSObject {
  * The app's own components drawing a sample plan, as a picture: shrunk like a phone's screenshot,
  * with interaction disabled, and read as one image by its label. Numbered marks point at its parts.
  */
-function FigureFrame({ spec }: { spec: HelpFigureSpec }) {
+function FigureFrame({ spec, alt }: { spec: HelpFigureSpec; alt: string }) {
   const Render = spec.render;
   const { crop } = spec;
   // A cropped screen shows its top or its bottom, without measuring: the same ahead of time.
@@ -115,7 +116,7 @@ function FigureFrame({ spec }: { spec: HelpFigureSpec }) {
   return (
     <Box
       role="img"
-      aria-label={spec.label}
+      aria-label={alt}
       w="fit-content"
       maxW="full"
       bg="bg"
@@ -142,8 +143,18 @@ function FigureFrame({ spec }: { spec: HelpFigureSpec }) {
   );
 }
 
-/** `:::figure name` … `:::`: the figure, and beside it what its numbered marks point at. */
-export function HelpFigure({ name, children }: { name: string; children?: ReactNode }) {
+/** The figure and its numbered explanations, with all copy supplied by the Markdown. */
+export function HelpFigure({
+  name,
+  caption,
+  alt,
+  children,
+}: {
+  name: string;
+  caption: string;
+  alt: string;
+  children?: ReactNode;
+}) {
   const spec = helpFigures[name];
   // Unreachable: the Markdown extension rejects a name without a figure.
   if (!spec) throw new Error(`No help figure is named ${name}.`);
@@ -161,9 +172,9 @@ export function HelpFigure({ name, children }: { name: string; children?: ReactN
       css={markColors}
     >
       <Box>
-        <FigureFrame spec={spec} />
+        <FigureFrame spec={spec} alt={alt} />
         <Text as="figcaption" fontSize="xs" color="fg.muted" mt="1.5">
-          {spec.caption}
+          {caption}
         </Text>
       </Box>
       {withPoints ? (

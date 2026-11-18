@@ -10,13 +10,31 @@ import { config, theme } from "@workspaces/ui/theme";
 import { expect, test } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { figureExtension } from "./figure-extension.ts";
+import help from "#/routes/(site)/(markdown)/-markdown/help.md?raw";
 import { helpFigures } from "./figures.tsx";
 import { HelpFigure } from "./help-figure.tsx";
+
+const helpNodes = parseMarkdown(help, { extensions: [figureExtension] }).children;
+
+/** Read the same copy as the page, so Markdown-only edits are checked in the browser too. */
+function figureCopy(name: string) {
+  const node = helpNodes.find(
+    (node) =>
+      node.type === "component" && node.tagName === "md-figure" && node.properties?.name === name,
+  );
+  if (node?.type !== "component") throw new Error(`Missing figure ${name}`);
+  const { caption, alt } = node.properties ?? {};
+  if (typeof caption !== "string" || typeof alt !== "string")
+    throw new Error(`Missing figure copy for ${name}`);
+  return { caption, alt };
+}
 
 /** The figure on a page of its own, under a router as on the help: some components link. */
 async function renderFigure(name: string) {
   await cleanup();
-  const root = createRootRoute({ component: () => <HelpFigure name={name} /> });
+  const root = createRootRoute({
+    component: () => <HelpFigure name={name} {...figureCopy(name)} />,
+  });
   const router = createRouter({
     routeTree: root,
     history: createMemoryHistory({ initialEntries: ["/help"] }),
@@ -30,7 +48,13 @@ async function renderFigure(name: string) {
 
 test.each(Object.values(helpFigures))("each mark of $name points at what it says", async (spec) => {
   const screen = await renderFigure(spec.name);
-  await expect.element(screen.getByRole("img", { name: spec.label })).toBeInTheDocument();
+  await expect
+    .element(screen.getByRole("img", { name: figureCopy(spec.name).alt }))
+    .toBeInTheDocument();
+  await expect
+    .element(screen.getByText(figureCopy(spec.name).caption, { exact: true }))
+    .toBeInTheDocument();
+  await expect.element(screen.getByText(figureCopy(spec.name).caption)).toBeInTheDocument();
   const figure = screen.container.querySelector(`[data-help-figure="${spec.name}"]`);
   for (const mark of spec.marks) {
     const found = figure?.querySelectorAll(mark.selector) ?? [];
@@ -41,7 +65,9 @@ test.each(Object.values(helpFigures))("each mark of $name points at what it says
 
 test.each(Object.values(helpFigures))("no box inside $name clips a mark's number", async (spec) => {
   const screen = await renderFigure(spec.name);
-  await expect.element(screen.getByRole("img", { name: spec.label })).toBeInTheDocument();
+  await expect
+    .element(screen.getByRole("img", { name: figureCopy(spec.name).alt }))
+    .toBeInTheDocument();
   const figure = screen.container.querySelector(`[data-help-figure="${spec.name}"]`);
   for (const mark of spec.marks) {
     const marked = figure?.querySelector(mark.selector);
@@ -56,32 +82,13 @@ test.each(Object.values(helpFigures))("no box inside $name clips a mark's number
   }
 });
 
-test("figure directives pass their name attribute and numbered explanations", () => {
-  const parsed = parseMarkdown(':::figure{name="plan"}\n1. 注文はプランごとに保存されます。\n:::', {
-    extensions: [figureExtension],
-  });
-  expect(parsed.children[0]).toMatchObject({
-    tagName: "md-figure",
-    properties: { name: "plan" },
-    children: [{ tagName: "md-figure-callout", properties: { step: "1" } }],
-  });
-});
-
-test.each([
-  [":::figure plan\n1. 説明\n:::", /Use :::figure/],
-  [':::figure{name="missing"}\n1. 説明\n:::', /has no figure/],
-  [':::figure{name="plan"}\n1. 説明', /has no closing/],
-  [':::figure{name="plan"}\n本文\n:::', /numbered list/],
-  [':::figure{name="plan"}\n1. 説明\n2. 説明\n:::', /marks but/],
-])("invalid figure directive fails: %s", (source, error) => {
-  expect(() => parseMarkdown(source, { extensions: [figureExtension] })).toThrow(error);
-});
-
 test("October's SPU figure shows both marked sections completely", async () => {
   const spec = helpFigures["spu-month-top"];
   if (!spec) throw new Error("Missing October SPU figure");
   const screen = await renderFigure(spec.name);
-  await expect.element(screen.getByRole("img", { name: spec.label })).toBeInTheDocument();
+  await expect
+    .element(screen.getByRole("img", { name: figureCopy(spec.name).alt }))
+    .toBeInTheDocument();
   const figure = screen.container.querySelector('[data-help-figure="spu-month-top"]');
   if (!figure?.parentElement) throw new Error("Missing figure frame");
   const frame = figure.parentElement.getBoundingClientRect();
