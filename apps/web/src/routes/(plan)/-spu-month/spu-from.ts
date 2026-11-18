@@ -1,3 +1,8 @@
+import type { Plan } from "@workspaces/domain";
+import { atom } from "jotai";
+import { accountIdOf } from "#/state/accounts.ts";
+import { accountSettingsAtom } from "#/state/derived.ts";
+
 declare module "@tanstack/react-router" {
   interface HistoryState {
     /**
@@ -17,3 +22,13 @@ export function spuPageFromPlan(planId: string, month: string, account: string |
     state: { spuFrom: { planId } },
   } as const;
 }
+
+/**
+ * Opens the month's SPU page from the plan: for the plan's account once the user tells accounts
+ * apart, read when the page is opened.
+ */
+export const spuPageFromPlanAtom = atom(null, (get, _set, plan: Plan, month: string) => {
+  const settings = get(accountSettingsAtom);
+  const account = settings.enabled ? accountIdOf(plan, settings) : undefined;
+  return spuPageFromPlan(plan.id, month, account);
+});

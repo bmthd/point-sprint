@@ -29,12 +29,12 @@ import {
   Text,
   useDisclosure,
 } from "@workspaces/ui";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useState } from "react";
 import { grouped, pointsText, rateText, rounded } from "#/ui/format.ts";
 import { withEffectiveAccount } from "#/state/accounts.ts";
 import { accountSettingsAtom, planResultAtom } from "#/state/derived.ts";
-import { saveSpuMonthAtom } from "#/state/mutations.ts";
+import { runSaveSpuMonthAtom } from "#/state/mutations.ts";
 import {
   plansAtom,
   plansQueryAtom,
@@ -458,7 +458,7 @@ export function SpuMonthEditor({
     useAtomValue(plansQueryAtom),
   ].every((query) => query.isSuccess);
   const result = useAtomValue(planResultAtom(planId ?? ""));
-  const { mutateAsync: saveMonth } = useAtomValue(saveSpuMonthAtom);
+  const saveMonth = useSetAtom(runSaveSpuMonthAtom);
   const [failed, setFailed] = useState(false);
   const plan = plans.find((candidate) => candidate.id === planId);
   const benefits = spuBenefitsOf(spuIdsIn(stored, accountId, month));

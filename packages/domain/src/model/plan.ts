@@ -10,6 +10,8 @@ export const PlanSchema = v.object({
   officialEventId: v.optional(v.string()),
   /** The account the plan's orders are bought with; absent for the default account. */
   accountId: v.optional(IdSchema),
+  /** Set while the plan is on hold; absent otherwise. Held plans stay out of other plans' estimates. */
+  onHold: v.optional(v.boolean()),
   period: PeriodSchema,
   benefits: v.array(BenefitSchema),
   orders: v.array(OrderSchema),

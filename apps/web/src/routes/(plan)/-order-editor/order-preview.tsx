@@ -8,6 +8,7 @@ import {
   calculateAll,
   capLines,
   taxExcludedTarget,
+  totalCountedWith,
 } from "@workspaces/domain";
 import { Flex, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
@@ -35,9 +36,6 @@ export type OrderPreview = {
   othersGain: number;
 };
 
-const sumOfTotals = (results: Map<string, CalculationResult>) =>
-  [...results.values()].reduce((sum, result) => sum + result.total, 0);
-
 const pointsOf = (result: CalculationResult | undefined, order: Order | undefined) => {
   const ids = new Set(order?.lineItems.map((item) => item.id));
   return (result?.breakdown ?? []).filter((row) => ids.has(row.lineItemId));
@@ -50,7 +48,7 @@ const pointsOf = (result: CalculationResult | undefined, order: Order | undefine
 export function previewOf(input: {
   plans: Plan[];
   /** Turns plans into the plans as they are calculated (`asCalculatedAtom`). */
-  asCalculated: (plans: Plan[]) => Plan[];
+  asCalculated: (plans: Plan[], shops: Shop[]) => Plan[];
   shops: Shop[];
   before: Map<string, CalculationResult>;
   planId: string;
@@ -69,6 +67,7 @@ export function previewOf(input: {
           ? updateOrder(plan, draft.order)
           : addOrder(plan, draft.order),
     ),
+    shops,
   );
   const after = calculateAll(withDraft, shops);
   const planBefore = before.get(planId);
@@ -98,7 +97,10 @@ export function previewOf(input: {
     shopAroundRateGain:
       (planAfter?.shopAroundOutlook?.currentRate ?? 0) -
       (planBefore?.shopAroundOutlook?.currentRate ?? 0),
-    othersGain: sumOfTotals(after) - points - (sumOfTotals(before) - originalPoints),
+    othersGain:
+      totalCountedWith(after, withDraft, planId) -
+      points -
+      (totalCountedWith(before, plans, planId) - originalPoints),
   };
 }
 

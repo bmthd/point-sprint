@@ -4,6 +4,7 @@ import { monthsOf } from "#/model/common.ts";
 import { type Plan, planAccountId } from "#/model/plan.ts";
 import type { SpuMonth } from "#/model/spu-month.ts";
 import { toggleBenefits } from "./benefit-ops.ts";
+import type { SpuAchievement } from "./spu-purchases.ts";
 
 /**
  * The ids of the SPU that are on for `accountId` in `month` (`YYYY-MM`). A month not stored yet
@@ -79,13 +80,23 @@ export function plansUsingSpuMonth(
 /**
  * The plan as it is calculated: every `standardSpu` item added to its benefits, on for the orders
  * of the months its account has it on (`conditions.months`). `plan` must have the account it is
- * calculated with. Items the plan holds itself are left to the plan.
+ * calculated with. Items the plan holds itself are left to the plan. `trial` are SPU turned on for
+ * this calculation only (`trialSpuAchievements` of a held plan): those of the plan's account and
+ * of one of its months are added to that month's items through `enableSpu`, even ones the user
+ * turned off; the stored `months` are not changed.
  */
-export function planWithSpu(plan: Plan, months: SpuMonth[]): Plan {
+export function planWithSpu(
+  plan: Plan,
+  months: SpuMonth[],
+  trial: readonly SpuAchievement[] = [],
+): Plan {
   const accountId = planAccountId(plan);
-  const idsByMonth = spuMonthsOfPlan(plan).map(
-    (month) => [month, spuIdsIn(months, accountId, month)] as const,
-  );
+  const idsByMonth = spuMonthsOfPlan(plan).map((month) => {
+    const trialIds = trial
+      .filter((one) => one.accountId === accountId && one.month === month)
+      .map((one) => one.benefitId);
+    return [month, new Set(enableSpu(spuIdsIn(months, accountId, month), trialIds))] as const;
+  });
   const own = new Set(plan.benefits.map((benefit) => benefit.id));
   const spu = standardSpu
     .filter((benefit) => !own.has(benefit.id))

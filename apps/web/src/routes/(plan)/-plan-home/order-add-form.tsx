@@ -3,9 +3,9 @@
 "use no memo";
 
 import { reset, useForm } from "@formisch/react";
-import { type Plan, calculateAll } from "@workspaces/domain";
+import { type Plan, calculateAll, totalCountedWith } from "@workspaces/domain";
 import { Collapse, Flex, Button, List, Text } from "@workspaces/ui";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { type KeyboardEvent, useDeferredValue, useId, useMemo, useState } from "react";
 import { pointsText } from "#/ui/format.ts";
 import { Form } from "#/routes/-form.tsx";
@@ -31,9 +31,6 @@ import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields.tsx";
 import { focusFirstField, useEntryMode } from "#/routes/(plan)/-order-entry.tsx";
 import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
 
-const sumOfTotals = (results: Map<string, { total: number }>) =>
-  [...results.values()].reduce((sum, result) => sum + result.total, 0);
-
 /** 「この注文で（5店舗目） 約 +120P」 while the form is valid. */
 function AddedPointsEstimate({ plan, form }: { plan: Plan; form: OrderForm }) {
   const plans = useAtomValue(plansAtom);
@@ -52,11 +49,12 @@ function AddedPointsEstimate({ plan, form }: { plan: Plan; form: OrderForm }) {
     const withOrder = plans.map((other) =>
       other.id === plan.id ? { ...other, orders: [...other.orders, draft.order] } : other,
     );
-    const after = calculateAll(asCalculated(withOrder), withShop);
+    const after = calculateAll(asCalculated(withOrder, withShop), withShop);
     const shopCountBefore = before.get(plan.id)?.shopCount ?? 0;
     const shopCountAfter = after.get(plan.id)?.shopCount ?? 0;
     return {
-      points: sumOfTotals(after) - sumOfTotals(before),
+      points:
+        totalCountedWith(after, withOrder, plan.id) - totalCountedWith(before, plans, plan.id),
       shop: shopCountAfter > shopCountBefore ? shopCountAfter : undefined,
     };
   }, [deferred, plans, shops, before, asCalculated, plan.id]);
@@ -91,13 +89,18 @@ function AddedPointsEstimate({ plan, form }: { plan: Plan; form: OrderForm }) {
   );
 }
 
+/** The new order that the form's output describes, with the shops saved when it is added. */
+const newDraftAtom = atom(null, (get, _set, output: OrderFormOutput) =>
+  draftOf(output, get(shopsAtom), undefined),
+);
+
 /**
  * 「＋ 注文を追加」 at the end of the desktop list. Enter in any field adds the order when it is
  * valid, then empties the form and puts the focus back on its first field: the amount, or the URL
  * when the order is entered by its URL.
  */
 export function OrderAddForm({ plan }: { plan: Plan }) {
-  const shops = useAtomValue(shopsAtom);
+  const newDraft = useSetAtom(newDraftAtom);
   const saveDraft = useSaveOrderDraft(plan.id, useSetAtom(orderSaveFailedAtom));
   const run = useSingleFlight();
   const [open, setOpen] = useState(plan.orders.length === 0);
@@ -112,7 +115,7 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
   const add = (output: OrderFormOutput) =>
     run(async () => {
       // Not saved, the typed order stays in the form so it can be added again.
-      if (!(await saveDraft(draftOf(output, shops, undefined), true))) return;
+      if (!(await saveDraft(newDraft(output), true))) return;
       reset(form, { initialInput: emptyInput(plan.period) });
       focusFirstField(form, mode);
       // Leaving the URL field would look up the URL it still showed.

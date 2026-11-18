@@ -16,7 +16,7 @@ import {
   SegmentedControl,
   Text,
 } from "@workspaces/ui";
-import { useAtom, useAtomValue } from "jotai";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { type ClipboardEvent, type ReactNode, type Ref, useId, useRef, useState } from "react";
 import { bind, errorsOf } from "#/routes/-form.tsx";
 import { shopsAtom } from "#/state/queries.ts";
@@ -99,15 +99,18 @@ export function EntryModeSwitch({
   );
 }
 
+/** The saved shop that the URL's shop is, among the shops saved when the URL is entered. */
+const shopOfUrlAtom = atom(null, (get, _set, url: string) => shopFromUrl(url, get(shopsAtom)));
+
 /**
  * Puts a URL in the URL field as a paste would: its shop is chosen at once, and its item is looked
  * up.
  */
 export function useEnterUrl(form: OrderForm, autofill: ItemAutofill) {
-  const shops = useAtomValue(shopsAtom);
+  const shopOfUrl = useSetAtom(shopOfUrlAtom);
   return (text: string) => {
     setInput(form, { path: ["url"], input: text });
-    const found = shopFromUrl(text, shops);
+    const found = shopOfUrl(text);
     if (found) applyShop(form, found);
     autofill.onUrlChange(text, true);
   };
