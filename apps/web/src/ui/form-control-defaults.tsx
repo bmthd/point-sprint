@@ -34,9 +34,8 @@ const segmentStyle = {
   indicatorProps: {
     bg: "bg.panel",
     boxShadow: "sm",
-    // Yamada UI 2.2.8 gives the indicator `layoutDependency: false`, with which motion never
-    // measures it, and the chosen one jumps instead of sliding. Drop this once it slides without.
-    layoutDependency: undefined,
+    // The chosen one moves at once, without sliding from the one chosen before.
+    transition: { duration: 0 },
   },
   itemProps: { color: "fg.muted", _checked: { color: "fg", fontWeight: "bold" } },
 } as const;
