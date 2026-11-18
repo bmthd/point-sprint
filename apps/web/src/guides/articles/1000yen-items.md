@@ -13,79 +13,79 @@ cardFigure: 1,000円ポッキリ
 
 自分用のおやつにも、ちょっとした手土産にも使えます。
 
-:::items{keyword="1000円ポッキリ お菓子" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ お菓子" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## おつまみ
 
 鮭とばや干物など、日持ちするものが多く出ています。
 
-:::items{keyword="1000円ポッキリ おつまみ" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ おつまみ" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## コーヒー
 
 ドリップバッグや、お試しの少量パックが多く出ています。
 
-:::items{keyword="1000円ポッキリ コーヒー" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ コーヒー" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## お茶
 
 ティーバッグの健康茶が多く、毎日少しずつ飲めます。
 
-:::items{keyword="1000円ポッキリ お茶" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ お茶" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## ラーメン
 
 ご当地ラーメンを、数食分のセットで試せます。
 
-:::items{keyword="1000円ポッキリ ラーメン" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ ラーメン" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## カレー
 
 レトルトなら常温で置いておけます。
 
-:::items{keyword="1000円ポッキリ カレー" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ カレー" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## 雑穀米
 
 白米に混ぜて炊く雑穀やもち麦です。
 
-:::items{keyword="1000円ポッキリ 雑穀米" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ 雑穀米" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## 日用品
 
 タオルや洗剤など、いずれ使う消耗品を1店舗分として買っておく方法です。
 
-:::items{keyword="1000円ポッキリ" NGKeyword="ふるさと納税" genreId=215783 minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ" NGKeyword="ふるさと納税" genreId=215783 minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## 靴下
 
 数足セットのものが多く、すぐに使えます。
 
-:::items{keyword="1000円ポッキリ 靴下" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ 靴下" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## スマホケース
 
 機種ごとのケースです。自分の機種に合うか確かめてから買います。
 
-:::items{keyword="1000円ポッキリ スマホケース" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ スマホケース" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## 充電ケーブル
 
 Type-C などのケーブルを、数本まとめて買えます。
 
-:::items{keyword="1000円ポッキリ 充電ケーブル" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ 充電ケーブル" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## 入浴剤
 
 数種類の詰め合わせや、バスソルトが出ています。
 
-:::items{keyword="1000円ポッキリ 入浴剤" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ 入浴剤" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## 美容
 
 スキンケアやヘアケアのお試しサイズも、1000円ポッキリで多く出ています。
 
-:::items{keyword="1000円ポッキリ" NGKeyword="ふるさと納税" genreId=100939 minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ" NGKeyword="ふるさと納税" genreId=100939 minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## 買う前に確かめること
 

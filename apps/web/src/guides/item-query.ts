@@ -1,6 +1,6 @@
 import * as v from "valibot";
 
-// `:::items{keyword="1000円ポッキリ" genreId=100227 hits=6}` in a guide: the item search parameters
+// `::items{keyword="1000円ポッキリ" genreId=100227 hits=6}` in a guide: the item search parameters
 // of a list of Rakuten items. Read by the build, which calls the API with them, and by the page,
 // which shows what the build found for them.
 
@@ -56,31 +56,32 @@ const ItemQuerySchema = v.pipe(
 
 export type ItemQuery = v.InferOutput<typeof ItemQuerySchema>;
 
-const OPENING = /^:::items\{(.*)\}\s*$/;
+const OPENING = /^::items\{(.*)\}\s*$/;
 
 /**
- * The query of a `:::items{…}` line, which takes `name="value"` or `name=value` pairs. A line that
+ * The query of a `::items{…}` line, which takes `name="value"` or `name=value` pairs. A line that
  * is not one gives `undefined`; a broken one throws, so a typo fails the build instead of quietly
  * showing no items.
  */
 export function parseItemsLine(line: string): ItemQuery | undefined {
+  if (line.startsWith(":::items")) throw new Error(`::items takes two colons: ${line}`);
   const opening = line.match(OPENING);
   if (!opening) return undefined;
   const pairs = opening[1] ?? "";
   const attributes: Record<string, string> = {};
   const rest = pairs.replace(/([A-Za-z]+)=(?:"([^"]*)"|([^\s"]+))/g, (_, name, quoted, bare) => {
-    if (name in attributes) throw new Error(`:::items sets ${name} twice: ${line}`);
+    if (name in attributes) throw new Error(`::items sets ${name} twice: ${line}`);
     attributes[name] = quoted ?? bare;
     return "";
   });
-  if (rest.trim()) throw new Error(`:::items cannot read "${rest.trim()}": ${line}`);
+  if (rest.trim()) throw new Error(`::items cannot read "${rest.trim()}": ${line}`);
   const parsed = v.safeParse(ItemQuerySchema, attributes);
   if (!parsed.success) {
     const problems = parsed.issues.map((issue) => {
       const path = v.getDotPath(issue);
       return path ? `${path}: ${issue.message}` : issue.message;
     });
-    throw new Error(`:::items is invalid (${problems.join("; ")}): ${line}`);
+    throw new Error(`::items is invalid (${problems.join("; ")}): ${line}`);
   }
   return parsed.output;
 }
@@ -92,7 +93,7 @@ export function itemQueryKey(query: ItemQuery) {
   );
 }
 
-/** The queries of every `:::items{…}` line in a Markdown source, in order. */
+/** The queries of every `::items{…}` line in a Markdown source, in order. */
 export function itemQueriesIn(markdown: string): ItemQuery[] {
   return markdown.split("\n").flatMap((line) => {
     const query = parseItemsLine(line);

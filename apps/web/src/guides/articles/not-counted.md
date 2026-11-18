@@ -36,7 +36,7 @@ cardFigure: 7つのケース
 - 楽天Kobo の一部。R-TOON、Rakuten Kobo（kobo.com）、楽天Kobo 電子書籍リーダーの中での買い物
 - 1商品あたり税抜100円未満の買い物
 
-一方で、同じページでは、楽券、Apple Gift Card 認定店、Google Play ギフトカード認定店を対象のサービスに挙げています。ギフトカードを買うなら、どのショップで買うかを確かめてください。:rakuten[楽天ブックス](https://books.rakuten.co.jp/)、:rakuten[楽天Kobo](https://books.rakuten.co.jp/e-book/)、:rakuten[楽天24](https://24.rakuten.co.jp/)、:rakuten[楽天ビック](https://biccamera.rakuten.co.jp/)、:rakuten[楽天スーパーDEAL](https://event.rakuten.co.jp/superdeal/)、:rakuten[Rakuten Fashion](https://brandavenue.rakuten.co.jp/) も対象です。ただし、Rakuten Fashion は複数のブランドで買っても1店舗と数えます（[ショップ買いまわりのガイド](https://event.rakuten.co.jp/campaign/point-up/marathon/guide/)）。
+一方で、同じページでは、楽券、Apple Gift Card 認定店、Google Play ギフトカード認定店を対象のサービスに挙げています。ギフトカードを買うなら、どのショップで買うかを確かめてください。:rakuten[楽天ブックス]{href="https://books.rakuten.co.jp/"}、:rakuten[楽天Kobo]{href="https://books.rakuten.co.jp/e-book/"}、:rakuten[楽天24]{href="https://24.rakuten.co.jp/"}、:rakuten[楽天ビック]{href="https://biccamera.rakuten.co.jp/"}、:rakuten[楽天スーパーDEAL]{href="https://event.rakuten.co.jp/superdeal/"}、:rakuten[Rakuten Fashion]{href="https://brandavenue.rakuten.co.jp/"} も対象です。ただし、Rakuten Fashion は複数のブランドで買っても1店舗と数えます（[ショップ買いまわりのガイド](https://event.rakuten.co.jp/campaign/point-up/marathon/guide/)）。
 
 ## クーポンで1,000円を下回ると数えられない
 
@@ -87,7 +87,7 @@ cardFigure: 7つのケース
 
 送料込みでちょうど1,000円の商品です。「ふるさと納税」を含む商品は除いています。値引きのクーポンを使うと1,000円を下回るので、クーポンを使わずに買います。ジャンルごとの一覧は「[1000円ポッキリで買えるもの](/guides/1000yen-items)」にまとめています。
 
-:::items{keyword="1000円ポッキリ" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
+::items{keyword="1000円ポッキリ" NGKeyword="ふるさと納税" minPrice=1000 maxPrice=1000 postageFlag=1 sort="-reviewCount" hits=6}
 
 ## 店舗数とポイントを計算する
 

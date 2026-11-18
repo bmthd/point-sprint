@@ -9,11 +9,11 @@ import {
 } from "#/routes/(site)/(markdown)/-markdown-body.tsx";
 import { markdownExtensions } from "#/routes/(site)/(markdown)/-markdown-extensions.ts";
 
-/** `:::profile` and `:::works` on a line of their own: where the profile and the works go. */
+/** `::profile` and `::works` on a line of their own: where the profile and the works go. */
 export const aboutExtension: MarkdownExtension = {
   name: "about",
   parseBlock(context) {
-    const name = context.lines[context.index]?.trim().match(/^:::(profile|works)$/)?.[1];
+    const name = context.lines[context.index]?.trim().match(/^::(profile|works)$/)?.[1];
     if (!name) return undefined;
     context.consume(1);
     return {

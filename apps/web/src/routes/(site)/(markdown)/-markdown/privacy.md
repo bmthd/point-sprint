@@ -78,7 +78,7 @@ Google は広告 Cookie を使用することにより、利用者が当サイ�
 
 当サイトでは、以下のとおり利用者の情報を外部に送信しています。
 
-:::details Google アナリティクス
+:::details[Google アナリティクス]
 
 - 送信先：Google LLC
 - 送信される情報：Cookie ID、閲覧したページのURL、参照元、IPアドレス、ブラウザや端末の情報、アクセス日時など
@@ -86,7 +86,7 @@ Google は広告 Cookie を使用することにより、利用者が当サイ�
 - オプトアウト：[Google アナリティクス オプトアウト アドオン](https://tools.google.com/dlpage/gaoptout)
   :::
 
-:::details Google AdSense
+:::details[Google AdSense]
 
 - 送信先：Google LLC
 - 送信される情報：Cookie ID、閲覧したページのURL、IPアドレス、ブラウザや端末の情報、広告の表示やクリックの履歴など
@@ -94,7 +94,7 @@ Google は広告 Cookie を使用することにより、利用者が当サイ�
 - オプトアウト：[広告設定](https://adssettings.google.com/)
   :::
 
-:::details Cloudflare Turnstile
+:::details[Cloudflare Turnstile]
 
 - 送信先：Cloudflare, Inc.
 - 送信される情報：IPアドレス、ブラウザや端末の情報など

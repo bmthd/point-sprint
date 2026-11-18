@@ -1,12 +1,14 @@
 import type { BlockNode, ComponentNode, MarkdownExtension } from "@tanstack/markdown";
 
 /**
- * The `:::name argument` block starting at `index`, up to its closing `:::`. An opening without a
+ * The container directive `:::name[label]` at `index`, up to its closing `:::`. An opening without a
  * closing throws, so a broken page fails the build instead of showing the syntax as text.
  */
 function container(lines: string[], index: number, name: string) {
-  const found = block(lines, index, new RegExp(`^:::${name}(?:\\s+(.*))?$`));
-  return found && { ...found, argument: found.opening[1]?.trim() ?? "" };
+  if (lines[index]?.startsWith(`:::${name} `))
+    throw new Error(`:::${name} takes its label in brackets: \`:::${name}[見出し]\``);
+  const found = block(lines, index, new RegExp(`^:::${name}(?:\\[(.*)\\])?\\s*$`));
+  return found && { ...found, label: found.opening[1]?.trim() ?? "" };
 }
 
 /** The block whose opening line, at `index`, matches `opening`, up to its closing `:::`. */
@@ -23,20 +25,20 @@ function block(lines: string[], index: number, opening: RegExp) {
   };
 }
 
-/** `:::details 見出し` … `:::`: a section closed until its heading is pressed. */
+/** `:::details[見出し]` … `:::`: a section closed until its heading is pressed. */
 const details: MarkdownExtension = {
   name: "details",
   parseBlock(context) {
     const block = container(context.lines, context.index, "details");
     if (!block) return undefined;
-    if (!block.argument) throw new Error(":::details needs a heading: `:::details 見出し`");
+    if (!block.label) throw new Error(":::details needs a heading: `:::details[見出し]`");
     context.consume(block.length);
     return {
       type: "component",
       name: "details",
       tagName: "md-details",
-      attributes: { summary: block.argument },
-      properties: { summary: block.argument },
+      attributes: { summary: block.label },
+      properties: { summary: block.label },
       children: context.parseBlocks(block.body),
     };
   },

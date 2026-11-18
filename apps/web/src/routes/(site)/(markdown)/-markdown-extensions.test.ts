@@ -6,7 +6,7 @@ const parse = (source: string) => parseMarkdown(source, { extensions: markdownEx
 
 test(":::details holds its heading and its blocks", () => {
   const [node] = parse(
-    ":::details 保留\n保留中の注文は合計に入りません。\n\n2段落目\n:::",
+    ":::details[保留]\n保留中の注文は合計に入りません。\n\n2段落目\n:::",
   ).children;
   expect(node).toMatchObject({
     type: "component",
@@ -74,13 +74,14 @@ test("the closing may be indented, as the formatter writes it after a list", () 
 });
 
 test("text after the block is parsed as usual", () => {
-  const nodes = parse(":::details 保留\n本文\n:::\n\n続きの段落").children;
+  const nodes = parse(":::details[保留]\n本文\n:::\n\n続きの段落").children;
   expect(nodes.map((node) => node.type)).toEqual(["component", "paragraph"]);
 });
 
 test.each([
-  { source: ":::details 保留\n本文", error: "has no closing" },
+  { source: ":::details[保留]\n本文", error: "has no closing" },
   { source: ":::details\n本文\n:::", error: "needs a heading" },
+  { source: ":::details 保留\n本文\n:::", error: "label in brackets" },
   { source: ":::timeline\n- 番号のない一覧\n:::", error: "one numbered list" },
   { source: ":::timeline\n1. 手順\n\n段落\n:::", error: "one numbered list" },
   { source: ":::info\n本文", error: "has no closing" },
