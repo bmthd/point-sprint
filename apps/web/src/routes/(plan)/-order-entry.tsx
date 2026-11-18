@@ -475,19 +475,16 @@ export function Conditions({
                 )}
               </FormField>
             </Box>
-            <Box
-              display="grid"
-              gridTemplateColumns="repeat(auto-fit, minmax(10rem, 1fr))"
-              alignItems="start"
-              gap="2.5"
-            >
+            {/* The shop rate keeps its narrow width beside the tax rate, and goes under it when
+                the tax rate's choices would not fit beside it. */}
+            <Flex wrap="wrap" align="flex-start" gap="2.5">
               <FormField of={form} path={["items", 0, "taxRate"]}>
                 {(field) => <TaxRateButtons field={field} size={size} fill />}
               </FormField>
               <FormField of={form} path={["items", 0, "shopPointRate"]}>
                 {(field) => <ShopRateInput field={field} size={size} />}
               </FormField>
-            </Box>
+            </Flex>
             {campaigns}
             {children}
           </Flex>

@@ -151,10 +151,20 @@ export function TaxRateButtons({
 }) {
   return (
     // Its legend sits above the choices as a field's label does above its input.
-    <Fieldset.Root legend="税率" minW="0" gap="1" legendProps={{ fontSize: "sm" }}>
+    <Fieldset.Root
+      legend="税率"
+      minW="0"
+      // Filling a row, it keeps the width its labels read well at, and takes the row alone when
+      // the row is narrower than that.
+      flex={fill ? `1 1 ${size === "lg" ? "19rem" : "16rem"}` : undefined}
+      gap="1"
+      legendProps={{ fontSize: "sm" }}
+    >
       <SegmentedControl.Root
         size={size}
         w={fill ? "full" : "xs"}
+        // Yamada UI's least width for its size is wider than a phone's sheet leaves it.
+        minW="0"
         items={TAX_RATES.map((rate) => ({ label: TAX_LABELS[rate], value: rate }))}
         value={typeof field.input === "string" ? (field.input as TaxRateValue) : undefined}
         onChange={(value) => field.onChange(value as TaxRateValue)}
@@ -175,7 +185,14 @@ export const optionalMark = (
 export function ShopRateInput({ field, size }: { field: ValueField; size?: "lg" }) {
   const { name, ref, onBlur } = field.props;
   return (
-    <UIField.Root label="独自倍率" optionalIndicator={optionalMark} {...errorsOf(field)} minW="0">
+    // A shop rate is at most two digits, so the field is as narrow as that and its label allow.
+    <UIField.Root
+      label="独自倍率"
+      optionalIndicator={optionalMark}
+      {...errorsOf(field)}
+      flex="none"
+      w={size === "lg" ? "9rem" : "8rem"}
+    >
       {/* The rate is on the price before tax, as Rakuten's shop rates are: 倍, not %. */}
       <InputGroup.Root size={size}>
         <NumberInput
