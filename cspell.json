@@ -22,6 +22,7 @@
     "Zenn",
     "simplewebauthn",
     "ctap",
+    "undici",
     "RPID",
     "Crockford",
     "nosniff",
