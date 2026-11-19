@@ -6,7 +6,17 @@ import {
   type TaxRate,
   capRows,
 } from "@workspaces/domain";
-import { Badge, Box, Flex, Heading, List, SegmentedControl, Text } from "@workspaces/ui";
+import {
+  Badge,
+  Box,
+  Flex,
+  Heading,
+  List,
+  NativeTable,
+  SegmentedControl,
+  Tag,
+  Text,
+} from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { grouped, yen } from "#/ui/format.ts";
 import { plansAtom } from "#/state/queries.ts";
@@ -50,7 +60,7 @@ function CapRow({
   const [line] = row.lines;
   if (!line) return null;
   const shared = sharedText(line, plans);
-  const condition = row.price === 0 ? undefined : conditionText(line, period);
+  const condition = conditionText(line, period);
   return (
     <List.Item display="flex" flexDirection="column" gap="1.5" py="2">
       <Flex align="center" gap="2" wrap="wrap">
@@ -69,8 +79,7 @@ function CapRow({
       <CapGauge line={line} />
       <Flex justify="space-between" align="flex-end" gap="2" fontSize="sm">
         <Text as="span" color="fg.muted" fontVariantNumeric="tabular-nums">
-          {grouped(line.usedElsewhere + line.usedHere)} / {grouped(line.cap)}P
-          {row.lines.length > 1 ? "（それぞれ）" : ""}
+          {capsText(row, line)}
         </Text>
         <Flex direction="column" align="flex-end">
           {condition ? (
@@ -79,7 +88,7 @@ function CapRow({
             </Text>
           ) : null}
           <Text as="b" fontVariantNumeric="tabular-nums">
-            {row.price === 0 ? "上限" : row.price === null ? "—" : `あと${yen(row.price)}`}
+            {row.price === null ? priceText(row) : `あと${priceText(row)}`}
           </Text>
         </Flex>
       </Flex>
@@ -87,9 +96,124 @@ function CapRow({
   );
 }
 
+const capsText = (row: Row, line: CapLine) =>
+  `${grouped(line.usedElsewhere + line.usedHere)} / ${grouped(line.cap)}P${row.lines.length > 1 ? "（それぞれ）" : ""}`;
+
+/** The price that fills a cap not filled yet; none when nothing fills it. */
+const priceText = (row: Row) => (row.price === null ? "—" : yen(row.price));
+
+/** The caps not filled yet as a table, one row a line, on a wide screen. */
+function CapTable({
+  rows,
+  today,
+  period,
+  plans,
+}: {
+  rows: Row[];
+  today: string | undefined;
+  period: Period;
+  plans: Plan[];
+}) {
+  return (
+    <NativeTable.Root fontSize="sm" fontVariantNumeric="tabular-nums">
+      <NativeTable.Thead fontSize="xs" color="fg.muted">
+        <NativeTable.Tr>
+          <NativeTable.Th fontWeight="normal" textAlign="start" px="2" pt="0" pb="1">
+            特典
+          </NativeTable.Th>
+          <NativeTable.Th fontWeight="normal" textAlign="start" px="2" pt="0" pb="1">
+            対象
+          </NativeTable.Th>
+          <NativeTable.Th fontWeight="normal" textAlign="start" px="2" pt="0" pb="1">
+            使った分 / 上限
+          </NativeTable.Th>
+          <NativeTable.Th
+            fontWeight="normal"
+            textAlign="end"
+            px="2"
+            pt="0"
+            pb="1"
+            whiteSpace="nowrap"
+          >
+            あと（税込）
+          </NativeTable.Th>
+        </NativeTable.Tr>
+      </NativeTable.Thead>
+      <NativeTable.Tbody>
+        {rows.map((row) => {
+          const [line] = row.lines;
+          if (!line) return null;
+          const shared = sharedText(line, plans);
+          const condition = conditionText(line, period);
+          return (
+            <NativeTable.Tr
+              key={row.lines.map((each) => `${each.benefit.id}:${each.key}`).join(",")}
+            >
+              <NativeTable.Td px="2" py="2.5" verticalAlign="middle">
+                <Text as="span" fontWeight="bold">
+                  {row.lines.map((each) => each.benefit.label).join("・")}
+                </Text>
+                {[condition, shared].map((note) =>
+                  note ? (
+                    <Text key={note} display="block" fontSize="xs" color="fg.muted">
+                      {note}
+                    </Text>
+                  ) : null,
+                )}
+              </NativeTable.Td>
+              <NativeTable.Td px="2" py="2.5" verticalAlign="middle">
+                <Badge variant="outline" colorScheme="gray" fullRounded>
+                  {scopeText(line, today)}
+                </Badge>
+              </NativeTable.Td>
+              <NativeTable.Td px="2" py="2.5" verticalAlign="middle" w="32%">
+                <CapGauge line={line} />
+                <Text display="block" mt="1" fontSize="xs" color="fg.muted">
+                  {capsText(row, line)}
+                </Text>
+              </NativeTable.Td>
+              <NativeTable.Td
+                px="2"
+                py="2.5"
+                verticalAlign="middle"
+                textAlign="end"
+                fontWeight="bold"
+                whiteSpace="nowrap"
+              >
+                {priceText(row)}
+              </NativeTable.Td>
+            </NativeTable.Tr>
+          );
+        })}
+      </NativeTable.Tbody>
+    </NativeTable.Root>
+  );
+}
+
+/** The filled caps: just their names and caps, as there is nothing left of them. */
+function FilledTags({ rows }: { rows: Row[] }) {
+  return (
+    <List.Root display="flex" flexDirection="row" flexWrap="wrap" gap="1.5">
+      {rows.flatMap((row) =>
+        row.lines.map((line) => (
+          <List.Item key={`${line.benefit.id}:${line.key}`}>
+            <Tag size="sm" variant="subtle" colorScheme="gray">
+              {line.benefit.label}
+              <Text as="span" ms="1" color="fg.muted" fontVariantNumeric="tabular-nums">
+                {grouped(line.cap)}P
+              </Text>
+            </Tag>
+          </List.Item>
+        )),
+      )}
+    </List.Root>
+  );
+}
+
 /**
  * 「上限までの残り」: every cap of the plan, in the order the tax-included price that fills it
- * exactly reaches it. Caps one price fills alike are one row, and the filled caps come last.
+ * exactly reaches it. Caps one price fills alike are one row, a table on a wide screen (`table`),
+ * and the filled caps come last, only their names.
  */
 export function CapList({
   lines,
@@ -97,30 +221,19 @@ export function CapList({
   period,
   taxRate,
   onTaxRate,
+  table = false,
 }: {
   lines: CapLine[];
   today: string | undefined;
   period: Period;
   taxRate: TaxRate;
   onTaxRate: (taxRate: TaxRate) => void;
+  table?: boolean;
 }) {
   const plans = useAtomValue(plansAtom);
   const rows = capRows(lines, taxRate);
   const open = rows.filter((row) => row.price !== 0);
   const filled = rows.filter((row) => row.price === 0);
-  const list = (shown: Row[]) => (
-    <List.Root gap="0">
-      {shown.map((row) => (
-        <CapRow
-          key={row.lines.map((line) => `${line.benefit.id}:${line.key}`).join(",")}
-          row={row}
-          today={today}
-          period={period}
-          plans={plans}
-        />
-      ))}
-    </List.Root>
-  );
   return (
     <Flex direction="column" gap="2">
       <Flex justify="space-between" align="center" gap="2" wrap="wrap">
@@ -137,13 +250,27 @@ export function CapList({
           css={segmentPressArea}
         />
       </Flex>
-      {open.length > 0 ? list(open) : null}
+      {open.length === 0 ? null : table ? (
+        <CapTable rows={open} today={today} period={period} plans={plans} />
+      ) : (
+        <List.Root gap="0">
+          {open.map((row) => (
+            <CapRow
+              key={row.lines.map((line) => `${line.benefit.id}:${line.key}`).join(",")}
+              row={row}
+              today={today}
+              period={period}
+              plans={plans}
+            />
+          ))}
+        </List.Root>
+      )}
       {filled.length > 0 ? (
         <>
           <Heading as="h4" fontSize="xs" color="fg.muted" pt="2">
-            上限に届いた特典
+            上限に届いた特典（{filled.reduce((sum, row) => sum + row.lines.length, 0)}）
           </Heading>
-          {list(filled)}
+          <FilledTags rows={filled} />
         </>
       ) : null}
       <Text fontSize="xs" color="fg.muted">

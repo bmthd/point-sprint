@@ -65,8 +65,9 @@ const plans = (unitPrice: number, benefits?: Benefit[]) => [
 const caps = () => page.getByRole("region", { name: "上限までの残り" });
 const cardRow = () => caps().getByRole("listitem").filter({ hasText: "楽天カード特典分" });
 
+// On a phone each cap is a list item; a wide screen has them as a table (its own test below).
 beforeEach(async () => {
-  await page.viewport(1280, 900);
+  await page.viewport(390, 844);
 });
 
 test("a cap shows what other plans used and the price that fills it", async () => {
@@ -85,12 +86,40 @@ test("a cap shows what other plans used and the price that fills it", async () =
   await expect.element(cardRow()).toMatchTextContent("あと¥7,000");
 });
 
-test("a cap that is used up is under its own heading", async () => {
+test("a cap that is used up is only its name and cap, under its own heading", async () => {
   // 1回目: ¥11,000 → 100P, the whole cap.
   await renderPlanHome(createMemoryRepository({ shops, plans: plans(11000) }));
-  await expect.element(caps()).toMatchTextContent(/上限に届いた特典.*楽天カード特典分/);
-  await expect.element(cardRow()).toMatchTextContent("上限");
+  await expect.element(caps()).toMatchTextContent(/上限に届いた特典（1）.*楽天カード特典分/);
+  await expect.element(cardRow()).toMatchTextContent("楽天カード特典分100P");
   await expect.element(cardRow()).not.toMatchTextContent("あと¥");
+  expect(caps().getByRole("img").query()).toBeNull();
+});
+
+test("on a wide screen the caps are a table under the orders, and the filled ones only names", async () => {
+  await page.viewport(1280, 900);
+  const ownCap: Benefit = {
+    ...card,
+    id: "b0000000-0000-4000-8000-0000000000c3",
+    label: "キャンペーン",
+    capScope: "plan",
+    sharedKey: undefined,
+    params: { rate: 1, roundingUnit: "item", cap: 1000 },
+  };
+  // 1回目: ¥11,000 fills the card's 100P; the plan's own cap is not filled.
+  await renderPlanHome(
+    createMemoryRepository({ shops, plans: plans(11000, [baseBenefit, ownCap, card]) }),
+  );
+  const row = caps().getByRole("row").filter({ hasText: "キャンペーン" });
+  await expect.element(row).toMatchTextContent("このプラン");
+  await expect.element(row).toMatchTextContent("0 / 1,000P");
+  await expect.element(row).toMatchTextContent(/¥\d/);
+  await expect.element(caps()).toMatchTextContent("上限に届いた特典（1）");
+  const filled = caps().getByRole("listitem");
+  await expect.element(filled).toMatchTextContent("楽天カード特典分100P");
+  // The caps are not among the orders.
+  await expect
+    .element(page.getByRole("region", { name: "注文のリスト" }).getByRole("table"))
+    .not.toBeInTheDocument();
 });
 
 test("without a capped benefit there is no list", async () => {
