@@ -301,16 +301,19 @@ export function OrdersHeading({
   orders,
   headingRef,
   id,
+  small = false,
 }: {
   orders: Order[];
   headingRef: RefObject<HTMLHeadingElement | null>;
   id?: string;
+  /** In the table's header row, among the column labels. */
+  small?: boolean;
 }) {
   const heldCount = orders.filter((order) => order.onHold).length;
   return (
-    <Heading as="h2" fontSize="md" ref={headingRef} tabIndex={-1} id={id}>
+    <Heading as="h2" fontSize={small ? "xs" : "md"} ref={headingRef} tabIndex={-1} id={id}>
       注文{" "}
-      <Text as="span" fontWeight="normal" fontSize="sm" color="fg.muted">
+      <Text as="span" fontWeight="normal" fontSize={small ? "xs" : "sm"} color="fg.muted">
         {orders.length}件{heldCount > 0 ? `（保留 ${heldCount}）` : ""}
       </Text>
     </Heading>

@@ -1,6 +1,6 @@
 import type { Plan } from "@workspaces/domain";
 import { Box, Flex, Card, List, Text, Tooltip, VisuallyHidden } from "@workspaces/ui";
-import { useCallback, useId, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useId, useMemo, useRef, useState } from "react";
 import { OrderAddForm } from "./order-add-form.tsx";
 import { withMonthSeparators } from "./order-months.tsx";
 import { OrderListContext, OrderRow, rowColumns } from "./order-row.tsx";
@@ -24,9 +24,12 @@ const HOLD_HINT =
 
 export function OrderTable({
   plan,
+  head,
   onSpu,
 }: {
   plan: Plan;
+  /** What the column starts with, left of 「リセット」: the plan's name. */
+  head: ReactNode;
   /** Opens a month's SPU from the month's separator, when the orders are of more than one month. */
   onSpu?: ((month: string) => void) | undefined;
 }) {
@@ -51,7 +54,7 @@ export function OrderTable({
   return (
     <Flex direction="column" gap="2.5">
       <ColumnHead>
-        <OrdersHeading orders={orders} headingRef={heading} id={headingId} />
+        {head}
         <HeaderButton disabled={orders.length === 0} onClick={askReset}>
           リセット
         </HeaderButton>
@@ -63,35 +66,45 @@ export function OrderTable({
       <VisuallyHidden id={holdHintId}>{HOLD_HINT}</VisuallyHidden>
       <VisuallyHidden role="status">{announcement}</VisuallyHidden>
       <Card.Root overflow="hidden">
-        {orders.length > 0 ? (
-          <Box
-            display="grid"
-            gridTemplateColumns={rowColumns}
-            alignItems="center"
-            gap="2.5"
-            px="3"
-            py="1.5"
-            borderBottomWidth="1px"
-            fontSize="xs"
-            color="fg.muted"
-            aria-hidden
-          >
+        {/* The column starts with the plan's name, so the orders' heading is the label of their column. */}
+        <Box
+          display="grid"
+          gridTemplateColumns={rowColumns}
+          alignItems="center"
+          gap="2.5"
+          px="3"
+          py="1.5"
+          borderBottomWidth="1px"
+          fontSize="xs"
+          color="fg.muted"
+        >
+          {orders.length > 0 ? (
             <Tooltip content={HOLD_HINT}>
-              <Text as="span" gridColumn="2" justifySelf="center" textDecoration="underline dotted">
+              <Text
+                as="span"
+                gridColumn="2"
+                justifySelf="center"
+                textDecoration="underline dotted"
+                aria-hidden
+              >
                 購入決定
               </Text>
             </Tooltip>
-            <Text as="span" gridColumn="4">
-              注文
-            </Text>
-            <Text as="span" gridColumn="5" justifySelf="end">
-              金額
-            </Text>
-            <Text as="span" gridColumn="6" justifySelf="end">
-              ポイント
-            </Text>
+          ) : null}
+          <Box gridColumn={orders.length > 0 ? "4" : "1 / 5"} color="fg">
+            <OrdersHeading orders={orders} headingRef={heading} id={headingId} small />
           </Box>
-        ) : null}
+          {orders.length > 0 ? (
+            <>
+              <Text as="span" gridColumn="5" justifySelf="end" aria-hidden>
+                金額
+              </Text>
+              <Text as="span" gridColumn="6" justifySelf="end" aria-hidden>
+                ポイント
+              </Text>
+            </>
+          ) : null}
+        </Box>
         <List.Root
           ref={listRef}
           as="ol"

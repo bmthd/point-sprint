@@ -749,7 +749,7 @@ test("editing one order does not re-render the other rows", async () => {
       updateOrder = (next) => update({ planId: PLAN, order: next });
     }, [update]);
     const loaded = plans.data?.find((p) => p.id === PLAN);
-    return loadedShops.isSuccess && loaded ? <OrderTable plan={loaded} /> : null;
+    return loadedShops.isSuccess && loaded ? <OrderTable plan={loaded} head={null} /> : null;
   }
 
   rowRenders.clear();

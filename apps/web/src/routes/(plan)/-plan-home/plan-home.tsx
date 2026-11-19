@@ -246,7 +246,8 @@ function Home({ plan }: { plan: Plan }) {
 
   return (
     <>
-      <PlanBar plan={plan} desktop={desktop} onChangeSpu={changeSpu} />
+      {/* On a desktop the plan's name heads the orders' column and its settings the result's. */}
+      {desktop ? null : <PlanBar plan={plan} desktop={desktop} onChangeSpu={changeSpu} />}
       {/* One column on a phone (summary first); on a wide screen the summary is the right column. */}
       <Box
         as="main"
@@ -275,6 +276,9 @@ function Home({ plan }: { plan: Plan }) {
               <Heading as="h2" id={resultHeadingId} fontSize="md">
                 結果
               </Heading>
+              {desktop ? (
+                <SettingsEntry plan={plan} desktop={desktop} onChangeSpu={changeSpu} />
+              ) : null}
             </ColumnHead>
           ) : null}
           <VStack gap="4" alignItems="stretch">
@@ -312,7 +316,7 @@ function Home({ plan }: { plan: Plan }) {
           minW="0"
         >
           {desktop ? (
-            <OrderTable plan={plan} onSpu={changeSpu} />
+            <OrderTable plan={plan} head={<PlanSwitcher plan={plan} />} onSpu={changeSpu} />
           ) : (
             <OrderList
               plan={plan}
