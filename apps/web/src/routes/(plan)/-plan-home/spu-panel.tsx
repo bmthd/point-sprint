@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as v from "valibot";
 import { accountIdOf } from "#/state/accounts.ts";
 import { accountSettingsAtom } from "#/state/derived.ts";
-import { CloseIcon } from "#/ui/icons.tsx";
+import { BackIcon, CloseIcon } from "#/ui/icons.tsx";
 import { useToday } from "#/routes/-use-today.ts";
 import { SpuMonthEditor, spuMonthText } from "#/routes/(plan)/-spu-month/spu-month-editor.tsx";
 
@@ -57,11 +57,15 @@ export function SpuPanel({
   month,
   onMonth,
   onClose,
+  backTo,
 }: {
   plan: Plan;
   month: string | undefined;
   onMonth: (month: string) => void;
+  /** Closes the panel: back to `backTo` when it is set. */
   onClose: () => void;
+  /** What the panel was opened from, which closing it goes back to: 「プランの設定」. */
+  backTo?: string | undefined;
 }) {
   const settings = useAtomValue(accountSettingsAtom);
   const today = useToday(now);
@@ -70,6 +74,10 @@ export function SpuPanel({
   const [last, setLast] = useState(month);
   if (month !== undefined && month !== last) setLast(month);
   const shown = month ?? last;
+  // While the panel slides out, it keeps where it goes back to.
+  const [lastBackTo, setLastBackTo] = useState(backTo);
+  if (month !== undefined && backTo !== lastBackTo) setLastBackTo(backTo);
+  const back = month === undefined ? lastBackTo : backTo;
   return (
     <Drawer.Root
       open={month !== undefined}
@@ -80,13 +88,20 @@ export function SpuPanel({
       restoreFocus
     >
       <Drawer.Content roundedLeft="l2">
-        <Drawer.Header justifyContent="space-between">
+        <Drawer.Header justifyContent={back ? "flex-start" : "space-between"} gap="1">
+          {back ? (
+            <IconButton variant="ghost" aria-label={`${back}に戻る`} onClick={onClose}>
+              <BackIcon />
+            </IconButton>
+          ) : null}
           <Drawer.Title as="h2">
             {shown ? `${spuMonthText(shown, today)}の SPU` : null}
           </Drawer.Title>
-          <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>
-            <CloseIcon />
-          </IconButton>
+          {back ? null : (
+            <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>
+              <CloseIcon />
+            </IconButton>
+          )}
         </Drawer.Header>
         <Drawer.Body alignItems="stretch">
           {shown && months.length > 1 ? (
@@ -112,7 +127,7 @@ export function SpuPanel({
         </Drawer.Body>
         <Drawer.Footer>
           <Button colorScheme="primary" size="lg" w="full" onClick={onClose}>
-            計算に反映して閉じる
+            {back ? `${back}に戻る` : "計算に反映して閉じる"}
           </Button>
         </Drawer.Footer>
       </Drawer.Content>
