@@ -232,6 +232,9 @@ function Home({ plan }: { plan: Plan }) {
         />
       </Panel>
     );
+  const warnings = (
+    <Warnings plan={plan} warnings={result.warnings} hasShopAround={outlook !== null} />
+  );
   const shareResult = (
     <ShareButton
       label="結果をシェア"
@@ -282,7 +285,12 @@ function Home({ plan }: { plan: Plan }) {
               note="注文の日付の月で決まります"
               onChange={changeSpu}
             />
-            <Warnings plan={plan} warnings={result.warnings} hasShopAround={outlook !== null} />
+            {wide && outlook ? (
+              <Panel label="あと何店舗回る？">
+                <ShopLadder outlook={outlook} />
+              </Panel>
+            ) : null}
+            {wide ? null : warnings}
             {wide ? capList : null}
             {wide ? (
               <Panel label="ポイントの内訳">
@@ -290,11 +298,6 @@ function Home({ plan }: { plan: Plan }) {
                   ポイントの内訳
                 </Heading>
                 <PointBreakdown totals={result.groupTotals} />
-              </Panel>
-            ) : null}
-            {wide && outlook ? (
-              <Panel label="あと何店舗回る？">
-                <ShopLadder outlook={outlook} />
               </Panel>
             ) : null}
             {wide ? shareResult : null}
@@ -318,6 +321,8 @@ function Home({ plan }: { plan: Plan }) {
               onSpu={changeSpu}
             />
           )}
+          {/* On a wide screen the warnings are about the orders, so they sit under them. */}
+          {wide ? <Box mt="4">{warnings}</Box> : null}
         </Box>
         {/* On a phone the caps and the share button come after the orders; on a wide screen they are in the right column. */}
         {wide ? null : (
