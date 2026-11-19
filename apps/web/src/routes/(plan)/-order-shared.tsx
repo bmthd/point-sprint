@@ -256,6 +256,10 @@ export function CampaignChip({ children }: { children: ReactNode }) {
   );
 }
 
+/** What turning 購入決定 off does, shown on the column's heading and read with each switch. */
+export const HOLD_HINT =
+  "オフにすると保留になり、買い回りの店舗数とポイントに数えません。買うか迷っている注文に使います。";
+
 /** An order's position among the counted orders, or 「保留」 for a held order. */
 export function OrderBadge({ badge }: { badge: number | null }) {
   return badge === null ? (

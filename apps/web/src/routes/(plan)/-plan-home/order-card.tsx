@@ -1,17 +1,7 @@
 import { taxExcludedTarget, taxIncludedTarget } from "@workspaces/domain";
-import {
-  Box,
-  Flex,
-  Button,
-  Card,
-  IconButton,
-  List,
-  Switch,
-  Text,
-  VisuallyHidden,
-} from "@workspaces/ui";
+import { Box, Flex, Button, IconButton, List, Switch, Text, VisuallyHidden } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
-import { memo, useId, useMemo, useRef } from "react";
+import { createContext, memo, use, useId, useMemo, useRef } from "react";
 import { pointsText, rateText, yen } from "#/ui/format.ts";
 import { orderAtom } from "#/state/derived.ts";
 import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "#/state/plan-operations.ts";
@@ -30,6 +20,9 @@ import {
 } from "#/routes/(plan)/-order-shared.tsx";
 import { pointFill } from "#/routes/-point-breakdown.tsx";
 
+/** The id of the text that explains what turning 購入決定 off does, for each row's switch. */
+export const HoldHintContext = createContext<string | undefined>(undefined);
+
 export type OrderCardProps = {
   planId: string;
   orderId: string;
@@ -42,7 +35,10 @@ export type OrderCardProps = {
   onDelete: (orderId: string) => void;
 };
 
-/** One order on the phone's order list. Only one card is open at a time. */
+/**
+ * One order on the phone's order list: a row of the list's table, like a row of the desktop table,
+ * with its 購入決定 switch. Only one row is open at a time.
+ */
 export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
   const { planId, orderId, index } = props;
   const key = useMemo(() => ({ planId, orderId }), [planId, orderId]);
@@ -57,7 +53,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
   const moveOrder = useSetAtom(moveOrderAtom);
   const shopName = useShopName(order);
   const bodyId = useId();
-  const holdNoteId = useId();
+  const holdHintId = use(HoldHintContext);
   const upRef = useRef<HTMLButtonElement>(null);
   const downRef = useRef<HTMLButtonElement>(null);
 
@@ -77,12 +73,22 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
 
   return (
     <List.Item>
-      <Card.Root
-        // A held order is told apart by its dashed frame, as well as its 「保留」 badge.
-        borderStyle={held ? "dashed" : undefined}
-        overflow="hidden"
-      >
-        <Flex align="center">
+      {/* A held order is told apart by its sunken row, as well as its 「保留」 badge. */}
+      <Box bg={held ? "bg.subtle" : undefined}>
+        <Flex align="center" pl="1">
+          <Switch
+            size="sm"
+            colorScheme="primary"
+            boxSize="11"
+            flex="none"
+            justifyContent="center"
+            checked={!held}
+            inputProps={{
+              "aria-label": `${shopName}の注文を購入決定`,
+              "aria-describedby": holdHintId,
+            }}
+            onChange={() => save(toggleHold({ planId, orderId }))}
+          />
           <Button
             variant="ghost"
             colorScheme="gray"
@@ -91,7 +97,10 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
             onClick={() => setOpenOrderId(open ? null : orderId)}
             flex="1"
             minW="0"
-            gap="2.5"
+            gap="2"
+            ps="1"
+            pe="3"
+            rounded="none"
             // The header holds three lines of text; a button is one line tall and does not wrap.
             h="auto"
             py="3"
@@ -100,7 +109,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
             lineHeight="normal"
           >
             {/* As wide as 「保留」, so the text beside it stays put when the order is held. */}
-            <Flex as="span" flex="none" w="10" justify="center">
+            <Flex as="span" flex="none" w="9" justify="center">
               <OrderBadge badge={props.badge} />
             </Flex>
             <Flex as="span" flex="1" minW="0" direction="column" gap="0.5">
@@ -124,7 +133,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                     : "商品名なし"}
                 </Text>
               )}
-              {/* One chip high with or without campaigns, so every card is as tall. */}
+              {/* One chip high with or without campaigns, so every row is as tall. */}
               <Flex
                 as="span"
                 align="center"
@@ -281,21 +290,6 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                   </List.Item>
                 ))}
               </List.Root>
-              <Flex direction="column" gap="1">
-                <Switch
-                  checked={!held}
-                  onChange={() => save(toggleHold({ planId, orderId }))}
-                  colorScheme="primary"
-                  flexDirection="row-reverse"
-                  justifyContent="space-between"
-                  inputProps={{ "aria-describedby": holdNoteId }}
-                >
-                  購入決定（オフで保留）
-                </Switch>
-                <Text id={holdNoteId} fontSize="xs" color="fg.muted">
-                  オフにすると合計と買い回りに入りません。
-                </Text>
-              </Flex>
               <Box display="grid" gridTemplateColumns="repeat(3, minmax(0, 1fr))" gap="2">
                 <Button variant="outline" size="lg" onClick={() => props.onEdit(orderId)}>
                   編集
@@ -319,7 +313,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
             </>
           ) : null}
         </Box>
-      </Card.Root>
+      </Box>
     </List.Item>
   );
 });

@@ -38,7 +38,7 @@ export const helpFigureMarks: Record<string, HelpFigureMark[]> = {
   ],
   "held-order": [
     { selector: "button > span:nth-of-type(3)", text: "保留中" },
-    { selector: "ul[aria-label^=購入決定] + div", text: "購入決定", offset: 2 },
+    { selector: "[aria-hidden=true] > span:first-of-type", text: "購入決定", offset: 2 },
   ],
   "spu-card": [{ selector: "button[aria-label='10月の SPU を変更']", text: "変更" }],
   "spu-months": [{ selector: "h2 + p + div", text: "10月から引き継ぎ" }],

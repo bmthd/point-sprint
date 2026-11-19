@@ -1,11 +1,12 @@
 import type { Plan } from "@workspaces/domain";
-import { Flex, List, Text } from "@workspaces/ui";
+import { Box, Card, Flex, List, Text, VisuallyHidden } from "@workspaces/ui";
 import { useAtom } from "jotai";
-import { useRef } from "react";
+import { type ReactNode, useId, useRef } from "react";
 import { reorderModeAtom } from "#/routes/(plan)/-ui.ts";
 import { withMonthSeparators } from "./order-months.tsx";
-import { OrderCard } from "./order-card.tsx";
+import { HoldHintContext, OrderCard } from "./order-card.tsx";
 import {
+  HOLD_HINT,
   HeaderButton,
   OrdersHeading,
   SaveFailedAlert,
@@ -14,8 +15,51 @@ import {
 import { ColumnHead } from "#/ui/column-head.tsx";
 
 /**
- * The plan's orders as cards (the phone layout). Counted orders are numbered in list order; held
- * ones get 「保留」 instead.
+ * The phone's table of orders: one card with the columns' names over the rows, in the desktop
+ * table's order. The rows are `children`, list items of `OrderCard`.
+ */
+export function OrderListTable({ children }: { children: ReactNode }) {
+  const holdHintId = useId();
+  return (
+    <Card.Root overflow="hidden">
+      <VisuallyHidden id={holdHintId}>{HOLD_HINT}</VisuallyHidden>
+      {/* The columns' names, for the eye: each switch and row is named on its own. */}
+      <Flex
+        align="center"
+        gap="2"
+        px="3"
+        py="1.5"
+        borderBottomWidth="1px"
+        fontSize="xs"
+        color="fg.muted"
+        aria-hidden
+      >
+        <Box as="span" w="11" ms="-2" textAlign="center" whiteSpace="nowrap">
+          購入決定
+        </Box>
+        <Box as="span" flex="1" ps="10">
+          注文
+        </Box>
+        <Box as="span" pe="6">
+          ポイント
+        </Box>
+      </Flex>
+      <List.Root
+        aria-label="注文"
+        gap="0"
+        // A line between the rows and the months' separators.
+        css={{ "& > li + li": { borderTopWidth: "1px" } }}
+      >
+        <HoldHintContext value={holdHintId}>{children}</HoldHintContext>
+      </List.Root>
+    </Card.Root>
+  );
+}
+
+/**
+ * The plan's orders as a table of rows in one card (the phone layout), in the desktop table's
+ * order: 購入決定, the position, the order, its points. Counted orders are numbered in list order;
+ * held ones get 「保留」 instead.
  */
 export function OrderList({
   plan,
@@ -57,7 +101,7 @@ export function OrderList({
           まだ注文がありません。「注文を追加」から入れられます。
         </Text>
       ) : (
-        <List.Root aria-label="注文" gap="2.5">
+        <OrderListTable>
           {withMonthSeparators({
             plan,
             onSpu,
@@ -73,8 +117,9 @@ export function OrderList({
                 onDelete={askDelete}
               />
             )),
+            separator: { px: "3", py: "1", bg: "bg.subtle" },
           })}
-        </List.Root>
+        </OrderListTable>
       )}
       {dialog}
     </Flex>

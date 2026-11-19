@@ -132,12 +132,12 @@ test("hold toggle moves the order out of the shop count", async () => {
   const screen = await renderPlanHome(repository);
 
   await expect.element(summary()).toMatchTextContent("4店舗を買い回り中");
-  await toggleOf("ショップ1").click();
-  const counted = screen.getByRole("switch", { name: "購入決定（オフで保留）" });
-  // The switch's input sits under its track, so it is clicked through its label.
-  const label = screen.getByText("購入決定（オフで保留）");
+  const counted = screen.getByRole("switch", { name: "ショップ1の注文を購入決定" });
+  // The input itself is visually hidden; a click lands on the box drawn in its label. Locators
+  // cannot reach an element's parent, so the label is found from the input.
+  const clickHold = () => userEvent.click(counted.element().closest("label") as HTMLElement);
   await expect.element(counted).toBeChecked();
-  await label.click();
+  await clickHold();
 
   await expect.element(summary()).toMatchTextContent("3店舗を買い回り中");
   await expect.element(heading()).toHaveTextContent("注文 4件（保留 1）");
@@ -146,7 +146,7 @@ test("hold toggle moves the order out of the shop count", async () => {
   await expect.element(counted).not.toBeChecked();
   await expect.poll(async () => (await repository.plans.get(PLAN))?.orders[1]?.onHold).toBe(true);
 
-  await label.click();
+  await clickHold();
   await expect.element(summary()).toMatchTextContent("4店舗を買い回り中");
 });
 
@@ -324,8 +324,11 @@ test("holding the only Books order tells that the month's Books SPU may be lost,
     spuIdsIn(await repository.spuMonths.list(), DEFAULT_ACCOUNT_ID, "2026-10").has(BOOKS_SPU_ID);
 
   await expect.element(summary()).toMatchTextContent("4店舗を買い回り中");
-  await toggleOf("ショップ1").click();
-  await screen.getByText("購入決定（オフで保留）").click();
+  // The input itself is visually hidden under the track that its label draws, and a forced click
+  // lands where it is: out from under the bottom bar.
+  const counted = screen.getByRole("switch", { name: "ショップ1の注文を購入決定" });
+  counted.element().scrollIntoView({ block: "center" });
+  await counted.click({ force: true });
 
   await expect
     .element(page.getByText("10月の SPU の楽天ブックスの対象外になるかもしれません"))

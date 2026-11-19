@@ -101,7 +101,7 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 日付の入力欄 | 注文日（注文の編集、プラン画面の追加フォームと行）、キャンペーンの追加とプラン設定の日付と期間は `DatePicker`（`locale="ja"`、`YYYY/MM/DD` の表示）。カレンダーは欄をタップしたときだけ開き、フォーカスや入力では開かない。タップで画面のキーボードは出さない（`inputMode="none"`）が、物理キーボードでは打ち込める。ダイアログを開いたときに欄へ自動でフォーカスしない |
 | キャンペーンの追加ダイアログ | 見出しの左に、追加するキャンペーンの画像（`boxSize="12"`）を置く |
 | 入力欄のまとまり | `Fieldset.Root`（`legend`）。注文の編集の2つ目以降の商品は `variant="outline" size="sm"` |
-| 買い回りにカウントするか | 表は `Checkbox colorScheme="primary" size="lg"`、カードは `Switch colorScheme="primary"` |
+| 買い回りにカウントするか（購入決定） | PC の表とスマホの表の各行の左に `Switch colorScheme="primary" size="sm"`。列の見出しは「購入決定」 |
 | 保留（注文の編集） | `Switch colorScheme="primary"` |
 | 開いて見る設定（注文の編集の詳細設定） | `NativeAccordion`（variant は既定の plain） |
 | 文中の追加ボタン（同じショップの商品を追加） | `Button variant="ghost" colorScheme="primary"` |
@@ -114,7 +114,7 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 上限の印（SPU が上限に達した） | `Badge colorScheme="primary" variant="solid" fullRounded` |
 | 表示だけのチップ（日付で自動のキャンペーン） | `Tag size="sm" variant="outline" fullRounded` |
 | 順番バッジ | `Badge variant="solid" colorScheme="mono" fullRounded` |
-| 保留中の注文 | カードは点線の枠（`borderStyle="dashed"`）、ポイントは `fg.muted` で取り消し線、バッジは「保留」の `Badge variant="outline" colorScheme="gray"` |
+| 保留中の注文 | スマホの表は行の地を `bg.subtle` に沈める。ポイントは `fg.muted` で取り消し線、バッジは「保留」の `Badge variant="outline" colorScheme="gray"` |
 | プレビュー（この注文で何ポイント） | 強調の数値 `primary.fg` |
 | 「あと何店舗回る？」の現在の行 | 地 `primary.subtle`、枠 `primary.outline`。上限までの満たし具合の棒は `Progress`（上限に届く行は `colorScheme="success"`、現在の行は `"primary"`、ほかは `"gray"`） |
 | 上限までの残り | 行は `List`。枠の単位は `Badge variant="outline" colorScheme="gray" fullRounded`。ゲージは 2 色に分けるため `Progress` ではなく帯を組む（ほかのプランの分 `gray.solid`、このプランの分 `primary.solid`、溝 `bg.muted`）。税率の切り替えは、注文の入力欄の税率と同じ `SegmentedControl`（`size="sm"`） |
