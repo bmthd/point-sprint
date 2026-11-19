@@ -1,7 +1,26 @@
 import * as v from "valibot";
 
-export const IdSchema = v.pipe(v.string(), v.uuid());
+/** A new id, or a uuid saved before ids were shortened. */
+export const IdSchema = v.union([
+  v.pipe(v.string(), v.regex(/^[0-9a-z]{10}$/)),
+  v.pipe(v.string(), v.uuid()),
+]);
 export type Id = v.InferOutput<typeof IdSchema>;
+
+const ID_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
+const ID_LENGTH = 10;
+
+/** 10 random lowercase letters and digits, short enough for a URL. */
+export function newId(): string {
+  let id = "";
+  while (id.length < ID_LENGTH) {
+    for (const byte of crypto.getRandomValues(new Uint8Array(ID_LENGTH))) {
+      // 252 is the largest multiple of 36 within a byte, so every character is equally likely.
+      if (byte < 252 && id.length < ID_LENGTH) id += ID_ALPHABET[byte % ID_ALPHABET.length];
+    }
+  }
+  return id;
+}
 
 export const IsoDateSchema = v.pipe(v.string(), v.isoDate());
 export type IsoDate = v.InferOutput<typeof IsoDateSchema>;

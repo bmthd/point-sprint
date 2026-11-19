@@ -11,6 +11,7 @@ import {
   orderShopContext,
   closestDateInPeriod,
   matchesConditions,
+  newId,
 } from "@workspaces/domain";
 import * as v from "valibot";
 import type { ShopChange } from "#/state/mutations.ts";
@@ -175,7 +176,7 @@ export function draftOf(
   const { shopId, shop, change: shopChange } = shopToSave(output, shops);
   const items = new Map(original?.lineItems.map((item) => [item.id, item]));
   const parsed = v.safeParse(OrderSchema, {
-    id: original?.id ?? crypto.randomUUID(),
+    id: original?.id ?? newId(),
     ...orderPurchase(shopId, { channel: output.channel, shopTags: output.is39 ? ["39shop"] : [] }),
     date: output.date,
     onHold: output.onHold,
@@ -191,7 +192,7 @@ export function draftOf(
       return {
         ...kept,
         ...item,
-        id: id || crypto.randomUUID(),
+        id: id || newId(),
         taxRate: Number(item.taxRate),
         ...(shopPointRate === undefined ? {} : { shopPointRate }),
         ...(url === undefined ? {} : { url }),

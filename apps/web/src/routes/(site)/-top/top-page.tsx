@@ -1,5 +1,5 @@
 import { ClientOnly, useHydrated, useNavigate } from "@tanstack/react-router";
-import { type OfficialEvent, type Plan, createPlan } from "@workspaces/domain";
+import { type OfficialEvent, type Plan, createPlan, newId } from "@workspaces/domain";
 import { Box, Button, Flex, Modal, Text } from "@workspaces/ui";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { useState, useTransition } from "react";
@@ -88,7 +88,7 @@ export function TopPage({
     setFailed(undefined);
     startCreating(async () => {
       const date = now();
-      const id = crypto.randomUUID();
+      const id = newId();
       const name = nameOf(event, date);
       try {
         await savePlan(
@@ -98,7 +98,7 @@ export function TopPage({
               name,
               event,
               now: date.toISOString(),
-              newId: () => crypto.randomUUID(),
+              newId,
             }),
           ),
         );

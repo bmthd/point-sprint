@@ -13,6 +13,7 @@ export {
 export {
   IdSchema,
   type Id,
+  newId,
   IsoDateSchema,
   type IsoDate,
   IsoTimeSchema,

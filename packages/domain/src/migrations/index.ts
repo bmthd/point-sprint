@@ -19,8 +19,9 @@ export type { Migration, SeedSource, StoreName } from "./runner.ts";
 // 7 added order tags for official events (#181), and 8 added the 24h order tag (#185).
 // 13 added the `noticeReads` store, which needs no row transforms either.
 // 14 added the plan's `onHold`.
+// 15 shortened new ids to 10 lowercase letters and digits; saved uuids stay valid.
 // The version bumps keep older tabs from reading or overwriting values they do not understand.
-export const CURRENT_SCHEMA_VERSION = 14;
+export const CURRENT_SCHEMA_VERSION = 15;
 
 export const migrations: Migration[] = [
   cardRequiresMigration,
