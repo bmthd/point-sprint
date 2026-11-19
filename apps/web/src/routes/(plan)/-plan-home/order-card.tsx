@@ -1,5 +1,15 @@
 import { taxExcludedTarget, taxIncludedTarget } from "@workspaces/domain";
-import { Box, Flex, Button, IconButton, List, Switch, Text, VisuallyHidden } from "@workspaces/ui";
+import {
+  Box,
+  Collapse,
+  Flex,
+  Button,
+  IconButton,
+  List,
+  Switch,
+  Text,
+  VisuallyHidden,
+} from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { createContext, memo, use, useId, useMemo, useRef } from "react";
 import { pointsText, rateText, yen } from "#/ui/format.ts";
@@ -75,13 +85,18 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
     <List.Item>
       {/* A held order is told apart by its sunken row, as well as its 「保留」 badge. */}
       <Box bg={held ? "bg.subtle" : undefined}>
-        <Flex align="center" pl="1">
+        <Flex align="center" position="relative">
+          {/* Laid over the row's button, so a press on the row ripples across the switch's column too. */}
           <Switch
             size="sm"
             colorScheme="primary"
             boxSize="11"
-            flex="none"
             justifyContent="center"
+            position="absolute"
+            insetStart="1"
+            top="50%"
+            transform="translateY(-50%)"
+            zIndex="1"
             checked={!held}
             inputProps={{
               "aria-label": `${shopName}の注文を購入決定`,
@@ -98,9 +113,11 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
             flex="1"
             minW="0"
             gap="2"
-            ps="1"
+            // Room on the left for the switch laid over it: 4px, its 44px, and 4px.
+            ps="13"
             pe="3"
-            rounded="none"
+            // Square, as wide and as tall as the row it fills.
+            rounded="0"
             // The header holds three lines of text; a button is one line tall and does not wrap.
             h="auto"
             py="3"
@@ -215,104 +232,94 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
             </Flex>
           ) : null}
         </Flex>
-        <Box
-          id={bodyId}
-          hidden={!open}
-          borderTopWidth="1px"
-          borderColor="border"
-          p="3"
-          display={open ? "flex" : "none"}
-          flexDirection="column"
-          gap="2.5"
-        >
-          {open ? (
-            <>
-              <List.Root aria-label="商品" gap="1" fontSize="sm">
-                {order.lineItems.map((item) => (
-                  <List.Item key={item.id} display="flex" justifyContent="space-between" gap="2">
-                    <span>
-                      {item.name}{" "}
-                      <Text as="span" color="fg.muted" fontVariantNumeric="tabular-nums">
-                        ×{item.quantity}
-                      </Text>
-                    </span>
-                    <Text as="span" fontVariantNumeric="tabular-nums">
-                      {yen(taxIncludedTarget(item))}
+        {/* It slides open and shut, like a row of the desktop table. */}
+        <Collapse open={open} unmountOnExit id={bodyId}>
+          <Flex direction="column" gap="2.5" borderTopWidth="1px" borderColor="border" p="3">
+            <List.Root aria-label="商品" gap="1" fontSize="sm">
+              {order.lineItems.map((item) => (
+                <List.Item key={item.id} display="flex" justifyContent="space-between" gap="2">
+                  <span>
+                    {item.name}{" "}
+                    <Text as="span" color="fg.muted" fontVariantNumeric="tabular-nums">
+                      ×{item.quantity}
                     </Text>
-                  </List.Item>
-                ))}
-              </List.Root>
-              <Flex justify="space-between" fontSize="xs" color="fg.muted">
-                <span>税抜の基準額</span>
-                <Text as="span" fontVariantNumeric="tabular-nums">
-                  {yen(base)}
-                </Text>
-              </Flex>
-              {/* A held order's lines are the ones it would have once counted, faded and struck. */}
-              <List.Root
-                gap="1.5"
-                fontSize="sm"
-                color={held ? "fg.muted" : undefined}
-                aria-label={held ? "購入決定にしたときの内訳" : "ポイントの内訳"}
-              >
-                {points.rows.map((row) => (
-                  <List.Item
-                    key={row.key}
-                    display="grid"
-                    gridTemplateColumns="14px 1fr 56px 56px"
-                    alignItems="center"
-                    gap="2"
+                  </span>
+                  <Text as="span" fontVariantNumeric="tabular-nums">
+                    {yen(taxIncludedTarget(item))}
+                  </Text>
+                </List.Item>
+              ))}
+            </List.Root>
+            <Flex justify="space-between" fontSize="xs" color="fg.muted">
+              <span>税抜の基準額</span>
+              <Text as="span" fontVariantNumeric="tabular-nums">
+                {yen(base)}
+              </Text>
+            </Flex>
+            {/* A held order's lines are the ones it would have once counted, faded and struck. */}
+            <List.Root
+              gap="1.5"
+              fontSize="sm"
+              color={held ? "fg.muted" : undefined}
+              aria-label={held ? "購入決定にしたときの内訳" : "ポイントの内訳"}
+            >
+              {points.rows.map((row) => (
+                <List.Item
+                  key={row.key}
+                  display="grid"
+                  gridTemplateColumns="14px 1fr 56px 56px"
+                  alignItems="center"
+                  gap="2"
+                >
+                  <Box
+                    boxSize="2.5"
+                    rounded="xs"
+                    bg={pointFill(row.group, 2)}
+                    opacity={held ? 0.4 : undefined}
+                    aria-hidden
+                  />
+                  <span>{row.label}</span>
+                  <Text
+                    as="span"
+                    textAlign="end"
+                    color="fg.muted"
+                    fontVariantNumeric="tabular-nums"
                   >
-                    <Box
-                      boxSize="2.5"
-                      rounded="xs"
-                      bg={pointFill(row.group, 2)}
-                      opacity={held ? 0.4 : undefined}
-                      aria-hidden
-                    />
-                    <span>{row.label}</span>
-                    <Text
-                      as="span"
-                      textAlign="end"
-                      color="fg.muted"
-                      fontVariantNumeric="tabular-nums"
-                    >
-                      {rateText(row.rate, row.group !== "base")}
-                    </Text>
-                    <Text
-                      as={held ? "s" : "span"}
-                      textAlign="end"
-                      fontWeight="medium"
-                      fontVariantNumeric="tabular-nums"
-                    >
-                      {pointsText(row.points)}
-                    </Text>
-                  </List.Item>
-                ))}
-              </List.Root>
-              <Box display="grid" gridTemplateColumns="repeat(3, minmax(0, 1fr))" gap="2">
-                <Button variant="outline" size="lg" onClick={() => props.onEdit(orderId)}>
-                  編集
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => save(copyOrder({ planId, orderId }))}
-                >
-                  複製
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  colorScheme="danger"
-                  onClick={() => props.onDelete(orderId)}
-                >
-                  削除
-                </Button>
-              </Box>
-            </>
-          ) : null}
-        </Box>
+                    {rateText(row.rate, row.group !== "base")}
+                  </Text>
+                  <Text
+                    as={held ? "s" : "span"}
+                    textAlign="end"
+                    fontWeight="medium"
+                    fontVariantNumeric="tabular-nums"
+                  >
+                    {pointsText(row.points)}
+                  </Text>
+                </List.Item>
+              ))}
+            </List.Root>
+            <Box display="grid" gridTemplateColumns="repeat(3, minmax(0, 1fr))" gap="2">
+              <Button variant="outline" size="lg" onClick={() => props.onEdit(orderId)}>
+                編集
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => save(copyOrder({ planId, orderId }))}
+              >
+                複製
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                colorScheme="danger"
+                onClick={() => props.onDelete(orderId)}
+              >
+                削除
+              </Button>
+            </Box>
+          </Flex>
+        </Collapse>
       </Box>
     </List.Item>
   );

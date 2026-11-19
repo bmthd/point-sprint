@@ -288,6 +288,8 @@ test("editing one order does not re-render other order cards", async () => {
 
   await expect.element(cardOf("ショップ0")).toMatchTextContent("400P");
   await expect.element(cardOf("ショップ1")).toMatchTextContent("400P");
+  // The closed rows' Collapse renders once more after it mounts: count from after that.
+  await new Promise((resolve) => setTimeout(resolve, 100));
   const before = renders.get("card-1");
 
   const edited = order(0);
