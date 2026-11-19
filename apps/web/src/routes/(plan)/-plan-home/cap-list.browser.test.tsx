@@ -86,12 +86,13 @@ test("a cap shows what other plans used and the price that fills it", async () =
   await expect.element(cardRow()).toMatchTextContent("あと¥7,000");
 });
 
-test("a cap that is used up is under its own heading", async () => {
+test("a cap that is used up is only its name and cap, under its own heading", async () => {
   // 1回目: ¥11,000 → 100P, the whole cap.
   await renderPlanHome(createMemoryRepository({ shops, plans: plans(11000) }));
-  await expect.element(caps()).toMatchTextContent(/上限に届いた特典.*楽天カード特典分/);
-  await expect.element(cardRow()).toMatchTextContent("上限");
+  await expect.element(caps()).toMatchTextContent(/上限に届いた特典（1）.*楽天カード特典分/);
+  await expect.element(cardRow()).toMatchTextContent("楽天カード特典分100P");
   await expect.element(cardRow()).not.toMatchTextContent("あと¥");
+  expect(caps().getByRole("img").query()).toBeNull();
 });
 
 test("on a wide screen the caps are a table under the orders, and the filled ones only names", async () => {

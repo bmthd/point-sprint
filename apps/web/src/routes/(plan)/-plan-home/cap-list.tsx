@@ -60,7 +60,7 @@ function CapRow({
   const [line] = row.lines;
   if (!line) return null;
   const shared = sharedText(line, plans);
-  const condition = row.price === 0 ? undefined : conditionText(line, period);
+  const condition = conditionText(line, period);
   return (
     <List.Item display="flex" flexDirection="column" gap="1.5" py="2">
       <Flex align="center" gap="2" wrap="wrap">
@@ -88,7 +88,7 @@ function CapRow({
             </Text>
           ) : null}
           <Text as="b" fontVariantNumeric="tabular-nums">
-            {row.price === 0 || row.price === null ? priceText(row) : `あと${priceText(row)}`}
+            {row.price === null ? priceText(row) : `あと${priceText(row)}`}
           </Text>
         </Flex>
       </Flex>
@@ -99,8 +99,8 @@ function CapRow({
 const capsText = (row: Row, line: CapLine) =>
   `${grouped(line.usedElsewhere + line.usedHere)} / ${grouped(line.cap)}P${row.lines.length > 1 ? "（それぞれ）" : ""}`;
 
-const priceText = (row: Row) =>
-  row.price === 0 ? "上限" : row.price === null ? "—" : yen(row.price);
+/** The price that fills a cap not filled yet; none when nothing fills it. */
+const priceText = (row: Row) => (row.price === null ? "—" : yen(row.price));
 
 /** The caps not filled yet as a table, one row a line, on a wide screen. */
 function CapTable({
@@ -190,7 +190,7 @@ function CapTable({
   );
 }
 
-/** The filled caps on a wide screen: just their names and caps, as there is nothing left of them. */
+/** The filled caps: just their names and caps, as there is nothing left of them. */
 function FilledTags({ rows }: { rows: Row[] }) {
   return (
     <List.Root display="flex" flexDirection="row" flexWrap="wrap" gap="1.5">
@@ -212,8 +212,8 @@ function FilledTags({ rows }: { rows: Row[] }) {
 
 /**
  * 「上限までの残り」: every cap of the plan, in the order the tax-included price that fills it
- * exactly reaches it. Caps one price fills alike are one row, and the filled caps come last. On a
- * wide screen (`table`) the caps are a table and the filled ones only their names.
+ * exactly reaches it. Caps one price fills alike are one row, a table on a wide screen (`table`),
+ * and the filled caps come last, only their names.
  */
 export function CapList({
   lines,
@@ -234,19 +234,6 @@ export function CapList({
   const rows = capRows(lines, taxRate);
   const open = rows.filter((row) => row.price !== 0);
   const filled = rows.filter((row) => row.price === 0);
-  const list = (shown: Row[]) => (
-    <List.Root gap="0">
-      {shown.map((row) => (
-        <CapRow
-          key={row.lines.map((line) => `${line.benefit.id}:${line.key}`).join(",")}
-          row={row}
-          today={today}
-          period={period}
-          plans={plans}
-        />
-      ))}
-    </List.Root>
-  );
   return (
     <Flex direction="column" gap="2">
       <Flex justify="space-between" align="center" gap="2" wrap="wrap">
@@ -266,15 +253,24 @@ export function CapList({
       {open.length === 0 ? null : table ? (
         <CapTable rows={open} today={today} period={period} plans={plans} />
       ) : (
-        list(open)
+        <List.Root gap="0">
+          {open.map((row) => (
+            <CapRow
+              key={row.lines.map((line) => `${line.benefit.id}:${line.key}`).join(",")}
+              row={row}
+              today={today}
+              period={period}
+              plans={plans}
+            />
+          ))}
+        </List.Root>
       )}
       {filled.length > 0 ? (
         <>
           <Heading as="h4" fontSize="xs" color="fg.muted" pt="2">
-            上限に届いた特典
-            {table ? `（${filled.reduce((sum, row) => sum + row.lines.length, 0)}）` : ""}
+            上限に届いた特典（{filled.reduce((sum, row) => sum + row.lines.length, 0)}）
           </Heading>
-          {table ? <FilledTags rows={filled} /> : list(filled)}
+          <FilledTags rows={filled} />
         </>
       ) : null}
       <Text fontSize="xs" color="fg.muted">
