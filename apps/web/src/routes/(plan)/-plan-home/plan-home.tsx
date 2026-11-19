@@ -40,10 +40,11 @@ import { SpuPanel, useSpuPanelTarget } from "./spu-panel.tsx";
 import { spuPageFromPlanAtom } from "#/routes/(plan)/-spu-month/spu-from.ts";
 import { SpuSettingsCard } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
 
-/** Same as the `lg` breakpoint: from here the summary is a column to the right of the orders. */
+/**
+ * Same as the `lg` breakpoint: from here the summary is a column to the right of the orders, the
+ * orders are a table, and the settings and a month's SPU open in a side panel.
+ */
 const WIDE = "(min-width: 61em)";
-/** From 1024px the orders are the desktop list instead of cards. */
-const DESKTOP = "(min-width: 64em)";
 
 function PlanSwitcher({ plan }: { plan: Plan }) {
   const navigate = useNavigate();
@@ -86,51 +87,11 @@ function PlanSwitcher({ plan }: { plan: Plan }) {
   );
 }
 
-/** On a desktop the settings open in a side panel; on a phone they are their own page. */
-function SettingsEntry({
-  plan,
-  desktop,
-  panel,
-  onChangeSpu,
-}: {
-  plan: Plan;
-  desktop: boolean;
-  panel: { open: boolean; onOpen: () => void; onClose: () => void };
-  onChangeSpu: (month: string) => void;
-}) {
-  return desktop ? (
-    <SettingsPanelButton
-      plan={plan}
-      open={panel.open}
-      onOpen={panel.onOpen}
-      onClose={panel.onClose}
-      onChangeSpu={onChangeSpu}
-    />
-  ) : (
-    <RouterIconButton
-      to="/plan/settings"
-      search={{ id: plan.id }}
-      aria-label="プランの設定（SPU・上限・キャンペーン）"
-      size="lg"
-      variant="ghost"
-      flex="none"
-      icon={<SlidersIcon />}
-    />
-  );
-}
-
-/** The plan's own bar under the site header: which plan this is, and its settings. */
-function PlanBar({
-  plan,
-  desktop,
-  panel,
-  onChangeSpu,
-}: {
-  plan: Plan;
-  desktop: boolean;
-  panel: { open: boolean; onOpen: () => void; onClose: () => void };
-  onChangeSpu: (month: string) => void;
-}) {
+/**
+ * The plan's own bar under the site header, while the screen is one column: which plan this is,
+ * and its settings, their own page. Two columns start with these instead.
+ */
+function PlanBar({ plan }: { plan: Plan }) {
   return (
     <Flex
       maxW="1280px"
@@ -143,7 +104,15 @@ function PlanBar({
       pr={{ base: "6", lg: "2" }}
     >
       <PlanSwitcher plan={plan} />
-      <SettingsEntry plan={plan} desktop={desktop} panel={panel} onChangeSpu={onChangeSpu} />
+      <RouterIconButton
+        to="/plan/settings"
+        search={{ id: plan.id }}
+        aria-label="プランの設定（SPU・上限・キャンペーン）"
+        size="lg"
+        variant="ghost"
+        flex="none"
+        icon={<SlidersIcon />}
+      />
     </Flex>
   );
 }
@@ -203,14 +172,13 @@ function Home({ plan }: { plan: Plan }) {
   const result = useAtomValue(planResultAtom(plan.id));
   useSpuLossNotice(plan);
   const wide = useMediaQuery(WIDE);
-  const desktop = useMediaQuery(DESKTOP);
   const editor = useOrderEditorTarget(plan);
   const spuPanel = useSpuPanelTarget(plan.id);
   const navigate = useNavigate();
   const spuPage = useSetAtom(spuPageFromPlanAtom);
-  // On a desktop a month's SPU opens in a side panel over the plan; elsewhere it is its own page.
+  // On a wide screen a month's SPU opens in a side panel over the plan; elsewhere it is its own page.
   const changeSpu = (month: string) => {
-    if (desktop) spuPanel.open(month);
+    if (wide) spuPanel.open(month);
     else {
       void navigate(spuPage(plan, month));
     }
@@ -265,10 +233,8 @@ function Home({ plan }: { plan: Plan }) {
 
   return (
     <>
-      {/* On a desktop the plan's name heads the orders' column and its settings the result's. */}
-      {desktop ? null : (
-        <PlanBar plan={plan} desktop={desktop} panel={settingsPanel} onChangeSpu={changeSpu} />
-      )}
+      {/* On a wide screen the plan's name heads the orders' column and its settings the result's. */}
+      {wide ? null : <PlanBar plan={plan} />}
       {/* One column on a phone (summary first); on a wide screen the summary is the right column. */}
       <Box
         as="main"
@@ -297,14 +263,13 @@ function Home({ plan }: { plan: Plan }) {
               <Heading as="h2" id={resultHeadingId} fontSize="md">
                 結果
               </Heading>
-              {desktop ? (
-                <SettingsEntry
-                  plan={plan}
-                  desktop={desktop}
-                  panel={settingsPanel}
-                  onChangeSpu={changeSpuFromSettings}
-                />
-              ) : null}
+              <SettingsPanelButton
+                plan={plan}
+                open={settingsPanel.open}
+                onOpen={settingsPanel.onOpen}
+                onClose={settingsPanel.onClose}
+                onChangeSpu={changeSpuFromSettings}
+              />
             </ColumnHead>
           ) : null}
           <VStack gap="4" alignItems="stretch">
@@ -341,15 +306,10 @@ function Home({ plan }: { plan: Plan }) {
           gridRow={{ base: "1", lg: "2" }}
           minW="0"
         >
-          {desktop ? (
+          {wide ? (
             <OrderTable plan={plan} head={<PlanSwitcher plan={plan} />} onSpu={changeSpu} />
           ) : (
-            <OrderList
-              plan={plan}
-              onEdit={editOrder}
-              onAdd={wide ? addOrder : undefined}
-              onSpu={changeSpu}
-            />
+            <OrderList plan={plan} onEdit={editOrder} onSpu={changeSpu} />
           )}
           {/* On a wide screen the warnings are about the orders, so they sit under them. */}
           {wide ? <Box mt="4">{warnings}</Box> : null}
@@ -366,12 +326,12 @@ function Home({ plan }: { plan: Plan }) {
       <OrderEditor
         plan={plan}
         target={editor.target}
-        layout={desktop ? "dialog" : "sheet"}
+        layout={wide ? "dialog" : "sheet"}
         onClose={editor.close}
       />
       <SpuPanel
         plan={plan}
-        month={desktop ? spuPanel.target : undefined}
+        month={wide ? spuPanel.target : undefined}
         onMonth={spuPanel.show}
         onClose={spuPanel.close}
         backTo={spuFromSettings ? "プランの設定" : undefined}

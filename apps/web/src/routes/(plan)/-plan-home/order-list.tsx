@@ -1,9 +1,8 @@
 import type { Plan } from "@workspaces/domain";
-import { Flex, Button, List, Text } from "@workspaces/ui";
+import { Flex, List, Text } from "@workspaces/ui";
 import { useAtom } from "jotai";
 import { useRef } from "react";
 import { reorderModeAtom } from "#/routes/(plan)/-ui.ts";
-import { PlusIcon } from "#/ui/icons.tsx";
 import { withMonthSeparators } from "./order-months.tsx";
 import { OrderCard } from "./order-card.tsx";
 import {
@@ -21,15 +20,12 @@ import { ColumnHead } from "#/ui/column-head.tsx";
 export function OrderList({
   plan,
   onEdit,
-  onAdd,
   onSpu,
 }: {
   plan: Plan;
   onEdit: (orderId: string) => void;
   /** Opens a month's SPU from the month's separator, when the orders are of more than one month. */
   onSpu?: ((month: string) => void) | undefined;
-  /** Shown as a button under the list when the screen has no bottom bar to add from. */
-  onAdd?: (() => void) | undefined;
 }) {
   const [reordering, setReordering] = useAtom(reorderModeAtom);
   const heading = useRef<HTMLHeadingElement>(null);
@@ -80,18 +76,6 @@ export function OrderList({
           })}
         </List.Root>
       )}
-      {onAdd ? (
-        <Button
-          variant="outline"
-          colorScheme="primary"
-          bg="bg.panel"
-          size="xl"
-          onClick={onAdd}
-          startIcon={<PlusIcon />}
-        >
-          注文を追加
-        </Button>
-      ) : null}
       {dialog}
     </Flex>
   );
