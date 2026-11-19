@@ -137,6 +137,8 @@ export function OrderAddForm({ plan }: { plan: Plan }) {
         size="xl"
         // As tall as an order's row above it.
         minH="16"
+        // It fills the card's edges: square, so the hover reaches them; the card rounds its own corners.
+        rounded="0"
         aria-expanded={open}
         aria-controls={formId}
         onClick={() => {
