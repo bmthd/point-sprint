@@ -127,7 +127,7 @@ export function SpuPanel({
         </Drawer.Body>
         <Drawer.Footer>
           <Button colorScheme="primary" size="lg" w="full" onClick={onClose}>
-            {back ? `${back}に戻る` : "計算に反映して閉じる"}
+            {back ? `${back}に戻る` : "計算に戻る"}
           </Button>
         </Drawer.Footer>
       </Drawer.Content>

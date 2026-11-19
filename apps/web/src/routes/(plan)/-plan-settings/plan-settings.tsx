@@ -18,7 +18,7 @@ import { SpendTiersSettings } from "./spend-tiers-settings.tsx";
 import { spuPageFromPlanAtom } from "#/routes/(plan)/-spu-month/spu-from.ts";
 import { SpuSettingsCard } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
 
-/** 「保存して計算に反映」, in the drawer's footer and in the page's bottom bar. */
+/** 「計算に戻る」, in the drawer's footer and in the page's bottom bar. The settings are saved as they change. */
 const primaryButton = { colorScheme: "primary", size: "lg", w: "full" } as const;
 
 /**
@@ -133,7 +133,7 @@ export function SettingsPanelButton({
           </Drawer.Body>
           <Drawer.Footer>
             <Button onClick={onClose} {...primaryButton}>
-              保存して計算に反映
+              計算に戻る
             </Button>
           </Drawer.Footer>
         </Drawer.Content>
@@ -183,7 +183,7 @@ function SettingsScreen({ plan }: { plan: Plan }) {
       >
         <Box maxW="640px" mx="auto">
           <RouterButton to="/plan" search={{ id: plan.id }} {...primaryButton}>
-            保存して計算に反映
+            計算に戻る
           </RouterButton>
         </Box>
       </Box>

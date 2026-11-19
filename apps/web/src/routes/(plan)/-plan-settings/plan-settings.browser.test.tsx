@@ -523,7 +523,7 @@ test("a failed save is reported and cleared when the settings are opened again",
     .toBeVisible();
 
   repository().plans.update = update;
-  await screen.getByRole("link", { name: "保存して計算に反映" }).click();
+  await screen.getByRole("link", { name: "計算に戻る" }).click();
   await expect.element(screen.getByRole("heading", { name: "プランのホーム" })).toBeVisible();
   await screen.router.navigate({ to: "/plan/settings", search: { id: PLAN } });
   await expect.element(screen.getByRole("heading", { name: "プランの設定" })).toBeVisible();
@@ -534,7 +534,7 @@ test("a failed save is reported and cleared when the settings are opened again",
 
 test("save button goes back to the plan home", async () => {
   const screen = await renderSettings(spuPlan());
-  await screen.getByRole("link", { name: "保存して計算に反映" }).click();
+  await screen.getByRole("link", { name: "計算に戻る" }).click();
   await expect.element(screen.getByRole("heading", { name: "プランのホーム" })).toBeVisible();
   expect(screen.router.state.location.search).toEqual({ id: PLAN });
 });
