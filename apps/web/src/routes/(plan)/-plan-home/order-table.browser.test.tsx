@@ -99,7 +99,7 @@ async function openAddForm(screen: Awaited<ReturnType<typeof renderPlanHome>>) {
   await expect.element(toggle).toHaveAttribute("aria-expanded", "true");
 }
 
-test("the list replaces the cards from 1024px", async () => {
+test("the list replaces the cards from 977px, where the screen has two columns", async () => {
   await renderWith();
   await expect.element(rows()).toHaveLength(4);
   await expect.element(cards()).not.toBeInTheDocument();
@@ -114,7 +114,9 @@ test("the list replaces the cards from 1024px", async () => {
     )
     .toBeInTheDocument();
 
-  await page.viewport(1000, 900);
+  await page.viewport(977, 900);
+  await expect.element(cards()).not.toBeInTheDocument();
+  await page.viewport(976, 900);
   await expect.element(cards()).toBeInTheDocument();
   await expect.element(list()).not.toBeInTheDocument();
 });
@@ -167,8 +169,8 @@ for (const onHold of [false, true]) {
   });
 }
 
-test("fits 1024px without horizontal scroll", async () => {
-  await page.viewport(1024, 900);
+test("fits 977px, the narrowest it is shown at, without horizontal scroll", async () => {
+  await page.viewport(977, 900);
   const long = "とても長い名前のショップ".repeat(6);
   const wideShops = shops.map((shop, index) => (index === 0 ? { ...shop, name: long } : shop));
   const wide = order(0);
