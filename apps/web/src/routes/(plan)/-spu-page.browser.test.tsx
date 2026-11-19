@@ -75,7 +75,8 @@ async function renderSpu({
   month?: string;
   plans?: Plan[];
   spuMonths?: SpuMonth[];
-  fromPlan?: boolean;
+  /** `"settings"`: opened from the plan's settings. */
+  fromPlan?: boolean | "settings";
   /** Holds the reading of the stored SPU until it settles. */
   read?: Promise<void>;
 } = {}) {
@@ -93,6 +94,11 @@ async function renderSpu({
     createRoute({ getParentRoute: () => root, path: "/plan", component: () => <h1>プラン</h1> }),
     createRoute({
       getParentRoute: () => root,
+      path: "/plan/settings",
+      component: () => <h1>プランの設定</h1>,
+    }),
+    createRoute({
+      getParentRoute: () => root,
       path: "/settings",
       component: () => <h1>共通設定</h1>,
     }),
@@ -100,7 +106,9 @@ async function renderSpu({
   ];
   const router = createRouter({
     routeTree: root.addChildren(routes),
-    history: createMemoryHistory({ initialEntries: ["/settings"] }),
+    history: createMemoryHistory({
+      initialEntries: [fromPlan === "settings" ? `/plan/settings?id=${PLAN}` : "/settings"],
+    }),
   });
   const screen = await render(
     <Providers repository={currentRepository}>
@@ -110,7 +118,12 @@ async function renderSpu({
   await router.navigate({
     to: "/spu",
     search: { month },
-    state: fromPlan ? { spuFrom: { planId: PLAN } } : {},
+    state:
+      fromPlan === "settings"
+        ? { spuFrom: { planId: PLAN, settings: true } }
+        : fromPlan
+          ? { spuFrom: { planId: PLAN } }
+          : {},
   });
   return Object.assign(screen, { router });
 }
@@ -302,6 +315,18 @@ test("opened from a plan of two months, it switches between them and goes back t
 
   await screen.getByRole("link", { name: "10月末マラソンに戻る" }).first().click();
   await expect.element(screen.getByRole("heading", { name: "プラン" })).toBeVisible();
+  expect(screen.router.state.location.search).toEqual({ id: PLAN });
+});
+
+test("opened from the plan's settings, it goes back to them", async () => {
+  const screen = await renderSpu({ plans: [makePlan([], [order(0)])], fromPlan: "settings" });
+  await expect.element(screen.getByRole("heading", { name: "10月の SPU" })).toBeVisible();
+  // Both 戻る (the header's and the bottom bar's) go to the settings, not the plan.
+  await expect
+    .poll(() => screen.getByRole("link", { name: "プランの設定に戻る" }).all())
+    .toHaveLength(2);
+  await screen.getByRole("link", { name: "プランの設定に戻る" }).last().click();
+  await expect.element(screen.getByRole("heading", { name: "プランの設定" })).toBeVisible();
   expect(screen.router.state.location.search).toEqual({ id: PLAN });
 });
 

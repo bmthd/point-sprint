@@ -90,13 +90,14 @@ function PlanSwitcher({ plan }: { plan: Plan }) {
 function SettingsEntry({
   plan,
   desktop,
+  panel,
   onChangeSpu,
 }: {
   plan: Plan;
   desktop: boolean;
+  panel: { open: boolean; onOpen: () => void; onClose: () => void };
   onChangeSpu: (month: string) => void;
 }) {
-  const panel = useDisclosure();
   return desktop ? (
     <SettingsPanelButton
       plan={plan}
@@ -122,10 +123,12 @@ function SettingsEntry({
 function PlanBar({
   plan,
   desktop,
+  panel,
   onChangeSpu,
 }: {
   plan: Plan;
   desktop: boolean;
+  panel: { open: boolean; onOpen: () => void; onClose: () => void };
   onChangeSpu: (month: string) => void;
 }) {
   return (
@@ -140,7 +143,7 @@ function PlanBar({
       pr={{ base: "6", lg: "2" }}
     >
       <PlanSwitcher plan={plan} />
-      <SettingsEntry plan={plan} desktop={desktop} onChangeSpu={onChangeSpu} />
+      <SettingsEntry plan={plan} desktop={desktop} panel={panel} onChangeSpu={onChangeSpu} />
     </Flex>
   );
 }
@@ -212,6 +215,22 @@ function Home({ plan }: { plan: Plan }) {
       void navigate(spuPage(plan, month));
     }
   };
+  const settingsPanel = useDisclosure();
+  // A month's SPU opened from the settings goes back to them when it is closed, however it is.
+  const [spuFromSettings, setSpuFromSettings] = useState(false);
+  const changeSpuFromSettings = (month: string) => {
+    setSpuFromSettings(true);
+    spuPanel.open(month);
+  };
+  const [shownSpu, setShownSpu] = useState(spuPanel.target);
+  if (spuPanel.target !== shownSpu) {
+    setShownSpu(spuPanel.target);
+    // A month to none is the panel closing; right after 変更 the URL has no month yet either.
+    if (spuPanel.target === undefined && spuFromSettings) {
+      setSpuFromSettings(false);
+      settingsPanel.onOpen();
+    }
+  }
   const { open: editOrder } = editor;
   const addOrder = useCallback(() => editOrder(NEW_ORDER), [editOrder]);
   const today = useToday(now);
@@ -247,7 +266,9 @@ function Home({ plan }: { plan: Plan }) {
   return (
     <>
       {/* On a desktop the plan's name heads the orders' column and its settings the result's. */}
-      {desktop ? null : <PlanBar plan={plan} desktop={desktop} onChangeSpu={changeSpu} />}
+      {desktop ? null : (
+        <PlanBar plan={plan} desktop={desktop} panel={settingsPanel} onChangeSpu={changeSpu} />
+      )}
       {/* One column on a phone (summary first); on a wide screen the summary is the right column. */}
       <Box
         as="main"
@@ -277,7 +298,12 @@ function Home({ plan }: { plan: Plan }) {
                 結果
               </Heading>
               {desktop ? (
-                <SettingsEntry plan={plan} desktop={desktop} onChangeSpu={changeSpu} />
+                <SettingsEntry
+                  plan={plan}
+                  desktop={desktop}
+                  panel={settingsPanel}
+                  onChangeSpu={changeSpuFromSettings}
+                />
               ) : null}
             </ColumnHead>
           ) : null}
@@ -348,6 +374,7 @@ function Home({ plan }: { plan: Plan }) {
         month={desktop ? spuPanel.target : undefined}
         onMonth={spuPanel.show}
         onClose={spuPanel.close}
+        backTo={spuFromSettings ? "プランの設定" : undefined}
       />
     </>
   );

@@ -18,6 +18,7 @@ import {
   VStack,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
+import type { MouseEvent } from "react";
 import { accountIdOf } from "#/state/accounts.ts";
 import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
 import { BackIcon, ForwardIcon } from "#/ui/icons.tsx";
@@ -47,6 +48,33 @@ function BackToCommon() {
   );
 }
 
+/**
+ * Where 「戻る」 goes from a page opened from a plan: back to its settings when opened from them
+ * (back in history, so they keep their scroll), otherwise to the plan.
+ */
+function useBackToPlan(from: { planId: string; settings?: boolean } | undefined, planName: string) {
+  const router = useRouter();
+  const canGoBack = useCanGoBack();
+  if (from?.settings) {
+    return {
+      label: "プランの設定に戻る",
+      link: {
+        to: "/plan/settings",
+        search: { id: from.planId },
+        onClick: (event: MouseEvent) => {
+          if (!canGoBack) return;
+          event.preventDefault();
+          router.history.back();
+        },
+      },
+    } as const;
+  }
+  return {
+    label: `${planName}に戻る`,
+    link: { to: "/plan", search: { id: from?.planId ?? "" } },
+  } as const;
+}
+
 function SpuScreen({ month, account }: { month: string; account: string | undefined }) {
   const navigate = useNavigate();
   const settings = useAtomValue(accountSettingsAtom);
@@ -70,6 +98,7 @@ function SpuScreen({ month, account }: { month: string; account: string | undefi
       state: (state) => state,
       replace: true,
     });
+  const back = useBackToPlan(from, plan?.name ?? "");
   const planMonths = plan ? spuMonthsOfPlan(plan) : [];
   const title = `${spuMonthText(month, today)}の SPU`;
   const previous = addMonths(month, -1);
@@ -80,9 +109,8 @@ function SpuScreen({ month, account }: { month: string; account: string | undefi
       <Flex maxW="640px" mx="auto" h="14" align="center" gap="1" px="2">
         {plan ? (
           <RouterIconButton
-            to="/plan"
-            search={{ id: plan.id }}
-            aria-label={`${plan.name}に戻る`}
+            {...back.link}
+            aria-label={back.label}
             size="lg"
             variant="ghost"
             icon={<BackIcon />}
@@ -166,14 +194,8 @@ function SpuScreen({ month, account }: { month: string; account: string | undefi
       >
         <Box maxW="640px" mx="auto">
           {plan ? (
-            <RouterButton
-              to="/plan"
-              search={{ id: plan.id }}
-              colorScheme="primary"
-              size="lg"
-              w="full"
-            >
-              {plan.name}に戻る
+            <RouterButton {...back.link} colorScheme="primary" size="lg" w="full">
+              {back.label}
             </RouterButton>
           ) : (
             <RouterButton to="/settings" colorScheme="primary" size="lg" w="full">
