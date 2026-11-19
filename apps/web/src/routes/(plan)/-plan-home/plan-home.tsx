@@ -41,10 +41,11 @@ import { spuPageFromPlanAtom } from "#/routes/(plan)/-spu-month/spu-from.ts";
 import { SpuSettingsCard } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
 
 /**
- * Same as the `lg` breakpoint: from here the summary is a column to the right of the orders, the
- * orders are a table, and the settings and a month's SPU open in a side panel.
+ * Wider than the `lg` breakpoint, which is up to 61em (976px) and keeps one column: from here the
+ * summary is a column to the right of the orders, the orders are a table, and the settings and a
+ * month's SPU open in a side panel.
  */
-const WIDE = "(min-width: 61em)";
+const WIDE = "(min-width: 977px)";
 
 function PlanSwitcher({ plan }: { plan: Plan }) {
   const navigate = useNavigate();
