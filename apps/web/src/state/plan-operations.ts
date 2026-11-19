@@ -19,6 +19,7 @@ import {
   togglePlanHold,
   updateBenefit,
   updateOrder,
+  newId,
 } from "@workspaces/domain";
 import { atom, type Getter } from "jotai";
 import { withEffectiveAccount } from "./accounts.ts";
@@ -35,7 +36,7 @@ function repeatableIds() {
   return () => {
     let index = 0;
     return () => {
-      const id = ids[index] ?? crypto.randomUUID();
+      const id = ids[index] ?? newId();
       ids[index++] = id;
       return id;
     };

@@ -8,6 +8,7 @@ import {
   hasCampaignOccurrence,
   instantiateCampaign,
   isTwoShopCampaign,
+  newId,
 } from "@workspaces/domain";
 import { Button, Flex, Image, List, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
@@ -96,7 +97,7 @@ export function CampaignAddButtons({
   const add = (template: CampaignTemplate) => {
     const input = defaultInputToday(plan, template);
     if (!input) return;
-    const benefit = instantiateCampaign(template, { id: crypto.randomUUID(), ...input });
+    const benefit = instantiateCampaign(template, { id: newId(), ...input });
     const operation = addBenefit({ planId: plan.id, benefit });
     save(operation);
     void operation.then(() => onAdded(benefit)).catch(() => {});

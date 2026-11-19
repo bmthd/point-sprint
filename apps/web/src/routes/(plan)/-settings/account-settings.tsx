@@ -1,4 +1,10 @@
-import { type Account, DEFAULT_ACCOUNT_ID, type Profile, accountsOf } from "@workspaces/domain";
+import {
+  type Account,
+  DEFAULT_ACCOUNT_ID,
+  type Profile,
+  accountsOf,
+  newId,
+} from "@workspaces/domain";
 import {
   Box,
   Button,
@@ -86,7 +92,7 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
   };
   const add = () => {
     // Made once, outside the change, so the cache and the repository get the same account.
-    const id = crypto.randomUUID();
+    const id = newId();
     void save((current) =>
       withAccounts(current, (list) => [...list, { id, name: `アカウント${list.length + 1}` }]),
     );
