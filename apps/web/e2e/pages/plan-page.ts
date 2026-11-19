@@ -107,7 +107,7 @@ export class SpuPanel {
   }
 
   async close() {
-    await this.root.getByRole("button", { name: "計算に反映して閉じる" }).click();
+    await this.root.getByRole("button", { name: "計算に戻る" }).click();
     await expect(this.root).toBeHidden();
   }
 }

@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import type { Plan } from "@workspaces/domain";
 import { Box, Flex, Button, Drawer, Heading, IconButton, Text, VStack } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useRef } from "react";
 import { planResultAtom } from "#/state/derived.ts";
 import { BackIcon, CloseIcon, PencilIcon } from "#/ui/icons.tsx";
 import { PlanPage } from "#/routes/(plan)/-plan-page.tsx";
@@ -17,7 +18,7 @@ import { SpendTiersSettings } from "./spend-tiers-settings.tsx";
 import { spuPageFromPlanAtom } from "#/routes/(plan)/-spu-month/spu-from.ts";
 import { SpuSettingsCard } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
 
-/** 「保存して計算に反映」, in the drawer's footer and in the page's bottom bar. */
+/** 「計算に戻る」, in the drawer's footer and in the page's bottom bar. The settings are saved as they change. */
 const primaryButton = { colorScheme: "primary", size: "lg", w: "full" } as const;
 
 /**
@@ -83,6 +84,9 @@ export function SettingsPanelButton({
   onClose: () => void;
   onChangeSpu: (month: string) => void;
 }) {
+  // Back from a month's SPU, the settings open where they were left.
+  const scrollTop = useRef(0);
+  const body = useRef<HTMLDivElement>(null);
   return (
     <>
       <Button
@@ -109,10 +113,19 @@ export function SettingsPanelButton({
               <CloseIcon />
             </IconButton>
           </Drawer.Header>
-          <Drawer.Body alignItems="stretch">
+          <Drawer.Body
+            alignItems="stretch"
+            ref={(element: HTMLDivElement | null) => {
+              body.current = element;
+              if (!element || scrollTop.current === 0) return;
+              element.scrollTop = scrollTop.current;
+              scrollTop.current = 0;
+            }}
+          >
             <SettingsContent
               plan={plan}
               onChangeSpu={(month) => {
+                scrollTop.current = body.current?.scrollTop ?? 0;
                 onClose();
                 onChangeSpu(month);
               }}
@@ -120,7 +133,7 @@ export function SettingsPanelButton({
           </Drawer.Body>
           <Drawer.Footer>
             <Button onClick={onClose} {...primaryButton}>
-              保存して計算に反映
+              計算に戻る
             </Button>
           </Drawer.Footer>
         </Drawer.Content>
@@ -150,7 +163,10 @@ function SettingsScreen({ plan }: { plan: Plan }) {
         </Heading>
       </Flex>
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="32">
-        <SettingsContent plan={plan} onChangeSpu={(month) => void navigate(spuPage(plan, month))} />
+        <SettingsContent
+          plan={plan}
+          onChangeSpu={(month) => void navigate(spuPage(plan, month, true))}
+        />
       </Box>
       <Box
         data-bottom-bar
@@ -167,7 +183,7 @@ function SettingsScreen({ plan }: { plan: Plan }) {
       >
         <Box maxW="640px" mx="auto">
           <RouterButton to="/plan" search={{ id: plan.id }} {...primaryButton}>
-            保存して計算に反映
+            計算に戻る
           </RouterButton>
         </Box>
       </Box>

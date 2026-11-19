@@ -523,7 +523,7 @@ test("a failed save is reported and cleared when the settings are opened again",
     .toBeVisible();
 
   repository().plans.update = update;
-  await screen.getByRole("link", { name: "保存して計算に反映" }).click();
+  await screen.getByRole("link", { name: "計算に戻る" }).click();
   await expect.element(screen.getByRole("heading", { name: "プランのホーム" })).toBeVisible();
   await screen.router.navigate({ to: "/plan/settings", search: { id: PLAN } });
   await expect.element(screen.getByRole("heading", { name: "プランの設定" })).toBeVisible();
@@ -534,12 +534,12 @@ test("a failed save is reported and cleared when the settings are opened again",
 
 test("save button goes back to the plan home", async () => {
   const screen = await renderSettings(spuPlan());
-  await screen.getByRole("link", { name: "保存して計算に反映" }).click();
+  await screen.getByRole("link", { name: "計算に戻る" }).click();
   await expect.element(screen.getByRole("heading", { name: "プランのホーム" })).toBeVisible();
   expect(screen.router.state.location.search).toEqual({ id: PLAN });
 });
 
-test("on a desktop the settings open in a side panel, and 変更 opens the month's SPU in its place", async () => {
+test("on a desktop the settings open in a side panel, and 変更 opens the month's SPU in its place, which goes back to them", async () => {
   await page.viewport(1280, 900);
   const plan = makePlan(structuredClone(marathon), [order(0)]);
   currentRepository = createMemoryRepository({
@@ -560,8 +560,9 @@ test("on a desktop the settings open in a side panel, and 変更 opens the month
   const spu = screen.getByRole("dialog", { name: "10月の SPU" });
   await tapCard(spu.getByRole("checkbox", { name: "楽天ブックス +0.5倍" }));
   await expect.poll(() => storedOn("楽天ブックス")).toBe(true);
-  await spu.getByRole("button", { name: "計算に反映して閉じる" }).click();
+  await spu.getByRole("button", { name: "プランの設定に戻る" }).last().click();
   await expect.element(spu).not.toBeInTheDocument();
+  await expect.element(screen.getByRole("dialog", { name: "プランの設定" })).toBeVisible();
 });
 test("the account is picked only once accounts are told apart", async () => {
   const SUB = "acc00000-0000-4000-8000-000000000002";
@@ -585,7 +586,7 @@ test("the account is picked only once accounts are told apart", async () => {
   await expect.poll(async () => (await storedPlan()).accountId).toBeUndefined();
 });
 
-test("the SPU is the month's: the settings show each month's rate, and 変更 opens the month's page from the plan", async () => {
+test("the SPU is the month's: the settings show each month's rate, and 変更 opens the month's page from the plan's settings", async () => {
   const plan = spuPlan([], [order(0), { ...order(1), date: "2026-11-02" }]);
   const screen = await renderSettings(plan, undefined, [spuMonth(["楽天モバイル"])]);
   const section = spuSection(screen);
@@ -601,7 +602,7 @@ test("the SPU is the month's: the settings show each month's rate, and 変更 op
   await section.getByRole("button", { name: "11月の SPU を変更" }).click();
   await expect.element(screen.getByRole("heading", { name: "月の SPU" })).toBeVisible();
   expect(screen.router.state.location.search).toEqual({ month: "2026-11" });
-  expect(screen.router.state.location.state.spuFrom).toEqual({ planId: PLAN });
+  expect(screen.router.state.location.state.spuFrom).toEqual({ planId: PLAN, settings: true });
 });
 
 test("attaches a plan made without an event to an event, after saying what it replaces", async () => {
