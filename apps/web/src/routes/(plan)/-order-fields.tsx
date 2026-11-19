@@ -11,6 +11,7 @@ import {
   campaignTemplates,
   channels,
   parseUrl,
+  newId,
 } from "@workspaces/domain";
 import {
   Badge,
@@ -390,7 +391,7 @@ export function shopToSave(choice: ShopChoice, shops: Shop[]): ShopToSave {
     );
     if (existing) return mark(existing);
     const shop: Shop = {
-      id: crypto.randomUUID(),
+      id: newId(),
       channel: choice.channel,
       ...(choice.shopCode ? { shopCode: choice.shopCode } : {}),
       name: choice.newShopName || choice.shopCode,

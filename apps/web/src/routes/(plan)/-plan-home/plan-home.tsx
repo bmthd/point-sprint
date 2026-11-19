@@ -281,13 +281,6 @@ function Home({ plan }: { plan: Plan }) {
               note="注文の日付の月で決まります"
               onChange={changeSpu}
             />
-            {wide && outlook ? (
-              <Panel label="あと何店舗回る？">
-                <ShopLadder outlook={outlook} />
-              </Panel>
-            ) : null}
-            {wide ? null : warnings}
-            {wide ? capList : null}
             {wide ? (
               <Panel label="ポイントの内訳">
                 <Heading as="h3" fontSize="sm">
@@ -296,6 +289,13 @@ function Home({ plan }: { plan: Plan }) {
                 <PointBreakdown totals={result.groupTotals} />
               </Panel>
             ) : null}
+            {wide && outlook ? (
+              <Panel label="あと何店舗回る？">
+                <ShopLadder outlook={outlook} />
+              </Panel>
+            ) : null}
+            {wide ? null : warnings}
+            {wide ? capList : null}
             {wide ? shareResult : null}
           </VStack>
         </VStack>

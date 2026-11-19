@@ -1,3 +1,4 @@
+import { newId as defaultNewId } from "@workspaces/domain";
 import {
   type EventWrite,
   type RunOutcome,
@@ -46,7 +47,7 @@ export async function collectEvents({
   store,
   fetch = globalThis.fetch,
   now = () => new Date(),
-  newId = () => crypto.randomUUID(),
+  newId = defaultNewId,
 }: {
   store: EventStore;
   fetch?: typeof globalThis.fetch;
