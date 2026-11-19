@@ -217,6 +217,7 @@ function Home({ plan }: { plan: Plan }) {
           period={plan.period}
           taxRate={taxRate}
           onTaxRate={setTaxRate}
+          table={wide}
         />
       </Panel>
     );
@@ -295,27 +296,27 @@ function Home({ plan }: { plan: Plan }) {
               </Panel>
             ) : null}
             {wide ? null : warnings}
-            {wide ? capList : null}
             {wide ? shareResult : null}
           </VStack>
         </VStack>
-        <Box
-          as="section"
-          id="orders"
-          aria-label="注文のリスト"
-          gridColumn="1"
-          gridRow={{ base: "1", lg: "2" }}
-          minW="0"
-        >
+        <Box gridColumn="1" gridRow={{ base: "1", lg: "2" }} minW="0">
+          <Box as="section" id="orders" aria-label="注文のリスト">
+            {wide ? (
+              <OrderTable plan={plan} head={<PlanSwitcher plan={plan} />} onSpu={changeSpu} />
+            ) : (
+              <OrderList plan={plan} onEdit={editOrder} onSpu={changeSpu} />
+            )}
+          </Box>
+          {/* On a wide screen the warnings are about the orders, so they sit under them, and the caps
+              after them, where there is room for their table. */}
           {wide ? (
-            <OrderTable plan={plan} head={<PlanSwitcher plan={plan} />} onSpu={changeSpu} />
-          ) : (
-            <OrderList plan={plan} onEdit={editOrder} onSpu={changeSpu} />
-          )}
-          {/* On a wide screen the warnings are about the orders, so they sit under them. */}
-          {wide ? <Box mt="4">{warnings}</Box> : null}
+            <VStack mt="4" gap="4" alignItems="stretch">
+              {warnings}
+              {capList}
+            </VStack>
+          ) : null}
         </Box>
-        {/* On a phone the caps and the share button come after the orders; on a wide screen they are in the right column. */}
+        {/* On a phone the caps and the share button come after the orders; on a wide screen the caps are under the orders and the share button in the right column. */}
         {wide ? null : (
           <VStack gridColumn="1" gridRow="3" gap="6" alignItems="stretch">
             {capList}
