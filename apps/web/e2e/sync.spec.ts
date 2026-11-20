@@ -76,8 +76,6 @@ test("a plan written on one device is on the other, and so are the orders added 
 
   const pcPlan = await PlanPage.open(pc, planId);
   await expect.poll(() => pcPlan.orderShops()).toEqual(["店A"]);
-  // A plan with orders keeps the form shut until it is asked for.
-  await pcPlan.orders.getByRole("button", { name: /^注文を追加/ }).click();
   await pcPlan.addOrder("店B", "2200");
 
   // Sent by the round that runs as 共通設定 opens, if not already 2 seconds after it was saved.

@@ -7,11 +7,11 @@ test("create plan, add order, see points, hold it, reload keeps data", async ({ 
 
   let plan = await (await TopPage.open(page)).createPlan();
 
-  // Desktop: the add accordion at the end of the list.
+  // Desktop: the empty row at the end of the list.
   await expect(plan.addForm.root).toBeVisible();
   await plan.addForm.newShop("テスト商店");
   await plan.addForm.price.fill("3300");
-  await plan.addForm.submit.click();
+  await plan.addForm.add();
 
   await expect(plan.orders.getByText("テスト商店").first()).toBeVisible();
   await expect(plan.breakdown).toContainText("通常30P");

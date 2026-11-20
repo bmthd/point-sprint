@@ -42,7 +42,7 @@ test("a pasted Ichiba URL fills in the order from the Worker's lookup", async ({
   expect(ours[0]?.origin).toBe(siteUrl);
   expect(browserCalls).toEqual([]);
 
-  await form.submit.click();
+  await form.add();
   await expect(plan.orders.getByText("コーヒー豆の店").first()).toBeVisible();
 });
 
