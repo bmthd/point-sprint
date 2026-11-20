@@ -354,23 +354,26 @@ describe("the desktop", () => {
     await page.viewport(1280, 900);
   });
 
-  test("the add form fills in the item, and says when it cannot", async () => {
+  test("the add row fills in the item from a URL pasted into its name, and says when it cannot", async () => {
     const lookup = vi
       .fn<ItemLookup>()
       .mockResolvedValueOnce({ ok: true, item: item() })
       .mockResolvedValue({ ok: false, error: { reason: "rate-limited" } });
     const screen = await renderWith(lookup, `/plan?id=${PLAN}`, marathonPlan([]));
-    const url = urlField(screen);
+    const name = screen.getByRole("textbox", { name: "新しい注文の商品名" });
+    const amount = screen.getByRole("textbox", { name: "新しい注文の金額" });
+    const conditions = screen.getByRole("button", { name: "新しい注文の条件" });
 
-    await paste(url, ITEM_URL);
-    await expect
-      .element(screen.getByRole("textbox", { name: /^商品名/ }))
-      .toHaveValue("ブレンドコーヒー豆 500g");
-    await expect.element(screen.getByRole("textbox", { name: "金額（税込）" })).toHaveValue("2160");
+    pasteFromClipboard(name, ITEM_URL);
+    await expect.element(name).toHaveValue("ブレンドコーヒー豆 500g");
+    await expect.element(amount).toHaveValue("2160");
+    // The new order's conditions open to show the URL and the shop it picked.
+    await expect.element(conditions).toHaveAttribute("aria-expanded", "true");
+    await expect.element(urlField(screen)).toHaveValue(ITEM_URL);
     await expect.element(shopField(screen)).toHaveValue("コーヒー豆の店");
-    await openConditions(screen);
     await expect.element(screen.getByRole("spinbutton", { name: /^独自倍率/ })).toHaveValue("5");
-    await screen.getByRole("button", { name: "追加する" }).click();
+    await amount.click();
+    await userEvent.keyboard("{Control>}{Enter}{/Control}");
 
     await expect.poll(async () => (await stored()).length).toBe(1);
     expect((await stored())[0]?.lineItems[0]).toMatchObject({
@@ -380,13 +383,14 @@ describe("the desktop", () => {
       url: ITEM_URL,
     });
 
-    // The emptied form looks up the next URL, also the same item again, and keeps its shop when
+    // The emptied row looks up the next URL, also the same item again, and keeps its shop when
     // the lookup fails.
-    await url.fill("https://item.rakuten.co.jp/shop-four/x/");
+    await conditions.click();
+    await urlField(screen).fill("https://item.rakuten.co.jp/shop-four/x/");
     await userEvent.keyboard("{Enter}");
     await expect.element(screen.getByText(FAILED)).toBeVisible();
     await expect.element(shopField(screen)).toHaveValue("ショップ4");
-    await expect.element(screen.getByRole("textbox", { name: "金額（税込）" })).toHaveValue("");
+    await expect.element(amount).toHaveValue("");
     expect(await stored()).toHaveLength(1);
   });
 

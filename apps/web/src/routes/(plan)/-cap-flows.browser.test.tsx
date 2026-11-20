@@ -30,11 +30,11 @@ beforeEach(async () => {
   await page.viewport(1280, 900);
 });
 
-/** The desktop add form with `shop` chosen. */
+/** The desktop add row, its conditions open, with `shop` chosen. */
 async function addForm(withPlan = plan, shop = "ショップ0") {
   const screen = await renderPlanHome(createMemoryRepository({ shops, plans: [withPlan] }));
-  if (withPlan.orders.length > 0) await screen.getByRole("button", { name: /注文を追加/ }).click();
-  // The editor is closed, so the only order fields on the page are the add form's.
+  await screen.getByRole("button", { name: "新しい注文の条件" }).click();
+  // No row is open, so the only order fields on the page are the add row's.
   const form = screen.getByRole("region", { name: "注文のリスト" });
   await enterShop(form, shop);
   return form;
@@ -44,7 +44,7 @@ const flows = () => page.getByRole("list", { name: "上限への入り方" });
 
 test("the amount typed shows where its points go, and a button fills the cap", async () => {
   const form = await addForm();
-  const amount = form.getByRole("textbox", { name: "金額（税込）" });
+  const amount = form.getByRole("textbox", { name: "新しい注文の金額" });
   // ¥11,000 at 10% → ¥10,000 before tax → 100P, 30P more than the 70P cap.
   await amount.fill("11000");
   await expect
@@ -91,7 +91,7 @@ test("an order from a new shop is priced at the rate that shop gives", async () 
     orders: [order(0)],
   };
   const form = await addForm(withOrder, "ショップ1");
-  await form.getByRole("textbox", { name: "金額（税込）" }).fill("11000");
+  await form.getByRole("textbox", { name: "新しい注文の金額" }).fill("11000");
   // At +2倍 the first order earns 200P, which leaves 100P: ¥5,000 before tax, ¥5,499 at 10%.
   await expect.element(flows()).toMatchTextContent("買いまわり（このプラン） +100P・100P はみ出す");
   await expect.element(form.getByRole("button", { name: "¥5,499 で使い切る" })).toBeVisible();

@@ -2,7 +2,16 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import { getInput, reset, useField, useForm, validate } from "@formisch/react";
+import {
+  focus,
+  getInput,
+  reset,
+  setErrors,
+  setInput,
+  useField,
+  useForm,
+  validate,
+} from "@formisch/react";
 import { type Order, type Shop, taxExcludedTarget, taxIncludedTarget } from "@workspaces/domain";
 import {
   Box,
@@ -15,7 +24,7 @@ import {
   Text,
   VisuallyHidden,
 } from "@workspaces/ui";
-import { useAtomValue, useSetAtom } from "jotai";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import {
   type KeyboardEvent,
   type RefObject,
@@ -34,7 +43,7 @@ import { shopsAtom } from "#/state/queries.ts";
 import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
 import { useLatestRef } from "#/use-latest-ref.ts";
 import { monthDayWithWeekday } from "#/ui/dates.ts";
-import { ChevronIcon, GripIcon } from "#/ui/icons.tsx";
+import { GripIcon } from "#/ui/icons.tsx";
 import {
   OrderFormSchema,
   type OrderFormInput,
@@ -42,8 +51,13 @@ import {
   hasDetails,
   inputOf,
 } from "#/routes/(plan)/-order-form.ts";
-import { useOrderAutofill } from "#/routes/(plan)/-order-form-store.ts";
+import {
+  AMOUNT_PATH,
+  type OrderForm,
+  useOrderAutofill,
+} from "#/routes/(plan)/-order-form-store.ts";
 import { NEW_SHOP } from "#/routes/(plan)/-order-fields.tsx";
+import { useEnterUrl } from "#/routes/(plan)/-order-entry.tsx";
 import {
   CampaignChip,
   OrderBadge,
@@ -58,9 +72,18 @@ import {
   useSaveOrderDraft,
   useShopName,
 } from "#/routes/(plan)/-order-shared.tsx";
-import { ACTION_BUTTON_WIDTH, OrderFormFields } from "./order-form-fields.tsx";
-import { useEntryMode } from "#/routes/(plan)/-order-entry.tsx";
 import { PointBreakdown } from "#/routes/-point-breakdown.tsx";
+import { ACTION_BUTTON_WIDTH, OrderDetailFields } from "./order-details.tsx";
+import {
+  AMOUNT_INSET,
+  type CommitResult,
+  InlineText,
+  type InlineTextHandle,
+  NAME_INSET,
+  RowToggle,
+  rowToggleCss,
+  textBoxProps,
+} from "./inline-text.tsx";
 import type { DragStart } from "./use-order-drag.ts";
 
 /** What the list shares with its rows without re-rendering them: refs and stable callbacks. */
@@ -86,17 +109,28 @@ const useListContext = () => {
 };
 
 /**
- * The columns of a closed row. Only the middle one (shop, item, campaigns) grows and shrinks. The
- * amount and the points are as wide in every row up to ¥999,999 and 99,999P, so their right edges
- * line up down the table.
+ * The columns of a row: handle, switch, number, item, amount, points, ⌄. Only the item's column
+ * grows and shrinks. The amount and the points are as wide in every row, the add row too, so
+ * their edges and the inputs that float over them line up down the table.
  */
-export const rowColumns =
-  "24px 56px 36px minmax(0, 1fr) minmax(4rem, auto) minmax(4.25rem, auto) 44px";
+export const rowColumns = "24px 56px 36px minmax(0, 1fr) 6rem 4.5rem 44px";
 
 /**
- * Whether the order uses 「詳細設定」: more than one item, or an item bought more than once or with
- * a coupon. Its row opens with them shown.
+ * Where the focus carries on in an order the add row has just made: its name being edited, its
+ * ⌄, or the field of its opened row that has `name`.
  */
+export type RowFocusRequest = { orderId: string; to: "name" | "toggle" | { field: string } };
+
+export const rowFocusRequestAtom = atom<RowFocusRequest | null>(null);
+
+/**
+ * Whether the row edits the order's name and amount itself: one item, bought once, without a
+ * coupon. Any other order is edited in its opened row. A stopgap until #344 gives each item a line.
+ */
+export function isSimpleOrder(order: Order) {
+  return !hasDetails(order);
+}
+
 /** The form's input as text, its keys sorted: the form and `inputOf` list them in different orders. */
 const inputKey = (input: unknown): string =>
   JSON.stringify(input, (_key, value: unknown) =>
@@ -118,37 +152,38 @@ function editInputOf(order: Order, shops: Shop[]): OrderFormInput {
 }
 
 /**
- * The order's fields, edited in place with the add form's fields. A change is saved once it is
- * valid: a choice at once, typed text when its field is left or Enter is pressed.
+ * The order's form, shared by the row's name and amount and its opened fields. A change is saved
+ * once it is valid (`commit`): a choice at once, typed text when its field is left or Enter is
+ * pressed. A change saved elsewhere comes into the fields.
  */
-function InlineOrderEditor({ planId, order }: { planId: string; order: Order }) {
-  const plan = useAtomValue(planAtom(planId));
+function useOrderEditForm(planId: string, order: Order) {
   const shops = useAtomValue(shopsAtom);
   const saveDraft = useSaveOrderDraft(planId, useSetAtom(orderSaveFailedAtom));
   const form = useForm({ schema: OrderFormSchema, initialInput: editInputOf(order, shops) });
   /** The input last saved, or being saved: the same input is not saved twice. */
   const saved = useRef(inputKey(getInput(form)));
 
-  const commit = async () => {
+  const commit = async (): Promise<CommitResult> => {
     const input = getInput(form);
     const json = inputKey(input);
-    if (json === saved.current) return;
+    if (json === saved.current) return "unchanged";
     // A new shop is saved once it has a name.
-    if (input.shop === NEW_SHOP && !input.newShopName?.trim() && !input.shopCode) return;
+    if (input.shop === NEW_SHOP && !input.newShopName?.trim() && !input.shopCode) return "pending";
     const previous = saved.current;
     saved.current = json;
     const result = await validate(form);
     const draft = result.success ? draftOf(result.output, shops, order) : undefined;
     if (!draft) {
       saved.current = previous;
-      return;
+      return "invalid";
     }
+    if (await saveDraft(draft, false)) return "saved";
     // Not saved: the same input can be saved again.
-    if (!(await saveDraft(draft, false))) saved.current = previous;
+    saved.current = previous;
+    return "failed";
   };
   const commitRef = useLatestRef(commit);
   const autofill = useOrderAutofill(form, () => void commitRef.current());
-  const [mode, setMode] = useEntryMode(false, order.lineItems[0]?.url ? "url" : "amount");
 
   // A choice is saved as soon as it is made; typed text when its field is left or Enter is pressed.
   const instantKey = JSON.stringify([
@@ -168,7 +203,6 @@ function InlineOrderEditor({ planId, order }: { planId: string; order: Order }) 
     void commitRef.current();
   }, [instantKey, commitRef, form]);
 
-  // A change saved elsewhere (to the shop, or in another tab) comes into the fields.
   useEffect(() => {
     const next = editInputOf(order, shops);
     const json = inputKey(next);
@@ -177,12 +211,43 @@ function InlineOrderEditor({ planId, order }: { planId: string; order: Order }) 
     reset(form, { initialInput: next });
   }, [order, shops, form]);
 
-  if (!plan) return null;
+  return { form, commit, commitRef, autofill };
+}
 
+/** Puts a typed field back as it was, without its error. */
+function restorer(form: OrderForm, path: typeof AMOUNT_PATH | readonly ["items", 0, "name"]) {
+  return (value: string) => {
+    if (path === AMOUNT_PATH) {
+      setInput(form, { path: AMOUNT_PATH, input: value });
+      setErrors(form, { path: AMOUNT_PATH, errors: null });
+    } else {
+      setInput(form, { path: ["items", 0, "name"], input: value });
+      setErrors(form, { path: ["items", 0, "name"], errors: null });
+    }
+  };
+}
+
+/**
+ * The opened row's fields. Typed text is saved when its field is left or Enter is pressed, a
+ * choice as soon as it is made.
+ */
+function OrderEditor({
+  planId,
+  order,
+  form,
+  autofill,
+  commit,
+}: {
+  planId: string;
+  order: Order;
+  form: OrderForm;
+  autofill: ReturnType<typeof useOrderAutofill>;
+  commit: () => Promise<CommitResult>;
+}) {
+  const plan = useAtomValue(planAtom(planId));
+  if (!plan) return null;
   return (
-    <Flex
-      direction="column"
-      gap="3"
+    <Box
       onBlur={(event) => {
         // Text is saved when its field is left, not when the focus moves within it.
         if (event.target instanceof HTMLInputElement) void commit();
@@ -197,17 +262,14 @@ function InlineOrderEditor({ planId, order }: { planId: string; order: Order }) 
         if (event.target instanceof HTMLSelectElement) void commit();
       }}
     >
-      <OrderFormFields
+      <OrderDetailFields
         form={form}
         plan={plan}
         autofill={autofill}
-        mode={mode}
-        onModeChange={setMode}
-        showSwitch={false}
-        detailsOpen={hasDetails(order)}
+        simple={isSimpleOrder(order)}
         onItemRemoved={() => void commit()}
       />
-    </Flex>
+    </Box>
   );
 }
 
@@ -223,16 +285,24 @@ export type OrderRowProps = {
 };
 
 /**
- * One order in the desktop list, which opens downwards into its breakdown and edit fields. The
- * handle moves the order by dragging, or with the arrow keys while it has the focus.
+ * One order in the desktop list. Its name and amount are edited on the row; its ⌄ opens it
+ * downwards into its conditions, breakdown, 「複製」 and 「削除」. The handle moves the order by
+ * dragging, or with the arrow keys while it has the focus.
  */
 export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
-  const { planId, orderId, index, count } = props;
+  const { planId, orderId } = props;
   const key = useMemo(() => ({ planId, orderId }), [planId, orderId]);
   const order = useAtomValue(orderAtom(key));
+  return order ? <LoadedRow {...props} order={order} /> : null;
+});
+
+function LoadedRow(props: OrderRowProps & { order: Order }) {
+  const { planId, orderId, index, count, order } = props;
+  const key = useMemo(() => ({ planId, orderId }), [planId, orderId]);
   const points = useAtomValue(orderCardPointsAtom(key));
   const open = useAtomValue(isOpenAtom(orderId));
   const setOpenOrderId = useSetAtom(openOrderIdAtom);
+  const [focusRequest, setFocusRequest] = useAtom(rowFocusRequestAtom);
   const toggleHold = useSetAtom(toggleHoldAtom);
   const copyOrder = useSetAtom(copyOrderAtom);
   const moveOrder = useSetAtom(moveOrderAtom);
@@ -241,7 +311,16 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
   const { startDrag, focusAfterMoveRef, announce, handleHintId, holdHintId } = useListContext();
   const detailId = useId();
   const handleRef = useRef<HTMLButtonElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const itemRef = useRef<HTMLLIElement>(null);
+  const detailRef = useRef<HTMLDivElement>(null);
+  const nameRef = useRef<InlineTextHandle>(null);
+  /** Set by Tab in the amount: the ⌄ it moves to opens the row. */
+  const openOnToggleFocus = useRef(false);
+  const { form, commit, autofill } = useOrderEditForm(planId, order);
+  const enterUrl = useEnterUrl(form, autofill);
+  const name = useField(form, { path: ["items", 0, "name"] });
+  const unitPrice = useField(form, { path: AMOUNT_PATH });
 
   // Moving an order can take its row out of the document for a moment, which drops the focus.
   useEffect(() => {
@@ -250,8 +329,25 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
     handleRef.current?.focus();
   }, [index, orderId, focusAfterMoveRef]);
 
-  if (!order) return null;
+  // The order the add row has just made: the focus carries on where it went in the add row.
+  useEffect(() => {
+    if (focusRequest?.orderId !== orderId) return;
+    setFocusRequest(null);
+    const { to } = focusRequest;
+    if (to === "name") nameRef.current?.editAtEnd();
+    else if (to === "toggle") toggleRef.current?.focus();
+    else {
+      requestAnimationFrame(() => {
+        const field = detailRef.current?.querySelector<HTMLElement>(
+          `[name="${CSS.escape(to.field)}"]`,
+        );
+        (field ?? toggleRef.current)?.focus();
+      });
+    }
+  }, [focusRequest, orderId, setFocusRequest]);
+
   const held = order.onHold;
+  const simple = isSimpleOrder(order);
 
   const moveTo = (toIndex: number) => {
     focusAfterMoveRef.current = orderId;
@@ -270,8 +366,25 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
     if (toIndex >= 0 && toIndex < count) void moveTo(toIndex);
   };
 
+  /** Tab from the amount: the row opens as the ⌄ gets the focus. */
+  const openOnTab = () => {
+    openOnToggleFocus.current = true;
+    setTimeout(() => {
+      openOnToggleFocus.current = false;
+    });
+  };
+
+  /** A URL pasted into the name or the amount is looked up, with the row open to show it. */
+  const pasteUrl = (url: string) => {
+    enterUrl(url);
+    setOpenOrderId(orderId);
+  };
+
   const base = order.lineItems.reduce((sum, item) => sum + taxExcludedTarget(item), 0);
   const amount = order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0);
+  const title =
+    orderTitle(order) ||
+    (shopName === "ショップ未入力" ? `${monthDayWithWeekday(order.date)}の注文` : "");
 
   return (
     <List.Item
@@ -288,7 +401,7 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
         gap="2.5"
         px="3"
         minH="16"
-        css={{ "&:has(> button[aria-expanded]:hover)": { bg: "bg.subtle" } }}
+        css={rowToggleCss}
       >
         {/* Drawn as tall as its dots, but pressed in a 44px square that reaches past its column. */}
         <IconButton
@@ -341,115 +454,213 @@ export const OrderRow = memo(function OrderRow(props: OrderRowProps) {
           }}
           onChange={() => save(toggleHold({ planId, orderId }))}
         />
-        {/* Everything right of the switch opens the row; the row lights up as it is pointed at. */}
-        <Box
-          as="button"
-          type="button"
-          gridColumn="3 / -1"
+        <OrderBadge badge={props.badge} />
+        {/* Each column in the same lanes: a small line, the main line, the campaigns' line. */}
+        <Flex
+          minW="0"
           alignSelf="stretch"
-          display="grid"
-          gridTemplateColumns="subgrid"
-          alignItems="center"
-          textAlign="start"
-          cursor="pointer"
-          aria-label={`${shopName}の注文の詳細と編集`}
-          aria-expanded={open}
-          aria-controls={detailId}
-          onClick={() => setOpenOrderId(open ? null : orderId)}
+          direction="column"
+          justify="center"
+          gap="0.5"
+          position="relative"
         >
-          <OrderBadge badge={props.badge} />
-          <Flex minW="0" direction="column" gap="0.5">
-            <Flex as="span" gap="2" fontSize="xs" color="fg.muted">
-              <Text as="span" lineClamp={1} wordBreak="break-all">
-                {shopName}
-              </Text>
-              <Text as="span" flex="none" fontVariantNumeric="tabular-nums">
-                {monthDayWithWeekday(order.date)}
-              </Text>
-            </Flex>
-            <Text as="span" fontSize="sm" fontWeight="medium" lineClamp={1} wordBreak="break-all">
-              {orderTitle(order) ||
-                (shopName === "ショップ未入力" ? `${monthDayWithWeekday(order.date)}の注文` : "")}
+          <Flex as="span" gap="2" h="4" lineHeight="16px" fontSize="xs" color="fg.muted">
+            <Text as="span" lineClamp={1} wordBreak="break-all">
+              {shopName}
             </Text>
-            {/* Kept, one chip high, on rows without campaigns so every closed row is as tall. */}
-            <Flex as="span" wrap="wrap" gap="1" minH="5.5">
-              {points.campaigns.map((label) => (
-                <CampaignChip key={label}>{label}</CampaignChip>
-              ))}
-            </Flex>
-          </Flex>
-          <Flex direction="column" align="flex-end" fontSize="sm" fontVariantNumeric="tabular-nums">
-            <span>{yen(amount)}</span>
-            <Text as="span" fontSize="2xs" color="fg.muted">
-              {taxLabel(order.lineItems)}
+            <Text as="span" flex="none" fontVariantNumeric="tabular-nums">
+              {monthDayWithWeekday(order.date)}
             </Text>
           </Flex>
-          <Flex direction="column" align="flex-end" fontVariantNumeric="tabular-nums">
-            {/* Held or not, two lines, so turning 購入決定 off leaves the row where it is. */}
-            {held ? (
-              <Text as="s" fontWeight="bold" color="fg.muted">
-                <VisuallyHidden>保留中の見込み </VisuallyHidden>
-                {pointsText(points.total)}
-              </Text>
-            ) : (
-              <Text as="span" fontWeight="bold">
-                {pointsText(points.total)}
-              </Text>
-            )}
-            {/* Both labels share one cell, so the column is as wide whichever one shows. */}
-            <Box display="grid" justifyItems="end" fontSize="2xs" color="fg.muted">
-              <Text as="span" gridArea="1 / 1" visibility={held ? "hidden" : undefined}>
-                {rateText(points.rate, false)}
-              </Text>
-              <Text as="span" gridArea="1 / 1" visibility={held ? undefined : "hidden"} aria-hidden>
-                保留中
-              </Text>
+          <InlineText
+            handleRef={nameRef}
+            field={name}
+            restore={restorer(form, ["items", 0, "name"])}
+            commit={commit}
+            label={`${shopName}の注文の商品名`}
+            previewLabel={`${shopName}の注文の商品名 ${title}`}
+            preview={title || "商品名"}
+            textProps={{
+              fontSize: "sm",
+              fontWeight: title ? "medium" : "normal",
+              color: title ? undefined : "fg.muted",
+            }}
+            inset={NAME_INSET}
+            onPasteUrl={pasteUrl}
+          />
+          {/* Kept, one chip high, on rows without campaigns so every closed row is as tall. */}
+          <Flex as="span" wrap="wrap" gap="1" minH="5.5">
+            {points.campaigns.map((label) => (
+              <CampaignChip key={label}>{label}</CampaignChip>
+            ))}
+          </Flex>
+        </Flex>
+        <Flex
+          alignSelf="stretch"
+          direction="column"
+          justify="center"
+          align="flex-end"
+          gap="0.5"
+          position="relative"
+          minW="0"
+          fontSize="sm"
+          fontVariantNumeric="tabular-nums"
+          onKeyDown={(event: KeyboardEvent) => {
+            if (event.key === "Tab" && !event.shiftKey && !simple) openOnTab();
+          }}
+        >
+          <Text as="span" h="4" lineHeight="16px" fontSize="2xs" color="fg.muted">
+            税込 {taxLabel(order.lineItems)}
+          </Text>
+          {simple ? (
+            <InlineText
+              field={unitPrice}
+              restore={restorer(form, AMOUNT_PATH)}
+              commit={commit}
+              label={`${shopName}の注文の金額`}
+              previewLabel={`${shopName}の注文の金額 ${yen(amount)}`}
+              preview={yen(amount)}
+              inset={AMOUNT_INSET}
+              align="end"
+              inputMode="numeric"
+              onPasteUrl={pasteUrl}
+              onTab={openOnTab}
+            />
+          ) : (
+            // Not a plain item: its amount is edited in the opened row, which a press opens.
+            <Box
+              as="button"
+              type="button"
+              {...textBoxProps(AMOUNT_INSET)}
+              textAlign="end"
+              lineHeight="20px"
+              position="relative"
+              _before={{
+                content: '""',
+                position: "absolute",
+                insetBlock: "-12px",
+                insetInline: "0",
+              }}
+              _hover={{ bg: "bg.subtle" }}
+              aria-label={`${shopName}の注文の金額 ${yen(amount)}（開いて商品ごとに直す）`}
+              onClick={() => {
+                setOpenOrderId(orderId);
+                requestAnimationFrame(() => focus(form, { path: AMOUNT_PATH }));
+              }}
+            >
+              {yen(amount)}
             </Box>
-          </Flex>
-          <Flex boxSize="11" align="center" justify="center" color="fg.muted">
-            <ChevronIcon open={open} />
-          </Flex>
-        </Box>
+          )}
+          <Box h="5.5" />
+        </Flex>
+        <Flex
+          alignSelf="stretch"
+          direction="column"
+          justify="center"
+          align="flex-end"
+          gap="0.5"
+          fontVariantNumeric="tabular-nums"
+        >
+          {/* Both labels share one cell, so the column is as wide whichever one shows. */}
+          <Box
+            display="grid"
+            justifyItems="end"
+            h="4"
+            lineHeight="16px"
+            fontSize="2xs"
+            color="fg.muted"
+          >
+            <Text as="span" gridArea="1 / 1" visibility={held ? "hidden" : undefined}>
+              {rateText(points.rate, false)}
+            </Text>
+            <Text as="span" gridArea="1 / 1" visibility={held ? undefined : "hidden"} aria-hidden>
+              保留中
+            </Text>
+          </Box>
+          {/* Held or not, the same lines, so turning 購入決定 off leaves the row where it is. */}
+          {held ? (
+            <Text as="s" h="22px" lineHeight="22px" fontWeight="bold" color="fg.muted">
+              <VisuallyHidden>保留中の見込み </VisuallyHidden>
+              {pointsText(points.total)}
+            </Text>
+          ) : (
+            <Text as="span" h="22px" lineHeight="22px" fontWeight="bold">
+              {pointsText(points.total)}
+            </Text>
+          )}
+          <Box h="5.5" />
+        </Flex>
+        <RowToggle
+          buttonRef={toggleRef}
+          open={open}
+          label={`${shopName}の注文の詳細と編集`}
+          controls={detailId}
+          onToggle={() => setOpenOrderId(open ? null : orderId)}
+          onFocus={() => {
+            if (!openOnToggleFocus.current) return;
+            openOnToggleFocus.current = false;
+            if (!open) setOpenOrderId(orderId);
+          }}
+        />
       </Box>
       {/* It slides open and shut, so a press shows which order the fields below belong to. */}
       {/* Once open, the window scrolls only if 「複製」 and 「削除」 are off it, as little as it can. */}
       <Collapse
         open={open}
         unmountOnExit
+        // Clipped, not scrolled: a field focused while it slides open (Tab from the amount opens
+        // it) would otherwise scroll the fields up inside it, and leave them there.
+        style={{ overflow: "clip" }}
         id={detailId}
         onAnimationComplete={() => {
           if (open && itemRef.current) revealBottom(itemRef.current);
         }}
       >
-        <Flex direction="column" gap="3.5" borderTopWidth="1px" pt="3.5" pb="4" px="4">
-          <Flex direction="column" gap="2">
-            <PointBreakdown totals={groupTotalsOf(points.rows)} legend="line" held={held} />
-            <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
-              {`税抜の基準額 ${yen(base)}`}
-            </Text>
-          </Flex>
-          <InlineOrderEditor planId={planId} order={order} />
-          <Flex wrap="wrap" gap="2" justify="flex-end">
-            <Button
-              variant="outline"
-              size="lg"
-              minW={ACTION_BUTTON_WIDTH}
-              onClick={() => save(copyOrder({ planId, orderId }))}
-            >
-              複製
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              colorScheme="danger"
-              minW={ACTION_BUTTON_WIDTH}
-              onClick={() => props.onDelete(orderId)}
-            >
-              削除
-            </Button>
+        <Flex
+          ref={detailRef}
+          direction="column"
+          gap="3.5"
+          borderTopWidth="1px"
+          pt="3.5"
+          pb="4"
+          px="4"
+        >
+          <OrderEditor
+            planId={planId}
+            order={order}
+            form={form}
+            autofill={autofill}
+            commit={commit}
+          />
+          <Flex wrap="wrap" align="flex-end" justify="space-between" gap="3">
+            <Flex direction="column" gap="2" flex="1 1 16rem" minW="0">
+              <PointBreakdown totals={groupTotalsOf(points.rows)} legend="line" held={held} />
+              <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
+                {`税抜の基準額 ${yen(base)}`}
+              </Text>
+            </Flex>
+            <Flex gap="2" flex="none">
+              <Button
+                variant="outline"
+                size="lg"
+                minW={ACTION_BUTTON_WIDTH}
+                onClick={() => save(copyOrder({ planId, orderId }))}
+              >
+                複製
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                colorScheme="danger"
+                minW={ACTION_BUTTON_WIDTH}
+                onClick={() => props.onDelete(orderId)}
+              >
+                削除
+              </Button>
+            </Flex>
           </Flex>
         </Flex>
       </Collapse>
     </List.Item>
   );
-});
+}
