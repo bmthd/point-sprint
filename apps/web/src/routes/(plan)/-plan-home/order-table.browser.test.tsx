@@ -259,10 +259,6 @@ test("the add row becomes an order by ⌘ + Enter in its amount, and moves on to
   await userEvent.keyboard("フェイスタオル{Enter}");
   await expect.element(newAmount()).toHaveFocus();
   await userEvent.keyboard("11,000");
-  // ¥10,000 before tax at 通常 1倍.
-  await expect
-    .element(screen.getByRole("status", { name: "ポイントの目安" }))
-    .toHaveTextContent("約+100P");
   // Enter alone does not make it.
   await userEvent.keyboard("{Enter}");
   expect((await stored())?.length).toBe(1);

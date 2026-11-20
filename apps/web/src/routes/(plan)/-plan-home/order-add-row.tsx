@@ -3,37 +3,27 @@
 "use no memo";
 
 import { getInput, reset, useField, useForm, validate } from "@formisch/react";
-import { type Plan, calculateAll, totalCountedWith } from "@workspaces/domain";
+import type { Plan } from "@workspaces/domain";
 import { Box, Collapse, Flex, Input, Kbd, List, Text } from "@workspaces/ui";
-import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
+import { atom, useAtom, useSetAtom } from "jotai";
 import {
   type FocusEvent,
   type KeyboardEvent,
   type PointerEvent,
-  useDeferredValue,
   useId,
-  useMemo,
   useRef,
   useState,
 } from "react";
-import { pointsText } from "#/ui/format.ts";
-import { asCalculatedAtom, calculationAtom } from "#/state/derived.ts";
-import { plansAtom, shopsAtom } from "#/state/queries.ts";
+import { shopsAtom } from "#/state/queries.ts";
 import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
 import { useSingleFlight } from "#/use-single-flight.ts";
 import {
   OrderFormSchema,
   type OrderFormOutput,
   draftOf,
-  draftOfInput,
   emptyInput,
 } from "#/routes/(plan)/-order-form.ts";
-import {
-  AMOUNT_PATH,
-  type OrderForm,
-  useFormInput,
-  useOrderAutofill,
-} from "#/routes/(plan)/-order-form-store.ts";
+import { AMOUNT_PATH, useOrderAutofill } from "#/routes/(plan)/-order-form-store.ts";
 import {
   orderSaveFailedAtom,
   revealBottom,
@@ -52,46 +42,6 @@ import {
   rowToggleCss,
 } from "./inline-text.tsx";
 import { type RowFocusRequest, rowColumns, rowFocusRequestAtom } from "./order-row.tsx";
-
-/** 「約+120P」, the points the plan gains with the new order, once its amount is typed. */
-function AddedPointsEstimate({ plan, form }: { plan: Plan; form: OrderForm }) {
-  const plans = useAtomValue(plansAtom);
-  const shops = useAtomValue(shopsAtom);
-  const before = useAtomValue(calculationAtom);
-  const asCalculated = useAtomValue(asCalculatedAtom);
-  const key = JSON.stringify(useFormInput(form));
-  // Calculating every plan again is the heavy part, so it may lag a keystroke behind.
-  const deferred = useDeferredValue(key);
-  const preview = useMemo(() => {
-    const draft = draftOfInput(JSON.parse(deferred), shops, undefined);
-    if (!draft) return undefined;
-    const withShop = draft.shop
-      ? [...shops.filter((shop) => shop.id !== draft.shop?.id), draft.shop]
-      : shops;
-    const withOrder = plans.map((other) =>
-      other.id === plan.id ? { ...other, orders: [...other.orders, draft.order] } : other,
-    );
-    const after = calculateAll(asCalculated(withOrder, withShop), withShop);
-    return totalCountedWith(after, withOrder, plan.id) - totalCountedWith(before, plans, plan.id);
-  }, [deferred, plans, shops, before, asCalculated, plan.id]);
-
-  return (
-    <Text
-      as="span"
-      role="status"
-      aria-label="ポイントの目安"
-      h="5"
-      lineHeight="20px"
-      fontSize="sm"
-      fontWeight="semibold"
-      color="fg.muted"
-      fontVariantNumeric="tabular-nums"
-      whiteSpace="nowrap"
-    >
-      {preview === undefined ? "" : `約+${pointsText(preview)}`}
-    </Text>
-  );
-}
 
 /** The new order that the form's output describes, with the shops saved when it is added. */
 const newDraftAtom = atom(null, (get, _set, output: OrderFormOutput) =>
@@ -278,30 +228,30 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
           />
           {amountError ? <FloatingError id={amountErrorId}>{amountError}</FloatingError> : null}
         </Box>
-        <Flex direction="column" align="flex-end" justify="center" gap="0.5" minW="0">
-          <Text
-            as="span"
-            fontSize="2xs"
-            color="fg.muted"
-            whiteSpace="nowrap"
-            display="flex"
-            flexDirection="column"
-            alignItems="flex-end"
-            lineHeight="short"
-          >
-            <span>
-              <Kbd fontSize="2xs" px="1">
-                {mod}
-              </Kbd>{" "}
-              +{" "}
-              <Kbd fontSize="2xs" px="1">
-                Enter
-              </Kbd>
-            </span>
-            <span>で追加</span>
-          </Text>
-          <AddedPointsEstimate plan={plan} form={form} />
-        </Flex>
+        <Text
+          as="span"
+          justifySelf="end"
+          fontSize="2xs"
+          color="fg.muted"
+          whiteSpace="nowrap"
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          gap="0.5"
+          lineHeight="short"
+        >
+          {/* The 「+」 sits on the keys' middle, not on their baseline. ⌘ is a square key. */}
+          <Flex as="span" align="center" gap="1">
+            <Kbd fontSize="2xs" h="5.5" minW="5.5" px="1" justifyContent="center">
+              {mod}
+            </Kbd>
+            +
+            <Kbd fontSize="2xs" h="5.5" px="1">
+              Enter
+            </Kbd>
+          </Flex>
+          <span>で追加</span>
+        </Text>
         <RowToggle
           buttonRef={toggleRef}
           open={open}

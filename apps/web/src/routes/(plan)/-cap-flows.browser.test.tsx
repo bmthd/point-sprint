@@ -58,8 +58,8 @@ test("the amount typed shows where its points go, and a button fills the cap", a
 });
 
 test("nothing is shown until an amount is typed", async () => {
-  await addForm();
-  await expect.element(page.getByRole("status", { name: "ポイントの目安" })).toBeInTheDocument();
+  const form = await addForm();
+  await expect.element(form.getByRole("textbox", { name: "新しい注文の金額" })).toBeInTheDocument();
   await expect.element(flows()).not.toBeInTheDocument();
 });
 

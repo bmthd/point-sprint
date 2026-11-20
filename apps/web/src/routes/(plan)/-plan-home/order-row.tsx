@@ -111,9 +111,10 @@ const useListContext = () => {
 /**
  * The columns of a row: handle, switch, number, item, amount, points, ⌄. Only the item's column
  * grows and shrinks. The amount and the points are as wide in every row, the add row too, so
- * their edges and the inputs that float over them line up down the table.
+ * their edges and the inputs that float over them line up down the table. The points are wide
+ * enough to leave a gap between the amount's input and the add row's ⌘ + Enter hint.
  */
-export const rowColumns = "24px 56px 36px minmax(0, 1fr) 6rem 4.5rem 44px";
+export const rowColumns = "24px 56px 36px minmax(0, 1fr) 6rem 5.5rem 44px";
 
 /**
  * Where the focus carries on in an order the add row has just made: its name being edited, its
