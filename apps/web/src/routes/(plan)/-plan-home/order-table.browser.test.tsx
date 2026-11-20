@@ -450,15 +450,24 @@ test("the name and amount are edited on the closed row", async () => {
   await expect.element(nameText()).toHaveFocus();
   await expect.element(rowOf("ショップ0")).toMatchTextContent("バスタオル");
 
-  // Tab goes on to the amount, which a change that cannot be saved does not leave on Enter.
+  // Tab goes on to the amount, edited at once. A change Enter cannot save is put back, its error
+  // under the text.
+  const amountText = () => screen.getByRole("button", { name: /^ショップ0の注文の金額/ });
   await nameText().click();
   await userEvent.keyboard("{Tab}");
   await expect.element(amount).toHaveFocus();
   await userEvent.fill(amount, "abc");
   await userEvent.keyboard("{Enter}");
-  await expect.element(amount).toHaveAttribute("aria-invalid", "true");
-  await expect.element(amount).toHaveFocus();
+  await expect.element(amountText()).toHaveFocus();
+  await expect.element(amount).not.toBeInTheDocument();
+  await expect
+    .element(amountText())
+    .toHaveAccessibleDescription("金額は0以上の整数で入れてください");
+  await expect.element(rowOf("ショップ0")).toMatchTextContent("¥11,000");
   expect((await stored())?.[0]?.lineItems[0]?.unitPrice).toBe(11000);
+  await userEvent.keyboard("{Enter}");
+  await expect.element(amount).toHaveValue("11,000");
+  await expect.element(page.getByText("金額は0以上の整数で入れてください")).not.toBeInTheDocument();
   await userEvent.fill(amount, "22,000");
   await userEvent.keyboard("{Enter}");
   await expect.element(rowOf("ショップ0")).toMatchTextContent("¥22,000");
@@ -528,10 +537,13 @@ test("an edit whose save failed can be saved again", async () => {
   await expect
     .element(screen.getByText("変更を保存できませんでした。もう一度お試しください。"))
     .toBeVisible();
-  // Still in the input, to be saved again.
-  await expect.element(amount).toHaveValue("22,000");
+  // Put back to what is saved, to be typed again.
+  await expect.element(amount).not.toBeInTheDocument();
   await expect.element(rowOf("ショップ0")).toMatchTextContent("¥11,000");
 
+  await userEvent.keyboard("{Enter}");
+  await expect.element(amount).toHaveValue("11,000");
+  await userEvent.fill(amount, "22,000");
   await userEvent.keyboard("{Enter}");
   await expect.poll(async () => (await stored())?.[0]?.lineItems[0]?.unitPrice).toBe(22000);
   await expect.element(rowOf("ショップ0")).toMatchTextContent("¥22,000");

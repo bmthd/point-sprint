@@ -1,11 +1,10 @@
-import { Box, IconButton, Input, Text } from "@workspaces/ui";
+import { Box, Editable, IconButton, Text } from "@workspaces/ui";
 import {
   type ClipboardEvent,
   type ComponentProps,
   type KeyboardEvent,
   type ReactNode,
   type Ref,
-  useEffect,
   useId,
   useImperativeHandle,
   useRef,
@@ -94,8 +93,12 @@ export type InlineTextHandle = { editAtEnd: () => void };
  * A row's text that is edited in place. Pressed, or reached with Tab, it becomes an input that
  * floats over its column. Enter and leaving the input save the change (`commit`); Esc puts back
  * what the field had. After Enter or Esc the focus is back on the text, which a second Enter edits
- * again. A change that cannot be saved stays in the input on Enter, with its error, and is put back
- * when the input is left.
+ * again. A change that cannot be saved is put back; after Enter its error shows under the text.
+ *
+ * Yamada UI's `Editable` keeps whether it is edited, and ends the editing on Enter, Esc and
+ * leaving the input. The text is our own button, not `Editable.Preview`: the preview starts
+ * editing whenever it gets the focus, so the focus could not come back to it after Enter, and it
+ * shows the raw value, not 「¥3,980」.
  */
 export function InlineText({
   field,
@@ -112,7 +115,7 @@ export function InlineText({
   handleRef,
   textProps,
 }: {
-  field: FieldState;
+  field: FieldState & { onChange: (value: string) => void };
   /** Puts `value` back in the field and clears its error. */
   restore: (value: string) => void;
   commit: () => Promise<CommitResult>;
@@ -131,133 +134,151 @@ export function InlineText({
   handleRef?: Ref<InlineTextHandle>;
   textProps?: ComponentProps<typeof Text>;
 }) {
-  const [editing, setEditing] = useState(false);
-  /** Where the caret goes once the input is in: everything selected, or after the text. */
-  const caret = useRef<"select" | "end">("select");
-  /** What the field had when editing started, which Esc and an unsaved change put back. */
+  /** The error of the change Enter could not save, shown under the text it put back. */
+  const [rejected, setRejected] = useState<string>();
+  /** What the field had when editing started, which a change that cannot be saved puts back. */
   const previous = useRef("");
+  /** Set by Enter and Esc, which give the focus back to the text. */
+  const byKey = useRef(false);
   /** Set while the focus goes back to the text, which then is not edited again. */
   const toText = useRef(false);
-  /** Set once the input is done with, so its blur saves nothing more. */
-  const done = useRef(false);
+  /** Set to start editing with the caret after the text instead of the text selected. */
+  const atEnd = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLButtonElement>(null);
-  const errorId = useId();
+  const rejectedId = useId();
   const value = typeof field.input === "string" ? field.input : "";
 
-  const start = (at: "select" | "end") => {
-    if (editing) return;
-    caret.current = at;
-    previous.current = value;
-    done.current = false;
-    setEditing(true);
+  useImperativeHandle(handleRef, () => ({
+    editAtEnd: () => {
+      atEnd.current = true;
+      textRef.current?.click();
+    },
+  }));
+
+  /** Once the editing has ended, Enter and Esc leave the focus on the text. */
+  const ended = () => {
+    if (!byKey.current) return;
+    byKey.current = false;
+    requestAnimationFrame(() => {
+      toText.current = true;
+      textRef.current?.focus();
+    });
   };
 
-  useImperativeHandle(handleRef, () => ({ editAtEnd: () => start("end") }));
-
-  useEffect(() => {
-    if (editing) {
-      const input = inputRef.current;
-      if (!input) return;
-      input.focus();
-      if (caret.current === "select") input.select();
-      else input.setSelectionRange(input.value.length, input.value.length);
-      return;
-    }
-    if (toText.current) textRef.current?.focus();
-  }, [editing]);
-
-  const finish = (focusText: boolean) => {
-    done.current = true;
-    toText.current = focusText;
-    setEditing(false);
-  };
-
-  const onKeyDown = async (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.nativeEvent.isComposing) return;
-    if (event.key === "Tab" && !event.shiftKey) onTab?.();
-    if (event.key === "Escape") {
-      event.preventDefault();
-      restore(previous.current);
-      finish(true);
-      return;
-    }
-    if (event.key !== "Enter") return;
-    event.preventDefault();
+  const save = async () => {
+    const enter = byKey.current;
+    ended();
     const result = await commit();
-    if (result === "invalid" || result === "failed") return;
-    finish(true);
+    if (result !== "invalid" && result !== "failed") return;
+    // Read before it is put back, which clears it.
+    const error = field.errors?.[0];
+    restore(previous.current);
+    if (enter && result === "invalid") setRejected(error);
   };
-
-  const onBlur = async () => {
-    field.props.onBlur();
-    if (done.current) return;
-    done.current = true;
-    setEditing(false);
-    const result = await commit();
-    if (result === "invalid" || result === "failed") restore(previous.current);
-  };
-
-  const error = field.errors?.[0];
 
   return (
-    <>
-      <Box
-        as="button"
-        type="button"
-        ref={textRef}
-        {...textBoxProps(inset)}
-        textAlign={align}
-        cursor="text"
-        position="relative"
-        // Drawn one line high, pressed 44px high over the small lines above and below it.
-        _before={{ content: '""', position: "absolute", insetBlock: "-12px", insetInline: "0" }}
-        _hover={{ bg: "bg.subtle" }}
-        _focusVisible={{
-          outlineWidth: "2px",
-          outlineStyle: "solid",
-          outlineColor: "primary.outline",
-        }}
-        aria-label={previewLabel}
-        // Kept in the row while the input covers it, so the row keeps its height.
-        visibility={editing ? "hidden" : undefined}
-        onFocus={() => {
-          if (toText.current) {
-            toText.current = false;
-            return;
-          }
-          start("select");
-        }}
-        onClick={() => start("select")}
-      >
-        <Text as="span" display="block" lineHeight="20px" truncated {...textProps}>
-          {preview}
-        </Text>
-      </Box>
-      {editing ? (
-        <>
-          <Input
-            {...field.props}
-            ref={(element: HTMLInputElement | null) => {
-              field.props.ref(element);
-              inputRef.current = element;
-            }}
-            value={value}
-            {...floatingInputProps(inset, align)}
-            boxShadow="md"
-            aria-label={label}
-            aria-invalid={error ? true : undefined}
-            aria-describedby={error ? errorId : undefined}
-            inputMode={inputMode}
-            autoComplete="off"
-            onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => void onKeyDown(event)}
-            onBlur={() => void onBlur()}
-            onPaste={pasteUrlTo(onPasteUrl)}
-          />
-          {error ? <FloatingError id={errorId}>{error}</FloatingError> : null}
-        </>
-      ) : null}
-    </>
+    <Editable.Root
+      value={value}
+      onChange={field.onChange}
+      onSubmit={() => void save()}
+      onCancel={(before) => {
+        ended();
+        restore(before);
+      }}
+      onEdit={() => {
+        if (!atEnd.current) return;
+        atEnd.current = false;
+        const input = inputRef.current;
+        input?.setSelectionRange(input.value.length, input.value.length);
+      }}
+      // The input floats over the column, not over the text.
+      display="block"
+      position="static"
+    >
+      {({ editing, onEdit }) => {
+        const start = () => {
+          previous.current = value;
+          byKey.current = false;
+          setRejected(undefined);
+          onEdit();
+        };
+        return (
+          <>
+            <Box
+              as="button"
+              type="button"
+              ref={textRef}
+              {...textBoxProps(inset)}
+              textAlign={align}
+              cursor="text"
+              position="relative"
+              // Drawn one line high, pressed 44px high over the small lines above and below it.
+              _before={{
+                content: '""',
+                position: "absolute",
+                insetBlock: "-12px",
+                insetInline: "0",
+              }}
+              _hover={{ bg: "bg.subtle" }}
+              _focusVisible={{
+                outlineWidth: "2px",
+                outlineStyle: "solid",
+                outlineColor: "primary.outline",
+              }}
+              aria-label={previewLabel}
+              aria-describedby={rejected ? rejectedId : undefined}
+              // Kept in the row while the input covers it, so the row keeps its height.
+              visibility={editing ? "hidden" : undefined}
+              onFocus={() => {
+                if (toText.current) {
+                  toText.current = false;
+                  return;
+                }
+                start();
+              }}
+              onBlur={() => setRejected(undefined)}
+              onClick={start}
+            >
+              <Text as="span" display="block" lineHeight="20px" truncated {...textProps}>
+                {preview}
+              </Text>
+            </Box>
+            <Editable.Input
+              name={field.props.name}
+              ref={(element: HTMLInputElement | null) => {
+                field.props.ref(element);
+                inputRef.current = element;
+              }}
+              {...floatingInputProps(inset, align)}
+              borderWidth="1px"
+              borderColor="border.emphasized"
+              rounded="l2"
+              boxShadow="md"
+              aria-label={label}
+              inputMode={inputMode}
+              autoComplete="off"
+              onFocus={field.props.onFocus}
+              onBlur={field.props.onBlur}
+              onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+                // An Enter that ends a conversion is the conversion's; Editable would take it as
+                // the end of the editing.
+                if (event.nativeEvent.isComposing) {
+                  if (event.key === "Enter") event.preventDefault();
+                  return;
+                }
+                if (event.key === "Tab" && !event.shiftKey) onTab?.();
+                if (event.key === "Enter" || event.key === "Escape") byKey.current = true;
+              }}
+              onPaste={pasteUrlTo(onPasteUrl)}
+            />
+            {!editing && rejected ? (
+              <FloatingError id={rejectedId}>{rejected}</FloatingError>
+            ) : null}
+          </>
+        );
+      }}
+    </Editable.Root>
   );
 }
 
