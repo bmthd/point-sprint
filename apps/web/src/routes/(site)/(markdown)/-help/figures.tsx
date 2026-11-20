@@ -1,10 +1,11 @@
 import type { Order, Plan } from "@workspaces/domain";
-import { Card, List } from "@workspaces/ui";
+import { Card } from "@workspaces/ui";
 import { useHydrateAtoms } from "jotai/utils";
 import type { ComponentType } from "react";
 import { useCapLines } from "#/routes/(plan)/-cap-lines.ts";
 import { CapList } from "#/routes/(plan)/-plan-home/cap-list.tsx";
 import { OrderCard } from "#/routes/(plan)/-plan-home/order-card.tsx";
+import { OrderListTable } from "#/routes/(plan)/-plan-home/order-list.tsx";
 import { SpuMonthsCard } from "#/routes/(plan)/-settings/spu-months-card.tsx";
 import { SyncSettings } from "#/routes/(plan)/-settings/sync-settings.tsx";
 import { SpuMonthEditor } from "#/routes/(plan)/-spu-month/spu-month-editor.tsx";
@@ -76,12 +77,12 @@ function CapsFigure() {
   );
 }
 
-/** The held order's card on the phone's list, opened. */
+/** The held order's row on the phone's list, opened. */
 function HeldOrderFigure() {
   useHydrateAtoms([[openOrderIdAtom, HELD_ORDER.id]]);
   const count = THIRD_MARATHON.orders.length;
   return (
-    <List.Root gap="3">
+    <OrderListTable>
       <OrderCard
         planId={THIRD_MARATHON.id}
         orderId={HELD_ORDER.id}
@@ -91,7 +92,7 @@ function HeldOrderFigure() {
         onEdit={ignore}
         onDelete={ignore}
       />
-    </List.Root>
+    </OrderListTable>
   );
 }
 

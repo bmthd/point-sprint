@@ -5,6 +5,7 @@ import { OrderAddForm } from "./order-add-form.tsx";
 import { withMonthSeparators } from "./order-months.tsx";
 import { OrderListContext, OrderRow, rowColumns } from "./order-row.tsx";
 import {
+  HOLD_HINT,
   HeaderButton,
   OrdersHeading,
   SaveFailedAlert,
@@ -18,10 +19,6 @@ import { useOrderDrag } from "./use-order-drag.ts";
  * fields, then 「＋ 注文を追加」. Rows never ask for more width than the column has. Counted orders
  * are numbered in list order; held ones get 「保留」 instead.
  */
-/** What turning 購入決定 off does, shown on the column's heading and read with each switch. */
-const HOLD_HINT =
-  "オフにすると保留になり、買い回りの店舗数とポイントに数えません。買うか迷っている注文に使います。";
-
 export function OrderTable({
   plan,
   head,
