@@ -1,52 +1,52 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 import { Footer, Header } from "./site-page.ts";
 
-/** The form that adds an order, at the end of the list on a wide screen. */
+/** The empty row that adds an order, at the end of the list on a wide screen. */
 export class AddOrderForm {
   readonly root: Locator;
+  readonly toggle: Locator;
   readonly shop: Locator;
   readonly itemUrl: Locator;
   readonly itemName: Locator;
   readonly price: Locator;
   readonly shopRate: Locator;
-  readonly submit: Locator;
 
   constructor(
     readonly page: Page,
     orders: Locator,
   ) {
-    this.root = orders.locator("form");
+    const toggle = page.getByRole("button", { name: "新しい注文の条件" });
+    this.root = orders.getByRole("listitem").filter({ has: toggle });
+    this.toggle = this.root.getByRole("button", { name: "新しい注文の条件" });
     // Typed to find a saved shop, or to name a new one.
     this.shop = this.root.getByRole("textbox", { name: /^ショップ/ });
     this.itemUrl = this.root.getByRole("textbox", { name: "商品ページのURL" });
-    this.itemName = this.root.getByRole("textbox", { name: /^商品名/ });
-    this.price = this.root.getByRole("textbox", { name: "金額（税込）" });
+    this.itemName = this.root.getByRole("textbox", { name: "新しい注文の商品名" });
+    this.price = this.root.getByRole("textbox", { name: "新しい注文の金額" });
     this.shopRate = this.root.getByRole("spinbutton", { name: /^独自倍率/ });
-    this.submit = this.root.getByRole("button", { name: "追加する" });
+  }
+
+  /** Opens the new order's conditions: its shop, URL, shop rate, date and campaigns. */
+  async openConditions() {
+    if ((await this.toggle.getAttribute("aria-expanded")) === "true") return;
+    await this.toggle.click();
   }
 
   /** Names a new shop: a name no saved shop has makes one. */
   async newShop(name: string) {
+    await this.openConditions();
     await this.shop.fill(name);
   }
 
-  /** Switches the form to 「URLで入れる」, where the URL field is. */
-  async byUrl() {
-    if (await this.itemUrl.isVisible()) return;
-    await this.root.getByText("URLで入れる", { exact: true }).click();
+  /** Makes the typed order with ⌘ (Ctrl) + Enter in its amount. */
+  async add() {
+    await this.price.focus();
+    await this.page.keyboard.press("ControlOrMeta+Enter");
   }
 
-  /** Opens 「条件」, which holds the shop rate, the date, the campaigns and the details. */
-  async openConditions() {
-    const label = this.root.getByText("条件", { exact: true });
-    if (await this.shopRate.isVisible()) return;
-    await label.click();
-  }
-
-  /** Pastes `url` into the item's URL field from the clipboard. */
+  /** Pastes `url` into the item's name from the clipboard, which looks the item up. */
   async pasteItemUrl(url: string) {
-    await this.byUrl();
-    await this.itemUrl.focus();
+    await this.itemName.focus();
     await this.page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
     await this.page.evaluate((value) => navigator.clipboard.writeText(value), url);
     await this.page.keyboard.press("ControlOrMeta+V");
@@ -54,7 +54,7 @@ export class AddOrderForm {
 
   /** Types `url` into the item's URL field and leaves it. */
   async typeItemUrl(url: string) {
-    await this.byUrl();
+    await this.openConditions();
     await this.itemUrl.fill(url);
     await this.itemUrl.blur();
   }
@@ -161,7 +161,7 @@ export class PlanPage {
   async addOrder(shop: string, price: string) {
     await this.addForm.newShop(shop);
     await this.addForm.price.fill(price);
-    await this.addForm.submit.click();
+    await this.addForm.add();
     await expect(this.orders).toContainText(shop);
   }
 

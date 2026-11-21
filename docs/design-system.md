@@ -104,6 +104,9 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 買い回りにカウントするか（購入決定） | PC の表とスマホの表の各行の左に `Switch colorScheme="primary" size="sm"`。列の見出しは「購入決定」 |
 | 保留（注文の編集） | `Switch colorScheme="primary"` |
 | 開いて見る設定（注文の編集の詳細設定） | `NativeAccordion`（variant は既定の plain） |
+| PC の注文の表で、行の上で直す商品名と金額 | ふだんは文字。ポインタを載せると地 `bg.subtle`。押すと高さ 40px の `Input`（面 `bg.panel`、フォーカス中の枠 `primary.solid`、影 `md`）がその列の上に浮く。追加の行の欄も同じ大きさと位置 |
+| PC の注文の表の行を開く ⌄ | `IconButton variant="ghost" colorScheme="gray" size="lg" disableRipple`。自分の面は持たず、ポインタを載せると行全体を `bg.subtle`、押すと `bg.muted` にする。矢印は `fg.muted` から `fg` へ。フォーカスの輪は行の内側に描く |
+| PC の注文の表の追加の行 | 左の空きに `primary.fg` の太字の「＋ 注文を追加」（商品名の欄の `label`）。右の空きに `Kbd` の ⌘ + Enter の案内 |
 | 文中の追加ボタン（同じショップの商品を追加） | `Button variant="ghost" colorScheme="primary"` |
 | 削除ボタン | `Button variant="outline" colorScheme="danger"`。プラン画面の注文の削除は `size="lg"` で、実行前に確認を挟む。注文の編集の「商品Nを削除」は既定の size。プラン一覧では `IconButton variant="ghost" colorScheme="danger" size="lg"`、プラン設定の並びでは `IconButton variant="ghost"` を使う |
 | 画像で選ぶ選択肢（勝ったら倍の +1倍／+2倍） | `RadioCardGroup.Root colorScheme="primary" size="sm" withIndicator={false}` を2列に並べ、各 `RadioCard.Root` に画像、倍率（`RadioCard.Label`）、どんな日か（`RadioCard.Description`）を縦に置く |
