@@ -187,5 +187,5 @@ export function OrderDetailFields({
   );
 }
 
-/** The width of 「複製」 and 「削除」 under an opened row. */
+/** The width of 「複製」 and 「削除」 under an opened row, and of the add row's 「追加する」. */
 export const ACTION_BUTTON_WIDTH = "28";

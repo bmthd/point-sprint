@@ -6,7 +6,6 @@ import {
   type ReactNode,
   type Ref,
   useId,
-  useImperativeHandle,
   useRef,
   useState,
 } from "react";
@@ -49,7 +48,9 @@ export function floatingInputProps(inset: FloatInset, align: "start" | "end") {
     bg: "bg.panel",
     textAlign: align,
     fontVariantNumeric: align === "end" ? "tabular-nums" : undefined,
-    _focus: { borderColor: "primary.solid" },
+    // Typing is shown in the text color, not red: red is kept for a value that is wrong.
+    _focus: { borderColor: "mono.outline" },
+    _invalid: { borderColor: "border.error", _focus: { borderColor: "border.error" } },
   } as const;
 }
 
@@ -86,9 +87,6 @@ export function pasteUrlTo(onUrl: ((url: string) => void) | undefined) {
   };
 }
 
-/** What a row can ask of its text from outside: to be edited with the caret at the end. */
-export type InlineTextHandle = { editAtEnd: () => void };
-
 /**
  * A row's text that is edited in place. Pressed, or reached with Tab, it becomes an input that
  * floats over its column. Enter and leaving the input save the change (`commit`); Esc puts back
@@ -115,7 +113,6 @@ export function InlineText({
   inputMode,
   onPasteUrl,
   onTab,
-  handleRef,
   textProps,
 }: {
   field: FieldState & { onChange: (value: string) => void };
@@ -134,7 +131,6 @@ export function InlineText({
   onPasteUrl?: (url: string) => void;
   /** Tab (not Shift+Tab) pressed in the input, before the focus moves on. */
   onTab?: () => void;
-  handleRef?: Ref<InlineTextHandle>;
   textProps?: ComponentProps<typeof Text>;
 }) {
   /** The error of the change Enter could not save, shown under the text it put back. */
@@ -145,19 +141,10 @@ export function InlineText({
   const byKey = useRef(false);
   /** Set while the focus goes back to the text, which then is not edited again. */
   const toText = useRef(false);
-  /** Set to start editing with the caret after the text instead of the text selected. */
-  const atEnd = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLButtonElement>(null);
   const rejectedId = useId();
   const value = typeof field.input === "string" ? field.input : "";
-
-  useImperativeHandle(handleRef, () => ({
-    editAtEnd: () => {
-      atEnd.current = true;
-      textRef.current?.click();
-    },
-  }));
 
   /** Once the editing has ended, Enter and Esc leave the focus on the text. */
   const ended = () => {
@@ -188,12 +175,6 @@ export function InlineText({
       onCancel={(before) => {
         ended();
         restore(before);
-      }}
-      onEdit={() => {
-        if (!atEnd.current) return;
-        atEnd.current = false;
-        const input = inputRef.current;
-        input?.setSelectionRange(input.value.length, input.value.length);
       }}
       // The input floats over the column, not over the text.
       display="block"
@@ -227,7 +208,7 @@ export function InlineText({
               _focusVisible={{
                 outlineWidth: "2px",
                 outlineStyle: "solid",
-                outlineColor: "primary.outline",
+                outlineColor: "mono.outline",
               }}
               aria-label={previewLabel}
               aria-describedby={rejected ? rejectedId : undefined}
@@ -364,7 +345,7 @@ export const rowToggleCss = {
   "&:has(> [data-row-toggle]:focus-visible)": {
     outlineWidth: "2px",
     outlineStyle: "solid",
-    outlineColor: "primary.outline",
+    outlineColor: "mono.outline",
     outlineOffset: "-2px",
   },
 } as const;

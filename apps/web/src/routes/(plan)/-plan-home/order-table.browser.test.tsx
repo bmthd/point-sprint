@@ -289,40 +289,52 @@ test("a name alone makes no order", async () => {
   await expect.element(screen.getByRole("button", { name: "新しい注文の条件" })).toBeVisible();
 });
 
-test("leaving the amount for the row's name makes the order and edits its name at the end", async () => {
+test("moving within the add row does not make the order; leaving the row does", async () => {
   await renderWith(makePlan([baseBenefit], [order(0)]));
   await expect.element(rows()).toHaveLength(1);
 
-  await newName().fill("タオル");
+  // The amount first, then back to the name: still the same draft.
   await newAmount().fill("1,000");
   await userEvent.keyboard("{Shift>}{Tab}{/Shift}");
+  await expect.element(newName()).toHaveFocus();
+  await userEvent.keyboard("タオル");
+  expect((await stored())?.length).toBe(1);
+  await expect.element(newAmount()).toHaveValue("1,000");
 
+  // Out of the row, it is made.
+  (document.activeElement as HTMLElement).blur();
   await expect.poll(async () => (await stored())?.length).toBe(2);
-  const name = page.getByRole("textbox", { name: "ショップ未入力の注文の商品名" });
-  await expect.element(name).toHaveFocus();
-  await expect.element(name).toHaveValue("タオル");
-  const input = name.element() as HTMLInputElement;
-  expect([input.selectionStart, input.selectionEnd]).toEqual([3, 3]);
+  expect((await stored())?.[1]?.lineItems[0]).toMatchObject({ name: "タオル", unitPrice: 1000 });
   await expect.element(newName()).toHaveValue("");
-
-  await userEvent.keyboard("ケット{Enter}");
-  await expect.poll(async () => (await stored())?.[1]?.lineItems[0]?.name).toBe("タオルケット");
 });
 
-test("Tab from the add row's amount to its ⌄ makes the order and opens it", async () => {
+test("「追加する」 in the add row's conditions makes the order", async () => {
+  await renderWith(makePlan([baseBenefit], [order(0)]));
+  await newName().fill("ハンドタオル");
+  await newAmount().fill("880");
+  await page.getByRole("button", { name: "新しい注文の条件" }).click();
+  await page.getByRole("button", { name: "追加する" }).click();
+
+  await expect.poll(async () => (await stored())?.length).toBe(2);
+  expect((await stored())?.[1]?.lineItems[0]).toMatchObject({
+    name: "ハンドタオル",
+    unitPrice: 880,
+  });
+  await expect.element(newName()).toHaveFocus();
+  await expect.element(newName()).toHaveValue("");
+});
+
+test("Tab from the add row's amount to its ⌄ opens its conditions without making the order", async () => {
   await renderWith(makePlan([baseBenefit], [order(0)]));
   await expect.element(rows()).toHaveLength(1);
 
   await newAmount().fill("2,200");
   await userEvent.keyboard("{Tab}");
 
-  await expect.poll(async () => (await stored())?.length).toBe(2);
-  const toggle = page.getByRole("button", { name: "ショップ未入力の注文の詳細と編集" });
+  const toggle = page.getByRole("button", { name: "新しい注文の条件" });
   await expect.element(toggle).toHaveFocus();
   await expect.element(toggle).toHaveAttribute("aria-expanded", "true");
-  await expect
-    .element(page.getByRole("button", { name: "新しい注文の条件" }))
-    .toHaveAttribute("aria-expanded", "false");
+  expect((await stored())?.length).toBe(1);
 });
 
 test("conditions opened before the order is made stay open on it, but not after ⌘ + Enter", async () => {
@@ -474,6 +486,26 @@ test("the name and amount are edited on the closed row", async () => {
   await new Promise((resolve) => setTimeout(resolve, 50));
   expect(saves).toBe(2);
   expect((await stored())?.[0]?.lineItems[0]?.unitPrice).toBe(22000);
+});
+
+test("an amount the add row cannot take is said in place of the ⌘ + Enter hint", async () => {
+  await renderWith(makePlan([baseBenefit], [order(0)]));
+  await newName().click();
+  await userEvent.keyboard("バスタオル{Enter}abc{Control>}{Enter}{/Control}");
+
+  expect((await stored())?.length).toBe(1);
+  await expect
+    .element(page.getByRole("alert"))
+    .toHaveTextContent("金額は0以上の整数で入れてください");
+  await expect
+    .element(newAmount())
+    .toHaveAccessibleDescription("金額は0以上の整数で入れてください");
+  await expect.element(page.getByText("で追加")).not.toBeInTheDocument();
+
+  // Typed again, the error gives way to the hint.
+  await userEvent.keyboard("{Backspace}{Backspace}{Backspace}3980");
+  await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
+  await expect.element(page.getByText("で追加")).toBeInTheDocument();
 });
 
 test("Enter and Esc that end an IME conversion do not end the editing", async () => {

@@ -24,7 +24,7 @@ import {
   Text,
   VisuallyHidden,
 } from "@workspaces/ui";
-import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import {
   type KeyboardEvent,
   type RefObject,
@@ -78,7 +78,6 @@ import {
   AMOUNT_INSET,
   type CommitResult,
   InlineText,
-  type InlineTextHandle,
   NAME_INSET,
   RowToggle,
   rowToggleCss,
@@ -115,14 +114,6 @@ const useListContext = () => {
  * enough to leave a gap between the amount's input and the add row's ⌘ + Enter hint.
  */
 export const rowColumns = "24px 56px 36px minmax(0, 1fr) 6rem 5.5rem 44px";
-
-/**
- * Where the focus carries on in an order the add row has just made: its name being edited, its
- * ⌄, or the field of its opened row that has `name`.
- */
-export type RowFocusRequest = { orderId: string; to: "name" | "toggle" | { field: string } };
-
-export const rowFocusRequestAtom = atom<RowFocusRequest | null>(null);
 
 /**
  * Whether the row edits the order's name and amount itself: one item, bought once, without a
@@ -303,7 +294,6 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
   const points = useAtomValue(orderCardPointsAtom(key));
   const open = useAtomValue(isOpenAtom(orderId));
   const setOpenOrderId = useSetAtom(openOrderIdAtom);
-  const [focusRequest, setFocusRequest] = useAtom(rowFocusRequestAtom);
   const toggleHold = useSetAtom(toggleHoldAtom);
   const copyOrder = useSetAtom(copyOrderAtom);
   const moveOrder = useSetAtom(moveOrderAtom);
@@ -314,8 +304,6 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
   const handleRef = useRef<HTMLButtonElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const itemRef = useRef<HTMLLIElement>(null);
-  const detailRef = useRef<HTMLDivElement>(null);
-  const nameRef = useRef<InlineTextHandle>(null);
   /** Set by Tab in the amount: the ⌄ it moves to opens the row. */
   const openOnToggleFocus = useRef(false);
   const { form, commit, autofill } = useOrderEditForm(planId, order);
@@ -329,23 +317,6 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
     focusAfterMoveRef.current = null;
     handleRef.current?.focus();
   }, [index, orderId, focusAfterMoveRef]);
-
-  // The order the add row has just made: the focus carries on where it went in the add row.
-  useEffect(() => {
-    if (focusRequest?.orderId !== orderId) return;
-    setFocusRequest(null);
-    const { to } = focusRequest;
-    if (to === "name") nameRef.current?.editAtEnd();
-    else if (to === "toggle") toggleRef.current?.focus();
-    else {
-      requestAnimationFrame(() => {
-        const field = detailRef.current?.querySelector<HTMLElement>(
-          `[name="${CSS.escape(to.field)}"]`,
-        );
-        (field ?? toggleRef.current)?.focus();
-      });
-    }
-  }, [focusRequest, orderId, setFocusRequest]);
 
   const held = order.onHold;
   const simple = isSimpleOrder(order);
@@ -474,7 +445,6 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
             </Text>
           </Flex>
           <InlineText
-            handleRef={nameRef}
             field={name}
             restore={restorer(form, ["items", 0, "name"])}
             commit={commit}
@@ -617,15 +587,13 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
           if (open && itemRef.current) revealBottom(itemRef.current);
         }}
       >
-        <Flex
-          ref={detailRef}
-          direction="column"
-          gap="3.5"
-          borderTopWidth="1px"
-          pt="3.5"
-          pb="4"
-          px="4"
-        >
+        <Flex direction="column" gap="3.5" borderTopWidth="1px" pt="3.5" pb="4" px="4">
+          <Flex direction="column" gap="2">
+            <PointBreakdown totals={groupTotalsOf(points.rows)} legend="line" held={held} />
+            <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
+              {`税抜の基準額 ${yen(base)}`}
+            </Text>
+          </Flex>
           <OrderEditor
             planId={planId}
             order={order}
@@ -633,32 +601,24 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
             autofill={autofill}
             commit={commit}
           />
-          <Flex wrap="wrap" align="flex-end" justify="space-between" gap="3">
-            <Flex direction="column" gap="2" flex="1 1 16rem" minW="0">
-              <PointBreakdown totals={groupTotalsOf(points.rows)} legend="line" held={held} />
-              <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
-                {`税抜の基準額 ${yen(base)}`}
-              </Text>
-            </Flex>
-            <Flex gap="2" flex="none">
-              <Button
-                variant="outline"
-                size="lg"
-                minW={ACTION_BUTTON_WIDTH}
-                onClick={() => save(copyOrder({ planId, orderId }))}
-              >
-                複製
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                colorScheme="danger"
-                minW={ACTION_BUTTON_WIDTH}
-                onClick={() => props.onDelete(orderId)}
-              >
-                削除
-              </Button>
-            </Flex>
+          <Flex wrap="wrap" gap="2" justify="flex-end">
+            <Button
+              variant="outline"
+              size="lg"
+              minW={ACTION_BUTTON_WIDTH}
+              onClick={() => save(copyOrder({ planId, orderId }))}
+            >
+              複製
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              colorScheme="danger"
+              minW={ACTION_BUTTON_WIDTH}
+              onClick={() => props.onDelete(orderId)}
+            >
+              削除
+            </Button>
           </Flex>
         </Flex>
       </Collapse>

@@ -2,11 +2,12 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import { getInput, reset, useField, useForm, validate } from "@formisch/react";
+import { getInput, reset, setErrors, useField, useForm, validate } from "@formisch/react";
 import type { Plan } from "@workspaces/domain";
-import { Box, Collapse, Flex, Input, Kbd, List, Text } from "@workspaces/ui";
+import { Box, Button, Collapse, Flex, Input, Kbd, List, Text } from "@workspaces/ui";
 import { atom, useAtom, useSetAtom } from "jotai";
 import {
+  type ChangeEvent,
   type FocusEvent,
   type KeyboardEvent,
   type PointerEvent,
@@ -31,17 +32,16 @@ import {
 } from "#/routes/(plan)/-order-shared.tsx";
 import { useEnterUrl } from "#/routes/(plan)/-order-entry.tsx";
 import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
-import { OrderDetailFields } from "./order-details.tsx";
+import { ACTION_BUTTON_WIDTH, OrderDetailFields } from "./order-details.tsx";
 import {
   AMOUNT_INSET,
-  FloatingError,
   NAME_INSET,
   RowToggle,
   floatingInputProps,
   pasteUrlTo,
   rowToggleCss,
 } from "./inline-text.tsx";
-import { type RowFocusRequest, rowColumns, rowFocusRequestAtom } from "./order-row.tsx";
+import { rowColumns } from "./order-row.tsx";
 
 /** The new order that the form's output describes, with the shops saved when it is added. */
 const newDraftAtom = atom(null, (get, _set, output: OrderFormOutput) =>
@@ -49,7 +49,7 @@ const newDraftAtom = atom(null, (get, _set, output: OrderFormOutput) =>
 );
 
 /** Where the focus went as the new order was made, and so where it carries on in that order. */
-type Next = RowFocusRequest["to"] | "next" | "stay";
+type Next = "next" | "stay";
 
 const isMac = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
 
@@ -70,7 +70,6 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
   // The new order's conditions and an opened row take turns: opening one closes the other.
   const [openOrderId, setOpenOrderId] = useAtom(openOrderIdAtom);
   if (open && openOrderId !== null) setOpen(false);
-  const setFocusRequest = useSetAtom(rowFocusRequestAtom);
   const form = useForm({ schema: OrderFormSchema, initialInput: emptyInput(plan.period) });
   const autofill = useOrderAutofill(form);
   const enterUrl = useEnterUrl(form, autofill);
@@ -79,16 +78,11 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
   const nameRef = useRef<HTMLInputElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const itemRef = useRef<HTMLLIElement>(null);
-  const detailRef = useRef<HTMLDivElement>(null);
-  /** Set while the ⌄ is pressed: a press that makes the order opens it, not the empty row. */
-  const toggleDown = useRef(false);
-  const skipToggleClick = useRef(false);
-  /** Set by Tab in the amount: the ⌄ it moves to opens the new order's conditions. */
+  /** Set by Tab in the amount: the ⌄ it moves to opens the row's conditions. */
   const openOnToggleFocus = useRef(false);
   const nameId = useId();
   const detailId = useId();
-  const nameErrorId = useId();
-  const amountErrorId = useId();
+  const errorId = useId();
 
   const openConditions = () => {
     setOpenOrderId(null);
@@ -110,9 +104,8 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
       autofill.reset();
       setOpen(false);
       setGeneration((count) => count + 1);
-      if (keepOpen || next === "toggle") setOpenOrderId(orderId);
+      if (keepOpen) setOpenOrderId(orderId);
       if (next === "next") nameRef.current?.focus();
-      else if (next !== "stay") setFocusRequest({ orderId, to: next });
     });
 
   const typedAmount = () => {
@@ -120,21 +113,15 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
     return typeof input === "string" && input.trim() !== "";
   };
 
-  const onAmountBlur = (event: FocusEvent<HTMLInputElement>) => {
-    amount.props.onBlur();
-    if (!typedAmount()) return;
-    // The order it makes opens instead, if the focus goes on to the ⌄.
-    openOnToggleFocus.current = false;
+  /**
+   * Leaving the row makes the order. Moving within it (the amount to the name, the ⌄, the
+   * conditions) does not: an order made while its name is still being typed was unexpected.
+   */
+  const onRowBlur = (event: FocusEvent<HTMLElement>) => {
     const to = event.relatedTarget;
-    let next: Next = "stay";
-    if (to === nameRef.current) next = "name";
-    else if (to === toggleRef.current || toggleDown.current) {
-      next = "toggle";
-      skipToggleClick.current = toggleDown.current;
-    } else if (to instanceof HTMLElement && detailRef.current?.contains(to)) {
-      next = { field: to.getAttribute("name") ?? "" };
-    }
-    void add(next);
+    if (to instanceof Node && itemRef.current?.contains(to)) return;
+    if (!typedAmount()) return;
+    void add("stay");
   };
 
   const onAmountKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -155,7 +142,11 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
   const mod = isMac() ? "⌘" : "Ctrl";
 
   return (
-    <List.Item ref={itemRef} borderTopWidth={plan.orders.length > 0 ? "1px" : undefined}>
+    <List.Item
+      ref={itemRef}
+      borderTopWidth={plan.orders.length > 0 ? "1px" : undefined}
+      onBlur={onRowBlur}
+    >
       <Box
         display="grid"
         gridTemplateColumns={rowColumns}
@@ -182,6 +173,10 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
         <Box as="label" data-press-area="" alignSelf="stretch" position="relative" minW="0">
           <Input
             {...name.props}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => {
+              name.props.onChange(event);
+              if (name.errors) setErrors(form, { path: ["items", 0, "name"], errors: null });
+            }}
             ref={(element: HTMLInputElement | null) => {
               name.props.ref(element);
               nameRef.current = element;
@@ -189,10 +184,10 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
             id={nameId}
             value={typeof name.input === "string" ? name.input : ""}
             {...floatingInputProps(NAME_INSET, "start")}
-            placeholder="商品名か URL"
+            placeholder="商品名またはURL"
             aria-label="新しい注文の商品名"
             aria-invalid={nameError ? true : undefined}
-            aria-describedby={nameError ? nameErrorId : undefined}
+            aria-describedby={nameError ? errorId : undefined}
             autoComplete="off"
             onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
               if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
@@ -204,11 +199,16 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
               openConditions();
             })}
           />
-          {nameError ? <FloatingError id={nameErrorId}>{nameError}</FloatingError> : null}
         </Box>
         <Box as="label" data-press-area="" alignSelf="stretch" position="relative" minW="0">
           <Input
             {...amount.props}
+            // Typed again, the error gives way to the ⌘ + Enter hint: the form is never submitted,
+            // so Formisch would not check the field again as it is typed.
+            onChange={(event: ChangeEvent<HTMLInputElement>) => {
+              amount.props.onChange(event);
+              if (amount.errors) setErrors(form, { path: AMOUNT_PATH, errors: null });
+            }}
             id={`${nameId}-amount`}
             value={typeof amount.input === "string" ? amount.input : ""}
             {...floatingInputProps(AMOUNT_INSET, "end")}
@@ -216,66 +216,72 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
             aria-label="新しい注文の金額"
             aria-required="true"
             aria-invalid={amountError ? true : undefined}
-            aria-describedby={amountError ? amountErrorId : undefined}
+            aria-describedby={amountError ? errorId : undefined}
             inputMode="numeric"
             autoComplete="off"
-            onBlur={onAmountBlur}
+            onBlur={amount.props.onBlur}
             onKeyDown={onAmountKeyDown}
             onPaste={pasteUrlTo((url) => {
               enterUrl(url);
               openConditions();
             })}
           />
-          {amountError ? <FloatingError id={amountErrorId}>{amountError}</FloatingError> : null}
         </Box>
-        <Text
-          as="span"
-          justifySelf="end"
-          fontSize="2xs"
-          color="fg.muted"
-          whiteSpace="nowrap"
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          gap="0.5"
-          lineHeight="short"
-        >
-          {/* The 「+」 sits on the keys' middle, not on their baseline. ⌘ is a square key. */}
-          <Flex as="span" align="center" gap="1">
-            <Kbd fontSize="2xs" h="5.5" minW="5.5" px="1" justifyContent="center">
-              {mod}
-            </Kbd>
-            +
-            <Kbd fontSize="2xs" h="5.5" px="1">
-              Enter
-            </Kbd>
-          </Flex>
-          <span>で追加</span>
-        </Text>
+        {/* A value the order cannot be made with is said where ⌘ + Enter is, in place of it: under
+            the inputs the table would cut it off. */}
+        {nameError || amountError ? (
+          <Text
+            id={errorId}
+            role="alert"
+            justifySelf="end"
+            fontSize="2xs"
+            fontWeight="semibold"
+            color="danger.fg"
+            textAlign="end"
+            lineHeight="short"
+            lineClamp={3}
+          >
+            {amountError ?? nameError}
+          </Text>
+        ) : (
+          <Text
+            as="span"
+            justifySelf="end"
+            fontSize="2xs"
+            color="fg.muted"
+            whiteSpace="nowrap"
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap="0.5"
+            lineHeight="short"
+          >
+            {/* The 「+」 sits on the keys' middle, not on their baseline. ⌘ is a square key. */}
+            <Flex as="span" align="center" gap="1">
+              <Kbd fontSize="2xs" h="5.5" minW="5.5" px="1" justifyContent="center">
+                {mod}
+              </Kbd>
+              +
+              <Kbd fontSize="2xs" h="5.5" px="1">
+                Enter
+              </Kbd>
+            </Flex>
+            <span>で追加</span>
+          </Text>
+        )}
         <RowToggle
           buttonRef={toggleRef}
           open={open}
           label="新しい注文の条件"
           controls={detailId}
           onToggle={() => {
-            if (skipToggleClick.current) {
-              skipToggleClick.current = false;
-              return;
-            }
             if (open) setOpen(false);
             else openConditions();
-          }}
-          onPointerDown={() => {
-            toggleDown.current = true;
-            setTimeout(() => {
-              toggleDown.current = false;
-            });
           }}
           onFocus={() => {
             if (!openOnToggleFocus.current) return;
             openOnToggleFocus.current = false;
-            // With an amount, leaving it makes the order, whose conditions then open.
-            if (!typedAmount() && !open) openConditions();
+            if (!open) openConditions();
           }}
         />
       </Box>
@@ -292,18 +298,9 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
           if (open && itemRef.current) revealBottom(itemRef.current);
         }}
       >
-        <Flex
-          ref={detailRef}
-          direction="column"
-          gap="3.5"
-          borderTopWidth="1px"
-          pt="3.5"
-          pb="4"
-          px="4"
-        >
+        <Flex direction="column" gap="3.5" borderTopWidth="1px" pt="3.5" pb="4" px="4">
           <OrderDetailFields form={form} plan={plan} autofill={autofill} simple />
-          {/* A press on 「¥N で使い切る」 keeps the caret in the amount it changes, so the order is
-              not made before the amount is. */}
+          {/* A press on 「¥N で使い切る」 keeps the caret in the amount it changes. */}
           <Box
             onPointerDown={(event: PointerEvent) => {
               if (event.target instanceof Element && event.target.closest("button")) {
@@ -313,6 +310,17 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
           >
             <CapFlows plan={plan} form={form} />
           </Box>
+          {/* Where an opened order has 「複製」 and 「削除」. */}
+          <Flex justify="flex-end">
+            <Button
+              colorScheme="primary"
+              size="lg"
+              minW={ACTION_BUTTON_WIDTH}
+              onClick={() => void add("next")}
+            >
+              追加する
+            </Button>
+          </Flex>
         </Flex>
       </Collapse>
     </List.Item>
