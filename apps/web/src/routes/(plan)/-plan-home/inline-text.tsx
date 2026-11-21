@@ -98,7 +98,10 @@ export type InlineTextHandle = { editAtEnd: () => void };
  * Yamada UI's `Editable` keeps whether it is edited, and ends the editing on Enter, Esc and
  * leaving the input. The text is our own button, not `Editable.Preview`: the preview starts
  * editing whenever it gets the focus, so the focus could not come back to it after Enter, and it
- * shows the raw value, not 「¥3,980」.
+ * shows the raw value, not 「¥3,980」. There is no `Editable.EditTrigger` either: Editable gives
+ * the focus back to it however the editing ends, so Tab could not move on. Once Editable lets the
+ * preview be focused without editing and show its own children (yamada-ui/yamada-ui#8069), use
+ * `Editable.Preview` and drop the button and its focus handling.
  */
 export function InlineText({
   field,
@@ -261,10 +264,11 @@ export function InlineText({
               onFocus={field.props.onFocus}
               onBlur={field.props.onBlur}
               onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
-                // An Enter that ends a conversion is the conversion's; Editable would take it as
-                // the end of the editing.
+                // An Enter or Esc that ends a conversion is the conversion's; Editable would take
+                // it as the end of the editing. Remove once Editable leaves keys of a conversion
+                // alone (yamada-ui/yamada-ui#8070).
                 if (event.nativeEvent.isComposing) {
-                  if (event.key === "Enter") event.preventDefault();
+                  if (event.key === "Enter" || event.key === "Escape") event.preventDefault();
                   return;
                 }
                 if (event.key === "Tab" && !event.shiftKey) onTab?.();

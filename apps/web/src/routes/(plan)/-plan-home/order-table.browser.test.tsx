@@ -476,6 +476,25 @@ test("the name and amount are edited on the closed row", async () => {
   expect((await stored())?.[0]?.lineItems[0]?.unitPrice).toBe(22000);
 });
 
+test("Enter and Esc that end an IME conversion do not end the editing", async () => {
+  const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
+  const nameText = () => screen.getByRole("button", { name: /^ショップ0の注文の商品名/ });
+  const name = screen.getByRole("textbox", { name: "ショップ0の注文の商品名" });
+  const composing = (key: string) =>
+    name
+      .element()
+      .dispatchEvent(new KeyboardEvent("keydown", { key, isComposing: true, bubbles: true }));
+
+  await nameText().click();
+  await userEvent.fill(name, "バスタオル");
+  composing("Enter");
+  composing("Escape");
+  await expect.element(name).toHaveFocus();
+  await expect.element(name).toHaveValue("バスタオル");
+  // The conversion over, Enter saves.
+  await userEvent.keyboard("{Enter}");
+  await expect.poll(async () => (await stored())?.[0]?.lineItems[0]?.name).toBe("バスタオル");
+});
 test("a change left in a row that cannot be saved is put back", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
   await screen.getByRole("button", { name: /^ショップ0の注文の金額/ }).click();
