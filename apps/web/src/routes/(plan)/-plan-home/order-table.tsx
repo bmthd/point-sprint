@@ -1,7 +1,7 @@
 import type { Plan } from "@workspaces/domain";
 import { Box, Flex, Card, List, Text, Tooltip, VisuallyHidden } from "@workspaces/ui";
 import { type ReactNode, useCallback, useId, useMemo, useRef, useState } from "react";
-import { OrderAddForm } from "./order-add-form.tsx";
+import { OrderAddRow } from "./order-add-row.tsx";
 import { withMonthSeparators } from "./order-months.tsx";
 import { OrderListContext, OrderRow, rowColumns } from "./order-row.tsx";
 import {
@@ -16,7 +16,7 @@ import { useOrderDrag } from "./use-order-drag.ts";
 
 /**
  * The plan's orders on a wide screen: one row per order that opens into its breakdown and edit
- * fields, then 「＋ 注文を追加」. Rows never ask for more width than the column has. Counted orders
+ * fields, then the empty row a new order is typed in. Rows never ask for more width than the column has. Counted orders
  * are numbered in list order; held ones get 「保留」 instead.
  */
 export function OrderTable({
@@ -139,7 +139,7 @@ export function OrderTable({
               separator: { px: "3", py: "1", bg: "bg.subtle", borderBottomWidth: "1px" },
             })}
           </OrderListContext>
-          <OrderAddForm plan={plan} />
+          <OrderAddRow plan={plan} />
         </List.Root>
       </Card.Root>
       <Text fontSize="xs" color="fg.muted">

@@ -10,7 +10,6 @@ import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import { DATE_PICKER_FIELD, misalignedFields, tapArea } from "#/test-layout.ts";
 import { expectTexts } from "#/test-texts.ts";
 import { OrderTable } from "./order-table.tsx";
-import { ENTRY_MODE_KEY } from "#/routes/(plan)/-ui.ts";
 import {
   PLAN,
   Providers,
@@ -30,9 +29,7 @@ import {
   spuBenefit,
   summary,
   tapCard,
-  chooseTaxRate,
-  enterByUrl,
-  openConditions,
+  urlField,
 } from "#/routes/(plan)/-test-fixtures.tsx";
 
 const rowRenders = vi.hoisted(() => new Map<string, number>());
@@ -90,13 +87,20 @@ async function renderWith(plan = marathonPlan(), withShops = shops) {
   return renderPlanHome(currentRepository);
 }
 
-async function openAddForm(screen: Awaited<ReturnType<typeof renderPlanHome>>) {
-  const toggle = screen.getByRole("button", { name: /注文を追加/ });
-  await expect.element(toggle).toBeVisible();
-  if (screen.getByRole("button", { name: /注文を追加/, expanded: false }).length) {
-    await toggle.click();
-  }
+// The empty row at the end of the list, where a new order is typed.
+const newName = () => page.getByRole("textbox", { name: "新しい注文の商品名" });
+const newAmount = () => page.getByRole("textbox", { name: "新しい注文の金額" });
+const newOrderRow = () =>
+  list()
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("button", { name: "新しい注文の条件" }) });
+
+/** Opens the conditions of the order being typed in the add row. */
+async function openNewOrder(screen: Awaited<ReturnType<typeof renderPlanHome>>) {
+  const toggle = screen.getByRole("button", { name: "新しい注文の条件" });
+  if (toggle.element().getAttribute("aria-expanded") !== "true") await toggle.click();
   await expect.element(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect.element(shopField(newOrderRow())).toBeVisible();
 }
 
 test("the list replaces the cards from 977px, where the screen has two columns", async () => {
@@ -195,12 +199,8 @@ test("fits 977px, the narrowest it is shown at, without horizontal scroll", asyn
       handle,
     );
   }
-  await screen.getByRole("button", { name: `${long}の注文の詳細と編集` }).click();
-  // Opening the add form closes the row, so its fields are the ones measured; a new shop's name
-  // is in the shop field.
-  await openAddForm(screen);
-  // The row shuts with an animation; its fields leave once it has.
-  await expect.poll(() => shopField(screen).elements().length).toBe(1);
+  // The new order's conditions are the fields measured; a new shop's name is in the shop field.
+  await openNewOrder(screen);
   await enterShop(screen, "はじめての店");
 
   // Every control can be pressed in at least 44px both ways (the switch through its label), even
@@ -210,18 +210,18 @@ test("fits 977px, the narrowest it is shown at, without horizontal scroll", asyn
       .getByRole("switch", { name: `${long}の注文を購入決定` })
       .element()
       .closest("label"),
-    screen.getByRole("button", { name: `${long}の注文の詳細と編集` }).element(),
     ...Array.from(
       list().element().querySelectorAll("input:not([type=checkbox]), select, button, summary"),
-      // A date picker's box, and a tax rate's label over its hidden radio, are what is tapped.
+      // A date picker's box, a tax rate's label over its hidden radio, and the column around an
+      // input of the add row are what is tapped.
       (control) =>
         control.closest(DATE_PICKER_FIELD) ??
         (control.matches("[type=radio]") ? control.closest("label") : null) ??
+        control.closest("[data-press-area]") ??
         control,
     ).filter(
       // The rate's up and down buttons share the field's height; the rate is typed in the field,
       // which is pressed in full.
-      // Fields inside a shut 「詳細設定」 are not on screen.
       (control) =>
         !control.closest(".ui-number-input__control") && (control as Element).checkVisibility(),
     ),
@@ -243,7 +243,7 @@ test("fits 977px, the narrowest it is shown at, without horizontal scroll", asyn
   expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(window.innerWidth);
 });
 
-test("enter in the add form adds an order and refocuses the first field", async () => {
+test("the add row becomes an order by ⌘ + Enter in its amount, and moves on to the next one", async () => {
   // The new order is dated today, so today is in the plan's period (10/4 to 10/9) for it to count.
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-10-05T03:00:00Z"));
@@ -251,104 +251,326 @@ test("enter in the add form adds an order and refocuses the first field", async 
     vi.useRealTimers();
   });
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
-
   await expect.element(rows()).toHaveLength(1);
-  await openAddForm(screen);
-  const amount = screen.getByRole("textbox", { name: "金額（税込）" });
-  // Opening the form puts the focus on the amount, which is entered first.
-  await expect.element(amount).toHaveFocus();
-  await enterShop(screen, "ショップ4");
-  await screen.getByRole("textbox", { name: /^商品名/ }).fill("フェイスタオル");
-  await screen.getByRole("textbox", { name: "金額（税込）" }).fill("11,000");
-  // ¥10,000 before tax at 通常 1倍, at a second shop.
-  await expect
-    .element(screen.getByRole("status", { name: "ポイントの目安" }))
-    .toHaveTextContent("この注文で（2店舗目） 約 +100P");
-  await chooseTaxRate(screen, "8%（食品）");
-  await screen.getByRole("textbox", { name: "金額（税込）" }).click();
-  await userEvent.keyboard("{Enter}");
 
-  await expectShopsInOrder(rows(), ["ショップ0", "ショップ4"]);
-  await expect.element(rowOf("ショップ4")).toMatchTextContent("¥11,000");
-  await expect.element(amount).toHaveFocus();
-  await expect
-    .element(screen.getByRole("button", { name: /注文を追加/ }))
-    .toHaveAttribute("aria-expanded", "true");
-  await expect.element(shopField(screen)).toHaveValue("");
-  await expect.element(screen.getByRole("textbox", { name: /^商品名/ })).toHaveValue("");
-  await expect.element(screen.getByRole("textbox", { name: "金額（税込）" })).toHaveValue("");
+  // 「＋ 注文を追加」 puts the caret in the name; Enter goes on to the amount.
+  await screen.getByText("＋ 注文を追加").click();
+  await expect.element(newName()).toHaveFocus();
+  await userEvent.keyboard("フェイスタオル{Enter}");
+  await expect.element(newAmount()).toHaveFocus();
+  await userEvent.keyboard("11,000");
+  // Enter alone does not make it.
+  await userEvent.keyboard("{Enter}");
+  expect((await stored())?.length).toBe(1);
+  await userEvent.keyboard("{Control>}{Enter}{/Control}");
 
   await expect.poll(async () => (await stored())?.length).toBe(2);
   expect((await stored())?.[1]).toMatchObject({
-    shopId: shopId(4),
     date: "2026-10-05",
     onHold: false,
     tags: [],
-    lineItems: [{ name: "フェイスタオル", unitPrice: 11000, quantity: 1, taxRate: 0.08 }],
+    lineItems: [{ name: "フェイスタオル", unitPrice: 11000, quantity: 1, taxRate: 0.1 }],
   });
+  await expect.element(rows()).toHaveLength(2);
+  await expect.element(newName()).toHaveFocus();
+  await expect.element(newName()).toHaveValue("");
+  await expect.element(newAmount()).toHaveValue("");
 });
 
-test("an invalid add form shows errors and saves nothing", async () => {
-  const screen = await renderWith(marathonPlan([order(0)]));
-
+test("a name alone makes no order", async () => {
+  const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
   await expect.element(rows()).toHaveLength(1);
-  await openAddForm(screen);
-  const amount = screen.getByRole("textbox", { name: "金額（税込）" });
-  await amount.fill("abc");
-  await userEvent.keyboard("{Enter}");
 
-  await expect.element(screen.getByText("金額は0以上の整数で入れてください")).toBeVisible();
-  await expect.element(amount).toHaveAttribute("aria-invalid", "true");
-  // The first field with an error takes the focus.
-  await expect.element(amount).toHaveFocus();
-  await expect.element(amount).toHaveValue("abc");
+  await newName().fill("あとで決める");
+  await userEvent.keyboard("{Tab}{Tab}{Tab}");
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  expect((await stored())?.length).toBe(1);
+  await expect.element(newName()).toHaveValue("あとで決める");
+  await expect.element(screen.getByRole("button", { name: "新しい注文の条件" })).toBeVisible();
+});
+
+test("moving within the add row does not make the order; leaving the row does", async () => {
+  await renderWith(makePlan([baseBenefit], [order(0)]));
   await expect.element(rows()).toHaveLength(1);
+
+  // The amount first, then back to the name: still the same draft.
+  await newAmount().fill("1,000");
+  await userEvent.keyboard("{Shift>}{Tab}{/Shift}");
+  await expect.element(newName()).toHaveFocus();
+  await userEvent.keyboard("タオル");
+  expect((await stored())?.length).toBe(1);
+  await expect.element(newAmount()).toHaveValue("1,000");
+
+  // Out of the row, it is made.
+  (document.activeElement as HTMLElement).blur();
+  await expect.poll(async () => (await stored())?.length).toBe(2);
+  expect((await stored())?.[1]?.lineItems[0]).toMatchObject({ name: "タオル", unitPrice: 1000 });
+  await expect.element(newName()).toHaveValue("");
+});
+
+test("「追加する」 in the add row's conditions makes the order", async () => {
+  await renderWith(makePlan([baseBenefit], [order(0)]));
+  await newName().fill("ハンドタオル");
+  await newAmount().fill("880");
+  await page.getByRole("button", { name: "新しい注文の条件" }).click();
+  await page.getByRole("button", { name: "追加する" }).click();
+
+  await expect.poll(async () => (await stored())?.length).toBe(2);
+  expect((await stored())?.[1]?.lineItems[0]).toMatchObject({
+    name: "ハンドタオル",
+    unitPrice: 880,
+  });
+  await expect.element(newName()).toHaveFocus();
+  await expect.element(newName()).toHaveValue("");
+});
+
+test("Tab from the add row's amount to its ⌄ opens its conditions without making the order", async () => {
+  await renderWith(makePlan([baseBenefit], [order(0)]));
+  await expect.element(rows()).toHaveLength(1);
+
+  await newAmount().fill("2,200");
+  await userEvent.keyboard("{Tab}");
+
+  const toggle = page.getByRole("button", { name: "新しい注文の条件" });
+  await expect.element(toggle).toHaveFocus();
+  await expect.element(toggle).toHaveAttribute("aria-expanded", "true");
+  expect((await stored())?.length).toBe(1);
+});
+
+test("conditions opened before the order is made stay open on it, but not after ⌘ + Enter", async () => {
+  const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
+  await expect.element(rows()).toHaveLength(1);
+
+  await openNewOrder(screen);
+  await enterShop(newOrderRow(), "ショップ4");
+  await newAmount().fill("3,300");
+  // Leaving the amount for anywhere outside the row makes the order there.
+  await heading().click();
+  await expect.poll(async () => (await stored())?.length).toBe(2);
+  expect((await stored())?.[1]?.shopId).toBe(shopId(4));
+  await expect
+    .element(screen.getByRole("button", { name: "ショップ4の注文の詳細と編集" }))
+    .toHaveAttribute("aria-expanded", "true");
+
+  await openNewOrder(screen);
+  await enterShop(newOrderRow(), "ショップ5");
+  await newAmount().fill("4,400");
+  await userEvent.keyboard("{Control>}{Enter}{/Control}");
+  await expect.poll(async () => (await stored())?.length).toBe(3);
+  await expect
+    .element(screen.getByRole("button", { name: "ショップ5の注文の詳細と編集" }))
+    .toHaveAttribute("aria-expanded", "false");
+  await expect.element(newName()).toHaveFocus();
+});
+
+test("an invalid amount shows its error and saves nothing", async () => {
+  await renderWith(marathonPlan([order(0)]));
+  await expect.element(rows()).toHaveLength(1);
+
+  await newAmount().fill("abc");
+  await userEvent.keyboard("{Control>}{Enter}{/Control}");
+
+  await expect.element(page.getByText("金額は0以上の整数で入れてください")).toBeVisible();
+  await expect.element(newAmount()).toHaveAttribute("aria-invalid", "true");
+  await expect.element(newAmount()).toHaveFocus();
+  await expect.element(newAmount()).toHaveValue("abc");
   expect((await stored())?.length).toBe(1);
 });
 
 test("an error under one field leaves the other fields of its row in place", async () => {
   const screen = await renderWith(marathonPlan([order(0)]));
   await expect.element(rows()).toHaveLength(1);
-  await openAddForm(screen);
-  // Its error takes two lines, the tallest under the add form's fields.
-  await openConditions(screen);
-  await screen.getByRole("spinbutton", { name: /^独自倍率/ }).fill("0.5");
-  await userEvent.keyboard("{Enter}");
+  await openNewOrder(screen);
+  // Its error takes two lines, the tallest under the new order's fields.
+  await newOrderRow()
+    .getByRole("spinbutton", { name: /^独自倍率/ })
+    .fill("0.5");
+  await newAmount().fill("1,000");
+  await userEvent.keyboard("{Control>}{Enter}{/Control}");
   await expect
     .element(screen.getByText("ショップ独自倍率は1以上の数で入れてください"))
     .toBeVisible();
+  expect((await stored())?.length).toBe(1);
 
-  const form = list()
-    .getByRole("listitem")
-    .filter({ has: page.getByRole("button", { name: /注文を追加/ }) });
   // Positions are read from the elements: no matcher measures them.
-  expect(misalignedFields(form.element())).toEqual([]);
+  expect(misalignedFields(newOrderRow().element())).toEqual([]);
 });
 
-test("a failed save keeps the add form's input", async () => {
-  const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
+test("a failed save keeps the add row's input", async () => {
+  await renderWith(makePlan([baseBenefit], [order(0)]));
   await expect.element(rows()).toHaveLength(1);
   repository().plans.update = async () => {
     throw new Error("disk full");
   };
 
-  await openAddForm(screen);
-  await enterShop(screen, "ショップ4");
-  const amount = screen.getByRole("textbox", { name: "金額（税込）" });
-  await amount.fill("3300");
-  await userEvent.keyboard("{Enter}");
+  await newAmount().fill("3300");
+  await userEvent.keyboard("{Control>}{Enter}{/Control}");
 
   await expect
-    .element(screen.getByText("変更を保存できませんでした。もう一度お試しください。"))
+    .element(page.getByText("変更を保存できませんでした。もう一度お試しください。"))
     .toBeVisible();
-  await expect.element(amount).toHaveValue("3300");
-  await expect.element(rows()).toHaveLength(1);
+  await expect.element(newAmount()).toHaveValue("3300");
   expect((await stored())?.length).toBe(1);
+});
+
+test("a URL pasted into the add row's name picks the shop and opens its conditions", async () => {
+  const withCodes = shops.map((shop, index) =>
+    index === 4 ? { ...shop, shopCode: "shop-four", tags: ["39shop" as const] } : shop,
+  );
+  const screen = await renderWith(marathonPlan([]), withCodes);
+
+  // A paste of the URL, as from the clipboard.
+  const data = new DataTransfer();
+  data.setData("text/plain", "https://item.rakuten.co.jp/shop-four/item-1/");
+  newName()
+    .element()
+    .dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true }));
+
+  await expect
+    .element(urlField(screen))
+    .toHaveValue("https://item.rakuten.co.jp/shop-four/item-1/");
+  await expect.element(newName()).toHaveValue("");
+  await expect.element(shopField(screen)).toHaveValue("ショップ4");
+  await expect.element(screen.getByRole("checkbox", { name: "39ショップ" })).toBeChecked();
+});
+
+test("the name and amount are edited on the closed row", async () => {
+  const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
+  let saves = 0;
+  const update = repository().plans.update.bind(repository().plans);
+  repository().plans.update = (id, change, shop) => {
+    saves += 1;
+    return update(id, change, shop);
+  };
+  const nameText = () => screen.getByRole("button", { name: /^ショップ0の注文の商品名/ });
+  const name = screen.getByRole("textbox", { name: "ショップ0の注文の商品名" });
+  const amount = screen.getByRole("textbox", { name: "ショップ0の注文の金額" });
+
+  await nameText().click();
+  await expect.element(name).toHaveFocus();
+  await userEvent.fill(name, "バスタオル");
+  await userEvent.keyboard("{Enter}");
+  await expect.poll(async () => (await stored())?.[0]?.lineItems[0]?.name).toBe("バスタオル");
+  // The focus is back on the text, which is not edited again until Enter.
+  await expect.element(nameText()).toHaveFocus();
+  await expect.element(name).not.toBeInTheDocument();
+  await userEvent.keyboard("{Enter}");
+  await expect.element(name).toHaveFocus();
+  // Esc puts back what the name had.
+  await userEvent.fill(name, "なし");
+  await userEvent.keyboard("{Escape}");
+  await expect.element(nameText()).toHaveFocus();
+  await expect.element(rowOf("ショップ0")).toMatchTextContent("バスタオル");
+
+  // Tab goes on to the amount, edited at once. A change Enter cannot save is put back, its error
+  // under the text.
+  const amountText = () => screen.getByRole("button", { name: /^ショップ0の注文の金額/ });
+  await nameText().click();
+  await userEvent.keyboard("{Tab}");
+  await expect.element(amount).toHaveFocus();
+  await userEvent.fill(amount, "abc");
+  await userEvent.keyboard("{Enter}");
+  await expect.element(amountText()).toHaveFocus();
+  await expect.element(amount).not.toBeInTheDocument();
+  await expect
+    .element(amountText())
+    .toHaveAccessibleDescription("金額は0以上の整数で入れてください");
+  await expect.element(rowOf("ショップ0")).toMatchTextContent("¥11,000");
+  expect((await stored())?.[0]?.lineItems[0]?.unitPrice).toBe(11000);
+  await userEvent.keyboard("{Enter}");
+  await expect.element(amount).toHaveValue("11,000");
+  await expect.element(page.getByText("金額は0以上の整数で入れてください")).not.toBeInTheDocument();
+  await userEvent.fill(amount, "22,000");
+  await userEvent.keyboard("{Enter}");
+  await expect.element(rowOf("ショップ0")).toMatchTextContent("¥22,000");
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  expect(saves).toBe(2);
+  expect((await stored())?.[0]?.lineItems[0]?.unitPrice).toBe(22000);
+});
+
+test("an amount the add row cannot take is said in place of the ⌘ + Enter hint", async () => {
+  await renderWith(makePlan([baseBenefit], [order(0)]));
+  await newName().click();
+  await userEvent.keyboard("バスタオル{Enter}abc{Control>}{Enter}{/Control}");
+
+  expect((await stored())?.length).toBe(1);
+  await expect
+    .element(page.getByRole("alert"))
+    .toHaveTextContent("金額は0以上の整数で入れてください");
+  await expect
+    .element(newAmount())
+    .toHaveAccessibleDescription("金額は0以上の整数で入れてください");
+  await expect.element(page.getByText("で追加")).not.toBeInTheDocument();
+
+  // Typed again, the error gives way to the hint.
+  await userEvent.keyboard("{Backspace}{Backspace}{Backspace}3980");
+  await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
+  await expect.element(page.getByText("で追加")).toBeInTheDocument();
+});
+
+test("Enter and Esc that end an IME conversion do not end the editing", async () => {
+  const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
+  const nameText = () => screen.getByRole("button", { name: /^ショップ0の注文の商品名/ });
+  const name = screen.getByRole("textbox", { name: "ショップ0の注文の商品名" });
+  const composing = (key: string) =>
+    name
+      .element()
+      .dispatchEvent(new KeyboardEvent("keydown", { key, isComposing: true, bubbles: true }));
+
+  await nameText().click();
+  await userEvent.fill(name, "バスタオル");
+  composing("Enter");
+  composing("Escape");
+  await expect.element(name).toHaveFocus();
+  await expect.element(name).toHaveValue("バスタオル");
+  // The conversion over, Enter saves.
+  await userEvent.keyboard("{Enter}");
+  await expect.poll(async () => (await stored())?.[0]?.lineItems[0]?.name).toBe("バスタオル");
+});
+test("a change left in a row that cannot be saved is put back", async () => {
+  const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
+  await screen.getByRole("button", { name: /^ショップ0の注文の金額/ }).click();
+  const amount = screen.getByRole("textbox", { name: "ショップ0の注文の金額" });
+  await userEvent.fill(amount, "abc");
+  await heading().click();
+
+  await expect.element(amount).not.toBeInTheDocument();
+  await expect.element(rowOf("ショップ0")).toMatchTextContent("¥11,000");
+  await screen.getByRole("button", { name: /^ショップ0の注文の金額/ }).click();
+  await expect.element(amount).toHaveValue("11,000");
+  await expect.element(amount).not.toHaveAttribute("aria-invalid");
+});
+
+test("Tab from a row's amount to its ⌄ opens the row", async () => {
+  const screen = await renderWith(makePlan([baseBenefit], [order(0), order(1)]));
+  let saves = 0;
+  const update = repository().plans.update.bind(repository().plans);
+  repository().plans.update = (id, change, shop) => {
+    saves += 1;
+    return update(id, change, shop);
+  };
+  const toggle = screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" });
+
+  await screen.getByRole("button", { name: /^ショップ0の注文の商品名/ }).click();
+  await userEvent.keyboard("{Tab}{Tab}");
+
+  await expect.element(toggle).toHaveFocus();
+  await expect.element(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect
+    .element(rowOf("ショップ0").getByRole("textbox", { name: /^ショップ/ }))
+    .toBeVisible();
+  // Nothing was changed, so nothing was saved.
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  expect(saves).toBe(0);
+
+  // Reached any other way, the ⌄ only takes the focus.
+  const other = screen.getByRole("button", { name: "ショップ1の注文の詳細と編集" });
+  other.element().focus();
+  await expect.element(other).toHaveAttribute("aria-expanded", "false");
 });
 
 test("an edit whose save failed can be saved again", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
-  await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
   const update = repository().plans.update.bind(repository().plans);
   let failNext = true;
   repository().plans.update = (id, change, shop) => {
@@ -359,73 +581,23 @@ test("an edit whose save failed can be saved again", async () => {
     return update(id, change, shop);
   };
 
-  const amount = () => screen.getByRole("textbox", { name: "金額（税込）" });
-  await amount().fill("22,000");
+  await screen.getByRole("button", { name: /^ショップ0の注文の金額/ }).click();
+  const amount = screen.getByRole("textbox", { name: "ショップ0の注文の金額" });
+  await userEvent.fill(amount, "22,000");
   await userEvent.keyboard("{Enter}");
   await expect
     .element(screen.getByText("変更を保存できませんでした。もう一度お試しください。"))
     .toBeVisible();
+  // Put back to what is saved, to be typed again.
+  await expect.element(amount).not.toBeInTheDocument();
   await expect.element(rowOf("ショップ0")).toMatchTextContent("¥11,000");
 
-  await amount().fill("22,000");
+  await userEvent.keyboard("{Enter}");
+  await expect.element(amount).toHaveValue("11,000");
+  await userEvent.fill(amount, "22,000");
   await userEvent.keyboard("{Enter}");
   await expect.poll(async () => (await stored())?.[0]?.lineItems[0]?.unitPrice).toBe(22000);
   await expect.element(rowOf("ショップ0")).toMatchTextContent("¥22,000");
-});
-
-test("a pasted URL picks the shop, or starts a new one", async () => {
-  const withCodes = shops.map((shop, index) =>
-    index === 4 ? { ...shop, shopCode: "shop-four", tags: ["39shop" as const] } : shop,
-  );
-  const screen = await renderWith(marathonPlan([]), withCodes);
-
-  await openAddForm(screen);
-  const url = await enterByUrl(screen);
-  await expect.element(url).toHaveFocus();
-  const shop = shopField(screen);
-  await url.fill("https://item.rakuten.co.jp/shop-four/item-1/");
-  await expect.element(shop).toHaveValue("ショップ4");
-  await openConditions(screen);
-  await expect.element(screen.getByRole("checkbox", { name: "39ショップ" })).toBeChecked();
-
-  await url.fill("https://item.rakuten.co.jp/coffee-beans/item-2/");
-  // A shop no one has saved: its name is in the shop field, to be kept or changed.
-  await expect.element(shop).toHaveValue("coffee-beans");
-  await shop.fill("コーヒー豆の店");
-  await tapCard(screen.getByRole("checkbox", { name: "リピート購入" }));
-  await screen.getByRole("textbox", { name: "金額（税込）" }).fill("2160");
-  await screen.getByRole("button", { name: "追加する" }).click();
-
-  await expect.element(rows().first()).toMatchTextContent("コーヒー豆の店");
-  const saved = (await repository().shops.list()).find((s) => s.name === "コーヒー豆の店");
-  expect(saved).toMatchObject({ channel: "rakuten-ichiba", shopCode: "coffee-beans", tags: [] });
-  await expect.poll(async () => (await stored())?.[0]?.shopId).toBe(saved?.id);
-  expect((await stored())?.[0]?.tags).toEqual(["repeat"]);
-});
-
-test("an order entered by its URL keeps the add form on the URL, and a URL pasted into the amount switches to it", async () => {
-  const screen = await renderWith(marathonPlan([]));
-
-  await openAddForm(screen);
-  const amount = screen.getByRole("textbox", { name: "金額（税込）" });
-  // A paste of the URL, as from the clipboard.
-  const data = new DataTransfer();
-  data.setData("text/plain", "https://item.rakuten.co.jp/shop-four/item-1/");
-  amount
-    .element()
-    .dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true }));
-  const url = screen.getByRole("textbox", { name: "商品ページのURL" });
-  await expect.element(url).toHaveValue("https://item.rakuten.co.jp/shop-four/item-1/");
-  await expect.element(amount).toHaveValue("");
-  await expect.element(shopField(screen)).toHaveValue("shop-four");
-
-  await amount.fill("1,000");
-  await userEvent.keyboard("{Enter}");
-  await expect.poll(async () => (await stored())?.length).toBe(1);
-  // The next order starts the same way, on this device too.
-  await expect.element(url).toHaveValue("");
-  await expect.element(url).toHaveFocus();
-  expect(localStorage.getItem(ENTRY_MODE_KEY)).toBe(JSON.stringify("url"));
 });
 
 test("keyboard reorder with the handle", async () => {
@@ -534,7 +706,7 @@ test("購入決定 switch toggles hold", async () => {
   await expect.element(summary()).toMatchTextContent("4店舗を買い回り中");
 });
 
-test("expanded row shows group totals and edits the order", async () => {
+test("expanded row shows group totals and edits the order's conditions", async () => {
   const screen = await renderWith(
     makePlan(
       [baseBenefit, spuBenefit, campaignBenefit, ...marathon],
@@ -556,47 +728,26 @@ test("expanded row shows group totals and edits the order", async () => {
     "キャンペーン100P",
   ]);
   await expect.element(row).toMatchTextContent("税抜の基準額 ¥10,000");
+  // The name and amount are on the row only.
+  await expect.element(row.getByRole("textbox", { name: /金額/ })).not.toBeInTheDocument();
 
-  let saves = 0;
-  const update = repository().plans.update.bind(repository().plans);
-  repository().plans.update = (id, change, shop) => {
-    saves += 1;
-    return update(id, change, shop);
-  };
-
-  // Text fields save on Enter, and only when valid.
-  const amount = screen.getByRole("textbox", { name: "金額（税込）" });
-  await amount.fill("abc");
+  // The conditions are there at once, with no 「条件」 to open.
+  await row.getByRole("group", { name: "税率" }).getByText("8%（食品）", { exact: true }).click();
+  await row.getByLabelText("注文日").fill("2026/10/07");
+  await row.getByRole("spinbutton", { name: /^独自倍率/ }).fill("3");
   await userEvent.keyboard("{Enter}");
-  await expect.element(amount).toHaveAttribute("aria-invalid", "true");
-  expect((await stored())?.[0]?.lineItems[0]?.unitPrice).toBe(11000);
-
-  await screen.getByRole("textbox", { name: "金額（税込）" }).fill("22,000");
-  // Leaving the field right after Enter does not save the same value again.
-  await userEvent.keyboard("{Enter}{Tab}");
-  await expect.element(rowOf("ショップ0")).toMatchTextContent("¥22,000");
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  expect(saves).toBe(1);
-  await screen.getByRole("textbox", { name: /^商品名/ }).fill("バスタオル");
-  await userEvent.keyboard("{Enter}");
-  await expect.element(rowOf("ショップ0")).toMatchTextContent("バスタオル");
-  await chooseTaxRate(screen, "8%（食品）");
-  // The closed add form's date field is the second one.
-  await screen.getByLabelText("注文日").first().fill("2026/10/07");
-  await screen.getByRole("spinbutton", { name: /^独自倍率/ }).fill("3");
-  await userEvent.keyboard("{Enter}");
-  await tapCard(screen.getByRole("checkbox", { name: "リピート購入" }));
-  await expect.element(screen.getByRole("checkbox", { name: "リピート購入" })).toBeChecked();
+  await tapCard(row.getByRole("checkbox", { name: "リピート購入" }));
+  await expect.element(row.getByRole("checkbox", { name: "リピート購入" })).toBeChecked();
 
   await expect
     .poll(async () => (await stored())?.[0])
     .toMatchObject({
       date: "2026-10-07",
       tags: ["repeat"],
-      lineItems: [{ name: "バスタオル", unitPrice: 22000, taxRate: 0.08, shopPointRate: 3 }],
+      lineItems: [{ unitPrice: 11000, taxRate: 0.08, shopPointRate: 3 }],
     });
 
-  const shopTag = screen.getByRole("checkbox", { name: "39ショップ" });
+  const shopTag = row.getByRole("checkbox", { name: "39ショップ" });
   await expect
     .element(shopTag)
     .toHaveAccessibleDescription("このショップの注文すべてに反映されます");
@@ -605,7 +756,7 @@ test("expanded row shows group totals and edits the order", async () => {
     .poll(async () => (await repository().shops.list()).find((s) => s.id === shopId(0))?.tags)
     .toEqual(["39shop"]);
 
-  await enterShop(screen, "ショップ5");
+  await enterShop(row, "ショップ5");
   await expect.poll(async () => (await stored())?.[0]?.shopId).toBe(shopId(5));
 
   // 複製 and 削除 work from the expanded row.
@@ -616,27 +767,11 @@ test("expanded row shows group totals and edits the order", async () => {
   await expect.element(rows()).toHaveLength(4);
 });
 
-test("leaving a field of an opened row unchanged saves nothing", async () => {
-  const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
-  let saves = 0;
-  const update = repository().plans.update.bind(repository().plans);
-  repository().plans.update = (id, change, shop) => {
-    saves += 1;
-    return update(id, change, shop);
-  };
-  await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
-
-  await screen.getByRole("textbox", { name: "金額（税込）" }).click();
-  await userEvent.keyboard("{Tab}{Tab}");
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  expect(saves).toBe(0);
-});
-
 test("an opened row puts its order at a new shop", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
   await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
 
-  await enterShop(screen, "はじめての店");
+  await enterShop(rowOf("ショップ0"), "はじめての店");
   await userEvent.keyboard("{Enter}");
 
   await expect
@@ -653,41 +788,36 @@ test("an opened row puts its order at a new shop", async () => {
     .toHaveLength(1);
 });
 
-test("the add form and an opened row take turns, and the form keeps what was typed", async () => {
+test("the new order's conditions and an opened row take turns, and the add row keeps what was typed", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
-  const add = screen.getByRole("button", { name: /注文を追加/ });
+  const add = screen.getByRole("button", { name: "新しい注文の条件" });
   const row = screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" });
 
   await add.click();
-  await screen.getByRole("textbox", { name: /^商品名/ }).fill("あとで足す");
+  await newName().fill("あとで足す");
   await row.click();
   await expect.element(row).toHaveAttribute("aria-expanded", "true");
   await expect.element(add).toHaveAttribute("aria-expanded", "false");
 
   await add.click();
   await expect.element(row).toHaveAttribute("aria-expanded", "false");
-  await expect.element(screen.getByRole("textbox", { name: /^商品名/ })).toHaveValue("あとで足す");
+  await expect.element(newName()).toHaveValue("あとで足す");
 });
 
-test("the add form adds an order with a quantity, a coupon and a second item", async () => {
+test("the add row makes an order with a quantity, a coupon and a second item", async () => {
   const screen = await renderWith(makePlan([baseBenefit], [order(0)]));
 
-  await openAddForm(screen);
-  const quantity = screen.getByRole("textbox", { name: "数量" });
-  await expect.element(quantity.first()).not.toBeInTheDocument();
-  await openConditions(screen);
-  await screen
-    .getByRole("textbox", { name: /^商品名/ })
-    .first()
-    .fill("フェイスタオル");
-  await screen.getByRole("textbox", { name: "金額（税込）" }).first().fill("1,000");
-  await quantity.first().fill("3");
-  await screen.getByRole("textbox", { name: "クーポン値引額（税込）" }).first().fill("200");
-  await screen.getByRole("button", { name: "＋ 同じショップの商品を追加" }).click();
-  const second = screen.getByRole("group", { name: "商品2" });
+  await openNewOrder(screen);
+  const conditions = newOrderRow();
+  await conditions.getByRole("textbox", { name: "数量" }).fill("3");
+  await conditions.getByRole("textbox", { name: "クーポン値引額（税込）" }).fill("200");
+  await conditions.getByRole("button", { name: "＋ 同じショップの商品を追加" }).click();
+  const second = conditions.getByRole("group", { name: "商品2" });
   await second.getByRole("textbox", { name: "商品名" }).fill("バスタオル");
   await second.getByRole("textbox", { name: "金額（税込）" }).fill("2,000");
-  await screen.getByRole("button", { name: "追加する" }).click();
+  await newName().fill("フェイスタオル");
+  await newAmount().fill("1,000");
+  await userEvent.keyboard("{Control>}{Enter}{/Control}");
 
   await expect.poll(async () => (await stored())?.length).toBe(2);
   expect((await stored())?.[1]?.lineItems).toMatchObject([
@@ -696,14 +826,20 @@ test("the add form adds an order with a quantity, a coupon and a second item", a
   ]);
 });
 
-test("an opened row of several items edits each item in 詳細設定", async () => {
+test("an order of several items edits its amounts in its opened row", async () => {
   const several = order(0, { items: 2 });
   const screen = await renderWith(marathonPlan([several, order(1)]));
 
-  await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
-  // Opened at first, since the order uses it.
-  const second = screen.getByRole("group", { name: "商品2" });
-  await expect.element(second).toBeVisible();
+  // Its amount on the row is the sum of its items: pressed, it opens the first item's amount.
+  await screen.getByRole("button", { name: /^ショップ0の注文の金額 ¥22,000/ }).click();
+  const row = rowOf("ショップ0");
+  const first = row.getByRole("textbox", { name: "商品1の金額（税込）" });
+  await expect.element(first).toHaveFocus();
+  await userEvent.fill(first, "5,500");
+  await userEvent.keyboard("{Enter}");
+  await expect.poll(async () => (await stored())?.[0]?.lineItems[0]?.unitPrice).toBe(5500);
+
+  const second = row.getByRole("group", { name: "商品2" });
   await second.getByRole("textbox", { name: "数量" }).fill("4");
   await userEvent.keyboard("{Tab}");
   await expect.poll(async () => (await stored())?.[0]?.lineItems[1]?.quantity).toBe(4);
@@ -732,8 +868,7 @@ test("an opened row of a plan with brand day saves the order's brand day tag", a
   );
 
   await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
-  await openConditions(screen);
-  await tapCard(screen.getByRole("checkbox", { name: "ブランドデー対象" }));
+  await tapCard(rowOf("ショップ0").getByRole("checkbox", { name: "ブランドデー対象" }));
   await expect.poll(async () => (await stored())?.[0]?.tags).toEqual(["brand-day"]);
 });
 
