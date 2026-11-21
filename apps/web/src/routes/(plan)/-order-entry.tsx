@@ -2,7 +2,7 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import { Field as FormField, focus, setInput, useField } from "@formisch/react";
+import { Field as FormField, focus, setInput, useField, useFieldArray } from "@formisch/react";
 import { type Plan, channels } from "@workspaces/domain";
 import {
   Badge,
@@ -338,7 +338,8 @@ function ConditionsSummary({ form }: { form: OrderForm }) {
   const rate = useField(form, { path: ["items", 0, "shopPointRate"] });
   const quantity = useField(form, { path: ["items", 0, "quantity"] });
   const discount = useField(form, { path: ["items", 0, "discount"] });
-  const items = useField(form, { path: ["items"] });
+  // The items' keys, not their input: reading the input would read every field of every item.
+  const items = useFieldArray(form, { path: ["items"] });
   const onHold = useField(form, { path: ["onHold"] });
   const tags = {
     is39: useField(form, { path: ["is39"] }).input === true,
@@ -356,7 +357,7 @@ function ConditionsSummary({ form }: { form: OrderForm }) {
       : "";
   const tax = taxRate.input === "0.08" ? "税8%" : taxRate.input === "0" ? "非課税" : "税10%";
   const rateText = typeof rate.input === "string" ? rate.input.trim() : "";
-  const count = Array.isArray(items.input) ? items.input.length : 1;
+  const count = items.items.length;
   const quantityText = typeof quantity.input === "string" ? quantity.input.trim() : "";
   const discountText = typeof discount.input === "string" ? discount.input.trim() : "";
 

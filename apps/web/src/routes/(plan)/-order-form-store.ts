@@ -14,6 +14,7 @@ import type { OrderFormSchema } from "./-order-form.ts";
 
 export type OrderForm = FormStore<typeof OrderFormSchema>;
 
+export const NAME_PATH = ["items", 0, "name"] as const;
 export const AMOUNT_PATH = ["items", 0, "unitPrice"] as const;
 
 export function urlFromPastedText(text: string) {
@@ -49,7 +50,7 @@ export function useOrderAutofill(form: OrderForm, onFilled?: () => void) {
   return useItemAutofill((item) => {
     applyShop(form, shopFromItem(item, shops));
     const fields = fieldsFromItem(item);
-    setInput(form, { path: ["items", 0, "name"], input: fields.name });
+    setInput(form, { path: NAME_PATH, input: fields.name });
     if (fields.unitPrice !== undefined)
       setInput(form, { path: AMOUNT_PATH, input: fields.unitPrice });
     setInput(form, { path: ["items", 0, "shopPointRate"], input: fields.shopPointRate });
