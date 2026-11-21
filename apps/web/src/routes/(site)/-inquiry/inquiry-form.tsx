@@ -1,3 +1,7 @@
+// Formisch fields read their signals through getters on objects that keep their identity, so
+// React Compiler would memoize what they return and miss every change.
+"use no memo";
+
 import { Field as FormField, useForm } from "@formisch/react";
 import { Alert, Button, Checkbox, Field, Input, Text, Textarea, VStack } from "@workspaces/ui";
 import { atom, useSetAtom } from "jotai";

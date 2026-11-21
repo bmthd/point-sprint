@@ -4,13 +4,14 @@
 
 import { getInput, reset, setErrors, useField, useForm, validate } from "@formisch/react";
 import type { Plan } from "@workspaces/domain";
-import { Box, Button, Collapse, Flex, Input, Kbd, List, Text } from "@workspaces/ui";
+import { Box, Button, Collapse, Flex, Input, Kbd, List, Text, isApple } from "@workspaces/ui";
 import { atom, useAtom, useSetAtom } from "jotai";
 import {
   type ChangeEvent,
   type FocusEvent,
   type KeyboardEvent,
   type PointerEvent,
+  type RefObject,
   useId,
   useRef,
   useState,
@@ -24,7 +25,12 @@ import {
   draftOf,
   emptyInput,
 } from "#/routes/(plan)/-order-form.ts";
-import { AMOUNT_PATH, useOrderAutofill } from "#/routes/(plan)/-order-form-store.ts";
+import {
+  AMOUNT_PATH,
+  NAME_PATH,
+  type OrderForm,
+  useOrderAutofill,
+} from "#/routes/(plan)/-order-form-store.ts";
 import {
   orderSaveFailedAtom,
   revealBottom,
@@ -51,8 +57,6 @@ const newDraftAtom = atom(null, (get, _set, output: OrderFormOutput) =>
 /** Where the focus went as the new order was made, and so where it carries on in that order. */
 type Next = "next" | "stay";
 
-const isMac = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
-
 /**
  * The empty row at the end of the desktop table, where a new order is typed: its name and amount
  * in the same inputs that float over an order's row, already open. It becomes an order once its
@@ -73,8 +77,6 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
   const form = useForm({ schema: OrderFormSchema, initialInput: emptyInput(plan.period) });
   const autofill = useOrderAutofill(form);
   const enterUrl = useEnterUrl(form, autofill);
-  const name = useField(form, { path: ["items", 0, "name"] });
-  const amount = useField(form, { path: AMOUNT_PATH });
   const nameRef = useRef<HTMLInputElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const itemRef = useRef<HTMLLIElement>(null);
@@ -137,9 +139,10 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
     if (event.metaKey || event.ctrlKey) void add("next");
   };
 
-  const nameError = name.errors?.[0];
-  const amountError = amount.errors?.[0];
-  const mod = isMac() ? "⌘" : "Ctrl";
+  const onPasteUrl = (url: string) => {
+    enterUrl(url);
+    openConditions();
+  };
 
   return (
     <List.Item
@@ -171,104 +174,24 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
         </Text>
         {/* The whole column puts the caret in its input, which is drawn 40px high. */}
         <Box as="label" data-press-area="" alignSelf="stretch" position="relative" minW="0">
-          <Input
-            {...name.props}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => {
-              name.props.onChange(event);
-              if (name.errors) setErrors(form, { path: ["items", 0, "name"], errors: null });
-            }}
-            ref={(element: HTMLInputElement | null) => {
-              name.props.ref(element);
-              nameRef.current = element;
-            }}
+          <NameInput
+            form={form}
             id={nameId}
-            value={typeof name.input === "string" ? name.input : ""}
-            {...floatingInputProps(NAME_INSET, "start")}
-            placeholder="商品名またはURL"
-            aria-label="新しい注文の商品名"
-            aria-invalid={nameError ? true : undefined}
-            aria-describedby={nameError ? errorId : undefined}
-            autoComplete="off"
-            onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
-              if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
-              event.preventDefault();
-              document.getElementById(`${nameId}-amount`)?.focus();
-            }}
-            onPaste={pasteUrlTo((url) => {
-              enterUrl(url);
-              openConditions();
-            })}
+            errorId={errorId}
+            inputRef={nameRef}
+            onPasteUrl={onPasteUrl}
           />
         </Box>
         <Box as="label" data-press-area="" alignSelf="stretch" position="relative" minW="0">
-          <Input
-            {...amount.props}
-            // Typed again, the error gives way to the ⌘ + Enter hint: the form is never submitted,
-            // so Formisch would not check the field again as it is typed.
-            onChange={(event: ChangeEvent<HTMLInputElement>) => {
-              amount.props.onChange(event);
-              if (amount.errors) setErrors(form, { path: AMOUNT_PATH, errors: null });
-            }}
+          <AmountInput
+            form={form}
             id={`${nameId}-amount`}
-            value={typeof amount.input === "string" ? amount.input : ""}
-            {...floatingInputProps(AMOUNT_INSET, "end")}
-            placeholder="金額"
-            aria-label="新しい注文の金額"
-            aria-required="true"
-            aria-invalid={amountError ? true : undefined}
-            aria-describedby={amountError ? errorId : undefined}
-            inputMode="numeric"
-            autoComplete="off"
-            onBlur={amount.props.onBlur}
+            errorId={errorId}
             onKeyDown={onAmountKeyDown}
-            onPaste={pasteUrlTo((url) => {
-              enterUrl(url);
-              openConditions();
-            })}
+            onPasteUrl={onPasteUrl}
           />
         </Box>
-        {/* A value the order cannot be made with is said where ⌘ + Enter is, in place of it: under
-            the inputs the table would cut it off. */}
-        {nameError || amountError ? (
-          <Text
-            id={errorId}
-            role="alert"
-            justifySelf="end"
-            fontSize="2xs"
-            fontWeight="semibold"
-            color="danger.fg"
-            textAlign="end"
-            lineHeight="short"
-            lineClamp={3}
-          >
-            {amountError ?? nameError}
-          </Text>
-        ) : (
-          <Text
-            as="span"
-            justifySelf="end"
-            fontSize="2xs"
-            color="fg.muted"
-            whiteSpace="nowrap"
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            gap="0.5"
-            lineHeight="short"
-          >
-            {/* The 「+」 sits on the keys' middle, not on their baseline. ⌘ is a square key. */}
-            <Flex as="span" align="center" gap="1">
-              <Kbd fontSize="2xs" h="5.5" minW="5.5" px="1" justifyContent="center">
-                {mod}
-              </Kbd>
-              +
-              <Kbd fontSize="2xs" h="5.5" px="1">
-                Enter
-              </Kbd>
-            </Flex>
-            <span>で追加</span>
-          </Text>
-        )}
+        <ErrorOrHint form={form} id={errorId} />
         <RowToggle
           buttonRef={toggleRef}
           open={open}
@@ -324,5 +247,138 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
         </Flex>
       </Collapse>
     </List.Item>
+  );
+}
+
+type RowInputProps = {
+  form: OrderForm;
+  id: string;
+  /** The id of the error said where ⌘ + Enter is. */
+  errorId: string;
+  onPasteUrl: (url: string) => void;
+};
+
+// The name, the amount and the line beside them each read their own fields, so a keystroke draws
+// the input again, not the row and its opened conditions.
+
+/** The new order's name. Enter moves on to the amount. */
+function NameInput({
+  form,
+  id,
+  errorId,
+  inputRef,
+  onPasteUrl,
+}: RowInputProps & { inputRef: RefObject<HTMLInputElement | null> }) {
+  const name = useField(form, { path: NAME_PATH });
+  return (
+    <Input
+      {...name.props}
+      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+        name.props.onChange(event);
+        if (name.errors) setErrors(form, { path: NAME_PATH, errors: null });
+      }}
+      ref={(element: HTMLInputElement | null) => {
+        name.props.ref(element);
+        inputRef.current = element;
+      }}
+      id={id}
+      value={typeof name.input === "string" ? name.input : ""}
+      {...floatingInputProps(NAME_INSET, "start")}
+      placeholder="商品名またはURL"
+      aria-label="新しい注文の商品名"
+      aria-invalid={name.errors ? true : undefined}
+      aria-describedby={name.errors ? errorId : undefined}
+      autoComplete="off"
+      onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+        if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+        event.preventDefault();
+        document.getElementById(`${id}-amount`)?.focus();
+      }}
+      onPaste={pasteUrlTo(onPasteUrl)}
+    />
+  );
+}
+
+/** The new order's amount, which it cannot be made without. */
+function AmountInput({
+  form,
+  id,
+  errorId,
+  onKeyDown,
+  onPasteUrl,
+}: RowInputProps & { onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void }) {
+  const amount = useField(form, { path: AMOUNT_PATH });
+  return (
+    <Input
+      {...amount.props}
+      // Typed again, the error gives way to the ⌘ + Enter hint: the form is never submitted,
+      // so Formisch would not check the field again as it is typed.
+      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+        amount.props.onChange(event);
+        if (amount.errors) setErrors(form, { path: AMOUNT_PATH, errors: null });
+      }}
+      id={id}
+      value={typeof amount.input === "string" ? amount.input : ""}
+      {...floatingInputProps(AMOUNT_INSET, "end")}
+      placeholder="金額"
+      aria-label="新しい注文の金額"
+      aria-required="true"
+      aria-invalid={amount.errors ? true : undefined}
+      aria-describedby={amount.errors ? errorId : undefined}
+      inputMode="numeric"
+      autoComplete="off"
+      onKeyDown={onKeyDown}
+      onPaste={pasteUrlTo(onPasteUrl)}
+    />
+  );
+}
+
+/**
+ * A value the order cannot be made with, said where ⌘ + Enter is, in place of it: under the
+ * inputs the table would cut it off. It reads only the two fields' errors.
+ */
+function ErrorOrHint({ form, id }: { form: OrderForm; id: string }) {
+  const nameError = useField(form, { path: NAME_PATH }).errors?.[0];
+  const amountError = useField(form, { path: AMOUNT_PATH }).errors?.[0];
+  const mod = isApple() ? "⌘" : "Ctrl";
+  return nameError || amountError ? (
+    <Text
+      id={id}
+      role="alert"
+      justifySelf="end"
+      fontSize="2xs"
+      fontWeight="semibold"
+      color="danger.fg"
+      textAlign="end"
+      lineHeight="short"
+      lineClamp={3}
+    >
+      {amountError ?? nameError}
+    </Text>
+  ) : (
+    <Text
+      as="span"
+      justifySelf="end"
+      fontSize="2xs"
+      color="fg.muted"
+      whiteSpace="nowrap"
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      gap="0.5"
+      lineHeight="short"
+    >
+      {/* The 「+」 sits on the keys' middle, not on their baseline. ⌘ is a square key. */}
+      <Flex as="span" align="center" gap="1">
+        <Kbd fontSize="2xs" h="5.5" minW="5.5" px="1" justifyContent="center">
+          {mod}
+        </Kbd>
+        +
+        <Kbd fontSize="2xs" h="5.5" px="1">
+          Enter
+        </Kbd>
+      </Flex>
+      <span>で追加</span>
+    </Text>
   );
 }

@@ -1,3 +1,8 @@
+// Formisch fields read their signals through getters on objects that keep their identity, so
+// React Compiler would memoize what they return and miss every change.
+"use no memo";
+
+import { setErrors, setInput, useField } from "@formisch/react";
 import { Box, Editable, IconButton, Text } from "@workspaces/ui";
 import {
   type ClipboardEvent,
@@ -9,8 +14,12 @@ import {
   useRef,
   useState,
 } from "react";
-import type { FieldState } from "#/routes/-form.tsx";
-import { urlFromPastedText } from "#/routes/(plan)/-order-form-store.ts";
+import {
+  AMOUNT_PATH,
+  NAME_PATH,
+  type OrderForm,
+  urlFromPastedText,
+} from "#/routes/(plan)/-order-form-store.ts";
 import { ChevronIcon } from "#/ui/icons.tsx";
 
 // The parts of the desktop table's rows that the orders' rows and the add row share: the 40px
@@ -100,10 +109,12 @@ export function pasteUrlTo(onUrl: ((url: string) => void) | undefined) {
  * the focus back to it however the editing ends, so Tab could not move on. Once Editable lets the
  * preview be focused without editing and show its own children (yamada-ui/yamada-ui#8069), use
  * `Editable.Preview` and drop the button and its focus handling.
+ *
+ * It reads its field itself, so a keystroke draws it again, not the row around it.
  */
 export function InlineText({
-  field,
-  restore,
+  form,
+  path,
   commit,
   label,
   preview,
@@ -115,9 +126,8 @@ export function InlineText({
   onTab,
   textProps,
 }: {
-  field: FieldState & { onChange: (value: string) => void };
-  /** Puts `value` back in the field and clears its error. */
-  restore: (value: string) => void;
+  form: OrderForm;
+  path: typeof NAME_PATH | typeof AMOUNT_PATH;
   commit: () => Promise<CommitResult>;
   /** The input's name, 「ショップ0の注文の商品名」. */
   label: string;
@@ -144,7 +154,20 @@ export function InlineText({
   const inputRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLButtonElement>(null);
   const rejectedId = useId();
+  const field = useField(form, { path });
   const value = typeof field.input === "string" ? field.input : "";
+
+  /** Puts a value back in the field, without its error. */
+  const restore = (before: string) => {
+    // Formisch takes one path at a time, not either of two.
+    if (path === AMOUNT_PATH) {
+      setInput(form, { path: AMOUNT_PATH, input: before });
+      setErrors(form, { path: AMOUNT_PATH, errors: null });
+    } else {
+      setInput(form, { path: NAME_PATH, input: before });
+      setErrors(form, { path: NAME_PATH, errors: null });
+    }
+  };
 
   /** Once the editing has ended, Enter and Esc leave the focus on the text. */
   const ended = () => {

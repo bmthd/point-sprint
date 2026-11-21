@@ -2,16 +2,7 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import {
-  focus,
-  getInput,
-  reset,
-  setErrors,
-  setInput,
-  useField,
-  useForm,
-  validate,
-} from "@formisch/react";
+import { focus, getInput, reset, useField, useForm, validate } from "@formisch/react";
 import { type Order, type Shop, taxExcludedTarget, taxIncludedTarget } from "@workspaces/domain";
 import {
   Box,
@@ -33,6 +24,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
 } from "react";
@@ -53,6 +45,7 @@ import {
 } from "#/routes/(plan)/-order-form.ts";
 import {
   AMOUNT_PATH,
+  NAME_PATH,
   type OrderForm,
   useOrderAutofill,
 } from "#/routes/(plan)/-order-form-store.ts";
@@ -153,7 +146,12 @@ function useOrderEditForm(planId: string, order: Order) {
   const saveDraft = useSaveOrderDraft(planId, useSetAtom(orderSaveFailedAtom));
   const form = useForm({ schema: OrderFormSchema, initialInput: editInputOf(order, shops) });
   /** The input last saved, or being saved: the same input is not saved twice. */
-  const saved = useRef(inputKey(getInput(form)));
+  const saved = useRef("");
+  // Read once, out of the render: reading every field while the row draws would draw the row
+  // again on every change of any of them.
+  useLayoutEffect(() => {
+    saved.current = inputKey(getInput(form));
+  }, [form]);
 
   const commit = async (): Promise<CommitResult> => {
     const input = getInput(form);
@@ -177,7 +175,28 @@ function useOrderEditForm(planId: string, order: Order) {
   const commitRef = useLatestRef(commit);
   const autofill = useOrderAutofill(form, () => void commitRef.current());
 
-  // A choice is saved as soon as it is made; typed text when its field is left or Enter is pressed.
+  useEffect(() => {
+    const next = editInputOf(order, shops);
+    const json = inputKey(next);
+    if (json === saved.current) return;
+    saved.current = json;
+    reset(form, { initialInput: next });
+  }, [order, shops, form]);
+
+  return { form, commit, commitRef, autofill };
+}
+
+/**
+ * Saves a choice as soon as it is made; typed text is saved when its field is left or Enter is
+ * pressed. It draws nothing: the fields it watches draw it again, not the row.
+ */
+function InstantCommit({
+  form,
+  commitRef,
+}: {
+  form: OrderForm;
+  commitRef: RefObject<() => Promise<CommitResult>>;
+}) {
   const instantKey = JSON.stringify([
     useField(form, { path: ["shop"] }).input,
     useField(form, { path: ["channel"] }).input,
@@ -194,29 +213,7 @@ function useOrderEditForm(planId: string, order: Order) {
     if (getInput(form).shop === NEW_SHOP) return;
     void commitRef.current();
   }, [instantKey, commitRef, form]);
-
-  useEffect(() => {
-    const next = editInputOf(order, shops);
-    const json = inputKey(next);
-    if (json === saved.current) return;
-    saved.current = json;
-    reset(form, { initialInput: next });
-  }, [order, shops, form]);
-
-  return { form, commit, commitRef, autofill };
-}
-
-/** Puts a typed field back as it was, without its error. */
-function restorer(form: OrderForm, path: typeof AMOUNT_PATH | readonly ["items", 0, "name"]) {
-  return (value: string) => {
-    if (path === AMOUNT_PATH) {
-      setInput(form, { path: AMOUNT_PATH, input: value });
-      setErrors(form, { path: AMOUNT_PATH, errors: null });
-    } else {
-      setInput(form, { path: ["items", 0, "name"], input: value });
-      setErrors(form, { path: ["items", 0, "name"], errors: null });
-    }
-  };
+  return null;
 }
 
 /**
@@ -306,10 +303,8 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
   const itemRef = useRef<HTMLLIElement>(null);
   /** Set by Tab in the amount: the ⌄ it moves to opens the row. */
   const openOnToggleFocus = useRef(false);
-  const { form, commit, autofill } = useOrderEditForm(planId, order);
+  const { form, commit, commitRef, autofill } = useOrderEditForm(planId, order);
   const enterUrl = useEnterUrl(form, autofill);
-  const name = useField(form, { path: ["items", 0, "name"] });
-  const unitPrice = useField(form, { path: AMOUNT_PATH });
 
   // Moving an order can take its row out of the document for a moment, which drops the focus.
   useEffect(() => {
@@ -364,6 +359,7 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
       data-order-id={orderId}
       borderTopWidth={index === 0 ? undefined : "1px"}
     >
+      <InstantCommit form={form} commitRef={commitRef} />
       <Box
         // Painted, so a dragged row covers the rows it passes.
         bg="bg.panel"
@@ -445,8 +441,8 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
             </Text>
           </Flex>
           <InlineText
-            field={name}
-            restore={restorer(form, ["items", 0, "name"])}
+            form={form}
+            path={NAME_PATH}
             commit={commit}
             label={`${shopName}の注文の商品名`}
             previewLabel={`${shopName}の注文の商品名 ${title}`}
@@ -485,8 +481,8 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
           </Text>
           {simple ? (
             <InlineText
-              field={unitPrice}
-              restore={restorer(form, AMOUNT_PATH)}
+              form={form}
+              path={AMOUNT_PATH}
               commit={commit}
               label={`${shopName}の注文の金額`}
               previewLabel={`${shopName}の注文の金額 ${yen(amount)}`}
