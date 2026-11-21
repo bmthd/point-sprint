@@ -4,7 +4,7 @@
 
 import { getInput, reset, setErrors, useField, useForm, validate } from "@formisch/react";
 import type { Plan } from "@workspaces/domain";
-import { Box, Button, Collapse, Flex, Input, Kbd, List, Text } from "@workspaces/ui";
+import { Box, Button, Collapse, Flex, Input, Kbd, List, Text, isApple } from "@workspaces/ui";
 import { atom, useAtom, useSetAtom } from "jotai";
 import {
   type ChangeEvent,
@@ -56,8 +56,6 @@ const newDraftAtom = atom(null, (get, _set, output: OrderFormOutput) =>
 
 /** Where the focus went as the new order was made, and so where it carries on in that order. */
 type Next = "next" | "stay";
-
-const isMac = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
 
 /**
  * The empty row at the end of the desktop table, where a new order is typed: its name and amount
@@ -342,7 +340,7 @@ function AmountInput({
 function ErrorOrHint({ form, id }: { form: OrderForm; id: string }) {
   const nameError = useField(form, { path: NAME_PATH }).errors?.[0];
   const amountError = useField(form, { path: AMOUNT_PATH }).errors?.[0];
-  const mod = isMac() ? "⌘" : "Ctrl";
+  const mod = isApple() ? "⌘" : "Ctrl";
   return nameError || amountError ? (
     <Text
       id={id}
