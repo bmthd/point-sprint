@@ -3,7 +3,7 @@
 "use no memo";
 
 import { getInput, reset, useField, useForm, validate } from "@formisch/react";
-import { Field, Input } from "@workspaces/ui";
+import { Field, Input, isComposing } from "@workspaces/ui";
 import { useRef } from "react";
 import * as v from "valibot";
 import { bind, errorsOf } from "#/routes/-form.tsx";
@@ -76,7 +76,7 @@ export function CommitField<T>({
           void commit();
         }}
         onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.nativeEvent.isComposing) void commit();
+          if (event.key === "Enter" && !isComposing(event)) void commit();
           if (event.key === "Escape") reset(form);
         }}
       />

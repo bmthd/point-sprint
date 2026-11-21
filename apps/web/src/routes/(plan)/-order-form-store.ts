@@ -3,6 +3,7 @@
 "use no memo";
 
 import { type FormStore, getInput, setInput, useField } from "@formisch/react";
+import { isComposing } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ChangeEvent, FocusEvent, KeyboardEvent } from "react";
 import { shopsAtom } from "#/state/queries.ts";
@@ -83,7 +84,7 @@ export function autofillUrlHandlers(
       autofill.onUrlCommit(event.currentTarget.value);
     },
     onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => {
-      if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+      if (event.key !== "Enter" || isComposing(event)) return;
       // An Enter that starts a lookup does only that: the form is sent by the next one.
       if (autofill.onUrlCommit(event.currentTarget.value)) {
         event.preventDefault();

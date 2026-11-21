@@ -1,6 +1,5 @@
-import { Box, Text } from "@workspaces/ui";
+import { Box, Text, useCallbackRef } from "@workspaces/ui";
 import { useEffect, useRef, useState } from "react";
-import { useLatestRef } from "#/use-latest-ref.ts";
 
 // Cloudflare Turnstile's widget, rendered by its script once the page is in the browser.
 
@@ -58,7 +57,7 @@ export type TurnstileWidgetProps = {
 export function TurnstileWidget({ siteKey, onToken, resetKey }: TurnstileWidgetProps) {
   const container = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | undefined>(undefined);
-  const onTokenRef = useLatestRef(onToken);
+  const latestOnToken = useCallbackRef(onToken);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -69,9 +68,9 @@ export function TurnstileWidget({ siteKey, onToken, resetKey }: TurnstileWidgetP
         widgetId.current = turnstile.render(container.current, {
           sitekey: siteKey,
           language: "ja",
-          callback: (token) => onTokenRef.current(token),
-          "expired-callback": () => onTokenRef.current(undefined),
-          "error-callback": () => onTokenRef.current(undefined),
+          callback: (token) => latestOnToken(token),
+          "expired-callback": () => latestOnToken(undefined),
+          "error-callback": () => latestOnToken(undefined),
         });
       },
       () => {
@@ -83,7 +82,7 @@ export function TurnstileWidget({ siteKey, onToken, resetKey }: TurnstileWidgetP
       if (widgetId.current !== undefined) window.turnstile?.remove(widgetId.current);
       widgetId.current = undefined;
     };
-  }, [siteKey, onTokenRef]);
+  }, [siteKey, latestOnToken]);
 
   useEffect(() => {
     if (resetKey > 0 && widgetId.current !== undefined) window.turnstile?.reset(widgetId.current);

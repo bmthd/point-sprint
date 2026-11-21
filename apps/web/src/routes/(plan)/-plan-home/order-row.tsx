@@ -14,6 +14,9 @@ import {
   Switch,
   Text,
   VisuallyHidden,
+  isComposing,
+  runKeyAction,
+  useCallbackRef,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
@@ -33,7 +36,6 @@ import { orderAtom, planAtom } from "#/state/derived.ts";
 import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "#/state/plan-operations.ts";
 import { shopsAtom } from "#/state/queries.ts";
 import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
-import { useLatestRef } from "#/use-latest-ref.ts";
 import { monthDayWithWeekday } from "#/ui/dates.ts";
 import { GripIcon } from "#/ui/icons.tsx";
 import {
@@ -172,8 +174,8 @@ function useOrderEditForm(planId: string, order: Order) {
     saved.current = previous;
     return "failed";
   };
-  const commitRef = useLatestRef(commit);
-  const autofill = useOrderAutofill(form, () => void commitRef.current());
+  const latestCommit = useCallbackRef(commit);
+  const autofill = useOrderAutofill(form, () => void latestCommit());
 
   useEffect(() => {
     const next = editInputOf(order, shops);
@@ -183,20 +185,14 @@ function useOrderEditForm(planId: string, order: Order) {
     reset(form, { initialInput: next });
   }, [order, shops, form]);
 
-  return { form, commit, commitRef, autofill };
+  return { form, commit, latestCommit, autofill };
 }
 
 /**
  * Saves a choice as soon as it is made; typed text is saved when its field is left or Enter is
  * pressed. It draws nothing: the fields it watches draw it again, not the row.
  */
-function InstantCommit({
-  form,
-  commitRef,
-}: {
-  form: OrderForm;
-  commitRef: RefObject<() => Promise<CommitResult>>;
-}) {
+function InstantCommit({ form, commit }: { form: OrderForm; commit: () => Promise<CommitResult> }) {
   const instantKey = JSON.stringify([
     useField(form, { path: ["shop"] }).input,
     useField(form, { path: ["channel"] }).input,
@@ -211,8 +207,8 @@ function InstantCommit({
   useEffect(() => {
     // A new shop's name is typed in the shop field: it is saved when the field is left.
     if (getInput(form).shop === NEW_SHOP) return;
-    void commitRef.current();
-  }, [instantKey, commitRef, form]);
+    void commit();
+  }, [instantKey, commit, form]);
   return null;
 }
 
@@ -241,8 +237,8 @@ function OrderEditor({
         // Text is saved when its field is left, not when the focus moves within it.
         if (event.target instanceof HTMLInputElement) void commit();
       }}
-      onKeyDown={(event: KeyboardEvent) => {
-        if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+      onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
+        if (event.key !== "Enter" || isComposing(event)) return;
         if (!(event.target instanceof HTMLInputElement)) return;
         void commit();
       }}
@@ -303,7 +299,7 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
   const itemRef = useRef<HTMLLIElement>(null);
   /** Set by Tab in the amount: the ⌄ it moves to opens the row. */
   const openOnToggleFocus = useRef(false);
-  const { form, commit, commitRef, autofill } = useOrderEditForm(planId, order);
+  const { form, commit, latestCommit, autofill } = useOrderEditForm(planId, order);
   const enterUrl = useEnterUrl(form, autofill);
 
   // Moving an order can take its row out of the document for a moment, which drops the focus.
@@ -324,14 +320,13 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
     return moved;
   };
 
-  const onHandleKeyDown = (event: KeyboardEvent) => {
-    const step = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
-    if (step === 0) return;
-    event.preventDefault();
+  const moveBy = (step: number) => {
     setOpenOrderId(null);
     const toIndex = index + step;
     if (toIndex >= 0 && toIndex < count) void moveTo(toIndex);
   };
+  const onHandleKeyDown = (event: KeyboardEvent<HTMLElement>) =>
+    runKeyAction(event, { ArrowUp: () => moveBy(-1), ArrowDown: () => moveBy(1) });
 
   /** Tab from the amount: the row opens as the ⌄ gets the focus. */
   const openOnTab = () => {
@@ -359,7 +354,7 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
       data-order-id={orderId}
       borderTopWidth={index === 0 ? undefined : "1px"}
     >
-      <InstantCommit form={form} commitRef={commitRef} />
+      <InstantCommit form={form} commit={latestCommit} />
       <Box
         // Painted, so a dragged row covers the rows it passes.
         bg="bg.panel"

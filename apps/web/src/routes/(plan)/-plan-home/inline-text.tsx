@@ -3,7 +3,7 @@
 "use no memo";
 
 import { setErrors, setInput, useField } from "@formisch/react";
-import { Box, Editable, IconButton, Text } from "@workspaces/ui";
+import { Box, Editable, IconButton, Text, isComposing, mergeRefs } from "@workspaces/ui";
 import {
   type ClipboardEvent,
   type ComponentProps,
@@ -253,10 +253,7 @@ export function InlineText({
             </Box>
             <Editable.Input
               name={field.props.name}
-              ref={(element: HTMLInputElement | null) => {
-                field.props.ref(element);
-                inputRef.current = element;
-              }}
+              ref={mergeRefs(field.props.ref, inputRef)}
               {...floatingInputProps(inset, align)}
               borderWidth="1px"
               borderColor="border.emphasized"
@@ -271,7 +268,7 @@ export function InlineText({
                 // An Enter or Esc that ends a conversion is the conversion's; Editable would take
                 // it as the end of the editing. Remove once Editable leaves keys of a conversion
                 // alone (yamada-ui/yamada-ui#8070).
-                if (event.nativeEvent.isComposing) {
+                if (isComposing(event)) {
                   if (event.key === "Enter" || event.key === "Escape") event.preventDefault();
                   return;
                 }

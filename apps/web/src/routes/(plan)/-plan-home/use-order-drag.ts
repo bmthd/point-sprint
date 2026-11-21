@@ -1,3 +1,4 @@
+import { clampNumber } from "@workspaces/ui";
 import { type PointerEvent, type RefObject, useEffect, useLayoutEffect, useState } from "react";
 
 /** How far a pressed handle moves before the press becomes a drag, in px. */
@@ -91,7 +92,7 @@ function dragOf(listRef: RefObject<HTMLElement | null>) {
     const first = rows[0]?.offsetTop ?? 0;
     const last = rows.at(-1);
     const listBottom = last ? last.offsetTop + last.offsetHeight : 0;
-    const top = Math.min(Math.max(y - drag.grabOffset, first), listBottom - row.offsetHeight);
+    const top = clampNumber(y - drag.grabOffset, first, listBottom - row.offsetHeight);
     row.style.transform = `translateY(${top - row.offsetTop}px)`;
 
     // The dragged row goes past another once it covers half of it: its top going up, its bottom
