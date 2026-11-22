@@ -55,7 +55,6 @@ import { ACTION_BUTTON_WIDTH, OrderDetailFields } from "./order-details.tsx";
 import {
   AMOUNT_INSET,
   NAME_INSET,
-  NAME_REACH,
   RowToggle,
   floatingInputProps,
   pasteUrlTo,
@@ -294,7 +293,8 @@ function NameInput({
       ref={mergeRefs(name.props.ref, inputRef)}
       id={id}
       value={typeof name.input === "string" ? name.input : ""}
-      {...floatingInputProps(NAME_INSET, "start", NAME_REACH)}
+      {...floatingInputProps(NAME_INSET, "start")}
+      data-grow=""
       placeholder="商品名またはURL"
       aria-label="新しい注文の商品名"
       aria-invalid={ariaAttr(name.errors)}

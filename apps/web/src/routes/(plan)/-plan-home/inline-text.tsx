@@ -3,7 +3,7 @@
 "use no memo";
 
 import { setErrors, setInput, useField } from "@formisch/react";
-import { Box, Editable, IconButton, Text, isComposing, mergeRefs } from "@workspaces/ui";
+import { Box, Editable, IconButton, Text, dataAttr, isComposing, mergeRefs } from "@workspaces/ui";
 import {
   type ClipboardEvent,
   type ComponentProps,
@@ -35,20 +35,15 @@ export type FloatInset = { start: string; end: string };
 export const NAME_INSET: FloatInset = { start: "-9px", end: "0px" };
 /** The amount reaches right, its digits ending where the text's did. */
 export const AMOUNT_INSET: FloatInset = { start: "-4px", end: "-9px" };
-/** Typed long, the item's name grows over the amount's and the points' columns, up to the ⌄ (`rowColumns`). */
-export const NAME_REACH = "calc(11.5rem + 20px)";
+/** Typed long, the name grows over the amount's and the points' columns, up to the ⌄ (`rowColumns`). */
+const GROW_REACH = "calc(11.5rem + 20px)";
 
 /**
  * The 40px input over the middle of its column, which spans the row's 64px: it covers the small
  * lines above and below the column's main line, and nothing in the row moves. Its text starts
  * where the column's text does.
  */
-export function floatingInputProps(
-  inset: FloatInset,
-  align: "start" | "end",
-  /** How far past its column's end the focused input may grow, as its text grows. */
-  reach?: string,
-) {
+export function floatingInputProps(inset: FloatInset, align: "start" | "end") {
   const columnWidth = `calc(100% - ${inset.start} - ${inset.end})`;
   return {
     position: "absolute",
@@ -57,19 +52,16 @@ export function floatingInputProps(
     insetInlineStart: inset.start,
     insetInlineEnd: inset.end,
     w: "auto",
-    // A long name pushes the input's end rightward, over the columns after it, while it is typed.
-    css: reach
-      ? {
-          "&:focus": {
-            insetInlineEnd: "auto",
-            // Over the amount's input, which comes after it.
-            zIndex: "3",
-            fieldSizing: "content",
-            minWidth: columnWidth,
-            maxWidth: `calc(${columnWidth} + ${reach})`,
-          },
-        }
-      : undefined,
+    css: {
+      "&[data-grow]:focus": {
+        insetInlineEnd: "auto",
+        // Over the amount's input, which comes after it.
+        zIndex: "3",
+        fieldSizing: "content",
+        minWidth: columnWidth,
+        maxWidth: `calc(${columnWidth} + ${GROW_REACH})`,
+      },
+    },
     h: "10",
     minH: "10",
     px: "2",
@@ -141,7 +133,7 @@ export function InlineText({
   preview,
   previewLabel,
   inset,
-  reach,
+  grow,
   align = "start",
   inputMode,
   onPasteUrl,
@@ -158,8 +150,7 @@ export function InlineText({
   /** The text's name, said with what it holds. */
   previewLabel: string;
   inset: FloatInset;
-  /** How far past its column's end the input may grow, as its text grows. */
-  reach?: string;
+  grow?: boolean;
   align?: "start" | "end";
   inputMode?: "numeric";
   onPasteUrl?: (url: string) => void;
@@ -278,7 +269,8 @@ export function InlineText({
             <Editable.Input
               name={field.props.name}
               ref={mergeRefs(field.props.ref, inputRef)}
-              {...floatingInputProps(inset, align, reach)}
+              {...floatingInputProps(inset, align)}
+              data-grow={dataAttr(grow)}
               borderWidth="1px"
               borderColor="border.emphasized"
               rounded="l2"
