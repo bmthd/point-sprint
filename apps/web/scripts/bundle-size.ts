@@ -44,30 +44,65 @@ for (let id: string | undefined = topPageRoute; id !== undefined; id = parentOf(
   }
 }
 
+const groups = [
+  { label: "Whole app", sizes: allFiles.map(measure) },
+  { label: "Top page, initial render", sizes: [...topPageFiles].map(measure) },
+];
+
 console.log(`## Client bundle size
 
 | | Files | Raw | gzip | Brotli |
 | --- | ---: | ---: | ---: | ---: |
-${row("Whole app", allFiles)}
-${row("Top page, initial render", [...topPageFiles])}
+${groups.map(({ label, sizes }) => row(label, sizes.length, total(sizes))).join("\n")}
 
-The top page's HTML, which the Worker renders on request, is not included.`);
+The top page's HTML, which the Worker renders on request, is not included.
+${groups.map(({ label, sizes }) => breakdown(label, sizes)).join("")}`);
 
 function parentOf(id: string): string | undefined {
   return Object.keys(routes).find((parent) => routes[parent]?.children?.includes(id));
 }
 
-function row(label: string, files: string[]): string {
-  let raw = 0;
-  let gzip = 0;
-  let brotli = 0;
-  for (const file of files) {
-    const content = readFileSync(join(clientDir, file));
-    raw += content.length;
-    gzip += gzipSync(content, { level: 9 }).length;
-    brotli += brotliCompressSync(content).length;
-  }
-  return `| ${label} | ${files.length} | ${kB(raw)} | ${kB(gzip)} | ${kB(brotli)} |`;
+type Size = { file: string; raw: number; gzip: number; brotli: number };
+
+function measure(file: string): Size {
+  const content = readFileSync(join(clientDir, file));
+  return {
+    file,
+    raw: content.length,
+    gzip: gzipSync(content, { level: 9 }).length,
+    brotli: brotliCompressSync(content).length,
+  };
+}
+
+function total(sizes: Size[]): Omit<Size, "file"> {
+  return {
+    raw: sizes.reduce((sum, size) => sum + size.raw, 0),
+    gzip: sizes.reduce((sum, size) => sum + size.gzip, 0),
+    brotli: sizes.reduce((sum, size) => sum + size.brotli, 0),
+  };
+}
+
+function row(label: string, files: number, size: Omit<Size, "file">): string {
+  return `| ${label} | ${files} | ${kB(size.raw)} | ${kB(size.gzip)} | ${kB(size.brotli)} |`;
+}
+
+/** The files of a group, the largest first, folded away. */
+function breakdown(label: string, sizes: Size[]): string {
+  const rows = sizes
+    .toSorted((a, b) => b.raw - a.raw)
+    .map(
+      (size) =>
+        `| \`${size.file.replace("/assets/", "")}\` | ${kB(size.raw)} | ${kB(size.gzip)} | ${kB(size.brotli)} |`,
+    );
+  return `
+<details><summary>${label}: ${sizes.length} files</summary>
+
+| File | Raw | gzip | Brotli |
+| --- | ---: | ---: | ---: |
+${rows.join("\n")}
+
+</details>
+`;
 }
 
 function kB(bytes: number): string {
