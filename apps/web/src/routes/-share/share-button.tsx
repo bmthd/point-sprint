@@ -9,9 +9,10 @@ import {
   type StackProps,
   Text,
   VStack,
+  useBoolean,
   useClipboard,
 } from "@workspaces/ui";
-import { useId, useState } from "react";
+import { useId } from "react";
 import { ShareIcon } from "#/ui/icons.tsx";
 import facebookLogo from "./facebook-logo.svg";
 import lineLogo from "./line-logo.svg";
@@ -32,19 +33,19 @@ export function ShareButton({
   target,
   ...rest
 }: { label: string; target: ShareTarget } & StackProps) {
-  const [open, setOpen] = useState(false);
+  const [open, { on, toggle }] = useBoolean();
   const panelId = useId();
 
   const share = async () => {
     if (open || !canShareNatively(target)) {
-      setOpen(!open);
+      toggle();
       return;
     }
     try {
       await navigator.share(target);
     } catch (error) {
       // Closing the share sheet is not a failure.
-      if (!(error instanceof DOMException && error.name === "AbortError")) setOpen(true);
+      if (!(error instanceof DOMException && error.name === "AbortError")) on();
     }
   };
 

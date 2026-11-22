@@ -1,5 +1,5 @@
 import type { PointGroup } from "@workspaces/domain";
-import { Box, Card, Flex, Text, VStack } from "@workspaces/ui";
+import { Box, Card, Flex, Text, VStack, ariaAttr } from "@workspaces/ui";
 import type { ReactNode } from "react";
 import { grouped } from "#/ui/format.ts";
 import { PointBreakdown } from "#/routes/-point-breakdown.tsx";
@@ -42,7 +42,7 @@ export function ResultCard({
   const shops =
     shopCount === null ? null : `${Math.min(shopCount, SHOP_STEPS)} / ${SHOP_STEPS} 店舗`;
   return (
-    <Card.Root aria-hidden={hidden || undefined} shadow="lg" overflow="visible" position="relative">
+    <Card.Root aria-hidden={ariaAttr(hidden)} shadow="lg" overflow="visible" position="relative">
       <Box position="absolute" top="-2.5" left="4">
         {label}
       </Box>
