@@ -7,7 +7,12 @@ import { page, userEvent } from "vitest/browser";
 import { updateOrderAtom } from "#/state/plan-operations.ts";
 import { plansQueryAtom, shopsQueryAtom } from "#/state/queries.ts";
 import { createMemoryRepository } from "#/storage/memory-repository.ts";
-import { DATE_PICKER_FIELD, misalignedFields, tapArea } from "#/test-layout.ts";
+import {
+  DATE_PICKER_FIELD,
+  ONE_COLUMN_MAX_WIDTH,
+  misalignedFields,
+  tapArea,
+} from "#/test-layout.ts";
 import { expectTexts } from "#/test-texts.ts";
 import { OrderTable } from "./order-table.tsx";
 import {
@@ -103,7 +108,7 @@ async function openNewOrder(screen: Awaited<ReturnType<typeof renderPlanHome>>) 
   await expect.element(shopField(newOrderRow())).toBeVisible();
 }
 
-test("the list replaces the cards from 977px, where the screen has two columns", async () => {
+test("the list replaces the cards where the screen has two columns", async () => {
   await renderWith();
   await expect.element(rows()).toHaveLength(4);
   await expect.element(cards()).not.toBeInTheDocument();
@@ -118,9 +123,9 @@ test("the list replaces the cards from 977px, where the screen has two columns",
     )
     .toBeInTheDocument();
 
-  await page.viewport(977, 900);
+  await page.viewport(ONE_COLUMN_MAX_WIDTH + 1, 900);
   await expect.element(cards()).not.toBeInTheDocument();
-  await page.viewport(976, 900);
+  await page.viewport(ONE_COLUMN_MAX_WIDTH, 900);
   await expect.element(cards()).toBeInTheDocument();
   await expect.element(list()).not.toBeInTheDocument();
 });
@@ -173,8 +178,8 @@ for (const onHold of [false, true]) {
   });
 }
 
-test("fits 977px, the narrowest it is shown at, without horizontal scroll", async () => {
-  await page.viewport(977, 900);
+test("fits the narrowest width it is shown at without horizontal scroll", async () => {
+  await page.viewport(ONE_COLUMN_MAX_WIDTH + 1, 900);
   const long = "とても長い名前のショップ".repeat(6);
   const wideShops = shops.map((shop, index) => (index === 0 ? { ...shop, name: long } : shop));
   const wide = order(0);
