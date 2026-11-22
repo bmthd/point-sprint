@@ -159,11 +159,7 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
   };
 
   return (
-    <List.Item
-      ref={itemRef}
-      borderTopWidth={plan.orders.length > 0 ? "1px" : undefined}
-      onBlur={onRowBlur}
-    >
+    <List.Item ref={itemRef} onBlur={onRowBlur}>
       <Box
         display="grid"
         gridTemplateColumns={rowColumns}
