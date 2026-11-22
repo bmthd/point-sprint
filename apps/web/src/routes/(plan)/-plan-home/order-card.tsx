@@ -2,6 +2,7 @@ import { taxExcludedTarget, taxIncludedTarget } from "@workspaces/domain";
 import {
   Box,
   Collapse,
+  dataAttr,
   Flex,
   Button,
   IconButton,
@@ -84,7 +85,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
   return (
     <List.Item>
       {/* A held order is told apart by its sunken row, as well as its 「保留」 badge. */}
-      <Box bg={held ? "bg.subtle" : undefined}>
+      <Box data-held={dataAttr(held)} css={{ "&[data-held]": { bg: "bg.subtle" } }}>
         <Flex align="center" position="relative">
           {/* Laid over the row's button, so a press on the row ripples across the switch's column too. */}
           <Switch
@@ -188,13 +189,18 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 </Text>
               )}
               <Box as="span" display="grid" justifyItems="end" fontSize="2xs" color="fg.muted">
-                <Text as="span" gridArea="1 / 1" visibility={held ? "hidden" : undefined}>
+                <Text
+                  as="span"
+                  gridArea="1 / 1"
+                  css={{ "[data-held] &": { visibility: "hidden" } }}
+                >
                   {rateText(points.rate, false)}
                 </Text>
                 <Text
                   as="span"
                   gridArea="1 / 1"
-                  visibility={held ? undefined : "hidden"}
+                  visibility="hidden"
+                  css={{ "[data-held] &": { visibility: "visible" } }}
                   aria-hidden
                 >
                   保留中
@@ -260,7 +266,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
             <List.Root
               gap="1.5"
               fontSize="sm"
-              color={held ? "fg.muted" : undefined}
+              css={{ "[data-held] &": { color: "fg.muted" } }}
               aria-label={held ? "購入決定にしたときの内訳" : "ポイントの内訳"}
             >
               {points.rows.map((row) => (
@@ -275,7 +281,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                     boxSize="2.5"
                     rounded="xs"
                     bg={pointFill(row.group, 2)}
-                    opacity={held ? 0.4 : undefined}
+                    css={{ "[data-held] &": { opacity: 0.4 } }}
                     aria-hidden
                   />
                   <span>{row.label}</span>
