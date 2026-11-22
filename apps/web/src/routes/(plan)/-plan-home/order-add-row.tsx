@@ -14,7 +14,6 @@ import {
   List,
   Text,
   ariaAttr,
-  dataAttr,
   isApple,
   isComposing,
   mergeRefs,
@@ -296,7 +295,7 @@ function NameInput({
       id={id}
       value={typeof name.input === "string" ? name.input : ""}
       {...floatingInputProps(NAME_INSET, "start")}
-      data-grow={dataAttr(true)}
+      data-grow
       placeholder="商品名またはURL"
       aria-label="新しい注文の商品名"
       aria-invalid={ariaAttr(name.errors)}
