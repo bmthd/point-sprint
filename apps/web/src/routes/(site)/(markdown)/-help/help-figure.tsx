@@ -1,6 +1,6 @@
-import { Box, type CSSObject, Grid, List, SystemProvider, Text } from "@workspaces/ui";
+import { Box, type CSSObject, Grid, List, SystemProvider, Text, dataAttr } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
-import { Children, type CSSProperties, type ReactNode } from "react";
+import { Children, type ReactNode } from "react";
 import { type HelpFigureSpec, helpFigures } from "./figures.tsx";
 import type { HelpFigureMark } from "./figure-marks.ts";
 import { SampleProviders } from "./sample-providers.tsx";
@@ -104,17 +104,6 @@ function markStyles(marks: HelpFigureMark[]): CSSObject {
 function FigureFrame({ spec, alt }: { spec: HelpFigureSpec; alt: string }) {
   const Render = spec.render;
   const { crop } = spec;
-  // A cropped screen shows its top or its bottom, without measuring: the same ahead of time.
-  const cropStyles: CSSObject = {
-    "&[data-crop]": {
-      h: "calc(var(--crop-height) * 1px)",
-      overflow: "hidden",
-      display: "flex",
-      flexDirection: "column",
-      "& > *": { flexShrink: 0 },
-    },
-    "&[data-crop=bottom]": { justifyContent: "flex-end" },
-  };
   return (
     <Box
       role="img"
@@ -130,12 +119,19 @@ function FigureFrame({ spec, alt }: { spec: HelpFigureSpec; alt: string }) {
       <Box
         inert
         data-help-figure={spec.name}
-        data-crop={crop?.from}
-        style={{ "--crop-height": crop?.height } as CSSProperties}
+        // A cropped screen shows its top, or with `data-end` its bottom, without measuring: the
+        // same ahead of time.
+        h={crop?.height}
+        overflow="hidden"
+        display="flex"
+        flexDirection="column"
+        _child={{ flexShrink: 0 }}
+        data-end={dataAttr(crop?.from === "bottom")}
+        _end={{ justifyContent: "flex-end" }}
         w={`${PHONE_WIDTH + (FRAME_PADDING - 16) * 2}px`}
         p={`${FRAME_PADDING}px`}
         containerType="inline-size"
-        css={{ zoom: ZOOM, ...cropStyles, ...markStyles(spec.marks) }}
+        css={{ zoom: ZOOM, ...markStyles(spec.marks) }}
       >
         <SystemProvider theme={theme} config={figureConfig}>
           <SampleProviders>

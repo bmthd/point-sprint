@@ -27,7 +27,7 @@ export function ChevronIcon({ open = false, size = 18 }: { open?: boolean; size?
       flex="none"
       transition="transform .15s"
       data-open={dataAttr(open)}
-      css={{ "&[data-open]": { transform: "rotate(180deg)" } }}
+      _open={{ transform: "rotate(180deg)" }}
     >
       <Icon size={size}>
         <path d="m6 9 6 6 6-6" />
