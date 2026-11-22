@@ -407,7 +407,7 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
             })
           }
         >
-          <GripVerticalIcon boxSize="4.5" />
+          <GripVerticalIcon />
         </IconButton>
         <Switch
           size="sm"

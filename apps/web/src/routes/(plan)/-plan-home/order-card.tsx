@@ -224,7 +224,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 disabled={index === 0}
                 onClick={() => move(index - 1)}
               >
-                <ArrowUpIcon boxSize="5" />
+                <ArrowUpIcon />
               </IconButton>
               <IconButton
                 ref={downRef}
@@ -235,7 +235,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 disabled={index === props.count - 1}
                 onClick={() => move(index + 1)}
               >
-                <ArrowDownIcon boxSize="5" />
+                <ArrowDownIcon />
               </IconButton>
             </Flex>
           ) : null}

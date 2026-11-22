@@ -203,7 +203,7 @@ function SpuLink(props: LinkProps) {
       {...props}
     >
       楽天で自分のSPUを確認する
-      <ArrowUpRightIcon boxSize="3.5" />
+      <ArrowUpRightIcon />
     </Link>
   );
 }
@@ -372,7 +372,7 @@ function UsingPlans({
               size="xs"
               fullRounded
               color="link"
-              endIcon={<ChevronRightIcon boxSize="5.5" />}
+              endIcon={<ChevronRightIcon />}
             >
               {plan.name}
               <Text as="span" color="fg.muted" fontWeight="normal">

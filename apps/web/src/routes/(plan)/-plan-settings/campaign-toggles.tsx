@@ -17,7 +17,7 @@ import {
   Switch,
   Text,
   dataAttr,
-  PencilLineIcon,
+  PencilIcon,
 } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
@@ -134,7 +134,7 @@ function CampaignRow({
               aria-controls={editing ? editorId : undefined}
               onClick={onEdit}
             >
-              <PencilLineIcon boxSize="4" />
+              <PencilIcon />
             </IconButton>
           ) : null}
         </Box>

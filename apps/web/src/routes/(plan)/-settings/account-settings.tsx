@@ -63,7 +63,7 @@ function AccountRow({
       </Box>
       {onDelete ? (
         <IconButton variant="ghost" aria-label={`${account.name}を削除`} onClick={onDelete}>
-          <XIcon boxSize="5" />
+          <XIcon />
         </IconButton>
       ) : null}
     </List.Item>

@@ -121,7 +121,7 @@ export function CampaignAddButtons({
                 disabled={full}
                 aria-label={full ? `${template.name}（追加済み）` : `${template.name}を追加`}
                 onClick={() => add(template)}
-                startIcon={<PlusIcon boxSize="4.5" />}
+                startIcon={<PlusIcon />}
                 gap="1.5"
               >
                 {imagePath ? (

@@ -55,7 +55,7 @@ export function ShareButton({
         variant="outline"
         bg="bg.panel"
         size="lg"
-        startIcon={<ShareIcon boxSize="4.5" />}
+        startIcon={<ShareIcon />}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => void share()}

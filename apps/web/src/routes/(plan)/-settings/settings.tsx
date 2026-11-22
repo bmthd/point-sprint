@@ -65,7 +65,7 @@ function BackLink() {
       }}
       size="lg"
       variant="ghost"
-      icon={<ChevronLeftIcon boxSize="5.5" />}
+      icon={<ChevronLeftIcon />}
     />
   );
 }

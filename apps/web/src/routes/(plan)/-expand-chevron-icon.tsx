@@ -5,7 +5,6 @@ export function ExpandChevronIcon({ open }: { open: boolean }) {
   return (
     <ChevronDownIcon
       data-open={dataAttr(open)}
-      boxSize="4.5"
       transitionProperty="rotate"
       transitionDuration="0.15s"
       _open={{ rotate: "180deg" }}

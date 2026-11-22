@@ -37,7 +37,7 @@ function MonthSeparator({
         color="link"
         size="sm"
         px="1"
-        endIcon={<ChevronRightIcon boxSize="5.5" />}
+        endIcon={<ChevronRightIcon />}
         onClick={() => onSpu(month)}
       >
         <Flex as="span" fontVariantNumeric="tabular-nums">

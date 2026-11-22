@@ -264,7 +264,7 @@ function SpendTiersEditor({
               variant="outline"
               colorScheme="primary"
               alignSelf="flex-start"
-              startIcon={<PlusIcon boxSize="4.5" />}
+              startIcon={<PlusIcon />}
               onClick={() =>
                 void withTiers((current) => [
                   ...current,
@@ -384,7 +384,7 @@ function TierRow({
       <Box boxSize="11" flexShrink="0">
         {onRemove ? (
           <IconButton variant="ghost" aria-label={`${name}を削除`} onClick={onRemove}>
-            <XIcon boxSize="5" />
+            <XIcon />
           </IconButton>
         ) : null}
       </Box>

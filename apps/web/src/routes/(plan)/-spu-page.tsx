@@ -44,7 +44,7 @@ function BackToCommon() {
       }}
       size="lg"
       variant="ghost"
-      icon={<ChevronLeftIcon boxSize="5.5" />}
+      icon={<ChevronLeftIcon />}
     />
   );
 }
@@ -114,7 +114,7 @@ function SpuScreen({ month, account }: { month: string; account: string | undefi
             aria-label={back.label}
             size="lg"
             variant="ghost"
-            icon={<ChevronLeftIcon boxSize="5.5" />}
+            icon={<ChevronLeftIcon />}
           />
         ) : (
           <BackToCommon />
@@ -131,7 +131,7 @@ function SpuScreen({ month, account }: { month: string; account: string | undefi
               px="2"
               aria-label={`${spuMonthText(previous, today)}の SPU`}
               onClick={() => show({ month: previous })}
-              startIcon={<ChevronLeftIcon boxSize="5.5" />}
+              startIcon={<ChevronLeftIcon />}
             >
               {spuMonthText(previous, today)}
             </Button>
@@ -142,7 +142,7 @@ function SpuScreen({ month, account }: { month: string; account: string | undefi
               px="2"
               aria-label={`${spuMonthText(next, today)}の SPU`}
               onClick={() => show({ month: next })}
-              endIcon={<ChevronRightIcon boxSize="5.5" />}
+              endIcon={<ChevronRightIcon />}
             >
               {spuMonthText(next, today)}
             </Button>

@@ -294,7 +294,7 @@ function SiteMenu() {
           <Drawer.Header justifyContent="space-between">
             <Drawer.Title as="h2">メニュー</Drawer.Title>
             <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>
-              <XIcon boxSize="5" />
+              <XIcon />
             </IconButton>
           </Drawer.Header>
           <Drawer.Body

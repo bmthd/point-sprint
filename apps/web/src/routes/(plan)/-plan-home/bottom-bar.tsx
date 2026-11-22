@@ -43,12 +43,7 @@ export function BottomBar({
           </Text>
         </Text>
       </Flex>
-      <Button
-        colorScheme="primary"
-        size="xl"
-        onClick={onAdd}
-        startIcon={<PlusIcon boxSize="4.5" />}
-      >
+      <Button colorScheme="primary" size="xl" onClick={onAdd} startIcon={<PlusIcon />}>
         注文を追加
       </Button>
     </Flex>

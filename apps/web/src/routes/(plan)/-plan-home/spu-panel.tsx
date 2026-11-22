@@ -104,7 +104,7 @@ export function SpuPanel({
         >
           {back ? (
             <IconButton variant="ghost" aria-label={`${back}に戻る`} onClick={onClose}>
-              <ChevronLeftIcon boxSize="5.5" />
+              <ChevronLeftIcon />
             </IconButton>
           ) : null}
           <Drawer.Title as="h2">
@@ -112,7 +112,7 @@ export function SpuPanel({
           </Drawer.Title>
           {back ? null : (
             <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>
-              <XIcon boxSize="5" />
+              <XIcon />
             </IconButton>
           )}
         </Drawer.Header>

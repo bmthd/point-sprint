@@ -49,7 +49,7 @@ function OrderEditorSheet({
         <Heading as="h2" fontSize="lg">
           {original ? "注文を編集" : "注文を追加"}
         </Heading>
-        <IconButton aria-label="閉じる" icon={<XIcon boxSize="5" />} variant="ghost" />
+        <IconButton aria-label="閉じる" icon={<XIcon />} variant="ghost" />
       </Card.Header>
       <Card.Body alignItems="stretch">
         <Form of={form} onSubmit={ignore}>

@@ -11,7 +11,7 @@ import {
   VStack,
   XIcon,
   ChevronLeftIcon,
-  PencilLineIcon,
+  PencilIcon,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRef } from "react";
@@ -105,7 +105,7 @@ export function SettingsPanelButton({
         colorScheme="gray"
         onClick={onOpen}
         flex="none"
-        endIcon={<PencilLineIcon boxSize="4" />}
+        endIcon={<PencilIcon />}
       >
         プランの設定
       </Button>
@@ -121,7 +121,7 @@ export function SettingsPanelButton({
           <Drawer.Header justifyContent="space-between">
             <Drawer.Title as="h2">プランの設定</Drawer.Title>
             <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>
-              <XIcon boxSize="5" />
+              <XIcon />
             </IconButton>
           </Drawer.Header>
           <Drawer.Body
@@ -167,7 +167,7 @@ function SettingsScreen({ plan }: { plan: Plan }) {
           aria-label="戻る"
           size="lg"
           variant="ghost"
-          icon={<ChevronLeftIcon boxSize="5.5" />}
+          icon={<ChevronLeftIcon />}
         />
         <Heading as="h1" fontSize="lg">
           プランの設定

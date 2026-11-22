@@ -78,7 +78,7 @@ export function SpuMonthsCard() {
           minH="11"
         >
           ほかの月
-          <ChevronRightIcon boxSize="5.5" />
+          <ChevronRightIcon />
         </RouterLink>
       </Card.Body>
     </Card.Root>

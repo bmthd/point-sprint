@@ -220,12 +220,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
   const header = (
     <parts.Header display="flex" alignItems="center" justifyContent="space-between">
       <parts.Title as="h2">{title}</parts.Title>
-      <IconButton
-        aria-label="閉じる"
-        onClick={onClose}
-        icon={<XIcon boxSize="5" />}
-        variant="ghost"
-      />
+      <IconButton aria-label="閉じる" onClick={onClose} icon={<XIcon />} variant="ghost" />
     </parts.Header>
   );
 

@@ -69,7 +69,7 @@ function PlanSwitcher({ plan }: { plan: Plan }) {
             aria-label="プランを切り替える"
             flex="none"
           >
-            <ChevronDownIcon boxSize="4" />
+            <ChevronDownIcon />
           </Button>
         </Menu.Trigger>
         <Menu.Content>
@@ -113,7 +113,7 @@ function PlanBar({ plan }: { plan: Plan }) {
         size="lg"
         variant="ghost"
         flex="none"
-        icon={<SlidersHorizontalIcon boxSize="5.5" />}
+        icon={<SlidersHorizontalIcon />}
       />
     </Flex>
   );
