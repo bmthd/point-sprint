@@ -87,10 +87,19 @@ jobs:
           RAKUTEN_ACCESS_KEY: ${{ secrets.RAKUTEN_ACCESS_KEY }}
           # Turnstile's test site key, which passes on any host, over the one in .env.production.
           PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA"
+      # Rewrites its own comment, found by how it starts: the last comment of the bot may be another
+      # job's (the bundle size, ci.yml).
       - name: Comment the preview URL
         run: |
-          gh pr comment "$PR_NUMBER" --edit-last --create-if-none \
-            --body "Preview: $URL (${HEAD_SHA::7})"
+          body="Preview: $URL (${HEAD_SHA::7})"
+          id=$(gh api "repos/$GH_REPO/issues/$PR_NUMBER/comments" --paginate --jq '.[]
+            | select(.user.login == "github-actions[bot]" and (.body | startswith("Preview: ")))
+            | .id' | head -n 1)
+          if [ -n "$id" ]; then
+            gh api --method PATCH "repos/$GH_REPO/issues/comments/$id" -f body="$body" > /dev/null
+          else
+            gh pr comment "$PR_NUMBER" --body "$body"
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}

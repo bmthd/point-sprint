@@ -163,6 +163,9 @@ export class PlanPage {
     await this.addForm.price.fill(price);
     await this.addForm.add();
     await expect(this.orders).toContainText(shop);
+    // The order shows once it is saved, and the row shuts its conditions after that. Read before
+    // they shut, they would be taken as open by the next order's `newShop`.
+    await expect(this.addForm.toggle).toHaveAttribute("aria-expanded", "false");
   }
 
   /** The shop of each order, `店A` or `店B`, in the list's order. */

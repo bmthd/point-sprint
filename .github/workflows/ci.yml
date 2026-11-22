@@ -54,6 +54,12 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      # To download the bundle size of main's latest build.
+      actions: read
+      # To comment the bundle size on the pull request.
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -79,6 +85,56 @@ jobs:
           - name: Build
             if: needs.changes.outputs.app == 'true'
             run: pnpm build
+      # A pull request compares with the latest run on main that kept the sizes. Without one, the
+      # summary shows the sizes alone.
+      - name: Measure bundle size
+        if: needs.changes.outputs.app == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          base=()
+          if [ "$EVENT" = pull_request ]; then
+            for run in $(gh run list --workflow ci.yml --branch main --event push --limit 20 \
+              --json databaseId --jq '.[].databaseId'); do
+              if gh run download "$run" --name bundle-size --dir "$RUNNER_TEMP/base" 2>/dev/null; then
+                base=(--base "$RUNNER_TEMP/base/bundle-size.json")
+                break
+              fi
+            done
+          fi
+          node apps/web/scripts/bundle-size.ts --out "$RUNNER_TEMP/bundle-size.json" "${base[@]}" \
+            > "$RUNNER_TEMP/bundle-size.md"
+          cat "$RUNNER_TEMP/bundle-size.md" >> "$GITHUB_STEP_SUMMARY"
+      # One comment per pull request, rewritten by each run. A pull request from a fork gets a token
+      # that cannot comment, and goes without.
+      - name: Comment the bundle size
+        if: github.event_name == 'pull_request' && needs.changes.outputs.app == 'true'
+        continue-on-error: ${{ github.event.pull_request.head.repo.fork }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          marker="<!-- bundle-size -->"
+          body="$marker
+          $(cat "$RUNNER_TEMP/bundle-size.md")"
+          id=$(gh api "repos/$GH_REPO/issues/$PR_NUMBER/comments" --paginate \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\")))
+              | .id" | head -n 1)
+          if [ -n "$id" ]; then
+            gh api --method PATCH "repos/$GH_REPO/issues/comments/$id" -f body="$body" > /dev/null
+          else
+            gh pr comment "$PR_NUMBER" --body "$body"
+          fi
+      - name: Keep the bundle size
+        if: github.event_name == 'push' && needs.changes.outputs.app == 'true'
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: bundle-size
+          path: ${{ runner.temp }}/bundle-size.json
+          retention-days: 90
       # Checks the workflows, and their scripts with shellcheck, at the versions in mise.dev.toml, even
       # when a step above failed.
       - id: jactionlint
