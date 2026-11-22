@@ -74,6 +74,7 @@ import {
   type CommitResult,
   InlineText,
   NAME_INSET,
+  NAME_REACH,
   RowToggle,
   rowToggleCss,
   textBoxProps,
@@ -448,6 +449,7 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
               color: title ? undefined : "fg.muted",
             }}
             inset={NAME_INSET}
+            reach={NAME_REACH}
             onPasteUrl={pasteUrl}
           />
           {/* Kept, one chip high, on rows without campaigns so every closed row is as tall. */}
