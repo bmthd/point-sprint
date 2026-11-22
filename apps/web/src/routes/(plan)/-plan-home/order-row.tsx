@@ -15,6 +15,7 @@ import {
   Switch,
   Text,
   VisuallyHidden,
+  dataAttr,
   isComposing,
   runKeyAction,
   useCallbackRef,
@@ -353,11 +354,7 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
     (shopName === "ショップ未入力" ? `${monthDayWithWeekday(order.date)}の注文` : "");
 
   return (
-    <List.Item
-      ref={itemRef}
-      data-order-id={orderId}
-      borderTopWidth={index === 0 ? undefined : "1px"}
-    >
+    <List.Item ref={itemRef} data-order-id={orderId}>
       <InstantCommit form={form} commit={latestCommit} />
       <Box
         // Painted, so a dragged row covers the rows it passes.
@@ -448,8 +445,9 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
             preview={title || "商品名"}
             textProps={{
               fontSize: "sm",
-              fontWeight: title ? "medium" : "normal",
-              color: title ? undefined : "fg.muted",
+              fontWeight: "medium",
+              _placeholder: { fontWeight: "normal", color: "fg.muted" },
+              "data-placeholder": dataAttr(!title),
             }}
             inset={NAME_INSET}
             grow

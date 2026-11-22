@@ -89,7 +89,8 @@ export function OrderTable({
               </Text>
             </Tooltip>
           ) : null}
-          <Box gridColumn={orders.length > 0 ? "4" : "1 / 5"} color="fg">
+          {/* Alone, without the columns' names, the heading spans the row. */}
+          <Box gridColumn="4" color="fg" css={{ "&:only-child": { gridColumn: "1 / 5" } }}>
             <OrdersHeading orders={orders} headingRef={heading} id={headingId} small />
           </Box>
           {orders.length > 0 ? (
@@ -111,6 +112,11 @@ export function OrderTable({
           // The rows are laid out from the list's top, where a dragged row is measured from.
           position="relative"
           css={{
+            // A line above each order but the first, and above the add row after the orders. A
+            // month's separator draws its own line under it.
+            "& > li[data-order-id] ~ li:is([data-order-id], :last-child)": {
+              borderTopWidth: "1px",
+            },
             // While a row is dragged, the others slide aside to leave room for it.
             "&[data-dragging] > li": {
               transitionProperty: "transform",

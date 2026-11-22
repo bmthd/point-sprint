@@ -94,7 +94,7 @@ export function ShopLadder({
   const scale = cap ?? Math.max(1, ...outlook.rows.map((row) => row.points));
 
   return (
-    <Flex direction="column" gap="2" css={compact ? folding : undefined}>
+    <Flex direction="column" gap="2" css={folding}>
       <Heading as="h3" fontSize="sm">
         あと何店舗回る？
       </Heading>
@@ -124,11 +124,13 @@ export function ShopLadder({
                 key={row.shops}
                 data-fold={dataAttr(fold)}
                 aria-current={isCurrent ? "true" : undefined}
-                bg={isCurrent ? "primary.subtle" : undefined}
-                outline={isCurrent ? "1px solid" : undefined}
-                outlineColor="primary.outline"
-                outlineOffset="-1px"
-                fontWeight={isCurrent ? "bold" : undefined}
+                _current={{
+                  bg: "primary.subtle",
+                  outline: "1px solid",
+                  outlineColor: "primary.outline",
+                  outlineOffset: "-1px",
+                  fontWeight: "bold",
+                }}
               >
                 <Td fold={fold}>{row.shops}店舗</Td>
                 <Td fold={fold}>+{row.rate}倍</Td>

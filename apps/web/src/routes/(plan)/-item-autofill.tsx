@@ -190,7 +190,7 @@ export function AutofillStatus({ autofill }: { autofill: ItemAutofill }) {
 
   return (
     // As tall as what it says: nothing while there is nothing to say.
-    <Box role="status" mt={state.kind === "idle" ? undefined : "1"}>
+    <Box role="status" _notEmpty={{ mt: "1" }}>
       {state.kind === "loading" ? message("商品情報を取得しています…") : null}
       {state.kind === "busy" ? (
         <VStack gap="0" alignItems="flex-start">
