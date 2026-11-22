@@ -1,7 +1,7 @@
 import { grouped } from "#/ui/format.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
-import { type Plan, capLines } from "@workspaces/domain";
+import { type Plan, capLines, accountIdOf } from "@workspaces/domain";
 import {
   Badge,
   Button,
@@ -18,7 +18,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useId, useMemo, useRef, useState } from "react";
-import { accountIdOf } from "#/state/accounts.ts";
+
 import { accountSettingsAtom, calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
 import { runDeletePlanAtom } from "#/state/mutations.ts";
 import { plansAtom } from "#/state/query-atoms.ts";

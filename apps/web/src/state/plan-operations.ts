@@ -20,9 +20,10 @@ import {
   updateBenefit,
   updateOrder,
   newId,
+  withEffectiveAccount,
 } from "@workspaces/domain";
 import { atom, type Getter } from "jotai";
-import { withEffectiveAccount } from "./accounts.ts";
+
 import { accountSettingsAtom } from "./derived.ts";
 import { type SavedPlans, type ShopChange, savePlanAtom, saveSpuMonthAtom } from "./mutations.ts";
 import { shopsAtom } from "./query-atoms.ts";

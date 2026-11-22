@@ -8,6 +8,7 @@ import {
   spuIdsIn,
   spuPurchaseRules,
   toggleSpu,
+  withEffectiveAccount,
 } from "@workspaces/domain";
 import {
   Alert,
@@ -34,7 +35,7 @@ import {
 import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useState } from "react";
 import { grouped, pointsText, rateText, rounded } from "#/ui/format.ts";
-import { withEffectiveAccount } from "#/state/accounts.ts";
+
 import { accountSettingsAtom, planResultAtom } from "#/state/derived.ts";
 import { runSaveSpuMonthAtom } from "#/state/mutations.ts";
 import {

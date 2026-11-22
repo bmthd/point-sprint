@@ -7,12 +7,13 @@ import {
   spuPurchaseRules,
   standardSpu,
   toggleSpu,
+  withEffectiveAccount,
 } from "@workspaces/domain";
 import { Button, Flex, Text, useNotice } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
 import { grouped } from "#/ui/format.ts";
-import { withEffectiveAccount } from "#/state/accounts.ts";
+
 import { accountSettingsAtom } from "#/state/derived.ts";
 import { saveSpuMonthAtom } from "#/state/mutations.ts";
 import { plansAtom, shopsAtom, spuMonthsAtom } from "#/state/query-atoms.ts";

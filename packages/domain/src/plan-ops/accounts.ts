@@ -1,11 +1,5 @@
-import {
-  type Account,
-  DEFAULT_ACCOUNT_ID,
-  type Plan,
-  type Profile,
-  accountsOf,
-  planAccountId,
-} from "@workspaces/domain";
+import { type Account, DEFAULT_ACCOUNT_ID } from "#/model/account.ts";
+import { type Plan, type Profile, accountsOf, planAccountId } from "#/model/plan.ts";
 
 export type AccountSettings = { enabled: boolean; accounts: Account[] };
 

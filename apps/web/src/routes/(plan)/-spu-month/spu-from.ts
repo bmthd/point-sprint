@@ -1,6 +1,6 @@
 import type { Plan } from "@workspaces/domain";
 import { atom } from "jotai";
-import { accountIdOf } from "#/state/accounts.ts";
+import { accountIdOf } from "@workspaces/domain";
 import { accountSettingsAtom } from "#/state/derived.ts";
 
 declare module "@tanstack/react-router" {
