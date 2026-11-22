@@ -1,3 +1,4 @@
+import { Box, dataAttr } from "@workspaces/ui";
 import type { ReactNode } from "react";
 
 function Icon({ size, children }: { size: number; children: ReactNode }) {
@@ -20,18 +21,18 @@ function Icon({ size, children }: { size: number; children: ReactNode }) {
 
 export function ChevronIcon({ open = false, size = 18 }: { open?: boolean; size?: number }) {
   return (
-    <span
-      style={{
-        display: "inline-flex",
-        flex: "none",
-        transition: "transform .15s",
-        transform: open ? "rotate(180deg)" : undefined,
-      }}
+    <Box
+      as="span"
+      display="inline-flex"
+      flex="none"
+      transition="transform .15s"
+      data-open={dataAttr(open)}
+      css={{ "&[data-open]": { transform: "rotate(180deg)" } }}
     >
       <Icon size={size}>
         <path d="m6 9 6 6 6-6" />
       </Icon>
-    </span>
+    </Box>
   );
 }
 

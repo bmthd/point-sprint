@@ -1,6 +1,6 @@
 import { Box, type CSSObject, Grid, List, SystemProvider, Text } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
-import { Children, type ReactNode } from "react";
+import { Children, type CSSProperties, type ReactNode } from "react";
 import { type HelpFigureSpec, helpFigures } from "./figures.tsx";
 import type { HelpFigureMark } from "./figure-marks.ts";
 import { SampleProviders } from "./sample-providers.tsx";
@@ -105,13 +105,15 @@ function FigureFrame({ spec, alt }: { spec: HelpFigureSpec; alt: string }) {
   const Render = spec.render;
   const { crop } = spec;
   // A cropped screen shows its top or its bottom, without measuring: the same ahead of time.
-  const cropStyles: CSSObject | undefined = crop && {
-    h: `${crop.height}px`,
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: crop.from === "top" ? "flex-start" : "flex-end",
-    "& > *": { flexShrink: 0 },
+  const cropStyles: CSSObject = {
+    "&[data-crop]": {
+      h: "calc(var(--crop-height) * 1px)",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      "& > *": { flexShrink: 0 },
+    },
+    "&[data-crop=bottom]": { justifyContent: "flex-end" },
   };
   return (
     <Box
@@ -128,6 +130,8 @@ function FigureFrame({ spec, alt }: { spec: HelpFigureSpec; alt: string }) {
       <Box
         inert
         data-help-figure={spec.name}
+        data-crop={crop?.from}
+        style={{ "--crop-height": crop?.height } as CSSProperties}
         w={`${PHONE_WIDTH + (FRAME_PADDING - 16) * 2}px`}
         p={`${FRAME_PADDING}px`}
         containerType="inline-size"
