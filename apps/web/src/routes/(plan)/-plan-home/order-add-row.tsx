@@ -183,7 +183,7 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
           ＋ 注文を追加
         </Text>
         {/* The whole column puts the caret in its input, which is drawn 40px high. */}
-        <Box as="label" data-press-area="" alignSelf="stretch" position="relative" minW="0">
+        <Box as="label" data-press-area alignSelf="stretch" position="relative" minW="0">
           <NameInput
             form={form}
             id={nameId}
@@ -192,7 +192,7 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
             onPasteUrl={onPasteUrl}
           />
         </Box>
-        <Box as="label" data-press-area="" alignSelf="stretch" position="relative" minW="0">
+        <Box as="label" data-press-area alignSelf="stretch" position="relative" minW="0">
           <AmountInput
             form={form}
             id={`${nameId}-amount`}

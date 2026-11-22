@@ -14,6 +14,7 @@ import {
   Switch,
   Text,
   VisuallyHidden,
+  dataAttr,
   isComposing,
   runKeyAction,
   useCallbackRef,
@@ -443,8 +444,9 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
             preview={title || "商品名"}
             textProps={{
               fontSize: "sm",
-              fontWeight: title ? "medium" : "normal",
-              color: title ? undefined : "fg.muted",
+              fontWeight: "medium",
+              _placeholder: { fontWeight: "normal", color: "fg.muted" },
+              "data-placeholder": dataAttr(!title),
             }}
             inset={NAME_INSET}
             grow
