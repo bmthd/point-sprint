@@ -1,6 +1,6 @@
 import { grouped } from "#/ui/format.ts";
 import { POINT_GROUPS, type PointGroup } from "@workspaces/domain";
-import { Box, Flex, List, Text } from "@workspaces/ui";
+import { Box, dataAttr, Flex, List, Text } from "@workspaces/ui";
 
 const labels: Record<PointGroup, string> = {
   base: "通常",
@@ -35,14 +35,14 @@ export function PointBreakdown({
 }) {
   const sum = POINT_GROUPS.reduce((total, group) => total + totals[group], 0);
   return (
-    <Flex direction="column" gap="2.5">
+    <Flex direction="column" gap="2.5" data-held={dataAttr(held)}>
       <Flex
         h="3.5"
         rounded="lg"
         overflow="hidden"
         gap="0.5"
-        bg={sum > 0 ? undefined : "bg.muted"}
-        opacity={held ? 0.4 : undefined}
+        _empty={{ bg: "bg.muted" }}
+        css={{ "[data-held] &": { opacity: 0.4 } }}
         aria-hidden
       >
         {sum > 0
@@ -61,7 +61,8 @@ export function PointBreakdown({
         rowGap={legend === "grid" ? "1.5" : "1"}
         columnGap={legend === "grid" ? "3" : "4"}
         fontSize={legend === "names" ? "xs" : "sm"}
-        color={held || legend === "names" ? "fg.muted" : undefined}
+        color={legend === "names" ? "fg.muted" : undefined}
+        css={{ "[data-held] &": { color: "fg.muted" } }}
       >
         {POINT_GROUPS.map((group) => (
           <List.Item key={group} display="flex" alignItems="center" gap="1.5">
@@ -70,7 +71,7 @@ export function PointBreakdown({
               rounded="xs"
               flex="none"
               bg={pointFill(group, 2)}
-              opacity={held ? 0.4 : undefined}
+              css={{ "[data-held] &": { opacity: 0.4 } }}
             />
             {labels[group]}
             {legend === "names" ? null : (

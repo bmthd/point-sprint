@@ -7,6 +7,7 @@ import { type Order, type Shop, taxExcludedTarget, taxIncludedTarget } from "@wo
 import {
   Box,
   Collapse,
+  dataAttr,
   Flex,
   Button,
   IconButton,
@@ -535,11 +536,18 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
             lineHeight="16px"
             fontSize="2xs"
             color="fg.muted"
+            data-held={dataAttr(held)}
           >
-            <Text as="span" gridArea="1 / 1" visibility={held ? "hidden" : undefined}>
+            <Text as="span" gridArea="1 / 1" css={{ "[data-held] &": { visibility: "hidden" } }}>
               {rateText(points.rate, false)}
             </Text>
-            <Text as="span" gridArea="1 / 1" visibility={held ? undefined : "hidden"} aria-hidden>
+            <Text
+              as="span"
+              gridArea="1 / 1"
+              visibility="hidden"
+              css={{ "[data-held] &": { visibility: "visible" } }}
+              aria-hidden
+            >
               保留中
             </Text>
           </Box>
