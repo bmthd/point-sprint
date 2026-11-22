@@ -20,7 +20,7 @@ import {
   type OrderForm,
   urlFromPastedText,
 } from "#/routes/(plan)/-order-form-store.ts";
-import { ChevronIcon } from "#/ui/icons.tsx";
+import { ExpandChevronIcon } from "#/routes/(plan)/-expand-chevron-icon.tsx";
 
 // The parts of the desktop table's rows that the orders' rows and the add row share: the 40px
 // input that floats over its column, the text that turns into it, and the ⌄ that opens a row.
@@ -377,7 +377,7 @@ export function RowToggle({
       onFocus={onFocus}
       onPointerDown={onPointerDown}
     >
-      <ChevronIcon open={open} />
+      <ExpandChevronIcon open={open} />
     </IconButton>
   );
 }

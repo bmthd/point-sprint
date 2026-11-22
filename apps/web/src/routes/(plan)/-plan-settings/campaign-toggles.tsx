@@ -17,12 +17,12 @@ import {
   Switch,
   Text,
   dataAttr,
+  PencilIcon,
 } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
 import { rateText } from "#/ui/format.ts";
 import { toggleBenefitAtom } from "#/state/plan-operations.ts";
-import { PencilIcon } from "#/ui/icons.tsx";
 import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
 import { CampaignAddButtons } from "./campaign-adder.tsx";
 import { CampaignEditor } from "./campaign-editor.tsx";

@@ -1,7 +1,6 @@
 import type { CalculationResult, Plan } from "@workspaces/domain";
-import { Flex, Button, Text } from "@workspaces/ui";
+import { Flex, Button, Text, PlusIcon } from "@workspaces/ui";
 import { grouped } from "#/ui/format.ts";
-import { PlusIcon } from "#/ui/icons.tsx";
 import { countedAmount, effectiveRate } from "./summary-card.tsx";
 
 /** The phone's bar fixed to the bottom of the screen: totals and the way to add an order. */

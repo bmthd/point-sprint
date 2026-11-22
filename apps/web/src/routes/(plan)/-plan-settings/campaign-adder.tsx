@@ -10,12 +10,11 @@ import {
   isTwoShopCampaign,
   newId,
 } from "@workspaces/domain";
-import { Button, Flex, Image, List, Text } from "@workspaces/ui";
+import { Button, Flex, Image, List, Text, PlusIcon } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import type { Ref } from "react";
 import { addBenefitAtom } from "#/state/plan-operations.ts";
 import { tokyoToday } from "#/ui/dates.ts";
-import { PlusIcon } from "#/ui/icons.tsx";
 import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
 import { PLACEHOLDER_CAP, SPECS } from "./campaign-form.ts";
 import { useSaveSettingsChange } from "./settings-shared.ts";

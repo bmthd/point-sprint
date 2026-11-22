@@ -16,12 +16,13 @@ import {
   SegmentedControl,
   Text,
   VStack,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { MouseEvent } from "react";
 import { accountIdOf } from "#/state/accounts.ts";
 import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
-import { BackIcon, ForwardIcon } from "#/ui/icons.tsx";
 import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
 import { useToday } from "#/routes/-use-today.ts";
 import { SpuMonthEditor, spuMonthText } from "./-spu-month/spu-month-editor.tsx";
@@ -43,7 +44,7 @@ function BackToCommon() {
       }}
       size="lg"
       variant="ghost"
-      icon={<BackIcon />}
+      icon={<ChevronLeftIcon />}
     />
   );
 }
@@ -113,7 +114,7 @@ function SpuScreen({ month, account }: { month: string; account: string | undefi
             aria-label={back.label}
             size="lg"
             variant="ghost"
-            icon={<BackIcon />}
+            icon={<ChevronLeftIcon />}
           />
         ) : (
           <BackToCommon />
@@ -130,7 +131,7 @@ function SpuScreen({ month, account }: { month: string; account: string | undefi
               px="2"
               aria-label={`${spuMonthText(previous, today)}の SPU`}
               onClick={() => show({ month: previous })}
-              startIcon={<BackIcon />}
+              startIcon={<ChevronLeftIcon />}
             >
               {spuMonthText(previous, today)}
             </Button>
@@ -141,7 +142,7 @@ function SpuScreen({ month, account }: { month: string; account: string | undefi
               px="2"
               aria-label={`${spuMonthText(next, today)}の SPU`}
               onClick={() => show({ month: next })}
-              endIcon={<ForwardIcon />}
+              endIcon={<ChevronRightIcon />}
             >
               {spuMonthText(next, today)}
             </Button>

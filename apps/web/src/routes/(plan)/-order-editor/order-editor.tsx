@@ -4,13 +4,12 @@
 
 import { Field as FormField, reset, useField, useForm } from "@formisch/react";
 import type { Order, Plan } from "@workspaces/domain";
-import { Box, Flex, Button, Drawer, IconButton, Modal, Switch, Text } from "@workspaces/ui";
+import { Box, Flex, Button, Drawer, IconButton, Modal, Switch, Text, XIcon } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } from "react";
 import { Form } from "#/routes/-form.tsx";
 import { shopsAtom } from "#/state/queries.ts";
 import { useSingleFlight } from "#/use-single-flight.ts";
-import { CloseIcon } from "#/ui/icons.tsx";
 import { CampaignCheck, OrderPart } from "#/routes/(plan)/-order-fields.tsx";
 import { CampaignChip, useSaveOrderDraft } from "#/routes/(plan)/-order-shared.tsx";
 import {
@@ -221,7 +220,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
   const header = (
     <parts.Header display="flex" alignItems="center" justifyContent="space-between">
       <parts.Title as="h2">{title}</parts.Title>
-      <IconButton aria-label="閉じる" onClick={onClose} icon={<CloseIcon />} variant="ghost" />
+      <IconButton aria-label="閉じる" onClick={onClose} icon={<XIcon />} variant="ghost" />
     </parts.Header>
   );
 

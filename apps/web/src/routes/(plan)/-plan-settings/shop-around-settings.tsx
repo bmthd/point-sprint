@@ -5,7 +5,7 @@ import { useId, useRef } from "react";
 import * as v from "valibot";
 import { grouped, rateText } from "#/ui/format.ts";
 import { updateBenefitAtom } from "#/state/plan-operations.ts";
-import { ChevronIcon } from "#/ui/icons.tsx";
+import { ExpandChevronIcon } from "#/routes/(plan)/-expand-chevron-icon.tsx";
 import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
 import { CommitDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
 import { END_BEFORE_START, START_AFTER_END, DateSchema, PointsSchema } from "@workspaces/domain";
@@ -151,7 +151,7 @@ function ShopAroundEditor({
         <Text as="span" fontSize="sm" color="primary.fg">
           変更
         </Text>
-        <ChevronIcon open={open} />
+        <ExpandChevronIcon open={open} />
       </Button>
       {open ? (
         <Flex
