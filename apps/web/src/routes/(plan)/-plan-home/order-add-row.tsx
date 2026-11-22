@@ -14,6 +14,7 @@ import {
   List,
   Text,
   ariaAttr,
+  dataAttr,
   isApple,
   isComposing,
   mergeRefs,
@@ -55,6 +56,7 @@ import { ACTION_BUTTON_WIDTH, OrderDetailFields } from "./order-details.tsx";
 import {
   AMOUNT_INSET,
   NAME_INSET,
+  ROW_GAP,
   RowToggle,
   floatingInputProps,
   pasteUrlTo,
@@ -167,7 +169,7 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
         display="grid"
         gridTemplateColumns={rowColumns}
         alignItems="center"
-        gap="2.5"
+        gap={ROW_GAP}
         px="3"
         minH="16"
         css={rowToggleCss}
@@ -294,7 +296,7 @@ function NameInput({
       id={id}
       value={typeof name.input === "string" ? name.input : ""}
       {...floatingInputProps(NAME_INSET, "start")}
-      data-grow=""
+      data-grow={dataAttr(true)}
       placeholder="商品名またはURL"
       aria-label="新しい注文の商品名"
       aria-invalid={ariaAttr(name.errors)}

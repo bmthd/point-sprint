@@ -3,6 +3,7 @@ import { Box, Flex, Card, List, Text, Tooltip, VisuallyHidden } from "@workspace
 import { type ReactNode, useCallback, useId, useMemo, useRef, useState } from "react";
 import { OrderAddRow } from "./order-add-row.tsx";
 import { withMonthSeparators } from "./order-months.tsx";
+import { ROW_GAP } from "./inline-text.tsx";
 import { OrderListContext, OrderRow, rowColumns } from "./order-row.tsx";
 import {
   HOLD_HINT,
@@ -68,7 +69,7 @@ export function OrderTable({
           display="grid"
           gridTemplateColumns={rowColumns}
           alignItems="center"
-          gap="2.5"
+          gap={ROW_GAP}
           px="3"
           py="1.5"
           borderBottomWidth="1px"

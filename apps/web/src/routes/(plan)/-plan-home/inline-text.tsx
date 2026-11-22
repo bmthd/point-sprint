@@ -35,8 +35,12 @@ export type FloatInset = { start: string; end: string };
 export const NAME_INSET: FloatInset = { start: "-9px", end: "0px" };
 /** The amount reaches right, its digits ending where the text's did. */
 export const AMOUNT_INSET: FloatInset = { start: "-4px", end: "-9px" };
-/** Typed long, the name grows over the amount's and the points' columns, up to the ⌄ (`rowColumns`). */
-const GROW_REACH = "calc(11.5rem + 20px)";
+/** The widths of the amount's and the points' columns, and the gap between a row's columns (`rowColumns`). */
+export const AMOUNT_COLUMN = "6rem";
+export const POINTS_COLUMN = "5.5rem";
+export const ROW_GAP = "2.5";
+/** Typed long, the name grows over the amount's and the points' columns, up to the ⌄. */
+const GROW_REACH = `${AMOUNT_COLUMN} + ${POINTS_COLUMN} + 2 * {spaces.${ROW_GAP}}`;
 
 /**
  * The 40px input over the middle of its column, which spans the row's 64px: it covers the small
@@ -58,8 +62,8 @@ export function floatingInputProps(inset: FloatInset, align: "start" | "end") {
         // Over the amount's input, which comes after it.
         zIndex: "3",
         fieldSizing: "content",
-        minWidth: columnWidth,
-        maxWidth: `calc(${columnWidth} + ${GROW_REACH})`,
+        minW: columnWidth,
+        maxW: `calc(${columnWidth} + ${GROW_REACH})`,
       },
     },
     h: "10",
