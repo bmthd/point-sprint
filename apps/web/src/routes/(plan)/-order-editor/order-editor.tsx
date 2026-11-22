@@ -8,7 +8,7 @@ import { Box, Flex, Button, Drawer, IconButton, Modal, Switch, Text, XIcon } fro
 import { useAtomValue } from "jotai";
 import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } from "react";
 import { Form } from "#/routes/-form.tsx";
-import { shopsAtom } from "#/state/queries.ts";
+import { shopsAtom } from "#/state/query-atoms.ts";
 import { useSingleFlight } from "#/use-single-flight.ts";
 import { CampaignCheck, OrderPart } from "#/routes/(plan)/-order-fields.tsx";
 import { CampaignChip, useSaveOrderDraft } from "#/routes/(plan)/-order-shared.tsx";

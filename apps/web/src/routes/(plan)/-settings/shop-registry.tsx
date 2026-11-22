@@ -4,7 +4,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
 import { ShopNameSchema } from "@workspaces/domain";
 import { changeShop, runSaveShopAtom } from "#/state/mutations.ts";
-import { shopsAtom } from "#/state/queries.ts";
+import { shopsAtom } from "#/state/query-atoms.ts";
 import { withTag } from "#/routes/(plan)/-order-fields.tsx";
 
 const is39 = (shop: Shop) => shop.tags.includes("39shop");

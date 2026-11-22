@@ -1,6 +1,6 @@
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
-import { noticeReadsQueryAtom } from "#/state/queries.ts";
+import { noticeReadsQueryAtom } from "#/state/query-atoms.ts";
 import { type Notice, notices as allNotices } from "./notices.ts";
 
 /**

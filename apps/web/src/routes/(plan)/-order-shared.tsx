@@ -16,7 +16,7 @@ import { selectAtom } from "jotai/utils";
 import { type ReactNode, type RefObject, useCallback, useRef, useState } from "react";
 import { orderAtom, orderPointsAtom, calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
 import { clearOrdersAtom, removeOrderAtom, saveOrderDraftAtom } from "#/state/plan-operations.ts";
-import { shopsAtom } from "#/state/queries.ts";
+import { shopsAtom } from "#/state/query-atoms.ts";
 import { openOrderIdAtom } from "./-ui.ts";
 import type { OrderDraft } from "./-order-form.ts";
 

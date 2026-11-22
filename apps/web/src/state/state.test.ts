@@ -36,7 +36,8 @@ import {
   togglePlanHoldAtom,
   updateOrderAtom,
 } from "./plan-operations.ts";
-import { plansAtom, profileAtom, queryKeys, shopsAtom, spuMonthsAtom } from "./queries.ts";
+import { queryKeys } from "./queries.ts";
+import { plansAtom, profileAtom, shopsAtom, spuMonthsAtom } from "./query-atoms.ts";
 import { repositoryAtom } from "./repository.ts";
 
 const now = "2026-10-05T00:00:00.000Z";

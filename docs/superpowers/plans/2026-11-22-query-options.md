@@ -42,3 +42,10 @@ queryKey と queryFn の上書き API は作らない。保存形式とスキー
 - [ ] start-target.ts には UI の create/choose の変換を残す。
 - [ ] 境界日と同順位を含むテスト、全体の検証を行い、PR 2 向け PR を作る。
 - [ ] 3 本の差分・CI・Preview を確認し、Stack のリンクを各 PR に記載する。
+
+### PR 1 の追加: Options と atom のモジュール分離
+
+- [x] state/queries.ts を純粋な Options と queryKeys に限定し、atom を state/query-atoms.ts に移す。
+- [x] 同期と公式イベントの Factory を hooks や atom と分離し、全 import を移す。
+- [x] analyze-query-bundles.ts で同条件のアプリビルドと Factory 単独バンドルを比較し、分析結果を記録する。
+- [ ] PR 1 を更新し、PR 2・3 を積み直して全体を検証する。

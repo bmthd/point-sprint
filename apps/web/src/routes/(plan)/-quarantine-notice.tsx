@@ -13,7 +13,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { deleteQuarantinedAtom } from "#/state/mutations.ts";
-import { quarantineQueryAtom, storageHealthQueryAtom } from "#/state/queries.ts";
+import { quarantineQueryAtom, storageHealthQueryAtom } from "#/state/query-atoms.ts";
 
 const storeLabels: Record<StoreName, string> = {
   plans: "プラン",

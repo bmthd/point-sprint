@@ -4,14 +4,10 @@ import { createStore } from "jotai";
 import { queryClientAtom } from "jotai-tanstack-query";
 import { expect, expectTypeOf, test } from "vitest";
 import { createMemoryRepository } from "#/storage/memory-repository.ts";
+import { officialEventsQueryAtom, officialEventsSourceAtom } from "#/routes/-official-events.ts";
 import {
-  officialEventsQueryAtom,
-  officialEventsQueryOptions,
-  officialEventsSourceAtom,
-} from "#/routes/-official-events.ts";
-import {
-  plansQueryAtom,
   plansQueryOptions,
+  syncEnabledQueryOptions,
   shopsQueryOptions,
   profileQueryOptions,
   spuMonthsQueryOptions,
@@ -19,8 +15,9 @@ import {
   quarantineQueryOptions,
   storageHealthQueryOptions,
 } from "./queries.ts";
+import { plansQueryAtom } from "./query-atoms.ts";
 import { repositoryAtom } from "./repository.ts";
-import { syncEnabledQueryOptions } from "./sync.ts";
+import { officialEventsQueryOptions } from "#/routes/-official-events-query.ts";
 
 test("reads repository data without subscribing and shares it with the query atom", async () => {
   const repository = createMemoryRepository();

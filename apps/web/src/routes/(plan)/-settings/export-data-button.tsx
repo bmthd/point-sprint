@@ -10,7 +10,7 @@ import {
   shopsQueryAtom,
   spuMonthsAtom,
   spuMonthsQueryAtom,
-} from "#/state/queries.ts";
+} from "#/state/query-atoms.ts";
 import { exportData, exportFileName } from "./export-data.ts";
 
 function downloadJson(name: string, text: string) {

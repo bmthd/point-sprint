@@ -12,3 +12,7 @@ atom の依存と等価比較、画面の動作は維持する。
 全体を一つの PR にまとめる案は取得定義と業務規則のレビューが混ざるため採用しない。
 Query ごとに分割する案は同型の変更を細分化するため採用しない。
 利用者と合意した 3 本の Stack PR とし、Factory、プラン計算、イベント選択の順に積む。
+
+Options と atom はモジュールも分離する。state/queries.ts は queryKeys と Repository を受け取る Factory、state/query-atoms.ts は atom を持つ。公式イベントの Factory は routes/-official-events-query.ts に置く。Options のモジュールから Jotai・React hooks・ストレージ実装への依存を持たせない。
+
+バンドルは同一の本番設定・固定 BUILD_ID と BUILD_DATE で PR 1 の分離前後を比較する。アプリ全体とトップページ初期配信の JS/CSS サイズ、および plansQueryOptions だけを公開する最小バンドルの依存を別々に確認する。実行速度の改善は主張しない。

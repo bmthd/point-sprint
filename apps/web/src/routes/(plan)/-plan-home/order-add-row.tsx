@@ -29,7 +29,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { shopsAtom } from "#/state/queries.ts";
+import { shopsAtom } from "#/state/query-atoms.ts";
 import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
 import { useSingleFlight } from "#/use-single-flight.ts";
 import {

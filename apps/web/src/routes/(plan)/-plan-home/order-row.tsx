@@ -36,7 +36,7 @@ import {
 import { grouped, pointsText, rateText, yen } from "#/ui/format.ts";
 import { orderAtom, planAtom } from "#/state/derived.ts";
 import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "#/state/plan-operations.ts";
-import { shopsAtom } from "#/state/queries.ts";
+import { shopsAtom } from "#/state/query-atoms.ts";
 import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
 import { monthDayWithWeekday } from "#/ui/dates.ts";
 import {

@@ -21,7 +21,7 @@ import {
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { type ClipboardEvent, type ReactNode, type Ref, useId, useRef, useState } from "react";
 import { bind, errorsOf } from "#/routes/-form.tsx";
-import { shopsAtom } from "#/state/queries.ts";
+import { shopsAtom } from "#/state/query-atoms.ts";
 import { type EntryMode, entryModeAtom } from "./-ui.ts";
 import { FormDatePicker } from "./-date-picker-field.tsx";
 import { AutofillStatus, type ItemAutofill } from "./-item-autofill.tsx";

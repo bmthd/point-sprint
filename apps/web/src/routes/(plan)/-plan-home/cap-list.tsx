@@ -19,7 +19,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { grouped, yen } from "#/ui/format.ts";
-import { plansAtom } from "#/state/queries.ts";
+import { plansAtom } from "#/state/query-atoms.ts";
 import { CAP_TAX_RATES, conditionText, scopeText, sharedText } from "#/routes/(plan)/-cap-lines.ts";
 import { segmentPressArea, taxRateLabel } from "#/routes/(plan)/-order-shared.tsx";
 

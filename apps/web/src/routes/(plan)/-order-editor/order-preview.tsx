@@ -15,7 +15,7 @@ import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { percent, pointsText, rateText, yen } from "#/ui/format.ts";
 import { asCalculatedAtom, calculationAtom } from "#/state/derived.ts";
-import { plansAtom, shopsAtom } from "#/state/queries.ts";
+import { plansAtom, shopsAtom } from "#/state/query-atoms.ts";
 import { orderPointRows } from "#/routes/(plan)/-order-shared.tsx";
 import type { OrderDraft } from "#/routes/(plan)/-order-form.ts";
 

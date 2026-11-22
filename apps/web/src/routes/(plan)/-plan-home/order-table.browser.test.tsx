@@ -5,7 +5,7 @@ import { beforeEach, expect, onTestFinished, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page, userEvent } from "vitest/browser";
 import { updateOrderAtom } from "#/state/plan-operations.ts";
-import { plansQueryAtom, shopsQueryAtom } from "#/state/queries.ts";
+import { plansQueryAtom, shopsQueryAtom } from "#/state/query-atoms.ts";
 import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import {
   DATE_PICKER_FIELD,

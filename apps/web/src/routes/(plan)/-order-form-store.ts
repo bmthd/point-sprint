@@ -6,7 +6,7 @@ import { type FormStore, getInput, setInput, useField } from "@formisch/react";
 import { isComposing } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ChangeEvent, FocusEvent, KeyboardEvent } from "react";
-import { shopsAtom } from "#/state/queries.ts";
+import { shopsAtom } from "#/state/query-atoms.ts";
 import { type ItemAutofill, useItemAutofill } from "./-item-autofill.tsx";
 import { NEW_SHOP, type ShopFromUrl, fieldsFromItem, shopFromItem } from "./-order-fields.tsx";
 import type { OrderFormSchema } from "./-order-form.ts";

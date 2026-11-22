@@ -2,7 +2,7 @@ import { ClientOnly, useCanGoBack, useRouter } from "@tanstack/react-router";
 import { Alert, Box, Flex, Heading, Text, VStack, ChevronLeftIcon } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
-import { storageHealthQueryAtom } from "#/state/queries.ts";
+import { storageHealthQueryAtom } from "#/state/query-atoms.ts";
 import { RouterIconButton } from "#/ui/router-link.tsx";
 import { QuarantineNotice } from "#/routes/(plan)/-quarantine-notice.tsx";
 import { StorageHealthFailure, storageMessages } from "#/routes/(plan)/-warnings.tsx";

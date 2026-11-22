@@ -43,7 +43,7 @@ import {
   profileQueryAtom,
   spuMonthsAtom,
   spuMonthsQueryAtom,
-} from "#/state/queries.ts";
+} from "#/state/query-atoms.ts";
 import { RouterButton } from "#/ui/router-link.tsx";
 import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
 import { monthDay, monthText, useSpuOffMessages } from "#/routes/(plan)/-warnings.tsx";
