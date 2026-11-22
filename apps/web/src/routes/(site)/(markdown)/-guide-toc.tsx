@@ -62,15 +62,17 @@ export function GuideToc({
               key={section}
               ps="3"
               borderLeftWidth="2px"
-              borderColor={reading ? "primary.solid" : "border"}
+              borderColor="border"
+              css={{ "&:has(> [aria-current])": { borderColor: "primary.solid" } }}
             >
               <Link
                 href={`#${section}`}
                 colorScheme="mono"
                 display="block"
                 py="1.5"
-                color={!markReading || reading ? "fg" : "fg.muted"}
-                fontWeight={reading ? "bold" : "normal"}
+                color={markReading ? "fg.muted" : "fg"}
+                fontWeight="normal"
+                _current={{ color: "fg", fontWeight: "bold" }}
                 aria-current={reading ? "location" : undefined}
               >
                 {section}
