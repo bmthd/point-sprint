@@ -1,3 +1,4 @@
+import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "#/state/queries.ts";
 import { type OfficialEvent, OfficialEventSchema } from "@workspaces/domain";
 import { atom } from "jotai";
@@ -21,11 +22,18 @@ export const officialEventsSourceAtom = atom<{ load: () => Promise<OfficialEvent
   load: fetchOfficialEvents,
 });
 
-export const officialEventsQueryAtom = atomWithQuery((get) => {
-  const { load } = get(officialEventsSourceAtom);
+export function officialEventsQueryOptions(load: () => Promise<OfficialEvent[]>) {
   // The master changes a few times a day at most.
-  return { queryKey: queryKeys.officialEvents, queryFn: load, staleTime: 10 * 60_000 };
-});
+  return queryOptions({
+    queryKey: queryKeys.officialEvents,
+    queryFn: load,
+    staleTime: 10 * 60_000,
+  });
+}
+
+export const officialEventsQueryAtom = atomWithQuery((get) =>
+  officialEventsQueryOptions(get(officialEventsSourceAtom).load),
+);
 
 const noEvents: OfficialEvent[] = [];
 

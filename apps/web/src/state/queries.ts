@@ -1,4 +1,6 @@
 import type { Plan, Profile, Shop, SpuMonth } from "@workspaces/domain";
+import { queryOptions } from "@tanstack/react-query";
+import type { Repository } from "#/storage/repository.ts";
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 import { repositoryAtom } from "./repository.ts";
@@ -19,67 +21,93 @@ export function defaultProfile(): Profile {
   return { updatedAt: new Date().toISOString() };
 }
 
-export const plansQueryAtom = atomWithQuery((get) => {
-  const repository = get(repositoryAtom);
-  return { queryKey: queryKeys.plans, queryFn: () => repository.plans.list() };
-});
+export function plansQueryOptions(repository: Repository) {
+  return queryOptions({ queryKey: queryKeys.plans, queryFn: () => repository.plans.list() });
+}
 
-export const shopsQueryAtom = atomWithQuery((get) => {
-  const repository = get(repositoryAtom);
-  return { queryKey: queryKeys.shops, queryFn: () => repository.shops.list() };
-});
+export function shopsQueryOptions(repository: Repository) {
+  return queryOptions({ queryKey: queryKeys.shops, queryFn: () => repository.shops.list() });
+}
 
-export const profileQueryAtom = atomWithQuery((get) => {
-  const repository = get(repositoryAtom);
-  return {
+export function profileQueryOptions(repository: Repository) {
+  return queryOptions({
     queryKey: queryKeys.profile,
     queryFn: async () => (await repository.profile.get()) ?? defaultProfile(),
-  };
-});
+  });
+}
 
-export const spuMonthsQueryAtom = atomWithQuery((get) => {
-  const repository = get(repositoryAtom);
-  return { queryKey: queryKeys.spuMonths, queryFn: () => repository.spuMonths.list() };
-});
+export function spuMonthsQueryOptions(repository: Repository) {
+  return queryOptions({
+    queryKey: queryKeys.spuMonths,
+    queryFn: () => repository.spuMonths.list(),
+  });
+}
+
+export function noticeReadsQueryOptions(repository: Repository) {
+  return queryOptions({
+    queryKey: queryKeys.noticeReads,
+    queryFn: () => repository.noticeReads.list(),
+  });
+}
+
+export function storageHealthQueryOptions(
+  repository: Repository,
+  {
+    enabled,
+    dataUpdatedAt,
+  }: { enabled: boolean; dataUpdatedAt: readonly [number, number, number, number] },
+) {
+  return queryOptions({
+    queryKey: [...queryKeys.storageHealth, ...dataUpdatedAt],
+    enabled,
+    queryFn: async () => ({
+      quarantined: await repository.quarantined(),
+      wasReset: repository.wasReset(),
+    }),
+  });
+}
+
+export function quarantineQueryOptions(repository: Repository) {
+  return queryOptions({
+    queryKey: queryKeys.quarantine,
+    queryFn: () => repository.quarantine.list(),
+  });
+}
+
+export const plansQueryAtom = atomWithQuery((get) => plansQueryOptions(get(repositoryAtom)));
+export const shopsQueryAtom = atomWithQuery((get) => shopsQueryOptions(get(repositoryAtom)));
+export const profileQueryAtom = atomWithQuery((get) => profileQueryOptions(get(repositoryAtom)));
+export const spuMonthsQueryAtom = atomWithQuery((get) =>
+  spuMonthsQueryOptions(get(repositoryAtom)),
+);
 
 /** The notices read on this device or one it syncs with. None until read: unknown on the server. */
-export const noticeReadsQueryAtom = atomWithQuery((get) => {
-  const repository = get(repositoryAtom);
-  return { queryKey: queryKeys.noticeReads, queryFn: () => repository.noticeReads.list() };
-});
+export const noticeReadsQueryAtom = atomWithQuery((get) =>
+  noticeReadsQueryOptions(get(repositoryAtom)),
+);
 
-/**
- * What went wrong while reading the stored data: rows set aside because they failed validation,
- * or a database recreated empty. Rows are set aside as they are read, so this asks again after
- * the plans, shops, profile and SPU months have been read.
- */
+/** Read health again after all stored data is read, since reading can quarantine rows. */
 export const storageHealthQueryAtom = atomWithQuery((get) => {
   const repository = get(repositoryAtom);
   const plans = get(plansQueryAtom);
   const shops = get(shopsQueryAtom);
   const profile = get(profileQueryAtom);
   const spuMonths = get(spuMonthsQueryAtom);
-  return {
-    queryKey: [
-      ...queryKeys.storageHealth,
+  return storageHealthQueryOptions(repository, {
+    enabled: plans.isSuccess && shops.isSuccess && profile.isSuccess && spuMonths.isSuccess,
+    dataUpdatedAt: [
       plans.dataUpdatedAt,
       shops.dataUpdatedAt,
       profile.dataUpdatedAt,
       spuMonths.dataUpdatedAt,
     ],
-    enabled: plans.isSuccess && shops.isSuccess && profile.isSuccess && spuMonths.isSuccess,
-    queryFn: async () => ({
-      quarantined: await repository.quarantined(),
-      wasReset: repository.wasReset(),
-    }),
-  };
+  });
 });
 
 /** The rows set aside because they failed validation, read only while someone looks at them. */
-export const quarantineQueryAtom = atomWithQuery((get) => {
-  const repository = get(repositoryAtom);
-  return { queryKey: queryKeys.quarantine, queryFn: () => repository.quarantine.list() };
-});
+export const quarantineQueryAtom = atomWithQuery((get) =>
+  quarantineQueryOptions(get(repositoryAtom)),
+);
 
 const noPlans: Plan[] = [];
 const noShops: Shop[] = [];
