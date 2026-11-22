@@ -7,7 +7,6 @@ import { type Order, type Shop, taxExcludedTarget, taxIncludedTarget } from "@wo
 import {
   Box,
   Collapse,
-  dataAttr,
   Flex,
   Button,
   IconButton,
