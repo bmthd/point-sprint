@@ -9,7 +9,7 @@ import {
   Menu,
   VStack,
   useDisclosure,
-  useMediaQuery,
+  useBreakpointValue,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
@@ -39,13 +39,6 @@ import { useSpuLossNotice } from "#/routes/(plan)/-spu-loss-notice.tsx";
 import { SpuPanel, useSpuPanelTarget } from "./spu-panel.tsx";
 import { spuPageFromPlanAtom } from "#/routes/(plan)/-spu-month/spu-from.ts";
 import { SpuSettingsCard } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
-
-/**
- * Wider than the `lg` breakpoint, which is up to 61em (976px) and keeps one column: from here the
- * summary is a column to the right of the orders, the orders are a table, and the settings and a
- * month's SPU open in a side panel.
- */
-const WIDE = "(min-width: 977px)";
 
 function PlanSwitcher({ plan }: { plan: Plan }) {
   const navigate = useNavigate();
@@ -172,7 +165,9 @@ const now = () => new Date();
 function Home({ plan }: { plan: Plan }) {
   const result = useAtomValue(planResultAtom(plan.id));
   useSpuLossNotice(plan);
-  const wide = useMediaQuery(WIDE);
+  // Wider than the `lg` breakpoint, which keeps one column: the summary is a column to the right of
+  // the orders, the orders are a table, and the settings and a month's SPU open in a side panel.
+  const wide = useBreakpointValue({ base: true, lg: false });
   const editor = useOrderEditorTarget(plan);
   const spuPanel = useSpuPanelTarget(plan.id);
   const navigate = useNavigate();
