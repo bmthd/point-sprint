@@ -38,6 +38,15 @@
 - 見た目は部品の `variant`、`size`、`colorScheme` で選び、色はテーマのトークンで指定する（`docs/design-system.md`）
 - `@workspaces/ui` にない部品や hooks を作ったときは、探したものの名前と、使わなかった理由を PR に書く
 
+## 状態で変わる見た目
+
+見た目を状態で変えるときは、状態を data 属性か aria 属性で要素に出し、CSS はその属性を見る。例: `data-held={dataAttr(held)}` と `css={{ "&[data-held]": { bg: "bg.subtle" } }}`、子は `"[data-held] &"`。aria 属性は `_current` や `_expanded` などの擬似 props で見る。`colorScheme` も同じく `_expanded={{ colorScheme: "primary" }}` のように書ける。
+
+- 並びや中身で決まるものは、属性を足さずにセレクタ（`:only-child`、`:empty`、`:has()`）で書く
+- 値なしの data 属性は名前だけ書く（`data-row-toggle`）
+
+スタイルの props の値に条件（`?:`、`&&`、`||`、`??`）を書くと、lint（`yamada/no-conditional-style`）が止める。
+
 ## Markdown の独自構文
 
 Markdown のページと記事に足す構文は、CommonMark の Generic directives 提案（remark-directive と同じ形）で書く。コロンの数で、子を持つかを表す。

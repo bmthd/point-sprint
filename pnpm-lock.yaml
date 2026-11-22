@@ -332,6 +332,9 @@ importers:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
     devDependencies:
+      '@oxlint/plugins':
+        specifier: 1.86.0
+        version: 1.86.0
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0

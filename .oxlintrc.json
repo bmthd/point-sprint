@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "unicorn", "oxc", "import"],
-  "jsPlugins": ["./apps/web/lint/jotai-plugin.ts"],
+  "jsPlugins": ["./apps/web/lint/jotai-plugin.ts", "./packages/ui/lint/style-plugin.ts"],
   "categories": {
     "correctness": "error"
   },
@@ -34,7 +34,8 @@
         "react/static-components": "error",
         "react/unsupported-syntax": "error",
         "react/use-memo": "error",
-        "jotai/no-callback-only-subscription": "error"
+        "jotai/no-callback-only-subscription": "error",
+        "yamada/no-conditional-style": "error"
       }
     },
     {
