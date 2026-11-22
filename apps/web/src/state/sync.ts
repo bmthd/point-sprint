@@ -2,10 +2,10 @@ import { queryKeys } from "./queries.ts";
 import { CURRENT_SCHEMA_VERSION } from "@workspaces/domain";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { atomWithQuery, queryClientAtom } from "jotai-tanstack-query";
+import { useCallbackRef } from "@workspaces/ui";
 import { useEffect } from "react";
 import { type SyncOutcome, createSyncRunner, syncOnce } from "#/storage/sync-engine.ts";
 import type { SyncServer } from "#/storage/sync-passkey.ts";
-import { useLatestRef } from "#/use-latest-ref.ts";
 import { OutdatedDatabaseError } from "#/storage/repository.ts";
 import { repositoryAtom } from "./repository.ts";
 
@@ -49,7 +49,7 @@ export function useSync(server: SyncServer, onOutdated: () => void): void {
   const client = useAtomValue(queryClientAtom);
   const setStatus = useSetAtom(syncStatusAtom);
   const setRequest = useSetAtom(requestSyncAtom);
-  const onOutdatedRef = useLatestRef(onOutdated);
+  const latestOnOutdated = useCallbackRef(onOutdated);
 
   useEffect(() => {
     let previous: SyncStatus = { state: "off" };
@@ -80,7 +80,7 @@ export function useSync(server: SyncServer, onOutdated: () => void): void {
           return set({ state: "signed-out" });
         case "outdated":
           set({ state: "failed", lastSyncedAt: at });
-          return onOutdatedRef.current();
+          return latestOnOutdated();
         case "refused":
           return set({ state: "failed", lastSyncedAt: at });
         case "synced":
@@ -111,5 +111,5 @@ export function useSync(server: SyncServer, onOutdated: () => void): void {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("online", onOnline);
     };
-  }, [repository, server, client, setStatus, setRequest, onOutdatedRef]);
+  }, [repository, server, client, setStatus, setRequest, latestOnOutdated]);
 }

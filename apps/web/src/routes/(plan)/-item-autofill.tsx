@@ -1,5 +1,14 @@
 import { channels, parseUrl } from "@workspaces/domain";
-import { Box, Button, HStack, Link, Text, VStack } from "@workspaces/ui";
+import {
+  Box,
+  Button,
+  HStack,
+  Link,
+  Text,
+  VStack,
+  useCallbackRef,
+  useInterval,
+} from "@workspaces/ui";
 import { atom, useSetAtom } from "jotai";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -9,7 +18,6 @@ import {
   LONGEST_WAIT_MS,
 } from "#/rakuten/item-lookup.ts";
 import type { ItemPage, RakutenItem } from "#/rakuten/item-search.ts";
-import { useLatestRef } from "#/use-latest-ref.ts";
 
 import { workerItemLookup } from "./-worker-item-lookup.ts";
 /** The item lookup through the Worker; tests replace it in their Jotai store. */
@@ -68,7 +76,7 @@ export function useItemAutofill(apply: (item: RakutenItem) => void) {
   const controller = useRef<AbortController>(undefined);
   /** The item page the state is about. */
   const current = useRef<ItemPage>(undefined);
-  const applyRef = useLatestRef(apply);
+  const latestApply = useCallbackRef(apply);
 
   /** Drops the lookup on its way, letting its turn at the API go. */
   const abandon = () => {
@@ -90,7 +98,7 @@ export function useItemAutofill(apply: (item: RakutenItem) => void) {
     void lookup(page, { maxWaitMs, signal: aborter.signal }).then((result) => {
       if (id !== request.current) return;
       controller.current = undefined;
-      if (result.ok) applyRef.current(result.item);
+      if (result.ok) latestApply(result.item);
       setState(result.ok ? IDLE : failedState(result));
     });
   };
@@ -161,11 +169,7 @@ const seconds = (ms: number) => Math.ceil(ms / 1000);
 function useSecondsLeft(state: AutofillState) {
   const [now, setNow] = useState(() => Date.now());
   const waiting = state.kind === "waiting";
-  useEffect(() => {
-    if (!waiting) return;
-    const timer = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(timer);
-  }, [waiting]);
+  useInterval(() => setNow(Date.now()), waiting ? 250 : null);
   if (state.kind !== "waiting") return 0;
   return Math.max(0, seconds(state.waitMs - Math.max(0, now - state.since)));
 }

@@ -11,6 +11,7 @@ import {
   type TdProps,
   type ThProps,
   VisuallyHidden,
+  dataAttr,
 } from "@workspaces/ui";
 
 /** The row of the current shop count; below the first tier that is the first row. */
@@ -121,7 +122,7 @@ export function ShopLadder({
             return (
               <NativeTable.Tr
                 key={row.shops}
-                data-fold={fold ? "" : undefined}
+                data-fold={dataAttr(fold)}
                 aria-current={isCurrent ? "true" : undefined}
                 bg={isCurrent ? "primary.subtle" : undefined}
                 outline={isCurrent ? "1px solid" : undefined}
