@@ -36,6 +36,7 @@
 - 部品や hooks、React の要素とイベントを扱う処理を書く前に、`packages/ui/src/index.ts` の export から使えるものを探す。例: ref をまとめる `mergeRefs`、IME の変換中を見る `isComposing`、最新の関数を呼ぶ `useCallbackRef`、属性の値を作る `dataAttr` と `ariaAttr`
 - `Box` に `as` を付けて要素を組み立てるのは、役割に合う部品がないときだけにする
 - 見た目は部品の `variant`、`size`、`colorScheme` で選び、色はテーマのトークンで指定する（`docs/design-system.md`）
+- 画面の幅で変えるときは、Yamada UI の breakpoint（`{ base, md, lg }` か `useBreakpointValue`）を使い、px の値でメディアクエリを書かない。各キーの幅と意味は `docs/design-system.md` の「画面の幅」にある
 - `@workspaces/ui` にない部品や hooks を作ったときは、探したものの名前と、使わなかった理由を PR に書く
 
 ## 状態で変わる見た目

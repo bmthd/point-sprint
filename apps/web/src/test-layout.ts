@@ -1,3 +1,8 @@
+import { theme } from "@workspaces/ui/theme";
+
+/** The widest screen, in px, that keeps one column: the `lg` breakpoint. One more has two. */
+export const ONE_COLUMN_MAX_WIDTH = Number.parseFloat(theme.breakpoints.lg) * 16;
+
 /** The box of a `DatePicker`, around its input. */
 export const DATE_PICKER_FIELD = "[role='combobox']:has(> input)";
 
