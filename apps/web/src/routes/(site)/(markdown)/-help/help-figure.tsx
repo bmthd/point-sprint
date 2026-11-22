@@ -1,7 +1,17 @@
-import { Box, type CSSObject, Grid, List, SystemProvider, Text, dataAttr } from "@workspaces/ui";
+import { useHydrated } from "@tanstack/react-router";
+import {
+  Box,
+  type CSSObject,
+  Grid,
+  List,
+  SystemProvider,
+  Text,
+  dataAttr,
+  useBreakpointValue,
+} from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { Children, type ReactNode } from "react";
-import { type HelpFigureSpec, helpFigures } from "./figures.tsx";
+import { type HelpFigureScreen, type HelpFigureSpec, helpFigures } from "./figures.tsx";
 import type { HelpFigureMark } from "./figure-marks.ts";
 import { SampleProviders } from "./sample-providers.tsx";
 
@@ -13,8 +23,20 @@ const PHONE_WIDTH = 375;
  */
 const FRAME_PADDING = 24;
 /** How much the phone is shrunk: 375px and the extra room into 313px. */
-const ZOOM = 0.8;
-/** How far a mark's outline stands off what it marks, and how thick it is. */
+const PHONE_ZOOM = 0.8;
+/** The plan page's left column on a 1470px window, as a MacBook shows it, where its tables are. */
+const WIDE_WIDTH = 848;
+/** How much the wide screen is shrunk: 848px and the room around it into the help's 638px column. */
+const WIDE_ZOOM = 0.7;
+/**
+ * The help's column is narrower than 638px on a narrow PC, down to 535px where the wide figures
+ * start: in a figure narrower than the screen at `WIDE_ZOOM` and its border, it is shrunk more.
+ */
+const WIDE_NARROWER = [
+  { maxInlineSize: "629px", css: { zoom: 0.65 } },
+  { maxInlineSize: "586px", css: { zoom: 0.59 } },
+];
+/** How far a mark's outline stands off what it marks, and how thick it is, on the phone. */
 const OUTLINE_OFFSET = 5;
 const OUTLINE_WIDTH = 3;
 /** A mark's number, on the phone before it is shrunk. */
@@ -28,6 +50,27 @@ const figureConfig = {
   ...config,
   breakpoint: { ...config.breakpoint, identifier: "@container" as const },
 };
+
+/**
+ * How each screen is drawn. A wide figure keeps the window's breakpoints: it shows only on a
+ * window as wide as the plan page's two columns, where the components lay themselves out as there.
+ */
+const screens = {
+  phone: {
+    width: PHONE_WIDTH + (FRAME_PADDING - 16) * 2,
+    zoom: PHONE_ZOOM,
+    narrower: [],
+    config: figureConfig,
+  },
+  wide: { width: WIDE_WIDTH + FRAME_PADDING * 2, zoom: WIDE_ZOOM, narrower: WIDE_NARROWER, config },
+};
+
+/** Where a figure of each screen shows: a wide one with the plan page's two columns. */
+const screenDisplay = {
+  phone: { base: "none", lg: "grid" },
+  wide: { base: "grid", lg: "none" },
+  both: "grid",
+} as const;
 
 /**
  * The marks' colors, set once on the figure for the outlines, the numbers on them and the numbers
@@ -57,17 +100,21 @@ const markNumber: CSSObject = {
  * number sits on its outline's top left corner, over the line. The figure is shrunk, so the
  * number is drawn larger to look like the circles beside the figure.
  */
-function markStyles(marks: HelpFigureMark[]): CSSObject {
+function markStyles(marks: HelpFigureMark[], zoom: number): CSSObject {
+  // A screen shrunk more draws its marks larger, to look as large as the phone's.
+  const scale = PHONE_ZOOM / zoom;
+  const outlineWidth = OUTLINE_WIDTH * scale;
+  const numberSize = NUMBER_SIZE * scale;
   const styles: CSSObject = {};
   for (const [index, mark] of marks.entries()) {
-    const offset = mark.offset ?? OUTLINE_OFFSET;
+    const offset = (mark.offset ?? OUTLINE_OFFSET) * scale;
     // The number's middle on the outline's corner: out by `offset` and half the outline.
-    const corner = `${-(offset + OUTLINE_WIDTH / 2 + NUMBER_SIZE / 2)}px`;
+    const corner = `${-(offset + outlineWidth / 2 + numberSize / 2)}px`;
     styles[`& :is(${mark.selector})`] = {
       position: "relative",
       // A button clips what overflows it, its own number too.
       overflow: "visible !important",
-      outline: `${OUTLINE_WIDTH}px solid`,
+      outline: `${outlineWidth}px solid`,
       outlineColor: "var(--help-mark)",
       outlineOffset: `${offset}px`,
       rounded: "md",
@@ -77,9 +124,9 @@ function markStyles(marks: HelpFigureMark[]): CSSObject {
         position: "absolute",
         top: corner,
         left: corner,
-        boxSize: `${NUMBER_SIZE}px`,
-        lineHeight: `${NUMBER_SIZE}px`,
-        fontSize: "sm",
+        boxSize: `${numberSize}px`,
+        lineHeight: `${numberSize}px`,
+        fontSize: `calc({fontSizes.sm} * ${scale})`,
         zIndex: "1",
       },
     };
@@ -97,13 +144,29 @@ function markStyles(marks: HelpFigureMark[]): CSSObject {
   return styles;
 }
 
+/** What a figure leaves out of its screen. */
+function hideStyles(selectors: string[] | undefined): CSSObject {
+  const styles: CSSObject = {};
+  if (selectors) styles[`& :is(${selectors.join(", ")})`] = { display: "none !important" };
+  return styles;
+}
+
 /**
- * The app's own components drawing a sample plan, as a picture: shrunk like a phone's screenshot,
- * with interaction disabled, and read as one image by its label. Numbered marks point at its parts.
+ * The app's own components drawing a sample plan, as a picture: shrunk like a screenshot, with
+ * interaction disabled, and read as one image by its label. Numbered marks point at its parts.
  */
-function FigureFrame({ spec, alt }: { spec: HelpFigureSpec; alt: string }) {
+function FigureFrame({
+  spec,
+  screen,
+  alt,
+}: {
+  spec: HelpFigureSpec;
+  screen: HelpFigureScreen;
+  alt: string;
+}) {
   const Render = spec.render;
   const { crop } = spec;
+  const { width, zoom, narrower, config: screenConfig } = screens[screen];
   return (
     <Box
       role="img"
@@ -128,12 +191,13 @@ function FigureFrame({ spec, alt }: { spec: HelpFigureSpec; alt: string }) {
         _child={{ flexShrink: 0 }}
         data-end={dataAttr(crop?.from === "bottom")}
         _end={{ justifyContent: "flex-end" }}
-        w={`${PHONE_WIDTH + (FRAME_PADDING - 16) * 2}px`}
+        w={`${width}px`}
         p={`${FRAME_PADDING}px`}
         containerType="inline-size"
-        css={{ zoom: ZOOM, ...markStyles(spec.marks) }}
+        _container={narrower}
+        css={{ zoom, ...hideStyles(spec.hide), ...markStyles(spec.marks, zoom) }}
       >
-        <SystemProvider theme={theme} config={figureConfig}>
+        <SystemProvider theme={theme} config={screenConfig}>
           <SampleProviders>
             <Render />
           </SampleProviders>
@@ -155,15 +219,27 @@ export function HelpFigure({
   alt: string;
   children?: ReactNode;
 }) {
+  const hydrated = useHydrated();
+  const wide = useBreakpointValue({ base: true, lg: false });
   const spec = helpFigures[name];
   // Unreachable: the Markdown extension rejects a name without a figure.
   if (!spec) throw new Error(`No help figure is named ${name}.`);
+  // The HTML made ahead of time has the figures of both screens, and hydrating it draws both.
+  // Once hydrated, and on coming to the help from another page, only this screen's are drawn.
+  if (hydrated && spec.screen && (spec.screen === "wide") !== wide) return null;
   const withPoints = Children.count(children) > 0;
+  const screen = spec.screen ?? "phone";
+  // A phone beside its points; a wide screen, as wide as the column, above them.
+  const beside = withPoints && screen === "phone";
+  const display = screenDisplay[spec.screen ?? "both"];
   return (
     <Grid
       as="figure"
+      // The column it is in, which a wide figure fits itself into.
+      containerType="inline-size"
+      display={display}
       templateColumns={
-        withPoints ? { base: "315px minmax(0, 1fr)", sm: "minmax(0, 1fr)" } : "minmax(0, 1fr)"
+        beside ? { base: "315px minmax(0, 1fr)", sm: "minmax(0, 1fr)" } : "minmax(0, 1fr)"
       }
       gap="6"
       my="lg"
@@ -172,7 +248,7 @@ export function HelpFigure({
       css={markColors}
     >
       <Box>
-        <FigureFrame spec={spec} alt={alt} />
+        <FigureFrame spec={spec} screen={screen} alt={alt} />
         <Text as="figcaption" fontSize="xs" color="fg.muted" mt="1.5">
           {caption}
         </Text>

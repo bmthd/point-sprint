@@ -17,6 +17,10 @@ export type HelpFigureMark = {
   offset?: number;
 };
 
+/** The rows a wide figure opens in the sample's table: its first order and its held one. */
+const FIRST_ROW = 'li[data-order-id="4e160000-0000-4000-8000-000000000001"]';
+const HELD_ROW = 'li[data-order-id="4e160000-0000-4000-8000-000000000008"]';
+
 /** The marks shared by the Markdown validator and the figure renderer, without UI imports. */
 export const helpFigureMarks: Record<string, HelpFigureMark[]> = {
   event: [
@@ -27,18 +31,34 @@ export const helpFigureMarks: Record<string, HelpFigureMark[]> = {
     { selector: "[role=status][aria-label=ポイントの目安]", text: "+840P" },
     { selector: "ul[aria-label=上限への入り方]", text: "で使い切る" },
   ],
+  "new-order-wide": [{ selector: "ul[aria-label=上限への入り方]", text: "で使い切る" }],
   plan: [{ selector: "button[aria-label^=すべてのプラン]", text: "すべて" }],
   "edit-order": [
     { selector: ".ui-native-accordion__panel .ui-field__root:nth-of-type(2)", text: "注文日" },
     { selector: ".ui-native-accordion__panel .ui-button", text: "同じショップの商品を追加" },
   ],
+  "edit-order-wide": [
+    {
+      selector: `${FIRST_ROW} div:nth-of-type(2) > .ui-field__root:nth-of-type(2)`,
+      text: "注文日",
+    },
+    { selector: `${FIRST_ROW} fieldset button`, text: "同じショップの商品を追加" },
+  ],
   caps: [
     { selector: "ul:first-of-type > li:first-of-type", text: "楽天カード特典分" },
+    { selector: "ul:last-of-type > li:first-of-type", text: "楽天モバイル" },
+  ],
+  "caps-wide": [
+    { selector: "tbody > tr:first-of-type > td:first-of-type", text: "楽天カード特典分" },
     { selector: "ul:last-of-type > li:first-of-type", text: "楽天モバイル" },
   ],
   "held-order": [
     { selector: "button > span:nth-of-type(3)", text: "保留中" },
     { selector: "[aria-hidden=true] > span:first-of-type", text: "購入決定", offset: 2 },
+  ],
+  "held-order-wide": [
+    { selector: `${HELD_ROW} > div:first-of-type > div:nth-of-type(3)`, text: "保留中" },
+    { selector: "article > div:first-of-type > span:first-of-type", text: "購入決定" },
   ],
   "spu-card": [{ selector: "button[aria-label='10月の SPU を変更']", text: "変更" }],
   "spu-months": [{ selector: "h2 + p + div", text: "10月から引き継ぎ" }],
