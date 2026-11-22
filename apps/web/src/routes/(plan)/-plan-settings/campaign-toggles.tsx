@@ -128,7 +128,7 @@ function CampaignRow({
           {template ? (
             <IconButton
               variant={editing ? "subtle" : "ghost"}
-              colorScheme={editing ? "primary" : undefined}
+              _expanded={{ colorScheme: "primary" }}
               aria-label={`${benefit.label}を編集`}
               aria-expanded={editing}
               aria-controls={editing ? editorId : undefined}

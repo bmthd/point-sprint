@@ -56,7 +56,9 @@ export function floatingInputProps(inset: FloatInset, align: "start" | "end") {
     insetInlineStart: inset.start,
     insetInlineEnd: inset.end,
     w: "auto",
+    "data-align": align,
     css: {
+      "&[data-align=end]": { fontVariantNumeric: "tabular-nums" },
       "&[data-grow]:focus": {
         insetInlineEnd: "auto",
         // Over the amount's input, which comes after it.
@@ -73,7 +75,6 @@ export function floatingInputProps(inset: FloatInset, align: "start" | "end") {
     fontSize: "sm",
     bg: "bg.panel",
     textAlign: align,
-    fontVariantNumeric: align === "end" ? "tabular-nums" : undefined,
     // Typing is shown in the text color, not red: red is kept for a value that is wrong.
     _focus: { borderColor: "mono.outline" },
     _invalid: { borderColor: "border.error", _focus: { borderColor: "border.error" } },

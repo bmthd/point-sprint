@@ -133,7 +133,7 @@ function ShopAroundEditor({
         onClick={onToggle}
         w="full"
         h="auto"
-        roundedBottom={open ? "0" : undefined}
+        _expanded={{ roundedBottom: "0" }}
         py="3"
         gap="3"
         textAlign="start"

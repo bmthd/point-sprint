@@ -14,6 +14,7 @@ import {
   Text,
   TriangleAlertIcon,
   VStack,
+  dataAttr,
   useDisclosure,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
@@ -162,9 +163,9 @@ function EventListNotice({
   tone?: "danger";
 }) {
   return (
-    <Card.Root role={tone === "danger" ? "alert" : undefined}>
+    <Card.Root role={tone === "danger" ? "alert" : undefined} data-tone={tone}>
       <Card.Body>
-        <Flex align="center" gap="2" color={tone === "danger" ? "danger.fg" : undefined}>
+        <Flex align="center" gap="2" css={{ "[data-tone=danger] &": { color: "danger.fg" } }}>
           {icon}
           <Text fontSize="md" fontWeight="bold">
             {title}
@@ -387,7 +388,8 @@ export function EventSection({
           {cards.map((event) => (
             <List.Item
               key={event.id}
-              flex={{ base: "initial", md: cards.length > 1 ? "0 0 88%" : "1 0 100%" }}
+              flex={{ base: "initial", md: "0 0 88%" }}
+              css={{ "&:only-child": { flex: { base: "initial", md: "1 0 100%" } } }}
               scrollSnapAlign={{ base: "none", md: "start" }}
               minW="0"
             >
@@ -458,10 +460,10 @@ export function EventSection({
             <EndedEvents events={behind} disabled={disabled} onCreate={onCreate} />
           ) : null}
         </Flex>
-        <VStack alignItems="stretch" gap="3" minW="0">
+        <VStack alignItems="stretch" gap="3" minW="0" data-odd-cards={dataAttr(oddCards)}>
           {content}
           {/* Under the cards when the last place has no room for it, and always in one column. */}
-          <Box display={oddCards ? { base: "none", lg: "block" } : undefined}>
+          <Box css={{ "[data-odd-cards] > &": { display: { base: "none", lg: "block" } } }}>
             <Button
               variant="ghost"
               colorScheme="link"

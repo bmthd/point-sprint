@@ -9,7 +9,7 @@ import {
   pointGroupOf,
   deepEqual,
 } from "@workspaces/domain";
-import { Badge, Button, Heading, Modal, Tag, Text, useDisclosure } from "@workspaces/ui";
+import { Badge, Button, Heading, Modal, Tag, Text, dataAttr, useDisclosure } from "@workspaces/ui";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
@@ -315,9 +315,23 @@ export function OrdersHeading({
 }) {
   const heldCount = orders.filter((order) => order.onHold).length;
   return (
-    <Heading as="h2" fontSize={small ? "xs" : "md"} ref={headingRef} tabIndex={-1} id={id}>
+    <Heading
+      as="h2"
+      fontSize="md"
+      data-small={dataAttr(small)}
+      css={{ "&[data-small]": { fontSize: "xs" } }}
+      ref={headingRef}
+      tabIndex={-1}
+      id={id}
+    >
       注文{" "}
-      <Text as="span" fontWeight="normal" fontSize={small ? "xs" : "sm"} color="fg.muted">
+      <Text
+        as="span"
+        fontWeight="normal"
+        fontSize="sm"
+        color="fg.muted"
+        css={{ "[data-small] > &": { fontSize: "xs" } }}
+      >
         {orders.length}件{heldCount > 0 ? `（保留 ${heldCount}）` : ""}
       </Text>
     </Heading>

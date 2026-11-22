@@ -137,7 +137,12 @@ export function ShopLadder({
                 <Td fold={fold} verticalAlign="middle">
                   <Progress
                     value={(row.points / scale) * 100}
-                    colorScheme={full ? "success" : isCurrent ? "primary" : "gray"}
+                    colorScheme="gray"
+                    data-full={dataAttr(full)}
+                    css={{
+                      "[aria-current] &:not([data-full])": { colorScheme: "primary" },
+                      "&[data-full]": { colorScheme: "success" },
+                    }}
                     aria-hidden
                   />
                 </Td>
