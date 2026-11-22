@@ -3,6 +3,7 @@
 "use no memo";
 
 import { getInput, reset, setErrors, useField, useForm, validate } from "@formisch/react";
+import { ClientOnly } from "@tanstack/react-router";
 import type { Plan } from "@workspaces/domain";
 import {
   Box,
@@ -28,7 +29,6 @@ import {
   useId,
   useRef,
   useState,
-  useSyncExternalStore,
 } from "react";
 import { shopsAtom } from "#/state/queries.ts";
 import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
@@ -356,13 +356,6 @@ function AmountInput({
   );
 }
 
-const subscribeNever = () => () => {};
-
-/** The key held with Enter to make the order, on this computer. */
-function modifierKey() {
-  return isApple() ? "⌘" : "Ctrl";
-}
-
 /**
  * A value the order cannot be made with, said where ⌘ + Enter is, in place of it: under the
  * inputs the table would cut it off. It reads only the two fields' errors.
@@ -370,8 +363,6 @@ function modifierKey() {
 function ErrorOrHint({ form, id }: { form: OrderForm; id: string }) {
   const nameError = useField(form, { path: NAME_PATH }).errors?.[0];
   const amountError = useField(form, { path: AMOUNT_PATH }).errors?.[0];
-  // Ahead of time, as the help's figure draws the row, it is ⌘ until the browser says otherwise.
-  const mod = useSyncExternalStore(subscribeNever, modifierKey, () => "⌘");
   return nameError || amountError ? (
     <Text
       id={id}
@@ -402,7 +393,8 @@ function ErrorOrHint({ form, id }: { form: OrderForm; id: string }) {
       {/* The 「+」 sits on the keys' middle, not on their baseline. ⌘ is a square key. */}
       <Flex as="span" align="center" gap="1">
         <Kbd fontSize="2xs" h="5.5" minW="5.5" px="1" justifyContent="center">
-          {mod}
+          {/* Ahead of time, as the help's figure draws the row, ⌘ until the browser says which. */}
+          <ClientOnly fallback="⌘">{isApple() ? "⌘" : "Ctrl"}</ClientOnly>
         </Kbd>
         +
         <Kbd fontSize="2xs" h="5.5" px="1">
