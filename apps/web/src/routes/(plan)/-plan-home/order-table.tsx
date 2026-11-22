@@ -90,7 +90,7 @@ export function OrderTable({
             </Tooltip>
           ) : null}
           {/* Alone, without the columns' names, the heading spans the row. */}
-          <Box gridColumn="4" color="fg" css={{ "&:only-child": { gridColumn: "1 / 5" } }}>
+          <Box gridColumn="4" color="fg" _onlyChild={{ gridColumn: "1 / 5" }}>
             <OrdersHeading orders={orders} headingRef={heading} id={headingId} small />
           </Box>
           {orders.length > 0 ? (
@@ -118,13 +118,12 @@ export function OrderTable({
               borderTopWidth: "1px",
             },
             // While a row is dragged, the others slide aside to leave room for it.
-            "&[data-dragging] > li": {
+            "&[data-dragging] > li:not([data-grabbed])": {
               transitionProperty: "transform",
               transitionDuration: "moderate",
               transitionTimingFunction: "ease",
               _mediaReduceMotion: { transitionProperty: "none" },
             },
-            "& > li[data-dragged]": { zIndex: "1", boxShadow: "md", transitionProperty: "none" },
           }}
         >
           <OrderListContext value={context}>

@@ -35,7 +35,8 @@
         "react/unsupported-syntax": "error",
         "react/use-memo": "error",
         "jotai/no-callback-only-subscription": "error",
-        "yamada/no-conditional-style": "error"
+        "yamada/no-conditional-style": "error",
+        "yamada/no-raw-selector": "error"
       }
     },
     {

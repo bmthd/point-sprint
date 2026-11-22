@@ -56,7 +56,7 @@ const periodDay =
         boxSize="full"
         rounded="{cell-rounded}"
         bg="primary.subtle"
-        css={{ "[data-selected] > &": { bg: "transparent" } }}
+        _groupSelected={{ bg: "transparent" }}
       >
         {value.getDate()}
       </Box>
@@ -90,7 +90,9 @@ export function FieldDatePicker({
       // A tap brings up the calendar alone, not the on-screen keyboard as well. A real keyboard can
       // still type a day.
       inputProps={{ ...ariaProps, minW: "0", inputMode: "none" }}
-      calendarProps={period ? { day: periodDay(period) } : undefined}
+      calendarProps={
+        period ? { day: periodDay(period), dayProps: { "data-group": "" } } : undefined
+      }
       {...props}
     />
   );

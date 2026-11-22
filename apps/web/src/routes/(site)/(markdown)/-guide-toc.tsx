@@ -69,7 +69,8 @@ export function GuideToc({
               ps="3"
               borderLeftWidth="2px"
               borderColor="border"
-              css={{ "&:has(> [aria-current])": { borderColor: "primary.solid" } }}
+              data-current={dataAttr(reading)}
+              _current={{ borderColor: "primary.solid" }}
             >
               <Link
                 href={`#${section}`}
@@ -79,7 +80,7 @@ export function GuideToc({
                 color="fg"
                 fontWeight="normal"
                 _current={{ fontWeight: "bold" }}
-                css={{ "[data-mark-reading] &:not([aria-current])": { color: "fg.muted" } }}
+                css={{ "[data-mark-reading] &": { _notCurrent: { color: "fg.muted" } } }}
                 aria-current={reading ? "location" : undefined}
               >
                 {section}

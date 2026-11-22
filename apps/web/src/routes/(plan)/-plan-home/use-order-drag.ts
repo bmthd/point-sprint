@@ -76,7 +76,7 @@ function dragOf(listRef: RefObject<HTMLElement | null>) {
     delete list.dataset.dragging;
     for (const row of rowsOf()) {
       row.style.transform = "";
-      delete row.dataset.dragged;
+      delete row.dataset.grabbed;
     }
   };
 
@@ -168,7 +168,7 @@ function dragOf(listRef: RefObject<HTMLElement | null>) {
       drag.onStart();
       const list = listRef.current;
       if (list) list.dataset.dragging = "";
-      drag.row.dataset.dragged = "";
+      drag.row.dataset.grabbed = "";
       drag.frame = requestAnimationFrame(() => follow(drag));
     }
     place(drag);

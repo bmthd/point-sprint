@@ -77,7 +77,7 @@ function StepLine() {
             alignItems: "flex-start",
             // The arrows go on lines of their own, each where the first one is: in the middle of
             // the second step, its number (24px), the gap (8px) and its eight characters.
-            "& > li": { flexWrap: "wrap", rowGap: "1" },
+            _child: { flexWrap: "wrap", rowGap: "1" },
             "& [data-step-arrow]": {
               flexBasis: "100%",
               boxSizing: "border-box",
