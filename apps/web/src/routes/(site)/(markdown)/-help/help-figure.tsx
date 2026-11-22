@@ -1,4 +1,14 @@
-import { Box, type CSSObject, Grid, List, SystemProvider, Text, dataAttr } from "@workspaces/ui";
+import { useHydrated } from "@tanstack/react-router";
+import {
+  Box,
+  type CSSObject,
+  Grid,
+  List,
+  SystemProvider,
+  Text,
+  dataAttr,
+  useBreakpointValue,
+} from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { Children, type ReactNode } from "react";
 import { type HelpFigureScreen, type HelpFigureSpec, helpFigures } from "./figures.tsx";
@@ -209,9 +219,14 @@ export function HelpFigure({
   alt: string;
   children?: ReactNode;
 }) {
+  const hydrated = useHydrated();
+  const wide = useBreakpointValue({ base: true, lg: false });
   const spec = helpFigures[name];
   // Unreachable: the Markdown extension rejects a name without a figure.
   if (!spec) throw new Error(`No help figure is named ${name}.`);
+  // The HTML made ahead of time has the figures of both screens, and hydrating it draws both.
+  // Once hydrated, and on coming to the help from another page, only this screen's are drawn.
+  if (hydrated && spec.screen && (spec.screen === "wide") !== wide) return null;
   const withPoints = Children.count(children) > 0;
   const screen = spec.screen ?? "phone";
   // A phone beside its points; a wide screen, as wide as the column, above them.
