@@ -94,7 +94,7 @@ export function ShopLadder({
   const scale = cap ?? Math.max(1, ...outlook.rows.map((row) => row.points));
 
   return (
-    <Flex direction="column" gap="2" css={compact ? folding : undefined}>
+    <Flex direction="column" gap="2" css={folding}>
       <Heading as="h3" fontSize="sm">
         あと何店舗回る？
       </Heading>
