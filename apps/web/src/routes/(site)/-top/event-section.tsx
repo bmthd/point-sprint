@@ -389,7 +389,7 @@ export function EventSection({
             <List.Item
               key={event.id}
               flex={{ base: "initial", md: "0 0 88%" }}
-              css={{ "&:only-child": { flex: { base: "initial", md: "1 0 100%" } } }}
+              _onlyChild={{ flex: { base: "initial", md: "1 0 100%" } }}
               scrollSnapAlign={{ base: "none", md: "start" }}
               minW="0"
             >

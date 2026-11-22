@@ -40,12 +40,13 @@
 
 ## 状態で変わる見た目
 
-見た目を状態で変えるときは、状態を data 属性か aria 属性で要素に出し、CSS はその属性を見る。例: `data-held={dataAttr(held)}` と `css={{ "&[data-held]": { bg: "bg.subtle" } }}`、子は `"[data-held] &"`。aria 属性は `_current` や `_expanded` などの擬似 props で見る。`colorScheme` も同じく `_expanded={{ colorScheme: "primary" }}` のように書ける。
+見た目を状態で変えるときは、状態を data 属性か aria 属性で要素に出し、CSS はその属性を見る。
 
-- 並びや中身で決まるものは、属性を足さずにセレクタ（`:only-child`、`:empty`、`:has()`）で書く
+- Yamada に擬似 props があるものはそれで書き、ないときだけ css にセレクタを書く。例: `data-complete` と `_complete`、`aria-current` と `_current`、`_groupCurrent`。`colorScheme` も `_expanded={{ colorScheme: "primary" }}` のように書ける
+- 並びや中身で決まるものは、属性を足さずに書く（`_onlyChild`、`_notFirstChild`、`_empty`、なければ `:has()`）
 - 値なしの data 属性は名前だけ書く（`data-row-toggle`）
 
-スタイルの props の値に条件（`?:`、`&&`、`||`、`??`）を書くと、lint（`yamada/no-conditional-style`）が止める。
+スタイルの props の値に条件（`?:`、`&&`、`||`、`??`）を書くと `yamada/no-conditional-style` が、擬似 props のあるセレクタを書くと `yamada/no-raw-selector` が止める。
 
 ## Markdown の独自構文
 

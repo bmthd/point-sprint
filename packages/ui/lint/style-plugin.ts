@@ -1,5 +1,5 @@
 import { definePlugin, defineRule } from "@oxlint/plugins";
-import { styleProperties } from "@yamada-ui/react/core";
+import { conditions, styleProperties } from "@yamada-ui/react/core";
 
 const styleProps = new Set<string>(styleProperties);
 
@@ -60,7 +60,51 @@ export const noConditionalStyle = defineRule({
   },
 });
 
+/** A selector with its spaces made the same, so `& > *` and `&>*` read alike. */
+function normalize(selector: string) {
+  return selector
+    .replace(/\s+/g, " ")
+    .replace(/\s*([>+~,()])\s*/g, "$1")
+    .replaceAll('"', "'")
+    .trim();
+}
+
+/**
+ * Each selector Yamada UI has a pseudo prop for, and the prop. The `focus-within` ones are left
+ * out: in 2.3.3 they read `&:not(:focus-within, ...)`, the opposite of their names.
+ */
+const pseudoProps = new Map<string, string>();
+for (const [name, selector] of Object.entries(conditions)) {
+  if (typeof selector !== "string" || selector.includes(":not(:focus-within")) continue;
+  const key = normalize(selector);
+  if (!pseudoProps.has(key)) pseudoProps.set(key, name);
+}
+
+export const noRawSelector = defineRule({
+  meta: {
+    type: "suggestion",
+    docs: {
+      description: "Disallow writing a selector that Yamada UI has a pseudo prop for.",
+    },
+    messages: {
+      raw: "`{{selector}}` は Yamada UI の `{{prop}}` で書く。擬似 props がないセレクタだけを css に書く。",
+    },
+  },
+  create(context) {
+    return {
+      Property(property) {
+        const { key } = property;
+        if (key.type !== "Literal" || typeof key.value !== "string") return;
+        const prop = pseudoProps.get(normalize(key.value));
+        if (prop) {
+          context.report({ node: key, messageId: "raw", data: { selector: key.value, prop } });
+        }
+      },
+    };
+  },
+});
+
 export default definePlugin({
   meta: { name: "yamada" },
-  rules: { "no-conditional-style": noConditionalStyle },
+  rules: { "no-conditional-style": noConditionalStyle, "no-raw-selector": noRawSelector },
 });

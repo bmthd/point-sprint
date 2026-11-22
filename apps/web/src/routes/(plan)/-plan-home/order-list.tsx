@@ -48,7 +48,7 @@ export function OrderListTable({ children }: { children: ReactNode }) {
         aria-label="注文"
         gap="0"
         // A line between the rows and the months' separators.
-        css={{ "& > li + li": { borderTopWidth: "1px" } }}
+        _notFirstChild={{ borderTopWidth: "1px" }}
       >
         <HoldHintContext value={holdHintId}>{children}</HoldHintContext>
       </List.Root>

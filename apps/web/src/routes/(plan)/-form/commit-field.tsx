@@ -3,7 +3,7 @@
 "use no memo";
 
 import { getInput, reset, useField, useForm, validate } from "@formisch/react";
-import { Field, Input, isComposing } from "@workspaces/ui";
+import { Field, Input, dataAttr, isComposing } from "@workspaces/ui";
 import { useRef } from "react";
 import * as v from "valibot";
 import { bind, errorsOf } from "#/routes/-form.tsx";
@@ -69,8 +69,8 @@ export function CommitField<T>({
         aria-label={hideLabel ? label : undefined}
         inputMode={inputMode}
         placeholder={placeholder}
-        data-align={align}
-        css={{ "&[data-align=end]": { fontVariantNumeric: "tabular-nums" } }}
+        data-numeric={dataAttr(align === "end")}
+        _numeric={{ fontVariantNumeric: "tabular-nums" }}
         {...bind(field)}
         onBlur={() => {
           field.props.onBlur();

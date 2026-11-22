@@ -353,7 +353,12 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
     (shopName === "ショップ未入力" ? `${monthDayWithWeekday(order.date)}の注文` : "");
 
   return (
-    <List.Item ref={itemRef} data-order-id={orderId}>
+    <List.Item
+      ref={itemRef}
+      data-order-id={orderId}
+      // Held up while it is dragged.
+      _grabbed={{ zIndex: "1", boxShadow: "md", transitionProperty: "none" }}
+    >
       <InstantCommit form={form} commit={latestCommit} />
       <Box
         // Painted, so a dragged row covers the rows it passes.

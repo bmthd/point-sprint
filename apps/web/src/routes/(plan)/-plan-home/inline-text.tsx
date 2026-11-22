@@ -56,16 +56,18 @@ export function floatingInputProps(inset: FloatInset, align: "start" | "end") {
     insetInlineStart: inset.start,
     insetInlineEnd: inset.end,
     w: "auto",
-    "data-align": align,
+    "data-numeric": dataAttr(align === "end"),
+    _numeric: { fontVariantNumeric: "tabular-nums" },
     css: {
-      "&[data-align=end]": { fontVariantNumeric: "tabular-nums" },
-      "&[data-grow]:focus": {
-        insetInlineEnd: "auto",
-        // Over the amount's input, which comes after it.
-        zIndex: "3",
-        fieldSizing: "content",
-        minW: columnWidth,
-        maxW: `calc(${columnWidth} + ${GROW_REACH})`,
+      "&[data-grow]": {
+        _focus: {
+          insetInlineEnd: "auto",
+          // Over the amount's input, which comes after it.
+          zIndex: "3",
+          fieldSizing: "content",
+          minW: columnWidth,
+          maxW: `calc(${columnWidth} + ${GROW_REACH})`,
+        },
       },
     },
     h: "10",
@@ -256,8 +258,8 @@ export function InlineText({
               aria-label={previewLabel}
               aria-describedby={rejected ? rejectedId : undefined}
               // Kept in the row while the input covers it, so the row keeps its height.
-              css={{ "&[data-editing]": { visibility: "hidden" } }}
-              data-editing={dataAttr(editing)}
+              _hidden={{ visibility: "hidden" }}
+              data-hidden={dataAttr(editing)}
               onFocus={() => {
                 if (toText.current) {
                   toText.current = false;
@@ -365,7 +367,7 @@ export function RowToggle({
       disableRipple
       color="fg.muted"
       _hover={{ bg: "transparent", color: "fg" }}
-      _active={{ bg: "transparent", "& > *": { transform: "translateY(1px)" } }}
+      _active={{ bg: "transparent", _child: { transform: "translateY(1px)" } }}
       // The row draws the ring, around itself.
       _focusVisible={{ outline: "none", boxShadow: "none" }}
       aria-label={label}

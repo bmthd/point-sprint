@@ -123,6 +123,7 @@ export function ShopLadder({
               <NativeTable.Tr
                 key={row.shops}
                 data-fold={dataAttr(fold)}
+                data-group
                 aria-current={isCurrent ? "true" : undefined}
                 _current={{
                   bg: "primary.subtle",
@@ -138,10 +139,11 @@ export function ShopLadder({
                   <Progress
                     value={(row.points / scale) * 100}
                     colorScheme="gray"
-                    data-full={dataAttr(full)}
-                    css={{
-                      "[aria-current] &:not([data-full])": { colorScheme: "primary" },
-                      "&[data-full]": { colorScheme: "success" },
+                    data-complete={dataAttr(full)}
+                    _complete={{ colorScheme: "success" }}
+                    _groupCurrent={{
+                      colorScheme: "primary",
+                      _complete: { colorScheme: "success" },
                     }}
                     aria-hidden
                   />

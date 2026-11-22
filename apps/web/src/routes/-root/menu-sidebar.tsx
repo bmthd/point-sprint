@@ -65,7 +65,7 @@ export function MenuSidebar({
               _active: { bg: "bg.muted" },
               _selected: { fontWeight: "bold", _active: { bg: "colorScheme.muted" } },
             },
-            "& > li:not(:last-of-type)": {
+            _notLastChild: {
               _after: { borderBottomWidth: "1px", mt: "{side-panel-space}" },
             },
           }}

@@ -164,7 +164,7 @@ export const markdownComponents = {
   }: Pick<AlertRootProps, "status" | "variant"> & { children?: ReactNode }) => (
     <Alert.Root status={status} variant={variant} my="lg" alignItems="flex-start" py="4">
       <Alert.Icon boxSize="7" />
-      <Alert.Description css={{ "& > :first-child": { mt: 0 }, "& > :last-child": { mb: 0 } }}>
+      <Alert.Description _firstChild={{ mt: 0 }} _lastChild={{ mb: 0 }}>
         {children}
       </Alert.Description>
     </Alert.Root>
