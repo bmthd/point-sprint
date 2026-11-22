@@ -28,6 +28,8 @@ import {
   Tag,
   Text,
   useDisclosure,
+  ChevronRightIcon,
+  ArrowUpRightIcon,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useState } from "react";
@@ -42,7 +44,6 @@ import {
   spuMonthsAtom,
   spuMonthsQueryAtom,
 } from "#/state/queries.ts";
-import { ExternalIcon, ForwardIcon } from "#/ui/icons.tsx";
 import { RouterButton } from "#/ui/router-link.tsx";
 import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
 import { monthDay, monthText, useSpuOffMessages } from "#/routes/(plan)/-warnings.tsx";
@@ -202,7 +203,7 @@ function SpuLink(props: LinkProps) {
       {...props}
     >
       楽天で自分のSPUを確認する
-      <ExternalIcon />
+      <ArrowUpRightIcon boxSize="3.5" />
     </Link>
   );
 }
@@ -371,7 +372,7 @@ function UsingPlans({
               size="xs"
               fullRounded
               color="link"
-              endIcon={<ForwardIcon />}
+              endIcon={<ChevronRightIcon boxSize="5.5" />}
             >
               {plan.name}
               <Text as="span" color="fg.muted" fontWeight="normal">

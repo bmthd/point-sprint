@@ -1,11 +1,10 @@
 import { useNavigate } from "@tanstack/react-router";
 import { DEFAULT_ACCOUNT_ID, addMonths } from "@workspaces/domain";
-import { Card, Field, Heading, NativeSelect, Text } from "@workspaces/ui";
+import { Card, Field, Heading, NativeSelect, Text, ChevronRightIcon } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId, useState } from "react";
 import { accountSettingsAtom } from "#/state/derived.ts";
 import { spuMonthsAtom } from "#/state/queries.ts";
-import { ForwardIcon } from "#/ui/icons.tsx";
 import { RouterLink } from "#/ui/router-link.tsx";
 import { useToday } from "#/routes/-use-today.ts";
 import { SpuMonthRows, unsetNote } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
@@ -79,7 +78,7 @@ export function SpuMonthsCard() {
           minH="11"
         >
           ほかの月
-          <ForwardIcon />
+          <ChevronRightIcon boxSize="5.5" />
         </RouterLink>
       </Card.Body>
     </Card.Root>

@@ -14,10 +14,10 @@ import {
   useDisclosure,
   useSystemColorMode,
   VStack,
+  XIcon,
 } from "@workspaces/ui";
 import type { ReactNode } from "react";
 import { RouterLink } from "#/ui/router-link.tsx";
-import { CloseIcon } from "#/ui/icons.tsx";
 import { UnreadDot } from "#/routes/-notices/unread-dot.tsx";
 import { useUnreadNoticeIds } from "#/routes/-notices/unread-notices.ts";
 import { MenuSidebar } from "./menu-sidebar.tsx";
@@ -294,7 +294,7 @@ function SiteMenu() {
           <Drawer.Header justifyContent="space-between">
             <Drawer.Title as="h2">メニュー</Drawer.Title>
             <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>
-              <CloseIcon />
+              <XIcon boxSize="5" />
             </IconButton>
           </Drawer.Header>
           <Drawer.Body

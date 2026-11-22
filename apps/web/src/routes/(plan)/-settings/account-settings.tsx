@@ -16,6 +16,7 @@ import {
   Switch,
   Text,
   useDisclosure,
+  XIcon,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRef, useState } from "react";
@@ -24,7 +25,6 @@ import { AccountNameSchema } from "@workspaces/domain";
 import { accountSettingsAtom } from "#/state/derived.ts";
 import { runSaveProfileAtom } from "#/state/mutations.ts";
 import { profileQueryAtom } from "#/state/queries.ts";
-import { CloseIcon } from "#/ui/icons.tsx";
 
 /** The profile with its accounts changed; the default account is kept even when not stored yet. */
 const withAccounts = (profile: Profile, change: (accounts: Account[]) => Account[]): Profile => ({
@@ -63,7 +63,7 @@ function AccountRow({
       </Box>
       {onDelete ? (
         <IconButton variant="ghost" aria-label={`${account.name}を削除`} onClick={onDelete}>
-          <CloseIcon />
+          <XIcon boxSize="5" />
         </IconButton>
       ) : null}
     </List.Item>

@@ -1,9 +1,8 @@
 import { ClientOnly, useCanGoBack, useRouter } from "@tanstack/react-router";
-import { Alert, Box, Flex, Heading, Text, VStack } from "@workspaces/ui";
+import { Alert, Box, Flex, Heading, Text, VStack, ChevronLeftIcon } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { storageHealthQueryAtom } from "#/state/queries.ts";
-import { BackIcon } from "#/ui/icons.tsx";
 import { RouterIconButton } from "#/ui/router-link.tsx";
 import { QuarantineNotice } from "#/routes/(plan)/-quarantine-notice.tsx";
 import { StorageHealthFailure, storageMessages } from "#/routes/(plan)/-warnings.tsx";
@@ -66,7 +65,7 @@ function BackLink() {
       }}
       size="lg"
       variant="ghost"
-      icon={<BackIcon />}
+      icon={<ChevronLeftIcon boxSize="5.5" />}
     />
   );
 }

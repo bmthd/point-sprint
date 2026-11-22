@@ -10,6 +10,8 @@ import {
   Switch,
   Text,
   VisuallyHidden,
+  ArrowUpIcon,
+  ArrowDownIcon,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { createContext, memo, use, useId, useMemo, useRef } from "react";
@@ -18,7 +20,7 @@ import { orderAtom } from "#/state/derived.ts";
 import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "#/state/plan-operations.ts";
 import { openOrderIdAtom, reorderModeAtom } from "#/routes/(plan)/-ui.ts";
 import { monthDayWithWeekday } from "#/ui/dates.ts";
-import { ArrowIcon, ChevronIcon } from "#/ui/icons.tsx";
+import { ExpandChevronIcon } from "#/routes/(plan)/-expand-chevron-icon.tsx";
 import {
   CampaignChip,
   OrderBadge,
@@ -208,7 +210,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
               </Box>
             </Flex>
             <Flex as="span" color="fg.muted">
-              <ChevronIcon open={open} />
+              <ExpandChevronIcon open={open} />
             </Flex>
           </Button>
           {reordering ? (
@@ -222,7 +224,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 disabled={index === 0}
                 onClick={() => move(index - 1)}
               >
-                <ArrowIcon direction="up" />
+                <ArrowUpIcon boxSize="5" />
               </IconButton>
               <IconButton
                 ref={downRef}
@@ -233,7 +235,7 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
                 disabled={index === props.count - 1}
                 onClick={() => move(index + 1)}
               >
-                <ArrowIcon direction="down" />
+                <ArrowDownIcon boxSize="5" />
               </IconButton>
             </Flex>
           ) : null}

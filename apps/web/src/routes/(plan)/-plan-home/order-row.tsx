@@ -18,6 +18,7 @@ import {
   isComposing,
   runKeyAction,
   useCallbackRef,
+  GripVerticalIcon,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
@@ -38,7 +39,6 @@ import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "#/state/plan-opera
 import { shopsAtom } from "#/state/queries.ts";
 import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
 import { monthDayWithWeekday } from "#/ui/dates.ts";
-import { GripIcon } from "#/ui/icons.tsx";
 import {
   OrderFormSchema,
   type OrderFormInput,
@@ -407,7 +407,7 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
             })
           }
         >
-          <GripIcon />
+          <GripVerticalIcon boxSize="4.5" />
         </IconButton>
         <Switch
           size="sm"

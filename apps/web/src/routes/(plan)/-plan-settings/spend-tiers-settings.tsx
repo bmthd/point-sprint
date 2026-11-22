@@ -1,5 +1,16 @@
 import { type Benefit, type Plan, type SpendTier, spendTierRate } from "@workspaces/domain";
-import { Box, Button, Card, Fieldset, Flex, IconButton, Text, useBoolean } from "@workspaces/ui";
+import {
+  Box,
+  Button,
+  Card,
+  Fieldset,
+  Flex,
+  IconButton,
+  Text,
+  useBoolean,
+  PlusIcon,
+  XIcon,
+} from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useId, useRef } from "react";
 import * as v from "valibot";
@@ -17,7 +28,7 @@ import {
 } from "@workspaces/domain";
 import { planResultAtom } from "#/state/derived.ts";
 import { updateBenefitAtom } from "#/state/plan-operations.ts";
-import { ChevronIcon, CloseIcon, PlusIcon } from "#/ui/icons.tsx";
+import { ExpandChevronIcon } from "#/routes/(plan)/-expand-chevron-icon.tsx";
 import { CommitDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
 import { isAddedCampaign, isFixedCampaign } from "./campaign-toggles.tsx";
 import { useDeleteCampaign } from "./delete-campaign.tsx";
@@ -174,7 +185,7 @@ function SpendTiersEditor({
         <Text as="span" fontSize="sm" color="primary.fg">
           変更
         </Text>
-        <ChevronIcon open={open} />
+        <ExpandChevronIcon open={open} />
       </Button>
       {open ? (
         <Flex
@@ -253,7 +264,7 @@ function SpendTiersEditor({
               variant="outline"
               colorScheme="primary"
               alignSelf="flex-start"
-              startIcon={<PlusIcon />}
+              startIcon={<PlusIcon boxSize="4.5" />}
               onClick={() =>
                 void withTiers((current) => [
                   ...current,
@@ -373,7 +384,7 @@ function TierRow({
       <Box boxSize="11" flexShrink="0">
         {onRemove ? (
           <IconButton variant="ghost" aria-label={`${name}を削除`} onClick={onRemove}>
-            <CloseIcon />
+            <XIcon boxSize="5" />
           </IconButton>
         ) : null}
       </Box>

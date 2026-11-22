@@ -10,6 +10,8 @@ import {
   VStack,
   useDisclosure,
   useMediaQuery,
+  ChevronDownIcon,
+  SlidersHorizontalIcon,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
@@ -27,7 +29,6 @@ import { BottomBar } from "./bottom-bar.tsx";
 import { CapList } from "./cap-list.tsx";
 import { useCapLines } from "#/routes/(plan)/-cap-lines.ts";
 import { useToday } from "#/routes/-use-today.ts";
-import { ChevronIcon, SlidersIcon } from "#/ui/icons.tsx";
 import { OrderList } from "./order-list.tsx";
 import { OrderTable } from "./order-table.tsx";
 import { PlanPage } from "#/routes/(plan)/-plan-page.tsx";
@@ -68,7 +69,7 @@ function PlanSwitcher({ plan }: { plan: Plan }) {
             aria-label="プランを切り替える"
             flex="none"
           >
-            <ChevronIcon size={16} />
+            <ChevronDownIcon boxSize="4" />
           </Button>
         </Menu.Trigger>
         <Menu.Content>
@@ -112,7 +113,7 @@ function PlanBar({ plan }: { plan: Plan }) {
         size="lg"
         variant="ghost"
         flex="none"
-        icon={<SlidersIcon />}
+        icon={<SlidersHorizontalIcon boxSize="5.5" />}
       />
     </Flex>
   );

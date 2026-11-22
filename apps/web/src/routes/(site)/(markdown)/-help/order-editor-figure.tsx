@@ -4,7 +4,7 @@
 
 import { useForm } from "@formisch/react";
 import type { Order, Plan } from "@workspaces/domain";
-import { Button, Card, Flex, Heading, IconButton } from "@workspaces/ui";
+import { Button, Card, Flex, Heading, IconButton, XIcon } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
@@ -25,7 +25,6 @@ import {
 } from "#/routes/(plan)/-order-form.ts";
 import { Form } from "#/routes/-form.tsx";
 import { shopsAtom } from "#/state/queries.ts";
-import { CloseIcon } from "#/ui/icons.tsx";
 import { SAMPLE_TODAY } from "./sample-data.ts";
 
 const ignore = () => {};
@@ -50,7 +49,7 @@ function OrderEditorSheet({
         <Heading as="h2" fontSize="lg">
           {original ? "注文を編集" : "注文を追加"}
         </Heading>
-        <IconButton aria-label="閉じる" icon={<CloseIcon />} variant="ghost" />
+        <IconButton aria-label="閉じる" icon={<XIcon boxSize="5" />} variant="ghost" />
       </Card.Header>
       <Card.Body alignItems="stretch">
         <Form of={form} onSubmit={ignore}>

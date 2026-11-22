@@ -1,12 +1,11 @@
 import { type Order, type Plan, spuIdsIn } from "@workspaces/domain";
-import { Box, Button, Flex, List, Text } from "@workspaces/ui";
+import { Box, Button, Flex, List, Text, ChevronRightIcon } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { rounded } from "#/ui/format.ts";
 import { accountIdOf } from "#/state/accounts.ts";
 import { accountSettingsAtom } from "#/state/derived.ts";
 import { spuMonthsAtom } from "#/state/queries.ts";
-import { ForwardIcon } from "#/ui/icons.tsx";
 import { monthText } from "#/routes/(plan)/-warnings.tsx";
 import { spuMonthRate } from "#/routes/(plan)/-spu-month/spu-month-editor.tsx";
 
@@ -38,7 +37,7 @@ function MonthSeparator({
         color="link"
         size="sm"
         px="1"
-        endIcon={<ForwardIcon />}
+        endIcon={<ChevronRightIcon boxSize="5.5" />}
         onClick={() => onSpu(month)}
       >
         <Flex as="span" fontVariantNumeric="tabular-nums">

@@ -1,10 +1,21 @@
 import { useNavigate } from "@tanstack/react-router";
 import type { Plan } from "@workspaces/domain";
-import { Box, Flex, Button, Drawer, Heading, IconButton, Text, VStack } from "@workspaces/ui";
+import {
+  Box,
+  Flex,
+  Button,
+  Drawer,
+  Heading,
+  IconButton,
+  Text,
+  VStack,
+  XIcon,
+  ChevronLeftIcon,
+  PencilLineIcon,
+} from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRef } from "react";
 import { planResultAtom } from "#/state/derived.ts";
-import { BackIcon, CloseIcon, PencilIcon } from "#/ui/icons.tsx";
 import { PlanPage } from "#/routes/(plan)/-plan-page.tsx";
 import { useSpuLossNotice } from "#/routes/(plan)/-spu-loss-notice.tsx";
 import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
@@ -94,7 +105,7 @@ export function SettingsPanelButton({
         colorScheme="gray"
         onClick={onOpen}
         flex="none"
-        endIcon={<PencilIcon />}
+        endIcon={<PencilLineIcon boxSize="4" />}
       >
         プランの設定
       </Button>
@@ -110,7 +121,7 @@ export function SettingsPanelButton({
           <Drawer.Header justifyContent="space-between">
             <Drawer.Title as="h2">プランの設定</Drawer.Title>
             <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>
-              <CloseIcon />
+              <XIcon boxSize="5" />
             </IconButton>
           </Drawer.Header>
           <Drawer.Body
@@ -156,7 +167,7 @@ function SettingsScreen({ plan }: { plan: Plan }) {
           aria-label="戻る"
           size="lg"
           variant="ghost"
-          icon={<BackIcon />}
+          icon={<ChevronLeftIcon boxSize="5.5" />}
         />
         <Heading as="h1" fontSize="lg">
           プランの設定

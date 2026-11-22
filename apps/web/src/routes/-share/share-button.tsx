@@ -11,9 +11,9 @@ import {
   VStack,
   useBoolean,
   useClipboard,
+  ShareIcon,
 } from "@workspaces/ui";
 import { useId } from "react";
-import { ShareIcon } from "#/ui/icons.tsx";
 import facebookLogo from "./facebook-logo.svg";
 import lineLogo from "./line-logo.svg";
 import xLogo from "./x-logo.svg";
@@ -55,7 +55,7 @@ export function ShareButton({
         variant="outline"
         bg="bg.panel"
         size="lg"
-        startIcon={<ShareIcon />}
+        startIcon={<ShareIcon boxSize="4.5" />}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => void share()}

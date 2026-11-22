@@ -1,12 +1,20 @@
 import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import { MonthSchema, type Plan, spuMonthsOfPlan } from "@workspaces/domain";
-import { Box, Button, Drawer, IconButton, SegmentedControl, Text } from "@workspaces/ui";
+import {
+  Box,
+  Button,
+  Drawer,
+  IconButton,
+  SegmentedControl,
+  Text,
+  XIcon,
+  ChevronLeftIcon,
+} from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as v from "valibot";
 import { accountIdOf } from "#/state/accounts.ts";
 import { accountSettingsAtom } from "#/state/derived.ts";
-import { BackIcon, CloseIcon } from "#/ui/icons.tsx";
 import { useToday } from "#/routes/-use-today.ts";
 import { SpuMonthEditor, spuMonthText } from "#/routes/(plan)/-spu-month/spu-month-editor.tsx";
 
@@ -96,7 +104,7 @@ export function SpuPanel({
         >
           {back ? (
             <IconButton variant="ghost" aria-label={`${back}に戻る`} onClick={onClose}>
-              <BackIcon />
+              <ChevronLeftIcon boxSize="5.5" />
             </IconButton>
           ) : null}
           <Drawer.Title as="h2">
@@ -104,7 +112,7 @@ export function SpuPanel({
           </Drawer.Title>
           {back ? null : (
             <IconButton variant="ghost" aria-label="閉じる" onClick={onClose}>
-              <CloseIcon />
+              <XIcon boxSize="5" />
             </IconButton>
           )}
         </Drawer.Header>

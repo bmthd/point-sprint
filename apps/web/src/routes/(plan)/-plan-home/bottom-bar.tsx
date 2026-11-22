@@ -1,7 +1,6 @@
 import type { CalculationResult, Plan } from "@workspaces/domain";
-import { Flex, Button, Text } from "@workspaces/ui";
+import { Flex, Button, Text, PlusIcon } from "@workspaces/ui";
 import { grouped } from "#/ui/format.ts";
-import { PlusIcon } from "#/ui/icons.tsx";
 import { countedAmount, effectiveRate } from "./summary-card.tsx";
 
 /** The phone's bar fixed to the bottom of the screen: totals and the way to add an order. */
@@ -44,7 +43,12 @@ export function BottomBar({
           </Text>
         </Text>
       </Flex>
-      <Button colorScheme="primary" size="xl" onClick={onAdd} startIcon={<PlusIcon />}>
+      <Button
+        colorScheme="primary"
+        size="xl"
+        onClick={onAdd}
+        startIcon={<PlusIcon boxSize="4.5" />}
+      >
         注文を追加
       </Button>
     </Flex>
