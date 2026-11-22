@@ -88,7 +88,12 @@ export function SpuPanel({
       restoreFocus
     >
       <Drawer.Content roundedLeft="l2">
-        <Drawer.Header justifyContent={back ? "flex-start" : "space-between"} gap="1">
+        <Drawer.Header
+          justifyContent="space-between"
+          // With a way back, its button leads and the title sits beside it.
+          css={{ "&:has(> button:first-child)": { justifyContent: "flex-start" } }}
+          gap="1"
+        >
           {back ? (
             <IconButton variant="ghost" aria-label={`${back}に戻る`} onClick={onClose}>
               <BackIcon />

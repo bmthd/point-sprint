@@ -69,7 +69,8 @@ export function CommitField<T>({
         aria-label={hideLabel ? label : undefined}
         inputMode={inputMode}
         placeholder={placeholder}
-        fontVariantNumeric={align === "end" ? "tabular-nums" : undefined}
+        data-align={align}
+        css={{ "&[data-align=end]": { fontVariantNumeric: "tabular-nums" } }}
         {...bind(field)}
         onBlur={() => {
           field.props.onBlur();

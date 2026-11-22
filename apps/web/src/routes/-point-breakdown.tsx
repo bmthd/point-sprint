@@ -53,16 +53,24 @@ export function PointBreakdown({
       </Flex>
       <List.Root
         aria-label={held ? "購入決定にしたときの内訳" : "ポイントの内訳"}
-        display={legend === "grid" ? "grid" : "flex"}
+        data-legend={legend}
+        display="flex"
         flexDirection="row"
-        flexWrap={legend === "names" ? "nowrap" : "wrap"}
-        justifyContent={legend === "names" ? "space-between" : undefined}
+        flexWrap="wrap"
         gridTemplateColumns="repeat(2, minmax(0, 1fr))"
-        rowGap={legend === "grid" ? "1.5" : "1"}
-        columnGap={legend === "grid" ? "3" : "4"}
-        fontSize={legend === "names" ? "xs" : "sm"}
-        color={legend === "names" ? "fg.muted" : undefined}
-        css={{ "[data-held] &": { color: "fg.muted" } }}
+        rowGap="1"
+        columnGap="4"
+        fontSize="sm"
+        css={{
+          "&[data-legend=grid]": { display: "grid", rowGap: "1.5", columnGap: "3" },
+          "&[data-legend=names]": {
+            flexWrap: "nowrap",
+            justifyContent: "space-between",
+            fontSize: "xs",
+            color: "fg.muted",
+          },
+          "[data-held] &": { color: "fg.muted" },
+        }}
       >
         {POINT_GROUPS.map((group) => (
           <List.Item key={group} display="flex" alignItems="center" gap="1.5">
@@ -77,9 +85,11 @@ export function PointBreakdown({
             {legend === "names" ? null : (
               <Text
                 as={held ? "s" : "span"}
-                ms={legend === "grid" ? "auto" : undefined}
-                fontWeight={legend === "grid" ? undefined : "bold"}
                 fontVariantNumeric="tabular-nums"
+                css={{
+                  "[data-legend=grid] &": { ms: "auto" },
+                  "[data-legend=line] &": { fontWeight: "bold" },
+                }}
               >
                 {grouped(totals[group])}P
               </Text>

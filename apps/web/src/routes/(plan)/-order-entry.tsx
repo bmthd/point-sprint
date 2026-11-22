@@ -15,6 +15,7 @@ import {
   NativeAccordion,
   SegmentedControl,
   Text,
+  dataAttr,
   mergeRefs,
 } from "@workspaces/ui";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -82,12 +83,13 @@ export function EntryModeSwitch({
     <SegmentedControl.Root
       aria-label="入れ方"
       size="lg"
-      // Each choice is pressed 44px, as a tax rate's is.
-      css={segmentPressArea}
       // As wide as its choices, or the row's width. Its large size is otherwise at least 24rem
       // wide, wider than a phone's sheet, and narrower widths leave the chosen one's mark behind.
-      w={fill ? "full" : "auto"}
-      alignSelf={fill ? "stretch" : "flex-start"}
+      data-fill={dataAttr(fill)}
+      w="auto"
+      alignSelf="flex-start"
+      // Each choice is pressed 44px, as a tax rate's is.
+      css={{ ...segmentPressArea, "&[data-fill]": { w: "full", alignSelf: "stretch" } }}
       minW="0"
       maxW="full"
       items={[
@@ -184,7 +186,8 @@ export function AmountField({
                   fontWeight="bold"
                   fontVariantNumeric="tabular-nums"
                   borderWidth="2px"
-                  borderColor={field.errors ? undefined : "primary.solid"}
+                  borderColor="primary.solid"
+                  _invalid={{ borderColor: "border.error" }}
                   onPaste={onPaste}
                 />
               </InputGroup.Root>

@@ -25,6 +25,7 @@ import {
   SegmentedControl,
   Text,
   Field as UIField,
+  dataAttr,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type ReactNode, useMemo } from "react";
@@ -155,21 +156,26 @@ export function TaxRateButtons({
     <Fieldset.Root
       legend="税率"
       minW="0"
+      data-fill={dataAttr(fill)}
+      data-size={size}
       // Filling a row, it keeps the width its labels read well at, and takes the row alone when
       // the row is narrower than that. Beside the shop rate it takes nearly all the room left.
-      flex={fill ? `1000 1 ${size === "lg" ? "19rem" : "16rem"}` : undefined}
+      css={{
+        "&[data-fill]": { flex: "1000 1 16rem" },
+        "&[data-fill][data-size=lg]": { flex: "1000 1 19rem" },
+      }}
       gap="1"
       legendProps={{ fontSize: "sm" }}
     >
       <SegmentedControl.Root
         size={size}
-        w={fill ? "full" : "xs"}
+        w="xs"
         // Yamada UI's least width for its size is wider than a phone's sheet leaves it.
         minW="0"
         items={TAX_RATES.map((rate) => ({ label: TAX_LABELS[rate], value: rate }))}
         value={typeof field.input === "string" ? (field.input as TaxRateValue) : undefined}
         onChange={(value) => field.onChange(value as TaxRateValue)}
-        css={segmentPressArea}
+        css={{ ...segmentPressArea, "[data-fill] &": { w: "full" } }}
       />
     </Fieldset.Root>
   );
@@ -192,7 +198,9 @@ export function ShopRateInput({ field, size }: { field: ValueField; size?: "lg" 
       label="独自倍率"
       optionalIndicator={optionalMark}
       {...errorsOf(field)}
-      flex={`1 0 ${size === "lg" ? "9rem" : "8rem"}`}
+      data-size={size}
+      flex="1 0 8rem"
+      css={{ "&[data-size=lg]": { flex: "1 0 9rem" } }}
     >
       {/* The rate is on the price before tax, as Rakuten's shop rates are: 倍, not %. */}
       <InputGroup.Root size={size}>
