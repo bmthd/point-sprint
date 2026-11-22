@@ -255,7 +255,8 @@ export function InlineText({
               aria-label={previewLabel}
               aria-describedby={rejected ? rejectedId : undefined}
               // Kept in the row while the input covers it, so the row keeps its height.
-              visibility={editing ? "hidden" : undefined}
+              css={{ "&[data-editing]": { visibility: "hidden" } }}
+              data-editing={dataAttr(editing)}
               onFocus={() => {
                 if (toText.current) {
                   toText.current = false;
@@ -356,7 +357,7 @@ export function RowToggle({
   return (
     <IconButton
       ref={buttonRef}
-      data-row-toggle=""
+      data-row-toggle
       variant="ghost"
       colorScheme="gray"
       size="lg"

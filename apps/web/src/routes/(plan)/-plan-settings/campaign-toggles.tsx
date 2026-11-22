@@ -6,7 +6,18 @@ import {
   isTwoShopCampaign,
   templateOfCampaign,
 } from "@workspaces/domain";
-import { Box, Card, Flex, Heading, IconButton, Image, List, Switch, Text } from "@workspaces/ui";
+import {
+  Box,
+  Card,
+  Flex,
+  Heading,
+  IconButton,
+  Image,
+  List,
+  Switch,
+  Text,
+  dataAttr,
+} from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
 import { rateText } from "#/ui/format.ts";
@@ -134,7 +145,9 @@ function CampaignRow({
           textAlign="end"
           fontSize="sm"
           fontWeight="medium"
-          color={benefit.enabled ? "primary.fg" : "fg.muted"}
+          color="fg.muted"
+          _checked={{ color: "primary.fg" }}
+          data-checked={dataAttr(benefit.enabled)}
         >
           {benefit.enabled ? "ON" : "OFF"}
         </Text>
