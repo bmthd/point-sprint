@@ -79,6 +79,9 @@ jobs:
           - name: Build
             if: needs.changes.outputs.app == 'true'
             run: pnpm build
+      - name: Measure bundle size
+        if: needs.changes.outputs.app == 'true'
+        run: node apps/web/scripts/bundle-size.ts >> "$GITHUB_STEP_SUMMARY"
       # Checks the workflows, and their scripts with shellcheck, at the versions in mise.dev.toml, even
       # when a step above failed.
       - id: jactionlint
