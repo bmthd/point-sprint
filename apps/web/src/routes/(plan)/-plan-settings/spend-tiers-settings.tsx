@@ -1,7 +1,7 @@
 import { type Benefit, type Plan, type SpendTier, spendTierRate } from "@workspaces/domain";
-import { Box, Button, Card, Fieldset, Flex, IconButton, Text } from "@workspaces/ui";
+import { Box, Button, Card, Fieldset, Flex, IconButton, Text, useBoolean } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
-import { type ReactNode, useId, useRef, useState } from "react";
+import { type ReactNode, useId, useRef } from "react";
 import * as v from "valibot";
 import { grouped, rateText, yen } from "#/ui/format.ts";
 import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
@@ -67,7 +67,7 @@ export function SpendTiersSettings({ plan }: { plan: Plan }) {
 }
 
 function SpendTiersCard({ plan, benefit }: { plan: Plan; benefit: SpendTiersBenefit }) {
-  const [open, setOpen] = useState(false);
+  const [open, { toggle }] = useBoolean();
   const sectionRef = useRef<HTMLElement>(null);
   const deletion = useDeleteCampaign(plan, sectionRef);
   return (
@@ -82,7 +82,7 @@ function SpendTiersCard({ plan, benefit }: { plan: Plan; benefit: SpendTiersBene
         plan={plan}
         benefit={benefit}
         open={open}
-        onToggle={() => setOpen((value) => !value)}
+        onToggle={toggle}
         onDelete={() => deletion.ask(benefit)}
       />
       {deletion.dialog}

@@ -4,7 +4,20 @@
 
 import { getInput, reset, setErrors, useField, useForm, validate } from "@formisch/react";
 import type { Plan } from "@workspaces/domain";
-import { Box, Button, Collapse, Flex, Input, Kbd, List, Text, isApple } from "@workspaces/ui";
+import {
+  Box,
+  Button,
+  Collapse,
+  Flex,
+  Input,
+  Kbd,
+  List,
+  Text,
+  ariaAttr,
+  isApple,
+  isComposing,
+  mergeRefs,
+} from "@workspaces/ui";
 import { atom, useAtom, useSetAtom } from "jotai";
 import {
   type ChangeEvent,
@@ -127,7 +140,7 @@ export function OrderAddRow({ plan }: { plan: Plan }) {
   };
 
   const onAmountKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.nativeEvent.isComposing) return;
+    if (isComposing(event)) return;
     if (event.key === "Tab" && !event.shiftKey) {
       openOnToggleFocus.current = true;
       setTimeout(() => {
@@ -277,20 +290,17 @@ function NameInput({
         name.props.onChange(event);
         if (name.errors) setErrors(form, { path: NAME_PATH, errors: null });
       }}
-      ref={(element: HTMLInputElement | null) => {
-        name.props.ref(element);
-        inputRef.current = element;
-      }}
+      ref={mergeRefs(name.props.ref, inputRef)}
       id={id}
       value={typeof name.input === "string" ? name.input : ""}
       {...floatingInputProps(NAME_INSET, "start")}
       placeholder="商品名またはURL"
       aria-label="新しい注文の商品名"
-      aria-invalid={name.errors ? true : undefined}
+      aria-invalid={ariaAttr(name.errors)}
       aria-describedby={name.errors ? errorId : undefined}
       autoComplete="off"
       onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
-        if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+        if (event.key !== "Enter" || isComposing(event)) return;
         event.preventDefault();
         document.getElementById(`${id}-amount`)?.focus();
       }}
@@ -323,7 +333,7 @@ function AmountInput({
       placeholder="金額"
       aria-label="新しい注文の金額"
       aria-required="true"
-      aria-invalid={amount.errors ? true : undefined}
+      aria-invalid={ariaAttr(amount.errors)}
       aria-describedby={amount.errors ? errorId : undefined}
       inputMode="numeric"
       autoComplete="off"

@@ -15,6 +15,7 @@ import {
   NativeAccordion,
   SegmentedControl,
   Text,
+  mergeRefs,
 } from "@workspaces/ui";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { type ClipboardEvent, type ReactNode, type Ref, useId, useRef, useState } from "react";
@@ -172,11 +173,7 @@ export function AmountField({
                 </InputGroup.Addon>
                 <Input
                   {...bind(field)}
-                  ref={(element: HTMLInputElement | null) => {
-                    field.props.ref(element);
-                    if (typeof inputRef === "function") inputRef(element);
-                    else if (inputRef) inputRef.current = element;
-                  }}
+                  ref={mergeRefs(field.props.ref, inputRef)}
                   aria-label="金額（税込）"
                   aria-required="true"
                   inputMode="numeric"
