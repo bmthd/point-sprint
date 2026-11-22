@@ -124,11 +124,13 @@ export function ShopLadder({
                 key={row.shops}
                 data-fold={dataAttr(fold)}
                 aria-current={isCurrent ? "true" : undefined}
-                bg={isCurrent ? "primary.subtle" : undefined}
-                outline={isCurrent ? "1px solid" : undefined}
-                outlineColor="primary.outline"
-                outlineOffset="-1px"
-                fontWeight={isCurrent ? "bold" : undefined}
+                _current={{
+                  bg: "primary.subtle",
+                  outline: "1px solid",
+                  outlineColor: "primary.outline",
+                  outlineOffset: "-1px",
+                  fontWeight: "bold",
+                }}
               >
                 <Td fold={fold}>{row.shops}店舗</Td>
                 <Td fold={fold}>+{row.rate}倍</Td>
