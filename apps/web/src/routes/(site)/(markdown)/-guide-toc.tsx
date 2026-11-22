@@ -1,4 +1,4 @@
-import { Box, Link, VStack } from "@workspaces/ui";
+import { Box, Link, VStack, dataAttr } from "@workspaces/ui";
 import { useEffect, useState } from "react";
 import { SidebarSection } from "#/routes/-sidebar/sidebar-section.tsx";
 
@@ -52,7 +52,13 @@ export function GuideToc({
   const current = markReading ? reached : undefined;
   return (
     <SidebarSection title="目次">
-      <VStack as="ol" gap="0" alignItems="stretch" listStyleType="none">
+      <VStack
+        as="ol"
+        gap="0"
+        alignItems="stretch"
+        listStyleType="none"
+        data-mark-reading={dataAttr(markReading)}
+      >
         {sections.map((section) => {
           const reading = section === current;
           return (
@@ -70,9 +76,10 @@ export function GuideToc({
                 colorScheme="mono"
                 display="block"
                 py="1.5"
-                color={markReading ? "fg.muted" : "fg"}
+                color="fg"
                 fontWeight="normal"
-                _current={{ color: "fg", fontWeight: "bold" }}
+                _current={{ fontWeight: "bold" }}
+                css={{ "[data-mark-reading] &:not([aria-current])": { color: "fg.muted" } }}
                 aria-current={reading ? "location" : undefined}
               >
                 {section}
