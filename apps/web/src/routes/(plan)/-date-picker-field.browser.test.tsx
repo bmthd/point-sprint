@@ -8,7 +8,7 @@ import { config, theme } from "@workspaces/ui/theme";
 import { DateSchema } from "@workspaces/domain";
 import { expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import { userEvent } from "vitest/browser";
+import { type Locator, userEvent } from "vitest/browser";
 import * as v from "valibot";
 import { errorsOf } from "#/routes/-form.tsx";
 import { CommitDatePicker, FormDatePicker } from "./-date-picker-field.tsx";
@@ -27,7 +27,7 @@ function renderPicker(onCommit: (day: string) => Promise<unknown>) {
 }
 
 /** Replaces what the field shows with `typed`, one key at a time, as a real keyboard does. */
-async function typeDay(field: { click: () => Promise<void> }, typed: string) {
+async function typeDay(field: Locator, typed: string) {
   await field.click();
   await userEvent.keyboard("{Control>}a{/Control}");
   await userEvent.keyboard(typed);

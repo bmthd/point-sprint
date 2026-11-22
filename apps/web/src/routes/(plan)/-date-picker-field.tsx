@@ -25,16 +25,14 @@ export function isDate(text: unknown): text is string {
 
 /**
  * A day typed into a date field: `2026/11/20` or `2026-11-20`, a 4-digit year and a day that
- * exists in its month. Full-width digits are read as half-width ones. Anything else — a day
- * still being typed, a day that does not exist — is `undefined`, never another day. The picker
- * itself reads typed text loosely (a lone `2` becomes 2001/02/01) and rewrites the field with
- * what it read, so typed text is judged here instead and only a day that passes is handed on.
+ * exists in its month. Full-width text is made half-width (NFKC), as the form's input schemas
+ * normalize it. Anything else — a day still being typed, a day that does not exist — is
+ * `undefined`, never another day. The picker itself reads typed text loosely (a lone `2`
+ * becomes 2001/02/01) and rewrites the field with what it read, so typed text is judged here
+ * instead and only a day that passes is handed on.
  */
 export function parseTypedDate(text: string): Date | undefined {
-  const halfWidth = text.replace(/[０-９]/g, (digit) =>
-    String.fromCharCode(digit.charCodeAt(0) - 0xfee0),
-  );
-  const match = /^(\d{4})([/-])(\d{1,2})\2(\d{1,2})$/.exec(halfWidth.trim());
+  const match = /^(\d{4})([/-])(\d{1,2})\2(\d{1,2})$/.exec(text.normalize("NFKC").trim());
   if (!match) return undefined;
   const year = Number(match[1]);
   const month = Number(match[3]);
@@ -103,12 +101,19 @@ const periodDay =
  * does not cover the form with it. The picker puts the field's `aria-invalid` and error description
  * on its box, not on the input that has the label, so they are given to the input as well.
  */
-export function FieldDatePicker(allProps: DatePickerProps & { period?: Period }) {
-  // The field keeps its own text (see below), so `inputValue` is not taken from the caller: the
-  // `inputValue` below is spread after the caller's props, so it wins.
-  const { period, value, defaultValue, onChange, onInputChange, inputProps, ...props } = allProps;
+export function FieldDatePicker({
+  period,
+  ...props
+}: DatePickerProps & {
+  /** The event's days, marked on the calendar. */
+  period?: Period;
+}) {
+  // The field keeps its own text (see below), so `inputValue` is not taken from the caller: it
+  // is set below, after the rest of the caller's props are spread.
+  const { value, defaultValue, onChange, onInputChange, inputProps, calendarProps, ...rest } =
+    props;
   const { ariaProps } = useFieldProps();
-  const controlled = "value" in allProps;
+  const controlled = "value" in props;
   // The text in the field, while it is being typed. `undefined` when nobody is typing: the field
   // then shows the day it holds, formatted. Typed text is kept exactly as typed until it names a
   // day (see parseTypedDate), so a half-typed day is never rewritten into another day.
@@ -156,7 +161,7 @@ export function FieldDatePicker(allProps: DatePickerProps & { period?: Period })
       fontVariantNumeric="tabular-nums"
       // The input keeps its own width otherwise, too wide for half of a row.
       minW="0"
-      {...props}
+      {...rest}
       value={value}
       defaultValue={defaultValue}
       onChange={commit}
@@ -214,7 +219,7 @@ export function FieldDatePicker(allProps: DatePickerProps & { period?: Period })
         },
       }}
       calendarProps={
-        period ? { day: periodDay(period), dayProps: { "data-group": "" } } : undefined
+        period ? { day: periodDay(period), dayProps: { "data-group": "" } } : calendarProps
       }
     />
   );
