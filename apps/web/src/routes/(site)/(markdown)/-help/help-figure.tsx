@@ -19,13 +19,13 @@ const WIDE_WIDTH = 848;
 /** How much the wide screen is shrunk: 848px and the room around it into the help's 638px column. */
 const WIDE_ZOOM = 0.7;
 /**
- * Below a 1080px window the help's column is narrower than 638px, down to 535px at 977px, where the
- * wide figures start: they are shrunk more there to fit it.
+ * The help's column is narrower than 638px on a narrow PC, down to 535px where the wide figures
+ * start: in a figure narrower than the screen at `WIDE_ZOOM` and its border, it is shrunk more.
  */
-const WIDE_NARROWER: CSSObject = {
-  "@media screen and (max-width: 1079px)": { zoom: 0.65 },
-  "@media screen and (max-width: 1029px)": { zoom: 0.59 },
-};
+const WIDE_NARROWER = [
+  { maxInlineSize: "629px", css: { zoom: 0.65 } },
+  { maxInlineSize: "586px", css: { zoom: 0.59 } },
+];
 /** How far a mark's outline stands off what it marks, and how thick it is, on the phone. */
 const OUTLINE_OFFSET = 5;
 const OUTLINE_WIDTH = 3;
@@ -49,7 +49,7 @@ const screens = {
   phone: {
     width: PHONE_WIDTH + (FRAME_PADDING - 16) * 2,
     zoom: PHONE_ZOOM,
-    narrower: {},
+    narrower: [],
     config: figureConfig,
   },
   wide: { width: WIDE_WIDTH + FRAME_PADDING * 2, zoom: WIDE_ZOOM, narrower: WIDE_NARROWER, config },
@@ -184,12 +184,8 @@ function FigureFrame({
         w={`${width}px`}
         p={`${FRAME_PADDING}px`}
         containerType="inline-size"
-        css={{
-          zoom,
-          ...narrower,
-          ...hideStyles(spec.hide),
-          ...markStyles(spec.marks, zoom),
-        }}
+        _container={narrower}
+        css={{ zoom, ...hideStyles(spec.hide), ...markStyles(spec.marks, zoom) }}
       >
         <SystemProvider theme={theme} config={screenConfig}>
           <SampleProviders>
@@ -224,6 +220,8 @@ export function HelpFigure({
   return (
     <Grid
       as="figure"
+      // The column it is in, which a wide figure fits itself into.
+      containerType="inline-size"
       display={display}
       templateColumns={
         beside ? { base: "315px minmax(0, 1fr)", sm: "minmax(0, 1fr)" } : "minmax(0, 1fr)"

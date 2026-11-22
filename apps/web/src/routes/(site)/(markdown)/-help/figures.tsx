@@ -110,10 +110,14 @@ function HeldOrderFigure() {
   );
 }
 
-/** The desktop table of the third marathon with `orderId`'s row opened. */
-function OpenRowFigure({ orderId }: { orderId: string }) {
-  useHydrateAtoms([[openOrderIdAtom, orderId]]);
-  return <OrderTable plan={THIRD_MARATHON} head={null} />;
+/**
+ * The desktop table of the third marathon with only `order`'s row, opened. The row reads its points
+ * from the whole plan in the store; the table is given the one order, so the others are not drawn.
+ */
+function OpenRowFigure({ order }: { order: Order }) {
+  useHydrateAtoms([[openOrderIdAtom, order.id]]);
+  const [plan] = useState(() => ({ ...THIRD_MARATHON, orders: [order] }));
+  return <OrderTable plan={plan} head={null} />;
 }
 
 /** The desktop table's last row, a new order of `price` yen being typed, with its conditions open. */
@@ -131,15 +135,16 @@ function NewOrderRowFigure({ price }: { price: number }) {
   );
 }
 
-/** The table's rows other than `orderId`'s, its head above the card and the note under it. */
-function otherRows(orderId: string) {
-  return [
-    `li[data-order-id]:not([data-order-id="${orderId}"])`,
-    "ol > li:not([data-order-id])",
-    ".ui-flex:has(> article) > .ui-flex:first-of-type",
-    "article ~ p",
-  ];
-}
+/**
+ * What the one row's table leaves out: the count of its orders, which would be one, the row a new
+ * order is typed in, the head above the card and the note under it.
+ */
+const OPEN_ROW_HIDE = [
+  "h2 > span",
+  "ol > li:not([data-order-id])",
+  ".ui-flex:has(> article) > .ui-flex:first-of-type",
+  "article ~ p",
+];
 
 /** The plan page's SPU, under the red card. */
 function SpuCardFigure() {
@@ -184,9 +189,9 @@ const figures: Omit<HelpFigureSpec, "marks">[] = [
   },
   {
     name: "edit-order-wide",
-    render: () => <OpenRowFigure orderId={FIRST_ORDER.id} />,
+    render: () => <OpenRowFigure order={FIRST_ORDER} />,
     screen: "wide",
-    hide: otherRows(FIRST_ORDER.id),
+    hide: OPEN_ROW_HIDE,
     crop: { height: 830, from: "top" },
   },
   {
@@ -211,9 +216,9 @@ const figures: Omit<HelpFigureSpec, "marks">[] = [
   },
   {
     name: "held-order-wide",
-    render: () => <OpenRowFigure orderId={HELD_ORDER.id} />,
+    render: () => <OpenRowFigure order={HELD_ORDER} />,
     screen: "wide",
-    hide: otherRows(HELD_ORDER.id),
+    hide: OPEN_ROW_HIDE,
     crop: { height: 222, from: "top" },
   },
   {
