@@ -8,6 +8,7 @@ import {
 import { UIProvider } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import { expect, test } from "vitest";
+import { page } from "vitest/browser";
 import { cleanup, render } from "vitest-browser-react";
 import { figureExtension } from "./figure-extension.ts";
 import help from "#/routes/(site)/(markdown)/-markdown/help.md?raw";
@@ -29,9 +30,13 @@ function figureCopy(name: string) {
   return { caption, alt };
 }
 
-/** The figure on a page of its own, under a router as on the help: some components link. */
+/**
+ * The figure on a page of its own, under a router as on the help: some components link. A wide
+ * figure shows only on a window as wide as the plan page's two columns.
+ */
 async function renderFigure(name: string) {
   await cleanup();
+  await page.viewport(helpFigures[name]?.screen === "wide" ? 1470 : 390, 900);
   const root = createRootRoute({
     component: () => <HelpFigure name={name} {...figureCopy(name)} />,
   });

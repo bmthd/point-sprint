@@ -5,6 +5,7 @@ import {
   NumberInputSchema,
   OptionalTextInputSchema,
   TextInputSchema,
+  TypedDateInputSchema,
 } from "./normalize.ts";
 
 test("a number drops full-width forms, commas, spaces and its unit's signs", () => {
@@ -30,6 +31,22 @@ test("an empty number field is undefined, and text that is not a number is NaN",
 test("a date is made half-width, and an empty one is undefined", () => {
   expect(v.parse(DateInputSchema, " ２０２６-１０-０５ ")).toBe("2026-10-05");
   expect(v.parse(DateInputSchema, "")).toBeUndefined();
+});
+
+test("a typed day is read with slashes or hyphens, a 1-digit month and day, full-width too", () => {
+  expect(v.parse(TypedDateInputSchema, "2026/11/20")).toBe("2026-11-20");
+  expect(v.parse(TypedDateInputSchema, "2026-11-20")).toBe("2026-11-20");
+  expect(v.parse(TypedDateInputSchema, "2026/1/5")).toBe("2026-01-05");
+  expect(v.parse(TypedDateInputSchema, " ２０２６／１１／２０ ")).toBe("2026-11-20");
+});
+
+test("text that does not name a day that exists is undefined, never another day", () => {
+  expect(v.parse(TypedDateInputSchema, "")).toBeUndefined();
+  expect(v.parse(TypedDateInputSchema, "2026/1")).toBeUndefined();
+  expect(v.parse(TypedDateInputSchema, "2026/2/30")).toBeUndefined();
+  expect(v.parse(TypedDateInputSchema, "2025/2/29")).toBeUndefined();
+  expect(v.parse(TypedDateInputSchema, "2024/2/29")).toBe("2024-02-29");
+  expect(v.parse(TypedDateInputSchema, "2026/13/1")).toBeUndefined();
 });
 
 test("text loses the spaces around it", () => {

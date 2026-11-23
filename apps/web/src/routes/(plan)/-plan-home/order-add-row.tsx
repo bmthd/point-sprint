@@ -3,6 +3,7 @@
 "use no memo";
 
 import { getInput, reset, setErrors, useField, useForm, validate } from "@formisch/react";
+import { ClientOnly } from "@tanstack/react-router";
 import type { Plan } from "@workspaces/domain";
 import {
   Box,
@@ -34,6 +35,7 @@ import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
 import { useSingleFlight } from "#/use-single-flight.ts";
 import {
   OrderFormSchema,
+  type OrderFormInput,
   type OrderFormOutput,
   draftOf,
   emptyInput,
@@ -78,17 +80,30 @@ type Next = "next" | "stay";
  * where it went, and the row is empty again under it. Its ⌄ opens the order's conditions before
  * it is made; they stay open on the order it becomes, unless ⌘ + Enter moves on to the next one.
  */
-export function OrderAddRow({ plan }: { plan: Plan }) {
+export function OrderAddRow({
+  plan,
+  initialInput,
+  initialOpen = false,
+}: {
+  plan: Plan;
+  /** What the row starts with, empty by default: the help's figure shows an order being typed. */
+  initialInput?: OrderFormInput;
+  /** Whether the conditions start open. */
+  initialOpen?: boolean;
+}) {
   const newDraft = useSetAtom(newDraftAtom);
   const saveDraft = useSaveOrderDraft(plan.id, useSetAtom(orderSaveFailedAtom));
   const run = useSingleFlight();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   /** Bumped as an order is made, so the new row's conditions start shut, without sliding. */
   const [generation, setGeneration] = useState(0);
   // The new order's conditions and an opened row take turns: opening one closes the other.
   const [openOrderId, setOpenOrderId] = useAtom(openOrderIdAtom);
   if (open && openOrderId !== null) setOpen(false);
-  const form = useForm({ schema: OrderFormSchema, initialInput: emptyInput(plan.period) });
+  const form = useForm({
+    schema: OrderFormSchema,
+    initialInput: initialInput ?? emptyInput(plan.period),
+  });
   const autofill = useOrderAutofill(form);
   const enterUrl = useEnterUrl(form, autofill);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -348,7 +363,6 @@ function AmountInput({
 function ErrorOrHint({ form, id }: { form: OrderForm; id: string }) {
   const nameError = useField(form, { path: NAME_PATH }).errors?.[0];
   const amountError = useField(form, { path: AMOUNT_PATH }).errors?.[0];
-  const mod = isApple() ? "⌘" : "Ctrl";
   return nameError || amountError ? (
     <Text
       id={id}
@@ -379,7 +393,8 @@ function ErrorOrHint({ form, id }: { form: OrderForm; id: string }) {
       {/* The 「+」 sits on the keys' middle, not on their baseline. ⌘ is a square key. */}
       <Flex as="span" align="center" gap="1">
         <Kbd fontSize="2xs" h="5.5" minW="5.5" px="1" justifyContent="center">
-          {mod}
+          {/* Ahead of time, as the help's figure draws the row, ⌘ until the browser says which. */}
+          <ClientOnly fallback="⌘">{isApple() ? "⌘" : "Ctrl"}</ClientOnly>
         </Kbd>
         +
         <Kbd fontSize="2xs" h="5.5" px="1">

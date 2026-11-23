@@ -208,6 +208,7 @@ export {
   type NumberUnit,
   NumberInputSchema,
   DateInputSchema,
+  TypedDateInputSchema,
   TextInputSchema,
   OptionalTextInputSchema,
 } from "./form/normalize.ts";
