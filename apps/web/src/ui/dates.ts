@@ -32,6 +32,11 @@ export function monthDay(date: string): string {
   return `${month}/${day}`;
 }
 
+/** Days of the week (0 is Sunday) as `火・木曜`. */
+export function weekdaysText(days: readonly number[]): string {
+  return `${days.map((day) => weekdays[day]).join("・")}曜`;
+}
+
 /** `2026-10-04` as `10/4（土）`. */
 export function monthDayWithWeekday(date: string): string {
   const { year, month, day } = parts(date);

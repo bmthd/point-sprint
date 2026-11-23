@@ -69,8 +69,11 @@ export const PREMIUM_CARD_BONUS_ID = "b3acca83-be7b-4c8a-9637-7706296679d4";
 export const BANK_CARD_ID = "1933c19c-0aa3-4052-8d5e-c0d07859a0a9";
 export const BANK_SALARY_ID = "3a7c47bd-3404-4dcb-9569-54989e63f077";
 
-/** What an SPU item that only orders paid with a 楽天カード get is: the card's or 楽天銀行's. */
-export type RakutenCardPart = "normal" | "bonus" | "bank";
+/**
+ * What an item that only orders paid with a 楽天カード get is: the card's SPU items, 楽天銀行's, or
+ * a campaign of the card itself (楽天プレミアムカードの楽天市場コース).
+ */
+export type RakutenCardPart = "normal" | "bonus" | "bank" | "ichiba-course";
 
 /**
  * The SPU items that only orders paid with a 楽天カード get, by id: the card's normal points, its

@@ -99,6 +99,14 @@ export const DateRuleSchema = v.variant("type", [
       v.minLength(1),
     ),
   }),
+  /** Days of the week: 0 is Sunday, 6 is Saturday. */
+  v.object({
+    type: v.literal("daysOfWeek"),
+    days: v.pipe(
+      v.array(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(6))),
+      v.minLength(1),
+    ),
+  }),
   v.object({ type: v.literal("dates"), dates: v.pipe(v.array(IsoDateSchema), v.minLength(1)) }),
   v.object({ type: v.literal("range"), start: IsoDateSchema, end: IsoDateSchema }),
 ]);

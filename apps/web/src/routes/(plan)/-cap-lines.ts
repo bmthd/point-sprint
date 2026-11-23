@@ -13,6 +13,7 @@ import {
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
+import { weekdaysText } from "#/ui/dates.ts";
 import { yen } from "#/ui/format.ts";
 
 /** The tax rates a cap's fill price can be shown at. */
@@ -63,6 +64,8 @@ function daysText(rule: DateRule): string {
   switch (rule.type) {
     case "daysOfMonth":
       return `${rule.days.join("・")}日`;
+    case "daysOfWeek":
+      return weekdaysText(rule.days);
     case "dates":
       return rule.dates.map(monthDay).join("・");
     case "range":

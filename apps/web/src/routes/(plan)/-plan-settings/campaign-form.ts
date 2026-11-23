@@ -16,6 +16,7 @@ export type FormSpec = {
 export const SPECS: Record<string, FormSpec> = {
   "thanks-day": { rank: true },
   wonderfulday: {},
+  "premium-card-ichiba": {},
   "sports-win": { date: true, winChoice: true },
   "39shop": { period: true },
   repeat: { period: true, minOrderAmount: true, cap: "required" },

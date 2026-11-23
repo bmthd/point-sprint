@@ -37,6 +37,8 @@ export function inDateRule(rule: DateRule, date: string): boolean {
   switch (rule.type) {
     case "daysOfMonth":
       return rule.days.includes(Number(date.slice(8, 10)));
+    case "daysOfWeek":
+      return rule.days.includes(new Date(`${date}T00:00:00Z`).getUTCDay());
     case "dates":
       return rule.dates.includes(date);
     case "range":

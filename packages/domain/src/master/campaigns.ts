@@ -83,6 +83,39 @@ export const campaignTemplates: CampaignTemplate[] = [
     },
   },
   {
+    id: "premium-card-ichiba",
+    name: "プレミアムカード 火・木",
+    occurrence: "fixed",
+    // 楽天プレミアムカードを持ち、楽天市場コースを選んだ人だけが対象なので、利用者が足す。
+    addedByUser: true,
+    benefit: {
+      id: "0a6e87fc-1dba-4926-b157-8edb51b9b871",
+      kind: "rate-bonus",
+      category: "campaign",
+      label: "楽天プレミアムカード 楽天市場コース",
+      imagePath: "/img/spu/service_card_premium.webp",
+      enabled: false,
+      // 出典: https://www.rakuten-card.co.jp/card/rakuten-premium-card/service/choose_p/
+      //       https://www.rakuten-card.co.jp/card/rakuten-premium-card/
+      // 確認日: 2026-11-23
+      // 「毎週火曜日・木曜日に楽天市場でお買い物をするとポイント+1倍加算」「月間10,000ポイント」
+      // （SPU の楽天カード特典分の月5,000ポイントとは別の上限）。「楽天市場でのカードご利用額100円につき
+      // 1ポイント」で、進呈例は「11,000円（税込み）」に110ポイントなので税込額に付ける。曜日は楽天市場の
+      // 購入履歴の「ご注文日(購入日時)」で決まる。
+      amountBasis: "tax-included",
+      capScope: "month",
+      sharedKey: "premium-card-ichiba",
+      // 対象は楽天市場の通常購入を楽天プレミアムカードで払った分。楽天ブックスは対象外。
+      // 「予約・定期購入・頒布会は対象外」は conditions で表せない。
+      conditions: {
+        channels: ["rakuten-ichiba"],
+        dateRule: { type: "daysOfWeek", days: [2, 4] },
+        rakutenCard: true,
+      },
+      params: { rate: 1, cap: 10000, roundingUnit: "order" },
+    },
+  },
+  {
     id: "sports-win",
     name: "勝ったら倍",
     occurrence: "user-dates",
