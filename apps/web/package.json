@@ -18,7 +18,7 @@
     "@tanstack/query-core": "5.104.1",
     "@tanstack/react-query": "5.104.1",
     "@tanstack/react-router": "1.170.46",
-    "@tanstack/react-start": "1.169.5",
+    "@tanstack/react-start": "1.169.7",
     "@workspaces/domain": "workspace:*",
     "@workspaces/ui": "workspace:*",
     "jotai": "3.0.2",
