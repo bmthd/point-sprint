@@ -32,23 +32,23 @@ queryKey と queryFn の上書き API は作らない。保存形式とスキー
 ### Task 2: プラン計算
 
 - [x] state/accounts.ts を domain/plan-ops/accounts.ts に移し全 import を移行する。
-- [ ] toCalculated を domain/plan-ops/calculated-plan.ts の calculatedPlan に移す。
-- [ ] 注文明細のポイント選択を domain/calculate/order-points.ts に移す。
-- [ ] 純粋関数のテストと既存状態テストを検証し、PR 1 向け PR を作る。
+- [x] toCalculated を domain/plan-ops/calculated-plan.ts の calculatedPlan に移す。
+- [x] 注文明細のポイント選択を domain/calculate/order-points.ts に移す。
+- [x] 純粋関数のテストと既存状態テストを検証し、PR 1 向け PR を作る。
 
 ### Task 3: イベント選択
 
-- [ ] endedLatestFirst と候補選択を domain/official-events/selection.ts に移す。
-- [ ] start-target.ts には UI の create/choose の変換を残す。
-- [ ] 境界日と同順位を含むテスト、全体の検証を行い、PR 2 向け PR を作る。
-- [ ] 3 本の差分・CI・Preview を確認し、Stack のリンクを各 PR に記載する。
+- [x] endedLatestFirst と候補選択を domain/official-events/selection.ts に移す。
+- [x] start-target.ts には UI の create/choose の変換を残す。
+- [x] 境界日と同順位を含むテスト、全体の検証を行い、PR 2 向け PR を作る。
+- [x] 3 本の差分・CI・Preview を確認し、Stack のリンクを各 PR に記載する。
 
 ### PR 1 の追加: Options と atom のモジュール分離
 
 - [x] state/queries.ts を純粋な Options と queryKeys に限定し、atom を state/query-atoms.ts に移す。
 - [x] 同期と公式イベントの Factory を hooks や atom と分離し、全 import を移す。
 - [x] analyze-query-bundles.ts で同条件のアプリビルドと Factory 単独バンドルを比較し、分析結果を記録する。
-- [ ] PR 1 を更新し、PR 2・3 を積み直して全体を検証する。
+- [x] PR 1 を更新し、PR 2・3 を積み直して全体を検証する。
 
 ### PR 1 の追加: appQueryOptions によるシグネチャ統一
 
@@ -56,11 +56,18 @@ queryKey と queryFn の上書き API は作らない。保存形式とスキー
 - [x] 9 種類の Factory と全呼び出し元を統一し、deps をオブジェクトにする。
 - [x] 引数の個数・戻り値・queryKey・ジェネリック select の型推論と実際の取得を検証する。
 - [x] 未使用 Factory が除去されることを最小バンドルで確認し、ビルド結果を記録する。
-- [ ] 全テスト・静的検査・ビルドを確認し、PR 1 を更新して後続 2 本を積み直す。
+- [x] 全テスト・静的検査・ビルドを確認し、PR 1 を更新して後続 2 本を積み直す。
 
 ### PR 1 の追加: queryOptions の適用を共通関数へ移す
 
 - [x] appQueryOptions 内で queryOptions を適用し、各 Factory はプレーンな Options を返す。
 - [x] queryKey のリテラルと DataTag、取得データ、generic select の推論を型テストで確認する。
 - [x] 取得・状態テスト、静的検査、ビルドと未使用 Factory の除去を確認する。
-- [ ] PR 1 を更新し、後続 2 本を積み直して CI・Preview を確認する。
+- [x] PR 1 を更新し、後続 2 本を積み直して CI・Preview を確認する。
+
+### PR 1 の追加: バンドル検査を通常テストへ接続
+
+- [x] 未使用 Factory・不要な実装依存の除去を state/query-options-bundle.test.ts に移す。
+- [x] 過去の atom 同居実装と、未使用 Factory を保持する副作用で失敗することを確認する。
+- [x] 分析専用スクリプトを削除し、レポートに計測コードのコミット参照を残す。
+- [x] 既存テスト・型・lint・書式・スペル検査を確認し、更新差分を用意する。Stack と CI の最終状態は各 PR 本文に記録する。

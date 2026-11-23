@@ -18,3 +18,5 @@ Options と atom はモジュールも分離する。state/queries.ts は queryK
 バンドルは同一の本番設定・固定 BUILD_ID と BUILD_DATE で PR 1 の分離前後を比較する。アプリ全体とトップページ初期配信の JS/CSS サイズ、および plansQueryOptions だけを公開する最小バンドルの依存を別々に確認する。実行速度の改善は主張しない。
 
 Factory は appQueryOptions(factory) で定義し、呼び出しを (deps, options) に統一する。deps は Repository や load を持つオブジェクト、options は必要な Factory だけが持つ第 2 引数とする。各 Factory は Options のオブジェクトを返し、helper 内で queryOptions を適用する。引数の個数、取得元と select 後のデータ、queryKey の型推論を維持する。Options 不要の Factory に undefined や空オブジェクトを渡さない。トップレベル呼び出しが未使用 Factory を残さないことを最小バンドルで確認する。
+
+バンドルの依存分離と未使用 Factory の除去は既存の Vitest テストに接続する。サイズ比較専用のスクリプトは常設せず、計測結果と当時のコードのコミット参照をレポートに残す。
