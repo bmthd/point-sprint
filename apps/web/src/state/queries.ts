@@ -1,4 +1,3 @@
-import { queryOptions } from "@tanstack/react-query";
 import type { Profile } from "@workspaces/domain";
 import type { Repository } from "#/storage/repository.ts";
 import { appQueryOptions } from "./app-query-options.ts";
@@ -25,48 +24,48 @@ type StorageHealthOptions = {
   dataUpdatedAt: readonly [number, number, number, number];
 };
 
-export const plansQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) =>
-  queryOptions({ queryKey: queryKeys.plans, queryFn: () => repository.plans.list() }),
-);
+export const plansQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) => ({
+  queryKey: queryKeys.plans,
+  queryFn: () => repository.plans.list(),
+}));
 
-export const shopsQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) =>
-  queryOptions({ queryKey: queryKeys.shops, queryFn: () => repository.shops.list() }),
-);
+export const shopsQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) => ({
+  queryKey: queryKeys.shops,
+  queryFn: () => repository.shops.list(),
+}));
 
-export const profileQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) =>
-  queryOptions({
-    queryKey: queryKeys.profile,
-    queryFn: async () => (await repository.profile.get()) ?? defaultProfile(),
-  }),
-);
+export const profileQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) => ({
+  queryKey: queryKeys.profile,
+  queryFn: async () => (await repository.profile.get()) ?? defaultProfile(),
+}));
 
-export const spuMonthsQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) =>
-  queryOptions({ queryKey: queryKeys.spuMonths, queryFn: () => repository.spuMonths.list() }),
-);
+export const spuMonthsQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) => ({
+  queryKey: queryKeys.spuMonths,
+  queryFn: () => repository.spuMonths.list(),
+}));
 
-export const noticeReadsQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) =>
-  queryOptions({ queryKey: queryKeys.noticeReads, queryFn: () => repository.noticeReads.list() }),
-);
+export const noticeReadsQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) => ({
+  queryKey: queryKeys.noticeReads,
+  queryFn: () => repository.noticeReads.list(),
+}));
 
 export const storageHealthQueryOptions = appQueryOptions(
-  ({ repository }: RepositoryQueryDeps, { enabled, dataUpdatedAt }: StorageHealthOptions) =>
-    queryOptions({
-      queryKey: [...queryKeys.storageHealth, ...dataUpdatedAt],
-      enabled,
-      queryFn: async () => ({
-        quarantined: await repository.quarantined(),
-        wasReset: repository.wasReset(),
-      }),
+  ({ repository }: RepositoryQueryDeps, { enabled, dataUpdatedAt }: StorageHealthOptions) => ({
+    queryKey: [...queryKeys.storageHealth, ...dataUpdatedAt],
+    enabled,
+    queryFn: async () => ({
+      quarantined: await repository.quarantined(),
+      wasReset: repository.wasReset(),
     }),
-);
-
-export const quarantineQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) =>
-  queryOptions({ queryKey: queryKeys.quarantine, queryFn: () => repository.quarantine.list() }),
-);
-
-export const syncEnabledQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) =>
-  queryOptions({
-    queryKey: queryKeys.syncEnabled,
-    queryFn: async () => (await repository.sync.meta.get()) !== undefined,
   }),
 );
+
+export const quarantineQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) => ({
+  queryKey: queryKeys.quarantine,
+  queryFn: () => repository.quarantine.list(),
+}));
+
+export const syncEnabledQueryOptions = appQueryOptions(({ repository }: RepositoryQueryDeps) => ({
+  queryKey: queryKeys.syncEnabled,
+  queryFn: async () => (await repository.sync.meta.get()) !== undefined,
+}));

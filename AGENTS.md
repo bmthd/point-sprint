@@ -91,7 +91,7 @@ Markdown のページと記事に足す構文は、CommonMark の Generic direct
 
 ## Query Options と atom
 
-取得定義は `queryOptions()` を返す Factory を `appQueryOptions()` に渡して定義し、Query atom から呼ぶ。引数は `(deps, options)` の順にし、deps は名前付きのオブジェクト、options は必要な Factory だけが持つ第 2 引数にする。Options 不要の Factory には `undefined` や空オブジェクトを渡さない。Options と query key のモジュールは Jotai・React の hooks・ストレージ実装を import せず、Repository の型や取得関数だけに依存する。`state/queries.ts` は Options と query key、`state/query-atoms.ts` は Query atom とフォールバックを持つ。Factory は Repository や取得関数を引数に受け取り、atom が取得元の差し替えと依存状態の購読を受け持つ。
+取得定義は Options のオブジェクトを返す Factory を `appQueryOptions()` に渡して定義し、Query atom から呼ぶ。`queryOptions()` は共通の `appQueryOptions()` 内で適用する。引数は `(deps, options)` の順にし、deps は名前付きのオブジェクト、options は必要な Factory だけが持つ第 2 引数にする。Options 不要の Factory には `undefined` や空オブジェクトを渡さない。Options と query key のモジュールは Jotai・React の hooks・ストレージ実装を import せず、Repository の型や取得関数だけに依存する。`state/queries.ts` は Options と query key、`state/query-atoms.ts` は Query atom とフォールバックを持つ。Factory は Repository や取得関数を引数に受け取り、atom が取得元の差し替えと依存状態の購読を受け持つ。
 
 状態の公開・選択・フォールバック・複数状態の合成は atom に置く。業務の計算や抽出は domain の純粋関数に置き、atom から呼ぶ。
 

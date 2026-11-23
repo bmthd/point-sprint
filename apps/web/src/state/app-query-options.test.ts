@@ -1,4 +1,4 @@
-import { QueryClient, QueryObserver, queryOptions } from "@tanstack/react-query";
+import { QueryClient, QueryObserver } from "@tanstack/react-query";
 import type { Plan } from "@workspaces/domain";
 import { expect, expectTypeOf, test } from "vitest";
 import { appQueryOptions } from "./app-query-options.ts";
@@ -9,7 +9,7 @@ test("preserves generic select inference and the fetched data type of the cache"
     <TData = Plan[]>(
       { load }: { load: () => Promise<Plan[]> },
       options: { select?: (plans: Plan[]) => TData },
-    ) => queryOptions({ queryKey: queryKeys.plans, queryFn: load, select: options.select }),
+    ) => ({ queryKey: queryKeys.plans, queryFn: load, select: options.select }),
   );
   const deps = { load: async (): Promise<Plan[]> => [] };
   const selected = selectedPlans(deps, { select: (plans) => plans.length });
@@ -28,6 +28,22 @@ test("preserves generic select inference and the fetched data type of the cache"
     expectTypeOf(unselectedObserver.getCurrentResult().data).toEqualTypeOf<Plan[] | undefined>();
     unselectedObserver.destroy();
     observer.destroy();
+  } finally {
+    client.clear();
+  }
+});
+
+test("plain options retain queryKey literals and fetched cache data types", async () => {
+  const plans = appQueryOptions(({ load }: { load: () => Promise<Plan[]> }) => ({
+    queryKey: queryKeys.plans,
+    queryFn: load,
+  }));
+  const options = plans({ load: async () => [] });
+  const client = new QueryClient();
+  try {
+    expect(await client.query(options)).toEqual([]);
+    expectTypeOf(options.queryKey[0]).toEqualTypeOf<"plans">();
+    expectTypeOf(client.getQueryData(options.queryKey)).toEqualTypeOf<Plan[] | undefined>();
   } finally {
     client.clear();
   }

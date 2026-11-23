@@ -57,3 +57,10 @@ queryKey と queryFn の上書き API は作らない。保存形式とスキー
 - [x] 引数の個数・戻り値・queryKey・ジェネリック select の型推論と実際の取得を検証する。
 - [x] 未使用 Factory が除去されることを最小バンドルで確認し、ビルド結果を記録する。
 - [ ] 全テスト・静的検査・ビルドを確認し、PR 1 を更新して後続 2 本を積み直す。
+
+### PR 1 の追加: queryOptions の適用を共通関数へ移す
+
+- [x] appQueryOptions 内で queryOptions を適用し、各 Factory はプレーンな Options を返す。
+- [x] queryKey のリテラルと DataTag、取得データ、generic select の推論を型テストで確認する。
+- [x] 取得・状態テスト、静的検査、ビルドと未使用 Factory の除去を確認する。
+- [ ] PR 1 を更新し、後続 2 本を積み直して CI・Preview を確認する。

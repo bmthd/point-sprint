@@ -74,3 +74,15 @@ main の日付入力修正と依存更新を取り込んだ PR 1 の 29ee2e0 を
 ファイル数は全アプリ 86、トップ初期ロード 42 のまま。Factory 単独の出力には queryOptions、appQueryOptions、使われる Factory と共通キー定義だけが残り、未使用 Factory・Jotai・Repository 実装は除去された。appQueryOptions は Factory をそのまま返す関数で、現在の Rolldown では PURE 注釈なしで検査が成功した。
 
 トップ初期ロードの gzip 差は +9 bytes で、速度改善の根拠にはしない。引数の型と依存の規約を共通化し、既存の tree-shaking を維持できることを確認した。
+
+## queryOptions の適用を共通関数へ移した場合（2026-11-23）
+
+基準は bf33daa。各 Factory 内の queryOptions を除き、appQueryOptions 内でまとめて適用した。同じ設定と固定 BUILD_ID / BUILD_DATE のビルド結果を比較した。変更前のアプリ値は直前の節で測定した同一リビジョンの成果物を使用し、変更後は 1 回ビルドした。
+
+| 対象 | raw: 前 → 後 | gzip: 前 → 後 | Brotli: 前 → 後 |
+| --- | ---: | ---: | ---: |
+| Factory 単独の診断 | 701 → 719 | 385 → 396 | 362 → 352 |
+| Whole app | 1,849,259 → 1,849,249 | 616,939 → 616,977 | 527,204 → 527,138 |
+| Top page, initial render | 1,370,955 → 1,370,945 | 438,048 → 438,074 | 372,467 → 372,341 |
+
+全アプリ 86、トップ初期ロード 42 ファイルのまま。未使用 Factory・Jotai・Repository 実装の除去は維持され、PURE 注釈なしで検査が成功した。queryKey のリテラル・キャッシュの DataTag・generic select の型推論も実装の型テストで確認した。型アサーションや any は使用していない。
