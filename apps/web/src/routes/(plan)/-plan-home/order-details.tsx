@@ -3,14 +3,13 @@
 "use no memo";
 
 import { Field as FormField, useField } from "@formisch/react";
-import type { Plan } from "@workspaces/domain";
-import { Box, Field, Flex, Input, Text } from "@workspaces/ui";
+import { hasOrderTagCampaign, type Plan } from "@workspaces/domain";
+import { Field, Flex, Grid, Input, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId } from "react";
 import { bind, errorsOf } from "#/routes/-form.tsx";
 import { shopsAtom } from "#/state/query-atoms.ts";
 import { AMOUNT_PATH, type OrderForm } from "#/routes/(plan)/-order-form-store.ts";
-import { hasOrderTagCampaign } from "#/routes/(plan)/-order-form.ts";
 import {
   CampaignCheck,
   ChannelField,
@@ -39,7 +38,7 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
   // The mark belongs to the shop, so a shop that is saved already gets it on every order.
   const saved = shops.some((other) => other.id === shop.input);
   return (
-    <Flex wrap="wrap" align="center" gap="2">
+    <Grid templateColumns="repeat(2, minmax(0, 1fr))" gap="2">
       <CampaignCheck
         campaign="39shop"
         checked={is39.input === true}
@@ -49,7 +48,7 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
         39ショップ
       </CampaignCheck>
       {saved ? (
-        <Text id={hintId} fontSize="xs" color="fg.muted">
+        <Text id={hintId} fontSize="xs" color="fg.muted" gridColumn="1 / -1" gridRow="2">
           このショップの注文すべてに反映されます
         </Text>
       ) : null}
@@ -70,26 +69,23 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
           ブランドデー対象
         </CampaignCheck>
       ) : null}
-      <CampaignCheck
-        campaign="24h"
-        checked={is24h.input === true}
-        onChange={() => is24h.onChange(!is24h.input)}
-      >
-        24時間限定
-      </CampaignCheck>
-    </Flex>
+      {hasOrderTagCampaign(plan.benefits, "24h") || is24h.input === true ? (
+        <CampaignCheck
+          campaign="24h"
+          checked={is24h.input === true}
+          onChange={() => is24h.onChange(!is24h.input)}
+        >
+          24時間限定
+        </CampaignCheck>
+      ) : null}
+    </Grid>
   );
 }
 
 /** The first item's name and amount, for an order whose row cannot edit its amount. */
 function FirstItemFields({ form }: { form: OrderForm }) {
   return (
-    <Box
-      display="grid"
-      gridTemplateColumns="minmax(0, 1fr) minmax(0, 12rem)"
-      alignItems="start"
-      gap="2.5"
-    >
+    <Grid templateColumns="minmax(0, 1fr) minmax(0, 12rem)" alignItems="start" gap="2.5">
       <FormField of={form} path={["items", 0, "name"]}>
         {(field) => (
           <Field.Root label="商品1の商品名" {...errorsOf(field)} minW="0">
@@ -110,7 +106,7 @@ function FirstItemFields({ form }: { form: OrderForm }) {
           </Field.Root>
         )}
       </FormField>
-    </Box>
+    </Grid>
   );
 }
 
@@ -135,21 +131,11 @@ export function OrderDetailFields({
 }) {
   return (
     <Flex direction="column" gap="3.5">
-      <Box
-        display="grid"
-        gridTemplateColumns="repeat(auto-fit, minmax(14rem, 1fr))"
-        alignItems="start"
-        gap="2.5"
-      >
+      <Grid templateColumns="repeat(auto-fit, minmax(14rem, 1fr))" alignItems="start" gap="2.5">
         <ShopAutocomplete form={form} size="lg" />
         <UrlField form={form} autofill={autofill} size="lg" />
-      </Box>
-      <Box
-        display="grid"
-        gridTemplateColumns="repeat(auto-fit, minmax(10rem, 1fr))"
-        alignItems="start"
-        gap="2.5"
-      >
+      </Grid>
+      <Grid templateColumns="repeat(auto-fit, minmax(10rem, 1fr))" alignItems="start" gap="2.5">
         <ChannelField form={form} size="lg" />
         <FormField of={form} path={["date"]}>
           {(field) => (
@@ -158,7 +144,7 @@ export function OrderDetailFields({
             </Field.Root>
           )}
         </FormField>
-      </Box>
+      </Grid>
       {/* The shop rate keeps its narrow width beside the tax rate, and goes under it when the tax
           rate's choices would not fit beside it. */}
       <Flex wrap="wrap" align="flex-start" gap="2.5">
