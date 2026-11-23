@@ -222,3 +222,4 @@ export { calculatedPlan } from "./plan-ops/calculated-plan.ts";
 export { type OrderPoints, orderPoints } from "./calculate/order-points.ts";
 export { endedLatestFirst, selectStartEvent } from "./official-events/selection.ts";
 export { hasOrderTagCampaign } from "./conditions/order-tags.ts";
+export { orderDelta } from "./calculate/order-delta.ts";

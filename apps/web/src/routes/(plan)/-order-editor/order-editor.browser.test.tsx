@@ -1,4 +1,6 @@
 import {
+  calculateAll,
+  updateOrder,
   type Benefit,
   BOOKS_SPU_ID,
   KOBO_SPU_ID,
@@ -500,7 +502,9 @@ test("editing an order from its card saves the changes", async () => {
   // Editing the order does not add a shop: the order's own figures only.
   await expect.element(preview()).toMatchTextContent("この注文単体で 600P（税抜 ¥10,000 × 6%）");
 
+  await expect.element(preview()).toMatchTextContent("プラン合計 +0P");
   await amountOf(sheet).fill("5,500");
+  await expect.element(preview()).toMatchTextContent("プラン合計 −300P");
   await sheet.getByRole("button", { name: "保存する" }).click();
   await expect.element(sheet).not.toBeInTheDocument();
 
@@ -627,7 +631,7 @@ for (const capped of [true, false]) {
     await expect.element(preview()).toMatchTextContent("10店舗目としてカウント");
     await expect
       .element(preview())
-      .toMatchTextContent(capped ? "この注文で +9P" : "この注文で +362P");
+      .toMatchTextContent(capped ? "プラン合計 +9P" : "プラン合計 +362P");
     await expect
       .element(preview())
       .toMatchTextContent(
@@ -646,7 +650,7 @@ for (const capped of [true, false]) {
         );
       await expect.element(preview()).not.toMatchTextContent("（買い回りが");
     } else {
-      await expect.element(preview()).not.toMatchTextContent("上限");
+      await expect.element(preview()).not.toMatchTextContent("上限 7,000P");
     }
   });
 }
@@ -675,10 +679,86 @@ for (const multiAccount of [false, true]) {
     const sheet = await openAdd(screen);
     await fillOrder(sheet, { shop: "ショップ2", amount: "11000" });
 
-    // Two existing 100P orders already share the 99P cap. Adding another redistributes
-    // that same 99P, so its points must be offset by losses on the existing orders.
-    await expect.element(preview()).toMatchTextContent("この注文で +0P");
+    // 上限の再配分で、このプランは 50P → 66P。別プランの減少は含めない。
+    await expect.element(preview()).toMatchTextContent("プラン合計 +16P");
     await expect.element(preview()).toMatchTextContent("この注文単体で 33P");
-    await expect.element(preview()).toMatchTextContent("ほかの注文 −33P");
+    await expect.element(preview()).toMatchTextContent("ほかの注文 −17P");
   });
 }
+
+for (const [width, cap, expected] of [
+  [390, 7000, 270],
+  [1280, 7000, 270],
+  [390, 100, 190],
+] as const) {
+  test(`追加シートの増分が確定後の合計差と一致する（幅 ${width}、上限 ${cap}）`, async () => {
+    await page.viewport(width, 900);
+    const first = order(0);
+    first.lineItems[0]!.unitPrice = 10000;
+    const plan = makePlan(
+      [
+        baseBenefit,
+        ...marathon.map((benefit) =>
+          benefit.kind === "shop-around"
+            ? { ...benefit, params: { ...benefit.params, cap } }
+            : benefit,
+        ),
+      ],
+      [first],
+    );
+    const before = calculateAll([plan], shops).get(PLAN)!.total;
+    currentRepository = createMemoryRepository({ shops, plans: [plan] });
+    const screen = await renderPlanHome(
+      currentRepository,
+      width === 1280 ? `/plan?id=${PLAN}&edit=new` : undefined,
+    );
+    const sheet =
+      width === 1280 ? screen.getByRole("dialog", { name: "注文を追加" }) : await openAdd(screen);
+    if (width === 1280) {
+      await enterShop(sheet, "ショップ1");
+      await amountOf(sheet).fill("10000");
+      await openConditions(sheet);
+      await sheet.getByLabelText("注文日").fill("2026/10/05");
+    } else {
+      await fillOrder(sheet, { shop: "ショップ1", amount: "10000" });
+    }
+    const status = sheet.getByRole("status", { name: "ポイントの目安" });
+    await expect.element(status).toMatchTextContent(`プラン合計 +${expected}P`);
+    if (cap === 7000) await expect.element(status).toMatchTextContent("ほかの注文 +90P");
+    await sheet.getByRole("button", { name: "続けて追加" }).click();
+    await expect
+      .poll(async () => {
+        const saved = await repository().plans.get(PLAN);
+        return saved
+          ? calculateAll([saved], await repository().shops.list()).get(PLAN)!.total - before
+          : undefined;
+      })
+      .toBe(expected);
+  });
+}
+
+test("日付編集のプレビューも既存注文の倍率変化を含む", async () => {
+  const plan = marathonPlan();
+  const original = plan.orders[1]!;
+  const before = calculateAll([plan], shops).get(PLAN)!.total;
+  const changed = { ...original, date: "2026-10-10" };
+  const expected = calculateAll([updateOrder(plan, changed)], shops).get(PLAN)!.total - before;
+  expect(expected).toBeLessThan(0);
+  const screen = await renderWith(plan);
+  const card = screen.getByRole("listitem").filter({ hasText: "ショップ1" });
+  await card.getByRole("button", { expanded: false }).first().click();
+  await card.getByRole("button", { name: "編集" }).click();
+  const sheet = screen.getByRole("dialog", { name: "注文を編集" });
+  await openConditions(sheet);
+  await sheet.getByLabelText("注文日").fill("2026/10/10");
+  await expect.element(preview()).toMatchTextContent(`プラン合計 −${Math.abs(expected)}P`);
+  await sheet.getByRole("button", { name: "保存する" }).click();
+  await expect
+    .poll(async () => {
+      const saved = await repository().plans.get(PLAN);
+      return saved
+        ? calculateAll([saved], await repository().shops.list()).get(PLAN)!.total - before
+        : undefined;
+    })
+    .toBe(expected);
+});

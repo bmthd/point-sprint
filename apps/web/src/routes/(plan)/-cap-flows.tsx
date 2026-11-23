@@ -55,7 +55,7 @@ export function CapFlows({ plan, form }: { plan: Plan; form: OrderForm }) {
           gap="2"
         >
           <Text as="span" fontVariantNumeric="tabular-nums">
-            {line.benefit.label}（{scopeText(line, undefined)}）{" "}
+            {line.benefit.label}（{scopeText(line, undefined)}）この注文分{" "}
             <Text as="b">+{grouped(into)}P</Text>
             {over > 0 ? (
               <Text as="span" color="fg.muted">

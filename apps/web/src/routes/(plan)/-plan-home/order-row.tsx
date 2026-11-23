@@ -51,6 +51,7 @@ import {
   NAME_PATH,
   type OrderForm,
   useOrderAutofill,
+  useFormInput,
 } from "#/routes/(plan)/-order-form-store.ts";
 import { NEW_SHOP } from "#/routes/(plan)/-order-fields.tsx";
 import { useEnterUrl } from "#/routes/(plan)/-order-entry.tsx";
@@ -69,6 +70,7 @@ import {
   useShopName,
 } from "#/routes/(plan)/-order-shared.tsx";
 import { PointBreakdown } from "#/routes/-point-breakdown.tsx";
+import { DraftPreview } from "#/routes/(plan)/-order-editor/order-editor.tsx";
 import { ACTION_BUTTON_WIDTH, OrderDetailFields } from "./order-details.tsx";
 import {
   AMOUNT_COLUMN,
@@ -251,6 +253,7 @@ function OrderEditor({
         if (event.target instanceof HTMLSelectElement) void commit();
       }}
     >
+      <DraftPreview form={form} planId={plan.id} original={order} />
       <OrderDetailFields
         form={form}
         plan={plan}
@@ -258,6 +261,28 @@ function OrderEditor({
         simple={isSimpleOrder(order)}
         onItemRemoved={() => void commit()}
       />
+    </Box>
+  );
+}
+
+/** 詳細を閉じたまま金額を編集中でも、確定前の増減を見せる。 */
+function PendingOrderPreview({
+  form,
+  planId,
+  order,
+  open,
+}: {
+  form: OrderForm;
+  planId: string;
+  order: Order;
+  open: boolean;
+}) {
+  const shops = useAtomValue(shopsAtom);
+  const current = useFormInput(form);
+  if (open || inputKey(current) === inputKey(editInputOf(order, shops))) return null;
+  return (
+    <Box px="4" pb="3">
+      <DraftPreview form={form} planId={planId} original={order} />
     </Box>
   );
 }
@@ -579,6 +604,7 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
           }}
         />
       </Box>
+      <PendingOrderPreview form={form} planId={planId} order={order} open={open} />
       {/* It slides open and shut, so a press shows which order the fields below belong to. */}
       {/* Once open, the window scrolls only if 「複製」 and 「削除」 are off it, as little as it can. */}
       <Collapse
