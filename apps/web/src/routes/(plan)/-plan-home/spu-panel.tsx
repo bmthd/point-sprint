@@ -1,5 +1,5 @@
 import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
-import { MonthSchema, type Plan, spuMonthsOfPlan } from "@workspaces/domain";
+import { MonthSchema, type Plan, spuMonthsOfPlan, accountIdOf } from "@workspaces/domain";
 import {
   Box,
   Button,
@@ -13,7 +13,7 @@ import {
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as v from "valibot";
-import { accountIdOf } from "#/state/accounts.ts";
+
 import { accountSettingsAtom } from "#/state/derived.ts";
 import { useToday } from "#/routes/-use-today.ts";
 import { SpuMonthEditor, spuMonthText } from "#/routes/(plan)/-spu-month/spu-month-editor.tsx";

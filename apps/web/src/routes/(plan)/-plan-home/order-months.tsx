@@ -1,9 +1,9 @@
-import { type Order, type Plan, spuIdsIn } from "@workspaces/domain";
+import { type Order, type Plan, spuIdsIn, accountIdOf } from "@workspaces/domain";
 import { Box, Button, Flex, List, Text, ChevronRightIcon } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { rounded } from "#/ui/format.ts";
-import { accountIdOf } from "#/state/accounts.ts";
+
 import { accountSettingsAtom } from "#/state/derived.ts";
 import { spuMonthsAtom } from "#/state/query-atoms.ts";
 import { monthText } from "#/routes/(plan)/-warnings.tsx";

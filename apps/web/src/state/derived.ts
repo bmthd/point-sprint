@@ -1,17 +1,16 @@
 import {
-  type BreakdownRow,
+  type OrderPoints,
   type Plan,
   type Shop,
-  type SpuMonth,
   calculateAll,
   deepEqual,
-  planWithSpu,
-  trialSpuAchievements,
+  calculatedPlan,
+  orderPoints,
+  accountSettingsOf,
 } from "@workspaces/domain";
 import { atom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
-import { type AccountSettings, accountSettingsOf, withEffectiveAccount } from "./accounts.ts";
 import { plansAtom, profileAtom, shopsAtom, spuMonthsAtom } from "./query-atoms.ts";
 
 /**
@@ -20,15 +19,6 @@ import { plansAtom, profileAtom, shopsAtom, spuMonthsAtom } from "./query-atoms.
  * plan.
  */
 export const accountSettingsAtom = selectAtom(profileAtom, accountSettingsOf, deepEqual);
-
-/**
- * The plan as it is calculated: with the account it is bought with and the SPU of its months. A
- * held plan also has on the SPU its own orders achieve, which are not saved to its months.
- */
-const toCalculated = (plan: Plan, settings: AccountSettings, months: SpuMonth[], shops: Shop[]) => {
-  const effective = withEffectiveAccount(plan, settings);
-  return planWithSpu(effective, months, trialSpuAchievements(effective, shops));
-};
 
 /**
  * Turns plans into the plans as they are calculated, for calculating plans with a change not
@@ -40,7 +30,7 @@ export const asCalculatedAtom = atom((get) => {
   const months = get(spuMonthsAtom);
   const savedShops = get(shopsAtom);
   return (plans: Plan[], shops: Shop[] = savedShops) =>
-    plans.map((plan) => toCalculated(plan, settings, months, shops));
+    plans.map((plan) => calculatedPlan(plan, settings, months, shops));
 });
 
 /** Every plan as it is calculated. */
@@ -73,8 +63,6 @@ export const planResultAtom = atomFamily((id: string) =>
   selectAtom(calculationAtom, (results) => results.get(id), deepEqual),
 );
 
-export type OrderPoints = { rows: BreakdownRow[]; total: number };
-
 const sameRows = (a: OrderPoints, b: OrderPoints) =>
   a.total === b.total &&
   a.rows.length === b.rows.length &&
@@ -94,11 +82,7 @@ export const orderPointsAtom = atomFamily(
     selectAtom(
       atom((get) => {
         const order = get(orderAtom({ planId, orderId }));
-        const lineItemIds = new Set(order?.lineItems.map((item) => item.id));
-        const rows =
-          get(planResultAtom(planId))?.breakdown.filter((row) => lineItemIds.has(row.lineItemId)) ??
-          [];
-        return { rows, total: rows.reduce((sum, row) => sum + row.points, 0) };
+        return orderPoints(order, get(planResultAtom(planId))?.breakdown ?? []);
       }),
       (points) => points,
       sameRows,

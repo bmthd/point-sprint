@@ -1,7 +1,7 @@
-import { DEFAULT_ACCOUNT_ID, type Plan } from "@workspaces/domain";
+import { DEFAULT_ACCOUNT_ID, type Plan, accountIdOf } from "@workspaces/domain";
 import { Card, Field, NativeSelect, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
-import { accountIdOf } from "#/state/accounts.ts";
+
 import { accountSettingsAtom } from "#/state/derived.ts";
 import { runSavePlanAtom } from "#/state/mutations.ts";
 import { useSaveSettingsChange } from "./settings-shared.ts";

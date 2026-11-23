@@ -5,7 +5,7 @@ import {
   useNavigate,
   useRouter,
 } from "@tanstack/react-router";
-import { DEFAULT_ACCOUNT_ID, addMonths, spuMonthsOfPlan } from "@workspaces/domain";
+import { DEFAULT_ACCOUNT_ID, addMonths, spuMonthsOfPlan, accountIdOf } from "@workspaces/domain";
 import {
   Box,
   Button,
@@ -21,7 +21,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { MouseEvent } from "react";
-import { accountIdOf } from "#/state/accounts.ts";
+
 import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
 import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
 import { useToday } from "#/routes/-use-today.ts";

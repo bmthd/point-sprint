@@ -6,13 +6,14 @@ import {
   type Plan,
   spuPurchaseRules,
   standardSpu,
+  withEffectiveAccount,
 } from "@workspaces/domain";
 import { Alert, Button, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { grouped } from "#/ui/format.ts";
 import { QuarantineNotice } from "./-quarantine-notice.tsx";
 import { officialEventsAtom } from "#/routes/-official-events.ts";
-import { withEffectiveAccount } from "#/state/accounts.ts";
+
 import { accountSettingsAtom } from "#/state/derived.ts";
 import { shopsAtom, spuMonthsAtom, storageHealthQueryAtom } from "#/state/query-atoms.ts";
 
