@@ -68,6 +68,7 @@ pnpm exec cf d1 query <データベースの ID> --sql "SELECT * FROM collection
 
 - `failed` が続くとき: スケジュールのページが取れないか、読めない。ページを開いて作りが変わっていないかを確かめ、`apps/web/src/server/official-events/event-pages.ts` を直す。直したら、そのときのページを `apps/web/src/server/official-events/event-pages/` に固定してテストを足す。
 - `warning` のとき: メッセージにある理由を見る。楽天の告知が正しく、検査が厳しすぎるなら検査を直す。
+- `ok` が続くのに次の回がないとき: `official_events` に `pending` の行がないかと、公式ページに次の回の告知があるかを確かめる。告知がなければ日付を予測して足さず、確認日時と公式ページの状態を Issue に残す。スーパーSALE は自動収集の対象外なので、告知後も手で追加する必要がある。
 
 ## 行を直すとき
 
