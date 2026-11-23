@@ -22,7 +22,7 @@ export const officialEventsSourceAtom = atom<{ load: () => Promise<OfficialEvent
 });
 
 export const officialEventsQueryAtom = atomWithQuery((get) =>
-  officialEventsQueryOptions(get(officialEventsSourceAtom).load),
+  officialEventsQueryOptions(get(officialEventsSourceAtom)),
 );
 
 const noEvents: OfficialEvent[] = [];

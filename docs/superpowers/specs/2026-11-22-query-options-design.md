@@ -16,3 +16,5 @@ Query ごとに分割する案は同型の変更を細分化するため採用�
 Options と atom はモジュールも分離する。state/queries.ts は queryKeys と Repository を受け取る Factory、state/query-atoms.ts は atom を持つ。公式イベントの Factory は routes/-official-events-query.ts に置く。Options のモジュールから Jotai・React hooks・ストレージ実装への依存を持たせない。
 
 バンドルは同一の本番設定・固定 BUILD_ID と BUILD_DATE で PR 1 の分離前後を比較する。アプリ全体とトップページ初期配信の JS/CSS サイズ、および plansQueryOptions だけを公開する最小バンドルの依存を別々に確認する。実行速度の改善は主張しない。
+
+Factory は appQueryOptions(factory) で定義し、呼び出しを (deps, options) に統一する。deps は Repository や load を持つオブジェクト、options は必要な Factory だけが持つ第 2 引数とする。helper は Factory をそのまま返し、引数の個数と queryOptions の戻り値の型推論を維持する。Options 不要の Factory に undefined や空オブジェクトを渡さない。トップレベル呼び出しが未使用 Factory を残さないことを最小バンドルで確認する。

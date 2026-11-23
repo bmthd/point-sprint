@@ -60,3 +60,17 @@ pnpm exec node scripts/analyze-query-bundles.ts --out /tmp/query-probe --probe-o
 ```
 
 同じ検査は分離前のコードで失敗し、分離後に成功することを確認した。
+
+## appQueryOptions 追加時の再検証（2026-11-23）
+
+main の日付入力修正と依存更新を取り込んだ PR 1 の 29ee2e0 を基準に、同じ設定・lockfile のまま helper を追加した。上のモジュール分離の比較とは基準が異なるため、この節の値を上の表へ混ぜない。変更前後各 1 回のアプリビルドで、固定 BUILD_ID / BUILD_DATE は同じものを使用した。
+
+| 対象 | raw: 前 → 後 | gzip: 前 → 後 | Brotli: 前 → 後 |
+| --- | ---: | ---: | ---: |
+| Factory 単独の診断 | 617 → 701 | 357 → 385 | 312 → 362 |
+| 全アプリ | 1,849,106 → 1,849,259 | 616,973 → 616,939 | 527,278 → 527,204 |
+| トップ初期ロード | 1,370,802 → 1,370,955 | 438,039 → 438,048 | 372,512 → 372,467 |
+
+ファイル数は全アプリ 86、トップ初期ロード 42 のまま。Factory 単独の出力には queryOptions、appQueryOptions、使われる Factory と共通キー定義だけが残り、未使用 Factory・Jotai・Repository 実装は除去された。appQueryOptions は Factory をそのまま返す関数で、現在の Rolldown では PURE 注釈なしで検査が成功した。
+
+トップ初期ロードの gzip 差は +9 bytes で、速度改善の根拠にはしない。引数の型と依存の規約を共通化し、既存の tree-shaking を維持できることを確認した。

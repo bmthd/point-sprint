@@ -22,7 +22,7 @@ export const syncStatusAtom = atom<SyncStatus>({ state: "off" });
 
 /** Whether this device syncs: it keeps the keys. */
 export const syncEnabledQueryAtom = atomWithQuery((get) =>
-  syncEnabledQueryOptions(get(repositoryAtom)),
+  syncEnabledQueryOptions({ repository: get(repositoryAtom) }),
 );
 
 const lastSyncedAt = (status: SyncStatus) =>

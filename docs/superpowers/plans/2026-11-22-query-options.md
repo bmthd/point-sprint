@@ -49,3 +49,11 @@ queryKey と queryFn の上書き API は作らない。保存形式とスキー
 - [x] 同期と公式イベントの Factory を hooks や atom と分離し、全 import を移す。
 - [x] analyze-query-bundles.ts で同条件のアプリビルドと Factory 単独バンドルを比較し、分析結果を記録する。
 - [ ] PR 1 を更新し、PR 2・3 を積み直して全体を検証する。
+
+### PR 1 の追加: appQueryOptions によるシグネチャ統一
+
+- [x] state/app-query-options.ts に deps と必要な options を取る Factory をそのまま返す helper を定義する。
+- [x] 9 種類の Factory と全呼び出し元を統一し、deps をオブジェクトにする。
+- [x] 引数の個数・戻り値・queryKey・ジェネリック select の型推論と実際の取得を検証する。
+- [x] 未使用 Factory が除去されることを最小バンドルで確認し、ビルド結果を記録する。
+- [ ] 全テスト・静的検査・ビルドを確認し、PR 1 を更新して後続 2 本を積み直す。
