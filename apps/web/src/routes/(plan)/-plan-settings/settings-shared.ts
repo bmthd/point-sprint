@@ -19,7 +19,7 @@ export function whenText(rule: DateRule | undefined): string {
   if (!rule) return "期間中ずっと";
   switch (rule.type) {
     case "daysOfMonth":
-      return "日付で自動";
+      return `毎月${rule.days.join("・")}日`;
     case "dates":
       return rule.dates.map(monthDay).join("・");
     case "range":

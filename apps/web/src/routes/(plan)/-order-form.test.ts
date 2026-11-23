@@ -1,6 +1,11 @@
 import * as v from "valibot";
 import { expect, test } from "vitest";
-import { OrderSchema, countShops } from "@workspaces/domain";
+import {
+  OrderSchema,
+  countShops,
+  campaignTemplates,
+  instantiateCampaign,
+} from "@workspaces/domain";
 import { NEW_SHOP } from "./-order-fields.tsx";
 import {
   type ItemInput,
@@ -9,6 +14,7 @@ import {
   emptyInput,
   emptyItem,
   inputOf,
+  dateCampaigns,
 } from "./-order-form.ts";
 
 const SHOP_ID = "a0000000-0000-4000-8000-000000000001";
@@ -188,4 +194,21 @@ test("a saved order keeps its date when opened", () => {
   });
 
   expect(inputOf(order, []).date).toBe("2026-10-01");
+});
+
+test("日付で自動にはタグ条件のあるキャンペーンを出さない", () => {
+  const benefits = campaignTemplates
+    .filter((t) => ["24h", "pointday"].includes(t.id))
+    .map((t) => instantiateCampaign(t, { id: t.benefit.id, dates: ["2026-10-25"] }));
+  for (const benefit of benefits) benefit.enabled = true;
+  expect(dateCampaigns(benefits, "2026-10-25").map((b) => b.sharedKey)).toEqual(["pointday"]);
+  expect(dateCampaigns(benefits, "2026-10-24")).toEqual([]);
+  const pointday = benefits.find((b) => b.sharedKey === "pointday");
+  if (!pointday) throw new Error("missing campaign");
+  expect(
+    dateCampaigns(
+      [{ ...pointday, conditions: { ...pointday.conditions, shopTags: ["39shop"] } }],
+      "2026-10-25",
+    ),
+  ).toEqual([]);
 });

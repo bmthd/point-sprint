@@ -241,6 +241,8 @@ export function dateCampaigns(benefits: Benefit[], date: string) {
       benefit.kind === "rate-bonus" &&
       benefit.category === "campaign" &&
       benefit.conditions.dateRule !== undefined &&
+      !benefit.conditions.orderTags?.length &&
+      !benefit.conditions.shopTags?.length &&
       matchesConditions(
         { dateRule: benefit.conditions.dateRule },
         {
