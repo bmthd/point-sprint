@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { rounded } from "#/ui/format.ts";
 import { accountIdOf } from "#/state/accounts.ts";
 import { accountSettingsAtom } from "#/state/derived.ts";
-import { spuMonthsAtom } from "#/state/queries.ts";
+import { spuMonthsAtom } from "#/state/query-atoms.ts";
 import { monthText } from "#/routes/(plan)/-warnings.tsx";
 import { spuMonthRate } from "./spu-month-editor.tsx";
 

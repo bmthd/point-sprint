@@ -16,7 +16,7 @@ import {
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
 import { planResultAtom } from "#/state/derived.ts";
-import { plansAtom } from "#/state/queries.ts";
+import { plansAtom } from "#/state/query-atoms.ts";
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { NEW_ORDER, OrderEditor } from "#/routes/(plan)/-order-editor/order-editor.tsx";
 import { SettingsPanelButton } from "#/routes/(plan)/-plan-settings/plan-settings.tsx";

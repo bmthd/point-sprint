@@ -1,4 +1,4 @@
-import { queryKeys } from "./queries.ts";
+import { syncEnabledQueryOptions } from "./queries.ts";
 import { CURRENT_SCHEMA_VERSION } from "@workspaces/domain";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { atomWithQuery, queryClientAtom } from "jotai-tanstack-query";
@@ -21,13 +21,9 @@ export type SyncStatus =
 export const syncStatusAtom = atom<SyncStatus>({ state: "off" });
 
 /** Whether this device syncs: it keeps the keys. */
-export const syncEnabledQueryAtom = atomWithQuery((get) => {
-  const repository = get(repositoryAtom);
-  return {
-    queryKey: queryKeys.syncEnabled,
-    queryFn: async () => (await repository.sync.meta.get()) !== undefined,
-  };
-});
+export const syncEnabledQueryAtom = atomWithQuery((get) =>
+  syncEnabledQueryOptions({ repository: get(repositoryAtom) }),
+);
 
 const lastSyncedAt = (status: SyncStatus) =>
   "lastSyncedAt" in status ? status.lastSyncedAt : undefined;

@@ -31,7 +31,7 @@ import { useAtomValue } from "jotai";
 import { type ReactNode, useMemo } from "react";
 import { type FieldState, bind, errorsOf } from "#/routes/-form.tsx";
 import { type ShopChange, changeShop, replaceShop } from "#/state/mutations.ts";
-import { shopsAtom } from "#/state/queries.ts";
+import { shopsAtom } from "#/state/query-atoms.ts";
 import type { RakutenItem } from "#/rakuten/item-search.ts";
 import { imageUrl, segmentPressArea, taxRateLabel } from "./-order-shared.tsx";
 import type { OrderForm } from "./-order-form-store.ts";

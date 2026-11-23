@@ -5,7 +5,7 @@ import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { useClientTitle } from "#/page-head.ts";
 import { planAtom } from "#/state/derived.ts";
-import { plansQueryAtom, shopsQueryAtom } from "#/state/queries.ts";
+import { plansQueryAtom, shopsQueryAtom } from "#/state/query-atoms.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
 
 function NotFound() {

@@ -14,7 +14,7 @@ import { QuarantineNotice } from "./-quarantine-notice.tsx";
 import { officialEventsAtom } from "#/routes/-official-events.ts";
 import { withEffectiveAccount } from "#/state/accounts.ts";
 import { accountSettingsAtom } from "#/state/derived.ts";
-import { shopsAtom, spuMonthsAtom, storageHealthQueryAtom } from "#/state/queries.ts";
+import { shopsAtom, spuMonthsAtom, storageHealthQueryAtom } from "#/state/query-atoms.ts";
 
 /** `2026-10-11` → `10/11`. */
 export function monthDay(date: string) {

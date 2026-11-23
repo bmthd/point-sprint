@@ -8,7 +8,7 @@ import { Box, Field, Flex, Input, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId } from "react";
 import { bind, errorsOf } from "#/routes/-form.tsx";
-import { shopsAtom } from "#/state/queries.ts";
+import { shopsAtom } from "#/state/query-atoms.ts";
 import { AMOUNT_PATH, type OrderForm } from "#/routes/(plan)/-order-form-store.ts";
 import { hasOrderTagCampaign } from "#/routes/(plan)/-order-form.ts";
 import {

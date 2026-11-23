@@ -21,7 +21,7 @@ import { type ReactNode, useId, useMemo, useRef, useState } from "react";
 import { accountIdOf } from "#/state/accounts.ts";
 import { accountSettingsAtom, calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
 import { runDeletePlanAtom } from "#/state/mutations.ts";
-import { plansAtom } from "#/state/queries.ts";
+import { plansAtom } from "#/state/query-atoms.ts";
 import { formatPeriod } from "#/ui/dates.ts";
 import { ResultCard } from "./result-card.tsx";
 

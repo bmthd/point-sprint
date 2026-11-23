@@ -5,7 +5,7 @@ import { expect, test, vi } from "vitest";
 import { cleanup, render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 import { updateOrderAtom } from "#/state/plan-operations.ts";
-import { plansQueryAtom, shopsQueryAtom } from "#/state/queries.ts";
+import { plansQueryAtom, shopsQueryAtom } from "#/state/query-atoms.ts";
 import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import { OrderList } from "./order-list.tsx";
 import {

@@ -24,7 +24,7 @@ import {
   inputOf,
 } from "#/routes/(plan)/-order-form.ts";
 import { Form } from "#/routes/-form.tsx";
-import { shopsAtom } from "#/state/queries.ts";
+import { shopsAtom } from "#/state/query-atoms.ts";
 import { SAMPLE_TODAY } from "./sample-data.ts";
 
 const ignore = () => {};

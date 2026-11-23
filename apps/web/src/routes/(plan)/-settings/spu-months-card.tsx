@@ -4,7 +4,7 @@ import { Card, Field, Heading, NativeSelect, Text, ChevronRightIcon } from "@wor
 import { useAtomValue } from "jotai";
 import { useId, useState } from "react";
 import { accountSettingsAtom } from "#/state/derived.ts";
-import { spuMonthsAtom } from "#/state/queries.ts";
+import { spuMonthsAtom } from "#/state/query-atoms.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
 import { useToday } from "#/routes/-use-today.ts";
 import { SpuMonthRows, unsetNote } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";

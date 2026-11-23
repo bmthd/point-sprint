@@ -4,7 +4,7 @@ import { Box, Button, Flex, Modal, Text } from "@workspaces/ui";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { useState, useTransition } from "react";
 import { replacePlan, runSavePlanAtom } from "#/state/mutations.ts";
-import { plansAtom, plansQueryAtom } from "#/state/queries.ts";
+import { plansAtom, plansQueryAtom } from "#/state/query-atoms.ts";
 import { ShareSection } from "#/routes/-sidebar/share-section.tsx";
 import { monthOf, tokyoToday } from "#/ui/dates.ts";
 import { officialEventsQueryAtom } from "#/routes/-official-events.ts";

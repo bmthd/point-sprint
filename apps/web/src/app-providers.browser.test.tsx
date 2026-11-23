@@ -5,7 +5,7 @@ import { useAtomValue } from "jotai";
 import { afterEach, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 import { AppProviders } from "./app-providers.tsx";
-import { plansQueryAtom } from "./state/queries.ts";
+import { plansQueryAtom } from "./state/query-atoms.ts";
 import { createIndexedDbRepository } from "./storage/indexed-db-repository.ts";
 
 afterEach(

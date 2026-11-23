@@ -9,7 +9,7 @@ import { useAtomValue } from "jotai";
 import { useDeferredValue, useMemo } from "react";
 import { grouped, yen } from "#/ui/format.ts";
 import { asCalculatedAtom } from "#/state/derived.ts";
-import { plansAtom, shopsAtom } from "#/state/queries.ts";
+import { plansAtom, shopsAtom } from "#/state/query-atoms.ts";
 import { scopeText } from "./-cap-lines.ts";
 import { draftOfInput } from "./-order-form.ts";
 import { AMOUNT_PATH, type OrderForm, useFormInput } from "./-order-form-store.ts";

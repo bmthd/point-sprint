@@ -15,7 +15,7 @@ import { grouped } from "#/ui/format.ts";
 import { withEffectiveAccount } from "#/state/accounts.ts";
 import { accountSettingsAtom } from "#/state/derived.ts";
 import { saveSpuMonthAtom } from "#/state/mutations.ts";
-import { plansAtom, shopsAtom, spuMonthsAtom } from "#/state/queries.ts";
+import { plansAtom, shopsAtom, spuMonthsAtom } from "#/state/query-atoms.ts";
 import { monthText } from "#/routes/(plan)/-warnings.tsx";
 
 /**

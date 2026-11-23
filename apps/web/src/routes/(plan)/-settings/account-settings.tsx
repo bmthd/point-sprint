@@ -24,7 +24,7 @@ import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
 import { AccountNameSchema } from "@workspaces/domain";
 import { accountSettingsAtom } from "#/state/derived.ts";
 import { runSaveProfileAtom } from "#/state/mutations.ts";
-import { profileQueryAtom } from "#/state/queries.ts";
+import { profileQueryAtom } from "#/state/query-atoms.ts";
 
 /** The profile with its accounts changed; the default account is kept even when not stored yet. */
 const withAccounts = (profile: Profile, change: (accounts: Account[]) => Account[]): Profile => ({
