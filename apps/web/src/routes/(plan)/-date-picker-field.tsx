@@ -4,10 +4,17 @@
 
 import type { FieldElementProps } from "@formisch/react";
 import type { Plan } from "@workspaces/domain";
-import { Box, DatePicker, type DatePickerProps, Field, useFieldProps } from "@workspaces/ui";
+import {
+  Box,
+  DatePicker,
+  type DatePickerProps,
+  Field,
+  isComposing,
+  useFieldProps,
+} from "@workspaces/ui";
 import { useState } from "react";
 import * as v from "valibot";
-import { DateSchema } from "@workspaces/domain";
+import { DateSchema, TypedDateInputSchema } from "@workspaces/domain";
 
 const DateText = DateSchema("日付");
 
@@ -15,6 +22,20 @@ const DateText = DateSchema("日付");
 export function isDate(text: unknown): text is string {
   return v.is(DateText, text);
 }
+
+/**
+ * A day typed into a date field, read by `TypedDateInputSchema`: `2026/11/20` or `2026-11-20`,
+ * a day that exists. Anything else — a day still being typed, a day that does not exist — is
+ * `undefined`, never another day. The picker itself reads typed text loosely (a lone `2`
+ * becomes 2001/02/01) and rewrites the field with what it read, so typed text is judged here
+ * instead and only a day that passes is handed on.
+ */
+export function parseTypedDate(text: string): Date | undefined {
+  return parseIsoDate(v.parse(TypedDateInputSchema, text));
+}
+
+/** A typed day in its full form, the only one taken while it is still being typed. */
+const TYPED_DAY = /^\d{4}[/-]\d{2}[/-]\d{2}$/;
 
 /** `2026-10-06` → that day at midnight here, or `undefined` for anything else. */
 export function parseIsoDate(text: unknown) {
@@ -76,7 +97,40 @@ export function FieldDatePicker({
   /** The event's days, marked on the calendar. */
   period?: Period;
 }) {
+  // The field keeps its own text (see below), so `inputValue` is not taken from the caller: it
+  // is set below, after the rest of the caller's props are spread.
+  const { value, defaultValue, onChange, onInputChange, inputProps, calendarProps, ...rest } =
+    props;
   const { ariaProps } = useFieldProps();
+  const controlled = "value" in props;
+  // The text in the field, while it is being typed. `undefined` when nobody is typing: the field
+  // then shows the day it holds, formatted. Typed text is kept exactly as typed until it names a
+  // day (see parseTypedDate), so a half-typed day is never rewritten into another day.
+  const [text, setText] = useState<string>();
+  // The day an uncontrolled field holds, followed here because its text is derived from it.
+  const [ownDay, setOwnDay] = useState<Date | undefined>(
+    defaultValue instanceof Date ? defaultValue : undefined,
+  );
+  const shown = controlled ? value : ownDay;
+
+  // A day changed elsewhere (a form reset, an autofill) replaces what the field shows. Compared
+  // by day, not by object: a controlled field builds a new Date for the same day on each render.
+  const valueDay = value ? isoDate(value) : "";
+  const [shownDay, setShownDay] = useState(valueDay);
+  if (valueDay !== shownDay) {
+    setShownDay(valueDay);
+    setText(undefined);
+  }
+
+  const commit = (date: Date | undefined) => {
+    if (!controlled) setOwnDay(date);
+    // The field now shows this day, formatted, not the text that was typed for it. The caller
+    // does not necessarily render this field again with the new day — a Formisch form keeps its
+    // input in its own store and saves from there — so the field puts the day on screen itself.
+    setText(date ? isoDate(date).replaceAll("-", "/") : "");
+    onChange?.(date);
+  };
+
   return (
     <DatePicker
       locale="ja"
@@ -87,13 +141,66 @@ export function FieldDatePicker({
       fontVariantNumeric="tabular-nums"
       // The input keeps its own width otherwise, too wide for half of a row.
       minW="0"
+      {...rest}
+      value={value}
+      defaultValue={defaultValue}
+      onChange={commit}
+      inputValue={text ?? (shown ? isoDate(shown).replaceAll("-", "/") : "")}
+      onInputChange={(input) => {
+        // The picker itself rewrites the text when a day is picked, cleared or left: follow it.
+        // Except on blur, when it rewrites the text with the day it still holds — one the text
+        // here has already replaced with a typed day that was handed on. That rewrite would put
+        // the old day back on screen. The picker calls this back through `useCallbackRef`, so
+        // the text read here is always the field's latest.
+        const rewritten =
+          typeof input === "string" && input !== "" ? parseTypedDate(input) : undefined;
+        const named = text ? parseTypedDate(text) : undefined;
+        if (!rewritten || !named || isoDate(rewritten) === isoDate(named)) {
+          setText(typeof input === "string" ? input : undefined);
+        }
+        onInputChange?.(input);
+      }}
       // A tap brings up the calendar alone, not the on-screen keyboard as well. A real keyboard can
       // still type a day.
-      inputProps={{ ...ariaProps, minW: "0", inputMode: "none" }}
+      inputProps={{
+        ...ariaProps,
+        ...inputProps,
+        minW: "0",
+        inputMode: "none",
+        onChange: (event) => {
+          inputProps?.onChange?.(event);
+          // Keep the picker's own reading of typed text out of this: it reads a half-typed day
+          // as another day and rewrites the field with it (see parseTypedDate).
+          event.preventDefault();
+          const typed = event.target.value;
+          setText(typed);
+          if (typed.trim() === "") commit(undefined);
+          else if (TYPED_DAY.test(typed.trim())) {
+            const date = parseTypedDate(typed);
+            if (date) commit(date);
+          }
+        },
+        onKeyDown: (event) => {
+          inputProps?.onKeyDown?.(event);
+          if (event.key !== "Enter" || isComposing(event)) return;
+          const typed = event.currentTarget.value;
+          if (typed.trim() === "") return;
+          // Enter does not hand a day this field cannot read to the picker's loose reading.
+          event.preventDefault();
+          const date = parseTypedDate(typed);
+          if (date) commit(date);
+        },
+        onBlur: (event) => {
+          inputProps?.onBlur?.(event);
+          // A day typed with a one-digit month or day is taken when the field is left. A day
+          // that cannot be read is not taken, and the field goes back to the day it holds.
+          const date = parseTypedDate(event.currentTarget.value);
+          if (date) commit(date);
+        },
+      }}
       calendarProps={
-        period ? { day: periodDay(period), dayProps: { "data-group": "" } } : undefined
+        period ? { day: periodDay(period), dayProps: { "data-group": "" } } : calendarProps
       }
-      {...props}
     />
   );
 }
