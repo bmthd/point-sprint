@@ -12,7 +12,7 @@ import {
   isComposing,
   useFieldProps,
 } from "@workspaces/ui";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import * as v from "valibot";
 import { DateSchema } from "@workspaces/domain";
 
@@ -123,9 +123,6 @@ export function FieldDatePicker({
     defaultValue instanceof Date ? defaultValue : undefined,
   );
   const shown = controlled ? value : ownDay;
-  // The day last handed on, readable inside the picker's own callbacks within the same event,
-  // before any state has settled.
-  const dayRef = useRef<Date | undefined>(shown);
 
   // A day changed elsewhere (a form reset, an autofill) replaces what the field shows. Compared
   // by day, not by object: a controlled field builds a new Date for the same day on each render.
@@ -136,13 +133,7 @@ export function FieldDatePicker({
     setText(undefined);
   }
 
-  // Follows the controlled day from outside (a form reset, an autofill), for the guard below.
-  useEffect(() => {
-    dayRef.current = value;
-  }, [value]);
-
   const commit = (date: Date | undefined) => {
-    dayRef.current = date;
     if (!controlled) setOwnDay(date);
     // The field now shows this day, formatted, not the text that was typed for it. The caller
     // does not necessarily render this field again with the new day — a Formisch form keeps its
@@ -168,14 +159,14 @@ export function FieldDatePicker({
       inputValue={text ?? (shown ? isoDate(shown).replaceAll("-", "/") : "")}
       onInputChange={(input) => {
         // The picker itself rewrites the text when a day is picked, cleared or left: follow it.
-        // Except on blur, when it rewrites the text with the day it still holds — one a typed
-        // day was just handed on over. That rewrite would put the old day back on screen.
+        // Except on blur, when it rewrites the text with the day it still holds — one the text
+        // here has already replaced with a typed day that was handed on. That rewrite would put
+        // the old day back on screen. The picker calls this back through `useCallbackRef`, so
+        // the text read here is always the field's latest.
         const rewritten =
           typeof input === "string" && input !== "" ? parseTypedDate(input) : undefined;
-        // The day this field holds is the one last handed on (or given from outside), which
-        // `commit` and the effect above keep in dayRef, ahead of the picker's own state.
-        const held = dayRef.current;
-        if (!rewritten || !held || isoDate(rewritten) === isoDate(held)) {
+        const named = text ? parseTypedDate(text) : undefined;
+        if (!rewritten || !named || isoDate(rewritten) === isoDate(named)) {
           setText(typeof input === "string" ? input : undefined);
         }
         onInputChange?.(input);
