@@ -119,8 +119,16 @@ export function CampaignAddButtons({
           const reason = unavailable ? "この期間に開催日がありません" : "追加済み";
           const imagePath = template.benefit.imagePath;
           return (
-            <List.Item key={template.id}>
+            <List.Item key={template.id} maxW="full">
+              {/* The reason a button is disabled is long; let it wrap on a phone. */}
               <Button
+                maxW="full"
+                h="auto"
+                minH="10"
+                py="1.5"
+                lineHeight="short"
+                whiteSpace="normal"
+                textAlign="start"
                 ref={index === 0 ? firstRef : undefined}
                 variant="outline"
                 colorScheme="primary"
