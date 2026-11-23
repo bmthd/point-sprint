@@ -14,7 +14,7 @@ import {
 } from "@workspaces/ui";
 import { useState } from "react";
 import * as v from "valibot";
-import { DateSchema } from "@workspaces/domain";
+import { DateSchema, TypedDateInputSchema } from "@workspaces/domain";
 
 const DateText = DateSchema("日付");
 
@@ -24,25 +24,14 @@ export function isDate(text: unknown): text is string {
 }
 
 /**
- * A day typed into a date field: `2026/11/20` or `2026-11-20`, a 4-digit year and a day that
- * exists in its month. Full-width text is made half-width (NFKC), as the form's input schemas
- * normalize it. Anything else — a day still being typed, a day that does not exist — is
+ * A day typed into a date field, read by `TypedDateInputSchema`: `2026/11/20` or `2026-11-20`,
+ * a day that exists. Anything else — a day still being typed, a day that does not exist — is
  * `undefined`, never another day. The picker itself reads typed text loosely (a lone `2`
  * becomes 2001/02/01) and rewrites the field with what it read, so typed text is judged here
  * instead and only a day that passes is handed on.
  */
 export function parseTypedDate(text: string): Date | undefined {
-  const match = /^(\d{4})([/-])(\d{1,2})\2(\d{1,2})$/.exec(text.normalize("NFKC").trim());
-  if (!match) return undefined;
-  const year = Number(match[1]);
-  const month = Number(match[3]);
-  const day = Number(match[4]);
-  const date = new Date(year, month - 1, day);
-  // A day that does not exist rolls over into the next month (Feb 30 → Mar 2); that is not it.
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-    return undefined;
-  }
-  return date;
+  return parseIsoDate(v.parse(TypedDateInputSchema, text));
 }
 
 /** A typed day in its full form, the only one taken while it is still being typed. */
