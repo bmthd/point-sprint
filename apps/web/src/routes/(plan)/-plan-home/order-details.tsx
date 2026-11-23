@@ -39,7 +39,7 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
   // The mark belongs to the shop, so a shop that is saved already gets it on every order.
   const saved = shops.some((other) => other.id === shop.input);
   return (
-    <Flex wrap="wrap" align="center" gap="2">
+    <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
       <CampaignCheck
         campaign="39shop"
         checked={is39.input === true}
@@ -49,7 +49,7 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
         39ショップ
       </CampaignCheck>
       {saved ? (
-        <Text id={hintId} fontSize="xs" color="fg.muted">
+        <Text id={hintId} fontSize="xs" color="fg.muted" gridColumn="1 / -1" gridRow="2">
           このショップの注文すべてに反映されます
         </Text>
       ) : null}
@@ -70,14 +70,16 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
           ブランドデー対象
         </CampaignCheck>
       ) : null}
-      <CampaignCheck
-        campaign="24h"
-        checked={is24h.input === true}
-        onChange={() => is24h.onChange(!is24h.input)}
-      >
-        24時間限定
-      </CampaignCheck>
-    </Flex>
+      {hasOrderTagCampaign(plan.benefits, "24h") || is24h.input === true ? (
+        <CampaignCheck
+          campaign="24h"
+          checked={is24h.input === true}
+          onChange={() => is24h.onChange(!is24h.input)}
+        >
+          24時間限定
+        </CampaignCheck>
+      ) : null}
+    </Box>
   );
 }
 

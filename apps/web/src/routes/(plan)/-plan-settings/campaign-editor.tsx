@@ -68,7 +68,7 @@ function RateChoices({
       withIndicator={false}
       display="grid"
       gridTemplateColumns={`repeat(${choices.length}, minmax(0, 1fr))`}
-      alignItems="start"
+      alignItems="stretch"
       gap="2"
     >
       {choices.map((option) => (
@@ -259,9 +259,11 @@ export function CampaignEditor({
           ) : null}
         </Box>
       ) : null}
-      <Text fontSize="xs" color="fg.muted">
-        Enter か、欄の外を押すと保存します。
-      </Text>
+      {spec.label || spec.date || spec.period || spec.rate || spec.minOrderAmount || spec.cap ? (
+        <Text fontSize="xs" color="fg.muted">
+          Enter か、欄の外を押すと保存します。
+        </Text>
+      ) : null}
       <Button variant="outline" colorScheme="danger" onClick={onDelete} alignSelf="flex-start">
         {benefit.label}を削除
       </Button>

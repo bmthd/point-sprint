@@ -108,14 +108,16 @@ export function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
             ブランドデー対象
           </CampaignCheck>
         ) : null}
-        <CampaignCheck
-          campaign="24h"
-          checked={is24h.input === true}
-          onChange={() => is24h.onChange(!is24h.input)}
-          rate={plus(tagBonus(plan.benefits, { order: "24h" }))}
-        >
-          24時間限定
-        </CampaignCheck>
+        {hasOrderTagCampaign(plan.benefits, "24h") || is24h.input === true ? (
+          <CampaignCheck
+            campaign="24h"
+            checked={is24h.input === true}
+            onChange={() => is24h.onChange(!is24h.input)}
+            rate={plus(tagBonus(plan.benefits, { order: "24h" }))}
+          >
+            24時間限定
+          </CampaignCheck>
+        ) : null}
       </Box>
       {byDate.length > 0 ? (
         <Flex wrap="wrap" align="center" gap="1.5" fontSize="xs" color="fg.muted">

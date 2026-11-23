@@ -115,7 +115,7 @@ function CampaignRow({
           <Flex direction="column" minW="0">
             <Text as="span" fontWeight="medium">
               {benefit.label}{" "}
-              <Text as="span" fontVariantNumeric="tabular-nums">
+              <Text as="span" fontVariantNumeric="tabular-nums" whiteSpace="nowrap">
                 {rateText(rateOf(benefit))}
               </Text>
             </Text>
