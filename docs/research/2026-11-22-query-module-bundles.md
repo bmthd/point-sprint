@@ -42,19 +42,11 @@ queryKeys は一つのオブジェクトなので、最小バンドルにも 9 �
 
 ファイル数と圧縮後サイズの増加は確認できたが、通信時間や描画時間は測定していない。手動のチャンク固定や Query ごとのファイル分割は、この結果だけでは追加しない。
 
-## 計測コードの参照と継続検査
+## 計測コードの参照
 
 今回限りのサイズ比較スクリプトは削除した。上の比較で使用したコードは [22f08b4 の analyze-query-bundles.ts](https://github.com/bmthd/point-sprint/blob/22f08b4/apps/web/scripts/analyze-query-bundles.ts) を参照する。サイズ比較を再現する場合は、比較対象ごとの作業環境でこの版のスクリプトを使い、出力先を分ける。通常の配信サイズの計測は、既存 CI の bundle-size.ts が引き続き受け持つ。
 
-未使用 Factory・Jotai・ストレージ実装の除去検査は state/query-options-bundle.test.ts に移した。既存の pnpm test と CI から実行される。アプリのビルド設定や外部 API を呼ばず、メモリ上で Factory だけのバンドルを検査する。
-
-対象の検査だけを実行する場合:
-
-```sh
-pnpm test --project web apps/web/src/state/query-options-bundle.test.ts
-```
-
-Options と atom が同居していた b8a6d05 の queries.ts を一時的に戻すと検査が失敗し、現在の実装に戻すと成功することを確認した。また、未使用 Factory をトップレベルの副作用で保持させた場合も失敗することを確認した。
+バンドルの除去検査は常設しない。依存構成を変えたときに必要な範囲で分析する。型推論・取得・状態の通常テストは維持する。
 
 ## appQueryOptions 追加時の再検証（2026-11-23）
 
