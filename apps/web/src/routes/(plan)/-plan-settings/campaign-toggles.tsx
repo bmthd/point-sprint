@@ -195,7 +195,7 @@ export function CampaignToggles({ plan }: { plan: Plan }) {
             キャンペーン
           </Heading>
           <Text fontSize="xs" color="fg.muted">
-            エントリーしたものを ON に
+            対象になったものを ON に
           </Text>
         </Flex>
         {campaigns.length > 0 ? (
