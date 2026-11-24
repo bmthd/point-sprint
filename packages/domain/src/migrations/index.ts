@@ -11,6 +11,7 @@ import { bankTiersMigration } from "./v9-bank-tiers.ts";
 import { spuMonthsMigration } from "./v10-spu-months.ts";
 import { orderRowsMigration } from "./v11-order-rows.ts";
 import { twoShopCampaignMigration } from "./v12-two-shop-campaign.ts";
+import { rakumaMigration } from "./v16-rakuma.ts";
 
 export type { Migration, SeedSource, StoreName } from "./runner.ts";
 
@@ -20,8 +21,9 @@ export type { Migration, SeedSource, StoreName } from "./runner.ts";
 // 13 added the `noticeReads` store, which needs no row transforms either.
 // 14 added the plan's `onHold`.
 // 15 shortened new ids to 10 lowercase letters and digits; saved uuids stay valid.
+// 16 added the ラクマ購入 +1倍 to the plans of official events, and the `minShopAmount` condition.
 // The version bumps keep older tabs from reading or overwriting values they do not understand.
-export const CURRENT_SCHEMA_VERSION = 15;
+export const CURRENT_SCHEMA_VERSION = 16;
 
 export const migrations: Migration[] = [
   cardRequiresMigration,
@@ -30,6 +32,7 @@ export const migrations: Migration[] = [
   spuMonthsMigration,
   orderRowsMigration,
   twoShopCampaignMigration,
+  rakumaMigration,
 ];
 
 export function migrateRow(
