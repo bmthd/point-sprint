@@ -228,11 +228,6 @@ export function tagBonus(benefits: Benefit[], tag: { shop?: "39shop"; order?: Or
     .reduce((sum, benefit) => sum + rateOf(benefit), 0);
 }
 
-/** Whether the plan has a campaign for orders with `tag`; only then is the order asked for it. */
-export function hasOrderTagCampaign(benefits: Benefit[], tag: OrderTag) {
-  return benefits.some((benefit) => benefit.conditions.orderTags?.includes(tag));
-}
-
 /** The plan's campaigns that apply by the order date alone (「日付で自動」). */
 export function dateCampaigns(benefits: Benefit[], date: string) {
   return benefits.filter(

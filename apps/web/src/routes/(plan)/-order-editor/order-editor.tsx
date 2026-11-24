@@ -3,8 +3,8 @@
 "use no memo";
 
 import { Field as FormField, reset, useField, useForm } from "@formisch/react";
-import type { Order, Plan } from "@workspaces/domain";
-import { Box, Flex, Button, Drawer, IconButton, Modal, Switch, Text, XIcon } from "@workspaces/ui";
+import { hasOrderTagCampaign, type Order, type Plan } from "@workspaces/domain";
+import { Grid, Flex, Button, Drawer, IconButton, Modal, Switch, Text, XIcon } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } from "react";
 import { Form } from "#/routes/-form.tsx";
@@ -17,7 +17,6 @@ import {
   OrderFormSchema,
   type OrderFormOutput,
   dateCampaigns,
-  hasOrderTagCampaign,
   draftOf,
   draftOfInput,
   emptyInput,
@@ -81,7 +80,7 @@ export function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
   return (
     <OrderPart legend="キャンペーン">
       {/* Cards of one width, two to a row, so their checks line up. */}
-      <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap="2">
+      <Grid templateColumns="repeat(2, minmax(0, 1fr))" gap="2">
         <CampaignCheck
           campaign="39shop"
           checked={is39.input === true}
@@ -108,15 +107,17 @@ export function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
             ブランドデー対象
           </CampaignCheck>
         ) : null}
-        <CampaignCheck
-          campaign="24h"
-          checked={is24h.input === true}
-          onChange={() => is24h.onChange(!is24h.input)}
-          rate={plus(tagBonus(plan.benefits, { order: "24h" }))}
-        >
-          24時間限定
-        </CampaignCheck>
-      </Box>
+        {hasOrderTagCampaign(plan.benefits, "24h") || is24h.input === true ? (
+          <CampaignCheck
+            campaign="24h"
+            checked={is24h.input === true}
+            onChange={() => is24h.onChange(!is24h.input)}
+            rate={plus(tagBonus(plan.benefits, { order: "24h" }))}
+          >
+            24時間限定
+          </CampaignCheck>
+        ) : null}
+      </Grid>
       {byDate.length > 0 ? (
         <Flex wrap="wrap" align="center" gap="1.5" fontSize="xs" color="fg.muted">
           <span>日付で自動：</span>

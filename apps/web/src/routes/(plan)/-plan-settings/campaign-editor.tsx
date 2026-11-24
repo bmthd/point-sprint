@@ -7,7 +7,7 @@ import {
   editCampaign,
   hasCampaignOccurrence,
 } from "@workspaces/domain";
-import { Box, Button, Flex, Image, RadioCard, RadioCardGroup, Text } from "@workspaces/ui";
+import { Grid, Button, Flex, Image, RadioCard, RadioCardGroup, Text } from "@workspaces/ui";
 import { useSetAtom } from "jotai";
 import * as v from "valibot";
 import { optionalGrouped } from "#/ui/format.ts";
@@ -42,8 +42,7 @@ const RANK_CHOICES = [
 ] as const;
 
 const twoColumns = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  templateColumns: "repeat(2, minmax(0, 1fr))",
   alignItems: "start",
   gap: "2",
 } as const;
@@ -68,7 +67,7 @@ function RateChoices({
       withIndicator={false}
       display="grid"
       gridTemplateColumns={`repeat(${choices.length}, minmax(0, 1fr))`}
-      alignItems="start"
+      alignItems="stretch"
       gap="2"
     >
       {choices.map((option) => (
@@ -176,7 +175,7 @@ export function CampaignEditor({
         />
       ) : null}
       {spec.period ? (
-        <Box {...twoColumns}>
+        <Grid {...twoColumns}>
           <CommitDatePicker
             key={`start:${period.start}:${period.end}`}
             label="開始日"
@@ -209,10 +208,10 @@ export function CampaignEditor({
               }))
             }
           />
-        </Box>
+        </Grid>
       ) : null}
       {spec.rate || spec.minOrderAmount || spec.cap ? (
-        <Box {...twoColumns}>
+        <Grid {...twoColumns}>
           {spec.rate ? (
             <CommitField
               key={`rate:${rate}`}
@@ -257,11 +256,13 @@ export function CampaignEditor({
               onCommit={(cap) => set({ cap })}
             />
           ) : null}
-        </Box>
+        </Grid>
       ) : null}
-      <Text fontSize="xs" color="fg.muted">
-        Enter か、欄の外を押すと保存します。
-      </Text>
+      {spec.label || spec.date || spec.period || spec.rate || spec.minOrderAmount || spec.cap ? (
+        <Text fontSize="xs" color="fg.muted">
+          Enter か、欄の外を押すと保存します。
+        </Text>
+      ) : null}
       <Button variant="outline" colorScheme="danger" onClick={onDelete} alignSelf="flex-start">
         {benefit.label}を削除
       </Button>
