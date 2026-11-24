@@ -49,7 +49,7 @@ test("the amount typed shows where its points go, and a button fills the cap", a
   await amount.fill("11000");
   await expect
     .element(flows())
-    .toMatchTextContent("エントリーキャンペーン（このプラン） +70P・30P はみ出す");
+    .toMatchTextContent("エントリーキャンペーン（このプラン）この注文分 +70P・30P はみ出す");
   await form.getByRole("button", { name: "¥7,699 で使い切る" }).click();
   await expect.element(amount).toHaveValue("7699");
   // The flows lag the field (useDeferredValue), and "+70P" is already there before the click.
@@ -93,6 +93,8 @@ test("an order from a new shop is priced at the rate that shop gives", async () 
   const form = await addForm(withOrder, "ショップ1");
   await form.getByRole("textbox", { name: "新しい注文の金額" }).fill("11000");
   // At +2倍 the first order earns 200P, which leaves 100P: ¥5,000 before tax, ¥5,499 at 10%.
-  await expect.element(flows()).toMatchTextContent("買いまわり（このプラン） +100P・100P はみ出す");
+  await expect
+    .element(flows())
+    .toMatchTextContent("買いまわり（このプラン）この注文分 +100P・100P はみ出す");
   await expect.element(form.getByRole("button", { name: "¥5,499 で使い切る" })).toBeVisible();
 });

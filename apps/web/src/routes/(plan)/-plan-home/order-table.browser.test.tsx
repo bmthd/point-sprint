@@ -1,4 +1,4 @@
-import type { Order } from "@workspaces/domain";
+import { calculateAll, type Order } from "@workspaces/domain";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useEffect } from "react";
 import { beforeEach, expect, onTestFinished, test, vi } from "vitest";
@@ -915,4 +915,49 @@ test("editing one order does not re-render the other rows", async () => {
   expect(rowRenders.get(orderId(0))).toBeGreaterThan(1);
   expect(rowRenders.get(orderId(1))).toBe(before);
   await expect.element(screen.locator).toMatchTextContent("¥22,000");
+});
+
+test("PC の追加行も既存注文の遡及分を含む合計差を出す", async () => {
+  const first = order(0);
+  first.lineItems[0]!.unitPrice = 10000;
+  const plan = makePlan([baseBenefit, ...marathon], [first]);
+  const before = calculateAll([plan], shops).get(PLAN)!.total;
+  const screen = await renderWith(plan);
+  await openNewOrder(screen);
+  await enterShop(newOrderRow(), "ショップ1");
+  await newOrderRow().getByLabelText("注文日").fill("2026/10/05");
+  await newAmount().fill("10000");
+  await expect
+    .element(newOrderRow().getByRole("status", { name: "ポイントの目安" }))
+    .toMatchTextContent("プラン合計 +270P");
+  await page.getByRole("button", { name: "追加する" }).click();
+  await expect
+    .poll(async () => {
+      const saved = await repository().plans.get(PLAN);
+      return saved
+        ? calculateAll([saved], await repository().shops.list()).get(PLAN)!.total - before
+        : undefined;
+    })
+    .toBe(270);
+});
+
+test("PC の詳細を閉じた金額編集でも確定前の増分を表示する", async () => {
+  const plan = makePlan([baseBenefit], [order(0)]);
+  const before = calculateAll([plan], shops).get(PLAN)!.total;
+  const screen = await renderWith(plan);
+  await screen.getByRole("button", { name: /^ショップ0の注文の金額/ }).click();
+  const amount = screen.getByRole("textbox", { name: "ショップ0の注文の金額" });
+  await amount.fill("22000");
+  await expect
+    .element(rowOf("ショップ0").getByRole("status", { name: "ポイントの目安" }))
+    .toMatchTextContent("プラン合計 +100P");
+  await userEvent.keyboard("{Enter}");
+  await expect
+    .poll(async () => {
+      const saved = await repository().plans.get(PLAN);
+      return saved
+        ? calculateAll([saved], await repository().shops.list()).get(PLAN)!.total - before
+        : undefined;
+    })
+    .toBe(100);
 });

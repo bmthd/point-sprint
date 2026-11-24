@@ -52,6 +52,7 @@ import {
   useSaveOrderDraft,
 } from "#/routes/(plan)/-order-shared.tsx";
 import { useEnterUrl } from "#/routes/(plan)/-order-entry.tsx";
+import { DraftPreview } from "#/routes/(plan)/-order-editor/order-editor.tsx";
 import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
 import { ACTION_BUTTON_WIDTH, OrderDetailFields } from "./order-details.tsx";
 import {
@@ -232,6 +233,9 @@ export function OrderAddRow({
             if (!open) openConditions();
           }}
         />
+      </Box>
+      <Box px="4" pb="3">
+        <DraftPreview form={form} planId={plan.id} />
       </Box>
       {/* Shut, the fields are taken out; what was typed stays in the form. */}
       <Collapse

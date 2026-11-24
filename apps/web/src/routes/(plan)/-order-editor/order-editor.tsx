@@ -50,11 +50,11 @@ export const NEW_ORDER = "new";
 /** The points the order the form describes gets, in the editor. */
 export function DraftPreview({
   form,
-  plan,
+  planId,
   original,
 }: {
   form: OrderForm;
-  plan: Plan;
+  planId: string;
   original?: Order;
 }) {
   const shops = useAtomValue(shopsAtom);
@@ -66,7 +66,7 @@ export function DraftPreview({
     () => draftOfInput(JSON.parse(deferred), shops, original),
     [deferred, shops, original],
   );
-  return <OrderPreviewBox planId={plan.id} draft={draft} original={original} />;
+  return <OrderPreviewBox planId={planId} draft={draft} original={original} />;
 }
 
 export function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
@@ -210,7 +210,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
     <AmountField
       form={form}
       inputRef={amountRef}
-      aside={<DraftPreview form={form} plan={plan} original={original} />}
+      aside={<DraftPreview form={form} planId={plan.id} original={original} />}
       onUrlPasted={(url) => {
         setMode("url");
         enterUrl(url);

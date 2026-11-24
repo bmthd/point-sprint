@@ -57,7 +57,7 @@ function OrderEditorSheet({
             {original ? null : <EntryModeSwitch mode="amount" fill onChange={ignore} />}
             <AmountField
               form={form}
-              aside={<DraftPreview form={form} plan={plan} original={original} />}
+              aside={<DraftPreview form={form} planId={plan.id} original={original} />}
               onUrlPasted={ignore}
             />
             <ShopAndName form={form} />

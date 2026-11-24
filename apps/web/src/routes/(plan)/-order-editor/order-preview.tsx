@@ -8,7 +8,7 @@ import {
   calculateAll,
   capLines,
   taxExcludedTarget,
-  totalCountedWith,
+  orderDelta,
 } from "@workspaces/domain";
 import { Flex, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
@@ -26,13 +26,15 @@ export type OrderPreview = {
   base: number;
   /** The sum of the rates the draft gets ("+N倍" is N% of `base`). */
   rate: number;
+  totalGain: number;
+  orderGain: number;
   points: number;
   rawPoints: number;
   reachedShopAroundCap: number | undefined;
   held: boolean;
   /** How much the shop-around rate grows. */
   shopAroundRateGain: number;
-  /** How many points every other order (in every plan) gains or loses. */
+  /** このプランのほかの注文の増減。 */
   othersGain: number;
 };
 
@@ -43,7 +45,7 @@ const pointsOf = (result: CalculationResult | undefined, order: Order | undefine
 
 /**
  * What saving the draft would change: every plan is calculated again with the draft added (or in
- * place of the order it edits) and compared with the figures as they are.
+ * place of the order it edits). The preview compares this plan's capped totals.
  */
 export function previewOf(input: {
   plans: Plan[];
@@ -74,7 +76,7 @@ export function previewOf(input: {
   const planAfter = after.get(planId);
   const rows = pointsOf(planAfter, draft.order);
   const points = rows.reduce((sum, row) => sum + row.points, 0);
-  const originalPoints = pointsOf(planBefore, original).reduce((sum, row) => sum + row.points, 0);
+  const delta = orderDelta({ before: planBefore, after: planAfter, order: draft.order, original });
   const shopCountBefore = planBefore?.shopCount ?? 0;
   const shopCountAfter = planAfter?.shopCount ?? 0;
   const plan = withDraft.find((plan) => plan.id === planId);
@@ -87,6 +89,8 @@ export function previewOf(input: {
         )?.cap
       : undefined;
   return {
+    totalGain: delta.total,
+    orderGain: delta.orderGain,
     newShopCount: shopCountAfter > shopCountBefore ? shopCountAfter : undefined,
     base: draft.order.lineItems.reduce((sum, item) => sum + taxExcludedTarget(item), 0),
     rate: orderPointRows(rows, benefits, planAfter?.rates ?? {}, draft.order.lineItems).rate,
@@ -97,16 +101,13 @@ export function previewOf(input: {
     shopAroundRateGain:
       (planAfter?.shopAroundOutlook?.currentRate ?? 0) -
       (planBefore?.shopAroundOutlook?.currentRate ?? 0),
-    othersGain:
-      totalCountedWith(after, withDraft, planId) -
-      points -
-      (totalCountedWith(before, plans, planId) - originalPoints),
+    othersGain: delta.othersGain,
   };
 }
 
 const signed = (points: number) => `${points < 0 ? "−" : "+"}${pointsText(Math.abs(points))}`;
 
-/** The total change and its allocation to this order and every other order. */
+/** このプランの合計の増減と、この注文・ほかの注文への内訳。 */
 export function OrderPreviewBox({
   planId,
   draft,
@@ -151,18 +152,19 @@ export function OrderPreviewBox({
         <Text fontSize="xs" color="fg.muted">
           ショップと金額を入れると、もらえるポイントの目安が出ます
         </Text>
-      ) : preview.held ? (
-        <Text fontSize="xs">保留中の注文は計算に入りません</Text>
       ) : (
         <>
+          {preview.held ? <Text fontSize="xs">保留中の注文は計算に入りません</Text> : null}
           {preview.newShopCount ? (
             <Text fontSize="xs">
               <b>{preview.newShopCount}店舗目</b>としてカウント
             </Text>
           ) : null}
           <Text fontSize="xl" color="primary.fg" as="b">
-            この注文で {signed(preview.points + preview.othersGain)}
+            プラン合計 {signed(preview.totalGain)}
           </Text>
+          <Text fontSize="xs">既存注文の変化と上限を含む、確定前後の増減です</Text>
+          {original ? <Text fontSize="xs">この注文の増減 {signed(preview.orderGain)}</Text> : null}
           <Text fontSize="xs">
             この注文単体で {pointsText(preview.points)}（税抜 {yen(preview.base)} ×{" "}
             {percent(preview.rate)}
