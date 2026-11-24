@@ -150,7 +150,7 @@ test("the ラクマ購入 +1倍 stays on, with the new event's days and key", ()
   };
   const next: OfficialEvent = {
     ...event,
-    id: "blackfriday-2026-11-19",
+    id: "marathon-2026-11-19",
     period: { start: "2026-11-19", end: "2026-11-25" },
   };
   const attached = attachToEvent(on, next, idSequence("d"));
@@ -159,7 +159,7 @@ test("the ラクマ購入 +1倍 stays on, with the new event's days and key", ()
   expect(kept[0]).toMatchObject({
     id: rakuma.id,
     enabled: true,
-    sharedKey: "rakuma:blackfriday-2026-11-19",
+    sharedKey: "rakuma:marathon-2026-11-19",
     conditions: { dateRule: { type: "range", start: "2026-11-19", end: "2026-11-25" } },
   });
 });

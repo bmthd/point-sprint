@@ -656,7 +656,12 @@ test("attaches a plan made without an event to an event, after saying what it re
   await expect.poll(async () => (await storedPlan()).officialEventId).toBe(event.id);
   const stored = await storedPlan();
   expect(stored.period).toEqual(event.period);
-  expect(stored.benefits).toEqual([...event.benefits, { ...fixed, enabled: true }, ...restFixed]);
+  expect(stored.benefits).toEqual([
+    ...event.benefits,
+    expect.objectContaining({ sharedKey: "rakuma:marathon-2026-10", enabled: false }),
+    { ...fixed, enabled: true },
+    ...restFixed,
+  ]);
   expect(stored.orders).toEqual(own.orders);
   await expect.element(section).not.toBeInTheDocument();
   await expect.element(screen.getByRole("button", { name: /お買い物マラソン/ })).toBeVisible();

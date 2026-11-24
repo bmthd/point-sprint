@@ -3,6 +3,7 @@ import {
   type Plan,
   campaignTemplates,
   comesWithPlan,
+  isRakumaBenefit,
   isTwoShopCampaign,
   templateOfCampaign,
 } from "@workspaces/domain";
@@ -46,11 +47,12 @@ export function isFixedCampaign(benefit: Benefit) {
 
 /**
  * Whether the user added this campaign themselves, so it can be deleted. Fixed campaigns (days
- * ending in 5 or 0) and the official event's benefits come with the plan.
+ * ending in 5 or 0), the ラクマ購入 +1倍 and the official event's benefits come with the plan.
  */
 export function isAddedCampaign(plan: Plan, benefit: Benefit) {
   // The event's benefits share its id as their key (`sharedKey`).
   if (benefit.sharedKey === undefined) return true;
+  if (isRakumaBenefit(benefit)) return false;
   return benefit.sharedKey !== plan.officialEventId && !fixedKeys.has(benefit.sharedKey);
 }
 
