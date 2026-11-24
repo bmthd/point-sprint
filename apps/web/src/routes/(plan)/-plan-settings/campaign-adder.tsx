@@ -7,6 +7,7 @@ import {
   comesWithPlan,
   hasCampaignOccurrence,
   instantiateCampaign,
+  inDateRule,
   isTwoShopCampaign,
   newId,
 } from "@workspaces/domain";
@@ -55,6 +56,8 @@ export function defaultInput(
     template.benefit.params.cap ?? (spec.cap === "required" ? PLACEHOLDER_CAP : undefined);
   const base = cap === undefined ? {} : { cap };
   if (template.occurrence === "fixed") {
+    const rule = template.benefit.conditions.dateRule;
+    if (rule && !daysOf(plan.period).some((day) => inDateRule(rule, day))) return undefined;
     return hasCampaignOccurrence(plan, template, {}) ? undefined : base;
   }
   if (template.occurrence === "user-dates") {
@@ -111,15 +114,26 @@ export function CampaignAddButtons({
         {addableTemplates.map((template, index) => {
           // Whether any day is left does not depend on today, which a render cannot read.
           const full = defaultInput(plan, template, plan.period.start) === undefined;
+          const unavailable =
+            full && template.occurrence === "fixed" && !hasCampaignOccurrence(plan, template, {});
+          const reason = unavailable ? "この期間に開催日がありません" : "追加済み";
           const imagePath = template.benefit.imagePath;
           return (
-            <List.Item key={template.id}>
+            <List.Item key={template.id} maxW="full">
+              {/* The reason a button is disabled is long; let it wrap on a phone. */}
               <Button
+                maxW="full"
+                h="auto"
+                minH="10"
+                py="1.5"
+                lineHeight="short"
+                whiteSpace="normal"
+                textAlign="start"
                 ref={index === 0 ? firstRef : undefined}
                 variant="outline"
                 colorScheme="primary"
                 disabled={full}
-                aria-label={full ? `${template.name}（追加済み）` : `${template.name}を追加`}
+                aria-label={full ? `${template.name}（${reason}）` : `${template.name}を追加`}
                 onClick={() => add(template)}
                 startIcon={<PlusIcon />}
                 gap="1.5"
@@ -128,6 +142,7 @@ export function CampaignAddButtons({
                   <Image src={imageUrl(imagePath)} alt="" boxSize="6" objectFit="contain" />
                 ) : null}
                 {template.name}
+                {unavailable ? `（${reason}）` : null}
               </Button>
             </List.Item>
           );

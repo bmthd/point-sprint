@@ -136,7 +136,7 @@ test("campaigns show the image from their master data", async () => {
 
   const campaign = screen
     .getByRole("region", { name: "キャンペーン" })
-    .getByRole("switch", { name: "5と0のつく日 +1倍 日付で自動" });
+    .getByRole("switch", { name: "5と0のつく日 +1倍 毎月5・10・15・20・25・30日" });
   const campaignSection = screen.getByRole("region", { name: "キャンペーン" });
   await expect.element(campaignSection.getByText("OFF", { exact: true })).toBeVisible();
   await tapCard(campaign);
@@ -225,7 +225,10 @@ test("adds sports-win again for the next day it does not have", async () => {
 });
 
 test("adds ご愛顧感謝デー once, with the rate of the rank chosen in its row", async () => {
-  const screen = await renderSettings(makePlan([pointDay()], []));
+  const screen = await renderSettings({
+    ...makePlan([pointDay()], []),
+    period: { start: "2026-10-01", end: "2026-10-31" },
+  });
   await screen.getByRole("button", { name: "ご愛顧感謝デーを追加" }).click();
 
   await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(2);
@@ -257,7 +260,10 @@ test("adds ご愛顧感謝デー once, with the rate of the rank chosen in its r
 });
 
 test("adds ワンダフルデー once, on, among the campaigns, and deletes it", async () => {
-  const screen = await renderSettings(makePlan([pointDay()], []));
+  const screen = await renderSettings({
+    ...makePlan([pointDay()], []),
+    period: { start: "2026-10-01", end: "2026-10-31" },
+  });
   await screen.getByRole("button", { name: "ワンダフルデーを追加" }).click();
 
   await expect.poll(async () => (await storedPlan()).benefits).toHaveLength(2);
@@ -516,7 +522,7 @@ test("a failed save is reported and cleared when the settings are opened again",
   await tapCard(
     screen
       .getByRole("region", { name: "キャンペーン" })
-      .getByRole("switch", { name: "5と0のつく日 +1倍 日付で自動" }),
+      .getByRole("switch", { name: "5と0のつく日 +1倍 毎月5・10・15・20・25・30日" }),
   );
   await expect
     .element(screen.getByText("変更を保存できませんでした。もう一度お試しください。"))
@@ -703,4 +709,17 @@ test("holding the only Books order from the settings page tells that the month's
   await expect
     .element(page.getByText("10月の SPU の楽天ブックスの対象外になるかもしれません"))
     .toBeVisible();
+});
+
+test("開催日がない固定キャンペーンの追加ボタンには理由を出す", async () => {
+  const screen = await renderSettings({
+    ...makePlan([], []),
+    period: { start: "2026-10-20", end: "2026-10-21" },
+  });
+  for (const name of ["ご愛顧感謝デー", "ワンダフルデー"]) {
+    await expect
+      .element(screen.getByRole("button", { name: `${name}（この期間に開催日がありません）` }))
+      .toBeDisabled();
+  }
+  expect((await storedPlan()).benefits).toEqual([]);
 });
