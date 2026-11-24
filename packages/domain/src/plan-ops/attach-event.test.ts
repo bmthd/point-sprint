@@ -2,6 +2,7 @@ import * as v from "valibot";
 import { expect, test } from "vitest";
 import { calculate } from "#/calculate/calculate.ts";
 import { createPlan } from "#/master/create-plan.ts";
+import { isRakumaBenefit } from "#/master/rakuma.ts";
 import type { Benefit } from "#/model/benefit.ts";
 import type { OfficialEvent } from "#/model/official-event.ts";
 import type { Order } from "#/model/order.ts";
@@ -103,7 +104,13 @@ test("an attached plan has the period, benefits and event of a plan made from th
 
   expect(attached.officialEventId).toBe(event.id);
   expect(attached.period).toEqual(event.period);
-  const shape = (benefits: Benefit[]) => benefits.map((benefit) => ({ ...benefit, enabled: true }));
+  // The ラクマ購入 +1倍 takes a new id from each sequence, so its id is left out.
+  const shape = (benefits: Benefit[]) =>
+    benefits.map((benefit) =>
+      isRakumaBenefit(benefit)
+        ? { ...benefit, id: "rakuma", enabled: true }
+        : { ...benefit, enabled: true },
+    );
   expect(shape(attached.benefits)).toEqual(shape(made.benefits));
   expect(attached.benefits.some((benefit) => benefit.id === handMade.id)).toBe(false);
   expect(v.parse(PlanSchema, attached)).toEqual(attached);
@@ -113,18 +120,48 @@ test("the fixed campaigns keep their ids and whether the user entered them", () 
   const own = ownPlan();
   const fixed = own.benefits.filter((benefit) => benefit.id !== handMade.id);
   const attached = attachToEvent(own, event, idSequence("d"));
-  expect(attached.benefits.slice(event.benefits.length)).toEqual(fixed);
-  expect(attached.benefits[event.benefits.length]?.enabled).toBe(true);
+  expect(attached.benefits.slice(event.benefits.length + 1)).toEqual(fixed);
+  expect(attached.benefits[event.benefits.length + 1]?.enabled).toBe(true);
 });
 
 test("a fixed campaign the plan lacks is added disabled, as createPlan adds it", () => {
   const own = ownPlan();
   const [, ...rest] = own.benefits;
   const attached = attachToEvent({ ...own, benefits: rest }, event, idSequence("d"));
-  const added = attached.benefits[event.benefits.length];
+  const added = attached.benefits[event.benefits.length + 1];
   expect(added?.id).toBe("d0000000-0000-4000-8000-000000000001");
   expect(added?.enabled).toBe(false);
   expect(added?.sharedKey).toBe(own.benefits[0]?.sharedKey);
+});
+
+test("the ラクマ購入 +1倍 stays on, with the new event's days and key", () => {
+  const made = createPlan({
+    id: "f0000000-0000-4000-8000-000000000002",
+    name: "plan",
+    event,
+    now,
+    newId: idSequence("e"),
+  });
+  const rakuma = made.benefits.find(isRakumaBenefit);
+  if (!rakuma) throw new Error("no ラクマ購入");
+  const on = {
+    ...made,
+    benefits: made.benefits.map((b) => (b.id === rakuma.id ? { ...b, enabled: true } : b)),
+  };
+  const next: OfficialEvent = {
+    ...event,
+    id: "blackfriday-2026-11-19",
+    period: { start: "2026-11-19", end: "2026-11-25" },
+  };
+  const attached = attachToEvent(on, next, idSequence("d"));
+  const kept = attached.benefits.filter(isRakumaBenefit);
+  expect(kept).toHaveLength(1);
+  expect(kept[0]).toMatchObject({
+    id: rakuma.id,
+    enabled: true,
+    sharedKey: "rakuma:blackfriday-2026-11-19",
+    conditions: { dateRule: { type: "range", start: "2026-11-19", end: "2026-11-25" } },
+  });
 });
 
 test("the orders stay, and one outside the new period is treated as outside it", () => {
