@@ -1,8 +1,8 @@
 import { ClientOnly, useHydrated, useNavigate } from "@tanstack/react-router";
 import { type OfficialEvent, type Plan, createPlan, newId } from "@workspaces/domain";
 import { Box, Button, Flex, Modal, Text } from "@workspaces/ui";
-import { atom, useAtomValue, useSetAtom } from "jotai";
-import { useState, useTransition } from "react";
+import { useAtomValue, useSetAtom } from "jotai";
+import { useEffect, useState, useTransition } from "react";
 import { replacePlan, runSavePlanAtom } from "#/state/mutations.ts";
 import { plansAtom, plansQueryAtom } from "#/state/query-atoms.ts";
 import { ShareSection } from "#/routes/-sidebar/share-section.tsx";
@@ -12,17 +12,19 @@ import { useToday } from "#/routes/-use-today.ts";
 import { EventSection } from "./event-section.tsx";
 import { Hero, SampleCard } from "./hero.tsx";
 import { PlanSection } from "./plan-section.tsx";
-import { startTarget } from "./start-target.ts";
+import { eventPlanName, startLabel, startTarget } from "./start-target.ts";
+
+/** How long the events the hero's button leads to stay outlined. */
+const HIGHLIGHT_MS = 2400;
+
+/** That all of `element` is on the screen. */
+function inView(element: HTMLElement): boolean {
+  const { top, bottom } = element.getBoundingClientRect();
+  return top >= 0 && bottom <= window.innerHeight;
+}
 
 /** The button a plan was started from: the hero's, or one in the events. */
 type Origin = "hero" | "events";
-
-/** Where the hero's start button goes, by the events read when it is pressed. */
-const startTargetAtom = atom(null, (get, _set, today: string | undefined) => {
-  const { data, isError } = get(officialEventsQueryAtom);
-  // Events kept from before a read that failed are not offered: the list says they cannot be read.
-  return startTarget(isError ? undefined : data, today);
-});
 
 /**
  * What `now` is overridden by in tests; the default is the real clock. `renderedToday` is the day in
@@ -60,21 +62,34 @@ export function TopPage({
     event?: OfficialEvent;
     origin: Origin;
   }>();
-  const startTargetOf = useSetAtom(startTargetAtom);
+  const { data: events, isError } = useAtomValue(officialEventsQueryAtom);
+  // Events kept from before a read that failed are not offered: the list says they cannot be read.
+  const target = startTarget(isError ? undefined : events, shownToday, plans);
+  // The events the hero's button asked to choose between, outlined in the list for a moment.
+  const [highlighted, setHighlighted] = useState<string[]>();
+  useEffect(() => {
+    if (!highlighted) return;
+    const timer = setTimeout(() => setHighlighted(undefined), HIGHLIGHT_MS);
+    return () => clearTimeout(timer);
+  }, [highlighted]);
 
   const start = () => {
-    const target = startTargetOf(shownToday);
-    if (target.kind === "create") return request(target.event, "hero");
+    if (target.kind === "create") return create(target.event, "hero");
+    if (target.kind === "resume") {
+      return void navigate({ to: "/plan", search: { id: target.plan.id } });
+    }
     const section = document.getElementById("events");
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    section?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    // A wide screen has the events in its first screen: they are outlined where they are.
+    if (section && !inView(section)) {
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      section.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    }
     section?.querySelector<HTMLElement>("h2")?.focus({ preventScroll: true });
+    if (target.events.length > 0) setHighlighted(target.events.map((event) => event.id));
   };
 
-  const nameOf = (event: OfficialEvent | undefined, date: Date) => {
-    const month = monthOf(event ? event.period.start : tokyoToday(date));
-    return event ? `${month}月 ${event.name}` : `${month}月の買い物`;
-  };
+  const nameOf = (event: OfficialEvent | undefined, date: Date) =>
+    event ? eventPlanName(event) : `${monthOf(tokyoToday(date))}月の買い物`;
 
   const request = (event: OfficialEvent | undefined, origin: Origin) => {
     const name = nameOf(event, now());
@@ -118,6 +133,8 @@ export function TopPage({
       <Flex direction="column" minH="calc(100svh - {sizes.14} - 1px)">
         <Hero
           onStart={start}
+          label={startLabel(target)}
+          toEvents={target.kind === "choose" && target.events.length > 0}
           disabled={disabled}
           loading={startedFrom("hero") !== undefined}
           failed={failed === "hero"}
@@ -129,6 +146,7 @@ export function TopPage({
         />
         <EventSection
           today={shownToday}
+          highlighted={highlighted}
           disabled={disabled}
           starting={startedFrom("events")}
           onCreate={(event) => request(event, "events")}

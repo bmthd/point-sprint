@@ -96,9 +96,26 @@ function EventCard({
   starting,
   onCreate,
   actionLabel,
-}: { event: OfficialEvent; status: Status | undefined; actionLabel: string } & CreateProps) {
+  highlighted,
+}: {
+  event: OfficialEvent;
+  status: Status | undefined;
+  actionLabel: string;
+  highlighted: boolean;
+} & CreateProps) {
   return (
-    <Card.Root h="full">
+    <Card.Root
+      h="full"
+      data-highlighted={dataAttr(highlighted)}
+      outlineWidth="2px"
+      outlineStyle="solid"
+      outlineColor="transparent"
+      // Inside the card: on a phone the cards scroll sideways in a box that clips what is outside.
+      outlineOffset="-2px"
+      transitionProperty="outline-color"
+      transitionDuration="slow"
+      css={{ "&[data-highlighted]": { outlineColor: "primary.solid" } }}
+    >
       <Card.Body flexDirection="row" alignItems="center" gap={{ base: "4", md: "3" }}>
         <VStack flex="1" minW="0" gap="1" alignItems="stretch">
           <Flex align="center" gap="2" minW="0">
@@ -296,6 +313,8 @@ type EventSectionProps = CreateProps & {
   onCreateWithoutEvent: () => void;
   /** That the plan started here could not be saved. */
   failed: boolean;
+  /** The ids of the events to outline, which the hero's button asked to choose between. */
+  highlighted?: string[];
 };
 
 /**
@@ -312,6 +331,7 @@ export function EventSection({
   onCreate,
   onCreateWithoutEvent,
   failed,
+  highlighted,
 }: EventSectionProps) {
   const headingId = useId();
   const { data, isPending, isError, refetch } = useAtomValue(officialEventsQueryAtom);
@@ -397,6 +417,7 @@ export function EventSection({
                 event={event}
                 status={statusOf(event, today)}
                 actionLabel={showEnded ? "この条件で計算" : "プランを作る"}
+                highlighted={highlighted?.includes(event.id) ?? false}
                 disabled={disabled}
                 starting={starting}
                 onCreate={onCreate}

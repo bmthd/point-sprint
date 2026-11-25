@@ -15,16 +15,25 @@ export function endedLatestFirst(events: OfficialEvent[], today: string): Offici
     );
 }
 
-/** Prefer a single running event, then a single upcoming event, then the latest ended event. */
-export function selectStartEvent(
-  events: OfficialEvent[],
-  today: string,
-): OfficialEvent | undefined {
+/**
+ * What a plan can be started for: one event, with whether it has `ended`; the `events` to choose
+ * from; or `none`.
+ */
+export type StartEventChoice =
+  | { kind: "one"; event: OfficialEvent; ended: boolean }
+  | { kind: "many"; events: OfficialEvent[] }
+  | { kind: "none" };
+
+/** The running events, else the upcoming ones, else the latest that ended. */
+export function startEventChoice(events: OfficialEvent[], today: string): StartEventChoice {
   const running = events.filter(({ period }) => period.start <= today && today <= period.end);
   const upcoming = events.filter(({ period }) => period.start > today);
-  const latestEnded = endedLatestFirst(events, today).slice(0, 1);
+  const [latestEnded] = endedLatestFirst(events, today);
 
-  const candidates = [running, upcoming, latestEnded].find((group) => group.length > 0) ?? [];
-  const [only, ...rest] = candidates;
-  return only !== undefined && rest.length === 0 ? only : undefined;
+  const ahead = running.length > 0 ? running : upcoming;
+  const [only, ...rest] = ahead;
+  if (only !== undefined && rest.length === 0) return { kind: "one", event: only, ended: false };
+  if (only !== undefined) return { kind: "many", events: ahead };
+  if (latestEnded !== undefined) return { kind: "one", event: latestEnded, ended: true };
+  return { kind: "none" };
 }

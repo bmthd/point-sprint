@@ -630,22 +630,21 @@ test("starts a plan for the one event running", async () => {
   expect(created?.officialEventId).toBe("marathon-2026-10");
 });
 
-test("asks before starting a plan whose name is taken", async () => {
+test("opens the plan already made for the running event instead of starting another", async () => {
   const repository = createMemoryRepository({
     plans: [plan(PLAN_A, "10月 お買い物マラソン&ジャンル祭", "2026-10-01T00:00:00.000Z", 0)],
   });
-  const { screen } = await renderTopPage(repository);
+  const { screen, router } = await renderTopPage(repository);
   await expect.element(screen.getByText("開催中")).toBeVisible();
 
-  await screen.getByRole("button", { name: "計算をはじめる" }).click();
+  await screen.getByRole("button", { name: "続きを計算する" }).click();
 
-  await expect
-    .element(screen.getByRole("dialog", { name: "同じ名前のプランがあります" }))
-    .toBeVisible();
+  await expect.poll(() => router.state.location.search).toEqual({ id: PLAN_A });
+  expect(router.state.location.pathname).toBe("/plan");
   expect(await repository.plans.list()).toHaveLength(1);
 });
 
-test("waits for the saved plans before starting one, so a taken name is asked about", async () => {
+test("waits for the saved plans before starting one, so the one already made is opened", async () => {
   const repository = createMemoryRepository({
     plans: [plan(PLAN_A, "10月 お買い物マラソン&ジャンル祭", "2026-10-01T00:00:00.000Z", 0)],
   });
@@ -658,18 +657,15 @@ test("waits for the saved plans before starting one, so a taken name is asked ab
     await loaded;
     return list();
   };
-  const { screen } = await renderTopPage(repository);
+  const { screen, router } = await renderTopPage(repository);
   await expect.element(screen.getByText("開催中")).toBeVisible();
 
-  const start = screen.getByRole("button", { name: "計算をはじめる" });
-  await expect.element(start).toBeDisabled();
+  await expect.element(screen.getByRole("button", { name: "計算をはじめる" })).toBeDisabled();
 
   load();
-  await start.click();
+  await screen.getByRole("button", { name: "続きを計算する" }).click();
 
-  await expect
-    .element(screen.getByRole("dialog", { name: "同じ名前のプランがあります" }))
-    .toBeVisible();
+  await expect.poll(() => router.state.location.search).toEqual({ id: PLAN_A });
   expect(await repository.plans.list()).toHaveLength(1);
 });
 
@@ -700,7 +696,7 @@ test("stays on the page with the buttons held until the plan is saved", async ()
   await expect.poll(() => router.state.location.pathname).toBe("/plan");
 });
 
-test("takes the visitor to the events when two are running", async () => {
+test("takes the visitor to the two events running, outlined, to choose between", async () => {
   const repository = createMemoryRepository();
   const second = marathon({
     id: "marathon-2026-10-second",
@@ -713,9 +709,16 @@ test("takes the visitor to the events when two are running", async () => {
   });
   await expect.element(screen.getByText("お買い物マラソン別枠")).toBeVisible();
 
-  await screen.getByRole("button", { name: "計算をはじめる" }).click();
+  await screen.getByRole("button", { name: "イベントを選んで計算" }).click();
 
   await expect.element(screen.getByRole("heading", { name: "イベント" })).toHaveFocus();
+  const outlined = () =>
+    screen
+      .getByRole("listitem")
+      .elements()
+      .filter((item) => item.querySelector("[data-highlighted]"))
+      .map((item) => item.querySelector("p")?.textContent);
+  await expect.poll(outlined).toEqual(["お買い物マラソン&ジャンル祭", "お買い物マラソン別枠"]);
   expect(router.state.location.pathname).toBe("/");
   expect(await repository.plans.list()).toHaveLength(0);
 });
@@ -782,7 +785,7 @@ test("starts a plan for the same ended event the list shows when none is ahead",
   const shown = screen.getByRole("listitem").filter({ hasText: "この条件で計算" });
   await expect.element(shown.getByText("お買い物マラソン短め")).toBeVisible();
 
-  await screen.getByRole("button", { name: "計算をはじめる" }).click();
+  await screen.getByRole("button", { name: "前回の条件で計算" }).click();
 
   await expect.poll(() => router.state.location.pathname).toBe("/plan");
   const [created] = await repository.plans.list();

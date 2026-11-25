@@ -1,4 +1,5 @@
 import {
+  ArrowDownIcon,
   ArrowRightIcon,
   Badge,
   Box,
@@ -120,17 +121,21 @@ function StepLine() {
 /**
  * The top page's first screen: what the tool is, how to start, and beside them `aside` (the sample,
  * or the visitor's plans). On a wide screen it grows to the height the page leaves it and keeps its
- * content in the middle. `loading` shows that the plan its button started is being made, and
- * `failed` that it could not be saved.
+ * content in the middle. `label` says where its button goes, `toEvents` that it goes down to the
+ * events, `loading` that the plan it started is being made, and `failed` that it could not be saved.
  */
 export function Hero({
   onStart,
+  label,
+  toEvents,
   disabled,
   loading,
   failed,
   aside,
 }: {
   onStart: () => void;
+  label: string;
+  toEvents: boolean;
   disabled: boolean;
   loading: boolean;
   failed: boolean;
@@ -213,9 +218,10 @@ export function Hero({
               minW={{ base: "18rem", lg: "auto" }}
               disabled={disabled}
               loading={loading}
+              endIcon={toEvents ? <ArrowDownIcon /> : undefined}
               onClick={onStart}
             >
-              計算をはじめる
+              {label}
             </Button>
           </Flex>
           {failed ? (
