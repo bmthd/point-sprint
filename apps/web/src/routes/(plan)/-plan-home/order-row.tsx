@@ -2,8 +2,14 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import { focus, getInput, reset, useField, useForm, validate } from "@formisch/react";
-import { type Order, type Shop, taxExcludedTarget, taxIncludedTarget } from "@workspaces/domain";
+import { getInput, reset, useField, useForm, validate } from "@formisch/react";
+import {
+  type LineItem,
+  type Order,
+  type Shop,
+  taxExcludedTarget,
+  taxIncludedTarget,
+} from "@workspaces/domain";
 import {
   Box,
   Collapse,
@@ -82,7 +88,6 @@ import {
   ROW_GAP,
   RowToggle,
   rowToggleCss,
-  textBoxProps,
 } from "./inline-text.tsx";
 import type { DragStart } from "./use-order-drag.ts";
 
@@ -118,7 +123,8 @@ export const rowColumns = `24px 56px 36px minmax(0, 1fr) ${AMOUNT_COLUMN} ${POIN
 
 /**
  * Whether the row edits the order's name and amount itself: one item, bought once, without a
- * coupon. Any other order is edited in its opened row. A stopgap until #344 gives each item a line.
+ * coupon. Any other order shows its total on its row, and a line under it for each item
+ * (`ItemLines`), whose name and unit price are edited there.
  */
 export function isSimpleOrder(order: Order) {
   return !hasDetails(order);
@@ -259,7 +265,6 @@ function OrderEditor({
         form={form}
         plan={plan}
         autofill={autofill}
-        simple={isSimpleOrder(order)}
         original={order}
         onItemRemoved={() => void commit()}
       />
@@ -466,24 +471,36 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
             <Text as="span" flex="none" fontVariantNumeric="tabular-nums">
               {monthDayWithWeekday(order.date)}
             </Text>
+            {simple ? null : (
+              <Text as="span" flex="none" fontVariantNumeric="tabular-nums">
+                {`商品 ${order.lineItems.length} 点`}
+              </Text>
+            )}
           </Flex>
-          <InlineText
-            form={form}
-            path={NAME_PATH}
-            commit={commit}
-            label={`${shopName}の注文の商品名`}
-            previewLabel={`${shopName}の注文の商品名 ${title}`}
-            preview={title || "商品名"}
-            textProps={{
-              fontSize: "sm",
-              fontWeight: "medium",
-              _placeholder: { fontWeight: "normal", color: "fg.muted" },
-              "data-placeholder": dataAttr(!title),
-            }}
-            inset={NAME_INSET}
-            grow
-            onPasteUrl={pasteUrl}
-          />
+          {simple ? (
+            <InlineText
+              form={form}
+              path={NAME_PATH}
+              commit={commit}
+              label={`${shopName}の注文の商品名`}
+              previewLabel={`${shopName}の注文の商品名 ${title}`}
+              preview={title || "商品名"}
+              textProps={{
+                fontSize: "sm",
+                fontWeight: "medium",
+                _placeholder: { fontWeight: "normal", color: "fg.muted" },
+                "data-placeholder": dataAttr(!title),
+              }}
+              inset={NAME_INSET}
+              grow
+              onPasteUrl={pasteUrl}
+            />
+          ) : (
+            // Each item's name is edited on its own line below.
+            <Text as="span" h="22px" lineHeight="22px" fontSize="sm" color="fg.muted" truncated>
+              {order.lineItems.map((item) => item.name).join("・")}
+            </Text>
+          )}
           {/* Kept, one chip high, on rows without campaigns so every closed row is as tall. */}
           <Flex as="span" wrap="wrap" gap="1" minH="5.5">
             {points.campaigns.map((label) => (
@@ -501,12 +518,9 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
           minW="0"
           fontSize="sm"
           fontVariantNumeric="tabular-nums"
-          onKeyDown={(event: KeyboardEvent) => {
-            if (event.key === "Tab" && !event.shiftKey && !simple) openOnTab();
-          }}
         >
           <Text as="span" h="4" lineHeight="16px" fontSize="2xs" color="fg.muted">
-            税込 {taxLabel(order.lineItems)}
+            {simple ? `税込 ${taxLabel(order.lineItems)}` : "合計"}
           </Text>
           {simple ? (
             <InlineText
@@ -523,29 +537,10 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
               onTab={openOnTab}
             />
           ) : (
-            // Not a plain item: its amount is edited in the opened row, which a press opens.
-            <Box
-              as="button"
-              type="button"
-              {...textBoxProps(AMOUNT_INSET)}
-              textAlign="end"
-              lineHeight="20px"
-              position="relative"
-              _before={{
-                content: '""',
-                position: "absolute",
-                insetBlock: "-12px",
-                insetInline: "0",
-              }}
-              _hover={{ bg: "bg.subtle" }}
-              aria-label={`${shopName}の注文の金額 ${yen(amount)}（開いて商品ごとに直す）`}
-              onClick={() => {
-                setOpenOrderId(orderId);
-                requestAnimationFrame(() => focus(form, { path: AMOUNT_PATH }));
-              }}
-            >
+            // The sum of the items, each edited on its own line below.
+            <Text as="span" h="22px" lineHeight="22px">
               {yen(amount)}
-            </Box>
+            </Text>
           )}
           <Box h="5.5" />
         </Flex>
@@ -606,6 +601,16 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
           }}
         />
       </Box>
+      {simple ? null : (
+        <ItemLines
+          order={order}
+          form={form}
+          commit={commit}
+          shopName={shopName}
+          itemPoints={points.itemPoints}
+          onPasteUrl={pasteUrl}
+        />
+      )}
       <PendingOrderPreview form={form} planId={planId} order={order} open={open} />
       {/* It slides open and shut, so a press shows which order the fields below belong to. */}
       {/* Once open, the window scrolls only if 「複製」 and 「削除」 are off it, as little as it can. */}
@@ -656,5 +661,125 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
         </Flex>
       </Collapse>
     </List.Item>
+  );
+}
+
+/** What an item's line says after its name: its quantity and its coupon, when it has them. */
+function itemExtras(item: LineItem) {
+  return [
+    ...(item.quantity === 1 ? [] : [`× ${item.quantity}`]),
+    ...(item.discount ? [`クーポン −${yen(item.discount)}`] : []),
+  ].join("・");
+}
+
+/**
+ * The lines under an order of more than a plain item, one 44px line per item, in the row's
+ * columns. Its name and unit price are edited in place, as a plain order's are on its row; its
+ * quantity and coupon show small after the name, and its points at the right.
+ */
+function ItemLines({
+  order,
+  form,
+  commit,
+  shopName,
+  itemPoints,
+  onPasteUrl,
+}: {
+  order: Order;
+  form: OrderForm;
+  commit: () => Promise<CommitResult>;
+  shopName: string;
+  itemPoints: Record<string, number>;
+  /** A URL pasted into the first item's name or unit price. */
+  onPasteUrl: (url: string) => void;
+}) {
+  return (
+    <Box
+      borderTopWidth="1px"
+      borderStyle="dashed"
+      // A dashed line between the items' lines.
+      _notFirstChild={{ borderTopWidth: "1px", borderStyle: "dashed" }}
+    >
+      {order.lineItems.map((item, index) => {
+        const name = `${shopName}の注文の商品${index + 1}`;
+        const extras = itemExtras(item);
+        const pasteUrl = index === 0 ? onPasteUrl : undefined;
+        return (
+          <Box
+            key={item.id}
+            display="grid"
+            gridTemplateColumns={rowColumns}
+            alignItems="center"
+            gap={ROW_GAP}
+            px="3"
+            h="11"
+          >
+            {/* An elbow in the number's column, from the order's row to the item. */}
+            <Box
+              aria-hidden
+              gridColumn="3"
+              justifySelf="end"
+              w="2.5"
+              h="22px"
+              transform="translateY(-6px)"
+              borderStartWidth="1px"
+              borderBottomWidth="1px"
+              borderColor="border.emphasized"
+              roundedBottomStart="l2"
+            />
+            <Flex minW="0" align="center" gap="2" position="relative">
+              <Box flex="1" minW="0">
+                <InlineText
+                  form={form}
+                  path={["items", index, "name"]}
+                  commit={commit}
+                  label={`${name}の商品名`}
+                  previewLabel={`${name}の商品名 ${item.name}`}
+                  preview={item.name}
+                  textProps={{ fontSize: "sm" }}
+                  inset={NAME_INSET}
+                  grow
+                  onPasteUrl={pasteUrl}
+                />
+              </Box>
+              {extras ? (
+                <Text
+                  as="span"
+                  flex="none"
+                  fontSize="2xs"
+                  color="fg.muted"
+                  fontVariantNumeric="tabular-nums"
+                >
+                  {extras}
+                </Text>
+              ) : null}
+            </Flex>
+            <Box position="relative" minW="0" fontSize="sm" fontVariantNumeric="tabular-nums">
+              <InlineText
+                form={form}
+                path={["items", index, "unitPrice"]}
+                commit={commit}
+                label={`${name}の単価`}
+                previewLabel={`${name}の単価 ${yen(item.unitPrice)}`}
+                preview={yen(item.unitPrice)}
+                inset={AMOUNT_INSET}
+                align="end"
+                inputMode="numeric"
+                onPasteUrl={pasteUrl}
+              />
+            </Box>
+            <Text
+              as="span"
+              justifySelf="end"
+              fontSize="xs"
+              color="fg.muted"
+              fontVariantNumeric="tabular-nums"
+            >
+              {pointsText(itemPoints[item.id] ?? 0)}
+            </Text>
+          </Box>
+        );
+      })}
+    </Box>
   );
 }

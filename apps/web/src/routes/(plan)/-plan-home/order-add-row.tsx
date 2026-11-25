@@ -251,7 +251,7 @@ export function OrderAddRow({
         }}
       >
         <Flex direction="column" gap="3.5" borderTopWidth="1px" pt="3.5" pb="4" px="4">
-          <OrderDetailFields form={form} plan={plan} autofill={autofill} simple />
+          <OrderDetailFields form={form} plan={plan} autofill={autofill} />
           {/* A press on 「¥N で使い切る」 keeps the caret in the amount it changes. */}
           <Box
             onPointerDown={(event: PointerEvent) => {

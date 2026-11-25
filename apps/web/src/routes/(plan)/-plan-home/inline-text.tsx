@@ -15,8 +15,7 @@ import {
   useState,
 } from "react";
 import {
-  AMOUNT_PATH,
-  NAME_PATH,
+  type ItemTextPath,
   type OrderForm,
   urlFromPastedText,
 } from "#/routes/(plan)/-order-form-store.ts";
@@ -148,7 +147,8 @@ export function InlineText({
   textProps,
 }: {
   form: OrderForm;
-  path: typeof NAME_PATH | typeof AMOUNT_PATH;
+  /** An item's name or amount: the first item's on a plain order's row, each item's on its own line. */
+  path: ItemTextPath;
   commit: () => Promise<CommitResult>;
   /** The input's name, 「ショップ0の注文の商品名」. */
   label: string;
@@ -182,12 +182,13 @@ export function InlineText({
   /** Puts a value back in the field, without its error. */
   const restore = (before: string) => {
     // Formisch takes one path at a time, not either of two.
-    if (path === AMOUNT_PATH) {
-      setInput(form, { path: AMOUNT_PATH, input: before });
-      setErrors(form, { path: AMOUNT_PATH, errors: null });
+    const [, index, key] = path;
+    if (key === "unitPrice") {
+      setInput(form, { path: ["items", index, "unitPrice"], input: before });
+      setErrors(form, { path: ["items", index, "unitPrice"], errors: null });
     } else {
-      setInput(form, { path: NAME_PATH, input: before });
-      setErrors(form, { path: NAME_PATH, errors: null });
+      setInput(form, { path: ["items", index, "name"], input: before });
+      setErrors(form, { path: ["items", index, "name"], errors: null });
     }
   };
 
