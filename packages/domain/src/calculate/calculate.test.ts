@@ -338,6 +338,36 @@ describe("calculate", () => {
     ]);
   });
 
+  test("minShopAmount leaves out the orders of shops below it over the benefit's days", () => {
+    const perShop: Benefit = {
+      id: "5c000000-0000-4000-8000-000000000003",
+      kind: "rate-bonus",
+      category: "campaign",
+      label: "ラクマ購入",
+      enabled: true,
+      amountBasis: "tax-excluded",
+      capScope: "plan",
+      conditions: { minShopAmount: 1000 },
+      params: { rate: 1, roundingUnit: "item" },
+    };
+    const result = calculate(
+      plan(
+        [
+          // 660 + 550 = 1,210 円で、どちらの注文も対象になる。
+          order(ORDER_1, SHOP_A, [item(ITEM_1, 660)]),
+          order(ORDER_2, SHOP_A, [item(ITEM_2, 550)], "2026-10-06"),
+          order(ORDER_3, SHOP_B, [item(ITEM_3, 880)]),
+        ],
+        [perShop],
+      ),
+      shops,
+    );
+    expect(rowsOf(result, perShop.id)).toEqual([
+      { lineItemId: ITEM_1, source: perShop.id, points: 6 },
+      { lineItemId: ITEM_2, source: perShop.id, points: 5 },
+    ]);
+  });
+
   test("orders on the first and last days of a plan of the user's own days get no warning", () => {
     const result = calculate(
       plan([

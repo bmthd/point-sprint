@@ -5,6 +5,7 @@ import type { OfficialEvent } from "#/model/official-event.ts";
 import { PlanSchema } from "#/model/plan.ts";
 import { campaignTemplates } from "./campaigns.ts";
 import { createPlan } from "./create-plan.ts";
+import { isRakumaBenefit } from "./rakuma.ts";
 
 const now = "2026-10-04T12:34:56.000Z";
 const event: OfficialEvent = {
@@ -36,7 +37,7 @@ function idSequence() {
 
 test("copies the event benefits, and no SPU", () => {
   const plan = createPlan({ id: planId, name: "plan", event, now, newId: idSequence() });
-  expect(plan.benefits).toHaveLength(event.benefits.length + fixedTemplates.length);
+  expect(plan.benefits).toHaveLength(event.benefits.length + 1 + fixedTemplates.length);
   expect(plan.benefits.some((benefit) => benefit.category === "spu")).toBe(false);
   expect(plan.officialEventId).toBe(event.id);
   expect(plan.period).toEqual(event.period);
@@ -47,6 +48,26 @@ test("copies the event benefits, and no SPU", () => {
   first.enabled = !first.enabled;
   first.label = "changed";
   expect(event).toEqual(before);
+});
+
+test("a plan made from an event has the ラクマ購入 +1倍 of its days, off", () => {
+  const plan = createPlan({ id: planId, name: "plan", event, now, newId: idSequence() });
+  const rakuma = plan.benefits.filter(isRakumaBenefit);
+  expect(rakuma).toHaveLength(1);
+  expect(rakuma[0]).toMatchObject({
+    kind: "rate-bonus",
+    enabled: false,
+    capScope: "campaign",
+    sharedKey: "rakuma:marathon-2026-10-04",
+    conditions: {
+      dateRule: { type: "range", start: "2026-10-04", end: "2026-10-09" },
+      minShopAmount: 1000,
+    },
+    params: { rate: 1, cap: 500 },
+  });
+  expect(v.parse(PlanSchema, plan)).toEqual(plan);
+  const own = createPlan({ id: planId, name: "plan", now, newId: idSequence() });
+  expect(own.benefits.some(isRakumaBenefit)).toBe(false);
 });
 
 test("plan without event uses today as period", () => {

@@ -4,6 +4,7 @@ import type { OfficialEvent } from "#/model/official-event.ts";
 import type { Plan } from "#/model/plan.ts";
 import { campaignTemplates } from "./campaigns.ts";
 import { instantiateCampaign } from "./instantiate.ts";
+import { rakumaFor } from "./rakuma.ts";
 
 const tokyoDate = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Tokyo",
@@ -32,7 +33,9 @@ export function createPlan(input: {
     ...(event ? { officialEventId: event.id } : {}),
     period: event ? { ...event.period } : { start: today, end: today },
     // The SPU is not the plan's: it is the account's for each month (`planWithSpu`).
-    benefits: [...structuredClone(event?.benefits ?? []), ...fixedCampaigns],
+    benefits: event
+      ? [...structuredClone(event.benefits), rakumaFor(event, undefined, newId), ...fixedCampaigns]
+      : fixedCampaigns,
     orders: [],
     updatedAt: now,
   };

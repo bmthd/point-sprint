@@ -110,6 +110,11 @@ export const ConditionsSchema = v.object({
   shopTags: v.optional(v.array(ShopTagSchema)),
   dateRule: v.optional(DateRuleSchema),
   minOrderAmount: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
+  /**
+   * Only the orders of a shop whose tax-included total over the benefit's days reaches this,
+   * counted as the shop-around counts a shop (ラクマ購入 +1倍).
+   */
+  minShopAmount: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
   orderTags: v.optional(v.array(OrderTagSchema)),
   /** Only the orders of these months (`YYYY-MM`): an SPU item in the months it is on. */
   months: v.optional(v.array(MonthSchema)),
