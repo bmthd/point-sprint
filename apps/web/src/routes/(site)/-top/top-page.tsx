@@ -12,7 +12,7 @@ import { useToday } from "#/routes/-use-today.ts";
 import { EventSection } from "./event-section.tsx";
 import { Hero, SampleCard } from "./hero.tsx";
 import { PlanSection } from "./plan-section.tsx";
-import { eventPlanName, startLabel, startTarget } from "./start-target.ts";
+import { type StartTarget, eventPlanName, startLabel, startTarget } from "./start-target.ts";
 
 /** How long the events the hero's button leads to stay outlined. */
 const HIGHLIGHT_MS = 2400;
@@ -64,7 +64,11 @@ export function TopPage({
   }>();
   const { data: events, isError } = useAtomValue(officialEventsQueryAtom);
   // Events kept from before a read that failed are not offered: the list says they cannot be read.
-  const target = startTarget(isError ? undefined : events, shownToday, plans);
+  const liveTarget = startTarget(isError ? undefined : events, shownToday, plans);
+  // Where the button went when it was pressed, kept while the plan it started is saved: the plan
+  // is in the list before it is saved, and the button would say 「続きを計算する」 meanwhile.
+  const [pressedTarget, setPressedTarget] = useState<StartTarget>();
+  const target = creating && pressedTarget ? pressedTarget : liveTarget;
   // The events the hero's button asked to choose between, outlined in the list for a moment.
   const [highlighted, setHighlighted] = useState<string[]>();
   useEffect(() => {
@@ -74,6 +78,7 @@ export function TopPage({
   }, [highlighted]);
 
   const start = () => {
+    setPressedTarget(target);
     if (target.kind === "create") return create(target.event, "hero");
     if (target.kind === "resume") {
       return void navigate({ to: "/plan", search: { id: target.plan.id } });

@@ -17,7 +17,10 @@ export class TopPage {
     this.createPlanWithoutEventButton = page.getByRole("button", {
       name: "イベントを選ばずにプランを作る",
     });
-    this.startButton = page.getByRole("button", { name: "計算をはじめる" });
+    // The hero's button, whose words say where it goes by the events and the plans.
+    this.startButton = page.getByRole("button", {
+      name: /^(計算をはじめる|イベントを選んで計算|前回の条件で計算|続きを計算する)$/,
+    });
   }
 
   static async open(page: Page) {
