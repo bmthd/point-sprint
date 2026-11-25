@@ -32,8 +32,6 @@ function spu(
     category?: "base" | "spu";
     exclusiveGroup?: string;
     requires?: string;
-    /** Only for the orders paid with a 楽天カード. */
-    rakutenCard?: true;
   },
   enabled = false,
 ): Benefit {
@@ -52,7 +50,7 @@ function spu(
     capScope,
     conditions: {
       channels: [...SPU_CHANNELS],
-      ...(params.rakutenCard ? { rakutenCard: true } : {}),
+      ...(RAKUTEN_CARD_PARTS.has(id) ? { rakutenCard: true } : {}),
     },
     ...(params.exclusiveGroup === undefined ? {} : { exclusiveGroup: params.exclusiveGroup }),
     ...(params.requires === undefined ? {} : { requires: params.requires }),
@@ -70,6 +68,22 @@ export const PREMIUM_CARD_BONUS_ID = "b3acca83-be7b-4c8a-9637-7706296679d4";
  */
 export const BANK_CARD_ID = "1933c19c-0aa3-4052-8d5e-c0d07859a0a9";
 export const BANK_SALARY_ID = "3a7c47bd-3404-4dcb-9569-54989e63f077";
+
+/** What an SPU item that only orders paid with a 楽天カード get is: the card's or 楽天銀行's. */
+export type RakutenCardPart = "normal" | "bonus" | "bank";
+
+/**
+ * The SPU items that only orders paid with a 楽天カード get, by id: the card's normal points, its
+ * bonuses and 楽天銀行's. 楽天銀行's are 「楽天カードでの楽天市場のご購入金額」 (特典8). They get the
+ * `rakutenCard` condition.
+ */
+export const RAKUTEN_CARD_PARTS: ReadonlyMap<string, RakutenCardPart> = new Map([
+  [CARD_NORMAL_ID, "normal"],
+  [CARD_BONUS_ID, "bonus"],
+  [PREMIUM_CARD_BONUS_ID, "bonus"],
+  [BANK_CARD_ID, "bank"],
+  [BANK_SALARY_ID, "bank"],
+]);
 
 /** 通常ポイント: always on, whatever the month's SPU says. */
 export const NORMAL_POINT_ID = "c69441cb-ac51-4cf9-8ebd-a909a093907e";
@@ -125,7 +139,6 @@ export const standardSpu: Benefit[] = [
     roundingUnit: "order",
     capScope: "plan",
     category: "base",
-    rakutenCard: true,
   }),
   // 「1-2．楽天カード利用特典ポイント：+1倍」。SPU の特典として楽天市場から付与される。
   // 上限は「その他の対象カード：1,000ポイント」。
@@ -140,7 +153,6 @@ export const standardSpu: Benefit[] = [
     capScope: "month",
     exclusiveGroup: "rakuten-card",
     requires: CARD_NORMAL_ID,
-    rakutenCard: true,
   }),
   // 楽天プレミアムカード・楽天ブラックカード・楽天ビジネスカードの特典分。上限は月5,000ポイント
   // （上の特典分の「その他の対象カード」とは別の上限）。出典は上と同じ SPU のページ。
@@ -158,7 +170,6 @@ export const standardSpu: Benefit[] = [
       capScope: "month",
       exclusiveGroup: "rakuten-card",
       requires: CARD_NORMAL_ID,
-      rakutenCard: true,
     },
     false,
   ),
@@ -206,13 +217,11 @@ export const standardSpu: Benefit[] = [
     rate: 0.3,
     cap: 1000,
     exclusiveGroup: "rakuten-bank",
-    rakutenCard: true,
   }),
   spu(BANK_SALARY_ID, "楽天銀行（給与受取）", "/img/spu/service_bank.webp", {
     rate: 0.5,
     cap: 1000,
     exclusiveGroup: "rakuten-bank",
-    rakutenCard: true,
   }),
   // 「9-1 当月合計30,000円以上のポイント投資（投資信託）でポイント+0.5倍」「2,000ポイント」。
   spu(

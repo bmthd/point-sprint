@@ -12,6 +12,8 @@ import {
   closestDateInPeriod,
   matchesConditions,
   newId,
+  paidWithRakutenCard,
+  withRakutenCard,
 } from "@workspaces/domain";
 import * as v from "valibot";
 import type { ShopChange } from "#/state/mutations.ts";
@@ -147,7 +149,7 @@ export function inputOf(order: Order, shops: Shop[]): OrderFormInput {
     repeat: order.tags.includes("repeat"),
     brandDay: order.tags.includes("brand-day"),
     is24h: order.tags.includes("24h"),
-    rakutenCard: order.rakutenCard !== false,
+    rakutenCard: paidWithRakutenCard(order),
     onHold: order.onHold,
     items: order.lineItems.map((item) => ({
       id: item.id,
@@ -184,7 +186,6 @@ export function draftOf(
     ...orderPurchase(shopId, { channel: output.channel, shopTags: output.is39 ? ["39shop"] : [] }),
     date: output.date,
     onHold: output.onHold,
-    ...(output.rakutenCard ? {} : { rakutenCard: false }),
     tags: [
       ...(output.repeat ? (["repeat"] as const) : []),
       ...(output.brandDay ? (["brand-day"] as const) : []),
@@ -204,7 +205,9 @@ export function draftOf(
       };
     }),
   });
-  return parsed.success ? { order: parsed.output, shop, shopChange } : undefined;
+  return parsed.success
+    ? { order: withRakutenCard(parsed.output, output.rakutenCard), shop, shopChange }
+    : undefined;
 }
 
 /** The draft of a form's current input, or `undefined` while it is not valid. */

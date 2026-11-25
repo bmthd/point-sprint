@@ -92,3 +92,14 @@ export function orderShopContext(
     ? { channel: shop?.channel ?? null, shopTags: shop?.tags ?? null }
     : { channel: order.channel, shopTags: order.shopTags };
 }
+
+/** Whether the order was paid with a 楽天カード: unless it says otherwise, it was. */
+export function paidWithRakutenCard(order: Order): boolean {
+  return order.rakutenCard !== false;
+}
+
+/** The order paid with a 楽天カード or otherwise. Only an order paid otherwise stores it. */
+export function withRakutenCard(order: Order, paid: boolean): Order {
+  const { rakutenCard: _paid, ...rest } = order;
+  return paid ? rest : { ...rest, rakutenCard: false };
+}

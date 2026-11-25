@@ -3,7 +3,13 @@
 "use no memo";
 
 import { Field as FormField, useField } from "@formisch/react";
-import { type Order, type Plan, hasRakutenCardSpu, planAccountId } from "@workspaces/domain";
+import {
+  type Order,
+  type Plan,
+  type RakutenCardPart,
+  hasRakutenCardSpu,
+  planAccountId,
+} from "@workspaces/domain";
 import { Flex, Switch, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useDeferredValue, useId, useMemo } from "react";
@@ -12,12 +18,19 @@ import { asCalculatedAtom } from "#/state/derived.ts";
 import { plansAtom, shopsAtom, spuMonthsAtom } from "#/state/query-atoms.ts";
 import { type OrderForm, useFormInput } from "./-order-form-store.ts";
 import { draftOfInput } from "./-order-form.ts";
-import { rakutenCardPointsOf } from "./-order-editor/order-preview.tsx";
+import { rakutenCardLossOf } from "./-order-editor/order-preview.tsx";
+
+const PART_NAMES: Record<RakutenCardPart, string> = {
+  normal: "通常分",
+  bonus: "特典分",
+  bank: "楽天銀行",
+};
 
 /** 「通常分と特典分」, or with 楽天銀行 「通常分・特典分・楽天銀行」. */
-function partsText(parts: string[]) {
-  if (parts.length === 0) return "楽天カードの分";
-  return parts.length === 2 ? parts.join("と") : parts.join("・");
+function partsText(parts: RakutenCardPart[]) {
+  const names = parts.map((part) => PART_NAMES[part]);
+  if (names.length === 0) return "楽天カードの分";
+  return names.length === 2 ? names.join("と") : names.join("・");
 }
 
 /** What the order gets from the 楽天カード's SPU items, calculated a keystroke behind the form. */
@@ -30,7 +43,7 @@ function useRakutenCardPoints(form: OrderForm, planId: string, original: Order |
   return useMemo(() => {
     const draft = draftOfInput(JSON.parse(deferred), shops, original);
     return draft
-      ? rakutenCardPointsOf({ plans, asCalculated, shops, planId, draft, original })
+      ? rakutenCardLossOf({ plans, asCalculated, shops, planId, draft, original })
       : undefined;
   }, [deferred, plans, shops, asCalculated, planId, original]);
 }

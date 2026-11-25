@@ -7,7 +7,7 @@ import { channels } from "#/channels/index.ts";
 import { matchesConditions } from "#/conditions/matches.ts";
 import { type Benefit, isTwoShopCampaign } from "#/model/benefit.ts";
 import type { ChannelId, OrderTag, ShopTag } from "#/model/common.ts";
-import { type LineItem, hasShop, orderShopContext } from "#/model/order.ts";
+import { type LineItem, hasShop, orderShopContext, paidWithRakutenCard } from "#/model/order.ts";
 import { type Plan, planAccountId } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
 import { capGroupKey, resolveGroupCap } from "./cap-groups.ts";
@@ -177,7 +177,7 @@ function orderContexts(plan: Plan, shops: Map<string, Shop>, warnings: Calculati
       date: order.date,
       orderTaxIncluded: order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0),
       orderTags: order.tags,
-      rakutenCard: order.rakutenCard !== false,
+      rakutenCard: paidWithRakutenCard(order),
       lineItems: order.lineItems,
     };
   });

@@ -1,4 +1,4 @@
-import { CARRIED_SPU_IDS, NORMAL_POINT_ID, standardSpu } from "#/master/spu.ts";
+import { CARRIED_SPU_IDS, NORMAL_POINT_ID, RAKUTEN_CARD_PARTS, standardSpu } from "#/master/spu.ts";
 import type { Benefit } from "#/model/benefit.ts";
 import { monthsOf } from "#/model/common.ts";
 import { type Plan, planAccountId } from "#/model/plan.ts";
@@ -31,7 +31,7 @@ export function spuIdsIn(months: SpuMonth[], accountId: string, month: string): 
  */
 export function hasRakutenCardSpu(months: SpuMonth[], accountId: string, month: string): boolean {
   const ids = spuIdsIn(months, accountId, month);
-  return standardSpu.some((benefit) => benefit.conditions.rakutenCard && ids.has(benefit.id));
+  return [...RAKUTEN_CARD_PARTS.keys()].some((id) => ids.has(id));
 }
 
 /** `standardSpu`, each item on exactly when `ids` has it. */

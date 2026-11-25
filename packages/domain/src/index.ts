@@ -48,6 +48,8 @@ export {
   withShop,
   hasShop,
   orderShopContext,
+  paidWithRakutenCard,
+  withRakutenCard,
 } from "./model/order.ts";
 export {
   PlanSchema,
@@ -85,6 +87,7 @@ export { spendTierRate, type SpendTier } from "./benefit-kinds/spend-tiers.ts";
 export type { BenefitKindDef, EligibleItem, RoundingUnit } from "./benefit-kinds/index.ts";
 export { SHOP_AROUND_MIN_AMOUNT, countShops } from "./calculate/shop-count.ts";
 export { calculate, calculateAll, totalCountedWith } from "./calculate/calculate.ts";
+export { rakutenCardLoss } from "./calculate/rakuten-card.ts";
 export { capGroupKey } from "./calculate/cap-groups.ts";
 export { POINT_GROUPS, pointGroupOf, type PointGroup } from "./calculate/point-group.ts";
 export {
@@ -117,6 +120,7 @@ export {
   CARRIED_SPU_IDS,
   KOBO_SPU_ID,
   NORMAL_POINT_ID,
+  type RakutenCardPart,
   spuPurchaseRules,
   standardSpu,
 } from "./master/spu.ts";

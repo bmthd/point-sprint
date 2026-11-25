@@ -9,6 +9,7 @@ import {
   capLines,
   taxExcludedTarget,
   orderDelta,
+  rakutenCardLoss,
 } from "@workspaces/domain";
 import { Flex, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
@@ -71,42 +72,18 @@ function plansWithDraft({ plans, asCalculated, planId, draft, original, ...input
   return { shops, withDraft };
 }
 
-/** The names of the parts paying with a 楽天カード gets, in the order they are told. */
-const CARD_PARTS = ["通常分", "特典分", "楽天銀行"] as const;
-
 /**
- * The points the draft gets from the SPU items only orders paid with a 楽天カード get, after their
- * caps: what paying it otherwise loses. `parts` names them: the card's normal points, its bonus
- * and 楽天銀行's.
+ * What paying the draft otherwise loses (`rakutenCardLoss`), with the draft added to its plan or in
+ * place of the order it edits.
  */
-export function rakutenCardPointsOf(input: DraftInput): {
-  points: number;
-  parts: (typeof CARD_PARTS)[number][];
-} {
-  const { rakutenCard: _paid, ...order } = input.draft.order;
-  const { shops, withDraft } = plansWithDraft({ ...input, draft: { ...input.draft, order } });
-  // The card's normal points count as 通常, its bonuses require them, and 楽天銀行's do neither.
-  const cardItems = new Map(
-    withDraft
-      .find((plan) => plan.id === input.planId)
-      ?.benefits.filter((benefit) => benefit.conditions.rakutenCard)
-      .map((benefit) => [
-        benefit.id,
-        benefit.category === "base"
-          ? CARD_PARTS[0]
-          : benefit.requires !== undefined
-            ? CARD_PARTS[1]
-            : CARD_PARTS[2],
-      ]),
-  );
-  const rows = pointsOf(calculateAll(withDraft, shops).get(input.planId), order).filter(
-    (row) => cardItems.has(row.source) && row.points > 0,
-  );
-  const parts = new Set(rows.map((row) => cardItems.get(row.source)));
-  return {
-    points: rows.reduce((sum, row) => sum + row.points, 0),
-    parts: CARD_PARTS.filter((part) => parts.has(part)),
-  };
+export function rakutenCardLossOf(input: DraftInput) {
+  const { shops, withDraft } = plansWithDraft(input);
+  return rakutenCardLoss({
+    plans: withDraft,
+    shops,
+    planId: input.planId,
+    orderId: input.draft.order.id,
+  });
 }
 
 /**

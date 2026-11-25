@@ -2,7 +2,7 @@ import { taxExcludedTarget, taxIncludedTarget } from "#/amounts/target-amount.ts
 import { benefitKinds, pointsFor } from "#/benefit-kinds/index.ts";
 import { channels } from "#/channels/index.ts";
 import { matchesConditions } from "#/conditions/matches.ts";
-import { type Order, orderShopContext } from "#/model/order.ts";
+import { type Order, orderShopContext, paidWithRakutenCard } from "#/model/order.ts";
 import type { Plan } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
 import { calculateAll } from "./calculate.ts";
@@ -59,7 +59,7 @@ export function capFlows(input: {
     date: order.date,
     orderTaxIncluded: order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0),
     orderTags: order.tags,
-    rakutenCard: order.rakutenCard !== false,
+    rakutenCard: paidWithRakutenCard(order),
   };
   const receives = context.channel !== null && channels[context.channel].receivesShopAround;
   const itemIds = new Set(order.lineItems.map((item) => item.id));
