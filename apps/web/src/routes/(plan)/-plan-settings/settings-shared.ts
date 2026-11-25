@@ -7,6 +7,7 @@ import {
   useContext,
   useState,
 } from "react";
+import { weekdaysText } from "#/ui/dates.ts";
 
 /** `2026-10-06` → `10/6`. */
 export function monthDay(date: string) {
@@ -20,6 +21,8 @@ export function whenText(rule: DateRule | undefined): string {
   switch (rule.type) {
     case "daysOfMonth":
       return `毎月${rule.days.join("・")}日`;
+    case "daysOfWeek":
+      return `毎週${weekdaysText(rule.days)}`;
     case "dates":
       return rule.dates.map(monthDay).join("・");
     case "range":

@@ -23,8 +23,9 @@ export type { Migration, SeedSource, StoreName } from "./runner.ts";
 // 15 shortened new ids to 10 lowercase letters and digits; saved uuids stay valid.
 // 16 added the ラクマ購入 +1倍 to the plans of official events, and the `minShopAmount` condition.
 // 17 added the order's `rakutenCard` and the `rakutenCard` condition.
+// 18 added the `daysOfWeek` date rule.
 // The version bumps keep older tabs from reading or overwriting values they do not understand.
-export const CURRENT_SCHEMA_VERSION = 17;
+export const CURRENT_SCHEMA_VERSION = 18;
 
 export const migrations: Migration[] = [
   cardRequiresMigration,

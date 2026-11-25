@@ -20,6 +20,14 @@ test("days ending in 0 or 5", () => {
   expect(matchesConditions(conditions, { ...ctx, date: "2026-10-06" })).toBe(false);
 });
 
+test("days of the week", () => {
+  // 2026-10-06 is a Tuesday, 10-07 a Wednesday, 10-08 a Thursday.
+  const conditions: Conditions = { dateRule: { type: "daysOfWeek", days: [2, 4] } };
+  expect(matchesConditions(conditions, { ...ctx, date: "2026-10-06" })).toBe(true);
+  expect(matchesConditions(conditions, { ...ctx, date: "2026-10-07" })).toBe(false);
+  expect(matchesConditions(conditions, { ...ctx, date: "2026-10-08" })).toBe(true);
+});
+
 test("channel filter", () => {
   expect(
     matchesConditions({ channels: ["rakuten-ichiba"] }, { ...ctx, channel: "rakuten-kobo" }),
