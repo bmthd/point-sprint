@@ -115,12 +115,24 @@ type BenefitLineItem = EligibleItem & { orderDate: string; taxIncluded: number }
 
 function eligibleItems(benefit: Benefit, orders: OrderContext[]): BenefitLineItem[] {
   const onlyReceiving = benefitKinds[benefit.kind].onlyReceivingChannels;
+  const matching = orders.filter(
+    (order) =>
+      !(onlyReceiving && (order.channel === null || !channels[order.channel].receivesShopAround)) &&
+      matchesConditions(benefit.conditions, order),
+  );
+  const { minShopAmount } = benefit.conditions;
+  // A shop's total over the benefit's days, as the shop-around counts it: an order without a shop
+  // stands alone.
+  const shopKey = (order: OrderContext) => order.shopId ?? order.orderId;
+  const shopTotals = new Map<string, number>();
+  for (const order of matching) {
+    shopTotals.set(shopKey(order), (shopTotals.get(shopKey(order)) ?? 0) + order.orderTaxIncluded);
+  }
   const items: BenefitLineItem[] = [];
-  for (const order of orders) {
-    if (onlyReceiving && (order.channel === null || !channels[order.channel].receivesShopAround)) {
+  for (const order of matching) {
+    if (minShopAmount !== undefined && (shopTotals.get(shopKey(order)) ?? 0) < minShopAmount) {
       continue;
     }
-    if (!matchesConditions(benefit.conditions, order)) continue;
     for (const item of order.lineItems) {
       items.push({
         lineItemId: item.id,

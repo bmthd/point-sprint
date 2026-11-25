@@ -130,6 +130,7 @@ export {
   templateOfCampaign,
 } from "./master/instantiate.ts";
 export { createPlan } from "./master/create-plan.ts";
+export { isRakumaBenefit } from "./master/rakuma.ts";
 export {
   addOrder,
   updateOrder,
