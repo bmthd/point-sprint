@@ -25,6 +25,7 @@ import { Route as sitemarkdownAboutRouteImport } from './routes/(site)/(markdown
 import { Route as sitemarkdownHelpRouteImport } from './routes/(site)/(markdown)/help.tsx'
 import { Route as sitemarkdownPrivacyRouteImport } from './routes/(site)/(markdown)/privacy.tsx'
 import { Route as sitemarkdownTermsRouteImport } from './routes/(site)/(markdown)/terms.tsx'
+import { Route as sitemarkdownWhyRouteImport } from './routes/(site)/(markdown)/why.tsx'
 import { Route as sitemarkdownGuidesIndexRouteImport } from './routes/(site)/(markdown)/guides/index.tsx'
 import { Route as sitemarkdownGuidesSlugRouteImport } from './routes/(site)/(markdown)/guides/$slug.tsx'
 
@@ -107,6 +108,11 @@ const sitemarkdownTermsRoute = sitemarkdownTermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => sitemarkdownRouteRoute,
 } as any)
+const sitemarkdownWhyRoute = sitemarkdownWhyRouteImport.update({
+  id: '/why',
+  path: '/why',
+  getParentRoute: () => sitemarkdownRouteRoute,
+} as any)
 const sitemarkdownGuidesIndexRoute = sitemarkdownGuidesIndexRouteImport.update({
   id: '/guides/',
   path: '/guides/',
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/help': typeof sitemarkdownHelpRoute
   '/privacy': typeof sitemarkdownPrivacyRoute
   '/terms': typeof sitemarkdownTermsRoute
+  '/why': typeof sitemarkdownWhyRoute
   '/guides/$slug': typeof sitemarkdownGuidesSlugRoute
   '/guides/': typeof sitemarkdownGuidesIndexRoute
 }
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/help': typeof sitemarkdownHelpRoute
   '/privacy': typeof sitemarkdownPrivacyRoute
   '/terms': typeof sitemarkdownTermsRoute
+  '/why': typeof sitemarkdownWhyRoute
   '/guides/$slug': typeof sitemarkdownGuidesSlugRoute
   '/guides': typeof sitemarkdownGuidesIndexRoute
 }
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/(site)/(markdown)/help': typeof sitemarkdownHelpRoute
   '/(site)/(markdown)/privacy': typeof sitemarkdownPrivacyRoute
   '/(site)/(markdown)/terms': typeof sitemarkdownTermsRoute
+  '/(site)/(markdown)/why': typeof sitemarkdownWhyRoute
   '/(site)/(markdown)/guides/$slug': typeof sitemarkdownGuidesSlugRoute
   '/(site)/(markdown)/guides/': typeof sitemarkdownGuidesIndexRoute
 }
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/privacy'
     | '/terms'
+    | '/why'
     | '/guides/$slug'
     | '/guides/'
   fileRoutesByTo: FileRoutesByTo
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/privacy'
     | '/terms'
+    | '/why'
     | '/guides/$slug'
     | '/guides'
   id:
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/(site)/(markdown)/help'
     | '/(site)/(markdown)/privacy'
     | '/(site)/(markdown)/terms'
+    | '/(site)/(markdown)/why'
     | '/(site)/(markdown)/guides/$slug'
     | '/(site)/(markdown)/guides/'
   fileRoutesById: FileRoutesById
@@ -367,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof sitemarkdownTermsRouteImport
       parentRoute: typeof sitemarkdownRouteRoute
     }
+    '/(site)/(markdown)/why': {
+      id: '/(site)/(markdown)/why'
+      path: '/why'
+      fullPath: '/why'
+      preLoaderRoute: typeof sitemarkdownWhyRouteImport
+      parentRoute: typeof sitemarkdownRouteRoute
+    }
     '/(site)/(markdown)/guides/': {
       id: '/(site)/(markdown)/guides/'
       path: '/guides'
@@ -389,6 +408,7 @@ interface sitemarkdownRouteRouteChildren {
   sitemarkdownHelpRoute: typeof sitemarkdownHelpRoute
   sitemarkdownPrivacyRoute: typeof sitemarkdownPrivacyRoute
   sitemarkdownTermsRoute: typeof sitemarkdownTermsRoute
+  sitemarkdownWhyRoute: typeof sitemarkdownWhyRoute
   sitemarkdownGuidesSlugRoute: typeof sitemarkdownGuidesSlugRoute
   sitemarkdownGuidesIndexRoute: typeof sitemarkdownGuidesIndexRoute
 }
@@ -398,6 +418,7 @@ const sitemarkdownRouteRouteChildren: sitemarkdownRouteRouteChildren = {
   sitemarkdownHelpRoute: sitemarkdownHelpRoute,
   sitemarkdownPrivacyRoute: sitemarkdownPrivacyRoute,
   sitemarkdownTermsRoute: sitemarkdownTermsRoute,
+  sitemarkdownWhyRoute: sitemarkdownWhyRoute,
   sitemarkdownGuidesSlugRoute: sitemarkdownGuidesSlugRoute,
   sitemarkdownGuidesIndexRoute: sitemarkdownGuidesIndexRoute,
 }

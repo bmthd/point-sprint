@@ -11,6 +11,7 @@ export const prerenderedPages = [
   "/settings",
   "/spu",
   "/about",
+  "/why",
   "/help",
   "/terms",
   "/privacy",

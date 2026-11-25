@@ -11,6 +11,7 @@ type FooterLink = { to: LinkProps["to"]; label: string } | { href: string; label
  */
 const footerLinks: readonly FooterLink[] = [
   { to: "/about", label: "このサイトについて" },
+  { to: "/why", label: "なぜポイントスプリントか" },
   { href: "https://github.com/bmthd/point-sprint", label: "ソースコード" },
   { to: "/inquiry", label: "お問い合わせ" },
   { to: "/terms", label: "利用規約" },
