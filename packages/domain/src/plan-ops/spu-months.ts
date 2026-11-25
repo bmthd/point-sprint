@@ -1,4 +1,4 @@
-import { CARRIED_SPU_IDS, NORMAL_POINT_ID, standardSpu } from "#/master/spu.ts";
+import { CARRIED_SPU_IDS, NORMAL_POINT_ID, RAKUTEN_CARD_PARTS, standardSpu } from "#/master/spu.ts";
 import type { Benefit } from "#/model/benefit.ts";
 import { monthsOf } from "#/model/common.ts";
 import { type Plan, planAccountId } from "#/model/plan.ts";
@@ -23,6 +23,15 @@ export function spuIdsIn(months: SpuMonth[], accountId: string, month: string): 
     );
   const carried = previous?.enabledIds.filter((id) => CARRIED_SPU_IDS.has(id)) ?? [];
   return new Set([NORMAL_POINT_ID, ...carried]);
+}
+
+/**
+ * Whether `accountId` has an SPU item on in `month` that only orders paid with a 楽天カード get
+ * (the card's and 楽天銀行's). Only then does paying an order otherwise change its points.
+ */
+export function hasRakutenCardSpu(months: SpuMonth[], accountId: string, month: string): boolean {
+  const ids = spuIdsIn(months, accountId, month);
+  return [...RAKUTEN_CARD_PARTS.keys()].some((id) => ids.has(id));
 }
 
 /** `standardSpu`, each item on exactly when `ids` has it. */

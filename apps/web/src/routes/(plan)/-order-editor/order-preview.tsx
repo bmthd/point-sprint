@@ -9,6 +9,7 @@ import {
   capLines,
   taxExcludedTarget,
   orderDelta,
+  rakutenCardLoss,
 } from "@workspaces/domain";
 import { Flex, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
@@ -43,21 +44,18 @@ const pointsOf = (result: CalculationResult | undefined, order: Order | undefine
   return (result?.breakdown ?? []).filter((row) => ids.has(row.lineItemId));
 };
 
-/**
- * What saving the draft would change: every plan is calculated again with the draft added (or in
- * place of the order it edits). The preview compares this plan's capped totals.
- */
-export function previewOf(input: {
+type DraftInput = {
   plans: Plan[];
   /** Turns plans into the plans as they are calculated (`asCalculatedAtom`). */
   asCalculated: (plans: Plan[], shops: Shop[]) => Plan[];
   shops: Shop[];
-  before: Map<string, CalculationResult>;
   planId: string;
   draft: OrderDraft;
   original: Order | undefined;
-}): OrderPreview {
-  const { plans, asCalculated, before, planId, draft, original } = input;
+};
+
+/** Every plan as it is calculated with the draft added, or in place of the order it edits. */
+function plansWithDraft({ plans, asCalculated, planId, draft, original, ...input }: DraftInput) {
   const shops = draft.shop
     ? [...input.shops.filter((shop) => shop.id !== draft.shop?.id), draft.shop]
     : input.shops;
@@ -71,6 +69,32 @@ export function previewOf(input: {
     ),
     shops,
   );
+  return { shops, withDraft };
+}
+
+/**
+ * What paying the draft otherwise loses (`rakutenCardLoss`), with the draft added to its plan or in
+ * place of the order it edits.
+ */
+export function rakutenCardLossOf(input: DraftInput) {
+  const { shops, withDraft } = plansWithDraft(input);
+  return rakutenCardLoss({
+    plans: withDraft,
+    shops,
+    planId: input.planId,
+    orderId: input.draft.order.id,
+  });
+}
+
+/**
+ * What saving the draft would change: every plan is calculated again with the draft added (or in
+ * place of the order it edits). The preview compares this plan's capped totals.
+ */
+export function previewOf(
+  input: DraftInput & { before: Map<string, CalculationResult> },
+): OrderPreview {
+  const { before, planId, draft, original } = input;
+  const { shops, withDraft } = plansWithDraft(input);
   const after = calculateAll(withDraft, shops);
   const planBefore = before.get(planId);
   const planAfter = after.get(planId);

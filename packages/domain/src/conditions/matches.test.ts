@@ -9,6 +9,7 @@ const ctx: ConditionContext = {
   orderTaxIncluded: 5000,
   shopTags: [],
   orderTags: [],
+  rakutenCard: true,
 };
 
 test("days ending in 0 or 5", () => {
@@ -62,4 +63,10 @@ test("orderTags requires every tag", () => {
   const conditions: Conditions = { orderTags: ["repeat"] };
   expect(matchesConditions(conditions, { ...ctx, orderTags: ["repeat"] })).toBe(true);
   expect(matchesConditions(conditions, { ...ctx, orderTags: [] })).toBe(false);
+});
+
+test("a card item matches only the orders paid with a 楽天カード", () => {
+  expect(matchesConditions({ rakutenCard: true }, ctx)).toBe(true);
+  expect(matchesConditions({ rakutenCard: true }, { ...ctx, rakutenCard: false })).toBe(false);
+  expect(matchesConditions({}, { ...ctx, rakutenCard: false })).toBe(true);
 });

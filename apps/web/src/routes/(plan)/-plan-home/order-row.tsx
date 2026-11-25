@@ -209,6 +209,7 @@ function InstantCommit({ form, commit }: { form: OrderForm; commit: () => Promis
     useField(form, { path: ["repeat"] }).input,
     useField(form, { path: ["brandDay"] }).input,
     useField(form, { path: ["is24h"] }).input,
+    useField(form, { path: ["rakutenCard"] }).input,
   ]);
   useEffect(() => {
     // A new shop's name is typed in the shop field: it is saved when the field is left.
@@ -259,6 +260,7 @@ function OrderEditor({
         plan={plan}
         autofill={autofill}
         simple={isSimpleOrder(order)}
+        original={order}
         onItemRemoved={() => void commit()}
       />
     </Box>

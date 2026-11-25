@@ -48,7 +48,10 @@ function spu(
     enabled,
     amountBasis,
     capScope,
-    conditions: { channels: [...SPU_CHANNELS] },
+    conditions: {
+      channels: [...SPU_CHANNELS],
+      ...(RAKUTEN_CARD_PARTS.has(id) ? { rakutenCard: true } : {}),
+    },
     ...(params.exclusiveGroup === undefined ? {} : { exclusiveGroup: params.exclusiveGroup }),
     ...(params.requires === undefined ? {} : { requires: params.requires }),
     params: cap === undefined ? { rate, roundingUnit } : { rate, cap, roundingUnit },
@@ -65,6 +68,22 @@ export const PREMIUM_CARD_BONUS_ID = "b3acca83-be7b-4c8a-9637-7706296679d4";
  */
 export const BANK_CARD_ID = "1933c19c-0aa3-4052-8d5e-c0d07859a0a9";
 export const BANK_SALARY_ID = "3a7c47bd-3404-4dcb-9569-54989e63f077";
+
+/** What an SPU item that only orders paid with a 楽天カード get is: the card's or 楽天銀行's. */
+export type RakutenCardPart = "normal" | "bonus" | "bank";
+
+/**
+ * The SPU items that only orders paid with a 楽天カード get, by id: the card's normal points, its
+ * bonuses and 楽天銀行's. 楽天銀行's are 「楽天カードでの楽天市場のご購入金額」 (特典8). They get the
+ * `rakutenCard` condition.
+ */
+export const RAKUTEN_CARD_PARTS: ReadonlyMap<string, RakutenCardPart> = new Map([
+  [CARD_NORMAL_ID, "normal"],
+  [CARD_BONUS_ID, "bonus"],
+  [PREMIUM_CARD_BONUS_ID, "bonus"],
+  [BANK_CARD_ID, "bank"],
+  [BANK_SALARY_ID, "bank"],
+]);
 
 /** 通常ポイント: always on, whatever the month's SPU says. */
 export const NORMAL_POINT_ID = "c69441cb-ac51-4cf9-8ebd-a909a093907e";
@@ -191,8 +210,9 @@ export const standardSpu: Benefit[] = [
   // 確認日: 2026-10-19。条件1〜3（楽天カードの利用代金を楽天銀行口座から引き落とす）で+0.3倍、
   // 条件1〜5（さらに前月に給与・賞与・年金を楽天銀行で受け取り、ハッピープログラムにエントリーする）
   // で合計+0.5倍。上限はどちらも同じなので、2つの項目を同じ exclusiveGroup にし、どちらか一方だけ
-  // 有効にできるようにする（旧サイトと同じ）。付与対象は楽天カードでの購入分だが、支払方法は
-  // conditions で表せない。
+  // 有効にできるようにする（旧サイトと同じ）。
+  // 「▼ポイント付与対象 楽天カードでの楽天市場のご購入金額」（確認日: 2026-11-25）なので、
+  // 楽天カードで払った注文だけに付ける。
   spu(BANK_CARD_ID, "楽天銀行（楽天カード引落）", "/img/spu/service_bank.webp", {
     rate: 0.3,
     cap: 1000,

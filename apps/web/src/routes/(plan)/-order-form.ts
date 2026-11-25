@@ -12,6 +12,8 @@ import {
   closestDateInPeriod,
   matchesConditions,
   newId,
+  paidWithRakutenCard,
+  withRakutenCard,
 } from "@workspaces/domain";
 import * as v from "valibot";
 import type { ShopChange } from "#/state/mutations.ts";
@@ -71,6 +73,8 @@ export const OrderFormSchema = v.pipe(
     repeat: v.boolean(),
     brandDay: v.boolean(),
     is24h: v.boolean(),
+    /** Paid with a 楽天カード: the card's SPU items count the order. */
+    rakutenCard: v.boolean(),
     onHold: v.boolean(),
   }),
   v.forward(
@@ -112,6 +116,7 @@ export function emptyInputForDate(date: string): OrderFormInput {
     repeat: false,
     brandDay: false,
     is24h: false,
+    rakutenCard: true,
     onHold: false,
     items: [emptyItem()],
   };
@@ -144,6 +149,7 @@ export function inputOf(order: Order, shops: Shop[]): OrderFormInput {
     repeat: order.tags.includes("repeat"),
     brandDay: order.tags.includes("brand-day"),
     is24h: order.tags.includes("24h"),
+    rakutenCard: paidWithRakutenCard(order),
     onHold: order.onHold,
     items: order.lineItems.map((item) => ({
       id: item.id,
@@ -199,7 +205,9 @@ export function draftOf(
       };
     }),
   });
-  return parsed.success ? { order: parsed.output, shop, shopChange } : undefined;
+  return parsed.success
+    ? { order: withRakutenCard(parsed.output, output.rakutenCard), shop, shopChange }
+    : undefined;
 }
 
 /** The draft of a form's current input, or `undefined` while it is not valid. */
@@ -247,6 +255,7 @@ export function dateCampaigns(benefits: Benefit[], date: string) {
           date,
           orderTaxIncluded: 0,
           orderTags: [],
+          rakutenCard: true,
         },
       ),
   );
