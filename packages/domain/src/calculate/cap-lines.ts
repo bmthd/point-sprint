@@ -166,7 +166,7 @@ export function capRows(lines: CapLine[], taxRate: TaxRate): CapRow[] {
   const rows = new Map<string, CapRow>();
   for (const line of lines) {
     const price = line.remaining === 0 ? 0 : fillPrice(line, taxRate);
-    const { dateRule, orderTags, shopTags, minOrderAmount } = line.benefit.conditions;
+    const { dateRule, orderTags, shopTags, minOrderAmount, rakutenCard } = line.benefit.conditions;
     const key = JSON.stringify([
       price,
       line.cap,
@@ -179,6 +179,7 @@ export function capRows(lines: CapLine[], taxRate: TaxRate): CapRow[] {
       orderTags,
       shopTags,
       minOrderAmount,
+      rakutenCard,
     ]);
     const row = rows.get(key);
     if (row) row.lines.push(line);

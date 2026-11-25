@@ -341,6 +341,7 @@ function ConditionsSummary({ form }: { form: OrderForm }) {
   // The items' keys, not their input: reading the input would read every field of every item.
   const items = useFieldArray(form, { path: ["items"] });
   const onHold = useField(form, { path: ["onHold"] });
+  const rakutenCard = useField(form, { path: ["rakutenCard"] });
   const tags = {
     is39: useField(form, { path: ["is39"] }).input === true,
     repeat: useField(form, { path: ["repeat"] }).input === true,
@@ -370,6 +371,7 @@ function ConditionsSummary({ form }: { form: OrderForm }) {
     ...(quantityText !== "" && quantityText !== "1" ? [`数量${quantityText}`] : []),
     ...(discountText !== "" && discountText !== "0" ? ["クーポン"] : []),
     ...(count > 1 ? [`商品${count}点`] : []),
+    ...(rakutenCard.input === false ? ["カードの分なし"] : []),
     ...(onHold.input === true ? ["保留"] : []),
   ];
   const plain = [

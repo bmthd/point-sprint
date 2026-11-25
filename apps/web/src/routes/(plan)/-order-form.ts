@@ -71,6 +71,8 @@ export const OrderFormSchema = v.pipe(
     repeat: v.boolean(),
     brandDay: v.boolean(),
     is24h: v.boolean(),
+    /** Paid with a 楽天カード: the card's SPU items count the order. */
+    rakutenCard: v.boolean(),
     onHold: v.boolean(),
   }),
   v.forward(
@@ -112,6 +114,7 @@ export function emptyInputForDate(date: string): OrderFormInput {
     repeat: false,
     brandDay: false,
     is24h: false,
+    rakutenCard: true,
     onHold: false,
     items: [emptyItem()],
   };
@@ -144,6 +147,7 @@ export function inputOf(order: Order, shops: Shop[]): OrderFormInput {
     repeat: order.tags.includes("repeat"),
     brandDay: order.tags.includes("brand-day"),
     is24h: order.tags.includes("24h"),
+    rakutenCard: order.rakutenCard !== false,
     onHold: order.onHold,
     items: order.lineItems.map((item) => ({
       id: item.id,
@@ -180,6 +184,7 @@ export function draftOf(
     ...orderPurchase(shopId, { channel: output.channel, shopTags: output.is39 ? ["39shop"] : [] }),
     date: output.date,
     onHold: output.onHold,
+    ...(output.rakutenCard ? {} : { rakutenCard: false }),
     tags: [
       ...(output.repeat ? (["repeat"] as const) : []),
       ...(output.brandDay ? (["brand-day"] as const) : []),
@@ -247,6 +252,7 @@ export function dateCampaigns(benefits: Benefit[], date: string) {
           date,
           orderTaxIncluded: 0,
           orderTags: [],
+          rakutenCard: true,
         },
       ),
   );

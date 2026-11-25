@@ -25,6 +25,15 @@ export function spuIdsIn(months: SpuMonth[], accountId: string, month: string): 
   return new Set([NORMAL_POINT_ID, ...carried]);
 }
 
+/**
+ * Whether `accountId` has an SPU item on in `month` that only orders paid with a 楽天カード get
+ * (the card's and 楽天銀行's). Only then does paying an order otherwise change its points.
+ */
+export function hasRakutenCardSpu(months: SpuMonth[], accountId: string, month: string): boolean {
+  const ids = spuIdsIn(months, accountId, month);
+  return standardSpu.some((benefit) => benefit.conditions.rakutenCard && ids.has(benefit.id));
+}
+
 /** `standardSpu`, each item on exactly when `ids` has it. */
 export function spuBenefitsOf(ids: ReadonlySet<string>): Benefit[] {
   return standardSpu.map((benefit) => ({

@@ -9,10 +9,13 @@ export interface ConditionContext {
   date: string;
   orderTaxIncluded: number;
   orderTags: OrderTag[];
+  /** Whether the order was paid with a 楽天カード. */
+  rakutenCard: boolean;
 }
 
 export function matchesConditions(conditions: Conditions, ctx: ConditionContext): boolean {
-  const { channels, shopIds, shopTags, dateRule, minOrderAmount, orderTags, months } = conditions;
+  const { channels, shopIds, shopTags, dateRule, minOrderAmount, orderTags, months, rakutenCard } =
+    conditions;
   if (channels && (ctx.channel === null || !channels.includes(ctx.channel))) return false;
   if (shopIds && (ctx.shopId === undefined || !shopIds.includes(ctx.shopId))) return false;
   if (
@@ -25,6 +28,7 @@ export function matchesConditions(conditions: Conditions, ctx: ConditionContext)
   if (minOrderAmount !== undefined && ctx.orderTaxIncluded < minOrderAmount) return false;
   if (orderTags && !orderTags.every((tag) => ctx.orderTags.includes(tag))) return false;
   if (months && !months.includes(ctx.date.slice(0, 7))) return false;
+  if (rakutenCard && !ctx.rakutenCard) return false;
   return true;
 }
 

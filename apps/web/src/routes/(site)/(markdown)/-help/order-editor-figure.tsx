@@ -67,7 +67,7 @@ function OrderEditorSheet({
               defaultOpen={original !== undefined}
               campaigns={<Campaigns form={form} plan={plan} />}
             >
-              <Details form={form} />
+              <Details form={form} plan={plan} original={original} />
             </Conditions>
             {original ? null : <CapFlows plan={plan} form={form} />}
           </Flex>

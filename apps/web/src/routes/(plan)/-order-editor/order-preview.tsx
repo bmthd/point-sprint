@@ -43,21 +43,18 @@ const pointsOf = (result: CalculationResult | undefined, order: Order | undefine
   return (result?.breakdown ?? []).filter((row) => ids.has(row.lineItemId));
 };
 
-/**
- * What saving the draft would change: every plan is calculated again with the draft added (or in
- * place of the order it edits). The preview compares this plan's capped totals.
- */
-export function previewOf(input: {
+type DraftInput = {
   plans: Plan[];
   /** Turns plans into the plans as they are calculated (`asCalculatedAtom`). */
   asCalculated: (plans: Plan[], shops: Shop[]) => Plan[];
   shops: Shop[];
-  before: Map<string, CalculationResult>;
   planId: string;
   draft: OrderDraft;
   original: Order | undefined;
-}): OrderPreview {
-  const { plans, asCalculated, before, planId, draft, original } = input;
+};
+
+/** Every plan as it is calculated with the draft added, or in place of the order it edits. */
+function plansWithDraft({ plans, asCalculated, planId, draft, original, ...input }: DraftInput) {
   const shops = draft.shop
     ? [...input.shops.filter((shop) => shop.id !== draft.shop?.id), draft.shop]
     : input.shops;
@@ -71,6 +68,56 @@ export function previewOf(input: {
     ),
     shops,
   );
+  return { shops, withDraft };
+}
+
+/** The names of the parts paying with a 楽天カード gets, in the order they are told. */
+const CARD_PARTS = ["通常分", "特典分", "楽天銀行"] as const;
+
+/**
+ * The points the draft gets from the SPU items only orders paid with a 楽天カード get, after their
+ * caps: what paying it otherwise loses. `parts` names them: the card's normal points, its bonus
+ * and 楽天銀行's.
+ */
+export function rakutenCardPointsOf(input: DraftInput): {
+  points: number;
+  parts: (typeof CARD_PARTS)[number][];
+} {
+  const { rakutenCard: _paid, ...order } = input.draft.order;
+  const { shops, withDraft } = plansWithDraft({ ...input, draft: { ...input.draft, order } });
+  // The card's normal points count as 通常, its bonuses require them, and 楽天銀行's do neither.
+  const cardItems = new Map(
+    withDraft
+      .find((plan) => plan.id === input.planId)
+      ?.benefits.filter((benefit) => benefit.conditions.rakutenCard)
+      .map((benefit) => [
+        benefit.id,
+        benefit.category === "base"
+          ? CARD_PARTS[0]
+          : benefit.requires !== undefined
+            ? CARD_PARTS[1]
+            : CARD_PARTS[2],
+      ]),
+  );
+  const rows = pointsOf(calculateAll(withDraft, shops).get(input.planId), order).filter(
+    (row) => cardItems.has(row.source) && row.points > 0,
+  );
+  const parts = new Set(rows.map((row) => cardItems.get(row.source)));
+  return {
+    points: rows.reduce((sum, row) => sum + row.points, 0),
+    parts: CARD_PARTS.filter((part) => parts.has(part)),
+  };
+}
+
+/**
+ * What saving the draft would change: every plan is calculated again with the draft added (or in
+ * place of the order it edits). The preview compares this plan's capped totals.
+ */
+export function previewOf(
+  input: DraftInput & { before: Map<string, CalculationResult> },
+): OrderPreview {
+  const { before, planId, draft, original } = input;
+  const { shops, withDraft } = plansWithDraft(input);
   const after = calculateAll(withDraft, shops);
   const planBefore = before.get(planId);
   const planAfter = after.get(planId);

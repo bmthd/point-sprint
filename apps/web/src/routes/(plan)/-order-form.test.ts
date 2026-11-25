@@ -212,3 +212,13 @@ test("日付で自動にはタグ条件のあるキャンペーンを出さな�
     ),
   ).toEqual([]);
 });
+
+test("an order paid otherwise is saved with rakutenCard false, and one paid with the card without it", () => {
+  const input = { ...emptyInput(PERIOD), items: [item({})] };
+  const card = draftOfInput(input, [], undefined)?.order;
+  const other = draftOfInput({ ...input, rakutenCard: false }, [], undefined)?.order;
+  expect(card && "rakutenCard" in card).toBe(false);
+  expect(other?.rakutenCard).toBe(false);
+  expect(other && inputOf(other, []).rakutenCard).toBe(false);
+  expect(card && inputOf(card, []).rakutenCard).toBe(true);
+});

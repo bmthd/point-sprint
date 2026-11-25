@@ -42,6 +42,7 @@ import {
 } from "#/routes/(plan)/-order-entry.tsx";
 import { OrderPreviewBox } from "./order-preview.tsx";
 import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
+import { RakutenCardSwitch } from "#/routes/(plan)/-rakuten-card-switch.tsx";
 import { ExtraItems, ItemDetailFields } from "#/routes/(plan)/-item-details.tsx";
 
 /** The editor's target in the URL (`edit=`): a new order, or the id of the order to edit. */
@@ -133,11 +134,20 @@ export function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
   );
 }
 
-/** Quantity, coupon, the items after the first one and 保留, last in 「条件」. */
-export function Details({ form }: { form: OrderForm }) {
+/** Quantity, coupon, the 楽天カード, 保留 and the items after the first one, last in 「条件」. */
+export function Details({
+  form,
+  plan,
+  original,
+}: {
+  form: OrderForm;
+  plan: Plan;
+  original?: Order;
+}) {
   return (
     <>
       <ItemDetailFields form={form} index={0} withRate={false} />
+      <RakutenCardSwitch form={form} plan={plan} original={original} />
       <FormField of={form} path={["onHold"]}>
         {(field) => (
           <Switch
@@ -266,7 +276,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
               defaultOpen={original ? hasDetails(original) : false}
               campaigns={<Campaigns form={form} plan={plan} />}
             >
-              <Details form={form} />
+              <Details form={form} plan={plan} original={original} />
             </Conditions>
             {original ? null : <CapFlows plan={plan} form={form} />}
           </Flex>

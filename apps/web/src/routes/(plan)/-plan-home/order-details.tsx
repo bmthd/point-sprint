@@ -3,7 +3,7 @@
 "use no memo";
 
 import { Field as FormField, useField } from "@formisch/react";
-import { hasOrderTagCampaign, type Plan } from "@workspaces/domain";
+import { hasOrderTagCampaign, type Order, type Plan } from "@workspaces/domain";
 import { Field, Flex, Grid, Input, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId } from "react";
@@ -22,6 +22,7 @@ import { ShopAutocomplete } from "#/routes/(plan)/-shop-autocomplete.tsx";
 import { UrlField } from "#/routes/(plan)/-order-entry.tsx";
 import type { ItemAutofill } from "#/routes/(plan)/-item-autofill.tsx";
 import { ExtraItems, ItemDetailFields } from "#/routes/(plan)/-item-details.tsx";
+import { RakutenCardSwitch } from "#/routes/(plan)/-rakuten-card-switch.tsx";
 
 // What an opened row of the desktop table holds, the same for an order and for the add row's new
 // order: the conditions at once, with no 「条件」 to open first. The item's name and amount are on
@@ -121,12 +122,15 @@ export function OrderDetailFields({
   plan,
   autofill,
   simple,
+  original,
   onItemRemoved,
 }: {
   form: OrderForm;
   plan: Plan;
   autofill: ItemAutofill;
   simple: boolean;
+  /** The order the fields edit, saved already. */
+  original?: Order;
   onItemRemoved?: () => void;
 }) {
   return (
@@ -165,6 +169,7 @@ export function OrderDetailFields({
           {simple ? null : <FirstItemFields form={form} />}
           <Flex direction="column" gap="2" maxW="md">
             <ItemDetailFields form={form} index={0} withRate={false} size="lg" />
+            <RakutenCardSwitch form={form} plan={plan} original={original} />
           </Flex>
           <ExtraItems form={form} onRemove={onItemRemoved} size="lg" />
         </Flex>

@@ -6,6 +6,7 @@ import {
   CARD_BONUS_ID,
   CARD_NORMAL_ID,
   NORMAL_POINT_ID,
+  PREMIUM_CARD_BONUS_ID,
 } from "#/master/spu.ts";
 import { calculate } from "#/calculate/calculate.ts";
 import { capLines } from "#/calculate/cap-lines.ts";
@@ -14,6 +15,7 @@ import type { Plan } from "#/model/plan.ts";
 import { type SpuMonth, spuMonthId } from "#/model/spu-month.ts";
 import {
   enableSpu,
+  hasRakutenCardSpu,
   planWithSpu,
   plansUsingSpuMonth,
   spuBenefitsOf,
@@ -151,6 +153,37 @@ describe("planWithSpu", () => {
     expect(ids).toEqual(own.map((benefit) => benefit.id));
   });
 
+  test("an order paid otherwise gets none of the card's points, and the others still do", () => {
+    const months = [
+      month(ACCOUNT, "2026-10", [CARD_NORMAL_ID, PREMIUM_CARD_BONUS_ID, BANK_CARD_ID]),
+    ];
+    const card = "00000000-0000-4000-8000-000000000001";
+    const other = "00000000-0000-4000-8000-000000000002";
+    const result = calculate(
+      planWithSpu(
+        plan({
+          orders: [
+            order(card, "2026-10-30"),
+            { ...order(other, "2026-10-30"), rakutenCard: false },
+          ],
+        }),
+        months,
+      ),
+      [],
+    );
+    const sourcesOf = (id: string) =>
+      result.breakdown.filter((row) => row.lineItemId === id).map((row) => row.source);
+    expect(sourcesOf(card)).toEqual(
+      expect.arrayContaining([
+        NORMAL_POINT_ID,
+        CARD_NORMAL_ID,
+        PREMIUM_CARD_BONUS_ID,
+        BANK_CARD_ID,
+      ]),
+    );
+    expect(sourcesOf(other)).toEqual([NORMAL_POINT_ID]);
+  });
+
   test("a month cap line is drawn only for the months the item is on", () => {
     const months = [month(ACCOUNT, "2026-10", [BOOKS_SPU_ID]), month(ACCOUNT, "2026-11", [])];
     const withSpu = planWithSpu(plan(), months);
@@ -199,5 +232,20 @@ describe("plansUsingSpuMonth", () => {
     expect(plansUsingSpuMonth([outside], ACCOUNT, "2026-12").map(({ orders }) => orders)).toEqual([
       1,
     ]);
+  });
+});
+
+describe("hasRakutenCardSpu", () => {
+  test("is on when the month has the card's or 楽天銀行's items, carried or stored", () => {
+    const months = [
+      month(ACCOUNT, "2026-10", [CARD_NORMAL_ID]),
+      month(ACCOUNT, "2026-12", [BOOKS_SPU_ID]),
+      month(ACCOUNT, "2027-01", [BANK_SALARY_ID]),
+    ];
+    expect(hasRakutenCardSpu(months, ACCOUNT, "2026-10")).toBe(true);
+    expect(hasRakutenCardSpu(months, ACCOUNT, "2026-11")).toBe(true);
+    expect(hasRakutenCardSpu(months, ACCOUNT, "2026-12")).toBe(false);
+    expect(hasRakutenCardSpu(months, ACCOUNT, "2027-01")).toBe(true);
+    expect(hasRakutenCardSpu(months, OTHER, "2026-10")).toBe(false);
   });
 });

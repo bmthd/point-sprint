@@ -59,6 +59,7 @@ export function capFlows(input: {
     date: order.date,
     orderTaxIncluded: order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0),
     orderTags: order.tags,
+    rakutenCard: order.rakutenCard !== false,
   };
   const receives = context.channel !== null && channels[context.channel].receivesShopAround;
   const itemIds = new Set(order.lineItems.map((item) => item.id));

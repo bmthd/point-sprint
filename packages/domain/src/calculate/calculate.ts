@@ -32,6 +32,7 @@ type OrderContext = {
   date: string;
   orderTaxIncluded: number;
   orderTags: OrderTag[];
+  rakutenCard: boolean;
   lineItems: LineItem[];
 };
 
@@ -164,6 +165,7 @@ function orderContexts(plan: Plan, shops: Map<string, Shop>, warnings: Calculati
       date: order.date,
       orderTaxIncluded: order.lineItems.reduce((sum, item) => sum + taxIncludedTarget(item), 0),
       orderTags: order.tags,
+      rakutenCard: order.rakutenCard !== false,
       lineItems: order.lineItems,
     };
   });

@@ -161,6 +161,7 @@ export {
   enableSpu,
   planWithSpu,
   plansUsingSpuMonth,
+  hasRakutenCardSpu,
   spuBenefitsOf,
   spuIdsIn,
   spuMonthsOfPlan,

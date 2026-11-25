@@ -32,6 +32,8 @@ function spu(
     category?: "base" | "spu";
     exclusiveGroup?: string;
     requires?: string;
+    /** Only for the orders paid with a 楽天カード. */
+    rakutenCard?: true;
   },
   enabled = false,
 ): Benefit {
@@ -48,7 +50,10 @@ function spu(
     enabled,
     amountBasis,
     capScope,
-    conditions: { channels: [...SPU_CHANNELS] },
+    conditions: {
+      channels: [...SPU_CHANNELS],
+      ...(params.rakutenCard ? { rakutenCard: true } : {}),
+    },
     ...(params.exclusiveGroup === undefined ? {} : { exclusiveGroup: params.exclusiveGroup }),
     ...(params.requires === undefined ? {} : { requires: params.requires }),
     params: cap === undefined ? { rate, roundingUnit } : { rate, cap, roundingUnit },
@@ -120,6 +125,7 @@ export const standardSpu: Benefit[] = [
     roundingUnit: "order",
     capScope: "plan",
     category: "base",
+    rakutenCard: true,
   }),
   // 「1-2．楽天カード利用特典ポイント：+1倍」。SPU の特典として楽天市場から付与される。
   // 上限は「その他の対象カード：1,000ポイント」。
@@ -134,6 +140,7 @@ export const standardSpu: Benefit[] = [
     capScope: "month",
     exclusiveGroup: "rakuten-card",
     requires: CARD_NORMAL_ID,
+    rakutenCard: true,
   }),
   // 楽天プレミアムカード・楽天ブラックカード・楽天ビジネスカードの特典分。上限は月5,000ポイント
   // （上の特典分の「その他の対象カード」とは別の上限）。出典は上と同じ SPU のページ。
@@ -151,6 +158,7 @@ export const standardSpu: Benefit[] = [
       capScope: "month",
       exclusiveGroup: "rakuten-card",
       requires: CARD_NORMAL_ID,
+      rakutenCard: true,
     },
     false,
   ),
@@ -191,17 +199,20 @@ export const standardSpu: Benefit[] = [
   // 確認日: 2026-10-19。条件1〜3（楽天カードの利用代金を楽天銀行口座から引き落とす）で+0.3倍、
   // 条件1〜5（さらに前月に給与・賞与・年金を楽天銀行で受け取り、ハッピープログラムにエントリーする）
   // で合計+0.5倍。上限はどちらも同じなので、2つの項目を同じ exclusiveGroup にし、どちらか一方だけ
-  // 有効にできるようにする（旧サイトと同じ）。付与対象は楽天カードでの購入分だが、支払方法は
-  // conditions で表せない。
+  // 有効にできるようにする（旧サイトと同じ）。
+  // 「▼ポイント付与対象 楽天カードでの楽天市場のご購入金額」（確認日: 2026-11-25）なので、
+  // 楽天カードで払った注文だけに付ける。
   spu(BANK_CARD_ID, "楽天銀行（楽天カード引落）", "/img/spu/service_bank.webp", {
     rate: 0.3,
     cap: 1000,
     exclusiveGroup: "rakuten-bank",
+    rakutenCard: true,
   }),
   spu(BANK_SALARY_ID, "楽天銀行（給与受取）", "/img/spu/service_bank.webp", {
     rate: 0.5,
     cap: 1000,
     exclusiveGroup: "rakuten-bank",
+    rakutenCard: true,
   }),
   // 「9-1 当月合計30,000円以上のポイント投資（投資信託）でポイント+0.5倍」「2,000ポイント」。
   spu(

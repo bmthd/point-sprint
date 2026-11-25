@@ -113,5 +113,7 @@ export const ConditionsSchema = v.object({
   orderTags: v.optional(v.array(OrderTagSchema)),
   /** Only the orders of these months (`YYYY-MM`): an SPU item in the months it is on. */
   months: v.optional(v.array(MonthSchema)),
+  /** Only the orders paid with a 楽天カード (`Order["rakutenCard"]`): the card's SPU items. */
+  rakutenCard: v.optional(v.literal(true)),
 });
 export type Conditions = v.InferOutput<typeof ConditionsSchema>;

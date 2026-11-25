@@ -8,7 +8,13 @@ import { migrateRow, migrations } from "./index.ts";
 const beforeSpuMonths = migrations.filter((migration) => migration.to < 10);
 
 const MOBILE_ID = "ca794fa7-4a85-43c6-ab34-e06feb115c5d";
-const master = (id: string) => standardSpu.find((benefit) => benefit.id === id);
+/** The master's item as it was at version 9, before the `rakutenCard` condition. */
+const master = (id: string) => {
+  const benefit = standardSpu.find((other) => other.id === id);
+  if (!benefit) return undefined;
+  const { rakutenCard: _card, ...conditions } = benefit.conditions;
+  return { ...benefit, conditions };
+};
 const { exclusiveGroup: _group, ...salary } = master(BANK_SALARY_ID) ?? {};
 const savedBank = { ...salary, label: "楽天銀行（楽天カード引落）", enabled: true };
 

@@ -34,6 +34,8 @@ const commonEntries = {
   lineItems: v.pipe(v.array(LineItemSchema), v.minLength(1)),
   onHold: v.optional(v.boolean(), false),
   tags: v.optional(v.array(OrderTagSchema), []),
+  /** `false` when the order was paid otherwise than with a 楽天カード. Left out, it was. */
+  rakutenCard: v.optional(v.boolean()),
 };
 
 export const OrderSchema = v.union([
