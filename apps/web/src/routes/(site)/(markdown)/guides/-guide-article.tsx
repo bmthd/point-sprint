@@ -20,6 +20,12 @@ import { headingIds, markdownComponents } from "#/routes/(site)/(markdown)/-mark
 export function GuideArticle({ guide: { article, lists, fetchedAt } }: { guide: Guide }) {
   const components = {
     ...markdownComponents,
+    // A subsection of a guide, which the contents list under its section.
+    h3: ({ children, id }: { children?: ReactNode; id?: string }) => (
+      <Heading as="h3" id={id} fontSize="md" mt="6" mb="1">
+        {children}
+      </Heading>
+    ),
     "md-figure": HelpFigure,
     "md-figure-callout": HelpFigureCallout,
     "md-items": ({ query }: { query: string }) => (

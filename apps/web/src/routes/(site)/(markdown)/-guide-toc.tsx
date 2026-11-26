@@ -5,10 +5,19 @@ import { SidebarSection } from "#/routes/-sidebar/sidebar-section.tsx";
 /** A section heading counts as the one being read once its top is this far from the window's top. */
 const READING_LINE = 96;
 
-/** The article's sections (its `##` headings), in order. A heading's id is its text. */
-export function guideSections(body: string) {
-  return [...body.matchAll(/^## (.+)$/gm)].map(([, heading = ""]) => heading.trim());
+/** A heading in the contents: a section (`##`) or a subsection (`###`) under the one before it. */
+export type GuideSection = { title: string; level: 2 | 3 };
+
+/** The article's sections and subsections, in order. A heading's id is its text. */
+export function guideSections(body: string): GuideSection[] {
+  return [...body.matchAll(/^(##|###) (.+)$/gm)].map(([, marks = "", heading = ""]) => ({
+    title: heading.trim(),
+    level: marks === "##" ? 2 : 3,
+  }));
 }
+
+/** How far a heading's link is indented, by its level. */
+const INDENT = { 2: "3", 3: "6" } as const;
 
 /**
  * The article's Markdown split before its first section: the introduction, then the sections.
@@ -20,15 +29,15 @@ export function splitIntroduction(body: string): [string, string] {
 }
 
 /** The section being read: the last one whose heading has reached the reading line. */
-function useSectionBeingRead(sections: string[]) {
+function useSectionBeingRead(sections: GuideSection[]) {
   const [current, setCurrent] = useState<string>();
   useEffect(() => {
     const update = () => {
-      const reached = sections.filter((section) => {
-        const heading = document.getElementById(section);
+      const reached = sections.filter(({ title }) => {
+        const heading = document.getElementById(title);
         return heading !== null && heading.getBoundingClientRect().top <= READING_LINE;
       });
-      setCurrent(reached.at(-1));
+      setCurrent(reached.at(-1)?.title);
     };
     update();
     window.addEventListener("scroll", update, { passive: true });
@@ -45,7 +54,7 @@ export function GuideToc({
   sections,
   markReading = false,
 }: {
-  sections: string[];
+  sections: GuideSection[];
   markReading?: boolean;
 }) {
   const reached = useSectionBeingRead(sections);
@@ -59,21 +68,21 @@ export function GuideToc({
         listStyleType="none"
         data-mark-reading={dataAttr(markReading)}
       >
-        {sections.map((section) => {
-          const reading = section === current;
+        {sections.map(({ title, level }) => {
+          const reading = title === current;
           return (
             // The line is on the row, not the link, so the link's rounded corners leave it straight.
             <Box
               as="li"
-              key={section}
-              ps="3"
+              key={title}
+              ps={INDENT[level]}
               borderLeftWidth="2px"
               borderColor="border"
               data-current={dataAttr(reading)}
               _current={{ borderColor: "primary.solid" }}
             >
               <Link
-                href={`#${section}`}
+                href={`#${title}`}
                 colorScheme="mono"
                 display="block"
                 py="1.5"
@@ -83,7 +92,7 @@ export function GuideToc({
                 css={{ "[data-mark-reading] &": { _notCurrent: { color: "fg.muted" } } }}
                 aria-current={reading ? "location" : undefined}
               >
-                {section}
+                {title}
               </Link>
             </Box>
           );
