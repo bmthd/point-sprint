@@ -6,7 +6,7 @@ export function GuideTags({ tags, ...props }: { tags: readonly GuideTag[] } & Wr
   return (
     <Wrap as="ul" gap="1.5" aria-label="タグ" {...props}>
       {tags.map((tag) => (
-        <Tag as="li" key={tag} size="sm" variant="subtle" colorScheme="primary" fullRounded>
+        <Tag as="li" key={tag} size="md" variant="subtle" colorScheme="primary" fullRounded>
           {tag}
         </Tag>
       ))}
