@@ -17,6 +17,8 @@ export type OrderForm = FormStore<typeof OrderFormSchema>;
 
 export const NAME_PATH = ["items", 0, "name"] as const;
 export const AMOUNT_PATH = ["items", 0, "unitPrice"] as const;
+/** The name or the amount of an item, the fields edited on the desktop table's lines. */
+export type ItemTextPath = readonly ["items", number, "name" | "unitPrice"];
 
 export function urlFromPastedText(text: string) {
   return text.match(/https?:\/\/\S+/i)?.[0] ?? text;

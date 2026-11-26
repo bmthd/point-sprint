@@ -54,6 +54,8 @@ export type OrderCardPoints = {
   rate: number;
   /** Labels of the campaigns that gave the order points. */
   campaigns: string[];
+  /** Each item's points by its id, what is left of them under the caps. */
+  itemPoints: Record<string, number>;
 };
 
 const groupLabels: Record<Exclude<PointGroup, "campaign">, string> = {
@@ -115,6 +117,13 @@ export function groupTotalsOf(rows: OrderPointRow[]): Record<PointGroup, number>
   return totals;
 }
 
+/** The breakdown's points summed by item. */
+function itemPointsOf(rows: BreakdownRow[]): Record<string, number> {
+  const points: Record<string, number> = {};
+  for (const row of rows) points[row.lineItemId] = (points[row.lineItemId] ?? 0) + row.points;
+  return points;
+}
+
 const noBenefits: Benefit[] = [];
 const benefitsAtom = atomFamily((planId: string) =>
   selectAtom(calculatedPlanAtom(planId), (plan) => plan?.benefits ?? noBenefits, deepEqual),
@@ -153,6 +162,7 @@ export const orderCardPointsAtom = atomFamily(
             get(orderAtom(key))?.lineItems ?? [],
           ),
           total: rows.reduce((sum, row) => sum + row.points, 0),
+          itemPoints: itemPointsOf(rows),
         };
       }),
       (points) => points,

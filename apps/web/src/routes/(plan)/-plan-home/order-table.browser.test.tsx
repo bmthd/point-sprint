@@ -144,15 +144,24 @@ test("each row shows the order's shop, items, amount, points and rate", async ()
   await expect.element(row.getByText("1", { exact: true })).toBeVisible();
   for (const text of [
     "10/5（月）",
-    "商品0-1 他1点",
+    "商品 2 点",
+    "商品0-1・商品0-2",
     "0と5のつく日",
+    "合計",
     "¥22,000",
-    "10%",
     "1,400P",
     "7倍",
   ]) {
     await expect.element(row).toMatchTextContent(text);
   }
+  // Each item has a line of its own, with its unit price and its points.
+  for (const item of [1, 2]) {
+    await expect
+      .element(row.getByRole("button", { name: `ショップ0の注文の商品${item}の単価 ¥11,000` }))
+      .toBeVisible();
+  }
+  await expect.element(row).toMatchTextContent(/700P.*700P/);
+  await expect.element(rowOf("ショップ1")).toMatchTextContent("税込 10%");
 });
 
 for (const onHold of [false, true]) {
@@ -185,7 +194,11 @@ test("fits the narrowest width it is shown at without horizontal scroll", async 
   const wide = order(0);
   wide.lineItems = wide.lineItems.map((item) => ({ ...item, name: "長い商品名".repeat(20) }));
   const screen = await renderWith(
-    makePlan([baseBenefit, spuBenefit, campaignBenefit, ...marathon], [wide, order(1)]),
+    makePlan(
+      [baseBenefit, spuBenefit, campaignBenefit, ...marathon],
+      // An order of several items, with a line for each.
+      [wide, order(1, { items: 2 })],
+    ),
     wideShops,
   );
 
@@ -831,26 +844,69 @@ test("the add row makes an order with a quantity, a coupon and a second item", a
   ]);
 });
 
-test("an order of several items edits its amounts in its opened row", async () => {
+test("an order of several items edits each item's name and unit price on its own line", async () => {
   const several = order(0, { items: 2 });
+  several.lineItems[0] = { ...several.lineItems[0]!, quantity: 2, discount: 300 };
   const screen = await renderWith(marathonPlan([several, order(1)]));
-
-  // Its amount on the row is the sum of its items: pressed, it opens the first item's amount.
-  await screen.getByRole("button", { name: /^ショップ0の注文の金額 ¥22,000/ }).click();
   const row = rowOf("ショップ0");
-  const first = row.getByRole("textbox", { name: "商品1の金額（税込）" });
-  await expect.element(first).toHaveFocus();
-  await userEvent.fill(first, "5,500");
-  await userEvent.keyboard("{Enter}");
-  await expect.poll(async () => (await stored())?.[0]?.lineItems[0]?.unitPrice).toBe(5500);
 
+  // The order's row shows the total of its items, ¥11,000 × 2 − ¥300 + ¥11,000, and edits neither
+  // a name nor an amount.
+  await expect.element(row).toMatchTextContent("¥32,700");
+  await expect.element(row).toMatchTextContent("× 2・クーポン −¥300");
+  await expect
+    .element(screen.getByRole("button", { name: /^ショップ0の注文の商品名/ }))
+    .not.toBeInTheDocument();
+  await expect
+    .element(screen.getByRole("button", { name: /^ショップ0の注文の金額/ }))
+    .not.toBeInTheDocument();
+
+  // The second item's name, then Tab to its unit price: each saves only that item.
+  await screen.getByRole("button", { name: "ショップ0の注文の商品2の商品名 商品0-2" }).click();
+  const name = screen.getByRole("textbox", { name: "ショップ0の注文の商品2の商品名" });
+  await expect.element(name).toHaveFocus();
+  await userEvent.fill(name, "バスタオル");
+  await userEvent.keyboard("{Tab}");
+  const unitPrice = screen.getByRole("textbox", { name: "ショップ0の注文の商品2の単価" });
+  await expect.element(unitPrice).toHaveFocus();
+  await expect.element(unitPrice).toHaveValue("11,000");
+  await userEvent.fill(unitPrice, "5,500");
+  await userEvent.keyboard("{Enter}");
+  await expect
+    .poll(async () => (await stored())?.[0]?.lineItems)
+    .toMatchObject([
+      { name: "商品0-1", unitPrice: 11000, quantity: 2, discount: 300 },
+      { name: "バスタオル", unitPrice: 5500, quantity: 1 },
+    ]);
+  await expect.element(row).toMatchTextContent("¥27,200");
+
+  // The first item's unit price, put back by Esc.
+  await screen.getByRole("button", { name: /^ショップ0の注文の商品1の単価/ }).click();
+  await userEvent.fill(screen.getByRole("textbox", { name: "ショップ0の注文の商品1の単価" }), "1");
+  await userEvent.keyboard("{Escape}");
+  await expect
+    .element(screen.getByRole("button", { name: /^ショップ0の注文の商品1の単価/ }))
+    .toHaveFocus();
+  expect((await stored())?.[0]?.lineItems[0]?.unitPrice).toBe(11000);
+
+  // Quantities and items are changed in the opened row. Left with a plain item, the order is one
+  // row again, its name and amount edited there.
+  await screen.getByRole("button", { name: "ショップ0の注文の詳細と編集" }).click();
   const second = row.getByRole("group", { name: "商品2" });
   await second.getByRole("textbox", { name: "数量" }).fill("4");
   await userEvent.keyboard("{Tab}");
   await expect.poll(async () => (await stored())?.[0]?.lineItems[1]?.quantity).toBe(4);
-
   await second.getByRole("button", { name: "商品2を削除" }).click();
   await expect.poll(async () => (await stored())?.[0]?.lineItems).toHaveLength(1);
+  await row.getByRole("textbox", { name: "数量" }).fill("1");
+  await row.getByRole("textbox", { name: "クーポン値引額（税込）" }).fill("");
+  await userEvent.keyboard("{Tab}");
+  await expect
+    .element(screen.getByRole("button", { name: "ショップ0の注文の金額 ¥11,000" }))
+    .toBeVisible();
+  await expect
+    .element(screen.getByRole("button", { name: /^ショップ0の注文の商品1の/ }))
+    .not.toBeInTheDocument();
 });
 
 test("an opened row of a plan with brand day saves the order's brand day tag", async () => {
