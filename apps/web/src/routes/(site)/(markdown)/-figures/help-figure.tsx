@@ -136,6 +136,8 @@ function markStyles(marks: HelpFigureMark[], zoom: number): CSSObject {
     // `:is()` matches the selector in the whole page, so the boxes between the start of the
     // selector and what it marks hold it too.
     styles[`& :has(:is(${mark.selector}))`] = { overflow: "visible !important" };
+    // A figure without numbered points frames what it marks, without the number.
+    styles[`&[data-unnumbered] :is(${mark.selector})::before`] = { display: "none" };
   }
   // An open accordion's panel clips by its own box, and so does its content's box.
   styles["& .ui-native-accordion__panel, & details::details-content"] = {
@@ -159,10 +161,12 @@ function FigureFrame({
   spec,
   screen,
   alt,
+  numbered,
 }: {
   spec: HelpFigureSpec;
   screen: HelpFigureScreen;
   alt: string;
+  numbered: boolean;
 }) {
   const Render = spec.render;
   const { crop } = spec;
@@ -190,6 +194,7 @@ function FigureFrame({
         flexDirection="column"
         _child={{ flexShrink: 0 }}
         data-end={dataAttr(crop?.from === "bottom")}
+        data-unnumbered={dataAttr(!numbered)}
         _end={{ justifyContent: "flex-end" }}
         w={`${width}px`}
         p={`${FRAME_PADDING}px`}
@@ -248,7 +253,7 @@ export function HelpFigure({
       css={markColors}
     >
       <Box>
-        <FigureFrame spec={spec} screen={screen} alt={alt} />
+        <FigureFrame spec={spec} screen={screen} alt={alt} numbered={withPoints} />
         <Text as="figcaption" fontSize="xs" color="fg.muted" mt="1.5">
           {caption}
         </Text>

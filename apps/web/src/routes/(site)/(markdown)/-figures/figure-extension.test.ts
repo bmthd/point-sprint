@@ -18,6 +18,20 @@ test("figure directives pass their name attribute and numbered explanations", ()
   });
 });
 
+test("a figure without a list frames its marks without numbered explanations", () => {
+  const parsed = parseMarkdown(
+    ':::figure[プランの一覧]{name="plan" alt="保存したプランの画面"}\n:::',
+    {
+      extensions: [figureExtension],
+    },
+  );
+  expect(parsed.children[0]).toMatchObject({
+    tagName: "md-figure",
+    properties: { name: "plan" },
+    children: [],
+  });
+});
+
 test.each([
   [":::figure plan\n1. 説明\n:::", /Use :::figure/],
   [':::figure{name="plan"}\n1. 説明\n:::', /Use :::figure/],
