@@ -225,7 +225,18 @@ export const markdownComponents = {
     </ColumnHead>
   ),
   h2: ({ children, id }) => (
-    <Heading as="h2" id={id} fontSize="md" mt="8" mb="2">
+    // A red line on its left tells a section from the subsections (`###`) inside it.
+    <Heading
+      as="h2"
+      id={id}
+      fontSize="lg"
+      fontWeight="bold"
+      mt="10"
+      mb="2"
+      ps="3"
+      borderLeftWidth="4px"
+      borderColor="primary.solid"
+    >
       {children}
     </Heading>
   ),
