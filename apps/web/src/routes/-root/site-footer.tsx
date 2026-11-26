@@ -3,7 +3,9 @@ import { Box, Flex, Link, Text, VStack, Wrap } from "@workspaces/ui";
 import { operatorName } from "#/page-head.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
 
-type FooterLink = { to: LinkProps["to"]; label: string } | { href: string; label: string };
+type FooterLink =
+  | { to: LinkProps["to"]; params?: LinkProps["params"]; label: string }
+  | { href: string; label: string };
 
 /**
  * The footer's links: who makes the site and its rules. The pages a reader comes back to are in the
@@ -11,7 +13,7 @@ type FooterLink = { to: LinkProps["to"]; label: string } | { href: string; label
  */
 const footerLinks: readonly FooterLink[] = [
   { to: "/about", label: "このサイトについて" },
-  { to: "/why", label: "なぜポイントスプリントか" },
+  { to: "/guides/$slug", params: { slug: "why-point-sprint" }, label: "なぜポイントスプリントか" },
   { href: "https://github.com/bmthd/point-sprint", label: "ソースコード" },
   { to: "/inquiry", label: "お問い合わせ" },
   { to: "/terms", label: "利用規約" },
@@ -54,6 +56,7 @@ export function SiteFooter() {
               <RouterLink
                 key={link.label}
                 to={link.to}
+                params={link.params}
                 color="link"
                 minH="11"
                 display="flex"
