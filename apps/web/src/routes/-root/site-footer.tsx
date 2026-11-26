@@ -13,7 +13,11 @@ type FooterLink =
  */
 const footerLinks: readonly FooterLink[] = [
   { to: "/about", label: "このサイトについて" },
-  { to: "/guides/$slug", params: { slug: "why-point-sprint" }, label: "なぜポイントスプリントか" },
+  {
+    to: "/guides/$slug",
+    params: { slug: "rakuten-point-calculator-comparison" },
+    label: "計算ツールの比較",
+  },
   { href: "https://github.com/bmthd/point-sprint", label: "ソースコード" },
   { to: "/inquiry", label: "お問い合わせ" },
   { to: "/terms", label: "利用規約" },
