@@ -29,7 +29,7 @@ function renderPicker(onCommit: (day: string) => Promise<unknown>) {
 /** Replaces what the field shows with `typed`, one key at a time, as a real keyboard does. */
 async function typeDay(field: Locator, typed: string) {
   await field.click();
-  await userEvent.keyboard("{Control>}a{/Control}");
+  await userEvent.keyboard("{ControlOrMeta>}a{/ControlOrMeta}");
   await userEvent.keyboard(typed);
 }
 
