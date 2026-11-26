@@ -1,21 +1,17 @@
 import { expect, test } from "vitest";
-import { japaneseDate, newestFirst, parseArticle } from "./article.ts";
+import { articleDates, japaneseDate, newestFirst, parseArticle } from "./article.ts";
 import { loadArticle, loadArticles } from "./articles.ts";
 
 const source = (frontmatter: string) => `---\n${frontmatter}\n---\n\n本文の段落\n`;
 
 const fields = `title: 1000円ポッキリで買えるもの
-description: "説明: コロンを含む"
-published: 2026-10-08
-updated: 2026-10-10`;
+description: "説明: コロンを含む"`;
 
 test("reads the frontmatter, and keeps the Markdown after it as the body", () => {
   expect(parseArticle("1000yen-items", source(fields))).toEqual({
     slug: "1000yen-items",
     title: "1000円ポッキリで買えるもの",
     description: "説明: コロンを含む",
-    published: "2026-10-08",
-    updated: "2026-10-10",
     body: "\n本文の段落\n",
   });
 });
@@ -24,9 +20,7 @@ test.each([
   { slug: "1000yen-items", source: "本文だけ", error: "no frontmatter" },
   { slug: "Items_1000", source: source(fields), error: "needs a slug" },
   { slug: "a", source: source(fields.replace(/^title.*\n/, "")), error: "title" },
-  { slug: "a", source: source(fields.replace("2026-10-08", "10/8")), error: "published" },
-  { slug: "a", source: source(fields.replace("2026-10-10", "2026-10-01")), error: "after" },
-  { slug: "a", source: source(fields.replace("2026-10-10", "2026-10-08")), error: "after" },
+  { slug: "a", source: source(`${fields}\npublished: 2026-10-08`), error: "published" },
   { slug: "a", source: source(`${fields}\nauthor: 誰か`), error: "author" },
   { slug: "a", source: source(`${fields}\nコロンのない行`), error: "cannot read" },
   { slug: "a", source: source(`${fields}\ncardLead: あと1店舗を足すなら`), error: "together" },
@@ -35,14 +29,28 @@ test.each([
   expect(() => parseArticle(slug, source)).toThrow(error);
 });
 
-test("an article not changed since it was published has no updated day", () => {
-  const article = parseArticle("a", source(fields.replace(/\nupdated.*/, "")));
-  expect(article).not.toHaveProperty("updated");
+test("an article is published on the day of its first commit, and changed on that of its last", () => {
+  expect(articleDates(["2026-10-28", "2026-10-20", "2026-10-09"], "2026-11-26")).toEqual({
+    published: "2026-10-09",
+    updated: "2026-10-28",
+  });
+});
+
+test("an article changed only on the day it was published has no updated day", () => {
+  expect(articleDates(["2026-10-09", "2026-10-09"], "2026-11-26")).toEqual({
+    published: "2026-10-09",
+  });
+});
+
+test("an article never committed is published today", () => {
+  expect(articleDates([], "2026-11-26")).toEqual({ published: "2026-11-26" });
 });
 
 test("lists the newest first", () => {
-  const article = (slug: string, day: string) =>
-    parseArticle(slug, source(`title: t\ndescription: d\npublished: ${day}`));
+  const article = (slug: string, published: string) => ({
+    ...parseArticle(slug, source("title: t\ndescription: d")),
+    published,
+  });
   const sorted = newestFirst([
     article("old", "2026-01-01"),
     article("new", "2026-10-01"),

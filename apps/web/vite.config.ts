@@ -3,6 +3,7 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { guideThumbnails } from "./guide-thumbnails-plugin.ts";
+import { gitArticleDates } from "#/guides/git-dates.ts";
 import { ogFonts } from "./og-fonts-plugin.ts";
 import { isAdsensePaused, isPullRequestPreview, parseGoogleTagsEnv } from "#/google-tags/env.ts";
 import { prerenderedPages, robotsTxt } from "#/prerender-pages.ts";
@@ -32,6 +33,7 @@ export default defineConfig(({ command, mode, isPreview }) => {
   const measurementId = isPullRequestPreview(process.env) ? undefined : googleTagIds?.measurementId;
   // While AdSense is paused (PUBLIC_ADSENSE_PAUSED), no build loads it or renders an ad unit.
   const adsenseClientId = isAdsensePaused(publicEnv) ? undefined : googleTagIds?.adsenseClientId;
+  const guideDates = gitArticleDates();
   return {
     plugins: [
       cloudflare({
@@ -89,6 +91,8 @@ export default defineConfig(({ command, mode, isPreview }) => {
       "import.meta.env.TURNSTILE_SITE_KEY": JSON.stringify(
         publicEnv.PUBLIC_TURNSTILE_SITE_KEY?.trim() || null,
       ),
+      // The days each guide was published and changed, from the git log.
+      "import.meta.env.GUIDE_DATES": JSON.stringify(guideDates),
       "import.meta.env.GA_MEASUREMENT_ID": JSON.stringify(measurementId),
       "import.meta.env.ADSENSE_CLIENT_ID": JSON.stringify(adsenseClientId),
     },
