@@ -3,6 +3,7 @@ import { Box, Heading, Link, Text } from "@workspaces/ui";
 import type { ReactNode } from "react";
 import { ArticleDates } from "./-article-dates.tsx";
 import { GuideItemList } from "./-guide-item-list.tsx";
+import { HelpFigure, HelpFigureCallout } from "#/routes/(site)/(markdown)/-figures/help-figure.tsx";
 import type { Guide } from "#/guides/load-guide.ts";
 import { guideExtensions, hasAffiliateLinks, rakutenAffiliateUrl } from "#/guides/markdown.ts";
 import {
@@ -19,6 +20,14 @@ import { headingIds, markdownComponents } from "#/routes/(site)/(markdown)/-mark
 export function GuideArticle({ guide: { article, lists, fetchedAt } }: { guide: Guide }) {
   const components = {
     ...markdownComponents,
+    // A subsection of a guide, which the contents list under its section.
+    h3: ({ children, id }: { children?: ReactNode; id?: string }) => (
+      <Heading as="h3" id={id} fontSize="md" mt="6" mb="1">
+        {children}
+      </Heading>
+    ),
+    "md-figure": HelpFigure,
+    "md-figure-callout": HelpFigureCallout,
     "md-items": ({ query }: { query: string }) => (
       <GuideItemList items={lists[query]} fetchedAt={fetchedAt} />
     ),

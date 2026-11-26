@@ -91,6 +91,7 @@
     "toon",
     "jactionlint",
     "shellcheck",
-    "miserc"
+    "miserc",
+    "dgadget"
   ]
 }

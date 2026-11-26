@@ -5,11 +5,14 @@ import { guideExtensions } from "#/guides/markdown.ts";
 import { guideSections, splitIntroduction } from "./-guide-toc.tsx";
 import { headingIds } from "./-markdown-body.tsx";
 
-test("each guide's contents link to the `##` headings it has, in order", async () => {
+test("each guide's contents link to the `##` and `###` headings it has, in order", async () => {
   for (const { body } of await loadArticles()) {
     const html = renderHtml(body, { headingIds, extensions: guideExtensions });
-    const h2Ids = [...html.matchAll(/<h2 id="([^"]+)"/g)].map(([, id]) => id);
-    expect(guideSections(body)).toEqual(h2Ids);
+    const headings = [...html.matchAll(/<h([23]) id="([^"]+)"/g)].map(([, level, id]) => ({
+      title: id,
+      level: Number(level),
+    }));
+    expect(guideSections(body)).toEqual(headings);
   }
 });
 

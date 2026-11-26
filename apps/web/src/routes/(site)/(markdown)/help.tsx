@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import markdown from "./-markdown/help.md?raw";
 import { pageHead } from "#/page-head.ts";
-import { figureExtension } from "./-help/figure-extension.ts";
-import { HelpFigure, HelpFigureCallout } from "./-help/help-figure.tsx";
+import { figureExtension } from "./-figures/figure-extension.ts";
+import { HelpFigure, HelpFigureCallout } from "./-figures/help-figure.tsx";
 import { MarkdownBody } from "./-markdown-body.tsx";
 
 export const Route = createFileRoute("/(site)/(markdown)/help")({

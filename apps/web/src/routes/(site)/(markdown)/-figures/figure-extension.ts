@@ -3,7 +3,8 @@ import { helpFigureMarks } from "./figure-marks.ts";
 
 /**
  * `:::figure[caption]{name="name" alt="description"}` … `:::`: a figure of the help, drawn by the app's components, with a numbered
- * list inside: item N says what mark N points at. A name
+ * list inside: item N says what mark N points at. Left empty, the marks are plain frames around
+ * what the text speaks of, without numbers. A name
  * without a figure, or items that do not match the marks, fail the build.
  */
 export const figureExtension: MarkdownExtension = {
@@ -46,7 +47,7 @@ export const figureExtension: MarkdownExtension = {
           ? list.items
           : undefined;
     if (!items) throw new Error(`:::figure ${name} holds one numbered list and nothing else`);
-    if (items.length !== marks.length)
+    if (items.length > 0 && items.length !== marks.length)
       throw new Error(`:::figure ${name} has ${marks.length} marks but ${items.length} items`);
     context.consume(closing - context.index + 1);
     const callouts = items.map((item, index): ComponentNode => ({

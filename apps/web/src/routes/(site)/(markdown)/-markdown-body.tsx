@@ -8,6 +8,8 @@ import {
   Button,
   Card,
   Center,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   Heading,
   Image,
   Link,
@@ -18,9 +20,10 @@ import {
   NativeTable,
   Text,
   Timeline,
+  dataAttr,
   useDisclosure,
 } from "@workspaces/ui";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import type { FileRoutesById } from "#/routeTree.gen.ts";
 import { markdownExtensions } from "./-markdown-extensions.ts";
 import { ColumnHead } from "#/ui/column-head.tsx";
@@ -97,6 +100,122 @@ function ScreenshotImage({ src, alt, title }: { src?: string; alt?: string; titl
   );
 }
 
+/**
+ * A table's first column, which names its rows: it stays in view while the rest scrolls sideways,
+ * on the card's face so the cells passing under it are hidden, and keeps room for a few words.
+ */
+const stickyFirstCell = {
+  position: "sticky",
+  left: "0",
+  zIndex: "1",
+  bg: "bg.panel",
+  minW: "6em",
+} as const;
+
+/**
+ * Which ways a box can still scroll sideways, and how wide the sticky first column is, read again
+ * whenever it scrolls or it or its table changes size. Both start false: the HTML made ahead of
+ * time shows no arrows, and they come in once the page measures its tables.
+ */
+function useScrollEdges() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ left: false, right: false, firstColumn: 0 });
+  useEffect(() => {
+    const box = ref.current;
+    if (!box) return;
+    const measure = () => {
+      // A pixel of slack: a zoomed page leaves scroll positions a fraction short of the end.
+      const left = box.scrollLeft > 1;
+      const right = box.scrollLeft + box.clientWidth < box.scrollWidth - 1;
+      const firstColumn = box.querySelector("th")?.offsetWidth ?? 0;
+      setEdges((now) =>
+        now.left === left && now.right === right && now.firstColumn === firstColumn
+          ? now
+          : { left, right, firstColumn },
+      );
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(box);
+    if (box.firstElementChild) observer.observe(box.firstElementChild);
+    box.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      observer.disconnect();
+      box.removeEventListener("scroll", measure);
+    };
+  }, []);
+  return { ref, ...edges };
+}
+
+/**
+ * An arrow at a side of a table that scrolls: shown while there is more of the table that way. A
+ * picture only, as the table itself scrolls by touch, wheel and keys; it lets presses through.
+ */
+const scrollArrow = {
+  "aria-hidden": true,
+  position: "absolute",
+  top: "50%",
+  transform: "translateY(-50%)",
+  zIndex: "2",
+  display: "flex",
+  opacity: 0,
+  transitionProperty: "opacity",
+  transitionDuration: "slower",
+  transitionTimingFunction: "ease",
+  _mediaReduceMotion: { transitionProperty: "none" },
+  alignItems: "center",
+  justifyContent: "center",
+  boxSize: "7",
+  rounded: "full",
+  bg: "bg.panel",
+  color: "fg.muted",
+  borderWidth: "1px",
+  borderColor: "border",
+  boxShadow: "sm",
+  pointerEvents: "none",
+} as const;
+
+/**
+ * A Markdown table that scrolls sideways in its own box when it is wider than the column, with an
+ * arrow on each side it can still scroll to. The left arrow sits past the first column, which stays.
+ */
+function ScrollingTable({ children }: { children?: ReactNode }) {
+  const { ref, left, right, firstColumn } = useScrollEdges();
+  return (
+    <Box
+      position="relative"
+      my="lg"
+      data-can-scroll-left={dataAttr(left)}
+      data-can-scroll-right={dataAttr(right)}
+      style={{ "--first-column": `${firstColumn}px` }}
+    >
+      <NativeTable.Root
+        withScrollArea
+        scrollAreaProps={{ ref, whiteSpace: "normal" }}
+        fontVariantNumeric="tabular-nums"
+      >
+        {children}
+      </NativeTable.Root>
+      <Center
+        {...scrollArrow}
+        data-scroll-arrow="left"
+        left="calc(var(--first-column) + {spaces.1})"
+        css={{ "[data-can-scroll-left] > &": { opacity: 1 } }}
+      >
+        <ChevronLeftIcon />
+      </Center>
+      <Center
+        {...scrollArrow}
+        data-scroll-arrow="right"
+        right="1"
+        css={{ "[data-can-scroll-right] > &": { opacity: 1 } }}
+      >
+        <ChevronRightIcon />
+      </Center>
+    </Box>
+  );
+}
+
 export const markdownComponents = {
   h1: ({ children, id }) => (
     <ColumnHead mb="2.5">
@@ -106,7 +225,18 @@ export const markdownComponents = {
     </ColumnHead>
   ),
   h2: ({ children, id }) => (
-    <Heading as="h2" id={id} fontSize="md" mt="8" mb="2">
+    // A red line on its left tells a section from the subsections (`###`) inside it.
+    <Heading
+      as="h2"
+      id={id}
+      fontSize="lg"
+      fontWeight="bold"
+      mt="10"
+      mb="2"
+      ps="3"
+      borderLeftWidth="4px"
+      borderColor="primary.solid"
+    >
       {children}
     </Heading>
   ),
@@ -132,16 +262,22 @@ export const markdownComponents = {
   ),
   li: ({ children }) => <List.Item>{children}</List.Item>,
   // A table's numbers line up by digit; a column's alignment comes from the Markdown (`--:`).
-  table: ({ children }) => (
-    <NativeTable.Root my="lg" fontVariantNumeric="tabular-nums">
-      {children}
-    </NativeTable.Root>
-  ),
+  // A table wider than the column scrolls sideways in its own box, not the page. The cells still
+  // wrap; the headings don't, so a column is as wide as its heading.
+  table: ({ children }) => <ScrollingTable>{children}</ScrollingTable>,
   thead: ({ children }) => <NativeTable.Thead>{children}</NativeTable.Thead>,
   tbody: ({ children }) => <NativeTable.Tbody>{children}</NativeTable.Tbody>,
   tr: ({ children }) => <NativeTable.Tr>{children}</NativeTable.Tr>,
-  th: ({ children, style }) => <NativeTable.Th style={style}>{children}</NativeTable.Th>,
-  td: ({ children, style }) => <NativeTable.Td style={style}>{children}</NativeTable.Td>,
+  th: ({ children, style }) => (
+    <NativeTable.Th style={style} whiteSpace="nowrap" _first={stickyFirstCell}>
+      {children}
+    </NativeTable.Th>
+  ),
+  td: ({ children, style }) => (
+    <NativeTable.Td style={style} _first={stickyFirstCell}>
+      {children}
+    </NativeTable.Td>
+  ),
   // What the text wants read is marked like a highlighter, not bolded; a long one still wraps.
   strong: ({ children }) => (
     <Mark as="strong" colorScheme="warning" whiteSpace="normal">
