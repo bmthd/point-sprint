@@ -1,4 +1,5 @@
 import type { MarkdownExtension } from "@tanstack/markdown";
+import { figureExtension } from "#/routes/(site)/(markdown)/-figures/figure-extension.ts";
 import { markdownExtensions } from "#/routes/(site)/(markdown)/-markdown-extensions.ts";
 import { itemQueryKey, parseItemsLine } from "./item-query.ts";
 
@@ -55,8 +56,11 @@ export function rakutenAffiliateUrl(page: string, affiliateId: string | null | u
   return `https://hb.afl.rakuten.co.jp/hgc/${affiliateId}/?pc=${encoded}&m=${encoded}`;
 }
 
-/** The syntax a guide may use: that of the other Markdown pages, the item lists, and the links to Rakuten. */
-export const guideExtensions = [...markdownExtensions, items, rakutenLink];
+/**
+ * The syntax a guide may use: that of the other Markdown pages, the help's figures, the item lists,
+ * and the links to Rakuten.
+ */
+export const guideExtensions = [...markdownExtensions, figureExtension, items, rakutenLink];
 
 /**
  * Whether an article has links that pay: a list of items (each item links to Rakuten as an
