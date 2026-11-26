@@ -2,6 +2,7 @@ import { Box, Card, Heading, LinkBox, List, Text, VStack } from "@workspaces/ui"
 import type { Article } from "#/guides/article.ts";
 import { GuideThumbnail } from "#/routes/(site)/-guide-card.tsx";
 import { ArticleDates } from "./-article-dates.tsx";
+import { GuideTags } from "./-guide-tags.tsx";
 
 /** Every shopping guide, newest first. */
 export function GuideList({ articles }: { articles: Article[] }) {
@@ -34,7 +35,20 @@ export function GuideList({ articles }: { articles: Article[] }) {
                     {article.title}
                   </LinkBox.Overlay>
                 </Heading>
-                <Text fontSize="sm" lineClamp={2} display={{ base: "-webkit-box", sm: "none" }}>
+                {/* One row of tags, so that the card is no taller than its thumbnail: the tags
+                    that do not fit wrap below it, out of sight, and the first ones tell the article
+                    best. Narrower, the card has no room for them; the article shows them. */}
+                <GuideTags
+                  tags={article.tags}
+                  h="6"
+                  overflow="hidden"
+                  display={{ base: "flex", md: "none" }}
+                />
+                <Text
+                  fontSize="sm"
+                  lineClamp={{ base: 1, md: 2 }}
+                  display={{ base: "-webkit-box", sm: "none" }}
+                >
                   {article.description}
                 </Text>
                 <Box display={{ base: "block", sm: "none" }}>

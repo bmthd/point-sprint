@@ -5,13 +5,15 @@ import { loadArticle, loadArticles } from "./articles.ts";
 const source = (frontmatter: string) => `---\n${frontmatter}\n---\n\n本文の段落\n`;
 
 const fields = `title: 1000円ポッキリで買えるもの
-description: "説明: コロンを含む"`;
+description: "説明: コロンを含む"
+tags: お買い物マラソン, 商品の紹介`;
 
 test("reads the frontmatter, and keeps the Markdown after it as the body", () => {
   expect(parseArticle("1000yen-items", source(fields))).toEqual({
     slug: "1000yen-items",
     title: "1000円ポッキリで買えるもの",
     description: "説明: コロンを含む",
+    tags: ["お買い物マラソン", "商品の紹介"],
     body: "\n本文の段落\n",
   });
 });
@@ -25,6 +27,14 @@ test.each([
   { slug: "a", source: source(`${fields}\nコロンのない行`), error: "cannot read" },
   { slug: "a", source: source(`${fields}\ncardLead: あと1店舗を足すなら`), error: "together" },
   { slug: "a", source: source(`${fields}\ncardFigure: 1,000円ポッキリ`), error: "together" },
+  { slug: "a", source: source(fields.replace(/\ntags.*/, "")), error: "tags" },
+  { slug: "a", source: source(fields.replace(/tags: .*/, "tags: 楽天モバイル")), error: "tags" },
+  {
+    slug: "a",
+    source: source(fields.replace(/tags: .*/, "tags: 楽天カード, 楽天カード")),
+    error: "twice",
+  },
+  { slug: "a", source: source(fields.replace(/tags: .*/, "tags: 楽天カード,")), error: "tags" },
 ])("a guide with a broken frontmatter throws: $error", ({ slug, source, error }) => {
   expect(() => parseArticle(slug, source)).toThrow(error);
 });
@@ -48,7 +58,7 @@ test("an article never committed is published today", () => {
 
 test("lists the newest first", () => {
   const article = (slug: string, published: string) => ({
-    ...parseArticle(slug, source("title: t\ndescription: d")),
+    ...parseArticle(slug, source("title: t\ndescription: d\ntags: 楽天カード")),
     published,
   });
   const sorted = newestFirst([
@@ -68,6 +78,14 @@ test("every guide in articles/ reads, and an unknown slug finds none", async () 
   expect(articles.map((a) => a.slug)).toContain("1000yen-items");
   expect(await loadArticle("1000yen-items")).toMatchObject({ title: "1000円ポッキリで買えるもの" });
   expect(await loadArticle("no-such-guide")).toBeUndefined();
+});
+
+test("reads the tags in the order they are written, without the spaces around them", () => {
+  const article = parseArticle(
+    "a",
+    source(fields.replace(/tags: .*/, "tags: 楽天カード ,キャンペーン")),
+  );
+  expect(article.tags).toEqual(["楽天カード", "キャンペーン"]);
 });
 
 test("reads the thumbnail's lead and figure", () => {

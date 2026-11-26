@@ -49,6 +49,10 @@
 
 スタイルの props の値に条件（`?:`、`&&`、`||`、`??`）を書くと `yamada/no-conditional-style` が、擬似 props のあるセレクタを書くと `yamada/no-raw-selector` が止める。
 
+## ガイド記事の frontmatter
+
+ガイド記事（`apps/web/src/guides/articles/*.md`）を書く・直すときは、先に `apps/web/src/guides/article.ts` の冒頭を読み、frontmatter をそこに書かれたとおりに書く。タグの並び順のように、ビルドでは止まらない決まりもそこにある。
+
 ## Markdown の独自構文
 
 Markdown のページと記事に足す構文は、CommonMark の Generic directives 提案（remark-directive と同じ形）で書く。コロンの数で、子を持つかを表す。
