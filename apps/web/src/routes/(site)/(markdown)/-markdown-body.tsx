@@ -97,6 +97,18 @@ function ScreenshotImage({ src, alt, title }: { src?: string; alt?: string; titl
   );
 }
 
+/**
+ * A table's first column, which names its rows: it stays in view while the rest scrolls sideways,
+ * on the card's face so the cells passing under it are hidden, and keeps room for a few words.
+ */
+const stickyFirstCell = {
+  position: "sticky",
+  left: "0",
+  zIndex: "1",
+  bg: "bg.panel",
+  minW: "6em",
+} as const;
+
 export const markdownComponents = {
   h1: ({ children, id }) => (
     <ColumnHead mb="2.5">
@@ -132,16 +144,30 @@ export const markdownComponents = {
   ),
   li: ({ children }) => <List.Item>{children}</List.Item>,
   // A table's numbers line up by digit; a column's alignment comes from the Markdown (`--:`).
+  // A table wider than the column scrolls sideways in its own box, not the page. The cells still
+  // wrap; the headings don't, so a column is as wide as its heading.
   table: ({ children }) => (
-    <NativeTable.Root my="lg" fontVariantNumeric="tabular-nums">
+    <NativeTable.Root
+      withScrollArea
+      scrollAreaProps={{ my: "lg", whiteSpace: "normal" }}
+      fontVariantNumeric="tabular-nums"
+    >
       {children}
     </NativeTable.Root>
   ),
   thead: ({ children }) => <NativeTable.Thead>{children}</NativeTable.Thead>,
   tbody: ({ children }) => <NativeTable.Tbody>{children}</NativeTable.Tbody>,
   tr: ({ children }) => <NativeTable.Tr>{children}</NativeTable.Tr>,
-  th: ({ children, style }) => <NativeTable.Th style={style}>{children}</NativeTable.Th>,
-  td: ({ children, style }) => <NativeTable.Td style={style}>{children}</NativeTable.Td>,
+  th: ({ children, style }) => (
+    <NativeTable.Th style={style} whiteSpace="nowrap" _first={stickyFirstCell}>
+      {children}
+    </NativeTable.Th>
+  ),
+  td: ({ children, style }) => (
+    <NativeTable.Td style={style} _first={stickyFirstCell}>
+      {children}
+    </NativeTable.Td>
+  ),
   // What the text wants read is marked like a highlighter, not bolded; a long one still wraps.
   strong: ({ children }) => (
     <Mark as="strong" colorScheme="warning" whiteSpace="normal">
