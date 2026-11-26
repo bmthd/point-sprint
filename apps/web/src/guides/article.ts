@@ -6,7 +6,7 @@ import * as v from "valibot";
 //   ---
 //   title: 1000円ポッキリで買えるもの
 //   description: 検索結果やリンクの説明に出す文
-//   tags: お買い物マラソン, 商品の紹介
+//   tags: 商品の紹介, お買い物マラソン
 //   ---
 //
 // `tags` tell what kind of article it is, from `GUIDE_TAGS`. Write the one that tells it best
