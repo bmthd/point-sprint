@@ -157,7 +157,12 @@ const scrollArrow = {
   top: "50%",
   transform: "translateY(-50%)",
   zIndex: "2",
-  display: "none",
+  display: "flex",
+  opacity: 0,
+  transitionProperty: "opacity",
+  transitionDuration: "slower",
+  transitionTimingFunction: "ease",
+  _mediaReduceMotion: { transitionProperty: "none" },
   alignItems: "center",
   justifyContent: "center",
   boxSize: "7",
@@ -195,7 +200,7 @@ function ScrollingTable({ children }: { children?: ReactNode }) {
         {...scrollArrow}
         data-scroll-arrow="left"
         left="calc(var(--first-column) + {spaces.1})"
-        css={{ "[data-can-scroll-left] > &": { display: "flex" } }}
+        css={{ "[data-can-scroll-left] > &": { opacity: 1 } }}
       >
         <ChevronLeftIcon />
       </Center>
@@ -203,7 +208,7 @@ function ScrollingTable({ children }: { children?: ReactNode }) {
         {...scrollArrow}
         data-scroll-arrow="right"
         right="1"
-        css={{ "[data-can-scroll-right] > &": { display: "flex" } }}
+        css={{ "[data-can-scroll-right] > &": { opacity: 1 } }}
       >
         <ChevronRightIcon />
       </Center>
