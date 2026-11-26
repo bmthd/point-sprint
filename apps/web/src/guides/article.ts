@@ -6,6 +6,7 @@ import * as v from "valibot";
 //   ---
 //   title: 1000円ポッキリで買えるもの
 //   description: 検索結果やリンクの説明に出す文
+//   tags: お買い物マラソン, 商品の紹介
 //   ---
 //
 // The days it was published and changed are not written: the build reads them from the git log
@@ -19,10 +20,34 @@ import * as v from "valibot";
 
 const Text = v.pipe(v.string(), v.trim(), v.nonEmpty());
 
+/**
+ * The tags a guide may have, telling what kind of article it is. Only these: a new one is added
+ * here, so that the same meaning is never written two ways.
+ */
+export const GUIDE_TAGS = [
+  "お買い物マラソン",
+  "ポイントの計算",
+  "楽天カード",
+  "キャンペーン",
+  "商品の紹介",
+] as const;
+
+export type GuideTag = (typeof GUIDE_TAGS)[number];
+
+/** `tags: a, b`: one tag or more, in the order written, each once. */
+const Tags = v.pipe(
+  v.string(),
+  v.transform((line) => line.split(",").map((tag) => tag.trim())),
+  v.array(v.picklist(GUIDE_TAGS)),
+  v.minLength(1),
+  v.check((tags) => new Set(tags).size === tags.length, "a tag is written twice"),
+);
+
 const FrontmatterSchema = v.pipe(
   v.strictObject({
     title: Text,
     description: Text,
+    tags: Tags,
     /** The line above the thumbnail's figure. */
     cardLead: v.optional(Text),
     /** The thumbnail's figure: the article's answer, in a few letters. */
