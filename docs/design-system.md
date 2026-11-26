@@ -116,7 +116,7 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | キャンペーンの ON / OFF | `CheckboxCard colorScheme="primary" size="sm"`（既定の surface とチェックの印） |
 | 上限の印（SPU が上限に達した） | `Badge colorScheme="primary" variant="solid" fullRounded` |
 | 表示だけのチップ（日付で自動のキャンペーン） | `Tag size="sm" variant="outline" fullRounded` |
-| ガイド記事のタグ | 表示だけのチップと同じ `Tag size="sm" variant="outline" fullRounded` を `Wrap` に並べる。記事は日付の行の下、一覧はタイトルの下。スマホの一覧はカードがサムネイルより高くなるので出さない |
+| ガイド記事のタグ | `Tag size="sm" variant="subtle" colorScheme="primary" fullRounded` を `Wrap` に並べる。記事は日付の行の下、一覧はタイトルの下。スマホの一覧はカードがサムネイルより高くなるので出さない |
 | 順番バッジ | `Badge variant="solid" colorScheme="mono" fullRounded` |
 | 保留中の注文 | スマホの表は行の地を `bg.subtle` に沈める。ポイントは `fg.muted` で取り消し線、バッジは「保留」の `Badge variant="outline" colorScheme="gray"` |
 | プレビュー（この注文で何ポイント） | 強調の数値 `primary.fg` |
