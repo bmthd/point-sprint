@@ -6,11 +6,10 @@ import * as v from "valibot";
 //   ---
 //   title: 1000円ポッキリで買えるもの
 //   description: 検索結果やリンクの説明に出す文
-//   published: 2026-10-08
-//   updated: 2026-10-20
 //   ---
 //
-// `updated` is written only once the article is changed after the day it was published.
+// The days it was published and changed are not written: the build reads them from the git log
+// (`git-dates.ts`), so that they are the days the changes reached main.
 //
 // `cardLead` and `cardFigure` are the words of its thumbnail (`thumbnail.ts`), written together:
 // the figure is the article's answer, drawn large under the lead.
@@ -24,39 +23,51 @@ const FrontmatterSchema = v.pipe(
   v.strictObject({
     title: Text,
     description: Text,
-    /** `YYYY-MM-DD`. */
-    published: v.pipe(v.string(), v.isoDate()),
-    /** `YYYY-MM-DD`: the day it was last changed, after `published`. None until it is changed. */
-    updated: v.optional(v.pipe(v.string(), v.isoDate())),
     /** The line above the thumbnail's figure. */
     cardLead: v.optional(Text),
     /** The thumbnail's figure: the article's answer, in a few letters. */
     cardFigure: v.optional(Text),
   }),
   v.check(
-    ({ published, updated }) => updated === undefined || published < updated,
-    "updated is not after published: leave it out until the article is changed",
-  ),
-  v.check(
     ({ cardLead, cardFigure }) => (cardLead === undefined) === (cardFigure === undefined),
     "cardLead and cardFigure go together: write both, or neither for a thumbnail of the title",
   ),
 );
 
-export type Article = v.InferOutput<typeof FrontmatterSchema> & {
+/** The days an article was published and last changed, as `YYYY-MM-DD` in Japan. */
+export type ArticleDates = {
+  published: string;
+  /** The day it was last changed, after `published`. None until it is changed on a later day. */
+  updated?: string;
+};
+
+/**
+ * The dates of an article from the days of its commits, the newest first. One never committed is
+ * published `today`.
+ */
+export function articleDates(commitDays: readonly string[], today: string): ArticleDates {
+  const published = commitDays.at(-1) ?? today;
+  const latest = commitDays[0] ?? today;
+  return latest > published ? { published, updated: latest } : { published };
+}
+
+/** A guide's file: its frontmatter, and the Markdown after it. */
+export type ArticleFile = v.InferOutput<typeof FrontmatterSchema> & {
   slug: string;
   /** The Markdown after the frontmatter. */
   body: string;
 };
 
+export type Article = ArticleFile & ArticleDates;
+
 /** A slug is part of the URL: lower case letters, digits and hyphens, telling what it is about. */
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
- * The article in a Markdown file. A file without the frontmatter, or with a field missing or
- * wrong, throws: the build fails rather than publishing a page without its title or dates.
+ * The guide in a Markdown file. A file without the frontmatter, or with a field missing or wrong,
+ * throws: the build fails rather than publishing a page without its title.
  */
-export function parseArticle(slug: string, source: string): Article {
+export function parseArticle(slug: string, source: string): ArticleFile {
   if (!SLUG.test(slug)) throw new Error(`The guide "${slug}" needs a slug like 1000yen-items`);
   const match = source.match(/^---\n([\s\S]*?)\n---\n/);
   if (!match) throw new Error(`The guide "${slug}" has no frontmatter (--- … ---) at the top`);

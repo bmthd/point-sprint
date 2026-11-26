@@ -32,6 +32,8 @@ jobs:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
+          # The guides' dates are read from the git log (apps/web/src/guides/git-dates.ts).
+          fetch-depth: 0
       - uses: $/.github/actions/setup
         with:
           cache: true

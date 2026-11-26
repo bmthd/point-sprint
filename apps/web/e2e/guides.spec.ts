@@ -1,6 +1,8 @@
 import { expect, test } from "./fixtures.ts";
 import { GUIDE_ITEM_NAME } from "./fake-rakuten-api.ts";
 import { GuidePage, GuidesPage } from "./pages/index.ts";
+import { japaneseDate } from "#/guides/article.ts";
+import { gitArticleDates } from "#/guides/git-dates.ts";
 import { siteUrl } from "#/site-url.ts";
 
 // The E2E build searches the guides' items in the stand-in for the Rakuten API
@@ -8,6 +10,9 @@ import { siteUrl } from "#/site-url.ts";
 
 const GUIDE = "/guides/1000yen-items";
 const TITLE = "1000円ポッキリで買えるもの";
+// The days the build read from the git log, which every change to the guide moves. It has been
+// changed since it was published, so it has both.
+const { published, updated } = gitArticleDates()["1000yen-items"] ?? { published: "" };
 
 test("the guide list leads to each guide", async ({ page }) => {
   const guides = await GuidesPage.open(page);
@@ -19,7 +24,7 @@ test("the guide list leads to each guide", async ({ page }) => {
 test("a guide shows its text and dates, with the items of each list", async ({ page }) => {
   const guide = await GuidePage.open(page, GUIDE);
   await expect(page).toHaveTitle(`${TITLE} | ポイントスプリント`);
-  await expect(page.getByText(/公開日 2026年10月8日/)).toBeVisible();
+  await expect(page.getByText(`公開日 ${japaneseDate(published)}`)).toBeVisible();
   await expect(guide.heading(2, "お菓子・スイーツ")).toBeVisible();
   await expect(page.getByText(/自分用のおやつにも/)).toBeVisible();
   await expect(guide.heading(2, "美容")).toBeVisible();
@@ -32,8 +37,9 @@ test("a guide is prerendered as an article", async ({ request }) => {
   expect(html).toContain(`<h1`);
   expect(html).toContain(TITLE);
   expect(html).toContain('<meta property="og:type" content="article"/>');
-  expect(html).toContain('<meta property="article:published_time" content="2026-10-08"/>');
-  expect(html).toContain('<meta property="article:modified_time" content="2026-10-28"/>');
+  expect(html).toContain(`<meta property="article:published_time" content="${published}"/>`);
+  expect(updated).toBeDefined();
+  expect(html).toContain(`<meta property="article:modified_time" content="${updated}"/>`);
 });
 
 test("a guide's OGP image is the thumbnail the build drew", async ({ request }) => {
@@ -54,7 +60,7 @@ test("the sitemap lists the guide list and every guide", async ({ request }) => 
   const sitemap = await (await request.get("/sitemap.xml")).text();
   expect(sitemap).toContain(`<loc>${siteUrl}/guides</loc>`);
   expect(sitemap).toContain(
-    `<loc>${siteUrl}/guides/1000yen-items</loc><lastmod>2026-10-28</lastmod>`,
+    `<loc>${siteUrl}/guides/1000yen-items</loc><lastmod>${updated}</lastmod>`,
   );
   expect(sitemap).toContain(`<loc>${siteUrl}/help</loc>`);
   expect(sitemap).not.toContain("/plan");
