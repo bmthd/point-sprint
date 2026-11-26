@@ -9,6 +9,9 @@ import * as v from "valibot";
 //   tags: お買い物マラソン, 商品の紹介
 //   ---
 //
+// `tags` tell what kind of article it is, from `GUIDE_TAGS`. Write the one that tells it best
+// first: a list that has no room for them all shows the first ones.
+//
 // The days it was published and changed are not written: the build reads them from the git log
 // (`git-dates.ts`), so that they are the days the changes reached main.
 //
@@ -34,7 +37,7 @@ export const GUIDE_TAGS = [
 
 export type GuideTag = (typeof GUIDE_TAGS)[number];
 
-/** `tags: a, b`: one tag or more, in the order written, each once. */
+/** `tags: a, b`: one tag or more, each once, the one that tells the article best first. */
 const Tags = v.pipe(
   v.string(),
   v.transform((line) => line.split(",").map((tag) => tag.trim())),

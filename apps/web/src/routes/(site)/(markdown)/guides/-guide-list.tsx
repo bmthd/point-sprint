@@ -35,10 +35,20 @@ export function GuideList({ articles }: { articles: Article[] }) {
                     {article.title}
                   </LinkBox.Overlay>
                 </Heading>
-                {/* A phone has room for the title alone: the tags would make the card taller than
-                    its thumbnail. The article shows them. */}
-                <GuideTags tags={article.tags} display={{ base: "flex", sm: "none" }} />
-                <Text fontSize="sm" lineClamp={2} display={{ base: "-webkit-box", sm: "none" }}>
+                {/* One row of tags, so that the card is no taller than its thumbnail: the tags
+                    that do not fit wrap below it, out of sight, and the first ones tell the article
+                    best. Narrower, the card has no room for them; the article shows them. */}
+                <GuideTags
+                  tags={article.tags}
+                  h="6"
+                  overflow="hidden"
+                  display={{ base: "flex", md: "none" }}
+                />
+                <Text
+                  fontSize="sm"
+                  lineClamp={{ base: 1, md: 2 }}
+                  display={{ base: "-webkit-box", sm: "none" }}
+                >
                   {article.description}
                 </Text>
                 <Box display={{ base: "block", sm: "none" }}>
