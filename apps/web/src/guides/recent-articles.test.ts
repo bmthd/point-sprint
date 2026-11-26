@@ -6,6 +6,7 @@ const article = (slug: string, published: string, updated?: string): Article => 
   slug,
   title: slug,
   description: slug,
+  tags: ["お買い物マラソン"],
   published,
   ...(updated === undefined ? {} : { updated }),
   body: "",
