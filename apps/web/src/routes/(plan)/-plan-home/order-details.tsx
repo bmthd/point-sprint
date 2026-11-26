@@ -4,12 +4,12 @@
 
 import { Field as FormField, useField } from "@formisch/react";
 import { hasOrderTagCampaign, type Order, type Plan } from "@workspaces/domain";
-import { Field, Flex, Grid, Input, Text } from "@workspaces/ui";
+import { Field, Flex, Grid, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId } from "react";
-import { bind, errorsOf } from "#/routes/-form.tsx";
+import { errorsOf } from "#/routes/-form.tsx";
 import { shopsAtom } from "#/state/query-atoms.ts";
-import { AMOUNT_PATH, type OrderForm } from "#/routes/(plan)/-order-form-store.ts";
+import type { OrderForm } from "#/routes/(plan)/-order-form-store.ts";
 import {
   CampaignCheck,
   ChannelField,
@@ -83,52 +83,21 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
   );
 }
 
-/** The first item's name and amount, for an order whose row cannot edit its amount. */
-function FirstItemFields({ form }: { form: OrderForm }) {
-  return (
-    <Grid templateColumns="minmax(0, 1fr) minmax(0, 12rem)" alignItems="start" gap="2.5">
-      <FormField of={form} path={["items", 0, "name"]}>
-        {(field) => (
-          <Field.Root label="商品1の商品名" {...errorsOf(field)} minW="0">
-            <Input size="lg" {...bind(field)} />
-          </Field.Root>
-        )}
-      </FormField>
-      <FormField of={form} path={AMOUNT_PATH}>
-        {(field) => (
-          <Field.Root label="商品1の金額（税込）" {...errorsOf(field)} minW="0">
-            <Input
-              size="lg"
-              textAlign="end"
-              fontVariantNumeric="tabular-nums"
-              inputMode="numeric"
-              {...bind(field)}
-            />
-          </Field.Root>
-        )}
-      </FormField>
-    </Grid>
-  );
-}
-
 /**
  * The order's conditions: where (shop, URL, channel) and when, the tax and shop rates, the
- * campaigns, then its items past a plain one's name and amount. `simple` is an order of one item
- * bought once without a coupon, whose name and amount are on the row; any other order edits its
- * first item here too. `onItemRemoved` runs once an item after the first one is removed.
+ * campaigns, then its items past the first one's name and amount, which are on the row or on the
+ * item's line. `onItemRemoved` runs once an item after the first one is removed.
  */
 export function OrderDetailFields({
   form,
   plan,
   autofill,
-  simple,
   original,
   onItemRemoved,
 }: {
   form: OrderForm;
   plan: Plan;
   autofill: ItemAutofill;
-  simple: boolean;
   /** The order the fields edit, saved already. */
   original?: Order;
   onItemRemoved?: () => void;
@@ -164,9 +133,6 @@ export function OrderDetailFields({
       </OrderPart>
       <OrderPart legend="数量・クーポン・商品">
         <Flex direction="column" gap="2" maxW="xl">
-          {/* Stopgap until #344 gives each item its own line: an order of more than a plain item
-              edits its first item's name and amount here. */}
-          {simple ? null : <FirstItemFields form={form} />}
           <Flex direction="column" gap="2" maxW="md">
             <ItemDetailFields form={form} index={0} withRate={false} size="lg" />
             <RakutenCardSwitch form={form} plan={plan} original={original} />
