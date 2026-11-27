@@ -6,7 +6,12 @@ import { spendTierRate } from "#/benefit-kinds/spend-tiers.ts";
 import { channels } from "#/channels/index.ts";
 import { matchesConditions } from "#/conditions/matches.ts";
 import { type Benefit, isTwoShopCampaign } from "#/model/benefit.ts";
-import type { ChannelId, OrderTag, ShopTag } from "#/model/common.ts";
+import {
+  type ChannelId,
+  type OrderTag,
+  type ShopTag,
+  closestDateInPeriod,
+} from "#/model/common.ts";
 import {
   DEFAULT_ORDER_CHANNEL,
   type LineItem,
@@ -540,31 +545,42 @@ export const BIG_ONE_MORE_SHOP_GAIN = 1000;
 
 /**
  * How much the sum of the totals counted with `planId` grows when the plan gets one more order of
- * ¥1,000 (10% tax included, no coupon) at a shop it has not bought from, on `date`. `null` when one
- * more shop does not change the plan's shop-around rate (no shop-around, or at its top tier), so the
- * gain would only be the item's own points. Caps apply: points over a cap are not counted.
+ * ¥1,000 (10% tax included, no coupon) at a shop it has not bought from. It is bought `today`, or on
+ * the plan's closest day when today is outside its period (its first day when today is not known).
+ * `null` when one more shop does not change the plan's shop-around rate (no shop-around, or at its
+ * top tier), so the gain would only be the item's own points. Caps apply: points over a cap are not
+ * counted. `results` are `calculateAll(plans, shops)`, the plans as they are now.
  */
-export function oneMoreShopGain(
-  plans: Plan[],
-  shops: Shop[],
-  planId: string,
-  date: string,
-): number | null {
+export function oneMoreShopGain({
+  plans,
+  shops,
+  results,
+  planId,
+  today,
+}: {
+  plans: Plan[];
+  shops: Shop[];
+  results: Map<string, CalculationResult>;
+  planId: string;
+  today: string | undefined;
+}): number | null {
   const plan = plans.find((other) => other.id === planId);
-  if (!plan) return null;
+  if (!plan || !results.get(planId)?.shopAroundOutlook?.nextShop) return null;
   const active = plans.filter((other) => !other.onHold);
   const world = plan.onHold ? [...active, plan] : active;
-  const before = calculateCore(world, shops);
-  if (!before.get(planId)?.shopAroundOutlook?.nextShop) return null;
+  // A held plan is calculated with the others; `results` has the others without it.
+  const before = plan.onHold
+    ? sumOfTotals(calculateCore(world, shops))
+    : totalCountedWith(results, plans, planId);
   const order: Order = {
     id: "one-more-shop",
-    date,
+    date: closestDateInPeriod({ date: today ?? plan.period.start, period: plan.period }),
     channel: DEFAULT_ORDER_CHANNEL,
     shopTags: [],
     lineItems: [
       {
         id: "one-more-shop-item",
-        name: "1000円ポッキリ",
+        name: `${ONE_MORE_SHOP_PRICE}円ポッキリ`,
         unitPrice: ONE_MORE_SHOP_PRICE,
         quantity: 1,
         taxRate: 0.1,
@@ -580,7 +596,7 @@ export function oneMoreShopGain(
     ),
     shops,
   );
-  return sumOfTotals(after) - sumOfTotals(before);
+  return sumOfTotals(after) - before;
 }
 
 /** `gain` when it is big enough for the plan to point out one more shop, `null` otherwise. */

@@ -1,5 +1,5 @@
 import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
-import { type Plan, type TaxRate, closestDateInPeriod } from "@workspaces/domain";
+import type { Plan, TaxRate } from "@workspaces/domain";
 import {
   Box,
   Flex,
@@ -199,13 +199,7 @@ function Home({ plan }: { plan: Plan }) {
   const { open: editOrder } = editor;
   const addOrder = useCallback(() => editOrder(NEW_ORDER), [editOrder]);
   const today = useToday(now);
-  // The 1000円ポッキリ is bought today, or on the plan's closest day when today is outside it.
-  const oneMoreShopGain = useAtomValue(
-    bigOneMoreShopGainAtom({
-      planId: plan.id,
-      date: closestDateInPeriod({ date: today ?? plan.period.start, period: plan.period }),
-    }),
-  );
+  const oneMoreShopGain = useAtomValue(bigOneMoreShopGainAtom({ planId: plan.id, today }));
   const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
   const lines = useCapLines(plan);
   const resultHeadingId = useId();

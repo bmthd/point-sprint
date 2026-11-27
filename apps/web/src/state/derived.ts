@@ -92,16 +92,24 @@ export const orderPointsAtom = atomFamily(
   sameOrderKey,
 );
 
-type OneMoreShopKey = { planId: string; date: string };
+type OneMoreShopKey = { planId: string; today: string | undefined };
 
 /**
- * What one more shop of a 1000円ポッキリ on `date` adds to the plan, when it is 1,000P or more:
- * otherwise `null`. Recalculated only when the plans, shops or date change.
+ * What one more shop of a 1000円ポッキリ adds to the plan, when it is 1,000P or more: otherwise
+ * `null`. Recalculated only when the plans, shops or day change.
  */
 export const bigOneMoreShopGainAtom = atomFamily(
-  ({ planId, date }: OneMoreShopKey) =>
+  ({ planId, today }: OneMoreShopKey) =>
     atom((get) =>
-      bigOneMoreShopGain(oneMoreShopGain(get(calculatedPlansAtom), get(shopsAtom), planId, date)),
+      bigOneMoreShopGain(
+        oneMoreShopGain({
+          plans: get(calculatedPlansAtom),
+          shops: get(shopsAtom),
+          results: get(calculationAtom),
+          planId,
+          today,
+        }),
+      ),
     ),
-  (a, b) => a.planId === b.planId && a.date === b.date,
+  (a, b) => a.planId === b.planId && a.today === b.today,
 );
