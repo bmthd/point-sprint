@@ -19,11 +19,27 @@ import { afterEach, expect, test, vi } from "vitest";
 import { createIndexedDbRepository } from "#/storage/indexed-db-repository.ts";
 import { createMemoryRepository } from "#/storage/memory-repository.ts";
 import type { Repository } from "#/storage/repository.ts";
-import { calculationAtom, orderAtom, orderPointsAtom } from "./derived.ts";
+import {
+  calculatedPlanAtom,
+  calculationAtom,
+  orderAtom,
+  orderPointsAtom,
+  planAtom,
+  planResultAtom,
+  planNameAtom,
+  planOnHoldAtom,
+  planPeriodAtom,
+  planOrderMetaAtom,
+  planCapLinesAtom,
+  planGroupTotalsAtom,
+  planShopOutlookAtom,
+  hasOrderAtom,
+} from "./derived.ts";
 import {
   changeShop,
   replacePlan,
   replaceShop,
+  runDeletePlanAtom,
   saveProfileAtom,
   savePlanAtom,
   saveShopAtom,
@@ -313,6 +329,66 @@ test("order points atom keeps identity when another order changes", async () => 
   await store.set(updateOrderAtom, { planId: PLAN, order: order(ORDER_B, 5000) });
   await vi.waitFor(() => expect(store.get(pointsB).total).toBe(100));
   expect(store.get(pointsA)).toBe(before);
+});
+
+test("the parts of another plan's calculation keep identity when a plan changes", async () => {
+  const other: Plan = { ...plan, id: OTHER_PLAN, name: "other" };
+  const store = setup(createMemoryRepository({ plans: [plan, other], shops: [shop] }));
+  await vi.waitFor(() => expect(store.get(plansAtom)).toHaveLength(2));
+  const calculated = calculatedPlanAtom(OTHER_PLAN);
+  const result = planResultAtom(OTHER_PLAN);
+  unsubscribes.push(
+    store.sub(calculated, () => {}),
+    store.sub(result, () => {}),
+    store.sub(calculationAtom, () => {}),
+  );
+  await vi.waitFor(() => expect(store.get(result)?.total).toBe(20));
+  const before = { plan: store.get(calculated), result: store.get(result) };
+
+  await store.set(updateOrderAtom, { planId: PLAN, order: order(ORDER_A, 3000) });
+  await vi.waitFor(() => expect(store.get(calculationAtom).get(PLAN)?.total).toBe(60));
+  expect(store.get(calculated)).toBe(before.plan);
+  // The result changes, since its cap usage covers every plan's caps, but its own parts do not.
+  expect(store.get(result)).not.toBe(before.result);
+  expect(store.get(result)?.breakdown).toBe(before.result?.breakdown);
+  expect(store.get(result)?.rates).toBe(before.result?.rates);
+});
+
+test("deleting a plan removes its atoms from the families", async () => {
+  const other: Plan = { ...plan, id: OTHER_PLAN, name: "other" };
+  const store = setup(createMemoryRepository({ plans: [plan, other], shops: [shop] }));
+  await vi.waitFor(() => expect(store.get(plansAtom)).toHaveLength(2));
+  // Read without subscribing to the deleted plan's atoms: its components are gone once it is.
+  store.get(orderPointsAtom({ planId: PLAN, orderId: ORDER_A }));
+  unsubscribes.push(store.sub(orderPointsAtom({ planId: OTHER_PLAN, orderId: ORDER_A }), () => {}));
+
+  const homeFamilies = [
+    planNameAtom,
+    planOnHoldAtom,
+    planPeriodAtom,
+    planOrderMetaAtom,
+    planCapLinesAtom,
+    planGroupTotalsAtom,
+    planShopOutlookAtom,
+  ];
+  for (const family of homeFamilies) {
+    family(PLAN);
+    family(OTHER_PLAN);
+  }
+  hasOrderAtom({ planId: PLAN, orderId: ORDER_A });
+  hasOrderAtom({ planId: OTHER_PLAN, orderId: ORDER_A });
+
+  store.set(runDeletePlanAtom, PLAN);
+  await vi.waitFor(() => expect([...planAtom.getParams()]).toEqual([OTHER_PLAN]));
+  expect(store.get(plansAtom).map((p) => p.id)).toEqual([OTHER_PLAN]);
+  expect([...orderAtom.getParams()]).toEqual([{ planId: OTHER_PLAN, orderId: ORDER_A }]);
+  expect([...orderPointsAtom.getParams()]).toEqual([{ planId: OTHER_PLAN, orderId: ORDER_A }]);
+  expect([...planResultAtom.getParams()]).toEqual([OTHER_PLAN]);
+  for (const family of homeFamilies) {
+    expect([...family.getParams()]).not.toContain(PLAN);
+    expect([...family.getParams()]).toContain(OTHER_PLAN);
+  }
+  expect([...hasOrderAtom.getParams()]).toEqual([{ planId: OTHER_PLAN, orderId: ORDER_A }]);
 });
 
 test("copy inserts the order right after the original", async () => {
