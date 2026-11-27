@@ -11,6 +11,7 @@ import {
 } from "@workspaces/ui";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { type RefObject, useEffect, useState } from "react";
+import { planAtom } from "#/state/derived.ts";
 import { attachToEventAtom, carryOverToEventAtom } from "#/state/plan-operations.ts";
 import { officialEventsAtom } from "#/routes/-official-events.ts";
 import { useToday } from "#/routes/-use-today.ts";
@@ -56,11 +57,12 @@ export function useEventChangeRequest(
  * saying what the event's period and benefits replace. Shown only on a plan without an event, and
  * once the events have loaded. A plan of an event changes it in its event's card (`EventCarryOver`).
  */
-export function EventAttacher({ plan }: { plan: Plan }) {
+export function EventAttacher({ planId }: { planId: string }) {
+  const plan = useAtomValue(planAtom(planId));
   const events = useAtomValue(officialEventsAtom);
   const attach = useSetAtom(attachToEventAtom);
-  const save = useSaveSettingsChange(plan.id);
-  if (plan.officialEventId !== undefined || events.length === 0) return null;
+  const save = useSaveSettingsChange(planId);
+  if (!plan || plan.officialEventId !== undefined || events.length === 0) return null;
   return (
     <Card.Root as="section" aria-label="公式イベント">
       <Card.Body alignItems="stretch" gap="3">

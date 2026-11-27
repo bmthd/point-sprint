@@ -186,6 +186,8 @@ test("shows next shop hint only below the top tier", async () => {
   // +3倍 → +4倍 on ¥40,000 is 400P more.
   await expect.element(screen.getByText("あと1店舗で全商品", { exact: false })).toBeVisible();
   await expect.element(summary()).toMatchTextContent("あと1店舗で全商品 +1倍（約 +400P）");
+  await expect.element(summary()).not.toMatchTextContent("1店舗で +1,000P 超え");
+  await expect.element(page.getByRole("region", { name: "合計" })).not.toMatchTextContent("超え");
 
   const topTier = makePlan({
     benefits: [baseBenefit, ...marathon],
@@ -195,6 +197,29 @@ test("shows next shop hint only below the top tier", async () => {
 
   await expect.element(summary()).toMatchTextContent("10店舗を買い回り中");
   await expect.element(summary()).not.toMatchTextContent("あと1店舗で");
+});
+
+test("turns the next shop row gold when one more 1000円ポッキリ adds 1,000P or more", async () => {
+  // Two shops of ¥150,000: +1倍 → +2倍 on ¥300,000 is 3,000P, and the ¥1,000 item (¥910 before
+  // tax) adds 9P of 通常 and 18P of マラソン.
+  const big = (index: number): Order => ({
+    ...order(index),
+    lineItems: order(index).lineItems.map((item) => ({ ...item, unitPrice: 150_000 })),
+  });
+  const plan = makePlan({ benefits: [baseBenefit, ...marathon], orders: [big(0), big(1)] });
+  const { screen } = await renderPlanHome(createMemoryRepository({ shops, plans: [plan] }));
+
+  await expect.element(summary()).toMatchTextContent("1店舗で +1,000P 超え");
+  await expect
+    .element(summary())
+    .toMatchTextContent("あと1店舗で全商品 +1倍（1000円ポッキリで約 +3,027P）");
+  await expect
+    .element(screen.getByRole("link", { name: "1000円ポッキリ" }))
+    .toHaveAttribute("href", "/guides/1000yen-items");
+  // The phone's bottom bar says so too, as the summary card is out of sight while orders are added.
+  const bar = page.getByRole("region", { name: "合計" });
+  await expect.element(bar).toMatchTextContent("1店舗で +1,000P 超え");
+  await expect.element(bar).toMatchTextContent("あと1店舗で約 +3,027P");
 });
 
 test("breakdown opens and sums to total", async () => {

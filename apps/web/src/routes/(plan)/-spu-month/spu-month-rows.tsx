@@ -1,16 +1,10 @@
-import {
-  type Plan,
-  type SpuMonth,
-  spuIdsIn,
-  spuMonthsOfPlan,
-  accountIdOf,
-} from "@workspaces/domain";
+import { type SpuMonth, spuIdsIn, spuMonthsOfPlan, accountIdOf } from "@workspaces/domain";
 import { Button, Card, Flex, Heading, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { rounded } from "#/ui/format.ts";
 
-import { accountSettingsAtom } from "#/state/derived.ts";
+import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
 import { spuMonthsAtom } from "#/state/query-atoms.ts";
 import { monthText } from "#/routes/(plan)/-warnings.tsx";
 import { spuMonthRate } from "./spu-month-editor.tsx";
@@ -102,18 +96,20 @@ export function SpuMonthRows({
  * A plan of one month has one line.
  */
 export function SpuSettingsCard({
-  plan,
+  planId,
   title,
   note,
   onChange,
 }: {
-  plan: Plan;
+  planId: string;
   title: string;
   note: string;
   onChange: (month: string) => void;
 }) {
+  const plan = useAtomValue(planAtom(planId));
   const settings = useAtomValue(accountSettingsAtom);
   const stored = useAtomValue(spuMonthsAtom);
+  if (!plan) return null;
   const accountId = accountIdOf(plan, settings);
   const months = spuMonthsOfPlan(plan);
   const [only] = months;

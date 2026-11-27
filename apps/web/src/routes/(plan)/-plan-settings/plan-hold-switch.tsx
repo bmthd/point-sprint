@@ -1,13 +1,15 @@
-import type { Plan } from "@workspaces/domain";
 import { Card, Switch, Text } from "@workspaces/ui";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
+import { planAtom } from "#/state/derived.ts";
 import { togglePlanHoldAtom } from "#/state/plan-operations.ts";
 import { useSaveSettingsChange } from "./settings-shared.ts";
 
 /** Holds the plan, or releases it: a held plan is left out of the other plans' calculation. */
-export function PlanHoldSwitch({ plan }: { plan: Plan }) {
+export function PlanHoldSwitch({ planId }: { planId: string }) {
+  const plan = useAtomValue(planAtom(planId));
   const toggle = useSetAtom(togglePlanHoldAtom);
-  const save = useSaveSettingsChange(plan.id);
+  const save = useSaveSettingsChange(planId);
+  if (!plan) return null;
   return (
     <Card.Root as="section" aria-label="保留">
       <Card.Body alignItems="stretch">

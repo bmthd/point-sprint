@@ -150,7 +150,7 @@ const OPEN_ROW_HIDE = [
 function SpuCardFigure() {
   return (
     <SpuSettingsCard
-      plan={THIRD_MARATHON}
+      planId={THIRD_MARATHON.id}
       title="SPU の設定"
       note="注文の日付の月で決まります"
       onChange={ignore}

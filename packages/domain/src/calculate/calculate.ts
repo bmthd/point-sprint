@@ -6,8 +6,20 @@ import { spendTierRate } from "#/benefit-kinds/spend-tiers.ts";
 import { channels } from "#/channels/index.ts";
 import { matchesConditions } from "#/conditions/matches.ts";
 import { type Benefit, isTwoShopCampaign } from "#/model/benefit.ts";
-import type { ChannelId, OrderTag, ShopTag } from "#/model/common.ts";
-import { type LineItem, hasShop, orderShopContext, paidWithRakutenCard } from "#/model/order.ts";
+import {
+  type ChannelId,
+  type OrderTag,
+  type ShopTag,
+  closestDateInPeriod,
+} from "#/model/common.ts";
+import {
+  DEFAULT_ORDER_CHANNEL,
+  type LineItem,
+  type Order,
+  hasShop,
+  orderShopContext,
+  paidWithRakutenCard,
+} from "#/model/order.ts";
 import { type Plan, planAccountId } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
 import { capGroupKey, resolveGroupCap } from "./cap-groups.ts";
@@ -523,6 +535,73 @@ export function totalCountedWith(
   return plans
     .filter((plan) => !plan.onHold || plan.id === planId)
     .reduce((sum, plan) => sum + (results.get(plan.id)?.total ?? 0), 0);
+}
+
+/** The price of the order `oneMoreShopGain` adds: a 1000円ポッキリ item, tax and shipping included. */
+export const ONE_MORE_SHOP_PRICE = 1000;
+
+/** How much one more shop must add before the plan says so. */
+export const BIG_ONE_MORE_SHOP_GAIN = 1000;
+
+/**
+ * How much the sum of the totals counted with `planId` grows when the plan gets one more order of
+ * ¥1,000 (10% tax included, no coupon) at a shop it has not bought from. It is bought `today`, or on
+ * the plan's closest day when today is outside its period (its first day when today is not known).
+ * `null` when one more shop does not change the plan's shop-around rate (no shop-around, or at its
+ * top tier), so the gain would only be the item's own points. Caps apply: points over a cap are not
+ * counted. `results` are `calculateAll(plans, shops)`, the plans as they are now.
+ */
+export function oneMoreShopGain({
+  plans,
+  shops,
+  results,
+  planId,
+  today,
+}: {
+  plans: Plan[];
+  shops: Shop[];
+  results: Map<string, CalculationResult>;
+  planId: string;
+  today: string | undefined;
+}): number | null {
+  const plan = plans.find((other) => other.id === planId);
+  if (!plan || !results.get(planId)?.shopAroundOutlook?.nextShop) return null;
+  const active = plans.filter((other) => !other.onHold);
+  const world = plan.onHold ? [...active, plan] : active;
+  // A held plan is calculated with the others; `results` has the others without it.
+  const before = plan.onHold
+    ? sumOfTotals(calculateCore(world, shops))
+    : totalCountedWith(results, plans, planId);
+  const order: Order = {
+    id: "one-more-shop",
+    date: closestDateInPeriod({ date: today ?? plan.period.start, period: plan.period }),
+    channel: DEFAULT_ORDER_CHANNEL,
+    shopTags: [],
+    lineItems: [
+      {
+        id: "one-more-shop-item",
+        name: `${ONE_MORE_SHOP_PRICE}円ポッキリ`,
+        unitPrice: ONE_MORE_SHOP_PRICE,
+        quantity: 1,
+        taxRate: 0.1,
+        discount: 0,
+      },
+    ],
+    onHold: false,
+    tags: [],
+  };
+  const after = calculateCore(
+    world.map((other) =>
+      other.id === planId ? { ...other, orders: [...other.orders, order] } : other,
+    ),
+    shops,
+  );
+  return sumOfTotals(after) - before;
+}
+
+/** `gain` when it is big enough for the plan to point out one more shop, `null` otherwise. */
+export function bigOneMoreShopGain(gain: number | null): number | null {
+  return gain !== null && gain >= BIG_ONE_MORE_SHOP_GAIN ? gain : null;
 }
 
 export function calculate(plan: Plan, shops: Shop[]): CalculationResult {

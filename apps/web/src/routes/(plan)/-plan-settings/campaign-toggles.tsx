@@ -20,8 +20,9 @@ import {
   dataAttr,
   PencilIcon,
 } from "@workspaces/ui";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
+import { planAtom } from "#/state/derived.ts";
 import { rateText } from "#/ui/format.ts";
 import { toggleBenefitAtom } from "#/state/plan-operations.ts";
 import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
@@ -179,7 +180,12 @@ function CampaignRow({
  * The campaigns with their switches, and a button for each template that adds it at once. A campaign
  * just added opens its values, to be changed there.
  */
-export function CampaignToggles({ plan }: { plan: Plan }) {
+export function CampaignToggles({ planId }: { planId: string }) {
+  const plan = useAtomValue(planAtom(planId));
+  return plan ? <CampaignTogglesContent plan={plan} /> : null;
+}
+
+function CampaignTogglesContent({ plan }: { plan: Plan }) {
   const toggle = useSetAtom(toggleBenefitAtom);
   const save = useSaveSettingsChange(plan.id);
   const [editingId, setEditingId] = useState<string>();

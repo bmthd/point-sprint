@@ -7,6 +7,7 @@ import {
 import { Box, Card, Flex, NativeAccordion, Progress, Text } from "@workspaces/ui";
 import { grouped } from "#/ui/format.ts";
 import { PointBreakdown } from "#/routes/-point-breakdown.tsx";
+import { NextShopRow } from "./one-more-shop.tsx";
 import { ShopLadder } from "./shop-ladder.tsx";
 
 const SHOP_STEPS = 10;
@@ -85,12 +86,15 @@ export function SummaryCard({
   result,
   compact,
   lines,
+  oneMoreShopGain,
 }: {
   plan: Plan;
   result: CalculationResult;
   compact: boolean;
   /** The plan's caps (`useCapLines`). */
   lines: CapLine[];
+  /** What one more shop of a 1000円ポッキリ adds, when it is 1,000P or more. */
+  oneMoreShopGain: number | null;
 }) {
   const outlook = result.shopAroundOutlook;
   const amount = countedAmount(plan);
@@ -148,17 +152,11 @@ export function SummaryCard({
               </span>
             </Flex>
             {outlook.nextShop ? (
-              <Text fontSize="sm" bg="blackAlpha.400" rounded="md" px="2.5" py="2">
-                あと1店舗で全商品{" "}
-                <Text as="b" fontVariantNumeric="tabular-nums">
-                  +{outlook.nextShop.rateDelta}倍
-                </Text>
-                （約{" "}
-                <Text as="b" fontVariantNumeric="tabular-nums">
-                  +{grouped(outlook.nextShop.pointsGain)}P
-                </Text>
-                ）
-              </Text>
+              <NextShopRow
+                rateDelta={outlook.nextShop.rateDelta}
+                pointsGain={outlook.nextShop.pointsGain}
+                gain={oneMoreShopGain}
+              />
             ) : null}
           </Flex>
         ) : null}

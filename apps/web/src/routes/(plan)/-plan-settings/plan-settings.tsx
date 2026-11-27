@@ -15,7 +15,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRef } from "react";
-import { planResultAtom } from "#/state/derived.ts";
+import { hasPlanResultAtom, planAtom } from "#/state/derived.ts";
 import { PlanPage } from "#/routes/(plan)/-plan-page.tsx";
 import { useSpuLossNotice } from "#/routes/(plan)/-spu-loss-notice.tsx";
 import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
@@ -37,23 +37,29 @@ const primaryButton = { colorScheme: "primary", size: "lg", w: "full" } as const
  * the plan's but the month's: `onChangeSpu` opens the SPU of a month.
  */
 export function SettingsContent({
-  plan,
+  planId,
   onChangeSpu,
 }: {
-  plan: Plan;
+  planId: string;
   onChangeSpu: (month: string) => void;
 }) {
   return (
-    <SettingsSaveFailureProvider key={plan.id}>
-      <SettingsBody plan={plan} onChangeSpu={onChangeSpu} />
+    <SettingsSaveFailureProvider key={planId}>
+      <SettingsBody planId={planId} onChangeSpu={onChangeSpu} />
     </SettingsSaveFailureProvider>
   );
 }
 
-function SettingsBody({ plan, onChangeSpu }: { plan: Plan; onChangeSpu: (month: string) => void }) {
-  const result = useAtomValue(planResultAtom(plan.id));
-  const failed = useSettingsSaveFailurePlanId() === plan.id;
-  if (!result) return null;
+function SettingsBody({
+  planId,
+  onChangeSpu,
+}: {
+  planId: string;
+  onChangeSpu: (month: string) => void;
+}) {
+  const hasResult = useAtomValue(hasPlanResultAtom(planId));
+  const failed = useSettingsSaveFailurePlanId() === planId;
+  if (!hasResult) return null;
   return (
     <VStack gap="5" alignItems="stretch">
       {failed ? (
@@ -61,19 +67,19 @@ function SettingsBody({ plan, onChangeSpu }: { plan: Plan; onChangeSpu: (month: 
           変更を保存できませんでした。もう一度お試しください。
         </Text>
       ) : null}
-      <AccountPicker plan={plan} />
-      <PlanHoldSwitch plan={plan} />
+      <AccountPicker planId={planId} />
+      <PlanHoldSwitch planId={planId} />
       <SpuSettingsCard
-        plan={plan}
+        planId={planId}
         title="SPU"
         note="月ごとに、すべてのプランで共有"
         onChange={onChangeSpu}
       />
-      <CampaignToggles plan={plan} />
-      <ShopAroundSettings plan={plan} />
-      <SpendTiersSettings plan={plan} />
+      <CampaignToggles planId={planId} />
+      <ShopAroundSettings planId={planId} />
+      <SpendTiersSettings planId={planId} />
       {/* Last, since it appears once the events load and would push the settings below it down. */}
-      <EventAttacher plan={plan} />
+      <EventAttacher planId={planId} />
     </VStack>
   );
 }
@@ -83,13 +89,13 @@ function SettingsBody({ plan, onChangeSpu }: { plan: Plan; onChangeSpu: (month: 
  * opens the SPU of a month, in place of the settings.
  */
 export function SettingsPanelButton({
-  plan,
+  planId,
   open,
   onOpen,
   onClose,
   onChangeSpu,
 }: {
-  plan: Plan;
+  planId: string;
   open: boolean;
   onOpen: () => void;
   onClose: () => void;
@@ -134,7 +140,7 @@ export function SettingsPanelButton({
             }}
           >
             <SettingsContent
-              plan={plan}
+              planId={planId}
               onChangeSpu={(month) => {
                 scrollTop.current = body.current?.scrollTop ?? 0;
                 onClose();
@@ -153,7 +159,12 @@ export function SettingsPanelButton({
   );
 }
 
-function SettingsScreen({ plan }: { plan: Plan }) {
+function SettingsScreen({ planId }: { planId: string }) {
+  const plan = useAtomValue(planAtom(planId));
+  return plan ? <SettingsScreenContent plan={plan} /> : null;
+}
+
+function SettingsScreenContent({ plan }: { plan: Plan }) {
   useSpuLossNotice(plan);
   const navigate = useNavigate();
   const spuPage = useSetAtom(spuPageFromPlanAtom);
@@ -175,7 +186,7 @@ function SettingsScreen({ plan }: { plan: Plan }) {
       </Flex>
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="32">
         <SettingsContent
-          plan={plan}
+          planId={plan.id}
           onChangeSpu={(month) => void navigate(spuPage(plan, month, true))}
         />
       </Box>
@@ -208,7 +219,7 @@ export function PlanSettings({ id }: { id: string | undefined }) {
     <PlanPage
       id={id}
       title={(plan) => `${plan.name}の設定`}
-      render={(plan) => <SettingsScreen plan={plan} />}
+      render={(plan) => <SettingsScreen planId={plan.id} />}
     />
   );
 }

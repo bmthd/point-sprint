@@ -47,6 +47,11 @@ export const colors = defineSemanticTokens.colors({
     marathon: ["brand.500", "brand.400"],
     campaign: ["amber.400", "amber.300"],
   },
+  /** The gold of 「1店舗で +1,000P 超え」, the same in both modes. */
+  boost: {
+    base: "amber.300",
+    fg: "black",
+  },
 
   black: {
     base: "#0a0b0b",

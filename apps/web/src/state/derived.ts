@@ -7,11 +7,19 @@ import {
   calculatedPlan,
   orderPoints,
   accountSettingsOf,
+  bigOneMoreShopGain,
+  oneMoreShopGain,
 } from "@workspaces/domain";
 import { atom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
-import { plansAtom, profileAtom, shopsAtom, spuMonthsAtom } from "./query-atoms.ts";
+import {
+  plansAtom,
+  profileAtom,
+  profileQueryAtom,
+  shopsAtom,
+  spuMonthsAtom,
+} from "./query-atoms.ts";
 
 /**
  * Whether the user tells accounts apart, and the accounts. Only the parts of the profile the
@@ -89,3 +97,78 @@ export const orderPointsAtom = atomFamily(
     ),
   sameOrderKey,
 );
+
+type OneMoreShopKey = { planId: string; today: string | undefined };
+
+/**
+ * What one more shop of a 1000円ポッキリ adds to the plan, when it is 1,000P or more: otherwise
+ * `null`. Recalculated only when the plans, shops or day change.
+ */
+export const bigOneMoreShopGainAtom = atomFamily(
+  ({ planId, today }: OneMoreShopKey) =>
+    atom((get) =>
+      bigOneMoreShopGain(
+        oneMoreShopGain({
+          plans: get(calculatedPlansAtom),
+          shops: get(shopsAtom),
+          results: get(calculationAtom),
+          planId,
+          today,
+        }),
+      ),
+    ),
+  (a, b) => a.planId === b.planId && a.today === b.today,
+);
+
+/** Whether the plan has a calculation, without subscribing to changes in its result. */
+export const hasPlanResultAtom = atomFamily((id: string) =>
+  atom((get) => get(planResultAtom(id)) !== undefined),
+);
+
+/** The names of just the plans sharing a cap, in the order shown beside it. */
+export const planNamesAtom = atomFamily(
+  (ids: string[]) =>
+    selectAtom(
+      plansAtom,
+      (plans) => ids.flatMap((id) => plans.find((plan) => plan.id === id)?.name ?? []),
+      deepEqual,
+    ),
+  deepEqual,
+);
+
+/** Saved plan ids in the order shown on the top page. */
+export const recentPlanIdsAtom = selectAtom(
+  plansAtom,
+  (plans) => [...plans].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1)).map((plan) => plan.id),
+  deepEqual,
+);
+
+export const shopAtom = atomFamily((id: string) =>
+  selectAtom(shopsAtom, (shops) => shops.find((shop) => shop.id === id)),
+);
+
+/** Shop ids in the registry name order, unchanged when only shop details change. */
+export const sortedShopIdsAtom = selectAtom(
+  shopsAtom,
+  (shops) => [...shops].sort((a, b) => a.name.localeCompare(b.name, "ja")).map((shop) => shop.id),
+  deepEqual,
+);
+
+export const accountAtom = atomFamily((id: string) =>
+  selectAtom(
+    accountSettingsAtom,
+    (settings) => settings.accounts.find((account) => account.id === id),
+    deepEqual,
+  ),
+);
+
+export const accountIdsAtom = selectAtom(
+  accountSettingsAtom,
+  (settings) => settings.accounts.map((account) => account.id),
+  deepEqual,
+);
+
+export const multiAccountEnabledAtom = atom((get) => get(accountSettingsAtom).enabled);
+
+/** Whether account settings can be saved, without subscribing to the profile data. */
+export const isProfileReadyAtom = atom((get) => get(profileQueryAtom).isSuccess);

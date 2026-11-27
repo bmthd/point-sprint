@@ -15,7 +15,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
-import { planResultAtom } from "#/state/derived.ts";
+import { bigOneMoreShopGainAtom, planResultAtom } from "#/state/derived.ts";
 import { plansAtom } from "#/state/query-atoms.ts";
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { NEW_ORDER, OrderEditor } from "#/routes/(plan)/-order-editor/order-editor.tsx";
@@ -209,6 +209,7 @@ function Home({ plan }: { plan: Plan }) {
     // The card scrolls itself into view, which resetting the scroll would undo.
     else void navigate({ to: "/plan/settings", search: { id: plan.id }, resetScroll: false });
   };
+  const oneMoreShopGain = useAtomValue(bigOneMoreShopGainAtom({ planId: plan.id, today }));
   const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
   const lines = useCapLines(plan);
   const resultHeadingId = useId();
@@ -281,7 +282,7 @@ function Home({ plan }: { plan: Plan }) {
                 結果
               </Heading>
               <SettingsPanelButton
-                plan={plan}
+                planId={plan.id}
                 open={settingsPanel.open}
                 onOpen={settingsPanel.onOpen}
                 onClose={settingsPanel.onClose}
@@ -290,9 +291,15 @@ function Home({ plan }: { plan: Plan }) {
             </ColumnHead>
           ) : null}
           <VStack gap="4" alignItems="stretch">
-            <SummaryCard plan={plan} result={result} compact={!wide} lines={lines} />
-            <SpuSettingsCard
+            <SummaryCard
               plan={plan}
+              result={result}
+              compact={!wide}
+              lines={lines}
+              oneMoreShopGain={oneMoreShopGain}
+            />
+            <SpuSettingsCard
+              planId={plan.id}
               title="SPU の設定"
               note="注文の日付の月で決まります"
               onChange={changeSpu}
@@ -339,7 +346,9 @@ function Home({ plan }: { plan: Plan }) {
           </VStack>
         )}
       </Box>
-      {wide ? null : <BottomBar plan={plan} result={result} onAdd={addOrder} />}
+      {wide ? null : (
+        <BottomBar plan={plan} result={result} onAdd={addOrder} oneMoreShopGain={oneMoreShopGain} />
+      )}
       <OrderEditor
         plan={plan}
         target={editor.target}

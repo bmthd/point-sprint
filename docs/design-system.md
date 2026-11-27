@@ -121,6 +121,7 @@ Yamada UI では、トークンの `base` の段は親の名前で参照する�
 | 保留中の注文 | スマホの表は行の地を `bg.subtle` に沈める。ポイントは `fg.muted` で取り消し線、バッジは「保留」の `Badge variant="outline" colorScheme="gray"` |
 | プレビュー（この注文で何ポイント） | 強調の数値 `primary.fg` |
 | 「あと何店舗回る？」の現在の行 | 地 `primary.subtle`、枠 `primary.outline`。上限までの満たし具合の棒は `Progress`（上限に届く行は `colorScheme="success"`、現在の行は `"primary"`、ほかは `"gray"`） |
+| あと1店舗で 1,000P 以上増えるとき | サマリーカードの「あと1店舗で全商品 +N倍」の行を、地 `boost`（`amber.300`）・文字 `boost.fg`（黒）の行に替える。ライトとダークで同じ色にする。札は `Badge variant="solid" colorScheme="black" fullRounded` に `SparklesIcon` と「1店舗で +1,000P 超え」。増分の数字は `xl` の太字。文中の「1000円ポッキリ」はガイドの記事へのリンクで、`variant="underline"`、色は文字と同じ。スマホはボトムバーの上辺にも同じ色の帯を出す。出入りは `Collapse` で、出るときに光が一度だけ横切る（`_mediaReduceMotion` では出さない） |
 | 上限までの残り | 行は `List`。枠の単位は `Badge variant="outline" colorScheme="gray" fullRounded`。ゲージは 2 色に分けるため `Progress` ではなく帯を組む（ほかのプランの分 `gray.solid`、このプランの分 `primary.solid`、溝 `bg.muted`）。税率の切り替えは、注文の入力欄の税率と同じ `SegmentedControl`（`size="sm"`） |
 | 警告 | `Alert.Root status="warning"`（既定の見た目） |
 | サイドバー（右カラム） | 読むページ（トップ、Markdown のページ、お問い合わせ、お知らせ）に置く（`PageWithSidebar`）。プランとプロフィールのような作業するページには置かない。PC は本文の右に幅 320px。各区画は `SidebarSection`（`Card.Root` の既定の panel と `h2` の見出し） |
