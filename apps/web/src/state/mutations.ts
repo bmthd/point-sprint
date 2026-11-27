@@ -11,6 +11,8 @@ import type { QueryClient } from "@tanstack/query-core";
 import { type Atom, atom } from "jotai";
 import { atomWithMutation, queryClientAtom } from "jotai-tanstack-query";
 import { defaultProfile, queryKeys } from "./queries.ts";
+import { removePlanAtoms } from "./derived.ts";
+import { plansAtom } from "./query-atoms.ts";
 import { repositoryAtom } from "./repository.ts";
 
 const timestamps = new WeakMap<object, string>();
@@ -311,7 +313,18 @@ export const runSavePlanAtom = runAtom(savePlanAtom);
 export const runSaveShopAtom = runAtom(saveShopAtom);
 export const runSaveProfileAtom = runAtom(saveProfileAtom);
 export const runSaveSpuMonthAtom = runAtom(saveSpuMonthAtom);
-/** Deletes the plan. A failure only puts the plan back, as `mutate` does: it is not thrown. */
+/**
+ * Deletes the plan. A failure only puts the plan back, as `mutate` does: it is not thrown.
+ *
+ * Once it is deleted, its atoms are removed from the families (`removePlanAtoms`). Not sooner: the
+ * plan's components read them until the plan leaves the cache, and would make them again.
+ */
 export const runDeletePlanAtom = atom(null, (get, _set, id: string) => {
-  get(deletePlanAtom).mutate(id);
+  const plan = get(plansAtom).find((plan) => plan.id === id);
+  get(deletePlanAtom)
+    .mutateAsync(id)
+    .then(
+      () => plan && removePlanAtoms(plan),
+      () => {},
+    );
 });

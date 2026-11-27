@@ -1,7 +1,7 @@
 import {
-  type OrderPoints,
   type Plan,
   type Shop,
+  type CalculationResult,
   calculateAll,
   deepEqual,
   calculatedPlan,
@@ -10,8 +10,9 @@ import {
   bigOneMoreShopGain,
   oneMoreShopGain,
 } from "@workspaces/domain";
-import { atom } from "jotai";
-import { atomFamily } from "jotai-family";
+import { replaceEqualDeep } from "@tanstack/query-core";
+import { type Atom, atom } from "jotai";
+import { type AtomFamily, atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
 import {
   plansAtom,
@@ -20,6 +21,45 @@ import {
   shopsAtom,
   spuMonthsAtom,
 } from "./query-atoms.ts";
+
+/**
+ * `source`, reusing the parts of its previous value that are equal to the new one. Atoms that read
+ * a part of it then change only when that part does, comparing it by reference.
+ */
+export function sharedAtom<T>(source: Atom<T>) {
+  return selectAtom(source, (next: T, previous?: T) => replaceEqualDeep(previous, next));
+}
+
+const planAtomRemovers: ((plan: Plan) => void)[] = [];
+
+/**
+ * Registers a family whose atoms belong to one plan: `ofPlan` tells whether the atom of `param`
+ * does. Deleting the plan removes those atoms (`removePlanAtoms`).
+ */
+export function removedWithPlan<Param, AtomType>(
+  family: AtomFamily<Param, AtomType>,
+  ofPlan: (param: Param, plan: Plan) => boolean,
+) {
+  planAtomRemovers.push((plan) => {
+    for (const param of family.getParams()) if (ofPlan(param, plan)) family.remove(param);
+  });
+  return family;
+}
+
+/** Removes the atoms of the plan from the families registered with `removedWithPlan`. */
+export function removePlanAtoms(plan: Plan) {
+  for (const remove of planAtomRemovers) remove(plan);
+}
+
+/** Whether a family keyed by plan id has the plan's atom. */
+export function isPlanId(id: string, plan: Plan) {
+  return id === plan.id;
+}
+
+/** Whether a family keyed by a plan id among others has the plan's atom. */
+export function hasPlanId({ planId }: { planId: string }, plan: Plan) {
+  return planId === plan.id;
+}
 
 /**
  * Whether the user tells accounts apart, and the accounts. Only the parts of the profile the
@@ -41,61 +81,67 @@ export const asCalculatedAtom = atom((get) => {
     plans.map((plan) => calculatedPlan(plan, settings, months, shops));
 });
 
-/** Every plan as it is calculated. */
-export const calculatedPlansAtom = atom((get) => get(asCalculatedAtom)(get(plansAtom)));
+/**
+ * Every plan as it is calculated. A plan, or a part of one, equal to the one calculated before is
+ * that same object.
+ */
+export const calculatedPlansAtom = sharedAtom(atom((get) => get(asCalculatedAtom)(get(plansAtom))));
 
-/** Every plan at once, because caps can be shared between plans of the same account. */
-export const calculationAtom = atom((get) =>
-  calculateAll(get(calculatedPlansAtom), get(shopsAtom)),
+/**
+ * Every plan at once, because caps can be shared between plans of the same account. Like the
+ * calculated plans, a result or a part of one equal to the one before is that same object.
+ */
+export const calculationAtom = selectAtom(
+  atom((get) => calculateAll(get(calculatedPlansAtom), get(shopsAtom))),
+  (next, previous?: Map<string, CalculationResult>) =>
+    new Map([...next].map(([id, result]) => [id, replaceEqualDeep(previous?.get(id), result)])),
 );
 
-export const planAtom = atomFamily((id: string) =>
-  selectAtom(plansAtom, (plans) => plans.find((plan) => plan.id === id)),
+export const planAtom = removedWithPlan(
+  atomFamily((id: string) =>
+    selectAtom(plansAtom, (plans) => plans.find((plan) => plan.id === id)),
+  ),
+  isPlanId,
 );
 
 /** The plan as it is calculated, with the SPU among its benefits. */
-export const calculatedPlanAtom = atomFamily((id: string) =>
-  selectAtom(calculatedPlansAtom, (plans) => plans.find((plan) => plan.id === id), deepEqual),
+export const calculatedPlanAtom = removedWithPlan(
+  atomFamily((id: string) =>
+    selectAtom(calculatedPlansAtom, (plans) => plans.find((plan) => plan.id === id)),
+  ),
+  isPlanId,
 );
 
 type OrderKey = { planId: string; orderId: string };
 const sameOrderKey = (a: OrderKey, b: OrderKey) => a.planId === b.planId && a.orderId === b.orderId;
 
-export const orderAtom = atomFamily(
-  ({ planId, orderId }: OrderKey) =>
-    selectAtom(planAtom(planId), (plan) => plan?.orders.find((order) => order.id === orderId)),
-  sameOrderKey,
+export const orderAtom = removedWithPlan(
+  atomFamily(
+    ({ planId, orderId }: OrderKey) =>
+      selectAtom(planAtom(planId), (plan) => plan?.orders.find((order) => order.id === orderId)),
+    sameOrderKey,
+  ),
+  hasPlanId,
 );
 
-export const planResultAtom = atomFamily((id: string) =>
-  selectAtom(calculationAtom, (results) => results.get(id), deepEqual),
+export const planResultAtom = removedWithPlan(
+  atomFamily((id: string) => selectAtom(calculationAtom, (results) => results.get(id))),
+  isPlanId,
 );
-
-const sameRows = (a: OrderPoints, b: OrderPoints) =>
-  a.total === b.total &&
-  a.rows.length === b.rows.length &&
-  a.rows.every((row, index) => {
-    const other = b.rows[index];
-    return (
-      other !== undefined &&
-      row.lineItemId === other.lineItemId &&
-      row.source === other.source &&
-      row.points === other.points
-    );
-  });
 
 /** The breakdown rows of one order's line items and their sum. */
-export const orderPointsAtom = atomFamily(
-  ({ planId, orderId }: OrderKey) =>
-    selectAtom(
-      atom((get) => {
-        const order = get(orderAtom({ planId, orderId }));
-        return orderPoints(order, get(planResultAtom(planId))?.breakdown ?? []);
-      }),
-      (points) => points,
-      sameRows,
-    ),
-  sameOrderKey,
+export const orderPointsAtom = removedWithPlan(
+  atomFamily(
+    ({ planId, orderId }: OrderKey) =>
+      sharedAtom(
+        atom((get) => {
+          const order = get(orderAtom({ planId, orderId }));
+          return orderPoints(order, get(planResultAtom(planId))?.breakdown ?? []);
+        }),
+      ),
+    sameOrderKey,
+  ),
+  hasPlanId,
 );
 
 type OneMoreShopKey = { planId: string; today: string | undefined };
@@ -104,36 +150,43 @@ type OneMoreShopKey = { planId: string; today: string | undefined };
  * What one more shop of a 1000円ポッキリ adds to the plan, when it is 1,000P or more: otherwise
  * `null`. Recalculated only when the plans, shops or day change.
  */
-export const bigOneMoreShopGainAtom = atomFamily(
-  ({ planId, today }: OneMoreShopKey) =>
-    atom((get) =>
-      bigOneMoreShopGain(
-        oneMoreShopGain({
-          plans: get(calculatedPlansAtom),
-          shops: get(shopsAtom),
-          results: get(calculationAtom),
-          planId,
-          today,
-        }),
+export const bigOneMoreShopGainAtom = removedWithPlan(
+  atomFamily(
+    ({ planId, today }: OneMoreShopKey) =>
+      atom((get) =>
+        bigOneMoreShopGain(
+          oneMoreShopGain({
+            plans: get(calculatedPlansAtom),
+            shops: get(shopsAtom),
+            results: get(calculationAtom),
+            planId,
+            today,
+          }),
+        ),
       ),
-    ),
-  (a, b) => a.planId === b.planId && a.today === b.today,
+    (a, b) => a.planId === b.planId && a.today === b.today,
+  ),
+  hasPlanId,
 );
 
 /** Whether the plan has a calculation, without subscribing to changes in its result. */
-export const hasPlanResultAtom = atomFamily((id: string) =>
-  atom((get) => get(planResultAtom(id)) !== undefined),
+export const hasPlanResultAtom = removedWithPlan(
+  atomFamily((id: string) => atom((get) => get(planResultAtom(id)) !== undefined)),
+  isPlanId,
 );
 
 /** The names of just the plans sharing a cap, in the order shown beside it. */
-export const planNamesAtom = atomFamily(
-  (ids: string[]) =>
-    selectAtom(
-      plansAtom,
-      (plans) => ids.flatMap((id) => plans.find((plan) => plan.id === id)?.name ?? []),
-      deepEqual,
-    ),
-  deepEqual,
+export const planNamesAtom = removedWithPlan(
+  atomFamily(
+    (ids: string[]) =>
+      selectAtom(
+        plansAtom,
+        (plans) => ids.flatMap((id) => plans.find((plan) => plan.id === id)?.name ?? []),
+        deepEqual,
+      ),
+    deepEqual,
+  ),
+  (ids, plan) => ids.includes(plan.id),
 );
 
 /** Saved plan ids in the order shown on the top page. */
