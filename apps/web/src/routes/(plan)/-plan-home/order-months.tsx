@@ -1,29 +1,31 @@
-import { type Order, type Plan, spuIdsIn, accountIdOf } from "@workspaces/domain";
+import { type Order, spuIdsIn, accountIdOf } from "@workspaces/domain";
 import { Box, Button, Flex, List, Text, ChevronRightIcon } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { rounded } from "#/ui/format.ts";
 
-import { accountSettingsAtom } from "#/state/derived.ts";
+import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
 import { spuMonthsAtom } from "#/state/query-atoms.ts";
 import { monthText } from "#/routes/(plan)/-warnings.tsx";
 import { spuMonthRate } from "#/routes/(plan)/-spu-month/spu-month-editor.tsx";
 
-const monthOf = (order: Order) => order.date.slice(0, 7);
+const monthOf = (order: Pick<Order, "date">) => order.date.slice(0, 7);
 
 /** 「11月の注文 ──── 11月の SPU 7.3倍 ›」: the orders after it are calculated with that month's SPU. */
 function MonthSeparator({
-  plan,
+  planId,
   month,
   onSpu,
   ...props
 }: {
-  plan: Plan;
+  planId: string;
   month: string;
   onSpu: (month: string) => void;
 } & Parameters<typeof List.Item>[0]) {
+  const plan = useAtomValue(planAtom(planId));
   const settings = useAtomValue(accountSettingsAtom);
   const stored = useAtomValue(spuMonthsAtom);
+  if (!plan) return null;
   const rate = spuMonthRate(spuIdsIn(stored, accountIdOf(plan, settings), month));
   return (
     <List.Item display="flex" alignItems="center" gap="2" fontSize="sm" {...props}>
@@ -53,19 +55,21 @@ function MonthSeparator({
  * the one before it. Only when the orders are of more than one month.
  */
 export function withMonthSeparators({
-  plan,
+  planId,
+  orders,
   onSpu,
   items,
   separator = {},
 }: {
-  plan: Plan;
+  planId: string;
+  orders: readonly Pick<Order, "date">[];
   onSpu: ((month: string) => void) | undefined;
-  /** One item per order of `plan.orders`, in the same order. */
+  /** One item per order of `orders`, in the same order. */
   items: ReactNode[];
   /** Props of each separator's list item, for the list it is in. */
   separator?: Parameters<typeof List.Item>[0];
 }): ReactNode[] {
-  const months = plan.orders.map(monthOf);
+  const months = orders.map(monthOf);
   if (!onSpu || new Set(months).size < 2) return items;
   return items.flatMap((item, index) => {
     const month = months[index];
@@ -73,7 +77,7 @@ export function withMonthSeparators({
     return [
       <MonthSeparator
         key={`month-${month}-${index}`}
-        plan={plan}
+        planId={planId}
         month={month}
         onSpu={onSpu}
         {...separator}

@@ -67,7 +67,7 @@ test("editing one order does not re-render the other cards of the list", async (
       updateOrder = (next) => update({ planId: PLAN, order: next });
     }, [update]);
     const loaded = plans.data?.find((p) => p.id === PLAN);
-    return loadedShops.isSuccess && loaded ? <OrderList plan={loaded} onEdit={noop} /> : null;
+    return loadedShops.isSuccess && loaded ? <OrderList planId={loaded.id} onEdit={noop} /> : null;
   }
 
   cardRenders.clear();

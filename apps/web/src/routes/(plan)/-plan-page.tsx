@@ -1,11 +1,10 @@
 import { ClientOnly } from "@tanstack/react-router";
-import type { Plan } from "@workspaces/domain";
 import { Button, Heading, Text, VStack } from "@workspaces/ui";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import type { ReactNode } from "react";
 import { useClientTitle } from "#/page-head.ts";
-import { planAtom } from "#/state/derived.ts";
-import { plansQueryAtom, shopsQueryAtom } from "#/state/query-atoms.ts";
+import { planNameAtom } from "#/state/derived.ts";
+import { planPageLoadStateAtom, retryPlanPageLoadAtom } from "#/state/query-atoms.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
 
 function NotFound() {
@@ -40,39 +39,30 @@ function LoadError({ onRetry }: { onRetry: () => void }) {
  * unknown shop. Until both have loaded nothing is shown.
  */
 function PlanScreen({ id, title, render }: PlanPageProps) {
-  const plan = useAtomValue(planAtom(id ?? ""));
-  const plans = useAtomValue(plansQueryAtom);
-  const shops = useAtomValue(shopsQueryAtom);
-  useClientTitle(plan && title(plan));
-  if (plans.isError || shops.isError) {
-    return (
-      <LoadError
-        onRetry={() => {
-          if (plans.isError) void plans.refetch();
-          if (shops.isError) void shops.refetch();
-        }}
-      />
-    );
-  }
-  if (!plans.isSuccess || !shops.isSuccess) {
+  const name = useAtomValue(planNameAtom(id ?? ""));
+  const loadState = useAtomValue(planPageLoadStateAtom);
+  const retry = useSetAtom(retryPlanPageLoadAtom);
+  useClientTitle(name === undefined ? undefined : title(name));
+  if (loadState === "error") return <LoadError onRetry={retry} />;
+  if (loadState === "loading") {
     return (
       <Text role="status" px="4" py="16" textAlign="center" color="fg.muted">
         読み込み中…
       </Text>
     );
   }
-  return plan ? render(plan) : <NotFound />;
+  return name !== undefined && id !== undefined ? render(id) : <NotFound />;
 }
 
 type PlanPageProps = {
   id: string | undefined;
   /** The page's name with the plan in it, put in the tab once the plan has loaded. */
-  title: (plan: Plan) => string;
-  render: (plan: Plan) => ReactNode;
+  title: (name: string) => string;
+  render: (planId: string) => ReactNode;
 };
 
 /**
- * A page of the plan `id`: `render` gets the plan once it and the shops have loaded. The plan
+ * A page of the plan `id`: `render` gets the plan id once it and the shops have loaded. The plan
  * lives on this device, so it renders on the client only.
  */
 export function PlanPage(props: PlanPageProps) {

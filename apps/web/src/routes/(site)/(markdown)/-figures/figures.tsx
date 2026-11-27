@@ -2,7 +2,8 @@ import type { Order, Plan } from "@workspaces/domain";
 import { useHydrateAtoms } from "jotai/utils";
 import { useState } from "react";
 import type { ComponentType } from "react";
-import { useCapLines } from "#/routes/(plan)/-cap-lines.ts";
+import { useAtomValue } from "jotai";
+import { planCapLinesAtom } from "#/state/derived.ts";
 import { CapList } from "#/routes/(plan)/-plan-home/cap-list.tsx";
 import { OrderCard } from "#/routes/(plan)/-plan-home/order-card.tsx";
 import { OrderAddRow } from "#/routes/(plan)/-plan-home/order-add-row.tsx";
@@ -74,7 +75,7 @@ function EventFigure() {
 
 /** 「上限までの残り」 of the third marathon, as its plan page shows it: a table on a wide screen. */
 function CapsFigure({ table = false }: { table?: boolean }) {
-  const lines = useCapLines(THIRD_MARATHON);
+  const lines = useAtomValue(planCapLinesAtom(THIRD_MARATHON.id));
   return (
     <Card.Root>
       <Card.Body alignItems="stretch">
@@ -116,8 +117,7 @@ function HeldOrderFigure() {
  */
 function OpenRowFigure({ order }: { order: Order }) {
   useHydrateAtoms([[openOrderIdAtom, order.id]]);
-  const [plan] = useState(() => ({ ...THIRD_MARATHON, orders: [order] }));
-  return <OrderTable plan={plan} head={null} />;
+  return <OrderTable planId={THIRD_MARATHON.id} orderIds={[order.id]} head={null} />;
 }
 
 /** The desktop table's last row, a new order of `price` yen being typed, with its conditions open. */
@@ -129,7 +129,7 @@ function NewOrderRowFigure({ price }: { price: number }) {
   return (
     <Card.Root overflow="hidden">
       <List.Root as="ol" gap="0">
-        <OrderAddRow plan={THIRD_MARATHON} initialInput={input} initialOpen />
+        <OrderAddRow planId={THIRD_MARATHON.id} initialInput={input} initialOpen />
       </List.Root>
     </Card.Root>
   );

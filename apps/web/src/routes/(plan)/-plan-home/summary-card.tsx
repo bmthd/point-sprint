@@ -91,7 +91,7 @@ export function SummaryCard({
   plan: Plan;
   result: CalculationResult;
   compact: boolean;
-  /** The plan's caps (`useCapLines`). */
+  /** The plan's caps (`planCapLinesAtom`). */
   lines: CapLine[];
   /** What one more shop of a 1000円ポッキリ adds, when it is 1,000P or more. */
   oneMoreShopGain: number | null;

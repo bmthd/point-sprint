@@ -165,7 +165,7 @@ function SettingsScreen({ planId }: { planId: string }) {
 }
 
 function SettingsScreenContent({ plan }: { plan: Plan }) {
-  useSpuLossNotice(plan);
+  useSpuLossNotice(plan.id);
   const navigate = useNavigate();
   const spuPage = useSetAtom(spuPageFromPlanAtom);
   return (
@@ -187,7 +187,7 @@ function SettingsScreenContent({ plan }: { plan: Plan }) {
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="32">
         <SettingsContent
           planId={plan.id}
-          onChangeSpu={(month) => void navigate(spuPage(plan, month, true))}
+          onChangeSpu={(month) => void navigate(spuPage(plan.id, month, true))}
         />
       </Box>
       <Box
@@ -218,8 +218,8 @@ export function PlanSettings({ id }: { id: string | undefined }) {
   return (
     <PlanPage
       id={id}
-      title={(plan) => `${plan.name}の設定`}
-      render={(plan) => <SettingsScreen planId={plan.id} />}
+      title={(name) => `${name}の設定`}
+      render={(planId) => <SettingsScreen planId={planId} />}
     />
   );
 }

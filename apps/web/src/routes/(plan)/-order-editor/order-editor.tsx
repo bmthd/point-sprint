@@ -8,6 +8,7 @@ import { Grid, Flex, Button, Drawer, IconButton, Modal, Switch, Text, XIcon } fr
 import { useAtomValue } from "jotai";
 import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } from "react";
 import { Form } from "#/routes/-form.tsx";
+import { planAtom } from "#/state/derived.ts";
 import { shopsAtom } from "#/state/query-atoms.ts";
 import { useSingleFlight } from "#/use-single-flight.ts";
 import { CampaignCheck, OrderPart } from "#/routes/(plan)/-order-fields.tsx";
@@ -319,33 +320,35 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
  * is `NEW_ORDER`, the id of the order to edit, or `undefined` when the editor is closed.
  */
 export function OrderEditor({
-  plan,
+  planId,
   target,
   layout,
   onClose,
 }: {
-  plan: Plan;
+  planId: string;
   target: string | undefined;
   layout: "sheet" | "dialog";
   onClose: () => void;
 }) {
+  const plan = useAtomValue(planAtom(planId));
   const amountRef = useRef<HTMLInputElement | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const original =
     target === undefined || target === NEW_ORDER
       ? undefined
-      : plan.orders.find((order) => order.id === target);
+      : plan?.orders.find((order) => order.id === target);
   const open = target === NEW_ORDER || original !== undefined;
-  const content = open ? (
-    <EditorContent
-      key={target}
-      plan={plan}
-      original={original}
-      layout={layout}
-      amountRef={amountRef}
-      onClose={onClose}
-    />
-  ) : null;
+  const content =
+    open && plan ? (
+      <EditorContent
+        key={target}
+        plan={plan}
+        original={original}
+        layout={layout}
+        amountRef={amountRef}
+        onClose={onClose}
+      />
+    ) : null;
 
   return layout === "sheet" ? (
     <Drawer.Root

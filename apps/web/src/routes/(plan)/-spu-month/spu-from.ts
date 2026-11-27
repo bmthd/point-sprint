@@ -1,7 +1,6 @@
-import type { Plan } from "@workspaces/domain";
 import { atom } from "jotai";
 import { accountIdOf } from "@workspaces/domain";
-import { accountSettingsAtom } from "#/state/derived.ts";
+import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
 
 declare module "@tanstack/react-router" {
   interface HistoryState {
@@ -38,9 +37,10 @@ export function spuPageFromPlan(
  */
 export const spuPageFromPlanAtom = atom(
   null,
-  (get, _set, plan: Plan, month: string, fromSettings?: boolean) => {
+  (get, _set, planId: string, month: string, fromSettings?: boolean) => {
+    const plan = get(planAtom(planId));
     const settings = get(accountSettingsAtom);
-    const account = settings.enabled ? accountIdOf(plan, settings) : undefined;
-    return spuPageFromPlan(plan.id, month, account, fromSettings);
+    const account = settings.enabled && plan ? accountIdOf(plan, settings) : undefined;
+    return spuPageFromPlan(planId, month, account, fromSettings);
   },
 );

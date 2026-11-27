@@ -108,7 +108,7 @@ function PlanRow({ planId, onDelete }: { planId: string; onDelete: (planId: stri
                 <Text fontWeight="bold" lineClamp={1} minW="0">
                   {plan.name}
                 </Text>
-                <PlanHoldBadge plan={plan} />
+                <PlanHoldBadge planId={planId} />
               </Flex>
               <Text fontSize="xs" color="fg.muted" fontVariantNumeric="tabular-nums">
                 {meta}
@@ -163,7 +163,7 @@ function LatestPlan({
           >
             {plan.name}
           </RouterLink>
-          <PlanHoldBadge plan={plan} />
+          <PlanHoldBadge planId={planId} />
         </Flex>
       }
       meta={meta}

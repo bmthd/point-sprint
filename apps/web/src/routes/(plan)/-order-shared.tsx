@@ -4,7 +4,6 @@ import {
   type LineItem,
   type Order,
   POINT_GROUPS,
-  type Plan,
   type PointGroup,
   pointGroupOf,
 } from "@workspaces/domain";
@@ -334,7 +333,7 @@ export function OrdersHeading({
   id,
   small = false,
 }: {
-  orders: Order[];
+  orders: readonly Pick<Order, "onHold">[];
   headingRef: RefObject<HTMLHeadingElement | null>;
   id?: string;
   /** In the table's header row, among the column labels. */
@@ -380,7 +379,11 @@ type Confirm = { kind: "delete"; orderId: string } | { kind: "reset" };
  * The confirmation before deleting one order or all of them. After either, focus goes to
  * `headingRef`, since the order (or every order) is gone.
  */
-export function useOrderConfirm(plan: Plan, headingRef: RefObject<HTMLElement | null>) {
+export function useOrderConfirm(
+  planId: string,
+  headingRef: RefObject<HTMLElement | null>,
+  orderCount: number,
+) {
   const removeOrder = useSetAtom(removeOrderAtom);
   const clearOrders = useSetAtom(clearOrdersAtom);
   const save = useSaveOrderChange();
@@ -399,10 +402,12 @@ export function useOrderConfirm(plan: Plan, headingRef: RefObject<HTMLElement | 
   const askDelete = useCallback((orderId: string) => ask({ kind: "delete", orderId }), [ask]);
   const askReset = useCallback(() => ask({ kind: "reset" }), [ask]);
 
-  const target =
-    confirm?.kind === "delete"
-      ? plan.orders.find((order) => order.id === confirm.orderId)
-      : undefined;
+  const target = useAtomValue(
+    orderAtom({
+      planId,
+      orderId: confirm?.kind === "delete" ? confirm.orderId : "",
+    }),
+  );
   const targetShop = useShopName(target);
 
   const dialog = (
@@ -412,7 +417,7 @@ export function useOrderConfirm(plan: Plan, headingRef: RefObject<HTMLElement | 
       body={
         <Text>
           {confirm?.kind === "reset"
-            ? `このプランの注文${plan.orders.length}件がすべて消えます。この操作は取り消せません。`
+            ? `このプランの注文${orderCount}件がすべて消えます。この操作は取り消せません。`
             : `「${targetShop}」の注文が消えます。この操作は取り消せません。`}
         </Text>
       }
@@ -422,9 +427,9 @@ export function useOrderConfirm(plan: Plan, headingRef: RefObject<HTMLElement | 
       onClose={onClose}
       onCancel={onClose}
       onSuccess={() => {
-        if (confirm?.kind === "reset") save(clearOrders({ planId: plan.id }));
+        if (confirm?.kind === "reset") save(clearOrders({ planId }));
         if (confirm?.kind === "delete") {
-          save(removeOrder({ planId: plan.id, orderId: confirm.orderId }));
+          save(removeOrder({ planId, orderId: confirm.orderId }));
         }
         onClose();
         finalFocus.current = headingRef.current;

@@ -26,6 +26,14 @@ import {
   orderPointsAtom,
   planAtom,
   planResultAtom,
+  planNameAtom,
+  planOnHoldAtom,
+  planPeriodAtom,
+  planOrderMetaAtom,
+  planCapLinesAtom,
+  planGroupTotalsAtom,
+  planShopOutlookAtom,
+  hasOrderAtom,
 } from "./derived.ts";
 import {
   changeShop,
@@ -354,12 +362,33 @@ test("deleting a plan removes its atoms from the families", async () => {
   store.get(orderPointsAtom({ planId: PLAN, orderId: ORDER_A }));
   unsubscribes.push(store.sub(orderPointsAtom({ planId: OTHER_PLAN, orderId: ORDER_A }), () => {}));
 
+  const homeFamilies = [
+    planNameAtom,
+    planOnHoldAtom,
+    planPeriodAtom,
+    planOrderMetaAtom,
+    planCapLinesAtom,
+    planGroupTotalsAtom,
+    planShopOutlookAtom,
+  ];
+  for (const family of homeFamilies) {
+    family(PLAN);
+    family(OTHER_PLAN);
+  }
+  hasOrderAtom({ planId: PLAN, orderId: ORDER_A });
+  hasOrderAtom({ planId: OTHER_PLAN, orderId: ORDER_A });
+
   store.set(runDeletePlanAtom, PLAN);
   await vi.waitFor(() => expect([...planAtom.getParams()]).toEqual([OTHER_PLAN]));
   expect(store.get(plansAtom).map((p) => p.id)).toEqual([OTHER_PLAN]);
   expect([...orderAtom.getParams()]).toEqual([{ planId: OTHER_PLAN, orderId: ORDER_A }]);
   expect([...orderPointsAtom.getParams()]).toEqual([{ planId: OTHER_PLAN, orderId: ORDER_A }]);
   expect([...planResultAtom.getParams()]).toEqual([OTHER_PLAN]);
+  for (const family of homeFamilies) {
+    expect([...family.getParams()]).not.toContain(PLAN);
+    expect([...family.getParams()]).toContain(OTHER_PLAN);
+  }
+  expect([...hasOrderAtom.getParams()]).toEqual([{ planId: OTHER_PLAN, orderId: ORDER_A }]);
 });
 
 test("copy inserts the order right after the original", async () => {
