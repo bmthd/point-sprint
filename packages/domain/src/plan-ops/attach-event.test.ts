@@ -8,7 +8,7 @@ import type { OfficialEvent } from "#/model/official-event.ts";
 import type { Order } from "#/model/order.ts";
 import { type Plan, PlanSchema } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
-import { attachToEvent } from "./attach-event.ts";
+import { attachToEvent, carryOverToEvent } from "./attach-event.ts";
 
 const SHOP_A = "a0000000-0000-4000-8000-000000000001";
 const SHOP_B = "b0000000-0000-4000-8000-000000000002";
@@ -182,4 +182,12 @@ test("the plan and the event are not changed", () => {
   if (!first) throw new Error("no benefits");
   first.label = "changed";
   expect({ own, event }).toEqual(before);
+});
+
+test("carrying a held plan over attaches it to the event and releases it", () => {
+  const own = { ...ownPlan(), onHold: true };
+  const carried = carryOverToEvent(own, event, idSequence("d"));
+  expect(carried).toEqual(attachToEvent({ ...own, onHold: undefined }, event, idSequence("d")));
+  expect(carried).not.toHaveProperty("onHold");
+  expect(own.onHold).toBe(true);
 });

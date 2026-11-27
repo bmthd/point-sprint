@@ -2,6 +2,7 @@ import {
   addBenefit,
   addOrder,
   attachToEvent,
+  carryOverToEvent,
   type Benefit,
   clearOrders,
   copyOrder,
@@ -186,4 +187,9 @@ export const updateBenefitAtom = planOperationAtom(
 export const attachToEventAtom = planOperationAtom(({ event }: { event: OfficialEvent }) => {
   const newIds = repeatableIds();
   return (plan) => attachToEvent(plan, event, newIds());
+});
+/** Carries the plan over to another event: attaches it as `attachToEventAtom` does, and releases its hold. */
+export const carryOverToEventAtom = planOperationAtom(({ event }: { event: OfficialEvent }) => {
+  const newIds = repeatableIds();
+  return (plan) => carryOverToEvent(plan, event, newIds());
 });

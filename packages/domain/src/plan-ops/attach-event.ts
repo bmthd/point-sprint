@@ -26,3 +26,14 @@ export function attachToEvent(plan: Plan, event: OfficialEvent, newId: () => Id)
     benefits: [...structuredClone(event.benefits), rakuma, ...fixedCampaigns],
   };
 }
+
+/**
+ * Returns the plan carried over to another event: attached to it as `attachToEvent` does, and
+ * released from hold, since it is carried over to count in the new event. The given plan and event
+ * are not changed.
+ */
+export function carryOverToEvent(plan: Plan, event: OfficialEvent, newId: () => Id): Plan {
+  const carried = attachToEvent(plan, event, newId);
+  delete carried.onHold;
+  return carried;
+}
