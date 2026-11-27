@@ -86,7 +86,15 @@ export { tierRate, type ShopAroundTier } from "./benefit-kinds/shop-around.ts";
 export { spendTierRate, type SpendTier } from "./benefit-kinds/spend-tiers.ts";
 export type { BenefitKindDef, EligibleItem, RoundingUnit } from "./benefit-kinds/index.ts";
 export { SHOP_AROUND_MIN_AMOUNT, countShops } from "./calculate/shop-count.ts";
-export { calculate, calculateAll, totalCountedWith } from "./calculate/calculate.ts";
+export {
+  BIG_ONE_MORE_SHOP_GAIN,
+  ONE_MORE_SHOP_PRICE,
+  bigOneMoreShopGain,
+  calculate,
+  calculateAll,
+  oneMoreShopGain,
+  totalCountedWith,
+} from "./calculate/calculate.ts";
 export { hasRakutenCardCampaign, rakutenCardLoss } from "./calculate/rakuten-card.ts";
 export { capGroupKey } from "./calculate/cap-groups.ts";
 export { POINT_GROUPS, pointGroupOf, type PointGroup } from "./calculate/point-group.ts";

@@ -3,7 +3,7 @@ import type { Benefit } from "#/model/benefit.ts";
 import type { LineItem, Order } from "#/model/order.ts";
 import type { Plan } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
-import { calculate } from "./calculate.ts";
+import { bigOneMoreShopGain, calculate, calculateAll, oneMoreShopGain } from "./calculate.ts";
 import type { CalculationResult } from "./types.ts";
 
 const SHOP_A = "a0000000-0000-4000-8000-000000000001";
@@ -477,4 +477,69 @@ describe("spend-tiers", () => {
       capReached: true,
     });
   });
+});
+
+describe("oneMoreShopGain", () => {
+  /** Orders at `count` shops of no saved shop, each ¥82,500 tax included (¥75,000 excluded). */
+  const bigOrders = (count: number): Order[] =>
+    Array.from({ length: count }, (_, index) => ({
+      id: `0${index}000000-0000-4000-8000-000000000000`,
+      channel: "rakuten-ichiba",
+      shopTags: [],
+      date: "2026-10-05",
+      lineItems: [item(`1${index}000000-0000-4000-8000-000000000000`, 82_500)],
+      onHold: false,
+      tags: [],
+    }));
+  const gainOf = (target: Plan, today?: string) =>
+    oneMoreShopGain({
+      plans: [target],
+      shops: [],
+      results: calculateAll([target], []),
+      planId: target.id,
+      today: today ?? "2026-10-05",
+    });
+  const gainUnknownToday = (target: Plan) =>
+    oneMoreShopGain({
+      plans: [target],
+      shops: [],
+      results: calculateAll([target], []),
+      planId: target.id,
+      today: undefined,
+    });
+
+  test("counts the rate going up on every purchase, and the ¥1,000 item's own points", () => {
+    // Before: 通常 1,500 + 買いまわり +1倍 1,500. After: the ¥1,000 item (¥910 excluded) adds 通常 9,
+    // and +2倍 gives 3,000 + 18.
+    expect(gainOf(plan(bigOrders(2)))).toBe(9 + 3018 - 1500);
+  });
+
+  test("does not count points over the cap", () => {
+    expect(gainOf(plan(bigOrders(2), [spuBase, shopAround(2000)]))).toBe(9 + 2000 - 1500);
+  });
+
+  test("buys the item on the plan's closest day when today is outside its period", () => {
+    // The shop-around of only 10/4 counts the item when it is bought on 10/4, the period's first day.
+    const firstDayOnly: Benefit = {
+      ...shopAround(),
+      conditions: { dateRule: { type: "range", start: "2026-10-04", end: "2026-10-04" } },
+    };
+    const orders = bigOrders(2).map((order) => ({ ...order, date: "2026-10-04" }));
+    const target = plan(orders, [spuBase, firstDayOnly]);
+    expect(gainOf(target, "2026-10-01")).toBe(9 + 3018 - 1500);
+    expect(gainUnknownToday(target)).toBe(9 + 3018 - 1500);
+    // Bought on 10/5, the item gets only its 通常.
+    expect(gainOf(target, "2026-10-05")).toBe(9);
+  });
+
+  test("is null when one more shop does not raise the rate", () => {
+    expect(gainOf(plan(bigOrders(10)))).toBeNull();
+    expect(gainOf(plan(bigOrders(2), [spuBase]))).toBeNull();
+  });
+});
+
+test("bigOneMoreShopGain keeps a gain of 1,000P or more", () => {
+  expect(bigOneMoreShopGain(999)).toBeNull();
+  expect(bigOneMoreShopGain(1000)).toBe(1000);
+  expect(bigOneMoreShopGain(null)).toBeNull();
 });
