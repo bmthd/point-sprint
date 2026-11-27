@@ -26,7 +26,7 @@ import {
   RequiredTextSchema,
   YenSchema,
 } from "@workspaces/domain";
-import { planResultAtom } from "#/state/derived.ts";
+import { planAtom, planResultAtom } from "#/state/derived.ts";
 import { updateBenefitAtom } from "#/state/plan-operations.ts";
 import { ExpandChevronIcon } from "#/routes/(plan)/-expand-chevron-icon.tsx";
 import { CommitDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
@@ -71,7 +71,9 @@ function standingOf(tiers: SpendTier[], total: number) {
  * A card for each campaign whose rate the total over its days sets: a one-line summary that opens
  * to change its name, period, tiers and cap.
  */
-export function SpendTiersSettings({ plan }: { plan: Plan }) {
+export function SpendTiersSettings({ planId }: { planId: string }) {
+  const plan = useAtomValue(planAtom(planId));
+  if (!plan) return null;
   return spendTiersOf(plan).map((benefit) => (
     <SpendTiersCard key={benefit.id} plan={plan} benefit={benefit} />
   ));

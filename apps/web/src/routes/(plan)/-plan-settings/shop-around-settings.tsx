@@ -2,6 +2,7 @@ import { type Benefit, type Plan, isTwoShopCampaign } from "@workspaces/domain";
 import { Box, Flex, Button, Card, Text, useBoolean } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useRef } from "react";
+import { planAtom } from "#/state/derived.ts";
 import * as v from "valibot";
 import { grouped, rateText } from "#/ui/format.ts";
 import { updateBenefitAtom } from "#/state/plan-operations.ts";
@@ -41,7 +42,12 @@ function summaryOf(benefit: ShopAroundBenefit, period: { start: string; end: str
 }
 
 /** 「買いまわりと上限」: a one-line summary that opens to override its period and cap. */
-export function ShopAroundSettings({ plan }: { plan: Plan }) {
+export function ShopAroundSettings({ planId }: { planId: string }) {
+  const plan = useAtomValue(planAtom(planId));
+  return plan ? <ShopAroundSettingsContent plan={plan} /> : null;
+}
+
+function ShopAroundSettingsContent({ plan }: { plan: Plan }) {
   const [open, { toggle }] = useBoolean();
   const sectionRef = useRef<HTMLElement>(null);
   const deletion = useDeleteCampaign(plan, sectionRef);

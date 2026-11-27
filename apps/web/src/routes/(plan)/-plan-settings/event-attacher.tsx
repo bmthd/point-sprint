@@ -1,4 +1,4 @@
-import type { OfficialEvent, Plan } from "@workspaces/domain";
+import type { OfficialEvent } from "@workspaces/domain";
 import {
   Button,
   Card,
@@ -11,6 +11,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useState } from "react";
+import { planAtom } from "#/state/derived.ts";
 import { attachToEventAtom } from "#/state/plan-operations.ts";
 import { officialEventsAtom } from "#/routes/-official-events.ts";
 import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
@@ -22,13 +23,14 @@ const periodText = (event: OfficialEvent) => whenText({ type: "range", ...event.
  * saying what the event's period and benefits replace. Shown only on a plan without an event, and
  * once the events have loaded.
  */
-export function EventAttacher({ plan }: { plan: Plan }) {
+export function EventAttacher({ planId }: { planId: string }) {
+  const plan = useAtomValue(planAtom(planId));
   const events = useAtomValue(officialEventsAtom);
   const attach = useSetAtom(attachToEventAtom);
-  const save = useSaveSettingsChange(plan.id);
+  const save = useSaveSettingsChange(planId);
   const { open, onOpen, onClose } = useDisclosure();
   const [eventId, setEventId] = useState("");
-  if (plan.officialEventId !== undefined || events.length === 0) return null;
+  if (!plan || plan.officialEventId !== undefined || events.length === 0) return null;
   const event = events.find((candidate) => candidate.id === eventId);
   const outside = event
     ? plan.orders.filter(

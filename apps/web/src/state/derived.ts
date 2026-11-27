@@ -113,3 +113,19 @@ export const bigOneMoreShopGainAtom = atomFamily(
     ),
   (a, b) => a.planId === b.planId && a.today === b.today,
 );
+
+/** Whether the plan has a calculation, without subscribing to changes in its result. */
+export const hasPlanResultAtom = atomFamily((id: string) =>
+  atom((get) => get(planResultAtom(id)) !== undefined),
+);
+
+/** The names of just the plans sharing a cap, in the order shown beside it. */
+export const planNamesAtom = atomFamily(
+  (ids: string[]) =>
+    selectAtom(
+      plansAtom,
+      (plans) => ids.flatMap((id) => plans.find((plan) => plan.id === id)?.name ?? []),
+      deepEqual,
+    ),
+  deepEqual,
+);

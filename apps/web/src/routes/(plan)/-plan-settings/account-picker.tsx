@@ -2,7 +2,7 @@ import { DEFAULT_ACCOUNT_ID, type Plan, accountIdOf } from "@workspaces/domain";
 import { Card, Field, NativeSelect, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 
-import { accountSettingsAtom } from "#/state/derived.ts";
+import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
 import { runSavePlanAtom } from "#/state/mutations.ts";
 import { useSaveSettingsChange } from "./settings-shared.ts";
 
@@ -13,11 +13,12 @@ const withAccount = (plan: Plan, accountId: string): Plan => {
 };
 
 /** The account the plan is bought with. Shown only once the user tells accounts apart. */
-export function AccountPicker({ plan }: { plan: Plan }) {
+export function AccountPicker({ planId }: { planId: string }) {
+  const plan = useAtomValue(planAtom(planId));
   const settings = useAtomValue(accountSettingsAtom);
   const savePlan = useSetAtom(runSavePlanAtom);
-  const save = useSaveSettingsChange(plan.id);
-  if (!settings.enabled) return null;
+  const save = useSaveSettingsChange(planId);
+  if (!plan || !settings.enabled) return null;
   return (
     <Card.Root as="section" aria-label="アカウント">
       <Card.Body alignItems="stretch">

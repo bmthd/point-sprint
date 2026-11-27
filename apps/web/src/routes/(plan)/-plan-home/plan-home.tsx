@@ -263,7 +263,7 @@ function Home({ plan }: { plan: Plan }) {
                 結果
               </Heading>
               <SettingsPanelButton
-                plan={plan}
+                planId={plan.id}
                 open={settingsPanel.open}
                 onOpen={settingsPanel.onOpen}
                 onClose={settingsPanel.onClose}
@@ -280,7 +280,7 @@ function Home({ plan }: { plan: Plan }) {
               oneMoreShopGain={oneMoreShopGain}
             />
             <SpuSettingsCard
-              plan={plan}
+              planId={plan.id}
               title="SPU の設定"
               note="注文の日付の月で決まります"
               onChange={changeSpu}

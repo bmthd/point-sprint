@@ -2,7 +2,6 @@ import {
   type CapLine,
   type CapRow as Row,
   type Period,
-  type Plan,
   type TaxRate,
   capRows,
 } from "@workspaces/domain";
@@ -19,9 +18,25 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { grouped, yen } from "#/ui/format.ts";
-import { plansAtom } from "#/state/query-atoms.ts";
-import { CAP_TAX_RATES, conditionText, scopeText, sharedText } from "#/routes/(plan)/-cap-lines.ts";
+import { planNamesAtom } from "#/state/derived.ts";
+import { CAP_TAX_RATES, conditionText, scopeText } from "#/routes/(plan)/-cap-lines.ts";
 import { segmentPressArea, taxRateLabel } from "#/routes/(plan)/-order-shared.tsx";
+
+/** Only the shared names subscribe to plans; changes to other fields leave the note alone. */
+function SharedPlans({ ids, table = false }: { ids: string[]; table?: boolean }) {
+  const names = useAtomValue(planNamesAtom(ids));
+  if (names.length === 0) return null;
+  const shared = `${names.join("・")}と共有`;
+  return table ? (
+    <Text display="block" fontSize="xs" color="fg.muted">
+      {shared}
+    </Text>
+  ) : (
+    <Text as="span" fontSize="xs" color="fg.muted">
+      {shared}
+    </Text>
+  );
+}
 
 /**
  * How full the cap is, in two colors: what other plans used, then what this plan used.
@@ -46,20 +61,9 @@ function CapGauge({ line }: { line: CapLine }) {
 }
 
 /** One row of caps that the same price fills alike: their names, and one gauge for them all. */
-function CapRow({
-  row,
-  today,
-  period,
-  plans,
-}: {
-  row: Row;
-  today: string | undefined;
-  period: Period;
-  plans: Plan[];
-}) {
+function CapRow({ row, today, period }: { row: Row; today: string | undefined; period: Period }) {
   const [line] = row.lines;
   if (!line) return null;
-  const shared = sharedText(line, plans);
   const condition = conditionText(line, period);
   return (
     <List.Item display="flex" flexDirection="column" gap="1.5" py="2">
@@ -70,11 +74,7 @@ function CapRow({
         <Badge variant="outline" colorScheme="gray" fullRounded>
           {scopeText(line, today)}
         </Badge>
-        {shared ? (
-          <Text as="span" fontSize="xs" color="fg.muted">
-            {shared}
-          </Text>
-        ) : null}
+        <SharedPlans ids={line.sharedWith} />
       </Flex>
       <CapGauge line={line} />
       <Flex justify="space-between" align="flex-end" gap="2" fontSize="sm">
@@ -107,12 +107,10 @@ function CapTable({
   rows,
   today,
   period,
-  plans,
 }: {
   rows: Row[];
   today: string | undefined;
   period: Period;
-  plans: Plan[];
 }) {
   return (
     <NativeTable.Root fontSize="sm" fontVariantNumeric="tabular-nums">
@@ -143,7 +141,6 @@ function CapTable({
         {rows.map((row) => {
           const [line] = row.lines;
           if (!line) return null;
-          const shared = sharedText(line, plans);
           const condition = conditionText(line, period);
           return (
             <NativeTable.Tr
@@ -153,13 +150,12 @@ function CapTable({
                 <Text as="span" fontWeight="bold">
                   {row.lines.map((each) => each.benefit.label).join("・")}
                 </Text>
-                {[condition, shared].map((note) =>
-                  note ? (
-                    <Text key={note} display="block" fontSize="xs" color="fg.muted">
-                      {note}
-                    </Text>
-                  ) : null,
-                )}
+                {condition ? (
+                  <Text display="block" fontSize="xs" color="fg.muted">
+                    {condition}
+                  </Text>
+                ) : null}
+                <SharedPlans ids={line.sharedWith} table />
               </NativeTable.Td>
               <NativeTable.Td px="2" py="2.5" verticalAlign="middle">
                 <Badge variant="outline" colorScheme="gray" fullRounded>
@@ -230,7 +226,6 @@ export function CapList({
   onTaxRate: (taxRate: TaxRate) => void;
   table?: boolean;
 }) {
-  const plans = useAtomValue(plansAtom);
   const rows = capRows(lines, taxRate);
   const open = rows.filter((row) => row.price !== 0);
   const filled = rows.filter((row) => row.price === 0);
@@ -251,7 +246,7 @@ export function CapList({
         />
       </Flex>
       {open.length === 0 ? null : table ? (
-        <CapTable rows={open} today={today} period={period} plans={plans} />
+        <CapTable rows={open} today={today} period={period} />
       ) : (
         <List.Root gap="0">
           {open.map((row) => (
@@ -260,7 +255,6 @@ export function CapList({
               row={row}
               today={today}
               period={period}
-              plans={plans}
             />
           ))}
         </List.Root>

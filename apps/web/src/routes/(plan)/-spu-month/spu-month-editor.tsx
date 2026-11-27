@@ -36,7 +36,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useState } from "react";
 import { grouped, pointsText, rateText, rounded } from "#/ui/format.ts";
 
-import { accountSettingsAtom, planResultAtom } from "#/state/derived.ts";
+import { accountSettingsAtom, planAtom, planResultAtom } from "#/state/derived.ts";
 import { runSaveSpuMonthAtom } from "#/state/mutations.ts";
 import {
   plansAtom,
@@ -423,7 +423,12 @@ function WhatIsSpu() {
   );
 }
 
-function SpuOffWarnings({ plan, month }: { plan: Plan; month: string }) {
+function SpuOffWarnings({ planId, month }: { planId: string; month: string }) {
+  const plan = useAtomValue(planAtom(planId));
+  return plan ? <SpuOffWarningMessages plan={plan} month={month} /> : null;
+}
+
+function SpuOffWarningMessages({ plan, month }: { plan: Plan; month: string }) {
   const warnings = useSpuOffMessages(plan, month);
   return warnings.map((warning) => (
     <Alert.Root key={warning} status="warning" role="status" alignItems="center">
@@ -450,7 +455,6 @@ export function SpuMonthEditor({
   planId?: string | undefined;
 }) {
   const stored = useAtomValue(spuMonthsAtom);
-  const plans = useAtomValue(plansAtom);
   // A tile turns its item over from what is stored, so it waits for the stored SPU: before that
   // every item shows off, and a tap on one that is on would turn it off. The account the page
   // shows comes from the profile and the plan, so it waits for them too.
@@ -462,7 +466,6 @@ export function SpuMonthEditor({
   const result = useAtomValue(planResultAtom(planId ?? ""));
   const saveMonth = useSetAtom(runSaveSpuMonthAtom);
   const [failed, setFailed] = useState(false);
-  const plan = plans.find((candidate) => candidate.id === planId);
   const benefits = spuBenefitsOf(spuIdsIn(stored, accountId, month));
   const tiles = spuTiles(benefits);
   const capped = result
@@ -511,7 +514,7 @@ export function SpuMonthEditor({
             </Text>
           </Text>
         </Flex>
-        {plan ? <SpuOffWarnings plan={plan} month={month} /> : null}
+        {planId !== undefined ? <SpuOffWarnings planId={planId} month={month} /> : null}
         <TileGroup
           title="契約・お支払いで決まる"
           note="翌月に引継"
