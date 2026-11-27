@@ -1,7 +1,6 @@
 import { selectAtom } from "jotai/utils";
 import { type CalculationResult } from "@workspaces/domain";
 import { useNavigate } from "@tanstack/react-router";
-import type { Plan } from "@workspaces/domain";
 import {
   Box,
   Flex,
@@ -17,7 +16,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRef } from "react";
-import { planAtom, planResultAtom } from "#/state/derived.ts";
+import { planResultAtom } from "#/state/derived.ts";
 import { PlanPage } from "#/routes/(plan)/-plan-page.tsx";
 import { useSpuLossNotice } from "#/routes/(plan)/-spu-loss-notice.tsx";
 import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
@@ -162,12 +161,7 @@ export function SettingsPanelButton({
 }
 
 function SettingsScreen({ planId }: { planId: string }) {
-  const plan = useAtomValue(planAtom(planId));
-  return plan ? <SettingsScreenContent plan={plan} /> : null;
-}
-
-function SettingsScreenContent({ plan }: { plan: Plan }) {
-  useSpuLossNotice(plan.id);
+  useSpuLossNotice(planId);
   const navigate = useNavigate();
   const spuPage = useSetAtom(spuPageFromPlanAtom);
   return (
@@ -176,7 +170,7 @@ function SettingsScreenContent({ plan }: { plan: Plan }) {
       <Flex maxW="640px" mx="auto" h="14" align="center" gap="1" px="2">
         <RouterIconButton
           to="/plan"
-          search={{ id: plan.id }}
+          search={{ id: planId }}
           aria-label="戻る"
           size="lg"
           variant="ghost"
@@ -188,8 +182,8 @@ function SettingsScreenContent({ plan }: { plan: Plan }) {
       </Flex>
       <Box as="main" maxW="640px" mx="auto" px="4" pt="1" pb="32">
         <SettingsContent
-          planId={plan.id}
-          onChangeSpu={(month) => void navigate(spuPage(plan.id, month, true))}
+          planId={planId}
+          onChangeSpu={(month) => void navigate(spuPage(planId, month, true))}
         />
       </Box>
       <Box
@@ -206,7 +200,7 @@ function SettingsScreenContent({ plan }: { plan: Plan }) {
         pb="calc(20px + env(safe-area-inset-bottom))"
       >
         <Box maxW="640px" mx="auto">
-          <RouterButton to="/plan" search={{ id: plan.id }} {...primaryButton}>
+          <RouterButton to="/plan" search={{ id: planId }} {...primaryButton}>
             計算に戻る
           </RouterButton>
         </Box>

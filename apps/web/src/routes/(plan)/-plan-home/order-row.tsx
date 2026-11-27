@@ -80,7 +80,7 @@ import {
   orderShopName,
 } from "#/routes/(plan)/-order-shared.tsx";
 import { PointBreakdown } from "#/routes/-point-breakdown.tsx";
-import { SavedDraftPreview } from "#/routes/(plan)/-order-editor/order-editor.tsx";
+import { DraftPreview } from "#/routes/(plan)/-order-editor/order-editor.tsx";
 import { ACTION_BUTTON_WIDTH, OrderDetailFields } from "./order-details.tsx";
 import {
   AMOUNT_COLUMN,
@@ -246,6 +246,7 @@ function OrderEditor({
   autofill: ReturnType<typeof useOrderAutofill>;
   commit: () => Promise<CommitResult>;
 }) {
+  const order = useAtomValue(orderAtom({ planId, orderId }));
   return (
     <Box
       onBlur={(event) => {
@@ -262,7 +263,7 @@ function OrderEditor({
         if (event.target instanceof HTMLSelectElement) void commit();
       }}
     >
-      <SavedDraftPreview form={form} planId={planId} orderId={orderId} />
+      <DraftPreview form={form} planId={planId} original={order} />
       <OrderDetailFields
         form={form}
         planId={planId}
@@ -292,7 +293,7 @@ function PendingOrderPreview({
   if (!order || open || inputKey(current) === inputKey(editInputOf(order, shops))) return null;
   return (
     <Box px="4" pb="3">
-      <SavedDraftPreview form={form} planId={planId} orderId={orderId} />
+      <DraftPreview form={form} planId={planId} original={order} />
     </Box>
   );
 }

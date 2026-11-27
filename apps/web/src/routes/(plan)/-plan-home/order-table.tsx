@@ -38,6 +38,7 @@ export function OrderTable({
   /** Opens a month's SPU from the month's separator, when the orders are of more than one month. */
   onSpu?: ((month: string) => void) | undefined;
 }) {
+  const plan = useAtomValue(planAtom(planId));
   const metadata = useAtomValue(selectAtom(planAtom(planId), orderMetadata, deepEqual));
   const orders = useMemo(
     () =>
@@ -155,7 +156,7 @@ export function OrderTable({
               separator: { px: "3", py: "1", bg: "bg.subtle", borderBottomWidth: "1px" },
             })}
           </OrderListContext>
-          <OrderAddRow planId={planId} />
+          {plan ? <OrderAddRow plan={plan} /> : null}
         </List.Root>
       </Card.Root>
       <Text fontSize="xs" color="fg.muted">

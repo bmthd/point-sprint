@@ -1,9 +1,7 @@
-import {
-  type CalculationResult,
-  type CapLine,
-  type Plan,
-  taxIncludedTarget,
-} from "@workspaces/domain";
+import { useAtomValue } from "jotai";
+import { planAtom, planResultAtom, bigOneMoreShopGainAtom } from "#/state/derived.ts";
+import { useToday } from "#/routes/-use-today.ts";
+import { type CapLine, type Plan, taxIncludedTarget } from "@workspaces/domain";
 import { Box, Card, Flex, NativeAccordion, Progress, Text } from "@workspaces/ui";
 import { grouped } from "#/ui/format.ts";
 import { PointBreakdown } from "#/routes/-point-breakdown.tsx";
@@ -11,6 +9,8 @@ import { NextShopRow } from "./one-more-shop.tsx";
 import { ShopLadder } from "./shop-ladder.tsx";
 
 const SHOP_STEPS = 10;
+
+const now = () => new Date();
 
 /** Tax-included target amount of the orders that are not held. */
 export function countedAmount(plan: Plan): number {
@@ -82,20 +82,20 @@ function AllCapsFilled({ lines }: { lines: CapLine[] }) {
  * card ends with the total amount instead.
  */
 export function SummaryCard({
-  plan,
-  result,
+  planId,
   compact,
   lines,
-  oneMoreShopGain,
 }: {
-  plan: Plan;
-  result: CalculationResult;
+  planId: string;
   compact: boolean;
   /** The plan's caps. */
   lines: CapLine[];
-  /** What one more shop of a 1000円ポッキリ adds, when it is 1,000P or more. */
-  oneMoreShopGain: number | null;
 }) {
+  const plan = useAtomValue(planAtom(planId));
+  const result = useAtomValue(planResultAtom(planId));
+  const today = useToday(now);
+  const oneMoreShopGain = useAtomValue(bigOneMoreShopGainAtom({ planId, today }));
+  if (!plan || !result) return null;
   const outlook = result.shopAroundOutlook;
   const amount = countedAmount(plan);
 

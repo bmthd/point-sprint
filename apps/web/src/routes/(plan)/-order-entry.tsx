@@ -2,11 +2,8 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
-import { selectAtom } from "jotai/utils";
-import { planAtom } from "#/state/derived.ts";
-
 import { Field as FormField, focus, setInput, useField, useFieldArray } from "@formisch/react";
-import { type Plan, channels, deepEqual } from "@workspaces/domain";
+import { type Plan, channels } from "@workspaces/domain";
 import {
   Badge,
   Box,
@@ -404,14 +401,6 @@ function ConditionsSummary({ form }: { form: OrderForm }) {
  * `campaigns` are the order's campaign checks; `children` go last (quantity, coupon and the like).
  * Shut, its fields stay in the form.
  */
-export function SavedConditions({
-  planId,
-  ...props
-}: Omit<Parameters<typeof Conditions>[0], "plan"> & { planId: string }) {
-  const period = useAtomValue(selectAtom(planAtom(planId), planPeriod, deepEqual));
-  return period ? <Conditions {...props} plan={{ period }} /> : null;
-}
-
 export function Conditions({
   form,
   plan,
@@ -510,5 +499,3 @@ export function Conditions({
     </NativeAccordion.Root>
   );
 }
-
-const planPeriod = (plan: Plan | undefined) => plan?.period;

@@ -2,7 +2,6 @@ import { selectAtom } from "jotai/utils";
 import {
   type Benefit,
   CARRIED_SPU_IDS,
-  type Plan,
   channels,
   plansUsingSpuMonth,
   spuBenefitsOf,
@@ -113,72 +112,6 @@ const TILE_SIZE = "76px";
  */
 const COLUMN_MIN_WIDTH = { base: "96px", sm: "72px" };
 
-function TileView({
-  benefit,
-  capped,
-  disabled,
-  onToggle,
-  onDetail,
-}: {
-  benefit: RateBenefit;
-  capped: boolean;
-  disabled: boolean;
-  onToggle: () => void;
-  onDetail: () => void;
-}) {
-  const name = tileName(benefit);
-  const on = benefit.enabled;
-  const badgeId = useId();
-  return (
-    <Flex direction="column" align="center" gap="1" minW="0">
-      <CheckboxCard.Root
-        checked={on}
-        disabled={disabled}
-        onChange={onToggle}
-        colorScheme="primary"
-        size="sm"
-        withIndicator={false}
-        w="full"
-        maxW={TILE_SIZE}
-        aspectRatio="1"
-        alignItems="center"
-        justifyContent="center"
-        inputProps={{
-          "aria-label": `${name} ${rateText(benefit.params.rate)}`,
-          "aria-describedby": capped ? badgeId : undefined,
-        }}
-      >
-        {benefit.imagePath ? (
-          <Image src={imageUrl(benefit.imagePath)} alt={name} boxSize="8" objectFit="contain" />
-        ) : null}
-        <Text as="span" fontVariantNumeric="tabular-nums">
-          +{rounded(benefit.params.rate)}
-        </Text>
-        {capped ? <CapBadge id={badgeId} position="absolute" top="-2" right="-2" /> : null}
-      </CheckboxCard.Root>
-      {/* Long names (楽天プレミアムカード（特典分）) wrap at a phrase, or anywhere when one phrase is wider than the column. */}
-      <Button
-        variant="ghost"
-        size="xs"
-        onClick={onDetail}
-        aria-label={`${name}の上限と条件`}
-        w="full"
-        h="auto"
-        minH="8"
-        py="1"
-        fontSize="2xs"
-        whiteSpace="normal"
-        px={{ base: "1", sm: "0" }}
-        wordBreak="keep-all"
-        overflowWrap="anywhere"
-        lineHeight="moderate"
-      >
-        {name}
-      </Button>
-    </Flex>
-  );
-}
-
 /** 「上限」: the SPU reached its cap in the plan the SPU was opened from. */
 function CapBadge(props: BadgeProps) {
   return (
@@ -205,15 +138,15 @@ function SpuLink(props: LinkProps) {
   );
 }
 
-function DetailBody({
-  benefit,
-  capped,
-  benefits,
-}: {
-  benefit: RateBenefit;
-  capped: boolean;
-  benefits: Benefit[];
-}) {
+function DetailBody({ benefitId, ...key }: TileKey & { benefitId: string }) {
+  const benefit = useAtomValue(
+    selectAtom(spuMonthsAtom, tileBenefit(key.accountId, key.month, benefitId), deepEqual),
+  );
+  const capped = useAtomValue(selectAtom(planResultAtom(key.planId ?? ""), tileCapped(benefitId)));
+  const benefits = useAtomValue(
+    selectAtom(spuMonthsAtom, monthBenefits(key.accountId, key.month), deepEqual),
+  );
+  if (benefit?.kind !== "rate-bonus") return null;
   const others = benefits.filter(
     (other) =>
       other.id !== benefit.id &&
@@ -284,40 +217,69 @@ function Tile({
   const capped = useAtomValue(selectAtom(planResultAtom(key.planId ?? ""), tileCapped(benefitId)));
   const disabled = !useAtomValue(spuReadyAtom);
   const detail = useDisclosure();
+  const badgeId = useId();
   if (benefit?.kind !== "rate-bonus") return null;
+  const name = tileName(benefit);
+  const on = benefit.enabled;
   return (
     <>
-      <TileView
-        benefit={benefit}
-        capped={capped}
-        disabled={disabled}
-        onToggle={() => onToggle(benefitId)}
-        onDetail={detail.onOpen}
-      />
+      <Flex direction="column" align="center" gap="1" minW="0">
+        <CheckboxCard.Root
+          checked={on}
+          disabled={disabled}
+          onChange={() => onToggle(benefitId)}
+          colorScheme="primary"
+          size="sm"
+          withIndicator={false}
+          w="full"
+          maxW={TILE_SIZE}
+          aspectRatio="1"
+          alignItems="center"
+          justifyContent="center"
+          inputProps={{
+            "aria-label": `${name} ${rateText(benefit.params.rate)}`,
+            "aria-describedby": capped ? badgeId : undefined,
+          }}
+        >
+          {benefit.imagePath ? (
+            <Image src={imageUrl(benefit.imagePath)} alt={name} boxSize="8" objectFit="contain" />
+          ) : null}
+          <Text as="span" fontVariantNumeric="tabular-nums">
+            +{rounded(benefit.params.rate)}
+          </Text>
+          {capped ? <CapBadge id={badgeId} position="absolute" top="-2" right="-2" /> : null}
+        </CheckboxCard.Root>
+        {/* Long names (楽天プレミアムカード（特典分）) wrap at a phrase, or anywhere when one phrase is wider than the column. */}
+        <Button
+          variant="ghost"
+          size="xs"
+          onClick={detail.onOpen}
+          aria-label={`${name}の上限と条件`}
+          w="full"
+          h="auto"
+          minH="8"
+          py="1"
+          fontSize="2xs"
+          whiteSpace="normal"
+          px={{ base: "1", sm: "0" }}
+          wordBreak="keep-all"
+          overflowWrap="anywhere"
+          lineHeight="moderate"
+        >
+          {name}
+        </Button>
+      </Flex>
       <Modal.Root
         open={detail.open}
         onClose={detail.onClose}
         size="sm"
         title={tileName(benefit)}
-        body={<TileDetail {...key} benefitId={benefitId} />}
+        body={<DetailBody {...key} benefitId={benefitId} />}
         cancel="閉じる"
         onCancel={detail.onClose}
       />
     </>
   );
-}
-
-function TileDetail({ benefitId, ...key }: TileKey & { benefitId: string }) {
-  const benefit = useAtomValue(
-    selectAtom(spuMonthsAtom, tileBenefit(key.accountId, key.month, benefitId), deepEqual),
-  );
-  const capped = useAtomValue(selectAtom(planResultAtom(key.planId ?? ""), tileCapped(benefitId)));
-  const benefits = useAtomValue(
-    selectAtom(spuMonthsAtom, monthBenefits(key.accountId, key.month), deepEqual),
-  );
-  return benefit?.kind === "rate-bonus" ? (
-    <DetailBody benefit={benefit} capped={capped} benefits={benefits} />
-  ) : null;
 }
 
 function TileGroup({
@@ -482,10 +444,6 @@ function WhatIsSpu() {
 
 function SpuOffWarnings({ planId, month }: { planId: string; month: string }) {
   const plan = useAtomValue(planAtom(planId));
-  return plan ? <SpuOffWarningMessages plan={plan} month={month} /> : null;
-}
-
-function SpuOffWarningMessages({ plan, month }: { plan: Plan; month: string }) {
   const warnings = useSpuOffMessages(plan, month);
   return warnings.map((warning) => (
     <Alert.Root key={warning} status="warning" role="status" alignItems="center">

@@ -43,7 +43,7 @@ import {
 } from "#/routes/(plan)/-order-form-store.ts";
 import {
   AmountField,
-  SavedConditions,
+  Conditions,
   EntryModeSwitch,
   ShopAndName,
   UrlField,
@@ -53,10 +53,7 @@ import {
 } from "#/routes/(plan)/-order-entry.tsx";
 import { OrderPreviewBox } from "./order-preview.tsx";
 import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
-import {
-  RakutenCardSwitch,
-  SavedRakutenCardSwitch,
-} from "#/routes/(plan)/-rakuten-card-switch.tsx";
+import { RakutenCardSwitch } from "#/routes/(plan)/-rakuten-card-switch.tsx";
 import { ExtraItems, ItemDetailFields } from "#/routes/(plan)/-item-details.tsx";
 
 /** The editor's target in the URL (`edit=`): a new order, or the id of the order to edit. */
@@ -82,24 +79,6 @@ export function DraftPreview({
     [deferred, shops, original],
   );
   return <OrderPreviewBox planId={planId} draft={draft} original={original} />;
-}
-
-export function SavedDraftPreview({
-  form,
-  planId,
-  orderId,
-}: {
-  form: OrderForm;
-  planId: string;
-  orderId?: string | undefined;
-}) {
-  const original = useAtomValue(orderAtom({ planId, orderId: orderId ?? "" }));
-  return <DraftPreview form={form} planId={planId} original={original} />;
-}
-
-function SavedCampaigns({ form, planId }: { form: OrderForm; planId: string }) {
-  const benefits = useAtomValue(selectAtom(planAtom(planId), planBenefits, deepEqual));
-  return <Campaigns form={form} plan={{ benefits }} />;
 }
 
 export function Campaigns({ form, plan }: { form: OrderForm; plan: Pick<Plan, "benefits"> }) {
@@ -221,6 +200,7 @@ type EditorProps = {
 /** The header, fields and buttons inside the sheet or the dialog. */
 function EditorContent({ period, planId, orderId, layout, amountRef, onClose }: EditorProps) {
   const original = useAtomValue(orderAtom({ planId, orderId: orderId ?? "" }));
+  const plan = useAtomValue(planAtom(planId));
   const shops = useAtomValue(shopsAtom);
   const [failed, setFailed] = useState(false);
   const saveDraft = useSaveOrderDraft(planId, setFailed);
@@ -259,11 +239,12 @@ function EditorContent({ period, planId, orderId, layout, amountRef, onClose }: 
     });
   };
 
+  if (!plan) return null;
   const amount = (
     <AmountField
       form={form}
       inputRef={amountRef}
-      aside={<SavedDraftPreview form={form} planId={planId} orderId={orderId} />}
+      aside={<DraftPreview form={form} planId={planId} original={original} />}
       onUrlPasted={(url) => {
         setMode("url");
         enterUrl(url);
@@ -313,17 +294,17 @@ function EditorContent({ period, planId, orderId, layout, amountRef, onClose }: 
                 <ShopAndName form={form} />
               </>
             )}
-            <SavedConditions
+            <Conditions
               form={form}
-              planId={planId}
+              plan={plan}
               defaultOpen={original ? hasDetails(original) : false}
-              campaigns={<SavedCampaigns form={form} planId={planId} />}
+              campaigns={<Campaigns form={form} plan={plan} />}
             >
               <DetailFields
                 form={form}
-                card={<SavedRakutenCardSwitch form={form} planId={planId} orderId={orderId} />}
+                card={<RakutenCardSwitch form={form} plan={plan} original={original} />}
               />
-            </SavedConditions>
+            </Conditions>
             {original ? null : <CapFlows planId={planId} form={form} />}
           </Flex>
         </Form>
@@ -434,4 +415,3 @@ export function OrderEditor({
 }
 
 const planPeriod = (plan: Plan | undefined) => plan?.period;
-const planBenefits = (plan: Plan | undefined) => plan?.benefits ?? [];

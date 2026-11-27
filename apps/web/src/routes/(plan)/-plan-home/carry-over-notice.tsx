@@ -1,19 +1,24 @@
-import type { Plan } from "@workspaces/domain";
+import { useAtomValue } from "jotai";
+import { planAtom } from "#/state/derived.ts";
+import { useToday } from "#/routes/-use-today.ts";
 import { Alert, Button } from "@workspaces/ui";
+
+const now = () => new Date();
 
 /**
  * On a held plan whose event has ended (its period, which is the event's unless changed by hand):the plan can be carried over to another event, with its
  * orders. Shown even before the next event is published, so that the user learns it can be done.
  */
 export function CarryOverNotice({
-  plan,
-  today,
+  planId,
   onCarryOver,
 }: {
-  plan: Plan;
-  today: string | undefined;
+  planId: string;
   onCarryOver: () => void;
 }) {
+  const plan = useAtomValue(planAtom(planId));
+  const today = useToday(now);
+  if (!plan) return null;
   const ended =
     plan.officialEventId !== undefined && today !== undefined && plan.period.end < today;
   if (!plan.onHold || !ended) return null;
