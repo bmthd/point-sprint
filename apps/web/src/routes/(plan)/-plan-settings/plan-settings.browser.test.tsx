@@ -663,27 +663,94 @@ test("attaches a plan made without an event to an event, after saying what it re
     ...restFixed,
   ]);
   expect(stored.orders).toEqual(own.orders);
-  await expect.element(section).not.toBeInTheDocument();
+  // Now a plan of the event, it is offered to be carried over, not attached.
+  await expect
+    .element(section.getByRole("combobox", { name: "公式イベントに結びつける" }))
+    .not.toBeInTheDocument();
   await expect.element(screen.getByRole("button", { name: /お買い物マラソン/ })).toBeVisible();
 });
 
-test("a plan of an event has nothing to attach", async () => {
-  const event: OfficialEvent = {
-    id: "marathon-2026-10",
-    name: "お買い物マラソン",
-    period: { start: "2026-10-04", end: "2026-10-09" },
-    benefits: structuredClone(marathon),
+const octoberEvent: OfficialEvent = {
+  id: "marathon-2026-10",
+  name: "お買い物マラソン",
+  period: { start: "2026-10-04", end: "2026-10-09" },
+  benefits: structuredClone(marathon),
+};
+
+/** Today is 11/27, after October's event. */
+const onNovember27 = () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-11-27T03:00:00Z"));
+  onTestFinished(() => {
+    vi.useRealTimers();
+  });
+};
+
+test("carries a held plan of an ended event over to an event that has not ended, and releases its hold", async () => {
+  onNovember27();
+  const ended: OfficialEvent = {
+    ...octoberEvent,
+    id: "marathon-2026-11-04",
+    name: "11月のマラソン",
+    period: { start: "2026-11-04", end: "2026-11-11" },
   };
-  const screen = await renderSettings(
-    { ...makePlan(structuredClone(marathon), []), officialEventId: event.id },
-    undefined,
-    [],
-    [event],
-  );
-  await expect.element(screen.getByRole("button", { name: /お買い物マラソン/ })).toBeVisible();
+  const next: OfficialEvent = {
+    ...octoberEvent,
+    id: "marathon-2026-12-04",
+    name: "12月のマラソン",
+    period: { start: "2026-12-04", end: "2026-12-11" },
+  };
+  const held: Plan = {
+    ...makePlan(structuredClone(marathon), [order(0)]),
+    officialEventId: octoberEvent.id,
+    onHold: true,
+  };
+  const screen = await renderSettings(held, undefined, [], [octoberEvent, ended, next]);
+
+  // The plan's event is changed in its card, the one that opens to its period and cap.
   await expect
     .element(screen.getByRole("region", { name: "公式イベント" }))
     .not.toBeInTheDocument();
+  const section = screen.getByRole("region", { name: "買いまわりと上限" });
+  await section.getByRole("button", { name: /お買い物マラソン/ }).click();
+  const picker = section.getByRole("combobox", { name: "イベント" });
+  // Neither the plan's own event nor one that has ended is offered.
+  await expect
+    .element(picker)
+    .toMatchTextContent("別のイベントを選ぶ12月のマラソン（12/4〜12/11）");
+  await picker.selectOptions("12月のマラソン（12/4〜12/11）");
+  await section.getByRole("button", { name: "引き継ぐ" }).click();
+
+  const dialog = screen.getByRole("dialog", { name: "別のイベントに引き継ぎますか？" });
+  await expect
+    .element(dialog.getByText("プランの保留を解き、ほかのプランと合わせて計算します。"))
+    .toBeVisible();
+  await dialog.getByRole("button", { name: "引き継ぐ" }).click();
+  await expect.poll(async () => (await storedPlan()).officialEventId).toBe(next.id);
+  const stored = await storedPlan();
+  expect(stored.period).toEqual(next.period);
+  expect(stored).not.toHaveProperty("onHold");
+  expect(stored.orders).toEqual(held.orders);
+});
+
+test("a plan of an event with no event to carry it over to says that one can be chosen once published", async () => {
+  onNovember27();
+  const screen = await renderSettings(
+    { ...makePlan(structuredClone(marathon), []), officialEventId: octoberEvent.id, onHold: true },
+    undefined,
+    [],
+    [octoberEvent],
+  );
+  const section = screen.getByRole("region", { name: "買いまわりと上限" });
+  await section.getByRole("button", { name: /お買い物マラソン/ }).click();
+  await expect
+    .element(
+      section.getByText(
+        "引き継げるイベントはまだありません。次のイベントが公開されたら、ここで選べます。",
+      ),
+    )
+    .toBeVisible();
+  await expect.element(section.getByRole("combobox", { name: "イベント" })).not.toBeInTheDocument();
 });
 
 test("the hold switch holds the plan and releases it", async () => {

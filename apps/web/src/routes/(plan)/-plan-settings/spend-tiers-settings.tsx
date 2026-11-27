@@ -32,6 +32,7 @@ import { ExpandChevronIcon } from "#/routes/(plan)/-expand-chevron-icon.tsx";
 import { CommitDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
 import { isAddedCampaign, isFixedCampaign } from "./campaign-toggles.tsx";
 import { useDeleteCampaign } from "./delete-campaign.tsx";
+import { EventCarryOver, isEventBenefit, useEventChangeRequest } from "./event-attacher.tsx";
 import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
 
 type SpendTiersBenefit = Extract<Benefit, { kind: "spend-tiers" }>;
@@ -80,9 +81,10 @@ export function SpendTiersSettings({ planId }: { planId: string }) {
 }
 
 function SpendTiersCard({ plan, benefit }: { plan: Plan; benefit: SpendTiersBenefit }) {
-  const [open, { toggle }] = useBoolean();
+  const [open, { on, toggle }] = useBoolean();
   const sectionRef = useRef<HTMLElement>(null);
   const deletion = useDeleteCampaign(plan, sectionRef);
+  useEventChangeRequest(isEventBenefit(plan, benefit), on, sectionRef);
   return (
     <Card.Root
       as="section"
@@ -200,6 +202,7 @@ function SpendTiersEditor({
           direction="column"
           gap="2.5"
         >
+          {isEventBenefit(plan, benefit) ? <EventCarryOver plan={plan} /> : null}
           {added ? (
             <CommitField
               key={`label:${benefit.label}`}

@@ -19,6 +19,7 @@ import { bigOneMoreShopGainAtom, planResultAtom } from "#/state/derived.ts";
 import { plansAtom } from "#/state/query-atoms.ts";
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { NEW_ORDER, OrderEditor } from "#/routes/(plan)/-order-editor/order-editor.tsx";
+import { eventChangeRequestAtom } from "#/routes/(plan)/-plan-settings/event-attacher.tsx";
 import { SettingsPanelButton } from "#/routes/(plan)/-plan-settings/plan-settings.tsx";
 import { ColumnHead } from "#/ui/column-head.tsx";
 import { RouterIconButton } from "#/ui/router-link.tsx";
@@ -26,6 +27,7 @@ import { ShareButton } from "#/routes/-share/share-button.tsx";
 import { planFigures } from "#/routes/-share/result-card.ts";
 import { resultShareTarget } from "#/routes/-share/share-target.ts";
 import { BottomBar } from "./bottom-bar.tsx";
+import { CarryOverNotice } from "./carry-over-notice.tsx";
 import { CapList } from "./cap-list.tsx";
 import { useCapLines } from "#/routes/(plan)/-cap-lines.ts";
 import { useToday } from "#/routes/-use-today.ts";
@@ -199,6 +201,14 @@ function Home({ plan }: { plan: Plan }) {
   const { open: editOrder } = editor;
   const addOrder = useCallback(() => editOrder(NEW_ORDER), [editOrder]);
   const today = useToday(now);
+  const requestEventChange = useSetAtom(eventChangeRequestAtom);
+  // The settings open with the card of the plan's event opened: in the side panel on a wide screen, else their own page.
+  const carryOver = () => {
+    requestEventChange(true);
+    if (wide) settingsPanel.onOpen();
+    // The card scrolls itself into view, which resetting the scroll would undo.
+    else void navigate({ to: "/plan/settings", search: { id: plan.id }, resetScroll: false });
+  };
   const oneMoreShopGain = useAtomValue(bigOneMoreShopGainAtom({ planId: plan.id, today }));
   const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
   const lines = useCapLines(plan);
@@ -234,6 +244,15 @@ function Home({ plan }: { plan: Plan }) {
     <>
       {/* On a wide screen the plan's name heads the orders' column and its settings the result's. */}
       {wide ? null : <PlanBar plan={plan} />}
+      <Box
+        maxW="1280px"
+        mx="auto"
+        px={{ base: "6", lg: "4" }}
+        pt={{ base: "6", lg: "1" }}
+        _empty={{ display: "none" }}
+      >
+        <CarryOverNotice plan={plan} today={today} onCarryOver={carryOver} />
+      </Box>
       {/* One column on a phone (summary first); on a wide screen the summary is the right column. */}
       <Box
         as="main"
