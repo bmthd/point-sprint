@@ -23,7 +23,12 @@ export function CarryOverNotice({
       <Alert.Description flex="1 1 16em">
         このイベントは終わりました。注文を残したまま、別のイベントに引き継げます。
       </Alert.Description>
-      <Button variant="outline" bg="bg.panel" onClick={onCarryOver}>
+      <Button
+        variant="outline"
+        bg="bg.panel"
+        w={{ base: "auto", md: "full" }}
+        onClick={onCarryOver}
+      >
         別のイベントに引き継ぐ
       </Button>
     </Alert.Root>
