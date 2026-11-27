@@ -7,14 +7,22 @@ import {
   type Plan,
   type PointGroup,
   pointGroupOf,
-  deepEqual,
 } from "@workspaces/domain";
 import { Badge, Button, Heading, Modal, Tag, Text, dataAttr, useDisclosure } from "@workspaces/ui";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
 import { type ReactNode, type RefObject, useCallback, useRef, useState } from "react";
-import { orderAtom, orderPointsAtom, calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
+import {
+  orderAtom,
+  orderPointsAtom,
+  calculatedPlanAtom,
+  planResultAtom,
+  hasPlanId,
+  isPlanId,
+  removedWithPlan,
+  sharedAtom,
+} from "#/state/derived.ts";
 import { clearOrdersAtom, removeOrderAtom, saveOrderDraftAtom } from "#/state/plan-operations.ts";
 import { shopsAtom } from "#/state/query-atoms.ts";
 import { openOrderIdAtom } from "./-ui.ts";
@@ -125,55 +133,64 @@ function itemPointsOf(rows: BreakdownRow[]): Record<string, number> {
 }
 
 const noBenefits: Benefit[] = [];
-const benefitsAtom = atomFamily((planId: string) =>
-  selectAtom(calculatedPlanAtom(planId), (plan) => plan?.benefits ?? noBenefits, deepEqual),
+const benefitsAtom = removedWithPlan(
+  atomFamily((planId: string) =>
+    selectAtom(calculatedPlanAtom(planId), (plan) => plan?.benefits ?? noBenefits),
+  ),
+  isPlanId,
 );
 const noRates: Record<string, number> = {};
-const ratesAtom = atomFamily((planId: string) =>
-  selectAtom(planResultAtom(planId), (result) => result?.rates ?? noRates, deepEqual),
+const ratesAtom = removedWithPlan(
+  atomFamily((planId: string) =>
+    selectAtom(planResultAtom(planId), (result) => result?.rates ?? noRates),
+  ),
+  isPlanId,
 );
-const heldEstimateAtom = atomFamily(
-  ({ planId, orderId }: OrderKey) =>
-    selectAtom(
-      planResultAtom(planId),
-      (result) => result?.heldEstimates.find((estimate) => estimate.orderId === orderId),
-      deepEqual,
-    ),
-  sameOrderKey,
+const heldEstimateAtom = removedWithPlan(
+  atomFamily(
+    ({ planId, orderId }: OrderKey) =>
+      selectAtom(planResultAtom(planId), (result) =>
+        result?.heldEstimates.find((estimate) => estimate.orderId === orderId),
+      ),
+    sameOrderKey,
+  ),
+  hasPlanId,
 );
 
 /**
  * Everything a card or a desktop row shows about its order's points. It only changes when this
  * order's figures do, so editing another order does not re-render it.
  */
-export const orderCardPointsAtom = atomFamily(
-  (key: OrderKey) =>
-    selectAtom(
-      atom((get): OrderCardPoints => {
-        const counted = get(orderPointsAtom(key));
-        const estimate = get(heldEstimateAtom(key));
-        // Only the preview shows rows fully cut by a cap. Cards and the table omit their rates too.
-        const rows = (estimate?.rows ?? counted.rows).filter((row) => row.points !== 0);
-        return {
-          ...orderPointRows(
-            rows,
-            get(benefitsAtom(key.planId)),
-            estimate?.rates ?? get(ratesAtom(key.planId)),
-            get(orderAtom(key))?.lineItems ?? [],
-          ),
-          total: rows.reduce((sum, row) => sum + row.points, 0),
-          itemPoints: itemPointsOf(rows),
-        };
-      }),
-      (points) => points,
-      deepEqual,
-    ),
-  sameOrderKey,
+export const orderCardPointsAtom = removedWithPlan(
+  atomFamily(
+    (key: OrderKey) =>
+      sharedAtom(
+        atom((get): OrderCardPoints => {
+          const counted = get(orderPointsAtom(key));
+          const estimate = get(heldEstimateAtom(key));
+          // Only the preview shows rows fully cut by a cap. Cards and the table omit their rates too.
+          const rows = (estimate?.rows ?? counted.rows).filter((row) => row.points !== 0);
+          return {
+            ...orderPointRows(
+              rows,
+              get(benefitsAtom(key.planId)),
+              estimate?.rates ?? get(ratesAtom(key.planId)),
+              get(orderAtom(key))?.lineItems ?? [],
+            ),
+            total: rows.reduce((sum, row) => sum + row.points, 0),
+            itemPoints: itemPointsOf(rows),
+          };
+        }),
+      ),
+    sameOrderKey,
+  ),
+  hasPlanId,
 );
 
 /** Whether this order is the open one; only the order that opens or closes re-renders. */
-export const isOpenAtom = atomFamily((orderId: string) =>
-  atom((get) => get(openOrderIdAtom) === orderId),
+export const isOpenAtom = removedWithPlan(
+  atomFamily((orderId: string) => atom((get) => get(openOrderIdAtom) === orderId)),
+  (orderId, plan) => plan.orders.some((order) => order.id === orderId),
 );
 
 /** Set when saving a change to an order failed; the card list or the desktop list shows it. */

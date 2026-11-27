@@ -14,6 +14,7 @@ export default defineConfig({
       "@simplewebauthn/browser",
       "@tanstack/markdown/react",
       "@tanstack/markdown/parser",
+      "@tanstack/query-core",
       "@tanstack/react-query",
       "jotai",
       "jotai/utils",
