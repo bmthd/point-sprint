@@ -5,7 +5,6 @@ import {
   channels,
   plansUsingSpuMonth,
   spuBenefitsOf,
-  spuIdsIn,
   spuPurchaseRules,
   toggleSpu,
   withEffectiveAccount,
@@ -32,17 +31,22 @@ import {
   ChevronRightIcon,
   ArrowUpRightIcon,
 } from "@workspaces/ui";
-import { useAtomValue, useSetAtom } from "jotai";
+import { atom, useAtomValue, useSetAtom } from "jotai";
 import { useId, useState } from "react";
 import { grouped, pointsText, rateText, rounded } from "#/ui/format.ts";
 
-import { accountSettingsAtom, planAtom, planResultAtom } from "#/state/derived.ts";
+import {
+  accountSettingsAtom,
+  planAtom,
+  spuMonthAtom,
+  spuTileAtom,
+  hasCappedBenefitAtom,
+} from "#/state/derived.ts";
 import { runSaveSpuMonthAtom } from "#/state/mutations.ts";
 import {
   plansAtom,
   plansQueryAtom,
   profileQueryAtom,
-  spuMonthsAtom,
   spuMonthsQueryAtom,
 } from "#/state/query-atoms.ts";
 import { RouterButton } from "#/ui/router-link.tsx";
@@ -117,7 +121,7 @@ const TILE_SIZE = "76px";
  */
 const COLUMN_MIN_WIDTH = { base: "96px", sm: "72px" };
 
-function Tile({
+function TileView({
   benefit,
   capped,
   disabled,
@@ -266,26 +270,67 @@ function DetailBody({
  * One group of tiles under its heading. `benefits` are all the month's items, for the dialog to
  * name the items a tile goes with.
  */
+const spuReadyAtom = atom((get) =>
+  [get(spuMonthsQueryAtom), get(profileQueryAtom), get(plansQueryAtom)].every(
+    (query) => query.isSuccess,
+  ),
+);
+
+type TileKey = { accountId: string; month: string; planId?: string | undefined };
+const tiles = spuTiles(spuBenefitsOf(new Set()));
+const carriedIds = tiles.filter((benefit) => CARRIED_SPU_IDS.has(benefit.id)).map(({ id }) => id);
+const monthlyIds = tiles.filter((benefit) => !CARRIED_SPU_IDS.has(benefit.id)).map(({ id }) => id);
+
+function Tile({
+  benefitId,
+  onToggle,
+  ...key
+}: TileKey & { benefitId: string; onToggle: (benefitId: string) => void }) {
+  const { benefit, capped } = useAtomValue(spuTileAtom({ ...key, benefitId }));
+  const disabled = !useAtomValue(spuReadyAtom);
+  const detail = useDisclosure();
+  if (benefit?.kind !== "rate-bonus") return null;
+  return (
+    <>
+      <TileView
+        benefit={benefit}
+        capped={capped}
+        disabled={disabled}
+        onToggle={() => onToggle(benefitId)}
+        onDetail={detail.onOpen}
+      />
+      <Modal.Root
+        open={detail.open}
+        onClose={detail.onClose}
+        size="sm"
+        title={tileName(benefit)}
+        body={<TileDetail {...key} benefitId={benefitId} />}
+        cancel="閉じる"
+        onCancel={detail.onClose}
+      />
+    </>
+  );
+}
+
+function TileDetail({ benefitId, ...key }: TileKey & { benefitId: string }) {
+  const { benefit, capped } = useAtomValue(spuTileAtom({ ...key, benefitId }));
+  const { benefits } = useAtomValue(spuMonthAtom(key));
+  return benefit?.kind === "rate-bonus" ? (
+    <DetailBody benefit={benefit} capped={capped} benefits={benefits} />
+  ) : null;
+}
+
 function TileGroup({
   title,
   note,
-  tiles,
-  benefits,
-  capped,
-  disabled,
-  onToggle,
-}: {
+  benefitIds,
+  ...props
+}: TileKey & {
   title: string;
   note: string;
-  tiles: RateBenefit[];
-  benefits: Benefit[];
-  capped: ReadonlySet<string>;
-  disabled: boolean;
+  benefitIds: readonly string[];
   onToggle: (benefitId: string) => void;
 }) {
-  const detail = useDisclosure();
-  const [detailId, setDetailId] = useState<string>();
-  const shown = tiles.find((benefit) => benefit.id === detailId);
   const titleId = useId();
   return (
     <Box as="section" aria-labelledby={titleId}>
@@ -304,35 +349,45 @@ function TileGroup({
         columnGap={{ base: "1.5", sm: "1" }}
         rowGap="2"
       >
-        {tiles.map((benefit) => (
-          <Tile
-            key={benefit.id}
-            benefit={benefit}
-            capped={capped.has(benefit.id)}
-            disabled={disabled}
-            onToggle={() => onToggle(benefit.id)}
-            onDetail={() => {
-              setDetailId(benefit.id);
-              detail.onOpen();
-            }}
-          />
+        {benefitIds.map((benefitId) => (
+          <Tile key={benefitId} benefitId={benefitId} {...props} />
         ))}
       </SimpleGrid>
-      <Modal.Root
-        open={detail.open && shown !== undefined}
-        onClose={detail.onClose}
-        size="sm"
-        title={shown ? tileName(shown) : undefined}
-        body={
-          shown ? (
-            <DetailBody benefit={shown} capped={capped.has(shown.id)} benefits={benefits} />
-          ) : null
-        }
-        cancel="閉じる"
-        onCancel={detail.onClose}
-      />
     </Box>
   );
+}
+
+function SpuTotals(key: TileKey) {
+  const { normal, spu } = useAtomValue(spuMonthAtom(key));
+  return (
+    <Flex wrap="wrap" align="baseline" columnGap="2" fontVariantNumeric="tabular-nums">
+      <Text fontSize="sm" color="fg.muted">
+        ポイント倍率
+      </Text>
+      <Text fontSize="4xl" fontWeight="bold" lineHeight="1.1">
+        {rounded(normal + spu)}
+        <Text as="span" fontSize="md" fontWeight="medium">
+          倍
+        </Text>
+      </Text>
+      <Text fontSize="xs" color="fg.muted" whiteSpace="nowrap">
+        通常 {rounded(normal)}倍 ＋ SPU{" "}
+        <Text as="b" color="fg">
+          +{rounded(spu)}倍
+        </Text>
+      </Text>
+    </Flex>
+  );
+}
+
+function CapLegend({ planId }: { planId: string | undefined }) {
+  const capped = useAtomValue(hasCappedBenefitAtom(planId ?? ""));
+  return capped ? (
+    <Flex as="span" align="center" gap="1">
+      <CapBadge as="span" />
+      このプランで上限に達した
+    </Flex>
+  ) : null;
 }
 
 /**
@@ -438,8 +493,6 @@ function SpuOffWarningMessages({ plan, month }: { plan: Plan; month: string }) {
   ));
 }
 
-const noneCapped: ReadonlySet<string> = new Set();
-
 /**
  * The SPU of `accountId` in `month`, for the user to turn on what they achieve. It is shared by
  * every plan of the account with orders of the month, which it lists. Opened from a plan
@@ -454,34 +507,15 @@ export function SpuMonthEditor({
   month: string;
   planId?: string | undefined;
 }) {
-  const stored = useAtomValue(spuMonthsAtom);
-  // A tile turns its item over from what is stored, so it waits for the stored SPU: before that
-  // every item shows off, and a tap on one that is on would turn it off. The account the page
-  // shows comes from the profile and the plan, so it waits for them too.
-  const loaded = [
-    useAtomValue(spuMonthsQueryAtom),
-    useAtomValue(profileQueryAtom),
-    useAtomValue(plansQueryAtom),
-  ].every((query) => query.isSuccess);
-  const result = useAtomValue(planResultAtom(planId ?? ""));
   const saveMonth = useSetAtom(runSaveSpuMonthAtom);
   const [failed, setFailed] = useState(false);
-  const benefits = spuBenefitsOf(spuIdsIn(stored, accountId, month));
-  const tiles = spuTiles(benefits);
-  const capped = result
-    ? new Set(
-        result.benefitTotals.filter((total) => total.capReached).map((total) => total.benefitId),
-      )
-    : noneCapped;
-  const normal = enabledRate(benefits, "base");
-  const spu = enabledRate(benefits, "spu");
   const toggle = (benefitId: string) => {
     setFailed(false);
     saveMonth({ accountId, month, change: (ids) => toggleSpu(ids, benefitId) }).catch(() =>
       setFailed(true),
     );
   };
-  const group = { benefits, capped, disabled: !loaded, onToggle: toggle };
+  const group = { accountId, month, planId, onToggle: toggle };
 
   return (
     // On a phone the smaller card leaves more width to the tiles.
@@ -497,44 +531,23 @@ export function SpuMonthEditor({
           <SpuLink fontSize="xs" />
         </Flex>
         {/* 「ポイント倍率」 is what 楽天's SPU page calls this number. */}
-        <Flex wrap="wrap" align="baseline" columnGap="2" fontVariantNumeric="tabular-nums">
-          <Text fontSize="sm" color="fg.muted">
-            ポイント倍率
-          </Text>
-          <Text fontSize="4xl" fontWeight="bold" lineHeight="1.1">
-            {rounded(normal + spu)}
-            <Text as="span" fontSize="md" fontWeight="medium">
-              倍
-            </Text>
-          </Text>
-          <Text fontSize="xs" color="fg.muted" whiteSpace="nowrap">
-            通常 {rounded(normal)}倍 ＋ SPU{" "}
-            <Text as="b" color="fg">
-              +{rounded(spu)}倍
-            </Text>
-          </Text>
-        </Flex>
+        <SpuTotals accountId={accountId} month={month} />
         {planId !== undefined ? <SpuOffWarnings planId={planId} month={month} /> : null}
         <TileGroup
           title="契約・お支払いで決まる"
           note="翌月に引継"
-          tiles={tiles.filter((benefit) => CARRIED_SPU_IDS.has(benefit.id))}
+          benefitIds={carriedIds}
           {...group}
         />
         <TileGroup
           title="その月の利用で決まる"
           note="毎月リセット"
-          tiles={tiles.filter((benefit) => !CARRIED_SPU_IDS.has(benefit.id))}
+          benefitIds={monthlyIds}
           {...group}
         />
         <UsingPlans accountId={accountId} month={month} planId={planId} />
         <Flex wrap="wrap" align="center" columnGap="3" rowGap="1.5" fontSize="xs" color="fg.muted">
-          {capped.size > 0 ? (
-            <Flex as="span" align="center" gap="1">
-              <CapBadge as="span" />
-              このプランで上限に達した
-            </Flex>
-          ) : null}
+          <CapLegend planId={planId} />
           <Text as="span">名前を押すと達成の条件と上限</Text>
         </Flex>
       </Card.Body>

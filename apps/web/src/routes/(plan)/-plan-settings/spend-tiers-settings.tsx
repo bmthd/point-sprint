@@ -11,6 +11,9 @@ import {
   PlusIcon,
   XIcon,
 } from "@workspaces/ui";
+import { atomFamily } from "jotai-family";
+import { selectAtom } from "jotai/utils";
+import { deepEqual } from "@workspaces/domain";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useId, useRef } from "react";
 import * as v from "valibot";
@@ -26,13 +29,20 @@ import {
   RequiredTextSchema,
   YenSchema,
 } from "@workspaces/domain";
-import { planAtom, planResultAtom } from "#/state/derived.ts";
+import {
+  planAtom,
+  benefitAtom,
+  planBenefitContextAtom,
+  benefitSpendTotalAtom,
+  removedWithPlan,
+  isPlanId,
+} from "#/state/derived.ts";
 import { updateBenefitAtom } from "#/state/plan-operations.ts";
 import { ExpandChevronIcon } from "#/routes/(plan)/-expand-chevron-icon.tsx";
 import { CommitDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
 import { isAddedCampaign, isFixedCampaign } from "./campaign-toggles.tsx";
 import { useDeleteCampaign } from "./delete-campaign.tsx";
-import { EventCarryOver, isEventBenefit, useEventChangeRequest } from "./event-attacher.tsx";
+import { SavedEventCarryOver, isEventBenefit, useEventChangeRequest } from "./event-attacher.tsx";
 import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
 
 type SpendTiersBenefit = Extract<Benefit, { kind: "spend-tiers" }>;
@@ -72,19 +82,32 @@ function standingOf(tiers: SpendTier[], total: number) {
  * A card for each campaign whose rate the total over its days sets: a one-line summary that opens
  * to change its name, period, tiers and cap.
  */
+const spendTierIdsAtom = removedWithPlan(
+  atomFamily((planId: string) =>
+    selectAtom(
+      planAtom(planId),
+      (plan) => (plan ? spendTiersOf(plan).map(({ id }) => id) : []),
+      deepEqual,
+    ),
+  ),
+  isPlanId,
+);
+
 export function SpendTiersSettings({ planId }: { planId: string }) {
-  const plan = useAtomValue(planAtom(planId));
-  if (!plan) return null;
-  return spendTiersOf(plan).map((benefit) => (
-    <SpendTiersCard key={benefit.id} plan={plan} benefit={benefit} />
+  const benefitIds = useAtomValue(spendTierIdsAtom(planId));
+  return benefitIds.map((benefitId) => (
+    <SpendTiersCard key={benefitId} planId={planId} benefitId={benefitId} />
   ));
 }
 
-function SpendTiersCard({ plan, benefit }: { plan: Plan; benefit: SpendTiersBenefit }) {
+function SpendTiersCard({ planId, benefitId }: { planId: string; benefitId: string }) {
+  const plan = useAtomValue(planBenefitContextAtom(planId));
+  const benefit = useAtomValue(benefitAtom({ planId, benefitId }));
   const [open, { on, toggle }] = useBoolean();
   const sectionRef = useRef<HTMLElement>(null);
-  const deletion = useDeleteCampaign(plan, sectionRef);
-  useEventChangeRequest(isEventBenefit(plan, benefit), on, sectionRef);
+  const deletion = useDeleteCampaign(planId, sectionRef);
+  useEventChangeRequest(!!plan && !!benefit && isEventBenefit(plan, benefit), on, sectionRef);
+  if (!plan || benefit?.kind !== "spend-tiers") return null;
   return (
     <Card.Root
       as="section"
@@ -94,11 +117,11 @@ function SpendTiersCard({ plan, benefit }: { plan: Plan; benefit: SpendTiersBene
       overflow="hidden"
     >
       <SpendTiersEditor
-        plan={plan}
-        benefit={benefit}
+        planId={planId}
+        benefitId={benefitId}
         open={open}
         onToggle={toggle}
-        onDelete={() => deletion.ask(benefit)}
+        onDelete={() => deletion.ask(benefitId)}
       />
       {deletion.dialog}
     </Card.Root>
@@ -106,22 +129,25 @@ function SpendTiersCard({ plan, benefit }: { plan: Plan; benefit: SpendTiersBene
 }
 
 function SpendTiersEditor({
-  plan,
-  benefit,
+  planId,
+  benefitId,
   open,
   onToggle,
   onDelete,
 }: {
-  plan: Plan;
-  benefit: SpendTiersBenefit;
+  planId: string;
+  benefitId: string;
   open: boolean;
   onToggle: () => void;
   onDelete: () => void;
 }) {
+  const plan = useAtomValue(planBenefitContextAtom(planId));
+  const benefit = useAtomValue(benefitAtom({ planId, benefitId }));
   const updateBenefit = useSetAtom(updateBenefitAtom);
-  const save = useSaveSettingsChange(plan.id);
-  const result = useAtomValue(planResultAtom(plan.id));
+  const save = useSaveSettingsChange(planId);
+  const total = useAtomValue(benefitSpendTotalAtom({ planId, benefitId }));
   const panelId = useId();
+  if (!plan || benefit?.kind !== "spend-tiers") return null;
   const added = isAddedCampaign(plan, benefit);
 
   const rule = benefit.conditions.dateRule;
@@ -159,7 +185,6 @@ function SpendTiersEditor({
       };
     });
   const highest = tiers.reduce((top, tier) => (tier.minAmount > top.minAmount ? tier : top));
-  const total = result?.spendTotals[benefit.id];
 
   return (
     <>
@@ -202,7 +227,7 @@ function SpendTiersEditor({
           direction="column"
           gap="2.5"
         >
-          {isEventBenefit(plan, benefit) ? <EventCarryOver plan={plan} /> : null}
+          {isEventBenefit(plan, benefit) ? <SavedEventCarryOver planId={planId} /> : null}
           {added ? (
             <CommitField
               key={`label:${benefit.label}`}

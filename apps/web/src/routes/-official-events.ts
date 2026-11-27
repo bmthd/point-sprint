@@ -1,5 +1,8 @@
 import { officialEventsQueryOptions } from "./-official-events-query.ts";
 import { type OfficialEvent, OfficialEventSchema } from "@workspaces/domain";
+import { atomFamily } from "jotai-family";
+import { selectAtom } from "jotai/utils";
+import { deepEqual, endedLatestFirst } from "@workspaces/domain";
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 import ky from "ky";
@@ -29,3 +32,38 @@ const noEvents: OfficialEvent[] = [];
 
 /** The events, or none while they load or when they cannot be read. */
 export const officialEventsAtom = atom((get) => get(officialEventsQueryAtom).data ?? noEvents);
+
+export const officialEventAtom = atomFamily((eventId: string) =>
+  selectAtom(officialEventsAtom, (events) => events.find((event) => event.id === eventId)),
+);
+
+export const officialEventPartitionsAtom = atomFamily((today: string | undefined) =>
+  selectAtom(
+    officialEventsQueryAtom,
+    ({ data, isPending, isError }) => {
+      const events = isPending || isError ? [] : data;
+      const ahead = today ? events.filter((event) => event.period.end >= today) : events;
+      const ended = today ? endedLatestFirst(events, today) : [];
+      const [latest, ...earlier] = ended;
+      const showEnded = ahead.length === 0 && latest !== undefined;
+      const behind = showEnded ? earlier : ended;
+      const months = new Map<string, string[]>();
+      for (const event of behind) {
+        const month = event.period.start.slice(0, 7);
+        months.set(month, [...(months.get(month) ?? []), event.id]);
+      }
+      return {
+        showEnded,
+        cards: (showEnded ? [latest] : ahead).map(({ id }) => id),
+        behind: [...months],
+      };
+    },
+    deepEqual,
+  ),
+);
+
+export const officialEventsStatusAtom = selectAtom(
+  officialEventsQueryAtom,
+  ({ isPending, isError, refetch }) => ({ isPending, isError, refetch }),
+  deepEqual,
+);

@@ -1,5 +1,4 @@
 import {
-  type Benefit,
   type CampaignInput,
   type CampaignTemplate,
   type Plan,
@@ -8,7 +7,7 @@ import {
   hasCampaignOccurrence,
 } from "@workspaces/domain";
 import { Grid, Button, Flex, Image, RadioCard, RadioCardGroup, Text } from "@workspaces/ui";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import * as v from "valibot";
 import { optionalGrouped } from "#/ui/format.ts";
 import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
@@ -23,6 +22,7 @@ import {
   RequiredTextSchema,
   YenSchema,
 } from "@workspaces/domain";
+import { planAtom, benefitAtom } from "#/state/derived.ts";
 import { updateBenefitAtom } from "#/state/plan-operations.ts";
 import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
 import { SPECS } from "./campaign-form.ts";
@@ -96,19 +96,22 @@ function RateChoices({
  */
 export function CampaignEditor({
   id,
-  plan,
-  benefit,
+  planId,
+  benefitId,
   template,
   onDelete,
 }: {
   id: string;
-  plan: Plan;
-  benefit: Benefit;
+  planId: string;
+  benefitId: string;
   template: CampaignTemplate;
   onDelete: () => void;
 }) {
+  const plan = useAtomValue(planAtom(planId));
+  const benefit = useAtomValue(benefitAtom({ planId, benefitId }));
   const updateBenefit = useSetAtom(updateBenefitAtom);
-  const save = useSaveSettingsChange(plan.id);
+  const save = useSaveSettingsChange(planId);
+  if (!plan || !benefit) return null;
   const spec = SPECS[template.id] ?? {};
   const input = campaignInputOf(benefit);
   const others = { ...plan, benefits: plan.benefits.filter((other) => other.id !== benefit.id) };

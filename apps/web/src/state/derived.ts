@@ -10,6 +10,10 @@ import {
   bigOneMoreShopGain,
   oneMoreShopGain,
   capLines,
+  accountIdOf,
+  spuMonthsOfPlan,
+  spuIdsIn,
+  spuBenefitsOf,
 } from "@workspaces/domain";
 import { replaceEqualDeep } from "@tanstack/query-core";
 import { type Atom, atom } from "jotai";
@@ -149,6 +153,30 @@ export const calculatedPlanAtom = removedWithPlan(
     selectAtom(calculatedPlansAtom, (plans) => plans.find((plan) => plan.id === id)),
   ),
   isPlanId,
+);
+
+type BenefitKey = { planId: string; benefitId: string };
+const sameBenefitKey = (a: BenefitKey, b: BenefitKey) =>
+  a.planId === b.planId && a.benefitId === b.benefitId;
+
+export const benefitAtom = removedWithPlan(
+  atomFamily(
+    ({ planId, benefitId }: BenefitKey) =>
+      selectAtom(planAtom(planId), (plan) =>
+        plan?.benefits.find((benefit) => benefit.id === benefitId),
+      ),
+    sameBenefitKey,
+  ),
+  hasPlanId,
+);
+
+export const benefitSpendTotalAtom = removedWithPlan(
+  atomFamily(
+    ({ planId, benefitId }: BenefitKey) =>
+      selectAtom(planResultAtom(planId), (result) => result?.spendTotals[benefitId]),
+    sameBenefitKey,
+  ),
+  hasPlanId,
 );
 
 type OrderKey = { planId: string; orderId: string };
@@ -300,3 +328,111 @@ export const multiAccountEnabledAtom = atom((get) => get(accountSettingsAtom).en
 
 /** Whether account settings can be saved, without subscribing to the profile data. */
 export const isProfileReadyAtom = atom((get) => get(profileQueryAtom).isSuccess);
+
+type SpuMonthKey = { accountId: string; month: string };
+const sameSpuMonthKey = (a: SpuMonthKey, b: SpuMonthKey) =>
+  a.accountId === b.accountId && a.month === b.month;
+
+export const spuMonthAtom = atomFamily(
+  ({ accountId, month }: SpuMonthKey) =>
+    sharedAtom(
+      atom((get) => {
+        const stored = get(spuMonthsAtom);
+        const own = stored.filter((candidate) => candidate.accountId === accountId);
+        const previous = own
+          .map((candidate) => candidate.month)
+          .filter((candidate) => candidate < month)
+          .sort()
+          .at(-1);
+        const unset = own.some((candidate) => candidate.month === month)
+          ? undefined
+          : previous
+            ? `未設定・${Number(previous.slice(5, 7))}月から引き継ぎ`
+            : "未設定";
+        const benefits = spuBenefitsOf(spuIdsIn(stored, accountId, month));
+        const rate = (category: "base" | "spu") =>
+          benefits.reduce(
+            (sum, benefit) =>
+              benefit.kind === "rate-bonus" && benefit.category === category && benefit.enabled
+                ? sum + benefit.params.rate
+                : sum,
+            0,
+          );
+        return { benefits, unset, normal: rate("base"), spu: rate("spu") };
+      }),
+    ),
+  sameSpuMonthKey,
+);
+
+export const planSpuMonthsAtom = removedWithPlan(
+  atomFamily((planId: string) =>
+    sharedAtom(
+      atom((get) => {
+        const plan = get(planAtom(planId));
+        return plan
+          ? {
+              accountId: accountIdOf(plan, get(accountSettingsAtom)),
+              months: spuMonthsOfPlan(plan).map((month) => ({
+                month,
+                orders: plan.orders.filter((order) => order.date.startsWith(month)).length,
+              })),
+            }
+          : undefined;
+      }),
+    ),
+  ),
+  isPlanId,
+);
+
+type SpuTileKey = SpuMonthKey & { benefitId: string; planId?: string | undefined };
+export const spuTileAtom = removedWithPlan(
+  atomFamily(
+    ({ accountId, month, benefitId, planId }: SpuTileKey) =>
+      sharedAtom(
+        atom((get) => ({
+          benefit: get(spuMonthAtom({ accountId, month })).benefits.find(
+            (benefit) => benefit.id === benefitId,
+          ),
+          capped:
+            planId !== undefined &&
+            (get(planResultAtom(planId))?.benefitTotals.some(
+              (total) => total.benefitId === benefitId && total.capReached,
+            ) ??
+              false),
+        })),
+      ),
+    (a, b) => sameSpuMonthKey(a, b) && a.benefitId === b.benefitId && a.planId === b.planId,
+  ),
+  (key, plan) => key.planId === plan.id,
+);
+
+export const hasCappedBenefitAtom = removedWithPlan(
+  atomFamily((planId: string) =>
+    atom(
+      (get) =>
+        get(planResultAtom(planId))?.benefitTotals.some((total) => total.capReached) ?? false,
+    ),
+  ),
+  isPlanId,
+);
+
+export const planBenefitsAtom = removedWithPlan(
+  atomFamily((planId: string) =>
+    selectAtom(planAtom(planId), (plan) => plan?.benefits ?? [], deepEqual),
+  ),
+  isPlanId,
+);
+
+export const planBenefitContextAtom = removedWithPlan(
+  atomFamily((planId: string) =>
+    selectAtom(
+      planAtom(planId),
+      (plan) =>
+        plan
+          ? { id: plan.id, period: plan.period, officialEventId: plan.officialEventId }
+          : undefined,
+      deepEqual,
+    ),
+  ),
+  isPlanId,
+);

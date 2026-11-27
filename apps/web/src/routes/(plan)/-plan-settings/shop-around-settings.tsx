@@ -1,8 +1,17 @@
 import { type Benefit, type Plan, isTwoShopCampaign } from "@workspaces/domain";
 import { Box, Flex, Button, Card, Text, useBoolean } from "@workspaces/ui";
+import { atomFamily } from "jotai-family";
+import { selectAtom } from "jotai/utils";
+import { deepEqual } from "@workspaces/domain";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useRef } from "react";
-import { planAtom } from "#/state/derived.ts";
+import {
+  planAtom,
+  planBenefitContextAtom,
+  benefitAtom,
+  removedWithPlan,
+  isPlanId,
+} from "#/state/derived.ts";
 import * as v from "valibot";
 import { grouped, rateText } from "#/ui/format.ts";
 import { updateBenefitAtom } from "#/state/plan-operations.ts";
@@ -13,7 +22,7 @@ import { END_BEFORE_START, START_AFTER_END, DateSchema, PointsSchema } from "@wo
 import { officialEventsAtom } from "#/routes/-official-events.ts";
 import { isAddedCampaign } from "./campaign-toggles.tsx";
 import { useDeleteCampaign } from "./delete-campaign.tsx";
-import { EventCarryOver, isEventBenefit, useEventChangeRequest } from "./event-attacher.tsx";
+import { SavedEventCarryOver, isEventBenefit, useEventChangeRequest } from "./event-attacher.tsx";
 import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
 
 type ShopAroundBenefit = Extract<Benefit, { kind: "shop-around" }>;
@@ -43,17 +52,29 @@ function summaryOf(benefit: ShopAroundBenefit, period: { start: string; end: str
 }
 
 /** 「買いまわりと上限」: a one-line summary that opens to override its period and cap. */
-export function ShopAroundSettings({ planId }: { planId: string }) {
-  const plan = useAtomValue(planAtom(planId));
-  return plan ? <ShopAroundSettingsContent plan={plan} /> : null;
-}
+const shopAroundSectionAtom = removedWithPlan(
+  atomFamily((planId: string) =>
+    selectAtom(
+      planAtom(planId),
+      (plan) => {
+        const benefit = plan ? shopAroundOf(plan) : undefined;
+        return {
+          benefitId: benefit?.id,
+          event: !!plan && !!benefit && isEventBenefit(plan, benefit),
+        };
+      },
+      deepEqual,
+    ),
+  ),
+  isPlanId,
+);
 
-function ShopAroundSettingsContent({ plan }: { plan: Plan }) {
+export function ShopAroundSettings({ planId }: { planId: string }) {
+  const { benefitId, event } = useAtomValue(shopAroundSectionAtom(planId));
   const [open, { on, toggle }] = useBoolean();
   const sectionRef = useRef<HTMLElement>(null);
-  const deletion = useDeleteCampaign(plan, sectionRef);
-  const benefit = shopAroundOf(plan);
-  useEventChangeRequest(benefit !== undefined && isEventBenefit(plan, benefit), on, sectionRef);
+  const deletion = useDeleteCampaign(planId, sectionRef);
+  useEventChangeRequest(event, on, sectionRef);
 
   return (
     <Card.Root
@@ -63,13 +84,13 @@ function ShopAroundSettingsContent({ plan }: { plan: Plan }) {
       aria-label="買いまわりと上限"
       overflow="hidden"
     >
-      {benefit ? (
+      {benefitId ? (
         <ShopAroundEditor
-          plan={plan}
-          benefit={benefit}
+          planId={planId}
+          benefitId={benefitId}
           open={open}
           onToggle={toggle}
-          onDelete={() => deletion.ask(benefit)}
+          onDelete={() => deletion.ask(benefitId)}
         />
       ) : (
         <Text px="4" py="3" fontSize="sm" color="fg.muted">
@@ -83,24 +104,26 @@ function ShopAroundSettingsContent({ plan }: { plan: Plan }) {
 }
 
 function ShopAroundEditor({
-  plan,
-  benefit,
+  planId,
+  benefitId,
   open,
   onToggle,
   onDelete,
 }: {
-  plan: Plan;
-  benefit: ShopAroundBenefit;
+  planId: string;
+  benefitId: string;
   open: boolean;
   onToggle: () => void;
   onDelete: () => void;
 }) {
+  const plan = useAtomValue(planBenefitContextAtom(planId));
+  const benefit = useAtomValue(benefitAtom({ planId, benefitId }));
   const updateBenefit = useSetAtom(updateBenefitAtom);
-  const save = useSaveSettingsChange(plan.id);
+  const save = useSaveSettingsChange(planId);
   const panelId = useId();
-  const added = isAddedCampaign(plan, benefit);
-
   const events = useAtomValue(officialEventsAtom);
+  if (!plan || benefit?.kind !== "shop-around") return null;
+  const added = isAddedCampaign(plan, benefit);
   // The benefit's own label until the events load, or when the event is no longer served.
   const name = events.find((event) => event.id === plan.officialEventId)?.name ?? benefit.label;
   const rule = benefit.conditions.dateRule;
@@ -172,7 +195,7 @@ function ShopAroundEditor({
           direction="column"
           gap="2.5"
         >
-          {isEventBenefit(plan, benefit) ? <EventCarryOver plan={plan} /> : null}
+          {isEventBenefit(plan, benefit) ? <SavedEventCarryOver planId={planId} /> : null}
           <Box
             display="grid"
             gridTemplateColumns="repeat(2, minmax(0, 1fr))"

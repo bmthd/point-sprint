@@ -1,7 +1,7 @@
-import type { Benefit, Plan } from "@workspaces/domain";
 import { Modal, Text, useDisclosure } from "@workspaces/ui";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { type RefObject, useRef, useState } from "react";
+import { benefitAtom } from "#/state/derived.ts";
 import { removeBenefitAtom } from "#/state/plan-operations.ts";
 import { useSaveSettingsChange } from "./settings-shared.ts";
 
@@ -10,15 +10,16 @@ import { useSaveSettingsChange } from "./settings-shared.ts";
  * `afterDelete`, since the button that opened it is gone; after cancelling it goes back to that
  * button.
  */
-export function useDeleteCampaign(plan: Plan, afterDelete: RefObject<HTMLElement | null>) {
+export function useDeleteCampaign(planId: string, afterDelete: RefObject<HTMLElement | null>) {
   const removeBenefit = useSetAtom(removeBenefitAtom);
-  const save = useSaveSettingsChange(plan.id);
+  const save = useSaveSettingsChange(planId);
   const { open, onOpen, onClose } = useDisclosure();
-  const [target, setTarget] = useState<Benefit>();
+  const [target, setTarget] = useState<string>();
   const finalFocus = useRef<HTMLElement | null>(null);
 
-  const ask = (benefit: Benefit) => {
-    setTarget(benefit);
+  const benefit = useAtomValue(benefitAtom({ planId, benefitId: target ?? "" }));
+  const ask = (benefitId: string) => {
+    setTarget(benefitId);
     finalFocus.current = null;
     onOpen();
   };
@@ -26,14 +27,14 @@ export function useDeleteCampaign(plan: Plan, afterDelete: RefObject<HTMLElement
     <Modal.Root
       open={open}
       title="キャンペーンを削除しますか？"
-      body={<Text>「{target?.label}」がこのプランから消えます。この操作は取り消せません。</Text>}
+      body={<Text>「{benefit?.label}」がこのプランから消えます。この操作は取り消せません。</Text>}
       cancel="キャンセル"
       success={{ children: "削除する", colorScheme: "danger" }}
       finalFocusRef={finalFocus}
       onClose={onClose}
       onCancel={onClose}
       onSuccess={() => {
-        if (target) save(removeBenefit({ planId: plan.id, benefitId: target.id }));
+        if (target) save(removeBenefit({ planId: planId, benefitId: target }));
         onClose();
         finalFocus.current = afterDelete.current;
       }}

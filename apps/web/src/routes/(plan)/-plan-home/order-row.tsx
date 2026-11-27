@@ -40,7 +40,7 @@ import {
   useRef,
 } from "react";
 import { grouped, pointsText, rateText, yen } from "#/ui/format.ts";
-import { orderAtom, planAtom } from "#/state/derived.ts";
+import { orderAtom } from "#/state/derived.ts";
 import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "#/state/plan-operations.ts";
 import { shopsAtom } from "#/state/query-atoms.ts";
 import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
@@ -76,7 +76,7 @@ import {
   useShopName,
 } from "#/routes/(plan)/-order-shared.tsx";
 import { PointBreakdown } from "#/routes/-point-breakdown.tsx";
-import { DraftPreview } from "#/routes/(plan)/-order-editor/order-editor.tsx";
+import { SavedDraftPreview } from "#/routes/(plan)/-order-editor/order-editor.tsx";
 import { ACTION_BUTTON_WIDTH, OrderDetailFields } from "./order-details.tsx";
 import {
   AMOUNT_COLUMN,
@@ -231,19 +231,17 @@ function InstantCommit({ form, commit }: { form: OrderForm; commit: () => Promis
  */
 function OrderEditor({
   planId,
-  order,
+  orderId,
   form,
   autofill,
   commit,
 }: {
   planId: string;
-  order: Order;
+  orderId: string;
   form: OrderForm;
   autofill: ReturnType<typeof useOrderAutofill>;
   commit: () => Promise<CommitResult>;
 }) {
-  const plan = useAtomValue(planAtom(planId));
-  if (!plan) return null;
   return (
     <Box
       onBlur={(event) => {
@@ -260,12 +258,12 @@ function OrderEditor({
         if (event.target instanceof HTMLSelectElement) void commit();
       }}
     >
-      <DraftPreview form={form} planId={plan.id} original={order} />
+      <SavedDraftPreview form={form} planId={planId} orderId={orderId} />
       <OrderDetailFields
         form={form}
-        plan={plan}
+        planId={planId}
         autofill={autofill}
-        original={order}
+        orderId={orderId}
         onItemRemoved={() => void commit()}
       />
     </Box>
@@ -276,20 +274,21 @@ function OrderEditor({
 function PendingOrderPreview({
   form,
   planId,
-  order,
+  orderId,
   open,
 }: {
   form: OrderForm;
   planId: string;
-  order: Order;
+  orderId: string;
   open: boolean;
 }) {
+  const order = useAtomValue(orderAtom({ planId, orderId }));
   const shops = useAtomValue(shopsAtom);
   const current = useFormInput(form);
-  if (open || inputKey(current) === inputKey(editInputOf(order, shops))) return null;
+  if (!order || open || inputKey(current) === inputKey(editInputOf(order, shops))) return null;
   return (
     <Box px="4" pb="3">
-      <DraftPreview form={form} planId={planId} original={order} />
+      <SavedDraftPreview form={form} planId={planId} orderId={orderId} />
     </Box>
   );
 }
@@ -603,15 +602,15 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
       </Box>
       {simple ? null : (
         <ItemLines
-          order={order}
+          planId={planId}
+          orderId={orderId}
           form={form}
           commit={commit}
           shopName={shopName}
-          itemPoints={points.itemPoints}
           onPasteUrl={pasteUrl}
         />
       )}
-      <PendingOrderPreview form={form} planId={planId} order={order} open={open} />
+      <PendingOrderPreview form={form} planId={planId} orderId={orderId} open={open} />
       {/* It slides open and shut, so a press shows which order the fields below belong to. */}
       {/* Once open, the window scrolls only if 「複製」 and 「削除」 are off it, as little as it can. */}
       <Collapse
@@ -634,7 +633,7 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
           </Flex>
           <OrderEditor
             planId={planId}
-            order={order}
+            orderId={orderId}
             form={form}
             autofill={autofill}
             commit={commit}
@@ -678,21 +677,24 @@ function itemExtras(item: LineItem) {
  * quantity and coupon show small after the name, and its points at the right.
  */
 function ItemLines({
-  order,
+  planId,
+  orderId,
   form,
   commit,
   shopName,
-  itemPoints,
   onPasteUrl,
 }: {
-  order: Order;
+  planId: string;
+  orderId: string;
   form: OrderForm;
   commit: () => Promise<CommitResult>;
   shopName: string;
-  itemPoints: Record<string, number>;
   /** A URL pasted into the first item's name or unit price. */
   onPasteUrl: (url: string) => void;
 }) {
+  const order = useAtomValue(orderAtom({ planId, orderId }));
+  const { itemPoints } = useAtomValue(orderCardPointsAtom({ planId, orderId }));
+  if (!order) return null;
   return (
     <Box
       borderTopWidth="1px"

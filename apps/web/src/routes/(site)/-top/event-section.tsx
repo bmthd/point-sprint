@@ -17,13 +17,16 @@ import {
   dataAttr,
   useDisclosure,
 } from "@workspaces/ui";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useStore } from "jotai";
 import { type ReactNode, useId } from "react";
 import { grouped } from "#/ui/format.ts";
 import { monthDay, monthDayWithWeekday } from "#/ui/dates.ts";
-import { officialEventsQueryAtom } from "#/routes/-official-events.ts";
+import {
+  officialEventAtom,
+  officialEventPartitionsAtom,
+  officialEventsStatusAtom,
+} from "#/routes/-official-events.ts";
 import { SaveFailed } from "./hero.tsx";
-import { endedLatestFirst } from "@workspaces/domain";
 
 /**
  * The highest rate and the cap of each shop-around and spend-tiers benefit, e.g.
@@ -85,24 +88,29 @@ type CreateProps = {
   onCreate: (event: OfficialEvent) => void;
 };
 
+type CreateIdProps = Omit<CreateProps, "onCreate"> & { onCreate: (eventId: string) => void };
+
 /**
  * An event's card: its name and terms on the left, the button on the right. A phone has the terms
  * on one short line, so the card stays low.
  */
 function EventCard({
-  event,
-  status,
+  eventId,
+  today,
   disabled,
   starting,
   onCreate,
   actionLabel,
   highlighted,
 }: {
-  event: OfficialEvent;
-  status: Status | undefined;
+  eventId: string;
+  today: string | undefined;
   actionLabel: string;
   highlighted: boolean;
-} & CreateProps) {
+} & CreateIdProps) {
+  const event = useAtomValue(officialEventAtom(eventId));
+  if (!event) return null;
+  const status = statusOf(event, today);
   return (
     <Card.Root
       h="full"
@@ -153,7 +161,7 @@ function EventCard({
           flexShrink="0"
           disabled={disabled}
           loading={starting?.event?.id === event.id}
-          onClick={() => onCreate(event)}
+          onClick={() => onCreate(eventId)}
         >
           {actionLabel}
         </Button>
@@ -228,17 +236,17 @@ const yearMonth = (date: string) => `${date.slice(0, 4)}年${Number(date.slice(5
  * The button to the events that ended and the drawer it opens: a panel for each month they started
  * in, the latest first. From the bottom on a phone, from the side otherwise.
  */
-function EndedEvents({ events, disabled, onCreate }: { events: OfficialEvent[] } & CreateProps) {
+function EndedEvents({
+  months,
+  disabled,
+  onCreate,
+}: { months: [string, string[]][] } & CreateIdProps) {
   const { open, onOpen, onClose } = useDisclosure();
-  const months = new Map<string, OfficialEvent[]>();
-  for (const event of events) {
-    const month = yearMonth(event.period.start);
-    months.set(month, [...(months.get(month) ?? []), event]);
-  }
+  const count = months.reduce((sum, [, ids]) => sum + ids.length, 0);
   return (
     <>
       <Button variant="ghost" colorScheme="link" size="sm" px="0" flexShrink="0" onClick={onOpen}>
-        終了したイベント（{events.length} 件）
+        終了したイベント（{count} 件）
       </Button>
       <Drawer.Root
         open={open}
@@ -258,43 +266,18 @@ function EndedEvents({ events, disabled, onCreate }: { events: OfficialEvent[] }
             {[...months].map(([month, monthEvents]) => (
               <VStack key={month} as="section" gap="2" alignItems="stretch">
                 <Heading as="h3" fontSize="sm" color="fg.muted">
-                  {month}
+                  {yearMonth(month)}
                 </Heading>
                 <Card.Root>
                   <List.Root>
-                    {monthEvents.map((event) => (
-                      <List.Item
-                        key={event.id}
-                        display="flex"
-                        alignItems="center"
-                        gap="3"
-                        px="4"
-                        py="2.5"
-                        _notFirst={{ borderTopWidth: "1px" }}
-                      >
-                        <VStack gap="0.5" flex="1" minW="0" alignItems="stretch">
-                          <Text fontWeight="bold">{event.name}</Text>
-                          <Text fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
-                            {monthDayWithWeekday(event.period.start)} 〜{" "}
-                            {monthDayWithWeekday(event.period.end)}
-                          </Text>
-                          <Text fontSize="xs" color="fg.muted">
-                            {tiersSummary(event)}
-                          </Text>
-                        </VStack>
-                        <Button
-                          variant="outline"
-                          bg="bg.panel"
-                          flexShrink="0"
-                          disabled={disabled}
-                          onClick={() => {
-                            onClose();
-                            onCreate(event);
-                          }}
-                        >
-                          プランを作る
-                        </Button>
-                      </List.Item>
+                    {monthEvents.map((eventId) => (
+                      <EndedEventRow
+                        key={eventId}
+                        eventId={eventId}
+                        disabled={disabled}
+                        onCreate={onCreate}
+                        onClose={onClose}
+                      />
                     ))}
                   </List.Root>
                 </Card.Root>
@@ -304,6 +287,54 @@ function EndedEvents({ events, disabled, onCreate }: { events: OfficialEvent[] }
         </Drawer.Content>
       </Drawer.Root>
     </>
+  );
+}
+
+function EndedEventRow({
+  eventId,
+  disabled,
+  onCreate,
+  onClose,
+}: {
+  eventId: string;
+  disabled: boolean;
+  onCreate: (eventId: string) => void;
+  onClose: () => void;
+}) {
+  const event = useAtomValue(officialEventAtom(eventId));
+  if (!event) return null;
+  return (
+    <List.Item
+      key={eventId}
+      display="flex"
+      alignItems="center"
+      gap="3"
+      px="4"
+      py="2.5"
+      _notFirst={{ borderTopWidth: "1px" }}
+    >
+      <VStack gap="0.5" flex="1" minW="0" alignItems="stretch">
+        <Text fontWeight="bold">{event.name}</Text>
+        <Text fontSize="sm" color="fg.muted" fontVariantNumeric="tabular-nums">
+          {monthDayWithWeekday(event.period.start)} 〜 {monthDayWithWeekday(event.period.end)}
+        </Text>
+        <Text fontSize="xs" color="fg.muted">
+          {tiersSummary(event)}
+        </Text>
+      </VStack>
+      <Button
+        variant="outline"
+        bg="bg.panel"
+        flexShrink="0"
+        disabled={disabled}
+        onClick={() => {
+          onClose();
+          onCreate(eventId);
+        }}
+      >
+        プランを作る
+      </Button>
+    </List.Item>
   );
 }
 
@@ -334,16 +365,15 @@ export function EventSection({
   highlighted,
 }: EventSectionProps) {
   const headingId = useId();
-  const { data, isPending, isError, refetch } = useAtomValue(officialEventsQueryAtom);
-
-  const events = isPending || isError ? [] : data;
-  const ahead = today ? events.filter((event) => event.period.end >= today) : events;
-  const ended = today ? endedLatestFirst(events, today) : [];
-  const [latestEnded, ...earlier] = ended;
-  // With nothing ahead, the latest that ended takes the cards' place, under its own heading.
-  const showEnded = !isPending && !isError && ahead.length === 0 && latestEnded !== undefined;
-  const cards = showEnded ? [latestEnded] : ahead;
-  const behind = showEnded ? earlier : ended;
+  const { isPending, isError, refetch } = useAtomValue(officialEventsStatusAtom);
+  const partitions = useAtomValue(officialEventPartitionsAtom(today));
+  const { cards, behind } = partitions;
+  const showEnded = !isPending && !isError && partitions.showEnded;
+  const store = useStore();
+  const create = (eventId: string) => {
+    const event = store.get(officialEventAtom(eventId));
+    if (event) onCreate(event);
+  };
 
   const withoutEvent = (
     <Button
@@ -405,22 +435,22 @@ export function EventSection({
         pe={{ base: "0", md: "5" }}
       >
         <List.Root aria-labelledby={headingId} display="contents">
-          {cards.map((event) => (
+          {cards.map((eventId) => (
             <List.Item
-              key={event.id}
+              key={eventId}
               flex={{ base: "initial", md: "0 0 88%" }}
               _onlyChild={{ flex: { base: "initial", md: "1 0 100%" } }}
               scrollSnapAlign={{ base: "none", md: "start" }}
               minW="0"
             >
               <EventCard
-                event={event}
-                status={statusOf(event, today)}
+                eventId={eventId}
+                today={today}
                 actionLabel={showEnded ? "この条件で計算" : "プランを作る"}
-                highlighted={highlighted?.includes(event.id) ?? false}
+                highlighted={highlighted?.includes(eventId) ?? false}
                 disabled={disabled}
                 starting={starting}
-                onCreate={onCreate}
+                onCreate={create}
               />
             </List.Item>
           ))}
@@ -478,7 +508,7 @@ export function EventSection({
             ) : null}
           </VStack>
           {behind.length > 0 ? (
-            <EndedEvents events={behind} disabled={disabled} onCreate={onCreate} />
+            <EndedEvents months={behind} disabled={disabled} onCreate={create} />
           ) : null}
         </Flex>
         <VStack alignItems="stretch" gap="3" minW="0" data-odd-cards={dataAttr(oddCards)}>

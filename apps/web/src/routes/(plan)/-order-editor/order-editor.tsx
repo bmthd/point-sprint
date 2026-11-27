@@ -6,9 +6,17 @@ import { Field as FormField, reset, useField, useForm } from "@formisch/react";
 import { hasOrderTagCampaign, type Order, type Plan } from "@workspaces/domain";
 import { Grid, Flex, Button, Drawer, IconButton, Modal, Switch, Text, XIcon } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { type RefObject, useDeferredValue, useId, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  type RefObject,
+  useDeferredValue,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Form } from "#/routes/-form.tsx";
-import { planAtom } from "#/state/derived.ts";
+import { planPeriodAtom, planBenefitsAtom, orderAtom } from "#/state/derived.ts";
 import { shopsAtom } from "#/state/query-atoms.ts";
 import { useSingleFlight } from "#/use-single-flight.ts";
 import { CampaignCheck, OrderPart } from "#/routes/(plan)/-order-fields.tsx";
@@ -33,7 +41,7 @@ import {
 } from "#/routes/(plan)/-order-form-store.ts";
 import {
   AmountField,
-  Conditions,
+  SavedConditions,
   EntryModeSwitch,
   ShopAndName,
   UrlField,
@@ -43,7 +51,10 @@ import {
 } from "#/routes/(plan)/-order-entry.tsx";
 import { OrderPreviewBox } from "./order-preview.tsx";
 import { CapFlows } from "#/routes/(plan)/-cap-flows.tsx";
-import { RakutenCardSwitch } from "#/routes/(plan)/-rakuten-card-switch.tsx";
+import {
+  RakutenCardSwitch,
+  SavedRakutenCardSwitch,
+} from "#/routes/(plan)/-rakuten-card-switch.tsx";
 import { ExtraItems, ItemDetailFields } from "#/routes/(plan)/-item-details.tsx";
 
 /** The editor's target in the URL (`edit=`): a new order, or the id of the order to edit. */
@@ -71,7 +82,25 @@ export function DraftPreview({
   return <OrderPreviewBox planId={planId} draft={draft} original={original} />;
 }
 
-export function Campaigns({ form, plan }: { form: OrderForm; plan: Plan }) {
+export function SavedDraftPreview({
+  form,
+  planId,
+  orderId,
+}: {
+  form: OrderForm;
+  planId: string;
+  orderId?: string | undefined;
+}) {
+  const original = useAtomValue(orderAtom({ planId, orderId: orderId ?? "" }));
+  return <DraftPreview form={form} planId={planId} original={original} />;
+}
+
+function SavedCampaigns({ form, planId }: { form: OrderForm; planId: string }) {
+  const benefits = useAtomValue(planBenefitsAtom(planId));
+  return <Campaigns form={form} plan={{ benefits }} />;
+}
+
+export function Campaigns({ form, plan }: { form: OrderForm; plan: Pick<Plan, "benefits"> }) {
   const is39 = useField(form, { path: ["is39"] });
   const repeat = useField(form, { path: ["repeat"] });
   const brandDay = useField(form, { path: ["brandDay"] });
@@ -146,9 +175,35 @@ export function Details({
   original?: Order;
 }) {
   return (
+    <DetailFields
+      form={form}
+      card={<RakutenCardSwitch form={form} plan={plan} original={original} />}
+    />
+  );
+}
+
+function SavedDetails({
+  form,
+  planId,
+  orderId,
+}: {
+  form: OrderForm;
+  planId: string;
+  orderId: string | undefined;
+}) {
+  return (
+    <DetailFields
+      form={form}
+      card={<SavedRakutenCardSwitch form={form} planId={planId} orderId={orderId} />}
+    />
+  );
+}
+
+function DetailFields({ form, card }: { form: OrderForm; card: ReactNode }) {
+  return (
     <>
       <ItemDetailFields form={form} index={0} withRate={false} />
-      <RakutenCardSwitch form={form} plan={plan} original={original} />
+      {card}
       <FormField of={form} path={["onHold"]}>
         {(field) => (
           <Switch
@@ -170,24 +225,26 @@ export function Details({
 }
 
 type EditorProps = {
-  plan: Plan;
-  original: Order | undefined;
+  period: Plan["period"];
+  planId: string;
+  orderId: string | undefined;
   layout: "sheet" | "dialog";
   amountRef: RefObject<HTMLInputElement | null>;
   onClose: () => void;
 };
 
 /** The header, fields and buttons inside the sheet or the dialog. */
-function EditorContent({ plan, original, layout, amountRef, onClose }: EditorProps) {
+function EditorContent({ period, planId, orderId, layout, amountRef, onClose }: EditorProps) {
+  const original = useAtomValue(orderAtom({ planId, orderId: orderId ?? "" }));
   const shops = useAtomValue(shopsAtom);
   const [failed, setFailed] = useState(false);
-  const saveDraft = useSaveOrderDraft(plan.id, setFailed);
+  const saveDraft = useSaveOrderDraft(planId, setFailed);
   const run = useSingleFlight();
   const formId = useId();
   const keepOpenId = useId();
   // The fields start from the order as it was when the editor opened.
   const [initialInput] = useState<OrderFormInput>(() =>
-    original ? inputOf(original, shops) : emptyInput(plan.period),
+    original ? inputOf(original, shops) : emptyInput(period),
   );
   const form = useForm({ schema: OrderFormSchema, initialInput });
   const autofill = useOrderAutofill(form);
@@ -207,7 +264,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
       // Not saved, what was typed stays in the fields so it can be saved again.
       if (!(await saveDraft(draftOf(output, shops, original), !original))) return;
       if (keepOpen) {
-        reset(form, { initialInput: emptyInput(plan.period) });
+        reset(form, { initialInput: emptyInput(period) });
         focusFirst(mode);
         // Leaving the URL field would look up the URL it still showed.
         autofill.reset();
@@ -221,7 +278,7 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
     <AmountField
       form={form}
       inputRef={amountRef}
-      aside={<DraftPreview form={form} planId={plan.id} original={original} />}
+      aside={<SavedDraftPreview form={form} planId={planId} orderId={orderId} />}
       onUrlPasted={(url) => {
         setMode("url");
         enterUrl(url);
@@ -271,15 +328,15 @@ function EditorContent({ plan, original, layout, amountRef, onClose }: EditorPro
                 <ShopAndName form={form} />
               </>
             )}
-            <Conditions
+            <SavedConditions
               form={form}
-              plan={plan}
+              planId={planId}
               defaultOpen={original ? hasDetails(original) : false}
-              campaigns={<Campaigns form={form} plan={plan} />}
+              campaigns={<SavedCampaigns form={form} planId={planId} />}
             >
-              <Details form={form} plan={plan} original={original} />
-            </Conditions>
-            {original ? null : <CapFlows plan={plan} form={form} />}
+              <SavedDetails form={form} planId={planId} orderId={orderId} />
+            </SavedConditions>
+            {original ? null : <CapFlows planId={planId} form={form} />}
           </Flex>
         </Form>
       </parts.Body>
@@ -330,20 +387,18 @@ export function OrderEditor({
   layout: "sheet" | "dialog";
   onClose: () => void;
 }) {
-  const plan = useAtomValue(planAtom(planId));
+  const period = useAtomValue(planPeriodAtom(planId));
+  const original = useAtomValue(orderAtom({ planId, orderId: target ?? "" }));
   const amountRef = useRef<HTMLInputElement | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);
-  const original =
-    target === undefined || target === NEW_ORDER
-      ? undefined
-      : plan?.orders.find((order) => order.id === target);
   const open = target === NEW_ORDER || original !== undefined;
   const content =
-    open && plan ? (
+    open && period ? (
       <EditorContent
         key={target}
-        plan={plan}
-        original={original}
+        period={period}
+        planId={planId}
+        orderId={target === NEW_ORDER ? undefined : target}
         layout={layout}
         amountRef={amountRef}
         onClose={onClose}
