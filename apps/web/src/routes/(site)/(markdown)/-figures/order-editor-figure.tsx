@@ -1,6 +1,7 @@
+"use no memo";
+
 // Formisch fields read their signals through getters on objects that keep their identity, so
 // React Compiler would memoize what they return and miss every change (as in the order editor).
-"use no memo";
 
 import { useForm } from "@formisch/react";
 import type { Order, Plan } from "@workspaces/domain";

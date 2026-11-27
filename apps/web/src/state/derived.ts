@@ -9,19 +9,12 @@ import {
   accountSettingsOf,
   bigOneMoreShopGain,
   oneMoreShopGain,
-  capLines,
 } from "@workspaces/domain";
 import { replaceEqualDeep } from "@tanstack/query-core";
 import { type Atom, atom } from "jotai";
 import { type AtomFamily, atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
-import {
-  plansAtom,
-  profileAtom,
-  profileQueryAtom,
-  shopsAtom,
-  spuMonthsAtom,
-} from "./query-atoms.ts";
+import { plansAtom, profileAtom, shopsAtom, spuMonthsAtom } from "./query-atoms.ts";
 
 /**
  * `source`, reusing the parts of its previous value that are equal to the new one. Atoms that read
@@ -105,44 +98,6 @@ export const planAtom = removedWithPlan(
   isPlanId,
 );
 
-/** The page gate and headings do not need the rest of the plan. */
-export const planNameAtom = removedWithPlan(
-  atomFamily((id: string) => atom((get) => get(planAtom(id))?.name)),
-  isPlanId,
-);
-
-export const planOnHoldAtom = removedWithPlan(
-  atomFamily((id: string) => atom((get) => get(planAtom(id))?.onHold ?? false)),
-  isPlanId,
-);
-
-export const planPeriodAtom = removedWithPlan(
-  atomFamily((id: string) => selectAtom(planAtom(id), (plan) => plan?.period, deepEqual)),
-  isPlanId,
-);
-
-/** Only list position, month separators and counted badges affect the list itself. */
-export const planOrderMetaAtom = removedWithPlan(
-  atomFamily((id: string) =>
-    selectAtom(
-      planAtom(id),
-      (plan) => plan?.orders.map(({ id, date, onHold }) => ({ id, date, onHold })) ?? [],
-      deepEqual,
-    ),
-  ),
-  isPlanId,
-);
-
-/** The switcher's list changes only when a plan's name or position changes. */
-export const recentPlanNamesAtom = selectAtom(
-  plansAtom,
-  (plans) =>
-    [...plans]
-      .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
-      .map(({ id, name }) => ({ id, name })),
-  deepEqual,
-);
-
 /** The plan as it is calculated, with the SPU among its benefits. */
 export const calculatedPlanAtom = removedWithPlan(
   atomFamily((id: string) =>
@@ -163,44 +118,8 @@ export const orderAtom = removedWithPlan(
   hasPlanId,
 );
 
-export const hasOrderAtom = removedWithPlan(
-  atomFamily(
-    ({ planId, orderId }: OrderKey) =>
-      atom((get) => get(orderAtom({ planId, orderId })) !== undefined),
-    sameOrderKey,
-  ),
-  hasPlanId,
-);
-
 export const planResultAtom = removedWithPlan(
   atomFamily((id: string) => selectAtom(calculationAtom, (results) => results.get(id))),
-  isPlanId,
-);
-
-export const planCapLinesAtom = removedWithPlan(
-  atomFamily((id: string) =>
-    selectAtom(
-      atom((get) => {
-        const plan = get(calculatedPlanAtom(id));
-        const result = get(planResultAtom(id));
-        return plan && result ? capLines(plan, result) : [];
-      }),
-      (lines) => lines,
-      deepEqual,
-    ),
-  ),
-  isPlanId,
-);
-
-export const planGroupTotalsAtom = removedWithPlan(
-  atomFamily((id: string) => selectAtom(planResultAtom(id), (result) => result?.groupTotals)),
-  isPlanId,
-);
-
-export const planShopOutlookAtom = removedWithPlan(
-  atomFamily((id: string) =>
-    selectAtom(planResultAtom(id), (result) => result?.shopAroundOutlook ?? null),
-  ),
   isPlanId,
 );
 
@@ -244,42 +163,8 @@ export const bigOneMoreShopGainAtom = removedWithPlan(
   hasPlanId,
 );
 
-/** Whether the plan has a calculation, without subscribing to changes in its result. */
-export const hasPlanResultAtom = removedWithPlan(
-  atomFamily((id: string) => atom((get) => get(planResultAtom(id)) !== undefined)),
-  isPlanId,
-);
-
-/** The names of just the plans sharing a cap, in the order shown beside it. */
-export const planNamesAtom = removedWithPlan(
-  atomFamily(
-    (ids: string[]) =>
-      selectAtom(
-        plansAtom,
-        (plans) => ids.flatMap((id) => plans.find((plan) => plan.id === id)?.name ?? []),
-        deepEqual,
-      ),
-    deepEqual,
-  ),
-  (ids, plan) => ids.includes(plan.id),
-);
-
-/** Saved plan ids in the order shown on the top page. */
-export const recentPlanIdsAtom = selectAtom(
-  plansAtom,
-  (plans) => [...plans].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1)).map((plan) => plan.id),
-  deepEqual,
-);
-
 export const shopAtom = atomFamily((id: string) =>
   selectAtom(shopsAtom, (shops) => shops.find((shop) => shop.id === id)),
-);
-
-/** Shop ids in the registry name order, unchanged when only shop details change. */
-export const sortedShopIdsAtom = selectAtom(
-  shopsAtom,
-  (shops) => [...shops].sort((a, b) => a.name.localeCompare(b.name, "ja")).map((shop) => shop.id),
-  deepEqual,
 );
 
 export const accountAtom = atomFamily((id: string) =>
@@ -289,14 +174,3 @@ export const accountAtom = atomFamily((id: string) =>
     deepEqual,
   ),
 );
-
-export const accountIdsAtom = selectAtom(
-  accountSettingsAtom,
-  (settings) => settings.accounts.map((account) => account.id),
-  deepEqual,
-);
-
-export const multiAccountEnabledAtom = atom((get) => get(accountSettingsAtom).enabled);
-
-/** Whether account settings can be saved, without subscribing to the profile data. */
-export const isProfileReadyAtom = atom((get) => get(profileQueryAtom).isSuccess);

@@ -2,12 +2,16 @@
 // React Compiler would memoize what they return and miss every change.
 "use no memo";
 
+import { selectAtom } from "jotai/utils";
+import { planAtom } from "#/state/derived.ts";
+
 import { Field as FormField, useField } from "@formisch/react";
-import { hasOrderTagCampaign, type Order, type Plan } from "@workspaces/domain";
+import { hasOrderTagCampaign, type Plan, deepEqual } from "@workspaces/domain";
 import { Field, Flex, Grid, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useId } from "react";
 import { errorsOf } from "#/routes/-form.tsx";
+
 import { shopsAtom } from "#/state/query-atoms.ts";
 import type { OrderForm } from "#/routes/(plan)/-order-form-store.ts";
 import {
@@ -22,13 +26,14 @@ import { ShopAutocomplete } from "#/routes/(plan)/-shop-autocomplete.tsx";
 import { UrlField } from "#/routes/(plan)/-order-entry.tsx";
 import type { ItemAutofill } from "#/routes/(plan)/-item-autofill.tsx";
 import { ExtraItems, ItemDetailFields } from "#/routes/(plan)/-item-details.tsx";
-import { RakutenCardSwitch } from "#/routes/(plan)/-rakuten-card-switch.tsx";
+import { SavedRakutenCardSwitch } from "#/routes/(plan)/-rakuten-card-switch.tsx";
 
 // What an opened row of the desktop table holds, the same for an order and for the add row's new
 // order: the conditions at once, with no 「条件」 to open first. The item's name and amount are on
 // the row itself.
 
-function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
+function TagChips({ form, planId }: { form: OrderForm; planId: string }) {
+  const benefits = useAtomValue(selectAtom(planAtom(planId), planBenefits, deepEqual));
   const shops = useAtomValue(shopsAtom);
   const shop = useField(form, { path: ["shop"] });
   const is39 = useField(form, { path: ["is39"] });
@@ -61,7 +66,7 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
         リピート購入
       </CampaignCheck>
       {/* Asked only when the plan has a brand day, or the order is marked already. */}
-      {hasOrderTagCampaign(plan.benefits, "brand-day") || brandDay.input === true ? (
+      {hasOrderTagCampaign(benefits, "brand-day") || brandDay.input === true ? (
         <CampaignCheck
           campaign="brand-day"
           checked={brandDay.input === true}
@@ -70,7 +75,7 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
           ブランドデー対象
         </CampaignCheck>
       ) : null}
-      {hasOrderTagCampaign(plan.benefits, "24h") || is24h.input === true ? (
+      {hasOrderTagCampaign(benefits, "24h") || is24h.input === true ? (
         <CampaignCheck
           campaign="24h"
           checked={is24h.input === true}
@@ -90,18 +95,19 @@ function TagChips({ form, plan }: { form: OrderForm; plan: Plan }) {
  */
 export function OrderDetailFields({
   form,
-  plan,
+  planId,
   autofill,
-  original,
+  orderId,
   onItemRemoved,
 }: {
   form: OrderForm;
-  plan: Plan;
+  planId: string;
   autofill: ItemAutofill;
   /** The order the fields edit, saved already. */
-  original?: Order;
+  orderId?: string;
   onItemRemoved?: () => void;
 }) {
+  const period = useAtomValue(selectAtom(planAtom(planId), planPeriod, deepEqual));
   return (
     <Flex direction="column" gap="3.5">
       <Grid templateColumns="repeat(auto-fit, minmax(14rem, 1fr))" alignItems="start" gap="2.5">
@@ -113,7 +119,7 @@ export function OrderDetailFields({
         <FormField of={form} path={["date"]}>
           {(field) => (
             <Field.Root label="注文日" {...errorsOf(field)} minW="0">
-              <FormDatePicker size="lg" field={field} period={plan.period} />
+              <FormDatePicker size="lg" field={field} period={period} />
             </Field.Root>
           )}
         </FormField>
@@ -129,13 +135,13 @@ export function OrderDetailFields({
         </FormField>
       </Flex>
       <OrderPart legend="キャンペーン">
-        <TagChips form={form} plan={plan} />
+        <TagChips form={form} planId={planId} />
       </OrderPart>
       <OrderPart legend="数量・クーポン・商品">
         <Flex direction="column" gap="2" maxW="xl">
           <Flex direction="column" gap="2" maxW="md">
             <ItemDetailFields form={form} index={0} withRate={false} size="lg" />
-            <RakutenCardSwitch form={form} plan={plan} original={original} />
+            <SavedRakutenCardSwitch form={form} planId={planId} orderId={orderId} />
           </Flex>
           <ExtraItems form={form} onRemove={onItemRemoved} size="lg" />
         </Flex>
@@ -146,3 +152,6 @@ export function OrderDetailFields({
 
 /** The width of 「複製」 and 「削除」 under an opened row, and of the add row's 「追加する」. */
 export const ACTION_BUTTON_WIDTH = "28";
+
+const planPeriod = (plan: Plan | undefined) => plan?.period;
+const planBenefits = (plan: Plan | undefined) => plan?.benefits ?? [];

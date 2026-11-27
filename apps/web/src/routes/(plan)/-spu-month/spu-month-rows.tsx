@@ -1,13 +1,23 @@
-import { type SpuMonth, spuIdsIn, spuMonthsOfPlan, accountIdOf } from "@workspaces/domain";
+import { selectAtom } from "jotai/utils";
+import { spuMonthsAtom } from "#/state/query-atoms.ts";
+import {
+  type SpuMonth,
+  type Plan,
+  type AccountSettings,
+  accountIdOf,
+  spuMonthsOfPlan,
+  spuBenefitsOf,
+  spuIdsIn,
+  spuRates,
+  deepEqual,
+} from "@workspaces/domain";
 import { Button, Card, Flex, Heading, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import type { ReactNode } from "react";
 import { rounded } from "#/ui/format.ts";
 
-import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
-import { spuMonthsAtom } from "#/state/query-atoms.ts";
+import { planAtom, accountSettingsAtom } from "#/state/derived.ts";
 import { monthText } from "#/routes/(plan)/-warnings.tsx";
-import { spuMonthRate } from "./spu-month-editor.tsx";
 
 /**
  * 「未設定・10月から引き継ぎ」 for a month the account has no SPU stored for: it takes over the
@@ -64,11 +74,29 @@ export function SpuMonthRows({
   onChange,
 }: {
   accountId: string;
-  rows: { month: string; note: ReactNode }[];
+  rows: { month: string; note: ReactNode; orders?: number }[];
   onChange: (month: string) => void;
 }) {
-  const stored = useAtomValue(spuMonthsAtom);
-  return rows.map(({ month, note }) => (
+  return rows.map((row) => (
+    <SpuMonthRow key={row.month} accountId={accountId} {...row} onChange={onChange} />
+  ));
+}
+
+function SpuMonthRow({
+  accountId,
+  month,
+  note,
+  orders,
+  onChange,
+}: {
+  accountId: string;
+  month: string;
+  note: ReactNode;
+  orders?: number;
+  onChange: (month: string) => void;
+}) {
+  const state = useAtomValue(selectAtom(spuMonthsAtom, monthState(accountId, month), deepEqual));
+  return (
     <Flex
       key={month}
       align="center"
@@ -82,13 +110,20 @@ export function SpuMonthRows({
       <Text as="span" fontWeight="bold" w="10" flex="none">
         {monthText(month)}
       </Text>
-      <Rate value={spuMonthRate(spuIdsIn(stored, accountId, month))} />
+      <Rate value={state.normal + state.spu} />
       <Text as="span" fontSize="xs" color="fg.muted" flex="1" minW="0">
-        {note}
+        {orders === undefined ? (
+          [note, state.unset].filter(Boolean).join("・")
+        ) : (
+          <>
+            注文 {orders}件{state.unset ? <br /> : null}
+            {state.unset}
+          </>
+        )}
       </Text>
       <ChangeButton month={month} onChange={onChange} />
     </Flex>
-  ));
+  );
 }
 
 /**
@@ -106,12 +141,11 @@ export function SpuSettingsCard({
   note: string;
   onChange: (month: string) => void;
 }) {
-  const plan = useAtomValue(planAtom(planId));
   const settings = useAtomValue(accountSettingsAtom);
-  const stored = useAtomValue(spuMonthsAtom);
-  if (!plan) return null;
-  const accountId = accountIdOf(plan, settings);
-  const months = spuMonthsOfPlan(plan);
+  const state = useAtomValue(selectAtom(planAtom(planId), planMonths(settings), deepEqual));
+  if (!state) return null;
+  const { accountId } = state;
+  const months = state.months.map(({ month }) => month);
   const [only] = months;
   if (months.length === 1 && only !== undefined) {
     return (
@@ -121,7 +155,7 @@ export function SpuSettingsCard({
             <Text fontSize="xs" fontWeight="bold" color="fg.muted">
               SPU（{monthText(only)}）
             </Text>
-            <Rate value={spuMonthRate(spuIdsIn(stored, accountId, only))} />
+            <MonthRate accountId={accountId} month={only} />
           </Flex>
           <ChangeButton month={only} onChange={onChange} />
         </Card.Body>
@@ -142,19 +176,7 @@ export function SpuSettingsCard({
         <div>
           <SpuMonthRows
             accountId={accountId}
-            rows={months.map((month) => {
-              const orders = plan.orders.filter((order) => order.date.startsWith(month)).length;
-              const unset = unsetNote(stored, accountId, month);
-              return {
-                month,
-                note: (
-                  <>
-                    注文 {orders}件{unset ? <br /> : null}
-                    {unset}
-                  </>
-                ),
-              };
-            })}
+            rows={state.months.map(({ month, orders }) => ({ month, orders, note: undefined }))}
             onChange={onChange}
           />
         </div>
@@ -162,3 +184,23 @@ export function SpuSettingsCard({
     </Card.Root>
   );
 }
+
+function MonthRate({ accountId, month }: { accountId: string; month: string }) {
+  const state = useAtomValue(selectAtom(spuMonthsAtom, monthState(accountId, month), deepEqual));
+  return <Rate value={state.normal + state.spu} />;
+}
+
+const monthState = (accountId: string, month: string) => (stored: SpuMonth[]) => ({
+  ...spuRates(spuBenefitsOf(spuIdsIn(stored, accountId, month))),
+  unset: unsetNote(stored, accountId, month),
+});
+const planMonths = (settings: AccountSettings) => (plan: Plan | undefined) =>
+  plan
+    ? {
+        accountId: accountIdOf(plan, settings),
+        months: spuMonthsOfPlan(plan).map((month) => ({
+          month,
+          orders: plan.orders.filter((order) => order.date.startsWith(month)).length,
+        })),
+      }
+    : undefined;

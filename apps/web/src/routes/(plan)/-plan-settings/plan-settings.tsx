@@ -1,3 +1,5 @@
+import { selectAtom } from "jotai/utils";
+import { type CalculationResult } from "@workspaces/domain";
 import { useNavigate } from "@tanstack/react-router";
 import type { Plan } from "@workspaces/domain";
 import {
@@ -15,7 +17,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRef } from "react";
-import { hasPlanResultAtom, planAtom } from "#/state/derived.ts";
+import { planAtom, planResultAtom } from "#/state/derived.ts";
 import { PlanPage } from "#/routes/(plan)/-plan-page.tsx";
 import { useSpuLossNotice } from "#/routes/(plan)/-spu-loss-notice.tsx";
 import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
@@ -57,7 +59,7 @@ function SettingsBody({
   planId: string;
   onChangeSpu: (month: string) => void;
 }) {
-  const hasResult = useAtomValue(hasPlanResultAtom(planId));
+  const hasResult = useAtomValue(selectAtom(planResultAtom(planId), resultExists));
   const failed = useSettingsSaveFailurePlanId() === planId;
   if (!hasResult) return null;
   return (
@@ -223,3 +225,5 @@ export function PlanSettings({ id }: { id: string | undefined }) {
     />
   );
 }
+
+const resultExists = (result: CalculationResult | undefined) => result !== undefined;

@@ -1,9 +1,12 @@
+import { selectAtom } from "jotai/utils";
+import { type Plan, deepEqual } from "@workspaces/domain";
+import { planAtom } from "#/state/derived.ts";
 import { Box, Card, Flex, List, Text, VisuallyHidden } from "@workspaces/ui";
 import { useAtom, useAtomValue } from "jotai";
 import { type ReactNode, useId, useRef } from "react";
-import { planOrderMetaAtom } from "#/state/derived.ts";
+
 import { reorderModeAtom } from "#/routes/(plan)/-ui.ts";
-import { withMonthSeparators } from "./order-months.tsx";
+import { orderBadges, withMonthSeparators } from "./order-months.tsx";
 import { HoldHintContext, OrderCard } from "./order-card.tsx";
 import {
   HOLD_HINT,
@@ -71,12 +74,12 @@ export function OrderList({
   /** Opens a month's SPU from the month's separator, when the orders are of more than one month. */
   onSpu?: ((month: string) => void) | undefined;
 }) {
-  const orders = useAtomValue(planOrderMetaAtom(planId));
+  const orders = useAtomValue(selectAtom(planAtom(planId), orderMetadata, deepEqual));
   const [reordering, setReordering] = useAtom(reorderModeAtom);
   const heading = useRef<HTMLHeadingElement>(null);
   const { askDelete, askReset, dialog } = useOrderConfirm(planId, heading, orders.length);
 
-  let counted = 0;
+  const badges = orderBadges(orders);
 
   return (
     <Flex direction="column" gap="2.5">
@@ -111,7 +114,7 @@ export function OrderList({
                 key={order.id}
                 planId={planId}
                 orderId={order.id}
-                badge={order.onHold ? null : ++counted}
+                badge={badges[index] ?? null}
                 index={index}
                 count={orders.length}
                 onEdit={onEdit}
@@ -126,3 +129,6 @@ export function OrderList({
     </Flex>
   );
 }
+
+const orderMetadata = (plan: Plan | undefined) =>
+  plan?.orders.map(({ id, date, onHold }) => ({ id, date, onHold })) ?? [];

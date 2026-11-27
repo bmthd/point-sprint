@@ -6,7 +6,9 @@ import {
   isRakumaBenefit,
   isTwoShopCampaign,
   templateOfCampaign,
+  deepEqual,
 } from "@workspaces/domain";
+
 import {
   Box,
   Card,
@@ -20,6 +22,8 @@ import {
   dataAttr,
   PencilIcon,
 } from "@workspaces/ui";
+import { selectAtom } from "jotai/utils";
+
 import { useAtomValue, useSetAtom } from "jotai";
 import { useId, useRef, useState } from "react";
 import { planAtom } from "#/state/derived.ts";
@@ -50,7 +54,7 @@ export function isFixedCampaign(benefit: Benefit) {
  * Whether the user added this campaign themselves, so it can be deleted. Fixed campaigns (days
  * ending in 5 or 0), the ラクマ購入 +1倍 and the official event's benefits come with the plan.
  */
-export function isAddedCampaign(plan: Plan, benefit: Benefit) {
+export function isAddedCampaign(plan: Pick<Plan, "officialEventId">, benefit: Benefit) {
   // The event's benefits share its id as their key (`sharedKey`).
   if (benefit.sharedKey === undefined) return true;
   if (isRakumaBenefit(benefit)) return false;
@@ -82,24 +86,27 @@ const rateOf = (benefit: Benefit) =>
  * is on and its switch. The ✎ keeps its place on every row, so the switches line up.
  */
 function CampaignRow({
-  plan,
-  benefit,
+  planId,
+  benefitId,
   editing,
   onEdit,
   onToggle,
   onDelete,
 }: {
-  plan: Plan;
-  benefit: Benefit;
+  planId: string;
+  benefitId: string;
   editing: boolean;
   onEdit: () => void;
   onToggle: () => void;
   onDelete: () => void;
 }) {
+  const plan = useAtomValue(selectAtom(planAtom(planId), benefitContext, deepEqual));
+  const benefit = useAtomValue(selectAtom(planAtom(planId), benefitById(benefitId), deepEqual));
+  const editorId = useId();
+  if (!plan || !benefit) return null;
   const when = whenText(benefit.conditions.dateRule);
   const name = `${benefit.label} ${rateText(rateOf(benefit))} ${when}`;
   const template = isAddedCampaign(plan, benefit) ? templateOfCampaign(benefit) : undefined;
-  const editorId = useId();
   return (
     <List.Item display="flex" flexDirection="column" gap="2">
       <Flex align="center" gap="2" minH="12">
@@ -166,8 +173,8 @@ function CampaignRow({
       {editing && template ? (
         <CampaignEditor
           id={editorId}
-          plan={plan}
-          benefit={benefit}
+          planId={planId}
+          benefitId={benefitId}
           template={template}
           onDelete={onDelete}
         />
@@ -180,18 +187,15 @@ function CampaignRow({
  * The campaigns with their switches, and a button for each template that adds it at once. A campaign
  * just added opens its values, to be changed there.
  */
-export function CampaignToggles({ planId }: { planId: string }) {
-  const plan = useAtomValue(planAtom(planId));
-  return plan ? <CampaignTogglesContent plan={plan} /> : null;
-}
+const campaignIds = (plan: Plan | undefined) => (plan ? campaignsOf(plan).map(({ id }) => id) : []);
 
-function CampaignTogglesContent({ plan }: { plan: Plan }) {
+export function CampaignToggles({ planId }: { planId: string }) {
+  const campaigns = useAtomValue(selectAtom(planAtom(planId), campaignIds, deepEqual));
   const toggle = useSetAtom(toggleBenefitAtom);
-  const save = useSaveSettingsChange(plan.id);
+  const save = useSaveSettingsChange(planId);
   const [editingId, setEditingId] = useState<string>();
   const addRef = useRef<HTMLButtonElement>(null);
-  const deletion = useDeleteCampaign(plan, addRef);
-  const campaigns = campaignsOf(plan);
+  const deletion = useDeleteCampaign(planId, addRef);
 
   return (
     <Card.Root as="section" aria-label="キャンペーン">
@@ -206,21 +210,21 @@ function CampaignTogglesContent({ plan }: { plan: Plan }) {
         </Flex>
         {campaigns.length > 0 ? (
           <List.Root gap="2">
-            {campaigns.map((benefit) => (
+            {campaigns.map((benefitId) => (
               <CampaignRow
-                key={benefit.id}
-                plan={plan}
-                benefit={benefit}
-                editing={editingId === benefit.id}
-                onEdit={() => setEditingId(editingId === benefit.id ? undefined : benefit.id)}
-                onToggle={() => save(toggle({ planId: plan.id, benefitId: benefit.id }))}
-                onDelete={() => deletion.ask(benefit)}
+                key={benefitId}
+                planId={planId}
+                benefitId={benefitId}
+                editing={editingId === benefitId}
+                onEdit={() => setEditingId(editingId === benefitId ? undefined : benefitId)}
+                onToggle={() => save(toggle({ planId, benefitId }))}
+                onDelete={() => deletion.ask(benefitId)}
               />
             ))}
           </List.Root>
         ) : null}
         <CampaignAddButtons
-          plan={plan}
+          planId={planId}
           firstRef={addRef}
           onAdded={(benefit) => setEditingId(benefit.id)}
         />
@@ -229,3 +233,8 @@ function CampaignTogglesContent({ plan }: { plan: Plan }) {
     </Card.Root>
   );
 }
+
+const benefitContext = (plan: Plan | undefined) =>
+  plan ? { id: plan.id, period: plan.period, officialEventId: plan.officialEventId } : undefined;
+const benefitById = (benefitId: string) => (plan: Plan | undefined) =>
+  plan?.benefits.find((benefit) => benefit.id === benefitId);

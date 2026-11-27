@@ -1,9 +1,13 @@
+import { selectAtom } from "jotai/utils";
+import { plansAtom } from "#/state/query-atoms.ts";
 import {
   type CapLine,
   type CapRow as Row,
   type Period,
   type TaxRate,
   capRows,
+  type Plan,
+  deepEqual,
 } from "@workspaces/domain";
 import {
   Badge,
@@ -18,13 +22,13 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { grouped, yen } from "#/ui/format.ts";
-import { planNamesAtom } from "#/state/derived.ts";
+
 import { CAP_TAX_RATES, conditionText, scopeText } from "#/routes/(plan)/-cap-lines.ts";
 import { segmentPressArea, taxRateLabel } from "#/routes/(plan)/-order-shared.tsx";
 
 /** Only the shared names subscribe to plans; changes to other fields leave the note alone. */
 function SharedPlans({ ids, table = false }: { ids: string[]; table?: boolean }) {
-  const names = useAtomValue(planNamesAtom(ids));
+  const names = useAtomValue(selectAtom(plansAtom, namesOfPlans(ids), deepEqual));
   if (names.length === 0) return null;
   const shared = `${names.join("・")}と共有`;
   return table ? (
@@ -273,3 +277,6 @@ export function CapList({
     </Flex>
   );
 }
+
+const namesOfPlans = (ids: string[]) => (plans: Plan[]) =>
+  ids.flatMap((id) => plans.find((plan) => plan.id === id)?.name ?? []);

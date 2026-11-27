@@ -4,10 +4,9 @@ import { Card, Field, Heading, NativeSelect, Text, ChevronRightIcon } from "@wor
 import { useAtomValue } from "jotai";
 import { useId, useState } from "react";
 import { accountSettingsAtom } from "#/state/derived.ts";
-import { spuMonthsAtom } from "#/state/query-atoms.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
 import { useToday } from "#/routes/-use-today.ts";
-import { SpuMonthRows, unsetNote } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
+import { SpuMonthRows } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
 
 const now = () => new Date();
 
@@ -18,7 +17,6 @@ const now = () => new Date();
 export function SpuMonthsCard() {
   const navigate = useNavigate();
   const settings = useAtomValue(accountSettingsAtom);
-  const stored = useAtomValue(spuMonthsAtom);
   const today = useToday(now);
   const [picked, setPicked] = useState(DEFAULT_ACCOUNT_ID);
   const titleId = useId();
@@ -30,8 +28,6 @@ export function SpuMonthsCard() {
   const account = settings.enabled ? { account: accountId } : {};
   const thisMonth = today.slice(0, 7);
   const nextMonth = addMonths(thisMonth, 1);
-  const note = (label: string, month: string) =>
-    [label, unsetNote(stored, accountId, month)].filter(Boolean).join("・");
   return (
     <Card.Root as="section" aria-labelledby={titleId}>
       <Card.Body alignItems="stretch" gap="2">
@@ -60,8 +56,8 @@ export function SpuMonthsCard() {
           <SpuMonthRows
             accountId={accountId}
             rows={[
-              { month: thisMonth, note: note("今月", thisMonth) },
-              { month: nextMonth, note: note("来月", nextMonth) },
+              { month: thisMonth, note: "今月" },
+              { month: nextMonth, note: "来月" },
             ]}
             onChange={(month) => void navigate({ to: "/spu", search: { month, ...account } })}
           />

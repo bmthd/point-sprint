@@ -1,4 +1,14 @@
-import { taxExcludedTarget, taxIncludedTarget } from "@workspaces/domain";
+import { selectAtom } from "jotai/utils";
+import {
+  taxExcludedTarget,
+  taxIncludedTarget,
+  type Shop,
+  type Plan,
+  type CalculationResult,
+  type Benefit,
+  type Order,
+  deepEqual,
+} from "@workspaces/domain";
 import {
   Box,
   Collapse,
@@ -14,9 +24,9 @@ import {
   ArrowDownIcon,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
-import { createContext, memo, use, useId, useMemo, useRef } from "react";
+import { createContext, use, useId, useRef, useMemo } from "react";
 import { pointsText, rateText, yen } from "#/ui/format.ts";
-import { orderAtom } from "#/state/derived.ts";
+import { orderAtom, shopAtom, calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
 import { copyOrderAtom, moveOrderAtom, toggleHoldAtom } from "#/state/plan-operations.ts";
 import { openOrderIdAtom, reorderModeAtom } from "#/routes/(plan)/-ui.ts";
 import { monthDayWithWeekday } from "#/ui/dates.ts";
@@ -24,12 +34,11 @@ import { ExpandChevronIcon } from "#/routes/(plan)/-expand-chevron-icon.tsx";
 import {
   CampaignChip,
   OrderBadge,
-  isOpenAtom,
-  orderCardPointsAtom,
+  orderCardPoints,
   orderTitle,
   taxLabel,
   useSaveOrderChange,
-  useShopName,
+  orderShopName,
 } from "#/routes/(plan)/-order-shared.tsx";
 import { pointFill } from "#/routes/-point-breakdown.tsx";
 
@@ -52,19 +61,25 @@ export type OrderCardProps = {
  * One order on the phone's order list: a row of the list's table, like a row of the desktop table,
  * with its 購入決定 switch. Only one row is open at a time.
  */
-export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
+export function OrderCard(props: OrderCardProps) {
   const { planId, orderId, index } = props;
-  const key = useMemo(() => ({ planId, orderId }), [planId, orderId]);
+  const key = { planId, orderId };
   const order = useAtomValue(orderAtom(key));
-  const points = useAtomValue(orderCardPointsAtom(key));
-  const open = useAtomValue(isOpenAtom(orderId));
+  const benefits = useAtomValue(
+    selectAtom(calculatedPlanAtom(planId), calculatedBenefits, deepEqual),
+  );
+  const pointsSelector = useMemo(() => pointsForOrder(order, benefits), [order, benefits]);
+  const points = useAtomValue(selectAtom(planResultAtom(planId), pointsSelector, deepEqual));
+  const openSelector = useMemo(() => isOrderOpen(orderId), [orderId]);
+  const open = useAtomValue(selectAtom(openOrderIdAtom, openSelector));
   const reordering = useAtomValue(reorderModeAtom);
   const setOpenOrderId = useSetAtom(openOrderIdAtom);
   const save = useSaveOrderChange();
   const toggleHold = useSetAtom(toggleHoldAtom);
   const copyOrder = useSetAtom(copyOrderAtom);
   const moveOrder = useSetAtom(moveOrderAtom);
-  const shopName = useShopName(order);
+  const savedShopName = useAtomValue(selectAtom(shopAtom(order?.shopId ?? ""), selectShopName));
+  const shopName = orderShopName(order, savedShopName);
   const bodyId = useId();
   const holdHintId = use(HoldHintContext);
   const upRef = useRef<HTMLButtonElement>(null);
@@ -331,4 +346,12 @@ export const OrderCard = memo(function OrderCard(props: OrderCardProps) {
       </Box>
     </List.Item>
   );
-});
+}
+
+const selectShopName = (shop: Shop | undefined) => shop?.name;
+
+const calculatedBenefits = (plan: Plan | undefined) => plan?.benefits ?? [];
+const pointsForOrder =
+  (order: Order | undefined, benefits: Benefit[]) => (result: CalculationResult | undefined) =>
+    orderCardPoints(order, benefits, result);
+const isOrderOpen = (orderId: string) => (openId: string | null) => openId === orderId;

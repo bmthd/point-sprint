@@ -261,7 +261,7 @@ function AddRow({
         }}
       >
         <Flex direction="column" gap="3.5" borderTopWidth="1px" pt="3.5" pb="4" px="4">
-          <OrderDetailFields form={form} plan={plan} autofill={autofill} />
+          <OrderDetailFields form={form} planId={plan.id} autofill={autofill} />
           {/* A press on 「¥N で使い切る」 keeps the caret in the amount it changes. */}
           <Box
             onPointerDown={(event: PointerEvent) => {
@@ -270,7 +270,7 @@ function AddRow({
               }
             }}
           >
-            <CapFlows plan={plan} form={form} />
+            <CapFlows planId={plan.id} form={form} />
           </Box>
           {/* Where an opened order has 「複製」 and 「削除」. */}
           <Flex justify="flex-end">

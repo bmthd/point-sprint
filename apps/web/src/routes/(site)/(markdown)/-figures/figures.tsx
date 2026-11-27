@@ -3,7 +3,7 @@ import { useHydrateAtoms } from "jotai/utils";
 import { useState } from "react";
 import type { ComponentType } from "react";
 import { useAtomValue } from "jotai";
-import { planCapLinesAtom } from "#/state/derived.ts";
+import { calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
 import { CapList } from "#/routes/(plan)/-plan-home/cap-list.tsx";
 import { OrderCard } from "#/routes/(plan)/-plan-home/order-card.tsx";
 import { OrderAddRow } from "#/routes/(plan)/-plan-home/order-add-row.tsx";
@@ -16,7 +16,7 @@ import { SpuSettingsCard } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
 import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
 import { EventSection } from "#/routes/(site)/-top/event-section.tsx";
 import { PlanSection } from "#/routes/(site)/-top/plan-section.tsx";
-import { DEFAULT_ACCOUNT_ID } from "@workspaces/domain";
+import { DEFAULT_ACCOUNT_ID, capLines } from "@workspaces/domain";
 import { Card, List } from "@workspaces/ui";
 import { emptyInputForDate, emptyItem } from "#/routes/(plan)/-order-form.ts";
 import { EditOrderFigure, NewOrderFigure } from "./order-editor-figure.tsx";
@@ -75,7 +75,9 @@ function EventFigure() {
 
 /** 「上限までの残り」 of the third marathon, as its plan page shows it: a table on a wide screen. */
 function CapsFigure({ table = false }: { table?: boolean }) {
-  const lines = useAtomValue(planCapLinesAtom(THIRD_MARATHON.id));
+  const calculated = useAtomValue(calculatedPlanAtom(THIRD_MARATHON.id));
+  const capResult = useAtomValue(planResultAtom(THIRD_MARATHON.id));
+  const lines = calculated && capResult ? capLines(calculated, capResult) : [];
   return (
     <Card.Root>
       <Card.Body alignItems="stretch">

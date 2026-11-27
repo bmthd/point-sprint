@@ -15,7 +15,7 @@ import { Flex, Switch, Text } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useDeferredValue, useId, useMemo } from "react";
 import { pointsText } from "#/ui/format.ts";
-import { asCalculatedAtom } from "#/state/derived.ts";
+import { asCalculatedAtom, planAtom, orderAtom } from "#/state/derived.ts";
 import { plansAtom, shopsAtom, spuMonthsAtom } from "#/state/query-atoms.ts";
 import { type OrderForm, useFormInput } from "./-order-form-store.ts";
 import { draftOfInput } from "./-order-form.ts";
@@ -73,6 +73,20 @@ export function RakutenCardSwitch({
     hasRakutenCardCampaign(plan) ||
     paid.input === false;
   return asked ? <CardSwitch form={form} planId={plan.id} original={original} /> : null;
+}
+
+export function SavedRakutenCardSwitch({
+  form,
+  planId,
+  orderId,
+}: {
+  form: OrderForm;
+  planId: string;
+  orderId?: string | undefined;
+}) {
+  const plan = useAtomValue(planAtom(planId));
+  const original = useAtomValue(orderAtom({ planId, orderId: orderId ?? "" }));
+  return plan ? <RakutenCardSwitch form={form} plan={plan} original={original} /> : null;
 }
 
 function CardSwitch({

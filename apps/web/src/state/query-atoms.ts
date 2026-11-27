@@ -20,14 +20,6 @@ export const shopsQueryAtom = atomWithQuery((get) =>
   shopsQueryOptions({ repository: get(repositoryAtom) }),
 );
 
-/** The plan page's loading gate must not subscribe to query data. */
-export const planPageLoadStateAtom = atom((get) => {
-  const plans = get(plansQueryAtom);
-  const shops = get(shopsQueryAtom);
-  if (plans.isError || shops.isError) return "error";
-  return plans.isSuccess && shops.isSuccess ? "ready" : "loading";
-});
-
 export const retryPlanPageLoadAtom = atom(null, (get) => {
   const plans = get(plansQueryAtom);
   const shops = get(shopsQueryAtom);

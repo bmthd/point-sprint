@@ -19,7 +19,11 @@ import { AMOUNT_PATH, type OrderForm, useFormInput } from "./-order-form-store.t
  * many are over, with a button that types the price filling the cap. Nothing while the order is not valid, is
  * held, or goes into no cap.
  */
-export function CapFlows({ plan, form }: { plan: Plan; form: OrderForm }) {
+export function CapFlows({
+  form,
+  ...target
+}: { form: OrderForm } & ({ plan: Plan } | { planId: string })) {
+  const planId = "planId" in target ? target.planId : target.plan.id;
   const plans = useAtomValue(plansAtom);
   const shops = useAtomValue(shopsAtom);
   const asCalculated = useAtomValue(asCalculatedAtom);
@@ -39,10 +43,10 @@ export function CapFlows({ plan, form }: { plan: Plan; form: OrderForm }) {
       plans,
       asCalculated: (changed) => asCalculated(changed, withShop),
       shops: withShop,
-      planId: plan.id,
+      planId,
       order: draft.order,
     });
-  }, [draft, plans, shops, asCalculated, plan.id]);
+  }, [draft, plans, shops, asCalculated, planId]);
   if (flows.length === 0) return null;
   return (
     <List.Root as="ul" aria-label="上限への入り方" w="full" fontSize="xs" gap="1">
