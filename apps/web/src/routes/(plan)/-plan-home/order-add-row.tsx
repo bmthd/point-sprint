@@ -19,7 +19,7 @@ import {
   isComposing,
   mergeRefs,
 } from "@workspaces/ui";
-import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
+import { atom, useAtom, useSetAtom } from "jotai";
 import {
   type ChangeEvent,
   type FocusEvent,
@@ -30,7 +30,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { planAtom } from "#/state/derived.ts";
 import { shopsAtom } from "#/state/query-atoms.ts";
 import { openOrderIdAtom } from "#/routes/(plan)/-ui.ts";
 import { useSingleFlight } from "#/use-single-flight.ts";
@@ -82,16 +81,7 @@ type Next = "next" | "stay";
  * where it went, and the row is empty again under it. Its ⌄ opens the order's conditions before
  * it is made; they stay open on the order it becomes, unless ⌘ + Enter moves on to the next one.
  */
-export function OrderAddRow(props: {
-  planId: string;
-  initialInput?: OrderFormInput;
-  initialOpen?: boolean;
-}) {
-  const plan = useAtomValue(planAtom(props.planId));
-  return plan ? <AddRow {...props} plan={plan} /> : null;
-}
-
-function AddRow({
+export function OrderAddRow({
   plan,
   initialInput,
   initialOpen = false,

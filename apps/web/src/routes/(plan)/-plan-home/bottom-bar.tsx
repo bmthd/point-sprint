@@ -1,22 +1,20 @@
-import type { CalculationResult, Plan } from "@workspaces/domain";
+import { useAtomValue } from "jotai";
+import { planAtom, planResultAtom, bigOneMoreShopGainAtom } from "#/state/derived.ts";
+import { useToday } from "#/routes/-use-today.ts";
 import { Box, Flex, Button, Text, PlusIcon } from "@workspaces/ui";
 import { grouped } from "#/ui/format.ts";
 import { NextShopBand } from "./one-more-shop.tsx";
 import { countedAmount, effectiveRate } from "./summary-card.tsx";
 
+const now = () => new Date();
+
 /** The phone's bar fixed to the bottom of the screen: totals and the way to add an order. */
-export function BottomBar({
-  plan,
-  result,
-  onAdd,
-  oneMoreShopGain,
-}: {
-  plan: Plan;
-  result: CalculationResult;
-  onAdd: () => void;
-  /** What one more shop of a 1000円ポッキリ adds, when it is 1,000P or more. */
-  oneMoreShopGain: number | null;
-}) {
+export function BottomBar({ planId, onAdd }: { planId: string; onAdd: () => void }) {
+  const plan = useAtomValue(planAtom(planId));
+  const result = useAtomValue(planResultAtom(planId));
+  const today = useToday(now);
+  const oneMoreShopGain = useAtomValue(bigOneMoreShopGainAtom({ planId, today }));
+  if (!plan || !result) return null;
   const amount = countedAmount(plan);
   return (
     <Box

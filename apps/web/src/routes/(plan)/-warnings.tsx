@@ -14,7 +14,7 @@ import { grouped } from "#/ui/format.ts";
 import { QuarantineNotice } from "./-quarantine-notice.tsx";
 import { officialEventsAtom } from "#/routes/-official-events.ts";
 
-import { accountSettingsAtom } from "#/state/derived.ts";
+import { planAtom, planResultAtom, accountSettingsAtom } from "#/state/derived.ts";
 import { shopsAtom, spuMonthsAtom, storageHealthQueryAtom } from "#/state/query-atoms.ts";
 
 /** `2026-10-11` → `10/11`. */
@@ -32,10 +32,11 @@ export function monthText(month: string) {
  * 3,000円以上の注文がありますが、10月の SPU の楽天ブックスが OFF です。」 Only those of `month`
  * when it is given.
  */
-export function useSpuOffMessages(plan: Plan, month?: string): string[] {
+export function useSpuOffMessages(plan: Plan | undefined, month?: string): string[] {
   const shops = useAtomValue(shopsAtom);
   const months = useAtomValue(spuMonthsAtom);
   const settings = useAtomValue(accountSettingsAtom);
+  if (!plan) return [];
   const achievements = disabledAchievedSpu(withEffectiveAccount(plan, settings), shops, months);
   return achievements.flatMap(({ month: achieved, benefitId }) => {
     if (month !== undefined && achieved !== month) return [];
@@ -149,22 +150,18 @@ export function StorageHealthFailure() {
 }
 
 /** Warnings about the plan's orders and about stored data that could not be read. */
-export function Warnings({
-  plan,
-  warnings,
-  hasShopAround,
-}: {
-  plan: Plan;
-  warnings: CalculationWarning[];
-  hasShopAround: boolean;
-}) {
+export function Warnings({ planId }: { planId: string }) {
+  const plan = useAtomValue(planAtom(planId));
+  const result = useAtomValue(planResultAtom(planId));
+  const offMessages = useSpuOffMessages(plan);
   const { data: storage } = useAtomValue(storageHealthQueryAtom);
   const event = useAtomValue(officialEventsAtom).find(
-    (candidate) => candidate.id === plan.officialEventId,
+    (candidate) => candidate.id === plan?.officialEventId,
   );
+  if (!plan || !result) return null;
   const messages = [
-    ...messagesOf(plan, event, warnings, hasShopAround, storage),
-    ...useSpuOffMessages(plan),
+    ...messagesOf(plan, event, result.warnings, result.shopAroundOutlook !== null, storage),
+    ...offMessages,
   ];
   return (
     <VStack gap="2" alignItems="stretch" _empty={{ display: "none" }}>

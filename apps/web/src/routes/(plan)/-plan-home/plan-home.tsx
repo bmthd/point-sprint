@@ -1,12 +1,6 @@
 import { selectAtom } from "jotai/utils";
 import { plansAtom } from "#/state/query-atoms.ts";
-import {
-  type Plan,
-  deepEqual,
-  type CalculationResult,
-  type Order,
-  capLines,
-} from "@workspaces/domain";
+import { type Plan, deepEqual, type Order, capLines } from "@workspaces/domain";
 import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import type { TaxRate } from "@workspaces/domain";
 import {
@@ -24,13 +18,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
-import {
-  bigOneMoreShopGainAtom,
-  planResultAtom,
-  planAtom,
-  orderAtom,
-  calculatedPlanAtom,
-} from "#/state/derived.ts";
+import { planResultAtom, planAtom, orderAtom, calculatedPlanAtom } from "#/state/derived.ts";
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { NEW_ORDER, OrderEditor } from "#/routes/(plan)/-order-editor/order-editor.tsx";
 import { eventChangeRequestAtom } from "#/routes/(plan)/-plan-settings/event-attacher.tsx";
@@ -171,120 +159,14 @@ function useOrderEditorTarget(planId: string) {
 
 const now = () => new Date();
 
-function SpuLossNotice({ planId }: { planId: string }) {
-  useSpuLossNotice(planId);
-  return null;
-}
-
-function PlanSummary({ planId, compact }: { planId: string; compact: boolean }) {
-  const plan = useAtomValue(planAtom(planId));
-  const result = useAtomValue(planResultAtom(planId));
-  const calculated = useAtomValue(calculatedPlanAtom(planId));
-  const capResult = useAtomValue(planResultAtom(planId));
-  const lines = calculated && capResult ? capLines(calculated, capResult) : [];
-  const today = useToday(now);
-  const gain = useAtomValue(bigOneMoreShopGainAtom({ planId, today }));
-  if (!plan || !result) return null;
-  return (
-    <SummaryCard
-      plan={plan}
-      result={result}
-      compact={compact}
-      lines={lines}
-      oneMoreShopGain={gain}
-    />
-  );
-}
-
-function PlanCaps({ planId, table }: { planId: string; table: boolean }) {
-  const period = useAtomValue(selectAtom(planAtom(planId), planPeriod, deepEqual));
-  const calculated = useAtomValue(calculatedPlanAtom(planId));
-  const capResult = useAtomValue(planResultAtom(planId));
-  const lines = calculated && capResult ? capLines(calculated, capResult) : [];
-  const today = useToday(now);
-  const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
-  if (!period || lines.length === 0) return null;
-  return (
-    <Panel id="caps" label="上限までの残り">
-      <CapList
-        lines={lines}
-        today={today}
-        period={period}
-        taxRate={taxRate}
-        onTaxRate={setTaxRate}
-        table={table}
-      />
-    </Panel>
-  );
-}
-
-function PlanWarnings({ planId }: { planId: string }) {
-  const plan = useAtomValue(planAtom(planId));
-  const result = useAtomValue(planResultAtom(planId));
-  if (!plan || !result) return null;
-  return (
-    <Warnings
-      plan={plan}
-      warnings={result.warnings}
-      hasShopAround={result.shopAroundOutlook !== null}
-    />
-  );
-}
-
-function PlanShareButton({ planId }: { planId: string }) {
-  const plan = useAtomValue(planAtom(planId));
-  const result = useAtomValue(planResultAtom(planId));
-  if (!plan || !result) return null;
-  return (
-    <ShareButton
-      label="結果をシェア"
-      target={resultShareTarget(
-        planFigures(result, effectiveRate(result.total, countedAmount(plan)), plan.officialEventId),
-      )}
-    />
-  );
-}
-
-function PlanBreakdown({ planId }: { planId: string }) {
-  const totals = useAtomValue(selectAtom(planResultAtom(planId), groupTotals, deepEqual));
-  if (!totals) return null;
-  return (
-    <Panel label="ポイントの内訳">
-      <Heading as="h3" fontSize="sm">
-        ポイントの内訳
-      </Heading>
-      <PointBreakdown totals={totals} />
-    </Panel>
-  );
-}
-
-function PlanShopLadder({ planId }: { planId: string }) {
-  const outlook = useAtomValue(selectAtom(planResultAtom(planId), shopOutlook, deepEqual));
-  if (!outlook) return null;
-  return (
-    <Panel label="あと何店舗回る？">
-      <ShopLadder outlook={outlook} />
-    </Panel>
-  );
-}
-
-function PlanBottomBar({ planId, onAdd }: { planId: string; onAdd: () => void }) {
-  const plan = useAtomValue(planAtom(planId));
-  const result = useAtomValue(planResultAtom(planId));
-  const today = useToday(now);
-  const gain = useAtomValue(bigOneMoreShopGainAtom({ planId, today }));
-  if (!plan || !result) return null;
-  return <BottomBar plan={plan} result={result} onAdd={onAdd} oneMoreShopGain={gain} />;
-}
-
-function PlanCarryOverNotice({ planId, onCarryOver }: { planId: string; onCarryOver: () => void }) {
-  const plan = useAtomValue(planAtom(planId));
-  const today = useToday(now);
-  return plan ? <CarryOverNotice plan={plan} today={today} onCarryOver={onCarryOver} /> : null;
-}
-
 function Home({ planId }: { planId: string }) {
-  const hasResult = useAtomValue(selectAtom(planResultAtom(planId), resultExists));
+  const plan = useAtomValue(planAtom(planId));
+  const result = useAtomValue(planResultAtom(planId));
+  const calculated = useAtomValue(calculatedPlanAtom(planId));
+  const today = useToday(now);
+  const lines = calculated && result ? capLines(calculated, result) : [];
+  const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
+  useSpuLossNotice(planId);
   // Wider than the `lg` breakpoint, which keeps one column: the summary is a column to the right of
   // the orders, the orders are a table, and the settings and a month's SPU open in a side panel.
   const wide = useBreakpointValue({ base: true, lg: false });
@@ -327,10 +209,29 @@ function Home({ planId }: { planId: string }) {
     else void navigate({ to: "/plan/settings", search: { id: planId }, resetScroll: false });
   };
   const resultHeadingId = useId();
-  if (!hasResult) return null;
-  const capList = <PlanCaps planId={planId} table={wide} />;
-  const warnings = <PlanWarnings planId={planId} />;
-  const shareResult = <PlanShareButton planId={planId} />;
+  if (!plan || !result) return null;
+  const capList =
+    lines.length > 0 ? (
+      <Panel id="caps" label="上限までの残り">
+        <CapList
+          lines={lines}
+          today={today}
+          period={plan.period}
+          taxRate={taxRate}
+          onTaxRate={setTaxRate}
+          table={wide}
+        />
+      </Panel>
+    ) : null;
+  const warnings = <Warnings planId={planId} />;
+  const shareResult = (
+    <ShareButton
+      label="結果をシェア"
+      target={resultShareTarget(
+        planFigures(result, effectiveRate(result.total, countedAmount(plan)), plan.officialEventId),
+      )}
+    />
+  );
 
   return (
     <>
@@ -343,7 +244,7 @@ function Home({ planId }: { planId: string }) {
         pt={{ base: "6", lg: "1" }}
         _empty={{ display: "none" }}
       >
-        <PlanCarryOverNotice planId={planId} onCarryOver={carryOver} />
+        <CarryOverNotice planId={planId} onCarryOver={carryOver} />
       </Box>
       {/* One column on a phone (summary first); on a wide screen the summary is the right column. */}
       <Box
@@ -383,15 +284,28 @@ function Home({ planId }: { planId: string }) {
             </ColumnHead>
           ) : null}
           <VStack gap="4" alignItems="stretch">
-            <PlanSummary planId={planId} compact={!wide} />
+            <SummaryCard planId={planId} compact={!wide} lines={lines} />
             <SpuSettingsCard
               planId={planId}
               title="SPU の設定"
               note="注文の日付の月で決まります"
               onChange={changeSpu}
             />
-            {wide ? <PlanBreakdown planId={planId} /> : null}
-            {wide ? <PlanShopLadder planId={planId} /> : null}
+            {wide ? (
+              <Panel label="ポイントの内訳">
+                <Heading as="h3" fontSize="sm">
+                  ポイントの内訳
+                </Heading>
+                <PointBreakdown totals={result.groupTotals} />
+              </Panel>
+            ) : null}
+            {wide ? (
+              result.shopAroundOutlook ? (
+                <Panel label="あと何店舗回る？">
+                  <ShopLadder outlook={result.shopAroundOutlook} />
+                </Panel>
+              ) : null
+            ) : null}
             {wide ? null : warnings}
             {wide ? shareResult : null}
           </VStack>
@@ -425,8 +339,7 @@ function Home({ planId }: { planId: string }) {
           </VStack>
         )}
       </Box>
-      {wide ? null : <PlanBottomBar planId={planId} onAdd={addOrder} />}
-      <SpuLossNotice planId={planId} />
+      {wide ? null : <BottomBar planId={planId} onAdd={addOrder} />}
       <OrderEditor
         planId={planId}
         target={editor.target}
@@ -450,10 +363,6 @@ export function PlanHome({ id }: { id: string | undefined }) {
 }
 
 const planName = (plan: Plan | undefined) => plan?.name;
-const planPeriod = (plan: Plan | undefined) => plan?.period;
-const groupTotals = (result: CalculationResult | undefined) => result?.groupTotals;
-const shopOutlook = (result: CalculationResult | undefined) => result?.shopAroundOutlook ?? null;
-const resultExists = (result: CalculationResult | undefined) => result !== undefined;
 const hasOrder = (order: Order | undefined) => order !== undefined;
 const recentPlanNames = (plans: Plan[]) =>
   [...plans]

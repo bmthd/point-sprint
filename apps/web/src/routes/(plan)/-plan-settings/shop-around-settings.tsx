@@ -25,7 +25,7 @@ import { CommitDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
 import { officialEventsAtom } from "#/routes/-official-events.ts";
 import { isAddedCampaign } from "./campaign-toggles.tsx";
 import { useDeleteCampaign } from "./delete-campaign.tsx";
-import { SavedEventCarryOver, isEventBenefit, useEventChangeRequest } from "./event-attacher.tsx";
+import { EventCarryOver, isEventBenefit, useEventChangeRequest } from "./event-attacher.tsx";
 import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
 
 type ShopAroundBenefit = Extract<Benefit, { kind: "shop-around" }>;
@@ -188,7 +188,7 @@ function ShopAroundEditor({
           direction="column"
           gap="2.5"
         >
-          {isEventBenefit(plan, benefit) ? <SavedEventCarryOver planId={planId} /> : null}
+          {isEventBenefit(plan, benefit) ? <EventCarryOver planId={planId} /> : null}
           <Box
             display="grid"
             gridTemplateColumns="repeat(2, minmax(0, 1fr))"

@@ -3,7 +3,7 @@
 "use no memo";
 
 import { selectAtom } from "jotai/utils";
-import { planAtom } from "#/state/derived.ts";
+import { planAtom, orderAtom } from "#/state/derived.ts";
 
 import { Field as FormField, useField } from "@formisch/react";
 import { hasOrderTagCampaign, type Plan, deepEqual } from "@workspaces/domain";
@@ -26,7 +26,7 @@ import { ShopAutocomplete } from "#/routes/(plan)/-shop-autocomplete.tsx";
 import { UrlField } from "#/routes/(plan)/-order-entry.tsx";
 import type { ItemAutofill } from "#/routes/(plan)/-item-autofill.tsx";
 import { ExtraItems, ItemDetailFields } from "#/routes/(plan)/-item-details.tsx";
-import { SavedRakutenCardSwitch } from "#/routes/(plan)/-rakuten-card-switch.tsx";
+import { RakutenCardSwitch } from "#/routes/(plan)/-rakuten-card-switch.tsx";
 
 // What an opened row of the desktop table holds, the same for an order and for the add row's new
 // order: the conditions at once, with no 「条件」 to open first. The item's name and amount are on
@@ -107,7 +107,9 @@ export function OrderDetailFields({
   orderId?: string;
   onItemRemoved?: () => void;
 }) {
-  const period = useAtomValue(selectAtom(planAtom(planId), planPeriod, deepEqual));
+  const plan = useAtomValue(planAtom(planId));
+  const original = useAtomValue(orderAtom({ planId, orderId: orderId ?? "" }));
+  const period = plan?.period;
   return (
     <Flex direction="column" gap="3.5">
       <Grid templateColumns="repeat(auto-fit, minmax(14rem, 1fr))" alignItems="start" gap="2.5">
@@ -141,7 +143,7 @@ export function OrderDetailFields({
         <Flex direction="column" gap="2" maxW="xl">
           <Flex direction="column" gap="2" maxW="md">
             <ItemDetailFields form={form} index={0} withRate={false} size="lg" />
-            <SavedRakutenCardSwitch form={form} planId={planId} orderId={orderId} />
+            {plan ? <RakutenCardSwitch form={form} plan={plan} original={original} /> : null}
           </Flex>
           <ExtraItems form={form} onRemove={onItemRemoved} size="lg" />
         </Flex>
@@ -153,5 +155,4 @@ export function OrderDetailFields({
 /** The width of 「複製」 and 「削除」 under an opened row, and of the add row's 「追加する」. */
 export const ACTION_BUTTON_WIDTH = "28";
 
-const planPeriod = (plan: Plan | undefined) => plan?.period;
 const planBenefits = (plan: Plan | undefined) => plan?.benefits ?? [];

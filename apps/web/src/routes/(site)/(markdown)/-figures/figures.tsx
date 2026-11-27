@@ -131,7 +131,7 @@ function NewOrderRowFigure({ price }: { price: number }) {
   return (
     <Card.Root overflow="hidden">
       <List.Root as="ol" gap="0">
-        <OrderAddRow planId={THIRD_MARATHON.id} initialInput={input} initialOpen />
+        <OrderAddRow plan={THIRD_MARATHON} initialInput={input} initialOpen />
       </List.Root>
     </Card.Root>
   );

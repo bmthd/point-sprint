@@ -84,17 +84,13 @@ export function EventAttacher({ planId }: { planId: string }) {
  * 「イベント」 at the top of the opened card of the plan's event: carries the plan over to another
  * event that has not ended, which also releases its hold. Says so when there is none yet.
  */
-export function SavedEventCarryOver({ planId }: { planId: string }) {
+export function EventCarryOver({ planId }: { planId: string }) {
   const plan = useAtomValue(planAtom(planId));
-  return plan ? <EventCarryOver plan={plan} /> : null;
-}
-
-export function EventCarryOver({ plan }: { plan: Plan }) {
   const events = useAtomValue(officialEventsAtom);
   const carryOver = useSetAtom(carryOverToEventAtom);
-  const save = useSaveSettingsChange(plan.id);
+  const save = useSaveSettingsChange(planId);
   const today = useToday(now);
-  if (events.length === 0) return null;
+  if (!plan || events.length === 0) return null;
   const candidates = events.filter(
     (candidate) =>
       candidate.id !== plan.officialEventId &&
