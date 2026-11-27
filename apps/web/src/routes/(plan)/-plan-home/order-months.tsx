@@ -86,3 +86,8 @@ export function withMonthSeparators({
     ];
   });
 }
+/** The visible rows' numbering, skipping orders on hold. */
+export function orderBadges(orders: { onHold?: boolean | undefined }[]) {
+  let counted = 0;
+  return orders.map((order) => (order.onHold ? null : ++counted));
+}

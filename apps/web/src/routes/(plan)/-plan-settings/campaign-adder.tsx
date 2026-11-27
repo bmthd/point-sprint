@@ -12,8 +12,9 @@ import {
   newId,
 } from "@workspaces/domain";
 import { Button, Flex, Image, List, Text, PlusIcon } from "@workspaces/ui";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import type { Ref } from "react";
+import { planAtom } from "#/state/derived.ts";
 import { addBenefitAtom } from "#/state/plan-operations.ts";
 import { tokyoToday } from "#/ui/dates.ts";
 import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
@@ -85,17 +86,19 @@ const isShopAround = (benefit: Benefit) =>
  * changed afterwards in its row. A template the plan already has is greyed out as 「追加済み」.
  */
 export function CampaignAddButtons({
-  plan,
+  planId,
   firstRef,
   onAdded,
 }: {
-  plan: Plan;
+  planId: string;
   firstRef?: Ref<HTMLButtonElement>;
   onAdded: (benefit: Benefit) => void;
 }) {
+  const plan = useAtomValue(planAtom(planId));
   const addBenefit = useSetAtom(addBenefitAtom);
-  const save = useSaveSettingsChange(plan.id);
+  const save = useSaveSettingsChange(planId);
 
+  if (!plan) return null;
   const add = (template: CampaignTemplate) => {
     const input = defaultInputToday(plan, template);
     if (!input) return;

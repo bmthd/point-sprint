@@ -1,5 +1,7 @@
 import { officialEventsQueryOptions } from "./-official-events-query.ts";
 import { type OfficialEvent, OfficialEventSchema } from "@workspaces/domain";
+import { atomFamily } from "jotai-family";
+import { selectAtom } from "jotai/utils";
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 import ky from "ky";
@@ -29,3 +31,7 @@ const noEvents: OfficialEvent[] = [];
 
 /** The events, or none while they load or when they cannot be read. */
 export const officialEventsAtom = atom((get) => get(officialEventsQueryAtom).data ?? noEvents);
+
+export const officialEventAtom = atomFamily((eventId: string) =>
+  selectAtom(officialEventsAtom, (events) => events.find((event) => event.id === eventId)),
+);

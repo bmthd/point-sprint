@@ -29,7 +29,7 @@ const now = () => new Date();
 export const eventChangeRequestAtom = atom(false);
 
 /** Whether `benefit` came with the plan's event, so that its card is where the event is changed. */
-export function isEventBenefit(plan: Plan, benefit: Benefit) {
+export function isEventBenefit(plan: Pick<Plan, "officialEventId">, benefit: Benefit) {
   return plan.officialEventId !== undefined && !isAddedCampaign(plan, benefit);
 }
 
@@ -84,6 +84,11 @@ export function EventAttacher({ planId }: { planId: string }) {
  * 「イベント」 at the top of the opened card of the plan's event: carries the plan over to another
  * event that has not ended, which also releases its hold. Says so when there is none yet.
  */
+export function SavedEventCarryOver({ planId }: { planId: string }) {
+  const plan = useAtomValue(planAtom(planId));
+  return plan ? <EventCarryOver plan={plan} /> : null;
+}
+
 export function EventCarryOver({ plan }: { plan: Plan }) {
   const events = useAtomValue(officialEventsAtom);
   const carryOver = useSetAtom(carryOverToEventAtom);

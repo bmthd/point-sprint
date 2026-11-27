@@ -1,19 +1,11 @@
 import {
-  type Benefit,
   type CampaignInput,
   type CampaignTemplate,
   type Plan,
   campaignInputOf,
   editCampaign,
   hasCampaignOccurrence,
-} from "@workspaces/domain";
-import { Grid, Button, Flex, Image, RadioCard, RadioCardGroup, Text } from "@workspaces/ui";
-import { useSetAtom } from "jotai";
-import * as v from "valibot";
-import { optionalGrouped } from "#/ui/format.ts";
-import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
-import { CommitDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
-import {
+  deepEqual,
   END_BEFORE_START,
   START_AFTER_END,
   DateSchema,
@@ -23,6 +15,16 @@ import {
   RequiredTextSchema,
   YenSchema,
 } from "@workspaces/domain";
+import { selectAtom } from "jotai/utils";
+
+import { Grid, Button, Flex, Image, RadioCard, RadioCardGroup, Text } from "@workspaces/ui";
+import { useAtomValue, useSetAtom } from "jotai";
+import * as v from "valibot";
+import { optionalGrouped } from "#/ui/format.ts";
+import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
+import { CommitDatePicker } from "#/routes/(plan)/-date-picker-field.tsx";
+
+import { planAtom } from "#/state/derived.ts";
 import { updateBenefitAtom } from "#/state/plan-operations.ts";
 import { imageUrl } from "#/routes/(plan)/-order-shared.tsx";
 import { SPECS } from "./campaign-form.ts";
@@ -96,19 +98,22 @@ function RateChoices({
  */
 export function CampaignEditor({
   id,
-  plan,
-  benefit,
+  planId,
+  benefitId,
   template,
   onDelete,
 }: {
   id: string;
-  plan: Plan;
-  benefit: Benefit;
+  planId: string;
+  benefitId: string;
   template: CampaignTemplate;
   onDelete: () => void;
 }) {
+  const plan = useAtomValue(planAtom(planId));
+  const benefit = useAtomValue(selectAtom(planAtom(planId), benefitById(benefitId), deepEqual));
   const updateBenefit = useSetAtom(updateBenefitAtom);
-  const save = useSaveSettingsChange(plan.id);
+  const save = useSaveSettingsChange(planId);
+  if (!plan || !benefit) return null;
   const spec = SPECS[template.id] ?? {};
   const input = campaignInputOf(benefit);
   const others = { ...plan, benefits: plan.benefits.filter((other) => other.id !== benefit.id) };
@@ -269,3 +274,6 @@ export function CampaignEditor({
     </Flex>
   );
 }
+
+const benefitById = (benefitId: string) => (plan: Plan | undefined) =>
+  plan?.benefits.find((benefit) => benefit.id === benefitId);

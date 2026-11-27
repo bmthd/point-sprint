@@ -4,7 +4,13 @@ import {
   type Profile,
   accountsOf,
   newId,
+  type AccountSettings,
+  deepEqual,
+  AccountNameSchema,
 } from "@workspaces/domain";
+import { selectAtom } from "jotai/utils";
+import { profileQueryAtom } from "#/state/query-atoms.ts";
+
 import {
   Box,
   Button,
@@ -18,16 +24,11 @@ import {
   useDisclosure,
   XIcon,
 } from "@workspaces/ui";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom, type ExtractAtomValue } from "jotai";
 import { useRef, useState } from "react";
 import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
-import { AccountNameSchema } from "@workspaces/domain";
-import {
-  accountAtom,
-  accountIdsAtom,
-  isProfileReadyAtom,
-  multiAccountEnabledAtom,
-} from "#/state/derived.ts";
+
+import { accountAtom, accountSettingsAtom } from "#/state/derived.ts";
 import { runSaveProfileAtom } from "#/state/mutations.ts";
 
 /** The profile with its accounts changed; the default account is kept even when not stored yet. */
@@ -97,10 +98,10 @@ function AccountRow({
  * turned on, every plan is the default account's and no account shows anywhere else.
  */
 export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => void }) {
-  const enabled = useAtomValue(multiAccountEnabledAtom);
-  const accountIds = useAtomValue(accountIdsAtom);
+  const enabled = useAtomValue(selectAtom(accountSettingsAtom, multiAccountEnabled));
+  const accountIds = useAtomValue(selectAtom(accountSettingsAtom, selectAccountIds, deepEqual));
   const defaultAccount = useAtomValue(accountAtom(DEFAULT_ACCOUNT_ID));
-  const isSuccess = useAtomValue(isProfileReadyAtom);
+  const isSuccess = useAtomValue(selectAtom(profileQueryAtom, profileReady));
   const saveProfile = useSetAtom(runSaveProfileAtom);
   const { open, onOpen, onClose } = useDisclosure();
   const [targetId, setTarget] = useState<string>();
@@ -202,3 +203,7 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
     </Card.Root>
   );
 }
+
+const selectAccountIds = (settings: AccountSettings) => settings.accounts.map(({ id }) => id);
+const multiAccountEnabled = (settings: AccountSettings) => settings.enabled;
+const profileReady = (query: ExtractAtomValue<typeof profileQueryAtom>) => query.isSuccess;

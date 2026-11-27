@@ -178,6 +178,7 @@ export {
   spuBenefitsOf,
   spuIdsIn,
   spuMonthsOfPlan,
+  spuRates,
   toggleSpu,
 } from "./plan-ops/spu-months.ts";
 export {

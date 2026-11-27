@@ -1,7 +1,9 @@
+import { selectAtom } from "jotai/utils";
+import { plansAtom } from "#/state/query-atoms.ts";
 import { grouped } from "#/ui/format.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
-import { capLines, accountIdOf } from "@workspaces/domain";
+import { capLines, accountIdOf, type Plan, deepEqual } from "@workspaces/domain";
 import {
   Badge,
   Button,
@@ -24,7 +26,6 @@ import {
   calculatedPlanAtom,
   planAtom,
   planResultAtom,
-  recentPlanIdsAtom,
 } from "#/state/derived.ts";
 import { runDeletePlanAtom } from "#/state/mutations.ts";
 import { formatPeriod } from "#/ui/dates.ts";
@@ -182,7 +183,7 @@ function LatestPlan({
  * delete button, behind 「すべてのプラン」. Plans live on this device, so this section only renders on the client.
  */
 export function PlanSection() {
-  const planIds = useAtomValue(recentPlanIdsAtom);
+  const planIds = useAtomValue(selectAtom(plansAtom, recentPlanIds, deepEqual));
   const deletePlan = useSetAtom(runDeletePlanAtom);
   const { open, onOpen, onClose } = useDisclosure();
   const all = useDisclosure();
@@ -275,3 +276,6 @@ export function PlanSection() {
     </VStack>
   );
 }
+
+const recentPlanIds = (plans: Plan[]) =>
+  [...plans].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1)).map(({ id }) => id);

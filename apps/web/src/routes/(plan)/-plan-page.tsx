@@ -1,10 +1,13 @@
+import { selectAtom } from "jotai/utils";
+import { type Plan } from "@workspaces/domain";
+import { planAtom } from "#/state/derived.ts";
 import { ClientOnly } from "@tanstack/react-router";
 import { Button, Heading, Text, VStack } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import type { ReactNode } from "react";
 import { useClientTitle } from "#/page-head.ts";
-import { planNameAtom } from "#/state/derived.ts";
-import { planPageLoadStateAtom, retryPlanPageLoadAtom } from "#/state/query-atoms.ts";
+
+import { plansQueryAtom, shopsQueryAtom, retryPlanPageLoadAtom } from "#/state/query-atoms.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
 
 function NotFound() {
@@ -39,8 +42,15 @@ function LoadError({ onRetry }: { onRetry: () => void }) {
  * unknown shop. Until both have loaded nothing is shown.
  */
 function PlanScreen({ id, title, render }: PlanPageProps) {
-  const name = useAtomValue(planNameAtom(id ?? ""));
-  const loadState = useAtomValue(planPageLoadStateAtom);
+  const name = useAtomValue(selectAtom(planAtom(id ?? ""), planName));
+  const plansState = useAtomValue(selectAtom(plansQueryAtom, queryState));
+  const shopsState = useAtomValue(selectAtom(shopsQueryAtom, queryState));
+  const loadState =
+    plansState === "error" || shopsState === "error"
+      ? "error"
+      : plansState === "ready" && shopsState === "ready"
+        ? "ready"
+        : "loading";
   const retry = useSetAtom(retryPlanPageLoadAtom);
   useClientTitle(name === undefined ? undefined : title(name));
   if (loadState === "error") return <LoadError onRetry={retry} />;
@@ -72,3 +82,8 @@ export function PlanPage(props: PlanPageProps) {
     </ClientOnly>
   );
 }
+
+const planName = (plan: Plan | undefined) => plan?.name;
+
+const queryState = (query: { isError: boolean; isSuccess: boolean }) =>
+  query.isError ? "error" : query.isSuccess ? "ready" : "loading";

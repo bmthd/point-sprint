@@ -6,25 +6,16 @@ import {
   POINT_GROUPS,
   type PointGroup,
   pointGroupOf,
+  type Shop,
+  type CalculationResult,
+  orderPoints,
 } from "@workspaces/domain";
 import { Badge, Button, Heading, Modal, Tag, Text, dataAttr, useDisclosure } from "@workspaces/ui";
 import { atom, useAtomValue, useSetAtom } from "jotai";
-import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
-import { type ReactNode, type RefObject, useCallback, useRef, useState } from "react";
-import {
-  orderAtom,
-  orderPointsAtom,
-  calculatedPlanAtom,
-  planResultAtom,
-  hasPlanId,
-  isPlanId,
-  removedWithPlan,
-  sharedAtom,
-} from "#/state/derived.ts";
+import { type ReactNode, type RefObject, useRef, useState } from "react";
+import { orderAtom, shopAtom } from "#/state/derived.ts";
 import { clearOrdersAtom, removeOrderAtom, saveOrderDraftAtom } from "#/state/plan-operations.ts";
-import { shopsAtom } from "#/state/query-atoms.ts";
-import { openOrderIdAtom } from "./-ui.ts";
 import type { OrderDraft } from "./-order-form.ts";
 
 // What the phone's order cards and the desktop's order list have in common.
@@ -36,9 +27,6 @@ const IMAGE_ORIGIN = "https://assets.bmth.dev/point-sprint";
 export function imageUrl(imagePath: string) {
   return `${IMAGE_ORIGIN}${imagePath}`;
 }
-
-type OrderKey = { planId: string; orderId: string };
-const sameOrderKey = (a: OrderKey, b: OrderKey) => a.planId === b.planId && a.orderId === b.orderId;
 
 /** One line of an order's breakdown: a point group, or one campaign on its own. */
 export type OrderPointRow = {
@@ -131,66 +119,26 @@ function itemPointsOf(rows: BreakdownRow[]): Record<string, number> {
   return points;
 }
 
-const noBenefits: Benefit[] = [];
-const benefitsAtom = removedWithPlan(
-  atomFamily((planId: string) =>
-    selectAtom(calculatedPlanAtom(planId), (plan) => plan?.benefits ?? noBenefits),
-  ),
-  isPlanId,
-);
-const noRates: Record<string, number> = {};
-const ratesAtom = removedWithPlan(
-  atomFamily((planId: string) =>
-    selectAtom(planResultAtom(planId), (result) => result?.rates ?? noRates),
-  ),
-  isPlanId,
-);
-const heldEstimateAtom = removedWithPlan(
-  atomFamily(
-    ({ planId, orderId }: OrderKey) =>
-      selectAtom(planResultAtom(planId), (result) =>
-        result?.heldEstimates.find((estimate) => estimate.orderId === orderId),
-      ),
-    sameOrderKey,
-  ),
-  hasPlanId,
-);
-
-/**
- * Everything a card or a desktop row shows about its order's points. It only changes when this
- * order's figures do, so editing another order does not re-render it.
- */
-export const orderCardPointsAtom = removedWithPlan(
-  atomFamily(
-    (key: OrderKey) =>
-      sharedAtom(
-        atom((get): OrderCardPoints => {
-          const counted = get(orderPointsAtom(key));
-          const estimate = get(heldEstimateAtom(key));
-          // Only the preview shows rows fully cut by a cap. Cards and the table omit their rates too.
-          const rows = (estimate?.rows ?? counted.rows).filter((row) => row.points !== 0);
-          return {
-            ...orderPointRows(
-              rows,
-              get(benefitsAtom(key.planId)),
-              estimate?.rates ?? get(ratesAtom(key.planId)),
-              get(orderAtom(key))?.lineItems ?? [],
-            ),
-            total: rows.reduce((sum, row) => sum + row.points, 0),
-            itemPoints: itemPointsOf(rows),
-          };
-        }),
-      ),
-    sameOrderKey,
-  ),
-  hasPlanId,
-);
-
-/** Whether this order is the open one; only the order that opens or closes re-renders. */
-export const isOpenAtom = removedWithPlan(
-  atomFamily((orderId: string) => atom((get) => get(openOrderIdAtom) === orderId)),
-  (orderId, plan) => plan.orders.some((order) => order.id === orderId),
-);
+/** The figures shown for a counted order, or its held estimate. */
+export function orderCardPoints(
+  order: Order | undefined,
+  benefits: Benefit[],
+  result: CalculationResult | undefined,
+): OrderCardPoints {
+  const counted = orderPoints(order, result?.breakdown ?? []);
+  const estimate = result?.heldEstimates.find((estimate) => estimate.orderId === order?.id);
+  const rows = (estimate?.rows ?? counted.rows).filter((row) => row.points !== 0);
+  return {
+    ...orderPointRows(
+      rows,
+      benefits,
+      estimate?.rates ?? result?.rates ?? {},
+      order?.lineItems ?? [],
+    ),
+    total: rows.reduce((sum, row) => sum + row.points, 0),
+    itemPoints: itemPointsOf(rows),
+  };
+}
 
 /** Set when saving a change to an order failed; the card list or the desktop list shows it. */
 export const orderSaveFailedAtom = atom(false);
@@ -198,13 +146,10 @@ export const orderSaveFailedAtom = atom(false);
 /** Saves a change to an order and reports a failure through `orderSaveFailedAtom`. */
 export function useSaveOrderChange() {
   const setFailed = useSetAtom(orderSaveFailedAtom);
-  return useCallback(
-    (operation: Promise<unknown>) => {
-      setFailed(false);
-      operation.catch(() => setFailed(true));
-    },
-    [setFailed],
-  );
+  return (operation: Promise<unknown>) => {
+    setFailed(false);
+    operation.catch(() => setFailed(true));
+  };
 }
 
 /**
@@ -225,20 +170,17 @@ export function revealBottom(element: Element, top: Element = element) {
  */
 export function useSaveOrderDraft(planId: string, setFailed: (failed: boolean) => void) {
   const saveOrderDraft = useSetAtom(saveOrderDraftAtom);
-  return useCallback(
-    async (draft: OrderDraft | undefined, isNew: boolean) => {
-      setFailed(draft === undefined);
-      if (!draft) return false;
-      try {
-        await saveOrderDraft({ planId, draft, isNew });
-        return true;
-      } catch {
-        setFailed(true);
-        return false;
-      }
-    },
-    [planId, setFailed, saveOrderDraft],
-  );
+  return async (draft: OrderDraft | undefined, isNew: boolean) => {
+    setFailed(draft === undefined);
+    if (!draft) return false;
+    try {
+      await saveOrderDraft({ planId, draft, isNew });
+      return true;
+    } catch {
+      setFailed(true);
+      return false;
+    }
+  };
 }
 
 export function taxRateLabel(rate: number) {
@@ -263,14 +205,6 @@ export function orderTitle(order: Order) {
   const [first] = order.lineItems;
   const rest = order.lineItems.length - 1;
   return `${first?.name ?? ""}${rest > 0 ? ` 他${rest}点` : ""}`;
-}
-
-export function useShopName(order: Order | undefined) {
-  const shops = useAtomValue(shopsAtom);
-  if (!order) return "不明なショップ";
-  if (order.shopId === undefined) return "ショップ未入力";
-  const shop = shops.find((shop) => shop.id === order.shopId);
-  return shop ? shop.name : "不明なショップ";
 }
 
 /** A campaign that gave the order points, as a small display-only chip. */
@@ -391,16 +325,13 @@ export function useOrderConfirm(
   const [confirm, setConfirm] = useState<Confirm>();
   const finalFocus = useRef<HTMLElement | null>(null);
 
-  const ask = useCallback(
-    (next: Confirm) => {
-      setConfirm(next);
-      finalFocus.current = null;
-      onOpen();
-    },
-    [onOpen],
-  );
-  const askDelete = useCallback((orderId: string) => ask({ kind: "delete", orderId }), [ask]);
-  const askReset = useCallback(() => ask({ kind: "reset" }), [ask]);
+  const ask = (next: Confirm) => {
+    setConfirm(next);
+    finalFocus.current = null;
+    onOpen();
+  };
+  const askDelete = (orderId: string) => ask({ kind: "delete", orderId });
+  const askReset = () => ask({ kind: "reset" });
 
   const target = useAtomValue(
     orderAtom({
@@ -408,7 +339,8 @@ export function useOrderConfirm(
       orderId: confirm?.kind === "delete" ? confirm.orderId : "",
     }),
   );
-  const targetShop = useShopName(target);
+  const savedShopName = useAtomValue(selectAtom(shopAtom(target?.shopId ?? ""), shopName));
+  const targetShop = orderShopName(target, savedShopName);
 
   const dialog = (
     <Modal.Root
@@ -437,4 +369,13 @@ export function useOrderConfirm(
     />
   );
   return { askDelete, askReset, dialog };
+}
+
+const shopName = (shop: Shop | undefined) => shop?.name;
+export function orderShopName(order: Order | undefined, name: string | undefined) {
+  return !order
+    ? "不明なショップ"
+    : order.shopId === undefined
+      ? "ショップ未入力"
+      : (name ?? "不明なショップ");
 }

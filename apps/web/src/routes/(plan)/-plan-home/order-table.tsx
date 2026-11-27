@@ -1,9 +1,12 @@
+import { selectAtom } from "jotai/utils";
+import { type Plan, deepEqual } from "@workspaces/domain";
+import { planAtom } from "#/state/derived.ts";
 import { useAtomValue } from "jotai";
-import { planOrderMetaAtom } from "#/state/derived.ts";
+
 import { Box, Flex, Card, List, Text, Tooltip, VisuallyHidden } from "@workspaces/ui";
-import { type ReactNode, useCallback, useId, useMemo, useRef, useState } from "react";
+import { type ReactNode, useId, useMemo, useRef, useState } from "react";
 import { OrderAddRow } from "./order-add-row.tsx";
-import { withMonthSeparators } from "./order-months.tsx";
+import { orderBadges, withMonthSeparators } from "./order-months.tsx";
 import { ROW_GAP } from "./inline-text.tsx";
 import { OrderListContext, OrderRow, rowColumns } from "./order-row.tsx";
 import {
@@ -35,7 +38,7 @@ export function OrderTable({
   /** Opens a month's SPU from the month's separator, when the orders are of more than one month. */
   onSpu?: ((month: string) => void) | undefined;
 }) {
-  const metadata = useAtomValue(planOrderMetaAtom(planId));
+  const metadata = useAtomValue(selectAtom(planAtom(planId), orderMetadata, deepEqual));
   const orders = useMemo(
     () =>
       orderIds === undefined ? metadata : metadata.filter((order) => orderIds.includes(order.id)),
@@ -50,13 +53,10 @@ export function OrderTable({
   const listRef = useRef<HTMLOListElement>(null);
   const startDrag = useOrderDrag({ listRef, orders });
   const focusAfterMoveRef = useRef<string | null>(null);
-  const announce = useCallback((message: string) => setAnnouncement(message), []);
-  const context = useMemo(
-    () => ({ startDrag, focusAfterMoveRef, announce, handleHintId, holdHintId }),
-    [startDrag, announce, handleHintId, holdHintId],
-  );
+  const announce = (message: string) => setAnnouncement(message);
+  const context = { startDrag, focusAfterMoveRef, announce, handleHintId, holdHintId };
 
-  let counted = 0;
+  const badges = orderBadges(orders);
 
   return (
     <Flex direction="column" gap="2.5">
@@ -145,7 +145,7 @@ export function OrderTable({
                   key={order.id}
                   planId={planId}
                   orderId={order.id}
-                  badge={order.onHold ? null : ++counted}
+                  badge={badges[index] ?? null}
                   index={index}
                   count={orders.length}
                   onDelete={askDelete}
@@ -165,3 +165,6 @@ export function OrderTable({
     </Flex>
   );
 }
+
+const orderMetadata = (plan: Plan | undefined) =>
+  plan?.orders.map(({ id, date, onHold }) => ({ id, date, onHold })) ?? [];

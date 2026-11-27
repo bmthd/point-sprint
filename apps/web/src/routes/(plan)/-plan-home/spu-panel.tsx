@@ -11,7 +11,7 @@ import {
   ChevronLeftIcon,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as v from "valibot";
 
 import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
@@ -28,27 +28,21 @@ export function useSpuPanelTarget(planId: string) {
   const router = useRouter();
   const search: { spu?: unknown } = useSearch({ strict: false });
   const openedHere = useRef(false);
-  const open = useCallback(
-    (month: string) => {
-      openedHere.current = true;
-      void navigate({ to: "/plan", search: { id: planId, spu: month } });
-    },
-    [navigate, planId],
-  );
+  const open = (month: string) => {
+    openedHere.current = true;
+    void navigate({ to: "/plan", search: { id: planId, spu: month } });
+  };
   /** Another month of the plan in the open panel, in place of the one shown. */
-  const show = useCallback(
-    (month: string) =>
-      void navigate({ to: "/plan", search: { id: planId, spu: month }, replace: true }),
-    [navigate, planId],
-  );
-  const close = useCallback(() => {
+  const show = (month: string) =>
+    void navigate({ to: "/plan", search: { id: planId, spu: month }, replace: true });
+  const close = () => {
     if (openedHere.current) {
       openedHere.current = false;
       router.history.back();
     } else {
       void navigate({ to: "/plan", search: { id: planId }, replace: true });
     }
-  }, [navigate, router, planId]);
+  };
   const target = v.is(MonthSchema, search.spu) ? search.spu : undefined;
   useEffect(() => {
     // Closed by the browser's back button: the next close must not go back again.

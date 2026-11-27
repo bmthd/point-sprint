@@ -1,10 +1,13 @@
-import { type Shop, channels } from "@workspaces/domain";
+import { type Shop, channels, deepEqual, ShopNameSchema } from "@workspaces/domain";
+import { selectAtom } from "jotai/utils";
+import { shopsAtom } from "#/state/query-atoms.ts";
+
 import { Card, Flex, Heading, List, Switch, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
-import { ShopNameSchema } from "@workspaces/domain";
+
 import { changeShop, runSaveShopAtom } from "#/state/mutations.ts";
-import { shopAtom, sortedShopIdsAtom } from "#/state/derived.ts";
+import { shopAtom } from "#/state/derived.ts";
 import { withTag } from "#/routes/(plan)/-order-fields.tsx";
 
 const is39 = (shop: Shop) => shop.tags.includes("39shop");
@@ -63,7 +66,7 @@ function ShopRow({ shopId, onFailed }: { shopId: string; onFailed: (failed: bool
 
 /** The shop registry: every shop with its channel and shop code, and its name and 39ショップ mark editable. */
 export function ShopRegistry({ onFailed }: { onFailed: (failed: boolean) => void }) {
-  const shopIds = useAtomValue(sortedShopIdsAtom);
+  const shopIds = useAtomValue(selectAtom(shopsAtom, sortedShopIds, deepEqual));
   return (
     <Card.Root as="section" aria-labelledby="shop-registry-title">
       <Card.Body alignItems="stretch">
@@ -88,3 +91,6 @@ export function ShopRegistry({ onFailed }: { onFailed: (failed: boolean) => void
     </Card.Root>
   );
 }
+
+const sortedShopIds = (shops: Shop[]) =>
+  [...shops].sort((a, b) => a.name.localeCompare(b.name, "ja")).map(({ id }) => id);

@@ -1,3 +1,12 @@
+import { selectAtom } from "jotai/utils";
+import { plansAtom } from "#/state/query-atoms.ts";
+import {
+  type Plan,
+  deepEqual,
+  type CalculationResult,
+  type Order,
+  capLines,
+} from "@workspaces/domain";
 import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import type { TaxRate } from "@workspaces/domain";
 import {
@@ -14,19 +23,13 @@ import {
   SlidersHorizontalIcon,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
-import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import {
   bigOneMoreShopGainAtom,
   planResultAtom,
   planAtom,
-  planCapLinesAtom,
-  planNameAtom,
-  planPeriodAtom,
-  hasPlanResultAtom,
-  hasOrderAtom,
-  recentPlanNamesAtom,
-  planGroupTotalsAtom,
-  planShopOutlookAtom,
+  orderAtom,
+  calculatedPlanAtom,
 } from "#/state/derived.ts";
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { NEW_ORDER, OrderEditor } from "#/routes/(plan)/-order-editor/order-editor.tsx";
@@ -55,8 +58,8 @@ import { SpuSettingsCard } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
 
 function PlanSwitcher({ planId }: { planId: string }) {
   const navigate = useNavigate();
-  const name = useAtomValue(planNameAtom(planId));
-  const plans = useAtomValue(recentPlanNamesAtom);
+  const name = useAtomValue(selectAtom(planAtom(planId), planName));
+  const plans = useAtomValue(selectAtom(plansAtom, recentPlanNames, deepEqual));
   const others = plans.filter((other) => other.id !== planId);
   return (
     <Box display="flex" alignItems="center" gap="1" minW="0">
@@ -138,27 +141,24 @@ function useOrderEditorTarget(planId: string) {
   const router = useRouter();
   const search: { edit?: unknown } = useSearch({ strict: false });
   const openedHere = useRef(false);
-  const open = useCallback(
-    (target: string) => {
-      openedHere.current = true;
-      void navigate({ to: "/plan", search: { id: planId, edit: target } });
-    },
-    [navigate, planId],
-  );
-  const close = useCallback(() => {
+  const open = (target: string) => {
+    openedHere.current = true;
+    void navigate({ to: "/plan", search: { id: planId, edit: target } });
+  };
+  const close = () => {
     if (openedHere.current) {
       openedHere.current = false;
       router.history.back();
     } else {
       void navigate({ to: "/plan", search: { id: planId }, replace: true });
     }
-  }, [navigate, router, planId]);
+  };
   const target = typeof search.edit === "string" ? search.edit : undefined;
   useEffect(() => {
     // Closed by the browser's back button: the next close must not go back again.
     if (target === undefined) openedHere.current = false;
   }, [target]);
-  const exists = useAtomValue(hasOrderAtom({ planId, orderId: target ?? "" }));
+  const exists = useAtomValue(selectAtom(orderAtom({ planId, orderId: target ?? "" }), hasOrder));
   const missing = target !== undefined && target !== NEW_ORDER && !exists;
   useEffect(() => {
     // `edit=` names an order that is not (or no longer) in the plan: drop it from the URL.
@@ -179,7 +179,9 @@ function SpuLossNotice({ planId }: { planId: string }) {
 function PlanSummary({ planId, compact }: { planId: string; compact: boolean }) {
   const plan = useAtomValue(planAtom(planId));
   const result = useAtomValue(planResultAtom(planId));
-  const lines = useAtomValue(planCapLinesAtom(planId));
+  const calculated = useAtomValue(calculatedPlanAtom(planId));
+  const capResult = useAtomValue(planResultAtom(planId));
+  const lines = calculated && capResult ? capLines(calculated, capResult) : [];
   const today = useToday(now);
   const gain = useAtomValue(bigOneMoreShopGainAtom({ planId, today }));
   if (!plan || !result) return null;
@@ -195,8 +197,10 @@ function PlanSummary({ planId, compact }: { planId: string; compact: boolean }) 
 }
 
 function PlanCaps({ planId, table }: { planId: string; table: boolean }) {
-  const period = useAtomValue(planPeriodAtom(planId));
-  const lines = useAtomValue(planCapLinesAtom(planId));
+  const period = useAtomValue(selectAtom(planAtom(planId), planPeriod, deepEqual));
+  const calculated = useAtomValue(calculatedPlanAtom(planId));
+  const capResult = useAtomValue(planResultAtom(planId));
+  const lines = calculated && capResult ? capLines(calculated, capResult) : [];
   const today = useToday(now);
   const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
   if (!period || lines.length === 0) return null;
@@ -242,7 +246,7 @@ function PlanShareButton({ planId }: { planId: string }) {
 }
 
 function PlanBreakdown({ planId }: { planId: string }) {
-  const totals = useAtomValue(planGroupTotalsAtom(planId));
+  const totals = useAtomValue(selectAtom(planResultAtom(planId), groupTotals, deepEqual));
   if (!totals) return null;
   return (
     <Panel label="ポイントの内訳">
@@ -255,7 +259,7 @@ function PlanBreakdown({ planId }: { planId: string }) {
 }
 
 function PlanShopLadder({ planId }: { planId: string }) {
-  const outlook = useAtomValue(planShopOutlookAtom(planId));
+  const outlook = useAtomValue(selectAtom(planResultAtom(planId), shopOutlook, deepEqual));
   if (!outlook) return null;
   return (
     <Panel label="あと何店舗回る？">
@@ -280,7 +284,7 @@ function PlanCarryOverNotice({ planId, onCarryOver }: { planId: string; onCarryO
 }
 
 function Home({ planId }: { planId: string }) {
-  const hasResult = useAtomValue(hasPlanResultAtom(planId));
+  const hasResult = useAtomValue(selectAtom(planResultAtom(planId), resultExists));
   // Wider than the `lg` breakpoint, which keeps one column: the summary is a column to the right of
   // the orders, the orders are a table, and the settings and a month's SPU open in a side panel.
   const wide = useBreakpointValue({ base: true, lg: false });
@@ -290,15 +294,12 @@ function Home({ planId }: { planId: string }) {
   const spuPage = useSetAtom(spuPageFromPlanAtom);
   // On a wide screen a month's SPU opens in a side panel over the plan; elsewhere it is its own page.
   const { open: openSpu } = spuPanel;
-  const changeSpu = useCallback(
-    (month: string) => {
-      if (wide) openSpu(month);
-      else {
-        void navigate(spuPage(planId, month));
-      }
-    },
-    [wide, openSpu, navigate, spuPage, planId],
-  );
+  const changeSpu = (month: string) => {
+    if (wide) openSpu(month);
+    else {
+      void navigate(spuPage(planId, month));
+    }
+  };
   const settingsPanel = useDisclosure();
   // A month's SPU opened from the settings goes back to them when it is closed, however it is.
   const [spuFromSettings, setSpuFromSettings] = useState(false);
@@ -316,7 +317,7 @@ function Home({ planId }: { planId: string }) {
     }
   }
   const { open: editOrder } = editor;
-  const addOrder = useCallback(() => editOrder(NEW_ORDER), [editOrder]);
+  const addOrder = () => editOrder(NEW_ORDER);
   const requestEventChange = useSetAtom(eventChangeRequestAtom);
   // The settings open with the card of the plan's event opened: in the side panel on a wide screen, else their own page.
   const carryOver = () => {
@@ -447,3 +448,14 @@ function Home({ planId }: { planId: string }) {
 export function PlanHome({ id }: { id: string | undefined }) {
   return <PlanPage id={id} title={(name) => name} render={(planId) => <Home planId={planId} />} />;
 }
+
+const planName = (plan: Plan | undefined) => plan?.name;
+const planPeriod = (plan: Plan | undefined) => plan?.period;
+const groupTotals = (result: CalculationResult | undefined) => result?.groupTotals;
+const shopOutlook = (result: CalculationResult | undefined) => result?.shopAroundOutlook ?? null;
+const resultExists = (result: CalculationResult | undefined) => result !== undefined;
+const hasOrder = (order: Order | undefined) => order !== undefined;
+const recentPlanNames = (plans: Plan[]) =>
+  [...plans]
+    .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
+    .map(({ id, name }) => ({ id, name }));
