@@ -12,6 +12,7 @@ import { END_BEFORE_START, START_AFTER_END, DateSchema, PointsSchema } from "@wo
 import { officialEventsAtom } from "#/routes/-official-events.ts";
 import { isAddedCampaign } from "./campaign-toggles.tsx";
 import { useDeleteCampaign } from "./delete-campaign.tsx";
+import { EventCarryOver, isEventBenefit, useEventChangeRequest } from "./event-attacher.tsx";
 import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
 
 type ShopAroundBenefit = Extract<Benefit, { kind: "shop-around" }>;
@@ -42,10 +43,11 @@ function summaryOf(benefit: ShopAroundBenefit, period: { start: string; end: str
 
 /** 「買いまわりと上限」: a one-line summary that opens to override its period and cap. */
 export function ShopAroundSettings({ plan }: { plan: Plan }) {
-  const [open, { toggle }] = useBoolean();
+  const [open, { on, toggle }] = useBoolean();
   const sectionRef = useRef<HTMLElement>(null);
   const deletion = useDeleteCampaign(plan, sectionRef);
   const benefit = shopAroundOf(plan);
+  useEventChangeRequest(benefit !== undefined && isEventBenefit(plan, benefit), on, sectionRef);
 
   return (
     <Card.Root
@@ -164,6 +166,7 @@ function ShopAroundEditor({
           direction="column"
           gap="2.5"
         >
+          {isEventBenefit(plan, benefit) ? <EventCarryOver plan={plan} /> : null}
           <Box
             display="grid"
             gridTemplateColumns="repeat(2, minmax(0, 1fr))"

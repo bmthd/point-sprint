@@ -19,7 +19,7 @@ import { planResultAtom } from "#/state/derived.ts";
 import { plansAtom } from "#/state/query-atoms.ts";
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { NEW_ORDER, OrderEditor } from "#/routes/(plan)/-order-editor/order-editor.tsx";
-import { eventAttacherRequestAtom } from "#/routes/(plan)/-plan-settings/event-attacher.tsx";
+import { eventChangeRequestAtom } from "#/routes/(plan)/-plan-settings/event-attacher.tsx";
 import { SettingsPanelButton } from "#/routes/(plan)/-plan-settings/plan-settings.tsx";
 import { ColumnHead } from "#/ui/column-head.tsx";
 import { RouterIconButton } from "#/ui/router-link.tsx";
@@ -201,12 +201,12 @@ function Home({ plan }: { plan: Plan }) {
   const { open: editOrder } = editor;
   const addOrder = useCallback(() => editOrder(NEW_ORDER), [editOrder]);
   const today = useToday(now);
-  const requestEventAttacher = useSetAtom(eventAttacherRequestAtom);
-  // The settings open at 「公式イベント」: in the side panel on a wide screen, else their own page.
+  const requestEventChange = useSetAtom(eventChangeRequestAtom);
+  // The settings open with the card of the plan's event opened: in the side panel on a wide screen, else their own page.
   const carryOver = () => {
-    requestEventAttacher(true);
+    requestEventChange(true);
     if (wide) settingsPanel.onOpen();
-    // 「公式イベント」 scrolls itself into view, which resetting the scroll would undo.
+    // The card scrolls itself into view, which resetting the scroll would undo.
     else void navigate({ to: "/plan/settings", search: { id: plan.id }, resetScroll: false });
   };
   const [taxRate, setTaxRate] = useState<TaxRate>(0.1);

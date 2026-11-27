@@ -1,4 +1,4 @@
-import type { OfficialEvent, Plan } from "@workspaces/domain";
+import type { Benefit, OfficialEvent, Plan } from "@workspaces/domain";
 import {
   Button,
   Card,
@@ -10,10 +10,11 @@ import {
   useDisclosure,
 } from "@workspaces/ui";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useEffect, useRef, useState } from "react";
+import { type RefObject, useEffect, useState } from "react";
 import { attachToEventAtom, carryOverToEventAtom } from "#/state/plan-operations.ts";
 import { officialEventsAtom } from "#/routes/-official-events.ts";
 import { useToday } from "#/routes/-use-today.ts";
+import { isAddedCampaign } from "./campaign-toggles.tsx";
 import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
 
 const periodText = (event: OfficialEvent) => whenText({ type: "range", ...event.period });
@@ -21,96 +22,162 @@ const periodText = (event: OfficialEvent) => whenText({ type: "range", ...event.
 const now = () => new Date();
 
 /**
- * Set to bring 「公式イベント」 into view the next time it shows: the plan's 「別のイベントに引き継ぐ」
- * opens the settings with it. It waits for the events to load, and is cleared once shown.
+ * Set to open the card of the plan's event, where it is carried over to another event, the next
+ * time the settings show: the plan's 「別のイベントに引き継ぐ」 opens the settings with it.
  */
-export const eventAttacherRequestAtom = atom(false);
+export const eventChangeRequestAtom = atom(false);
+
+/** Whether `benefit` came with the plan's event, so that its card is where the event is changed. */
+export function isEventBenefit(plan: Plan, benefit: Benefit) {
+  return plan.officialEventId !== undefined && !isAddedCampaign(plan, benefit);
+}
 
 /**
- * 「公式イベント」: attaches a plan made without an event to one of the master's events, or carries a
- * plan of an event over to another one that has not ended, after saying what the event's period and
- * benefits replace. Carrying over also releases the plan's hold. Shown once the events have loaded.
+ * Opens the card of the plan's event and brings it into view when `eventChangeRequestAtom` asks
+ * for it. `enabled` on that one card only: the first that sees the request clears it.
+ */
+export function useEventChangeRequest(
+  enabled: boolean,
+  open: () => void,
+  section: RefObject<HTMLElement | null>,
+) {
+  const [requested, setRequested] = useAtom(eventChangeRequestAtom);
+  useEffect(() => {
+    if (!requested || !enabled) return;
+    setRequested(false);
+    open();
+    // Once the card has opened, so that its fields are in view too.
+    requestAnimationFrame(() => section.current?.scrollIntoView({ block: "start" }));
+  }, [requested, enabled, open, section, setRequested]);
+}
+
+/**
+ * 「公式イベント」: attaches a plan made without an event to one of the master's events, after
+ * saying what the event's period and benefits replace. Shown only on a plan without an event, and
+ * once the events have loaded. A plan of an event changes it in its event's card (`EventCarryOver`).
  */
 export function EventAttacher({ plan }: { plan: Plan }) {
   const events = useAtomValue(officialEventsAtom);
   const attach = useSetAtom(attachToEventAtom);
+  const save = useSaveSettingsChange(plan.id);
+  if (plan.officialEventId !== undefined || events.length === 0) return null;
+  return (
+    <Card.Root as="section" aria-label="公式イベント">
+      <Card.Body alignItems="stretch" gap="3">
+        <EventPicker
+          plan={plan}
+          events={events}
+          label="公式イベントに結びつける"
+          note="イベントの前に作ったプランを、あとから公開されたイベントに結びつけます。期間と特典がイベントのものになります。"
+          action="結びつける"
+          title="公式イベントに結びつけますか？"
+          onChoose={(event) => save(attach({ planId: plan.id, event }))}
+        />
+      </Card.Body>
+    </Card.Root>
+  );
+}
+
+/**
+ * 「イベント」 at the top of the opened card of the plan's event: carries the plan over to another
+ * event that has not ended, which also releases its hold. Says so when there is none yet.
+ */
+export function EventCarryOver({ plan }: { plan: Plan }) {
+  const events = useAtomValue(officialEventsAtom);
   const carryOver = useSetAtom(carryOverToEventAtom);
   const save = useSaveSettingsChange(plan.id);
   const today = useToday(now);
+  if (events.length === 0) return null;
+  const candidates = events.filter(
+    (candidate) =>
+      candidate.id !== plan.officialEventId &&
+      (today === undefined || candidate.period.end >= today),
+  );
+  if (candidates.length === 0) {
+    return (
+      <Field.Root label="イベント">
+        <Text fontSize="sm" color="fg.muted">
+          引き継げるイベントはまだありません。次のイベントが公開されたら、ここで選べます。
+        </Text>
+      </Field.Root>
+    );
+  }
+  return (
+    <EventPicker
+      plan={plan}
+      events={candidates}
+      label="イベント"
+      placeholder="別のイベントを選ぶ"
+      note="注文を残したまま、プランを別のイベントに引き継ぎます。期間と特典がイベントのものになります。"
+      action="引き継ぐ"
+      title="別のイベントに引き継ぎますか？"
+      releasesHold={plan.onHold === true}
+      onChoose={(event) => save(carryOver({ planId: plan.id, event }))}
+    />
+  );
+}
+
+/** Picks one of `events`, and `onChoose` it after saying what the event's period and benefits replace. */
+function EventPicker({
+  plan,
+  events,
+  label,
+  placeholder = "イベントを選ぶ",
+  note,
+  action,
+  title,
+  releasesHold = false,
+  onChoose,
+}: {
+  plan: Plan;
+  events: OfficialEvent[];
+  label: string;
+  placeholder?: string;
+  note: string;
+  action: string;
+  title: string;
+  releasesHold?: boolean;
+  onChoose: (event: OfficialEvent) => void;
+}) {
   const { open, onOpen, onClose } = useDisclosure();
   const [eventId, setEventId] = useState("");
-  const [requested, setRequested] = useAtom(eventAttacherRequestAtom);
-  const section = useRef<HTMLElement>(null);
-  const shown = events.length > 0;
-  useEffect(() => {
-    if (!requested || !shown) return;
-    section.current?.scrollIntoView({ block: "center" });
-    setRequested(false);
-  }, [requested, shown, setRequested]);
-  if (!shown) return null;
-
-  const carrying = plan.officialEventId !== undefined;
-  const candidates = carrying
-    ? events.filter(
-        (candidate) =>
-          candidate.id !== plan.officialEventId &&
-          (today === undefined || candidate.period.end >= today),
-      )
-    : events;
-  const event = candidates.find((candidate) => candidate.id === eventId);
+  const event = events.find((candidate) => candidate.id === eventId);
   const outside = event
     ? plan.orders.filter(
         (order) => order.date < event.period.start || order.date > event.period.end,
       ).length
     : 0;
-  const action = carrying ? "引き継ぐ" : "結びつける";
-
   return (
-    <Card.Root as="section" ref={section} aria-label="公式イベント">
-      <Card.Body alignItems="stretch" gap="3">
-        {candidates.length === 0 ? (
-          <>
-            <Text fontWeight="bold">別のイベントに引き継ぐ</Text>
-            <Text fontSize="sm" color="fg.muted">
-              引き継げるイベントはまだありません。次のイベントが公開されたら、ここで選べます。
-            </Text>
-          </>
-        ) : (
-          <>
-            <Field.Root label={carrying ? "別のイベントに引き継ぐ" : "公式イベントに結びつける"}>
-              {/* Not `placeholder`, which would name the select in place of its label. */}
-              <NativeSelect.Root
-                value={eventId}
-                onChange={(change) => setEventId(change.currentTarget.value)}
-              >
-                <option value="">イベントを選ぶ</option>
-                {candidates.map((candidate) => (
-                  <option key={candidate.id} value={candidate.id}>
-                    {candidate.name}（{periodText(candidate)}）
-                  </option>
-                ))}
-              </NativeSelect.Root>
-            </Field.Root>
-            <Text fontSize="xs" color="fg.muted">
-              {carrying
-                ? "注文を残したまま、プランを別のイベントに移します。期間と特典がイベントのものになります。"
-                : "イベントの前に作ったプランを、あとから公開されたイベントに結びつけます。期間と特典がイベントのものになります。"}
-            </Text>
-            <Button
-              variant="outline"
-              colorScheme="primary"
-              alignSelf="flex-start"
-              disabled={!event}
-              onClick={onOpen}
-            >
-              {action}
-            </Button>
-          </>
-        )}
-      </Card.Body>
+    <>
+      <Field.Root label={label}>
+        {/* Not `placeholder`, which would name the select in place of its label. */}
+        <NativeSelect.Root
+          value={eventId}
+          onChange={(change) => setEventId(change.currentTarget.value)}
+        >
+          <option value="">{placeholder}</option>
+          {events.map((candidate) => (
+            <option key={candidate.id} value={candidate.id}>
+              {candidate.name}（{periodText(candidate)}）
+            </option>
+          ))}
+        </NativeSelect.Root>
+      </Field.Root>
+      <Text fontSize="xs" color="fg.muted">
+        {note}
+      </Text>
+      <Button
+        variant="outline"
+        colorScheme="primary"
+        alignSelf="flex-start"
+        disabled={!event}
+        onClick={onOpen}
+      >
+        {action}
+      </Button>
       <Modal.Root
         open={open}
-        title={carrying ? "別のイベントに引き継ぎますか？" : "公式イベントに結びつけますか？"}
+        title={title}
         body={
           <List.Root styleType="disc" gap="1">
             <List.Item>
@@ -126,7 +193,7 @@ export function EventAttacher({ plan }: { plan: Plan }) {
                 件あります。注文は残り、期間の外の注文として扱います。
               </List.Item>
             ) : null}
-            {carrying && plan.onHold ? (
+            {releasesHold ? (
               <List.Item>プランの保留を解き、ほかのプランと合わせて計算します。</List.Item>
             ) : null}
           </List.Root>
@@ -137,14 +204,12 @@ export function EventAttacher({ plan }: { plan: Plan }) {
         onCancel={onClose}
         onSuccess={() => {
           if (event) {
-            save(
-              carrying ? carryOver({ planId: plan.id, event }) : attach({ planId: plan.id, event }),
-            );
+            onChoose(event);
             setEventId("");
           }
           onClose();
         }}
       />
-    </Card.Root>
+    </>
   );
 }

@@ -707,10 +707,17 @@ test("carries a held plan of an ended event over to an event that has not ended,
   };
   const screen = await renderSettings(held, undefined, [], [octoberEvent, ended, next]);
 
-  const section = screen.getByRole("region", { name: "公式イベント" });
-  const picker = section.getByRole("combobox", { name: "別のイベントに引き継ぐ" });
+  // The plan's event is changed in its card, the one that opens to its period and cap.
+  await expect
+    .element(screen.getByRole("region", { name: "公式イベント" }))
+    .not.toBeInTheDocument();
+  const section = screen.getByRole("region", { name: "買いまわりと上限" });
+  await section.getByRole("button", { name: /お買い物マラソン/ }).click();
+  const picker = section.getByRole("combobox", { name: "イベント" });
   // Neither the plan's own event nor one that has ended is offered.
-  await expect.element(picker).toMatchTextContent("イベントを選ぶ12月のマラソン（12/4〜12/11）");
+  await expect
+    .element(picker)
+    .toMatchTextContent("別のイベントを選ぶ12月のマラソン（12/4〜12/11）");
   await picker.selectOptions("12月のマラソン（12/4〜12/11）");
   await section.getByRole("button", { name: "引き継ぐ" }).click();
 
@@ -734,13 +741,16 @@ test("a plan of an event with no event to carry it over to says that one can be 
     [],
     [octoberEvent],
   );
-  const section = screen.getByRole("region", { name: "公式イベント" });
+  const section = screen.getByRole("region", { name: "買いまわりと上限" });
+  await section.getByRole("button", { name: /お買い物マラソン/ }).click();
   await expect
-    .element(section)
-    .toMatchTextContent(
-      "別のイベントに引き継ぐ引き継げるイベントはまだありません。次のイベントが公開されたら、ここで選べます。",
-    );
-  await expect.element(section.getByRole("combobox")).not.toBeInTheDocument();
+    .element(
+      section.getByText(
+        "引き継げるイベントはまだありません。次のイベントが公開されたら、ここで選べます。",
+      ),
+    )
+    .toBeVisible();
+  await expect.element(section.getByRole("combobox", { name: "イベント" })).not.toBeInTheDocument();
 });
 
 test("the hold switch holds the plan and releases it", async () => {

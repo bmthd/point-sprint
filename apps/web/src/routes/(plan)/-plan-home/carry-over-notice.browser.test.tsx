@@ -40,6 +40,20 @@ test("a held plan of an ended event offers to carry it over, and opens the setti
   expect(screen.router.state.location.search).toEqual({ id: planOfEvent().id });
 });
 
+test("on a wide screen, the settings open in the side panel with the card of the plan's event opened", async () => {
+  await page.viewport(1470, 900);
+  await render(planOfEvent({ onHold: true }));
+  await carryOver().click();
+  const panel = page.getByRole("dialog", { name: "プランの設定" });
+  await expect
+    .element(
+      panel
+        .getByRole("region", { name: "買いまわりと上限" })
+        .getByRole("button", { name: /ショップ買いまわり|お買い物マラソン/ }),
+    )
+    .toHaveAttribute("aria-expanded", "true");
+});
+
 test("a plan that is not held, or whose event has not ended, is not offered to be carried over", async () => {
   await render(planOfEvent());
   await expect.element(page.getByRole("heading", { name: planOfEvent().name })).toBeVisible();
