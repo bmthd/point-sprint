@@ -1,7 +1,7 @@
-import type { Plan } from "@workspaces/domain";
 import { Box, Card, Flex, List, Text, VisuallyHidden } from "@workspaces/ui";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { type ReactNode, useId, useRef } from "react";
+import { planOrderMetaAtom } from "#/state/derived.ts";
 import { reorderModeAtom } from "#/routes/(plan)/-ui.ts";
 import { withMonthSeparators } from "./order-months.tsx";
 import { HoldHintContext, OrderCard } from "./order-card.tsx";
@@ -62,20 +62,20 @@ export function OrderListTable({ children }: { children: ReactNode }) {
  * held ones get 「保留」 instead.
  */
 export function OrderList({
-  plan,
+  planId,
   onEdit,
   onSpu,
 }: {
-  plan: Plan;
+  planId: string;
   onEdit: (orderId: string) => void;
   /** Opens a month's SPU from the month's separator, when the orders are of more than one month. */
   onSpu?: ((month: string) => void) | undefined;
 }) {
+  const orders = useAtomValue(planOrderMetaAtom(planId));
   const [reordering, setReordering] = useAtom(reorderModeAtom);
   const heading = useRef<HTMLHeadingElement>(null);
-  const { askDelete, askReset, dialog } = useOrderConfirm(plan, heading);
+  const { askDelete, askReset, dialog } = useOrderConfirm(planId, heading, orders.length);
 
-  const orders = plan.orders;
   let counted = 0;
 
   return (
@@ -103,12 +103,13 @@ export function OrderList({
       ) : (
         <OrderListTable>
           {withMonthSeparators({
-            plan,
+            planId,
+            orders,
             onSpu,
             items: orders.map((order, index) => (
               <OrderCard
                 key={order.id}
-                planId={plan.id}
+                planId={planId}
                 orderId={order.id}
                 badge={order.onHold ? null : ++counted}
                 index={index}

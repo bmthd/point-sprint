@@ -3,16 +3,13 @@ import {
   type DateRule,
   type OrderTag,
   type Period,
-  type Plan,
   type ShopTag,
   type TaxRate,
-  capLines,
   daysOf,
   inDateRule,
 } from "@workspaces/domain";
 import { useAtomValue } from "jotai";
-import { useMemo } from "react";
-import { calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
+import { planCapLinesAtom } from "#/state/derived.ts";
 import { weekdaysText } from "#/ui/dates.ts";
 import { yen } from "#/ui/format.ts";
 
@@ -20,13 +17,8 @@ import { yen } from "#/ui/format.ts";
 export const CAP_TAX_RATES: TaxRate[] = [0.1, 0.08, 0];
 
 /** The plan's caps, with the account and the SPU it is calculated with. */
-export function useCapLines(plan: Plan): CapLine[] {
-  const result = useAtomValue(planResultAtom(plan.id));
-  const calculated = useAtomValue(calculatedPlanAtom(plan.id));
-  return useMemo(
-    () => (result && calculated ? capLines(calculated, result) : []),
-    [calculated, result],
-  );
+export function useCapLines(planId: string): CapLine[] {
+  return useAtomValue(planCapLinesAtom(planId));
 }
 
 const monthDay = (date: string) => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;

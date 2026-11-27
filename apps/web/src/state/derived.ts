@@ -9,6 +9,7 @@ import {
   accountSettingsOf,
   bigOneMoreShopGain,
   oneMoreShopGain,
+  capLines,
 } from "@workspaces/domain";
 import { atom } from "jotai";
 import { atomFamily } from "jotai-family";
@@ -53,6 +54,36 @@ export const planAtom = atomFamily((id: string) =>
   selectAtom(plansAtom, (plans) => plans.find((plan) => plan.id === id)),
 );
 
+/** The page gate and headings do not need the rest of the plan. */
+export const planNameAtom = atomFamily((id: string) => atom((get) => get(planAtom(id))?.name));
+
+export const planOnHoldAtom = atomFamily((id: string) =>
+  atom((get) => get(planAtom(id))?.onHold ?? false),
+);
+
+export const planPeriodAtom = atomFamily((id: string) =>
+  selectAtom(planAtom(id), (plan) => plan?.period, deepEqual),
+);
+
+/** Only list position, month separators and counted badges affect the list itself. */
+export const planOrderMetaAtom = atomFamily((id: string) =>
+  selectAtom(
+    planAtom(id),
+    (plan) => plan?.orders.map(({ id, date, onHold }) => ({ id, date, onHold })) ?? [],
+    deepEqual,
+  ),
+);
+
+/** The switcher's list changes only when a plan's name or position changes. */
+export const recentPlanNamesAtom = selectAtom(
+  plansAtom,
+  (plans) =>
+    [...plans]
+      .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
+      .map(({ id, name }) => ({ id, name })),
+  deepEqual,
+);
+
 /** The plan as it is calculated, with the SPU among its benefits. */
 export const calculatedPlanAtom = atomFamily((id: string) =>
   selectAtom(calculatedPlansAtom, (plans) => plans.find((plan) => plan.id === id), deepEqual),
@@ -67,8 +98,34 @@ export const orderAtom = atomFamily(
   sameOrderKey,
 );
 
+export const hasOrderAtom = atomFamily(
+  ({ planId, orderId }: OrderKey) =>
+    atom((get) => get(orderAtom({ planId, orderId })) !== undefined),
+  sameOrderKey,
+);
+
 export const planResultAtom = atomFamily((id: string) =>
   selectAtom(calculationAtom, (results) => results.get(id), deepEqual),
+);
+
+export const planCapLinesAtom = atomFamily((id: string) =>
+  selectAtom(
+    atom((get) => {
+      const plan = get(calculatedPlanAtom(id));
+      const result = get(planResultAtom(id));
+      return plan && result ? capLines(plan, result) : [];
+    }),
+    (lines) => lines,
+    deepEqual,
+  ),
+);
+
+export const planGroupTotalsAtom = atomFamily((id: string) =>
+  selectAtom(planResultAtom(id), (result) => result?.groupTotals, deepEqual),
+);
+
+export const planShopOutlookAtom = atomFamily((id: string) =>
+  selectAtom(planResultAtom(id), (result) => result?.shopAroundOutlook ?? null, deepEqual),
 );
 
 const sameRows = (a: OrderPoints, b: OrderPoints) =>

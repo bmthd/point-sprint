@@ -1,5 +1,5 @@
 import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
-import { MonthSchema, type Plan, spuMonthsOfPlan, accountIdOf } from "@workspaces/domain";
+import { MonthSchema, spuMonthsOfPlan, accountIdOf } from "@workspaces/domain";
 import {
   Box,
   Button,
@@ -14,7 +14,7 @@ import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as v from "valibot";
 
-import { accountSettingsAtom } from "#/state/derived.ts";
+import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
 import { useToday } from "#/routes/-use-today.ts";
 import { SpuMonthEditor, spuMonthText } from "#/routes/(plan)/-spu-month/spu-month-editor.tsx";
 
@@ -61,13 +61,13 @@ const now = () => new Date();
 
 /** The SPU of `month` in a side panel over the plan, on a desktop. Nothing while `month` is not set. */
 export function SpuPanel({
-  plan,
+  planId,
   month,
   onMonth,
   onClose,
   backTo,
 }: {
-  plan: Plan;
+  planId: string;
   month: string | undefined;
   onMonth: (month: string) => void;
   /** Closes the panel: back to `backTo` when it is set. */
@@ -75,9 +75,10 @@ export function SpuPanel({
   /** What the panel was opened from, which closing it goes back to: 「プランの設定」. */
   backTo?: string | undefined;
 }) {
+  const plan = useAtomValue(planAtom(planId));
   const settings = useAtomValue(accountSettingsAtom);
   const today = useToday(now);
-  const months = spuMonthsOfPlan(plan);
+  const months = plan ? spuMonthsOfPlan(plan) : [];
   // While the panel slides out, it keeps showing the month it was closed on.
   const [last, setLast] = useState(month);
   if (month !== undefined && month !== last) setLast(month);
@@ -86,6 +87,7 @@ export function SpuPanel({
   const [lastBackTo, setLastBackTo] = useState(backTo);
   if (month !== undefined && backTo !== lastBackTo) setLastBackTo(backTo);
   const back = month === undefined ? lastBackTo : backTo;
+  if (!plan) return null;
   return (
     <Drawer.Root
       open={month !== undefined}

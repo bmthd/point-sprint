@@ -1,5 +1,5 @@
 import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
-import type { Plan, TaxRate } from "@workspaces/domain";
+import type { TaxRate } from "@workspaces/domain";
 import {
   Box,
   Flex,
@@ -15,8 +15,18 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
-import { bigOneMoreShopGainAtom, planResultAtom } from "#/state/derived.ts";
-import { plansAtom } from "#/state/query-atoms.ts";
+import {
+  bigOneMoreShopGainAtom,
+  planResultAtom,
+  planAtom,
+  planNameAtom,
+  planPeriodAtom,
+  hasPlanResultAtom,
+  hasOrderAtom,
+  recentPlanNamesAtom,
+  planGroupTotalsAtom,
+  planShopOutlookAtom,
+} from "#/state/derived.ts";
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { NEW_ORDER, OrderEditor } from "#/routes/(plan)/-order-editor/order-editor.tsx";
 import { eventChangeRequestAtom } from "#/routes/(plan)/-plan-settings/event-attacher.tsx";
@@ -43,18 +53,17 @@ import { SpuPanel, useSpuPanelTarget } from "./spu-panel.tsx";
 import { spuPageFromPlanAtom } from "#/routes/(plan)/-spu-month/spu-from.ts";
 import { SpuSettingsCard } from "#/routes/(plan)/-spu-month/spu-month-rows.tsx";
 
-function PlanSwitcher({ plan }: { plan: Plan }) {
+function PlanSwitcher({ planId }: { planId: string }) {
   const navigate = useNavigate();
-  const plans = useAtomValue(plansAtom);
-  const others = plans
-    .filter((other) => other.id !== plan.id)
-    .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+  const name = useAtomValue(planNameAtom(planId));
+  const plans = useAtomValue(recentPlanNamesAtom);
+  const others = plans.filter((other) => other.id !== planId);
   return (
     <Box display="flex" alignItems="center" gap="1" minW="0">
       <Heading as="h1" fontSize="md" lineClamp={1}>
-        {plan.name}
+        {name}
       </Heading>
-      <PlanHoldBadge plan={plan} />
+      <PlanHoldBadge planId={planId} />
       <Menu.Root>
         <Menu.Trigger>
           <Button
@@ -88,7 +97,7 @@ function PlanSwitcher({ plan }: { plan: Plan }) {
  * The plan's own bar under the site header, while the screen is one column: which plan this is,
  * and its settings, their own page. Two columns start with these instead.
  */
-function PlanBar({ plan }: { plan: Plan }) {
+function PlanBar({ planId }: { planId: string }) {
   return (
     <Flex
       maxW="1280px"
@@ -100,10 +109,10 @@ function PlanBar({ plan }: { plan: Plan }) {
       pl={{ base: "6", lg: "3" }}
       pr={{ base: "6", lg: "2" }}
     >
-      <PlanSwitcher plan={plan} />
+      <PlanSwitcher planId={planId} />
       <RouterIconButton
         to="/plan/settings"
-        search={{ id: plan.id }}
+        search={{ id: planId }}
         aria-label="プランの設定（SPU・上限・キャンペーン）"
         size="lg"
         variant="ghost"
@@ -124,8 +133,7 @@ const Panel = (props: { children: ReactNode; label: string; id?: string }) => (
  * The order editor is open while the URL has `edit=` (`new`, or an order id), so the back button
  * closes it. Closing it goes back when this page opened it, and otherwise drops `edit=` in place.
  */
-function useOrderEditorTarget(plan: Plan) {
-  const planId = plan.id;
+function useOrderEditorTarget(planId: string) {
   const navigate = useNavigate();
   const router = useRouter();
   const search: { edit?: unknown } = useSearch({ strict: false });
@@ -150,10 +158,8 @@ function useOrderEditorTarget(plan: Plan) {
     // Closed by the browser's back button: the next close must not go back again.
     if (target === undefined) openedHere.current = false;
   }, [target]);
-  const missing =
-    target !== undefined &&
-    target !== NEW_ORDER &&
-    !plan.orders.some((order) => order.id === target);
+  const exists = useAtomValue(hasOrderAtom({ planId, orderId: target ?? "" }));
+  const missing = target !== undefined && target !== NEW_ORDER && !exists;
   useEffect(() => {
     // `edit=` names an order that is not (or no longer) in the plan: drop it from the URL.
     if (!missing) return;
@@ -165,23 +171,134 @@ function useOrderEditorTarget(plan: Plan) {
 
 const now = () => new Date();
 
-function Home({ plan }: { plan: Plan }) {
-  const result = useAtomValue(planResultAtom(plan.id));
-  useSpuLossNotice(plan);
+function SpuLossNotice({ planId }: { planId: string }) {
+  useSpuLossNotice(planId);
+  return null;
+}
+
+function PlanSummary({ planId, compact }: { planId: string; compact: boolean }) {
+  const plan = useAtomValue(planAtom(planId));
+  const result = useAtomValue(planResultAtom(planId));
+  const lines = useCapLines(planId);
+  const today = useToday(now);
+  const gain = useAtomValue(bigOneMoreShopGainAtom({ planId, today }));
+  if (!plan || !result) return null;
+  return (
+    <SummaryCard
+      plan={plan}
+      result={result}
+      compact={compact}
+      lines={lines}
+      oneMoreShopGain={gain}
+    />
+  );
+}
+
+function PlanCaps({ planId, table }: { planId: string; table: boolean }) {
+  const period = useAtomValue(planPeriodAtom(planId));
+  const lines = useCapLines(planId);
+  const today = useToday(now);
+  const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
+  if (!period || lines.length === 0) return null;
+  return (
+    <Panel id="caps" label="上限までの残り">
+      <CapList
+        lines={lines}
+        today={today}
+        period={period}
+        taxRate={taxRate}
+        onTaxRate={setTaxRate}
+        table={table}
+      />
+    </Panel>
+  );
+}
+
+function PlanWarnings({ planId }: { planId: string }) {
+  const plan = useAtomValue(planAtom(planId));
+  const result = useAtomValue(planResultAtom(planId));
+  if (!plan || !result) return null;
+  return (
+    <Warnings
+      plan={plan}
+      warnings={result.warnings}
+      hasShopAround={result.shopAroundOutlook !== null}
+    />
+  );
+}
+
+function PlanShareButton({ planId }: { planId: string }) {
+  const plan = useAtomValue(planAtom(planId));
+  const result = useAtomValue(planResultAtom(planId));
+  if (!plan || !result) return null;
+  return (
+    <ShareButton
+      label="結果をシェア"
+      target={resultShareTarget(
+        planFigures(result, effectiveRate(result.total, countedAmount(plan)), plan.officialEventId),
+      )}
+    />
+  );
+}
+
+function PlanBreakdown({ planId }: { planId: string }) {
+  const totals = useAtomValue(planGroupTotalsAtom(planId));
+  if (!totals) return null;
+  return (
+    <Panel label="ポイントの内訳">
+      <Heading as="h3" fontSize="sm">
+        ポイントの内訳
+      </Heading>
+      <PointBreakdown totals={totals} />
+    </Panel>
+  );
+}
+
+function PlanShopLadder({ planId }: { planId: string }) {
+  const outlook = useAtomValue(planShopOutlookAtom(planId));
+  if (!outlook) return null;
+  return (
+    <Panel label="あと何店舗回る？">
+      <ShopLadder outlook={outlook} />
+    </Panel>
+  );
+}
+
+function PlanBottomBar({ planId, onAdd }: { planId: string; onAdd: () => void }) {
+  const plan = useAtomValue(planAtom(planId));
+  const result = useAtomValue(planResultAtom(planId));
+  const today = useToday(now);
+  const gain = useAtomValue(bigOneMoreShopGainAtom({ planId, today }));
+  if (!plan || !result) return null;
+  return <BottomBar plan={plan} result={result} onAdd={onAdd} oneMoreShopGain={gain} />;
+}
+
+function PlanCarryOverNotice({ planId, onCarryOver }: { planId: string; onCarryOver: () => void }) {
+  const plan = useAtomValue(planAtom(planId));
+  const today = useToday(now);
+  return plan ? <CarryOverNotice plan={plan} today={today} onCarryOver={onCarryOver} /> : null;
+}
+
+function Home({ planId }: { planId: string }) {
+  const hasResult = useAtomValue(hasPlanResultAtom(planId));
   // Wider than the `lg` breakpoint, which keeps one column: the summary is a column to the right of
   // the orders, the orders are a table, and the settings and a month's SPU open in a side panel.
   const wide = useBreakpointValue({ base: true, lg: false });
-  const editor = useOrderEditorTarget(plan);
-  const spuPanel = useSpuPanelTarget(plan.id);
+  const editor = useOrderEditorTarget(planId);
+  const spuPanel = useSpuPanelTarget(planId);
   const navigate = useNavigate();
   const spuPage = useSetAtom(spuPageFromPlanAtom);
   // On a wide screen a month's SPU opens in a side panel over the plan; elsewhere it is its own page.
-  const changeSpu = (month: string) => {
-    if (wide) spuPanel.open(month);
-    else {
-      void navigate(spuPage(plan, month));
-    }
-  };
+  const { open: openSpu } = spuPanel;
+  const changeSpu = useCallback(
+    (month: string) => {
+      if (wide) openSpu(month);
+      else {
+        void navigate(spuPage(planId, month));
+      }
+    },
+    [wide, openSpu, navigate, spuPage, planId],
+  );
   const settingsPanel = useDisclosure();
   // A month's SPU opened from the settings goes back to them when it is closed, however it is.
   const [spuFromSettings, setSpuFromSettings] = useState(false);
@@ -200,50 +317,24 @@ function Home({ plan }: { plan: Plan }) {
   }
   const { open: editOrder } = editor;
   const addOrder = useCallback(() => editOrder(NEW_ORDER), [editOrder]);
-  const today = useToday(now);
   const requestEventChange = useSetAtom(eventChangeRequestAtom);
   // The settings open with the card of the plan's event opened: in the side panel on a wide screen, else their own page.
   const carryOver = () => {
     requestEventChange(true);
     if (wide) settingsPanel.onOpen();
     // The card scrolls itself into view, which resetting the scroll would undo.
-    else void navigate({ to: "/plan/settings", search: { id: plan.id }, resetScroll: false });
+    else void navigate({ to: "/plan/settings", search: { id: planId }, resetScroll: false });
   };
-  const oneMoreShopGain = useAtomValue(bigOneMoreShopGainAtom({ planId: plan.id, today }));
-  const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
-  const lines = useCapLines(plan);
   const resultHeadingId = useId();
-  if (!result) return null;
-  const outlook = result.shopAroundOutlook;
-  const capList =
-    lines.length === 0 ? null : (
-      <Panel id="caps" label="上限までの残り">
-        <CapList
-          lines={lines}
-          today={today}
-          period={plan.period}
-          taxRate={taxRate}
-          onTaxRate={setTaxRate}
-          table={wide}
-        />
-      </Panel>
-    );
-  const warnings = (
-    <Warnings plan={plan} warnings={result.warnings} hasShopAround={outlook !== null} />
-  );
-  const shareResult = (
-    <ShareButton
-      label="結果をシェア"
-      target={resultShareTarget(
-        planFigures(result, effectiveRate(result.total, countedAmount(plan)), plan.officialEventId),
-      )}
-    />
-  );
+  if (!hasResult) return null;
+  const capList = <PlanCaps planId={planId} table={wide} />;
+  const warnings = <PlanWarnings planId={planId} />;
+  const shareResult = <PlanShareButton planId={planId} />;
 
   return (
     <>
       {/* On a wide screen the plan's name heads the orders' column and its settings the result's. */}
-      {wide ? null : <PlanBar plan={plan} />}
+      {wide ? null : <PlanBar planId={planId} />}
       <Box
         maxW="1280px"
         mx="auto"
@@ -251,7 +342,7 @@ function Home({ plan }: { plan: Plan }) {
         pt={{ base: "6", lg: "1" }}
         _empty={{ display: "none" }}
       >
-        <CarryOverNotice plan={plan} today={today} onCarryOver={carryOver} />
+        <PlanCarryOverNotice planId={planId} onCarryOver={carryOver} />
       </Box>
       {/* One column on a phone (summary first); on a wide screen the summary is the right column. */}
       <Box
@@ -282,7 +373,7 @@ function Home({ plan }: { plan: Plan }) {
                 結果
               </Heading>
               <SettingsPanelButton
-                planId={plan.id}
+                planId={planId}
                 open={settingsPanel.open}
                 onOpen={settingsPanel.onOpen}
                 onClose={settingsPanel.onClose}
@@ -291,32 +382,15 @@ function Home({ plan }: { plan: Plan }) {
             </ColumnHead>
           ) : null}
           <VStack gap="4" alignItems="stretch">
-            <SummaryCard
-              plan={plan}
-              result={result}
-              compact={!wide}
-              lines={lines}
-              oneMoreShopGain={oneMoreShopGain}
-            />
+            <PlanSummary planId={planId} compact={!wide} />
             <SpuSettingsCard
-              planId={plan.id}
+              planId={planId}
               title="SPU の設定"
               note="注文の日付の月で決まります"
               onChange={changeSpu}
             />
-            {wide ? (
-              <Panel label="ポイントの内訳">
-                <Heading as="h3" fontSize="sm">
-                  ポイントの内訳
-                </Heading>
-                <PointBreakdown totals={result.groupTotals} />
-              </Panel>
-            ) : null}
-            {wide && outlook ? (
-              <Panel label="あと何店舗回る？">
-                <ShopLadder outlook={outlook} />
-              </Panel>
-            ) : null}
+            {wide ? <PlanBreakdown planId={planId} /> : null}
+            {wide ? <PlanShopLadder planId={planId} /> : null}
             {wide ? null : warnings}
             {wide ? shareResult : null}
           </VStack>
@@ -324,9 +398,13 @@ function Home({ plan }: { plan: Plan }) {
         <Box gridColumn="1" gridRow={{ base: "1", lg: "2" }} minW="0">
           <Box as="section" id="orders" aria-label="注文のリスト">
             {wide ? (
-              <OrderTable plan={plan} head={<PlanSwitcher plan={plan} />} onSpu={changeSpu} />
+              <OrderTable
+                planId={planId}
+                head={<PlanSwitcher planId={planId} />}
+                onSpu={changeSpu}
+              />
             ) : (
-              <OrderList plan={plan} onEdit={editOrder} onSpu={changeSpu} />
+              <OrderList planId={planId} onEdit={editOrder} onSpu={changeSpu} />
             )}
           </Box>
           {/* On a wide screen the warnings are about the orders, so they sit under them, and the caps
@@ -346,17 +424,16 @@ function Home({ plan }: { plan: Plan }) {
           </VStack>
         )}
       </Box>
-      {wide ? null : (
-        <BottomBar plan={plan} result={result} onAdd={addOrder} oneMoreShopGain={oneMoreShopGain} />
-      )}
+      {wide ? null : <PlanBottomBar planId={planId} onAdd={addOrder} />}
+      <SpuLossNotice planId={planId} />
       <OrderEditor
-        plan={plan}
+        planId={planId}
         target={editor.target}
         layout={wide ? "dialog" : "sheet"}
         onClose={editor.close}
       />
       <SpuPanel
-        plan={plan}
+        planId={planId}
         month={wide ? spuPanel.target : undefined}
         onMonth={spuPanel.show}
         onClose={spuPanel.close}
@@ -368,5 +445,5 @@ function Home({ plan }: { plan: Plan }) {
 
 /** The plan's home at `/plan?id=`. */
 export function PlanHome({ id }: { id: string | undefined }) {
-  return <PlanPage id={id} title={(plan) => plan.name} render={(plan) => <Home plan={plan} />} />;
+  return <PlanPage id={id} title={(name) => name} render={(planId) => <Home planId={planId} />} />;
 }

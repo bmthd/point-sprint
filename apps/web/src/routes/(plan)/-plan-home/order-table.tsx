@@ -1,4 +1,5 @@
-import type { Plan } from "@workspaces/domain";
+import { useAtomValue } from "jotai";
+import { planOrderMetaAtom } from "#/state/derived.ts";
 import { Box, Flex, Card, List, Text, Tooltip, VisuallyHidden } from "@workspaces/ui";
 import { type ReactNode, useCallback, useId, useMemo, useRef, useState } from "react";
 import { OrderAddRow } from "./order-add-row.tsx";
@@ -21,24 +22,32 @@ import { useOrderDrag } from "./use-order-drag.ts";
  * are numbered in list order; held ones get 「保留」 instead.
  */
 export function OrderTable({
-  plan,
+  planId,
+  orderIds,
   head,
   onSpu,
 }: {
-  plan: Plan;
+  planId: string;
+  /** Draw just these orders, while rows still read points from the full stored plan. */
+  orderIds?: readonly string[];
   /** What the column starts with, left of 「リセット」: the plan's name. */
   head: ReactNode;
   /** Opens a month's SPU from the month's separator, when the orders are of more than one month. */
   onSpu?: ((month: string) => void) | undefined;
 }) {
+  const metadata = useAtomValue(planOrderMetaAtom(planId));
+  const orders = useMemo(
+    () =>
+      orderIds === undefined ? metadata : metadata.filter((order) => orderIds.includes(order.id)),
+    [metadata, orderIds],
+  );
   const heading = useRef<HTMLHeadingElement>(null);
   const headingId = useId();
   const handleHintId = useId();
   const holdHintId = useId();
-  const { askDelete, askReset, dialog } = useOrderConfirm(plan, heading);
+  const { askDelete, askReset, dialog } = useOrderConfirm(planId, heading, orders.length);
   const [announcement, setAnnouncement] = useState("");
   const listRef = useRef<HTMLOListElement>(null);
-  const orders = plan.orders;
   const startDrag = useOrderDrag({ listRef, orders });
   const focusAfterMoveRef = useRef<string | null>(null);
   const announce = useCallback((message: string) => setAnnouncement(message), []);
@@ -128,12 +137,13 @@ export function OrderTable({
         >
           <OrderListContext value={context}>
             {withMonthSeparators({
-              plan,
+              planId,
+              orders,
               onSpu,
               items: orders.map((order, index) => (
                 <OrderRow
                   key={order.id}
-                  planId={plan.id}
+                  planId={planId}
                   orderId={order.id}
                   badge={order.onHold ? null : ++counted}
                   index={index}
@@ -145,7 +155,7 @@ export function OrderTable({
               separator: { px: "3", py: "1", bg: "bg.subtle", borderBottomWidth: "1px" },
             })}
           </OrderListContext>
-          <OrderAddRow plan={plan} />
+          <OrderAddRow planId={planId} />
         </List.Root>
       </Card.Root>
       <Text fontSize="xs" color="fg.muted">

@@ -25,12 +25,13 @@ import { monthText } from "#/routes/(plan)/-warnings.tsx";
  * meets it. The SPU stays on, since it may be met outside this app; the notice offers to turn it
  * off for the month.
  */
-export function useSpuLossNotice(plan: Plan) {
+export function useSpuLossNotice(planId: string) {
   const settings = useAtomValue(accountSettingsAtom);
   const plans = useAtomValue(plansAtom);
   const shops = useAtomValue(shopsAtom);
   const months = useAtomValue(spuMonthsAtom);
-  const accountId = planAccountId(withEffectiveAccount(plan, settings));
+  const plan = plans.find((candidate) => candidate.id === planId);
+  const accountId = plan ? planAccountId(withEffectiveAccount(plan, settings)) : undefined;
   const notice = useNotice({ status: "warning", duration: 10000, closeStrategy: "button" });
   const { mutateAsync: saveMonth } = useAtomValue(saveSpuMonthAtom);
   const previous = useRef<{ plans: Plan[]; shops: Shop[] }>(undefined);
@@ -38,7 +39,7 @@ export function useSpuLossNotice(plan: Plan) {
   useEffect(() => {
     const before = previous.current;
     previous.current = { plans, shops };
-    if (!before) return;
+    if (!before || accountId === undefined) return;
     const effective = (list: Plan[]) => list.map((other) => withEffectiveAccount(other, settings));
     const lost = lostSpuPurchases({
       before: effective(before.plans),
