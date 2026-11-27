@@ -1,5 +1,5 @@
 import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
-import type { Plan, TaxRate } from "@workspaces/domain";
+import { type Plan, type TaxRate, closestDateInPeriod } from "@workspaces/domain";
 import {
   Box,
   Flex,
@@ -15,7 +15,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useCallback, useEffect, useId, useRef, useState } from "react";
-import { planResultAtom } from "#/state/derived.ts";
+import { bigOneMoreShopGainAtom, planResultAtom } from "#/state/derived.ts";
 import { plansAtom } from "#/state/query-atoms.ts";
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { NEW_ORDER, OrderEditor } from "#/routes/(plan)/-order-editor/order-editor.tsx";
@@ -199,6 +199,13 @@ function Home({ plan }: { plan: Plan }) {
   const { open: editOrder } = editor;
   const addOrder = useCallback(() => editOrder(NEW_ORDER), [editOrder]);
   const today = useToday(now);
+  // The 1000円ポッキリ is bought today, or on the plan's closest day when today is outside it.
+  const oneMoreShopGain = useAtomValue(
+    bigOneMoreShopGainAtom({
+      planId: plan.id,
+      date: closestDateInPeriod({ date: today ?? plan.period.start, period: plan.period }),
+    }),
+  );
   const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
   const lines = useCapLines(plan);
   const resultHeadingId = useId();
@@ -271,7 +278,13 @@ function Home({ plan }: { plan: Plan }) {
             </ColumnHead>
           ) : null}
           <VStack gap="4" alignItems="stretch">
-            <SummaryCard plan={plan} result={result} compact={!wide} lines={lines} />
+            <SummaryCard
+              plan={plan}
+              result={result}
+              compact={!wide}
+              lines={lines}
+              oneMoreShopGain={oneMoreShopGain}
+            />
             <SpuSettingsCard
               plan={plan}
               title="SPU の設定"
@@ -320,7 +333,9 @@ function Home({ plan }: { plan: Plan }) {
           </VStack>
         )}
       </Box>
-      {wide ? null : <BottomBar plan={plan} result={result} onAdd={addOrder} />}
+      {wide ? null : (
+        <BottomBar plan={plan} result={result} onAdd={addOrder} oneMoreShopGain={oneMoreShopGain} />
+      )}
       <OrderEditor
         plan={plan}
         target={editor.target}

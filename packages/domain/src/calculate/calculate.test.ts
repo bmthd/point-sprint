@@ -3,7 +3,7 @@ import type { Benefit } from "#/model/benefit.ts";
 import type { LineItem, Order } from "#/model/order.ts";
 import type { Plan } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
-import { calculate } from "./calculate.ts";
+import { bigOneMoreShopGain, calculate, oneMoreShopGain } from "./calculate.ts";
 import type { CalculationResult } from "./types.ts";
 
 const SHOP_A = "a0000000-0000-4000-8000-000000000001";
@@ -477,4 +477,43 @@ describe("spend-tiers", () => {
       capReached: true,
     });
   });
+});
+
+describe("oneMoreShopGain", () => {
+  /** Orders at `count` shops of no saved shop, each ¥82,500 tax included (¥75,000 excluded). */
+  const bigOrders = (count: number): Order[] =>
+    Array.from({ length: count }, (_, index) => ({
+      id: `0${index}000000-0000-4000-8000-000000000000`,
+      channel: "rakuten-ichiba",
+      shopTags: [],
+      date: "2026-10-05",
+      lineItems: [item(`1${index}000000-0000-4000-8000-000000000000`, 82_500)],
+      onHold: false,
+      tags: [],
+    }));
+
+  test("counts the rate going up on every purchase, and the ¥1,000 item's own points", () => {
+    // Before: 通常 1,500 + 買いまわり +1倍 1,500. After: the ¥1,000 item (¥910 excluded) adds 通常 9,
+    // and +2倍 gives 3,000 + 18.
+    const before = plan(bigOrders(2));
+    expect(oneMoreShopGain([before], [], before.id, "2026-10-05")).toBe(9 + 3018 - 1500);
+  });
+
+  test("does not count points over the cap", () => {
+    const capped = plan(bigOrders(2), [spuBase, shopAround(2000)]);
+    expect(oneMoreShopGain([capped], [], capped.id, "2026-10-05")).toBe(9 + 2000 - 1500);
+  });
+
+  test("is null when one more shop does not raise the rate", () => {
+    const top = plan(bigOrders(10));
+    expect(oneMoreShopGain([top], [], top.id, "2026-10-05")).toBeNull();
+    const withoutShopAround = plan(bigOrders(2), [spuBase]);
+    expect(oneMoreShopGain([withoutShopAround], [], withoutShopAround.id, "2026-10-05")).toBeNull();
+  });
+});
+
+test("bigOneMoreShopGain keeps a gain of 1,000P or more", () => {
+  expect(bigOneMoreShopGain(999)).toBeNull();
+  expect(bigOneMoreShopGain(1000)).toBe(1000);
+  expect(bigOneMoreShopGain(null)).toBeNull();
 });

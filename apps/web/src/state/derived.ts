@@ -7,6 +7,8 @@ import {
   calculatedPlan,
   orderPoints,
   accountSettingsOf,
+  bigOneMoreShopGain,
+  oneMoreShopGain,
 } from "@workspaces/domain";
 import { atom } from "jotai";
 import { atomFamily } from "jotai-family";
@@ -88,4 +90,18 @@ export const orderPointsAtom = atomFamily(
       sameRows,
     ),
   sameOrderKey,
+);
+
+type OneMoreShopKey = { planId: string; date: string };
+
+/**
+ * What one more shop of a 1000円ポッキリ on `date` adds to the plan, when it is 1,000P or more:
+ * otherwise `null`. Recalculated only when the plans, shops or date change.
+ */
+export const bigOneMoreShopGainAtom = atomFamily(
+  ({ planId, date }: OneMoreShopKey) =>
+    atom((get) =>
+      bigOneMoreShopGain(oneMoreShopGain(get(calculatedPlansAtom), get(shopsAtom), planId, date)),
+    ),
+  (a, b) => a.planId === b.planId && a.date === b.date,
 );
