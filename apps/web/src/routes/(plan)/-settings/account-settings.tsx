@@ -22,9 +22,13 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { useRef, useState } from "react";
 import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
 import { AccountNameSchema } from "@workspaces/domain";
-import { accountSettingsAtom } from "#/state/derived.ts";
+import {
+  accountAtom,
+  accountIdsAtom,
+  isProfileReadyAtom,
+  multiAccountEnabledAtom,
+} from "#/state/derived.ts";
 import { runSaveProfileAtom } from "#/state/mutations.ts";
-import { profileQueryAtom } from "#/state/query-atoms.ts";
 
 /** The profile with its accounts changed; the default account is kept even when not stored yet. */
 const withAccounts = (profile: Profile, change: (accounts: Account[]) => Account[]): Profile => ({
@@ -33,14 +37,28 @@ const withAccounts = (profile: Profile, change: (accounts: Account[]) => Account
 });
 
 function AccountRow({
-  account,
-  onRename,
+  accountId,
+  onFailed,
   onDelete,
 }: {
-  account: Account;
-  onRename: (name: string) => Promise<unknown>;
-  onDelete?: () => void;
+  accountId: string;
+  onFailed: (failed: boolean) => void;
+  onDelete: (accountId: string) => void;
 }) {
+  const account = useAtomValue(accountAtom(accountId));
+  const saveProfile = useSetAtom(runSaveProfileAtom);
+  const rename = (name: string) => {
+    onFailed(false);
+    const saving = saveProfile({
+      change: (current) =>
+        withAccounts(current, (list) =>
+          list.map((other) => (other.id === accountId ? { ...other, name } : other)),
+        ),
+    });
+    saving.catch(() => onFailed(true));
+    return saving;
+  };
+  if (!account) return null;
   return (
     <List.Item
       display="flex"
@@ -58,11 +76,15 @@ function AccountRow({
           hideLabel
           initial={account.name}
           schema={AccountNameSchema}
-          onCommit={onRename}
+          onCommit={rename}
         />
       </Box>
-      {onDelete ? (
-        <IconButton variant="ghost" aria-label={`${account.name}を削除`} onClick={onDelete}>
+      {accountId !== DEFAULT_ACCOUNT_ID ? (
+        <IconButton
+          variant="ghost"
+          aria-label={`${account.name}を削除`}
+          onClick={() => onDelete(accountId)}
+        >
           <XIcon />
         </IconButton>
       ) : null}
@@ -75,14 +97,17 @@ function AccountRow({
  * turned on, every plan is the default account's and no account shows anywhere else.
  */
 export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => void }) {
-  const { enabled, accounts } = useAtomValue(accountSettingsAtom);
-  const { isSuccess } = useAtomValue(profileQueryAtom);
+  const enabled = useAtomValue(multiAccountEnabledAtom);
+  const accountIds = useAtomValue(accountIdsAtom);
+  const defaultAccount = useAtomValue(accountAtom(DEFAULT_ACCOUNT_ID));
+  const isSuccess = useAtomValue(isProfileReadyAtom);
   const saveProfile = useSetAtom(runSaveProfileAtom);
   const { open, onOpen, onClose } = useDisclosure();
-  const [target, setTarget] = useState<Account>();
+  const [targetId, setTarget] = useState<string>();
+  const target = useAtomValue(accountAtom(targetId ?? ""));
   const finalFocus = useRef<HTMLElement | null>(null);
   const addRef = useRef<HTMLButtonElement>(null);
-  const defaultName = accounts.find((account) => account.id === DEFAULT_ACCOUNT_ID)?.name;
+  const defaultName = defaultAccount?.name;
 
   const save = (change: (profile: Profile) => Profile) => {
     onFailed(false);
@@ -124,26 +149,16 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
         {enabled ? (
           <>
             <List.Root aria-label="楽天アカウント" gap="0">
-              {accounts.map((account) => (
+              {accountIds.map((accountId) => (
                 <AccountRow
-                  key={account.id}
-                  account={account}
-                  onRename={(name) =>
-                    save((current) =>
-                      withAccounts(current, (list) =>
-                        list.map((other) => (other.id === account.id ? { ...other, name } : other)),
-                      ),
-                    )
-                  }
-                  onDelete={
-                    account.id === DEFAULT_ACCOUNT_ID
-                      ? undefined
-                      : () => {
-                          setTarget(account);
-                          finalFocus.current = null;
-                          onOpen();
-                        }
-                  }
+                  key={accountId}
+                  accountId={accountId}
+                  onFailed={onFailed}
+                  onDelete={(id) => {
+                    setTarget(id);
+                    finalFocus.current = null;
+                    onOpen();
+                  }}
                 />
               ))}
             </List.Root>

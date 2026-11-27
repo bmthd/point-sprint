@@ -1,7 +1,7 @@
 import { grouped } from "#/ui/format.ts";
 import { RouterLink } from "#/ui/router-link.tsx";
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
-import { type Plan, capLines, accountIdOf } from "@workspaces/domain";
+import { capLines, accountIdOf } from "@workspaces/domain";
 import {
   Badge,
   Button,
@@ -19,9 +19,14 @@ import {
 import { useAtomValue, useSetAtom } from "jotai";
 import { type ReactNode, useId, useMemo, useRef, useState } from "react";
 
-import { accountSettingsAtom, calculatedPlanAtom, planResultAtom } from "#/state/derived.ts";
+import {
+  accountSettingsAtom,
+  calculatedPlanAtom,
+  planAtom,
+  planResultAtom,
+  recentPlanIdsAtom,
+} from "#/state/derived.ts";
 import { runDeletePlanAtom } from "#/state/mutations.ts";
-import { plansAtom } from "#/state/query-atoms.ts";
 import { formatPeriod } from "#/ui/dates.ts";
 import { ResultCard } from "./result-card.tsx";
 
@@ -44,9 +49,11 @@ function TrashIcon() {
 }
 
 /** 「メイン・10/1〜10/31・1店舗・2件」: the plan's account when accounts are told apart, its period and size. */
-function useMeta(plan: Plan): string {
-  const result = useAtomValue(planResultAtom(plan.id));
+function useMeta(planId: string): string {
+  const plan = useAtomValue(planAtom(planId));
+  const result = useAtomValue(planResultAtom(planId));
   const settings = useAtomValue(accountSettingsAtom);
+  if (!plan) return "";
   const accountId = accountIdOf(plan, settings);
   const account = settings.enabled
     ? settings.accounts.find((candidate) => candidate.id === accountId)
@@ -54,14 +61,22 @@ function useMeta(plan: Plan): string {
   return `${account ? `${account.name}・` : ""}${formatPeriod(plan.period)}・${result?.shopCount ?? 0}店舗・${plan.orders.length}件`;
 }
 
-function DeleteButton({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => void }) {
+function DeleteButton({
+  planId,
+  onDelete,
+}: {
+  planId: string;
+  onDelete: (planId: string) => void;
+}) {
+  const plan = useAtomValue(planAtom(planId));
+  if (!plan) return null;
   return (
     <IconButton
       variant="ghost"
       colorScheme="danger"
       size="lg"
       aria-label={`${plan.name}を削除`}
-      onClick={() => onDelete(plan)}
+      onClick={() => onDelete(planId)}
     >
       <TrashIcon />
     </IconButton>
@@ -69,9 +84,11 @@ function DeleteButton({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) =
 }
 
 /** A plan's row in the list of all plans: a link to it with its total, and its delete button. */
-function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => void }) {
-  const result = useAtomValue(planResultAtom(plan.id));
-  const meta = useMeta(plan);
+function PlanRow({ planId, onDelete }: { planId: string; onDelete: (planId: string) => void }) {
+  const plan = useAtomValue(planAtom(planId));
+  const result = useAtomValue(planResultAtom(planId));
+  const meta = useMeta(planId);
+  if (!plan) return null;
   return (
     <List.Item>
       <Card.Root>
@@ -101,7 +118,7 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
               {grouped(result?.total ?? 0)}P
             </Text>
           </RouterLink>
-          <DeleteButton plan={plan} onDelete={onDelete} />
+          <DeleteButton planId={planId} onDelete={onDelete} />
         </Card.Body>
       </Card.Root>
     </List.Item>
@@ -110,17 +127,18 @@ function PlanRow({ plan, onDelete }: { plan: Plan; onDelete: (plan: Plan) => voi
 
 /** The latest plan, in the sample's card: what a visitor sees before having a plan. */
 function LatestPlan({
-  plan,
+  planId,
   heading,
   action,
 }: {
-  plan: Plan;
+  planId: string;
   heading: ReactNode;
   action: ReactNode;
 }) {
-  const result = useAtomValue(planResultAtom(plan.id));
-  const calculated = useAtomValue(calculatedPlanAtom(plan.id));
-  const meta = useMeta(plan);
+  const plan = useAtomValue(planAtom(planId));
+  const result = useAtomValue(planResultAtom(planId));
+  const calculated = useAtomValue(calculatedPlanAtom(planId));
+  const meta = useMeta(planId);
   const outlook = result?.shopAroundOutlook ?? null;
   const capRemaining = useMemo(() => {
     if (!result || !calculated || !outlook) return null;
@@ -129,6 +147,7 @@ function LatestPlan({
     );
     return line ? line.remaining : null;
   }, [calculated, outlook, result]);
+  if (!plan) return null;
   return (
     <ResultCard
       label={heading}
@@ -163,22 +182,21 @@ function LatestPlan({
  * delete button, behind 「すべてのプラン」. Plans live on this device, so this section only renders on the client.
  */
 export function PlanSection() {
-  const plans = useAtomValue(plansAtom);
+  const planIds = useAtomValue(recentPlanIdsAtom);
   const deletePlan = useSetAtom(runDeletePlanAtom);
   const { open, onOpen, onClose } = useDisclosure();
   const all = useDisclosure();
-  const [target, setTarget] = useState<Plan>();
+  const [targetId, setTarget] = useState<string>();
+  const target = useAtomValue(planAtom(targetId ?? ""));
   const finalFocus = useRef<HTMLElement | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const headingId = useId();
 
-  const sorted = [...plans].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
-
-  const latest = sorted[0];
+  const latest = planIds[0];
   // Nothing to show until there is a plan: the sample takes its place.
   if (!latest) return null;
 
-  const onDelete = (next: Plan) => {
+  const onDelete = (next: string) => {
     setTarget(next);
     finalFocus.current = null;
     onOpen();
@@ -187,7 +205,7 @@ export function PlanSection() {
   return (
     <VStack as="section" aria-labelledby={headingId} alignItems="stretch">
       <LatestPlan
-        plan={latest}
+        planId={latest}
         // Managing the plans, deleting one among them, is in the list of all of them.
         action={
           <Button
@@ -195,10 +213,10 @@ export function PlanSection() {
             colorScheme="link"
             size="xs"
             flexShrink="0"
-            aria-label={`すべてのプラン（${sorted.length} 件）`}
+            aria-label={`すべてのプラン（${planIds.length} 件）`}
             onClick={all.onOpen}
           >
-            すべて（{sorted.length} 件）
+            すべて（{planIds.length} 件）
           </Button>
         }
         heading={
@@ -225,8 +243,8 @@ export function PlanSection() {
           </Drawer.Header>
           <Drawer.Body py="4">
             <List.Root gap="2.5">
-              {sorted.map((plan) => (
-                <PlanRow key={plan.id} plan={plan} onDelete={onDelete} />
+              {planIds.map((planId) => (
+                <PlanRow key={planId} planId={planId} onDelete={onDelete} />
               ))}
             </List.Root>
           </Drawer.Body>
@@ -249,7 +267,9 @@ export function PlanSection() {
           // The delete button is gone, so the dialog cannot hand focus back to it. With the last
           // plan the section goes too, so focus moves to the events below.
           finalFocus.current =
-            plans.length > 1 ? heading.current : document.querySelector<HTMLElement>("#events h2");
+            planIds.length > 1
+              ? heading.current
+              : document.querySelector<HTMLElement>("#events h2");
         }}
       />
     </VStack>
