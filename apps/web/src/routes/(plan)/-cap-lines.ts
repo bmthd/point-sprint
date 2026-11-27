@@ -47,12 +47,6 @@ export function scopeText(line: CapLine, today: string | undefined): string {
   }
 }
 
-/** 「1回目と共有」, when other plans used the cap. */
-export function sharedText(line: CapLine, plans: Plan[]): string | undefined {
-  const names = line.sharedWith.flatMap((id) => plans.find((plan) => plan.id === id)?.name ?? []);
-  return names.length === 0 ? undefined : `${names.join("・")}と共有`;
-}
-
 const SHOP_TAG_TEXT: Record<ShopTag, string> = { "39shop": "39ショップ" };
 const ORDER_TAG_TEXT: Record<OrderTag, string> = {
   repeat: "リピート購入",
