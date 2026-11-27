@@ -13,7 +13,13 @@ import {
 import { atom } from "jotai";
 import { atomFamily } from "jotai-family";
 import { selectAtom } from "jotai/utils";
-import { plansAtom, profileAtom, shopsAtom, spuMonthsAtom } from "./query-atoms.ts";
+import {
+  plansAtom,
+  profileAtom,
+  profileQueryAtom,
+  shopsAtom,
+  spuMonthsAtom,
+} from "./query-atoms.ts";
 
 /**
  * Whether the user tells accounts apart, and the accounts. Only the parts of the profile the
@@ -129,3 +135,40 @@ export const planNamesAtom = atomFamily(
     ),
   deepEqual,
 );
+
+/** Saved plan ids in the order shown on the top page. */
+export const recentPlanIdsAtom = selectAtom(
+  plansAtom,
+  (plans) => [...plans].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1)).map((plan) => plan.id),
+  deepEqual,
+);
+
+export const shopAtom = atomFamily((id: string) =>
+  selectAtom(shopsAtom, (shops) => shops.find((shop) => shop.id === id)),
+);
+
+/** Shop ids in the registry name order, unchanged when only shop details change. */
+export const sortedShopIdsAtom = selectAtom(
+  shopsAtom,
+  (shops) => [...shops].sort((a, b) => a.name.localeCompare(b.name, "ja")).map((shop) => shop.id),
+  deepEqual,
+);
+
+export const accountAtom = atomFamily((id: string) =>
+  selectAtom(
+    accountSettingsAtom,
+    (settings) => settings.accounts.find((account) => account.id === id),
+    deepEqual,
+  ),
+);
+
+export const accountIdsAtom = selectAtom(
+  accountSettingsAtom,
+  (settings) => settings.accounts.map((account) => account.id),
+  deepEqual,
+);
+
+export const multiAccountEnabledAtom = atom((get) => get(accountSettingsAtom).enabled);
+
+/** Whether account settings can be saved, without subscribing to the profile data. */
+export const isProfileReadyAtom = atom((get) => get(profileQueryAtom).isSuccess);

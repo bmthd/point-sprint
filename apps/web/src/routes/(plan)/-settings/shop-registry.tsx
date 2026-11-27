@@ -4,19 +4,21 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { CommitField } from "#/routes/(plan)/-form/commit-field.tsx";
 import { ShopNameSchema } from "@workspaces/domain";
 import { changeShop, runSaveShopAtom } from "#/state/mutations.ts";
-import { shopsAtom } from "#/state/query-atoms.ts";
+import { shopAtom, sortedShopIdsAtom } from "#/state/derived.ts";
 import { withTag } from "#/routes/(plan)/-order-fields.tsx";
 
 const is39 = (shop: Shop) => shop.tags.includes("39shop");
 
-function ShopRow({
-  shop,
-  onSave,
-}: {
-  shop: Shop;
-  /** Saves a change, applied to the shop as it is when it is saved. */
-  onSave: (change: (shop: Shop) => Shop) => Promise<unknown>;
-}) {
+function ShopRow({ shopId, onFailed }: { shopId: string; onFailed: (failed: boolean) => void }) {
+  const shop = useAtomValue(shopAtom(shopId));
+  const saveShop = useSetAtom(runSaveShopAtom);
+  const save = (change: (shop: Shop) => Shop) => {
+    onFailed(false);
+    const saving = saveShop(changeShop(shopId, change));
+    saving.catch(() => onFailed(true));
+    return saving;
+  };
+  if (!shop) return null;
   return (
     <List.Item
       display="flex"
@@ -33,7 +35,7 @@ function ShopRow({
         hideLabel
         initial={shop.name}
         schema={ShopNameSchema}
-        onCommit={(name) => onSave((current) => ({ ...current, name }))}
+        onCommit={(name) => save((current) => ({ ...current, name }))}
       />
       <Flex align="center" justify="space-between" gap="3">
         <Text fontSize="xs" color="fg.muted" minW="0" overflowWrap="anywhere">
@@ -49,7 +51,7 @@ function ShopRow({
           checked={is39(shop)}
           onChange={(event) => {
             const on = event.currentTarget.checked;
-            void onSave((current) => ({ ...current, tags: withTag(current.tags, "39shop", on) }));
+            void save((current) => ({ ...current, tags: withTag(current.tags, "39shop", on) }));
           }}
         >
           39ショップ
@@ -61,15 +63,7 @@ function ShopRow({
 
 /** The shop registry: every shop with its channel and shop code, and its name and 39ショップ mark editable. */
 export function ShopRegistry({ onFailed }: { onFailed: (failed: boolean) => void }) {
-  const shops = useAtomValue(shopsAtom);
-  const saveShop = useSetAtom(runSaveShopAtom);
-  const sorted = [...shops].sort((a, b) => a.name.localeCompare(b.name, "ja"));
-  const save = (shopId: string, change: (shop: Shop) => Shop) => {
-    onFailed(false);
-    const saving = saveShop(changeShop(shopId, change));
-    saving.catch(() => onFailed(true));
-    return saving;
-  };
+  const shopIds = useAtomValue(sortedShopIdsAtom);
   return (
     <Card.Root as="section" aria-labelledby="shop-registry-title">
       <Card.Body alignItems="stretch">
@@ -79,10 +73,10 @@ export function ShopRegistry({ onFailed }: { onFailed: (failed: boolean) => void
         <Text fontSize="xs" color="fg.muted">
           注文で入力したショップがここに並びます。名前と39ショップかどうかを直せます。
         </Text>
-        {sorted.length > 0 ? (
+        {shopIds.length > 0 ? (
           <List.Root aria-label="ショップ台帳" gap="0">
-            {sorted.map((shop) => (
-              <ShopRow key={shop.id} shop={shop} onSave={(change) => save(shop.id, change)} />
+            {shopIds.map((shopId) => (
+              <ShopRow key={shopId} shopId={shopId} onFailed={onFailed} />
             ))}
           </List.Root>
         ) : (
