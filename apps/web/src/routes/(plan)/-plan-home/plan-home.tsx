@@ -19,6 +19,7 @@ import {
   bigOneMoreShopGainAtom,
   planResultAtom,
   planAtom,
+  planCapLinesAtom,
   planNameAtom,
   planPeriodAtom,
   hasPlanResultAtom,
@@ -39,7 +40,6 @@ import { resultShareTarget } from "#/routes/-share/share-target.ts";
 import { BottomBar } from "./bottom-bar.tsx";
 import { CarryOverNotice } from "./carry-over-notice.tsx";
 import { CapList } from "./cap-list.tsx";
-import { useCapLines } from "#/routes/(plan)/-cap-lines.ts";
 import { useToday } from "#/routes/-use-today.ts";
 import { OrderList } from "./order-list.tsx";
 import { OrderTable } from "./order-table.tsx";
@@ -179,7 +179,7 @@ function SpuLossNotice({ planId }: { planId: string }) {
 function PlanSummary({ planId, compact }: { planId: string; compact: boolean }) {
   const plan = useAtomValue(planAtom(planId));
   const result = useAtomValue(planResultAtom(planId));
-  const lines = useCapLines(planId);
+  const lines = useAtomValue(planCapLinesAtom(planId));
   const today = useToday(now);
   const gain = useAtomValue(bigOneMoreShopGainAtom({ planId, today }));
   if (!plan || !result) return null;
@@ -196,7 +196,7 @@ function PlanSummary({ planId, compact }: { planId: string; compact: boolean }) 
 
 function PlanCaps({ planId, table }: { planId: string; table: boolean }) {
   const period = useAtomValue(planPeriodAtom(planId));
-  const lines = useCapLines(planId);
+  const lines = useAtomValue(planCapLinesAtom(planId));
   const today = useToday(now);
   const [taxRate, setTaxRate] = useState<TaxRate>(0.1);
   if (!period || lines.length === 0) return null;
