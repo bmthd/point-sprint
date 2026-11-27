@@ -5,6 +5,7 @@ import {
   channels,
   plansUsingSpuMonth,
   spuBenefitsOf,
+  spuRates,
   spuPurchaseRules,
   toggleSpu,
   withEffectiveAccount,
@@ -73,19 +74,10 @@ const spuTiles = (benefits: Benefit[]): RateBenefit[] =>
       (benefit.category === "spu" || (benefit.category === "base" && !isNormalPoint(benefit))),
   );
 
-const enabledRate = (benefits: Benefit[], category: Benefit["category"]) =>
-  benefits.reduce(
-    (sum, benefit) =>
-      benefit.kind === "rate-bonus" && benefit.category === category && benefit.enabled
-        ? sum + benefit.params.rate
-        : sum,
-    0,
-  );
-
 /** The ポイント倍率 of the SPU items `ids`: 通常 and SPU together, as 楽天's SPU page shows it. */
 export function spuMonthRate(ids: ReadonlySet<string>) {
-  const benefits = spuBenefitsOf(ids);
-  return enabledRate(benefits, "base") + enabledRate(benefits, "spu");
+  const { normal, spu } = spuRates(spuBenefitsOf(ids));
+  return normal + spu;
 }
 
 /** `2026-11` → `11月`, or `2027年1月` when it is not of the year of `today`. */

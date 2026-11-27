@@ -42,6 +42,19 @@ export function spuBenefitsOf(ids: ReadonlySet<string>): Benefit[] {
   }));
 }
 
+/** The enabled rates of the normal points and SPU, as Rakuten shows the month total. */
+export function spuRates(benefits: readonly Benefit[]) {
+  const rate = (category: "base" | "spu") =>
+    benefits.reduce(
+      (sum, benefit) =>
+        benefit.kind === "rate-bonus" && benefit.category === category && benefit.enabled
+          ? sum + benefit.params.rate
+          : sum,
+      0,
+    );
+  return { normal: rate("base"), spu: rate("spu") };
+}
+
 /**
  * The ids that are on after toggling `benefitId`, with the rules of `toggleBenefits`: one item of
  * an exclusive group, and the card's normal points with its bonus.

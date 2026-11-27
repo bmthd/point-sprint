@@ -14,6 +14,7 @@ import {
   spuMonthsOfPlan,
   spuIdsIn,
   spuBenefitsOf,
+  spuRates,
 } from "@workspaces/domain";
 import { replaceEqualDeep } from "@tanstack/query-core";
 import { type Atom, atom } from "jotai";
@@ -350,15 +351,7 @@ export const spuMonthAtom = atomFamily(
             ? `未設定・${Number(previous.slice(5, 7))}月から引き継ぎ`
             : "未設定";
         const benefits = spuBenefitsOf(spuIdsIn(stored, accountId, month));
-        const rate = (category: "base" | "spu") =>
-          benefits.reduce(
-            (sum, benefit) =>
-              benefit.kind === "rate-bonus" && benefit.category === category && benefit.enabled
-                ? sum + benefit.params.rate
-                : sum,
-            0,
-          );
-        return { benefits, unset, normal: rate("base"), spu: rate("spu") };
+        return { benefits, unset, ...spuRates(benefits) };
       }),
     ),
   sameSpuMonthKey,
