@@ -1,5 +1,5 @@
 import { Box, Link, VStack, dataAttr } from "@workspaces/ui";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { SidebarSection } from "#/routes/-sidebar/sidebar-section.tsx";
 
 /** A section heading counts as the one being read once its top is this far from the window's top. */
@@ -30,21 +30,25 @@ export function splitIntroduction(body: string): [string, string] {
 
 /** The section being read: the last one whose heading has reached the reading line. */
 function useSectionBeingRead(sections: GuideSection[]) {
-  const [current, setCurrent] = useState<string>();
-  useEffect(() => {
-    const update = () => {
+  return useSyncExternalStore(
+    subscribe,
+    () => {
       const reached = sections.filter(({ title }) => {
         const heading = document.getElementById(title);
         return heading !== null && heading.getBoundingClientRect().top <= READING_LINE;
       });
-      setCurrent(reached.at(-1)?.title);
-    };
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
-  }, [sections]);
-  return current;
+      return reached.at(-1)?.title;
+    },
+    getServerSnapshot,
+  );
 }
+
+function subscribe(onChange: () => void) {
+  window.addEventListener("scroll", onChange, { passive: true });
+  return () => window.removeEventListener("scroll", onChange);
+}
+
+const getServerSnapshot = () => undefined;
 
 /**
  * The contents of a shopping guide: a link to each section. With `markReading`, the one being read

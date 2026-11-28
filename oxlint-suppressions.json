@@ -1,9 +1,4 @@
 {
-  "apps/web/src/google-tags/adsense-slot.tsx": {
-    "react-app/no-effect-hooks": {
-      "count": 1
-    }
-  },
   "apps/web/src/page-head.ts": {
     "react-app/no-effect-hooks": {
       "count": 1
@@ -34,22 +29,7 @@
       "count": 1
     }
   },
-  "apps/web/src/routes/(site)/(markdown)/-guide-toc.tsx": {
-    "react-app/no-effect-hooks": {
-      "count": 1
-    }
-  },
-  "apps/web/src/routes/(site)/(markdown)/-markdown-body.tsx": {
-    "react-app/no-effect-hooks": {
-      "count": 1
-    }
-  },
   "apps/web/src/routes/(site)/-notices/notices-page.tsx": {
-    "react-app/no-effect-hooks": {
-      "count": 1
-    }
-  },
-  "apps/web/src/routes/(site)/-top/top-page.tsx": {
     "react-app/no-effect-hooks": {
       "count": 1
     }
