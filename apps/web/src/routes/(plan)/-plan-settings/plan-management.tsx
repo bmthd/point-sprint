@@ -1,14 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import {
-  Button,
-  Card,
-  Heading,
-  Modal,
-  Separator,
-  Switch,
-  Text,
-  useDisclosure,
-} from "@workspaces/ui";
+import { Button, Card, Heading, Modal, Separator, Switch, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { selectAtom } from "jotai/utils";
 import { type Plan } from "@workspaces/domain";
@@ -59,28 +50,27 @@ function DeletePlan({ planId }: { planId: string }) {
   const name = useAtomValue(selectAtom(planAtom(planId), planName));
   const deletePlan = useSetAtom(runDeletePlanAtom);
   const navigate = useNavigate();
-  const { open, onOpen, onClose } = useDisclosure();
   return (
     <>
-      <Button variant="outline" colorScheme="danger" alignSelf="start" onClick={onOpen}>
-        このプランを削除
-      </Button>
-      <Text fontSize="xs" color="fg.muted">
-        このプランと、その注文がすべて消えます。この操作は取り消せません。
-      </Text>
       <Modal.Root
-        open={open}
         title="プランを削除しますか？"
         body={<Text>「{name}」と、その注文はすべて消えます。この操作は取り消せません。</Text>}
         cancel="キャンセル"
         success={{ children: "削除する", colorScheme: "danger" }}
-        onClose={onClose}
-        onCancel={onClose}
-        onSuccess={() => {
+        onSuccess={(onClose) => {
           onClose();
           void navigate({ to: "/" }).then(() => deletePlan(planId));
         }}
-      />
+      >
+        <Modal.OpenTrigger>
+          <Button variant="outline" colorScheme="danger" alignSelf="start">
+            このプランを削除
+          </Button>
+        </Modal.OpenTrigger>
+      </Modal.Root>
+      <Text fontSize="xs" color="fg.muted">
+        このプランと、その注文がすべて消えます。この操作は取り消せません。
+      </Text>
     </>
   );
 }
