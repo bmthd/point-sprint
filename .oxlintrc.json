@@ -2,8 +2,8 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "unicorn", "oxc", "import"],
   "jsPlugins": [
-    "./apps/web/lint/jotai-plugin.ts",
-    "./packages/ui/lint/style-plugin.ts",
+    "./packages/lint/src/jotai-plugin.ts",
+    "./packages/lint/src/style-plugin.ts",
     "./packages/lint/src/react-plugin.ts"
   ],
   "categories": {

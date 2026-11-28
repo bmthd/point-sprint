@@ -39,12 +39,6 @@
 - 画面の幅で変えるときは、Yamada UI の breakpoint（`{ base, md, lg }` か `useBreakpointValue`）を使い、px の値でメディアクエリを書かない。各キーの幅と意味は `docs/design-system.md` の「画面の幅」にある
 - `@workspaces/ui` にない部品や hooks を作ったときは、探したものの名前と、使わなかった理由を PR に書く
 
-## Effect hooks
-
-`apps/web/src` のアプリのコードでは、React と `@workspaces/ui` の `use*Effect` を使わない。テストとテスト専用の補助ファイルは対象に含めない。`packages/lint` の `react-app/no-effect-hooks` が名前付き import・再 export と、default・namespace import 経由の参照を止める。`useEffectEvent` は対象に含めない。既存の箇所は `oxlint-suppressions.json` に記録し、順に減らす。
-
-既存の箇所を変更するときは、イベントハンドラー、クリーンアップを返す ref callback、`useSyncExternalStore`、jotai の atom、ルーターの loader などに置き換え、`pnpm exec oxlint --prune-suppressions` を実行する。`oxlint-disable` コメントは追加しない。
-
 ## 状態で変わる見た目
 
 見た目を状態で変えるときは、状態を data 属性か aria 属性で要素に出し、CSS はその属性を見る。
@@ -52,8 +46,6 @@
 - Yamada に擬似 props があるものはそれで書き、ないときだけ css にセレクタを書く。例: `data-complete` と `_complete`、`aria-current` と `_current`、`_groupCurrent`。`colorScheme` も `_expanded={{ colorScheme: "primary" }}` のように書ける
 - 並びや中身で決まるものは、属性を足さずに書く（`_onlyChild`、`_notFirstChild`、`_empty`、なければ `:has()`）
 - 値なしの data 属性は名前だけ書く（`data-row-toggle`）
-
-スタイルの props の値に条件（`?:`、`&&`、`||`、`??`）を書くと `yamada/no-conditional-style` が、擬似 props のあるセレクタを書くと `yamada/no-raw-selector` が止める。
 
 ## ガイド記事の frontmatter
 

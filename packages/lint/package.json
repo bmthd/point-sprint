@@ -2,10 +2,8 @@
   "name": "@workspaces/lint",
   "private": true,
   "type": "module",
-  "exports": {
-    ".": "./src/react-plugin.ts"
-  },
   "devDependencies": {
-    "@oxlint/plugins": "1.86.0"
+    "@oxlint/plugins": "1.86.0",
+    "@yamada-ui/react": "2.3.3"
   }
 }
