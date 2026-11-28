@@ -723,6 +723,36 @@ test("takes the visitor to the two events running, outlined, to choose between",
   expect(await repository.plans.list()).toHaveLength(0);
 });
 
+test("keeps events outlined for the full duration after pressing the hero button again", async () => {
+  const second = marathon({
+    id: "marathon-2026-10-second",
+    name: "お買い物マラソン別枠",
+    start: "2026-10-04",
+    end: "2026-10-09",
+  });
+  const { screen } = await renderTopPage(createMemoryRepository(), {
+    events: { load: async () => [servedEvents[1] as OfficialEvent, second] },
+  });
+  const button = screen.getByRole("button", { name: "イベントを選んで計算" });
+  await expect.element(button).toBeEnabled();
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  try {
+    const outlined = () => screen.container.querySelectorAll("[data-highlighted]").length;
+    await button.click();
+    await expect.poll(outlined).toBe(2);
+    await vi.advanceTimersByTimeAsync(1200);
+    await button.click();
+    await vi.advanceTimersByTimeAsync(1200);
+    expect(outlined()).toBe(2);
+    await vi.advanceTimersByTimeAsync(1199);
+    expect(outlined()).toBe(2);
+    await vi.advanceTimersByTimeAsync(1);
+    await expect.poll(outlined).toBe(0);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
 test("does not start a plan from events kept from before a read that failed", async () => {
   const repository = createMemoryRepository();
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

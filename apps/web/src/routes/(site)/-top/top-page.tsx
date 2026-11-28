@@ -2,7 +2,7 @@ import { ClientOnly, useHydrated, useNavigate } from "@tanstack/react-router";
 import { type OfficialEvent, type Plan, createPlan, newId } from "@workspaces/domain";
 import { Box, Button, Flex, Modal, Text } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
-import { useEffect, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { replacePlan, runSavePlanAtom } from "#/state/mutations.ts";
 import { plansAtom, plansQueryAtom } from "#/state/query-atoms.ts";
 import { ShareSection } from "#/routes/-sidebar/share-section.tsx";
@@ -71,11 +71,7 @@ export function TopPage({
   const target = creating && pressedTarget ? pressedTarget : liveTarget;
   // The events the hero's button asked to choose between, outlined in the list for a moment.
   const [highlighted, setHighlighted] = useState<string[]>();
-  useEffect(() => {
-    if (!highlighted) return;
-    const timer = setTimeout(() => setHighlighted(undefined), HIGHLIGHT_MS);
-    return () => clearTimeout(timer);
-  }, [highlighted]);
+  const highlightTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const start = () => {
     setPressedTarget(target);
@@ -90,7 +86,11 @@ export function TopPage({
       section.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
     }
     section?.querySelector<HTMLElement>("h2")?.focus({ preventScroll: true });
-    if (target.events.length > 0) setHighlighted(target.events.map((event) => event.id));
+    if (target.events.length > 0) {
+      clearTimeout(highlightTimer.current);
+      setHighlighted(target.events.map((event) => event.id));
+      highlightTimer.current = setTimeout(() => setHighlighted(undefined), HIGHLIGHT_MS);
+    }
   };
 
   const nameOf = (event: OfficialEvent | undefined, date: Date) =>

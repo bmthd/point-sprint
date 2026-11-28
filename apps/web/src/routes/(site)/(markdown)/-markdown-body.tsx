@@ -23,7 +23,7 @@ import {
   dataAttr,
   useDisclosure,
 } from "@workspaces/ui";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useState } from "react";
 import type { FileRoutesById } from "#/routeTree.gen.ts";
 import { markdownExtensions } from "./-markdown-extensions.ts";
 import { ColumnHead } from "#/ui/column-head.tsx";
@@ -118,11 +118,8 @@ const stickyFirstCell = {
  * time shows no arrows, and they come in once the page measures its tables.
  */
 function useScrollEdges() {
-  const ref = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ left: false, right: false, firstColumn: 0 });
-  useEffect(() => {
-    const box = ref.current;
-    if (!box) return;
+  const ref = (box: HTMLDivElement) => {
     const measure = () => {
       // A pixel of slack: a zoomed page leaves scroll positions a fraction short of the end.
       const left = box.scrollLeft > 1;
@@ -143,7 +140,7 @@ function useScrollEdges() {
       observer.disconnect();
       box.removeEventListener("scroll", measure);
     };
-  }, []);
+  };
   return { ref, ...edges };
 }
 

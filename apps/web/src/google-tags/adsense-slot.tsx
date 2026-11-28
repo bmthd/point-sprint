@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { googleTagIds } from "./ids.ts";
 
 type Props = {
@@ -20,14 +19,12 @@ export function AdsenseSlot({
   fullWidthResponsive = false,
   clientId = googleTagIds.adsenseClientId,
 }: Props) {
-  useEffect(() => {
-    if (!clientId) return;
-    (window.adsbygoogle ??= []).push({});
-  }, [clientId]);
-
   if (!clientId) return null;
   return (
     <ins
+      ref={(element) => {
+        if (element) (window.adsbygoogle ??= []).push({});
+      }}
       className="adsbygoogle"
       style={{ display: "block" }}
       data-ad-client={clientId}
