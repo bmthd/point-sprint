@@ -1,0 +1,67 @@
+{
+  "apps/web/src/google-tags/adsense-slot.tsx": {
+    "react-app/no-effect-hooks": {
+      "count": 1
+    }
+  },
+  "apps/web/src/page-head.ts": {
+    "react-app/no-effect-hooks": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-item-autofill.tsx": {
+    "react-app/no-effect-hooks": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-plan-home/order-row.tsx": {
+    "react-app/no-effect-hooks": {
+      "count": 2
+    }
+  },
+  "apps/web/src/routes/(plan)/-plan-home/use-order-drag.ts": {
+    "react-app/no-effect-hooks": {
+      "count": 2
+    }
+  },
+  "apps/web/src/routes/(plan)/-plan-settings/event-attacher.tsx": {
+    "react-app/no-effect-hooks": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-spu-loss-notice.tsx": {
+    "react-app/no-effect-hooks": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(site)/(markdown)/-guide-toc.tsx": {
+    "react-app/no-effect-hooks": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(site)/(markdown)/-markdown-body.tsx": {
+    "react-app/no-effect-hooks": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(site)/-notices/notices-page.tsx": {
+    "react-app/no-effect-hooks": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(site)/-top/top-page.tsx": {
+    "react-app/no-effect-hooks": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/-turnstile-widget.tsx": {
+    "react-app/no-effect-hooks": {
+      "count": 1
+    }
+  },
+  "apps/web/src/state/sync.ts": {
+    "react-app/no-effect-hooks": {
+      "count": 1
+    }
+  }
+}

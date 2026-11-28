@@ -256,9 +256,6 @@ importers:
       '@expo-google-fonts/noto-sans-jp':
         specifier: 0.4.4
         version: 0.4.4
-      '@oxlint/plugins':
-        specifier: 1.86.0
-        version: 1.86.0
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
@@ -311,6 +308,15 @@ importers:
         specifier: 1.5.0
         version: 1.5.0(typescript@7.0.2)
 
+  packages/lint:
+    devDependencies:
+      '@oxlint/plugins':
+        specifier: 1.86.0
+        version: 1.86.0
+      '@yamada-ui/react':
+        specifier: 2.3.3
+        version: 2.3.3(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.0)(supports-color@10.2.2))(@types/react@19.3.0)(motion@14.0.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react-is@16.13.1)(react@19.3.0)(redux@5.0.1)(supports-color@10.2.2)
+
   packages/ui:
     dependencies:
       '@emotion/react':
@@ -332,9 +338,6 @@ importers:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
     devDependencies:
-      '@oxlint/plugins':
-        specifier: 1.86.0
-        version: 1.86.0
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0

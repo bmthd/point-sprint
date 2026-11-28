@@ -47,8 +47,6 @@
 - 並びや中身で決まるものは、属性を足さずに書く（`_onlyChild`、`_notFirstChild`、`_empty`、なければ `:has()`）
 - 値なしの data 属性は名前だけ書く（`data-row-toggle`）
 
-スタイルの props の値に条件（`?:`、`&&`、`||`、`??`）を書くと `yamada/no-conditional-style` が、擬似 props のあるセレクタを書くと `yamada/no-raw-selector` が止める。
-
 ## ガイド記事の frontmatter
 
 ガイド記事（`apps/web/src/guides/articles/*.md`）を書く・直すときは、先に `apps/web/src/guides/article.ts` の冒頭を読み、frontmatter をそこに書かれたとおりに書く。タグの並び順のように、ビルドでは止まらない決まりもそこにある。

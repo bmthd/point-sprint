@@ -1,0 +1,9 @@
+{
+  "name": "@workspaces/lint",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@oxlint/plugins": "1.86.0",
+    "@yamada-ui/react": "2.3.3"
+  }
+}

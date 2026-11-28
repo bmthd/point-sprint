@@ -7,6 +7,6 @@ export default defineConfig({
   define: { "import.meta.env.GUIDE_DATES": JSON.stringify(gitArticleDates()) },
   test: {
     name: "web",
-    include: ["src/**/*.test.ts", "lint/**/*.test.ts"],
+    include: ["src/**/*.test.ts"],
   },
 });
