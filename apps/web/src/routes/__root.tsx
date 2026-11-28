@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { Box, Flex, ColorModeScript, UIProvider } from "@workspaces/ui";
+import { createRootRoute, HeadContent, Outlet, Scripts, useHydrated } from "@tanstack/react-router";
+import { Box, Flex, ColorModeScript, UIProvider, dataAttr } from "@workspaces/ui";
 import { config, theme } from "@workspaces/ui/theme";
 import type { ReactNode } from "react";
 import { AppProviders } from "#/app-providers.tsx";
@@ -82,8 +82,11 @@ const themeColor = { light: "#bf0000", dark: "#a30000" };
 const colorModeStorage = typeof window === "undefined" ? "cookie" : "localStorage";
 
 function RootDocument({ children }: { children: ReactNode }) {
+  // Set once the page has hydrated, after the router has put the scroll where the page starts: the
+  // E2E tests wait for it before they click.
+  const hydrated = useHydrated();
   return (
-    <html lang="ja" suppressHydrationWarning>
+    <html lang="ja" suppressHydrationWarning data-hydrated={dataAttr(hydrated)}>
       <head>
         <HeadContent />
         <ViewportMeta />

@@ -1,11 +1,12 @@
 import { type Page, expect } from "@playwright/test";
+import { hydrated, openHydrated } from "./hydration.ts";
 
 /** The guide list. */
 export class GuidesPage {
   constructor(readonly page: Page) {}
 
   static async open(page: Page) {
-    await page.goto("/guides");
+    await openHydrated(page, "/guides");
     return new GuidesPage(page);
   }
 
@@ -14,6 +15,7 @@ export class GuidesPage {
     await this.page.getByRole("main").getByRole("link", { name: title }).click();
     // A page load: the static files are served at the path with a trailing slash.
     await expect(this.page).toHaveURL(new RegExp(`${path}/?$`));
+    await hydrated(this.page);
     return new GuidePage(this.page);
   }
 }
@@ -23,7 +25,7 @@ export class GuidePage {
   constructor(readonly page: Page) {}
 
   static async open(page: Page, path: string) {
-    await page.goto(path);
+    await openHydrated(page, path);
     return new GuidePage(page);
   }
 

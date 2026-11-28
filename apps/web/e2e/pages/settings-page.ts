@@ -1,5 +1,6 @@
 import { type Locator, type Page, expect } from "@playwright/test";
-import { type NavigationOptions, SitePage, endsWithPath } from "./site-page.ts";
+import { SitePage, endsWithPath } from "./site-page.ts";
+import { hydrated, openHydrated } from "./hydration.ts";
 
 /** 共通設定 (the settings): the SPU of each month, the shops and the advanced settings. */
 export class SettingsPage {
@@ -12,7 +13,7 @@ export class SettingsPage {
   }
 
   static async open(page: Page) {
-    await page.goto("/settings");
+    await openHydrated(page, "/settings");
     return new SettingsPage(page);
   }
 
@@ -41,13 +42,15 @@ export class SettingsPage {
 
   async reload() {
     await this.page.reload();
+    await hydrated(this.page);
     return new SettingsPage(this.page);
   }
 
   /** Goes back to the page 共通設定 was opened from, at `path`. */
-  async goBack(path: string, options?: NavigationOptions) {
+  async goBack(path: string) {
     await this.backLink.click();
-    await expect(this.page).toHaveURL(endsWithPath(path), options);
+    await expect(this.page).toHaveURL(endsWithPath(path));
+    await hydrated(this.page);
     return new SitePage(this.page);
   }
 }

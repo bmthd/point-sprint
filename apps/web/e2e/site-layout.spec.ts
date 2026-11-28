@@ -33,8 +33,7 @@ async function openReady(page: Page, path: string) {
   return site;
 }
 
-// One test per page, like the footer's: the retries of every page together take more than one
-// test's time allows.
+// One test per page, like the footer's: every page together takes more than one test's time allows.
 for (const { name } of pages("")) {
   test(`${name} links to the top and 共通設定 from the header, and 戻る comes back`, async ({
     page,
@@ -43,30 +42,24 @@ for (const { name } of pages("")) {
     const path = pages(id).find((p) => p.name === name)?.path ?? "";
     await (await openReady(page, path)).header.goToTop();
 
-    // Retried from the page: a click before the page hydrates loads 共通設定 as a new
-    // document, and 戻る then has no page to go back to.
-    await expect(async () => {
-      const settings = await (await openReady(page, path)).header.goToSettings();
-      await expect(settings.heading).toBeVisible();
-      if (path === "/settings") return;
-      await settings.goBack(path, { timeout: 2000 });
-    }).toPass();
+    const settings = await (await openReady(page, path)).header.goToSettings();
+    await expect(settings.heading).toBeVisible();
+    if (path === "/settings") return;
+    await settings.goBack(path);
   });
 }
 
-test("the header marks the page being shown", async ({ page }) => {
-  const id = await createPlan(page);
-  for (const { name, path } of pages(id)) {
-    await test.step(name, async () => {
-      const { header } = await SitePage.open(page, path);
-      if (path === "/") await expect(header.topLink).toHaveAttribute("aria-current", "page");
-      else await expect(header.topLink).not.toHaveAttribute("aria-current");
-      if (path === "/settings")
-        await expect(header.settingsLink).toHaveAttribute("aria-current", "page");
-      else await expect(header.settingsLink).not.toHaveAttribute("aria-current");
-    });
-  }
-});
+// One test per page, like the footer's: every page together takes more than one test's time allows.
+for (const { name } of pages("")) {
+  test(`the header marks ${name} as the page being shown`, async ({ page }) => {
+    const { header } = await openPage(page, name);
+    if (name === "トップ") await expect(header.topLink).toHaveAttribute("aria-current", "page");
+    else await expect(header.topLink).not.toHaveAttribute("aria-current");
+    if (name === "共通設定")
+      await expect(header.settingsLink).toHaveAttribute("aria-current", "page");
+    else await expect(header.settingsLink).not.toHaveAttribute("aria-current");
+  });
+}
 
 test("on a wide screen the header's menus open on a pointer and on the keyboard, and their names go to their pages", async ({
   page,
@@ -82,11 +75,8 @@ test("on a wide screen the header's menus open on a pointer and on the keyboard,
   await expect(header.helpLink).toBeVisible();
   await expect(header.root.getByRole("link", { name: "買い物ガイド" })).toBeVisible();
 
-  // Retried: a click before the page hydrates loads the page as a new document.
-  await expect(async () => {
-    await header.guidesLink.click();
-    await expect(page).toHaveURL(endsWithPath("/guides"), { timeout: 2000 });
-  }).toPass();
+  await header.guidesLink.click();
+  await expect(page).toHaveURL(endsWithPath("/guides"));
   await expect(new SitePage(page).heading("買い物ガイド")).toBeVisible();
   await expect(header.guidesLink).toHaveAttribute("aria-current", "page");
 
@@ -157,27 +147,41 @@ for (const width of [390, 1280]) {
   });
 }
 
-// One test per page: together they follow dozens of links, more than one test's time allows.
+/** Where the footer's links in the site go, in their order: ソースコード leaves the site. */
+const footerTargets = [
+  "/about",
+  "/guides/rakuten-point-calculator-comparison",
+  "/inquiry",
+  "/terms",
+  "/privacy",
+];
+
+/** Opens the page named `name`, with a plan to show if it is one of a plan's pages. */
+async function openPage(page: Page, name: string) {
+  const needsPlan = pages("").some((p) => p.name === name && p.path.includes("id="));
+  const id = needsPlan ? await createPlan(page) : "";
+  return openReady(page, pages(id).find((p) => p.name === name)?.path ?? "");
+}
+
 for (const { name } of pages("")) {
-  test(`${name} has the footer, and each footer link opens its page`, async ({ page }) => {
-    const id = await createPlan(page);
-    const path = pages(id).find((p) => p.name === name)?.path ?? "";
-    const { footer } = await openReady(page, path);
+  test(`${name} has the footer`, async ({ page }) => {
+    const { footer } = await openPage(page, name);
     await expect(footer.root).toContainText("このブラウザの中に保存されます");
     await expect(footer.root).toContainText("ポイントスプリントは個人開発のサイトです。");
     await expect(footer.root).toContainText("© 2026 じょうげん");
     // No link to an anchor that is not on the page, or to a page that does not exist yet.
     await expect(footer.root.locator('a[href^="#"]')).toHaveCount(0);
-
-    for (const href of await footer.linkTargets()) {
-      // Retried from the page: a click while the page hydrates can do nothing.
-      let target: SitePage | undefined;
-      await expect(async () => {
-        target = await (await openReady(page, path)).footer.follow(href, { timeout: 2000 });
-      }).toPass();
-      await expect(target!.main).toBeVisible();
-    }
+    expect(await footer.linkTargets()).toEqual(footerTargets);
   });
+
+  // One test per link: each loads two pages, and the links of a page together take more than one
+  // test's time allows.
+  for (const href of footerTargets) {
+    test(`${name}'s footer link to ${href} opens its page`, async ({ page }) => {
+      const target = await (await openPage(page, name)).footer.follow(href);
+      await expect(target.main).toBeVisible();
+    });
+  }
 }
 
 test("the footer links to each page that tells about the site", async ({ page }) => {
@@ -187,12 +191,8 @@ test("the footer links to each page that tells about the site", async ({ page })
     { label: "利用規約", path: "/terms", heading: "利用規約" },
     { label: "プライバシーポリシー", path: "/privacy", heading: "プライバシーポリシー" },
   ]) {
-    // Retried from the page: a click while the page hydrates can do nothing.
-    let target: SitePage | undefined;
-    await expect(async () => {
-      target = await (await openReady(page, "/")).footer.goTo(label, path, { timeout: 2000 });
-    }).toPass();
-    await expect(target!.heading(heading)).toBeVisible();
+    const target = await (await openReady(page, "/")).footer.goTo(label, path);
+    await expect(target.heading(heading)).toBeVisible();
   }
 });
 

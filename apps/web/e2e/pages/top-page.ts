@@ -1,6 +1,7 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 import { PlanPage } from "./plan-page.ts";
 import { Footer, Header } from "./site-page.ts";
+import { hydrated, openHydrated } from "./hydration.ts";
 
 /** The top page: the events that have not ended, and the plans. */
 export class TopPage {
@@ -24,13 +25,8 @@ export class TopPage {
   }
 
   static async open(page: Page) {
-    await page.goto("/");
+    await openHydrated(page, "/");
     return new TopPage(page);
-  }
-
-  /** Waits until the page has hydrated: its buttons are disabled until then. */
-  async hydrated() {
-    await expect(this.startButton).toBeEnabled();
   }
 
   get header() {
@@ -50,6 +46,7 @@ export class TopPage {
   async createPlan() {
     await this.createPlanButton.click();
     await expect(this.page).toHaveURL(/\/plan\?id=/);
+    await hydrated(this.page);
     const plan = new PlanPage(this.page);
     // The top page's heading stays until the plan's replaces it.
     await expect(plan.orders).toBeVisible();

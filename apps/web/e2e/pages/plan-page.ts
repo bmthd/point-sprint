@@ -1,5 +1,6 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 import { Footer, Header } from "./site-page.ts";
+import { hydrated, openHydrated } from "./hydration.ts";
 
 /** The empty row that adds an order, at the end of the list on a wide screen. */
 export class AddOrderForm {
@@ -138,7 +139,7 @@ export class PlanPage {
   }
 
   static async open(page: Page, id: string) {
-    await page.goto(`/plan?id=${id}`);
+    await openHydrated(page, `/plan?id=${id}`);
     return new PlanPage(page);
   }
 
@@ -230,6 +231,7 @@ export class PlanPage {
 
   async reload() {
     await this.page.reload();
+    await hydrated(this.page);
     return new PlanPage(this.page);
   }
 }

@@ -9,5 +9,5 @@ export { PlanSettingsPage } from "./plan-settings-page.ts";
 export { SettingsPage } from "./settings-page.ts";
 export { SharePage } from "./share-page.ts";
 export { SyncSection } from "./sync-section.ts";
-export { Footer, Header, Menu, type NavigationOptions, Sidebar, SitePage } from "./site-page.ts";
+export { Footer, Header, Menu, Sidebar, SitePage } from "./site-page.ts";
 export { TopPage } from "./top-page.ts";

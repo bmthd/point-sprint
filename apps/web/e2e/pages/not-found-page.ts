@@ -1,5 +1,6 @@
 import { type Page, type Response, expect } from "@playwright/test";
 import { TopPage } from "./top-page.ts";
+import { hydrated, openHydrated } from "./hydration.ts";
 
 /** The page for a URL no route matches. */
 export class NotFoundPage {
@@ -9,7 +10,7 @@ export class NotFoundPage {
   ) {}
 
   static async open(page: Page, path: string) {
-    return new NotFoundPage(page, await page.goto(path));
+    return new NotFoundPage(page, await openHydrated(page, path));
   }
 
   get heading() {
@@ -19,6 +20,7 @@ export class NotFoundPage {
   async goToTop() {
     await this.page.getByRole("main").getByRole("link", { name: "トップに戻る" }).click();
     await expect(this.page).toHaveURL("/");
+    await hydrated(this.page);
     return new TopPage(this.page);
   }
 }
