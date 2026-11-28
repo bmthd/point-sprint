@@ -20,14 +20,16 @@ export function eventMasterRunsOut(
 }
 
 /**
- * An event Rakuten holds once a year, which the collection is meant to pick up from its page by
- * `due` (`MM-DD`), its `id` starting with `idPrefix`.
+ * An event Rakuten holds on about the same days every year, which the collection is meant to pick
+ * up from its page by `due` (`MM-DD`), its `id` starting with `idPrefix`. An event held several
+ * times a year, like 楽天スーパーSALE, has one for each.
  */
 export type YearlyEvent = { name: string; idPrefix: string; due: string; until: string };
 
 /**
  * The yearly events that the master lacks this year, from their `due` to their `until` (`MM-DD`,
- * both in `today`'s year): the collection did not pick them up, and the operator has to add them.
+ * both in `today`'s year), as no event of theirs overlaps those days: the collection did not pick
+ * them up, and the operator has to add them.
  */
 export function missingYearlyEvents(
   events: OfficialEvent[],
@@ -35,10 +37,15 @@ export function missingYearlyEvents(
   today: string,
 ): YearlyEvent[] {
   const year = today.slice(0, 4);
-  return yearly.filter(
-    ({ idPrefix, due, until }) =>
-      `${year}-${due}` <= today &&
-      today <= `${year}-${until}` &&
-      !events.some((event) => event.id.startsWith(idPrefix) && event.period.start.startsWith(year)),
-  );
+  return yearly.filter(({ idPrefix, due, until }) => {
+    const [from, to] = [`${year}-${due}`, `${year}-${until}`];
+    return (
+      from <= today &&
+      today <= to &&
+      !events.some(
+        (event) =>
+          event.id.startsWith(idPrefix) && event.period.start <= to && from <= event.period.end,
+      )
+    );
+  });
 }

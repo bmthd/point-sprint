@@ -4,13 +4,15 @@ import {
   BLACK_FRIDAY_URL,
   MARATHON_URL,
   SCHEDULE_URL,
+  SUPERSALE_URL,
   type CurrentRound,
   type ScheduledRound,
   readCurrentRound,
   readSchedule,
+  readShownRounds,
 } from "./event-pages.ts";
 
-// Turns the marathon pages and the Black Friday page into rows of the event master (event-store.ts). A row is published only
+// Turns the marathon pages, the Black Friday page and the 楽天スーパーSALE page into rows of the event master (event-store.ts). A row is published only
 // when it passes the checks below; otherwise the row already published stays as it is, and the
 // reason goes into the run's message, where the operator finds it (docs/event-master.md).
 
@@ -317,37 +319,75 @@ export function collectMarathon(input: {
   return { writes, ...log };
 }
 
-const BLACK_FRIDAY_NAME = "ブラックフライデー";
+/**
+ * A page that shows one campaign's shop-around, like the marathon's, in the same campaign details,
+ * from its entry until its end. It has no schedule page, and the rest of the year it shows no round
+ * or cannot be fetched, which is no warning.
+ */
+type CampaignPage = {
+  /** The page's name in the notes, as 「ブラックフライデーのページ」. */
+  label: string;
+  url: string;
+  /** The rows' `id`, before the first day. */
+  idPrefix: string;
+  /** What the campaign's name holds, as 「ブラックフライデー」. */
+  nameIncludes: string;
+  /** Details the page shows next to the campaign's, which are not read. */
+  others?: (campaignName: string) => boolean;
+};
+
+const BLACK_FRIDAY_PAGE: CampaignPage = {
+  label: "ブラックフライデーのページ",
+  url: BLACK_FRIDAY_URL,
+  idPrefix: "black-friday",
+  nameIncludes: "ブラックフライデー",
+};
+
+const SUPERSALE_PAGE: CampaignPage = {
+  label: "スーパーSALE のページ",
+  url: SUPERSALE_URL,
+  idPrefix: "supersale",
+  nameIncludes: "スーパーSALE",
+  // 「楽天スーパーSALE【楽天モバイルご利用者限定！先行セール】」 starts a day earlier, for 楽天モバイル's
+  // users only.
+  others: (campaignName) => campaignName.includes("楽天モバイル"),
+};
 
 /**
- * The row to write for the Black Friday the page shows, from its entry until its end, under the
- * campaign's name (「楽天市場のブラックフライデー」). The rest of the year the page shows none, or
- * cannot be fetched, and that is no warning.
+ * The row to write for the round `page` shows, under the campaign's name (「楽天市場のブラックフライデー」,
+ * 「楽天スーパーSALE」).
  */
-export function collectBlackFriday(input: {
-  /** The Black Friday page, or why it could not be fetched. */
-  page: { html: string } | { error: string };
-  today: string;
-  stored: ReadonlyMap<string, StoredEvent>;
-  newId: () => string;
-}): Collection {
-  const { page, today, stored, newId } = input;
+function collectCampaignPage(
+  page: CampaignPage,
+  input: {
+    /** The page, or why it could not be fetched. */
+    fetched: { html: string } | { error: string };
+    today: string;
+    stored: ReadonlyMap<string, StoredEvent>;
+    newId: () => string;
+  },
+): Collection {
+  const { fetched, today, stored, newId } = input;
   const log: RunLog = { notes: [], outcome: "ok" };
-  if ("error" in page) {
-    log.notes.push(`ブラックフライデーのページを取得できない（${page.error}）`);
+  if ("error" in fetched) {
+    log.notes.push(`${page.label}を取得できない（${fetched.error}）`);
     return { writes: [], ...log };
   }
-  const shown = readCurrentRound(page.html);
+  const rounds = readShownRounds(fetched.html).filter(
+    (round) => !page.others?.(round.campaignName),
+  );
+  const [first] = rounds;
+  if (!first) {
+    log.notes.push(`${page.label}に開催中・開催直前の回がない`);
+    return { writes: [], ...log };
+  }
+  const shown = rounds.find((round) => round.campaignName.includes(page.nameIncludes));
   if (!shown) {
-    log.notes.push("ブラックフライデーのページに開催中・開催直前の回がない");
-    return { writes: [], ...log };
-  }
-  if (!shown.campaignName.includes(BLACK_FRIDAY_NAME)) {
-    warn(log, `ブラックフライデーのページのキャンペーン名が「${shown.campaignName}」`);
+    warn(log, `${page.label}のキャンペーン名が「${first.campaignName}」`);
     return { writes: [], ...log };
   }
   if (shown.period.end < today) return { writes: [], ...log };
-  const id = `black-friday-${shown.period.start}`;
+  const id = `${page.idPrefix}-${shown.period.start}`;
   const existing = stored.get(id);
   if (heldByOperator(id, existing, log)) return { writes: [], ...log };
   const event = shopAroundEvent({
@@ -360,8 +400,33 @@ export function collectBlackFriday(input: {
     benefitId: shopAroundOf(existing?.event)?.id ?? newId(),
   });
   const write = checkedWrite(
-    { event, existing, sourceUrl: BLACK_FRIDAY_URL, noted: (change) => `${id}: ${change}` },
+    { event, existing, sourceUrl: page.url, noted: (change) => `${id}: ${change}` },
     log,
   );
   return { writes: write ? [write] : [], ...log };
+}
+
+/** The row to write for the Black Friday the page shows (2026: entry from 11-12, 11-19 to 11-25). */
+export function collectBlackFriday(input: {
+  page: { html: string } | { error: string };
+  today: string;
+  stored: ReadonlyMap<string, StoredEvent>;
+  newId: () => string;
+}): Collection {
+  const { page, ...rest } = input;
+  return collectCampaignPage(BLACK_FRIDAY_PAGE, { fetched: page, ...rest });
+}
+
+/**
+ * The row to write for the 楽天スーパーSALE the page shows: March, June, September and December, from
+ * the entry about 6 days before (2026-12: entry from 11-28 10:00, 12-04 20:00 to 12-11 01:59).
+ */
+export function collectSupersale(input: {
+  page: { html: string } | { error: string };
+  today: string;
+  stored: ReadonlyMap<string, StoredEvent>;
+  newId: () => string;
+}): Collection {
+  const { page, ...rest } = input;
+  return collectCampaignPage(SUPERSALE_PAGE, { fetched: page, ...rest });
 }

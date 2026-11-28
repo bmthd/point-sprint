@@ -4,6 +4,7 @@ import {
   type StoredEvent,
   checkEvent,
   collectMarathon,
+  collectSupersale,
   marathonEvent,
 } from "./event-collection.ts";
 
@@ -286,4 +287,15 @@ test("checks the period, the rate and the cap", () => {
   expect(
     checkEvent(marathonEvent({ round: second, maxRate: 30, cap: 500, benefitId: KEPT })),
   ).toEqual(["倍率が最大 30 倍", "上限が 500"]);
+});
+
+test("does not warn when the 楽天スーパーSALE page shows no round or cannot be fetched", () => {
+  const collect = (page: { html: string } | { error: string }) =>
+    collectSupersale({ page, today: "2026-11-28", stored: new Map(), newId: idSequence() });
+  expect(collect({ html: "<p>次回の開催をお楽しみに</p>" })).toEqual({
+    writes: [],
+    outcome: "ok",
+    notes: ["スーパーSALE のページに開催中・開催直前の回がない"],
+  });
+  expect(collect({ error: "HTTP 404" }).outcome).toBe("ok");
 });

@@ -12,12 +12,20 @@ import type { OfficialEvent } from "#/model/official-event.ts";
 const url = process.env.EVENTS_URL ?? "https://point-sprint.bmth.dev/events.json";
 const leadDays = 7;
 /**
- * Collected from their pages once a year (docs/event-master.md). Black Friday's page has shown the
- * year's campaign from its entry, which opened on 11-18 at the latest in 2020〜2026, and the
- * campaign ended on 11-27 at the latest.
+ * Collected from their pages (docs/event-master.md). Black Friday's page has shown the year's
+ * campaign from its entry, which opened on 11-18 at the latest in 2020〜2026, and the campaign
+ * ended on 11-27 at the latest. 楽天スーパーSALE runs from the 4th 20:00 to the 11th 01:59 of March,
+ * June, September and December, and its page shows it from the entry, about 6 days before.
  */
+const supersale = (month: string): YearlyEvent => ({
+  name: `楽天スーパーSALE（${Number(month)}月）`,
+  idPrefix: "supersale-",
+  due: `${month}-03`,
+  until: `${month}-10`,
+});
 const yearly: YearlyEvent[] = [
   { name: "ブラックフライデー", idPrefix: "black-friday-", due: "11-19", until: "11-27" },
+  ...["03", "06", "09", "12"].map(supersale),
 ];
 const today = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Tokyo",

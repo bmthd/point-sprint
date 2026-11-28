@@ -5,8 +5,9 @@ import {
   type StoredEvent,
   collectBlackFriday,
   collectMarathon,
+  collectSupersale,
 } from "./event-collection.ts";
-import { BLACK_FRIDAY_URL, MARATHON_URL, SCHEDULE_URL } from "./event-pages.ts";
+import { BLACK_FRIDAY_URL, MARATHON_URL, SCHEDULE_URL, SUPERSALE_URL } from "./event-pages.ts";
 
 /** Where the collection keeps the event master (event-store.ts for D1). */
 export type EventStore = {
@@ -40,8 +41,8 @@ async function sha256(text: string): Promise<string> {
 const severity: Record<RunOutcome, number> = { ok: 0, warning: 1, failed: 2 };
 
 /**
- * Reads the schedule page, the marathon page and the Black Friday page, three requests a run, and
- * writes what passes the checks. Every run is logged, with why an event was not published.
+ * Reads the schedule page, the marathon page, the Black Friday page and the 楽天スーパーSALE page,
+ * four requests a run, and writes what passes the checks. Every run is logged, with why an event was not published.
  */
 export async function collectEvents({
   store,
@@ -64,10 +65,11 @@ export async function collectEvents({
       return { error: error instanceof Error ? error.message : String(error) };
     }
   };
-  const [schedule, marathon, blackFriday] = await Promise.all([
+  const [schedule, marathon, blackFriday, supersale] = await Promise.all([
     get(SCHEDULE_URL),
     get(MARATHON_URL),
     get(BLACK_FRIDAY_URL),
+    get(SUPERSALE_URL),
   ]);
   if ("error" in schedule) {
     const message = `スケジュールのページを取得できない（${schedule.error}）`;
@@ -79,6 +81,7 @@ export async function collectEvents({
   const collections = [
     collectMarathon({ scheduleHtml: schedule.html, marathon, today, stored, newId }),
     collectBlackFriday({ page: blackFriday, today, stored, newId }),
+    collectSupersale({ page: supersale, today, stored, newId }),
   ];
   const outcome = collections
     .map((collection) => collection.outcome)
@@ -87,7 +90,9 @@ export async function collectEvents({
     collections.flatMap((collection) => collection.writes),
     startedAt,
   );
-  const pages = [schedule, marathon, blackFriday].map((page) => ("html" in page ? page.html : ""));
+  const pages = [schedule, marathon, blackFriday, supersale].map((page) =>
+    "html" in page ? page.html : "",
+  );
   await store.logRun({
     startedAt,
     outcome,
