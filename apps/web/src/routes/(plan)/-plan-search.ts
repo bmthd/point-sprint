@@ -3,10 +3,11 @@ import * as v from "valibot";
 declare module "@tanstack/react-router" {
   interface HistoryState {
     /**
-     * The settings' side panel was opened over the plan, the history entry before this one, which
-     * closing the panel goes back to.
+     * A panel over the plan (the order editor, a month's SPU, the settings) was opened over the
+     * history entry before this one, which closing the panel goes back to. Kept in the entry, it
+     * holds after the back and forward buttons as well.
      */
-    settingsOverPlan?: true;
+    closesBack?: true;
   }
 }
 

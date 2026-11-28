@@ -97,11 +97,11 @@ export function useSettingsPanelTarget(planId: string) {
   const navigate = useNavigate();
   const router = useRouter();
   const search: { settings?: unknown; spu?: unknown } = useSearch({ strict: false });
-  const overPlan = useLocation({ select: (location) => location.state.settingsOverPlan === true });
+  const closesBack = useLocation({ select: (location) => location.state.closesBack === true });
   const shown = search.settings === true;
-  const open = () => void navigate({ ...settingsPanel(planId), state: { settingsOverPlan: true } });
+  const open = () => void navigate({ ...settingsPanel(planId), state: { closesBack: true } });
   const close = () => {
-    if (overPlan) router.history.back();
+    if (closesBack) router.history.back();
     else void navigate({ to: "/plan", search: { id: planId }, replace: true });
   };
   return { shown, open: shown && search.spu === undefined, onOpen: open, onClose: close };
