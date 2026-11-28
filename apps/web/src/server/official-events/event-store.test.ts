@@ -1,24 +1,50 @@
-import { readFileSync } from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
 import { expect, test } from "vitest";
-import { collectEvents } from "./collect-events.ts";
-import { MARATHON_URL, SCHEDULE_URL } from "./event-pages.ts";
+import { type ReadPages, collectEvents } from "./collect-events.ts";
+import { MARATHON_URL } from "./event-pages.ts";
 import { d1EventStore, lastCheckedAt, publishedEvents } from "./event-store.ts";
 import { memoryD1 } from "#/server/shared/memory-d1.ts";
 
-const read = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
-
-const pages: Record<string, string> = {
-  [SCHEDULE_URL]: read("event-pages/schedule-2026-10.html"),
-  [MARATHON_URL]: read("event-pages/marathon-2026-10-14.html"),
-};
+/**
+ * October 2026's rounds, read while the marathon page showed the second one. The Black Friday page
+ * and the 楽天スーパーSALE page are not served.
+ */
+const readPages = async (): Promise<ReadPages> => ({
+  schedule: {
+    read: [
+      {
+        title: "第一弾",
+        period: { start: "2026-10-04", end: "2026-10-09" },
+        times: { start: "20:00", end: "01:59" },
+      },
+      {
+        title: "第二弾",
+        period: { start: "2026-10-14", end: "2026-10-17" },
+        times: { start: "20:00", end: "09:59" },
+      },
+      {
+        title: "第三弾",
+        period: { start: "2026-10-24", end: "2026-10-27" },
+        times: { start: "20:00", end: "09:59" },
+      },
+    ],
+  },
+  marathon: {
+    read: {
+      campaignName: "お買い物マラソン",
+      period: { start: "2026-10-14", end: "2026-10-17" },
+      times: { start: "20:00", end: "09:59" },
+      maxRate: 10,
+      cap: 7000,
+    },
+  },
+  blackFriday: { error: "HTTP 503" },
+  supersale: { error: "HTTP 503" },
+  sourceHash: "0".repeat(64),
+});
 /** What every run here notes: the Black Friday page and the 楽天スーパーSALE page are not served. */
 const NO_CAMPAIGN_PAGES =
   "ブラックフライデーのページを取得できない（HTTP 503）\nスーパーSALE のページを取得できない（HTTP 503）";
-const fetchPages = (async (url: string) =>
-  pages[url] === undefined
-    ? new Response("", { status: 503 })
-    : new Response(pages[url])) as typeof fetch;
 
 const runs = (sqlite: DatabaseSync) =>
   sqlite.prepare("SELECT outcome, message FROM collection_runs ORDER BY id").all();
@@ -41,7 +67,7 @@ test("a run confirms the round on the marathon page and logs what it did", async
   const { db, sqlite } = memoryD1();
   // 2026-10-15 12:00 in Japan, while the second round runs.
   const now = () => new Date("2026-10-15T03:00:00Z");
-  expect(await collectEvents({ store: d1EventStore(db), fetch: fetchPages, now })).toBe("ok");
+  expect(await collectEvents({ store: d1EventStore(db), readPages, now })).toBe("ok");
   // The second round already had the cap the page shows, and the third keeps the one it had.
   expect(runs(sqlite)).toEqual([{ outcome: "ok", message: NO_CAMPAIGN_PAGES }]);
 
@@ -49,7 +75,7 @@ test("a run confirms the round on the marathon page and logs what it did", async
     `UPDATE official_events SET benefits_json = replace(benefits_json, '"cap":7000', '"cap":5000')
      WHERE id = 'marathon-2026-10-14'`,
   );
-  await collectEvents({ store: d1EventStore(db), fetch: fetchPages, now });
+  await collectEvents({ store: d1EventStore(db), readPages, now });
   expect(runs(sqlite).at(-1)).toEqual({
     outcome: "ok",
     message: `marathon-2026-10-14: 更新\n${NO_CAMPAIGN_PAGES}`,
@@ -104,8 +130,11 @@ test("serves no row that is not published or not an event", async () => {
 
 test("logs a failed run without writing when the schedule page cannot be fetched", async () => {
   const { db, sqlite } = memoryD1();
-  const fetchNothing = (async () => new Response("", { status: 503 })) as unknown as typeof fetch;
-  expect(await collectEvents({ store: d1EventStore(db), fetch: fetchNothing })).toBe("failed");
+  const unread = async (): Promise<ReadPages> => ({
+    ...(await readPages()),
+    schedule: { error: "HTTP 503" },
+  });
+  expect(await collectEvents({ store: d1EventStore(db), readPages: unread })).toBe("failed");
   expect(runs(sqlite)).toEqual([
     { outcome: "failed", message: "スケジュールのページを取得できない（HTTP 503）" },
   ]);

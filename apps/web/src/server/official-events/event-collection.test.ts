@@ -1,17 +1,13 @@
-import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
 import {
+  type PageReading,
   type StoredEvent,
   checkEvent,
   collectMarathon,
   collectSupersale,
   marathonEvent,
 } from "./event-collection.ts";
-
-const fixture = (name: string) =>
-  readFileSync(new URL(`event-pages/${name}`, import.meta.url), "utf8");
-const scheduleHtml = fixture("schedule-2026-10.html");
-const marathonHtml = fixture("marathon-2026-10-14.html");
+import type { CurrentRound, ScheduledRound } from "./event-pages.ts";
 
 const idSequence = () => {
   let next = 0;
@@ -21,15 +17,31 @@ const idSequence = () => {
 /** The shop-around's id in the row already stored. */
 const KEPT = "b0000000-0000-4000-8000-0000000000aa";
 
-const second = {
+// October 2026's rounds, as the schedule page showed them.
+const first: ScheduledRound = {
+  title: "第一弾",
+  period: { start: "2026-10-04", end: "2026-10-09" },
+  times: { start: "20:00", end: "01:59" },
+};
+const second: ScheduledRound = {
   title: "第二弾",
   period: { start: "2026-10-14", end: "2026-10-17" },
   times: { start: "20:00", end: "09:59" },
 };
-const third = {
+const third: ScheduledRound = {
   title: "第三弾",
   period: { start: "2026-10-24", end: "2026-10-27" },
   times: { start: "20:00", end: "09:59" },
+};
+const schedule = [first, second, third];
+
+/** The second round, as the marathon page showed it while it ran. */
+const shownSecond: CurrentRound = {
+  campaignName: "お買い物マラソン",
+  period: second.period,
+  times: { start: "20:00", end: "09:59" },
+  maxRate: 10,
+  cap: 7000,
 };
 
 const published = (event: StoredEvent["event"]): StoredEvent => ({
@@ -41,13 +53,13 @@ const published = (event: StoredEvent["event"]): StoredEvent => ({
 const collect = (
   options: {
     today?: string;
-    marathon?: { html: string } | { error: string };
+    marathon?: PageReading<CurrentRound | undefined>;
     stored?: Map<string, StoredEvent>;
   } = {},
 ) =>
   collectMarathon({
-    scheduleHtml,
-    marathon: options.marathon ?? { html: marathonHtml },
+    schedule,
+    marathon: options.marathon ?? { read: shownSecond },
     today: options.today ?? "2026-10-15",
     stored: options.stored ?? new Map(),
     newId: idSequence(),
@@ -114,7 +126,7 @@ test("writes nothing for a round that has not changed, and keeps its benefit id"
 test("keeps the cap read from the marathon page once the page has moved on", () => {
   const event = marathonEvent({ round: second, maxRate: 10, cap: 7000, benefitId: KEPT });
   const { writes } = collect({
-    marathon: { html: "<p>終了しました</p>" },
+    marathon: { read: undefined },
     stored: new Map([[event.id, published(event)]]),
   });
   expect(writes.map((write) => write.event.id)).toEqual(["marathon-2026-10-24"]);
@@ -135,14 +147,14 @@ test("leaves rows the operator fixed or turned down", () => {
 });
 
 test("does not publish a round that fails the checks, and keeps the one published", () => {
-  const html = marathonHtml.replace(">7,000ポイント(期間限定)", ">700,000ポイント(期間限定)");
+  const marathon = { read: { ...shownSecond, cap: 700_000 } };
   const before = marathonEvent({ round: second, maxRate: 10, cap: 7000, benefitId: KEPT });
-  const kept = collect({ marathon: { html }, stored: new Map([[before.id, published(before)]]) });
+  const kept = collect({ marathon, stored: new Map([[before.id, published(before)]]) });
   expect(kept.outcome).toBe("warning");
   expect(kept.writes.map((write) => write.event.id)).toEqual(["marathon-2026-10-24"]);
   expect(kept.notes).toContain("marathon-2026-10-14: 上限が 700000");
 
-  const fresh = collect({ marathon: { html } });
+  const fresh = collect({ marathon });
   expect(fresh.writes[0]).toMatchObject({
     status: "pending",
     event: { id: "marathon-2026-10-14" },
@@ -150,8 +162,8 @@ test("does not publish a round that fails the checks, and keeps the one publishe
 });
 
 test("does not take the marathon page's round when it overlaps a round on the schedule page", () => {
-  const html = marathonHtml.replace("2026年10月14日(水)20:00", "2026年10月13日(火)20:00");
-  const { writes, outcome, notes } = collect({ marathon: { html } });
+  const period = { start: "2026-10-13", end: "2026-10-17" };
+  const { writes, outcome, notes } = collect({ marathon: { read: { ...shownSecond, period } } });
   expect(outcome).toBe("warning");
   expect(notes).toContain(
     "マラソンのページの期間 2026-10-13〜2026-10-17 がスケジュールのページにない",
@@ -165,8 +177,14 @@ test("does not take the marathon page's round when it overlaps a round on the sc
 
 // On 2026-11-03 the marathon page showed November's first round while the schedule page still
 // listed October's rounds.
-const marathonAheadHtml = fixture("marathon-2026-11-04.html");
-const ahead = {
+const shownAhead: CurrentRound = {
+  campaignName: "お買い物マラソン&ジャンル祭",
+  period: { start: "2026-11-04", end: "2026-11-11" },
+  times: { start: "20:00", end: "01:59" },
+  maxRate: 10,
+  cap: 7000,
+};
+const ahead: ScheduledRound = {
   title: "&ジャンル祭",
   period: { start: "2026-11-04", end: "2026-11-11" },
   times: { start: "20:00", end: "01:59" },
@@ -176,7 +194,7 @@ const aheadEvent = (benefitId: string) =>
 
 test("publishes the marathon page's round that the schedule page does not list yet", () => {
   const { writes, outcome, notes } = collect({
-    marathon: { html: marathonAheadHtml },
+    marathon: { read: shownAhead },
     today: "2026-11-03",
   });
   expect(outcome).toBe("ok");
@@ -194,13 +212,10 @@ test("publishes the marathon page's round that the schedule page does not list y
 });
 
 test("names the round from the schedule page once it lists the round, keeping its ids", () => {
-  const scheduleHtml = `
-    <div class="marathonCalender-title"><span>第一弾!</span></div>
-    <p class="marathonCalender-lead">2026年11月4日(水) 20:00 ～ 2026年11月11日(水) 01:59</p>`;
   const stored = new Map([["marathon-2026-11-04", published(aheadEvent(KEPT))]]);
   const { writes, outcome } = collectMarathon({
-    scheduleHtml,
-    marathon: { html: marathonAheadHtml },
+    schedule: [{ ...ahead, title: "第一弾" }],
+    marathon: { read: shownAhead },
     today: "2026-11-05",
     stored,
     newId: idSequence(),
@@ -223,7 +238,7 @@ test("names the round from the schedule page once it lists the round, keeping it
 test("writes nothing for the round ahead of the schedule page once it is stored", () => {
   const stored = new Map([["marathon-2026-11-04", published(aheadEvent(KEPT))]]);
   const { writes } = collect({
-    marathon: { html: marathonAheadHtml },
+    marathon: { read: shownAhead },
     today: "2026-11-03",
     stored,
   });
@@ -236,7 +251,7 @@ test("leaves the round ahead of the schedule page when the operator fixed or tur
     { event: aheadEvent(KEPT), status: "rejected", locked: false },
   ] satisfies StoredEvent[]) {
     const { writes, notes } = collect({
-      marathon: { html: marathonAheadHtml },
+      marathon: { read: shownAhead },
       today: "2026-11-03",
       stored: new Map([["marathon-2026-11-04", row]]),
     });
@@ -248,8 +263,8 @@ test("leaves the round ahead of the schedule page when the operator fixed or tur
 });
 
 test("holds back the round ahead of the schedule page when it fails the checks", () => {
-  const html = marathonAheadHtml.replace(">7,000ポイント(期間限定)", ">700,000ポイント(期間限定)");
-  const { writes, outcome, notes } = collect({ marathon: { html }, today: "2026-11-03" });
+  const marathon = { read: { ...shownAhead, cap: 700_000 } };
+  const { writes, outcome, notes } = collect({ marathon, today: "2026-11-03" });
   expect(outcome).toBe("warning");
   expect(notes).toContain("marathon-2026-11-04: 上限が 700000");
   expect(writes).toMatchObject([{ status: "pending", event: { id: "marathon-2026-11-04" } }]);
@@ -264,8 +279,8 @@ test("goes on from the schedule page when the marathon page cannot be fetched", 
 
 test("fails without writing when the schedule page has no rounds", () => {
   const result = collectMarathon({
-    scheduleHtml: "<p>メンテナンス中</p>",
-    marathon: { html: marathonHtml },
+    schedule: [],
+    marathon: { read: shownSecond },
     today: "2026-10-15",
     stored: new Map(),
     newId: idSequence(),
@@ -290,12 +305,60 @@ test("checks the period, the rate and the cap", () => {
 });
 
 test("does not warn when the 楽天スーパーSALE page shows no round or cannot be fetched", () => {
-  const collect = (page: { html: string } | { error: string }) =>
+  const collect = (page: PageReading<CurrentRound[]>) =>
     collectSupersale({ page, today: "2026-11-28", stored: new Map(), newId: idSequence() });
-  expect(collect({ html: "<p>次回の開催をお楽しみに</p>" })).toEqual({
+  expect(collect({ read: [] })).toEqual({
     writes: [],
     outcome: "ok",
     notes: ["スーパーSALE のページに開催中・開催直前の回がない"],
   });
   expect(collect({ error: "HTTP 404" }).outcome).toBe("ok");
+});
+
+// 2026-12's 楽天スーパーSALE, as its page shows the three campaigns.
+const supersaleRound = (campaignName: string, start: string): CurrentRound => ({
+  campaignName,
+  period: { start, end: "2026-12-11" },
+  times: { start: "20:00", end: "01:59" },
+  maxRate: 10,
+  cap: 7000,
+});
+
+test("publishes the 楽天スーパーSALE shop-around for everyone, not the 楽天モバイル users' own", () => {
+  const { writes, outcome } = collectSupersale({
+    page: {
+      read: [
+        supersaleRound("楽天スーパーSALE【楽天モバイルご利用者限定！先行セール】", "2026-12-03"),
+        supersaleRound("楽天スーパーSALE【楽天モバイルご利用者限定】", "2026-12-03"),
+        supersaleRound("楽天スーパーSALE", "2026-12-04"),
+      ],
+    },
+    today: "2026-11-28",
+    stored: new Map(),
+    newId: idSequence(),
+  });
+  expect(outcome).toBe("ok");
+  expect(writes).toMatchObject([
+    {
+      status: "published",
+      sourceUrl: "https://event.rakuten.co.jp/campaign/supersale/",
+      event: {
+        id: "supersale-2026-12-04",
+        name: "楽天スーパーSALE",
+        period: { start: "2026-12-04", end: "2026-12-11" },
+      },
+    },
+  ]);
+});
+
+test("warns about a 楽天スーパーSALE page whose campaign is named otherwise", () => {
+  const { writes, outcome, notes } = collectSupersale({
+    page: { read: [supersaleRound("お買い物マラソン", "2026-12-04")] },
+    today: "2026-11-28",
+    stored: new Map(),
+    newId: idSequence(),
+  });
+  expect(outcome).toBe("warning");
+  expect(notes).toEqual(["スーパーSALE のページのキャンペーン名が「お買い物マラソン」"]);
+  expect(writes).toEqual([]);
 });
