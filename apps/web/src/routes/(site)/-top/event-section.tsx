@@ -23,7 +23,6 @@ import {
   TriangleAlertIcon,
   VStack,
   dataAttr,
-  useDisclosure,
 } from "@workspaces/ui";
 import { useAtomValue, useStore, type ExtractAtomValue } from "jotai";
 import { type ReactNode, useId } from "react";
@@ -260,52 +259,45 @@ function EndedEvents({
   disabled,
   onCreate,
 }: { months: [string, string[]][] } & CreateIdProps) {
-  const { open, onOpen, onClose } = useDisclosure();
   const count = months.reduce((sum, [, ids]) => sum + ids.length, 0);
   return (
-    <>
-      <Button variant="ghost" colorScheme="link" size="sm" px="0" flexShrink="0" onClick={onOpen}>
-        終了したイベント（{count} 件）
-      </Button>
-      <Drawer.Root
-        open={open}
-        onClose={onClose}
-        placement={{ base: "inline-end", md: "block-end" }}
-        size="lg"
+    <Drawer.Root placement={{ base: "inline-end", md: "block-end" }} size="lg">
+      <Drawer.OpenTrigger>
+        <Button variant="ghost" colorScheme="link" size="sm" px="0" flexShrink="0">
+          終了したイベント（{count} 件）
+        </Button>
+      </Drawer.OpenTrigger>
+      <Drawer.Content
+        bg="bg.base"
+        maxH={{ base: "none", md: "calc(100dvh - 24px)" }}
+        roundedTop={{ base: "0", md: "l2" }}
       >
-        <Drawer.Content
-          bg="bg.base"
-          maxH={{ base: "none", md: "calc(100dvh - 24px)" }}
-          roundedTop={{ base: "0", md: "l2" }}
-        >
-          <Drawer.Header bg="bg.panel" borderBottomWidth="1px">
-            <Drawer.Title fontSize="md">終了したイベント</Drawer.Title>
-          </Drawer.Header>
-          <Drawer.Body py="4" gap="5">
-            {[...months].map(([month, monthEvents]) => (
-              <VStack key={month} as="section" gap="2" alignItems="stretch">
-                <Heading as="h3" fontSize="sm" color="fg.muted">
-                  {yearMonth(month)}
-                </Heading>
-                <Card.Root>
-                  <List.Root>
-                    {monthEvents.map((eventId) => (
-                      <EndedEventRow
-                        key={eventId}
-                        eventId={eventId}
-                        disabled={disabled}
-                        onCreate={onCreate}
-                        onClose={onClose}
-                      />
-                    ))}
-                  </List.Root>
-                </Card.Root>
-              </VStack>
-            ))}
-          </Drawer.Body>
-        </Drawer.Content>
-      </Drawer.Root>
-    </>
+        <Drawer.Header bg="bg.panel" borderBottomWidth="1px">
+          <Drawer.Title fontSize="md">終了したイベント</Drawer.Title>
+        </Drawer.Header>
+        <Drawer.Body py="4" gap="5">
+          {[...months].map(([month, monthEvents]) => (
+            <VStack key={month} as="section" gap="2" alignItems="stretch">
+              <Heading as="h3" fontSize="sm" color="fg.muted">
+                {yearMonth(month)}
+              </Heading>
+              <Card.Root>
+                <List.Root>
+                  {monthEvents.map((eventId) => (
+                    <EndedEventRow
+                      key={eventId}
+                      eventId={eventId}
+                      disabled={disabled}
+                      onCreate={onCreate}
+                    />
+                  ))}
+                </List.Root>
+              </Card.Root>
+            </VStack>
+          ))}
+        </Drawer.Body>
+      </Drawer.Content>
+    </Drawer.Root>
   );
 }
 
@@ -313,12 +305,10 @@ function EndedEventRow({
   eventId,
   disabled,
   onCreate,
-  onClose,
 }: {
   eventId: string;
   disabled: boolean;
   onCreate: (eventId: string) => void;
-  onClose: () => void;
 }) {
   const event = useAtomValue(officialEventAtom(eventId));
   if (!event) return null;
@@ -341,18 +331,17 @@ function EndedEventRow({
           {tiersSummary(event)}
         </Text>
       </VStack>
-      <Button
-        variant="outline"
-        bg="bg.panel"
-        flexShrink="0"
-        disabled={disabled}
-        onClick={() => {
-          onClose();
-          onCreate(eventId);
-        }}
-      >
-        プランを作る
-      </Button>
+      <Drawer.CloseTrigger>
+        <Button
+          variant="outline"
+          bg="bg.panel"
+          flexShrink="0"
+          disabled={disabled}
+          onClick={() => onCreate(eventId)}
+        >
+          プランを作る
+        </Button>
+      </Drawer.CloseTrigger>
     </List.Item>
   );
 }

@@ -35,7 +35,6 @@ export function useDeleteCampaign(planId: string, afterDelete: RefObject<HTMLEle
       success={{ children: "削除する", colorScheme: "danger" }}
       finalFocusRef={finalFocus}
       onClose={onClose}
-      onCancel={onClose}
       onSuccess={() => {
         if (target) save(removeBenefit({ planId: planId, benefitId: target }));
         onClose();

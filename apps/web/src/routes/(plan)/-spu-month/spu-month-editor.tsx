@@ -32,7 +32,6 @@ import {
   SimpleGrid,
   Tag,
   Text,
-  useDisclosure,
   ChevronRightIcon,
   ArrowUpRightIcon,
 } from "@workspaces/ui";
@@ -216,7 +215,6 @@ function Tile({
   );
   const capped = useAtomValue(selectAtom(planResultAtom(key.planId ?? ""), tileCapped(benefitId)));
   const disabled = !useAtomValue(spuReadyAtom);
-  const detail = useDisclosure();
   const badgeId = useId();
   if (benefit?.kind !== "rate-bonus") return null;
   const name = tileName(benefit);
@@ -250,34 +248,33 @@ function Tile({
           {capped ? <CapBadge id={badgeId} position="absolute" top="-2" right="-2" /> : null}
         </CheckboxCard.Root>
         {/* Long names (楽天プレミアムカード（特典分）) wrap at a phrase, or anywhere when one phrase is wider than the column. */}
-        <Button
-          variant="ghost"
-          size="xs"
-          onClick={detail.onOpen}
-          aria-label={`${name}の上限と条件`}
-          w="full"
-          h="auto"
-          minH="8"
-          py="1"
-          fontSize="2xs"
-          whiteSpace="normal"
-          px={{ base: "1", sm: "0" }}
-          wordBreak="keep-all"
-          overflowWrap="anywhere"
-          lineHeight="moderate"
+        <Modal.Root
+          size="sm"
+          title={tileName(benefit)}
+          body={<DetailBody {...key} benefitId={benefitId} />}
+          cancel="閉じる"
         >
-          {name}
-        </Button>
+          <Modal.OpenTrigger>
+            <Button
+              variant="ghost"
+              size="xs"
+              aria-label={`${name}の上限と条件`}
+              w="full"
+              h="auto"
+              minH="8"
+              py="1"
+              fontSize="2xs"
+              whiteSpace="normal"
+              px={{ base: "1", sm: "0" }}
+              wordBreak="keep-all"
+              overflowWrap="anywhere"
+              lineHeight="moderate"
+            >
+              {name}
+            </Button>
+          </Modal.OpenTrigger>
+        </Modal.Root>
       </Flex>
-      <Modal.Root
-        open={detail.open}
-        onClose={detail.onClose}
-        size="sm"
-        title={tileName(benefit)}
-        body={<DetailBody {...key} benefitId={benefitId} />}
-        cancel="閉じる"
-        onCancel={detail.onClose}
-      />
     </>
   );
 }
@@ -410,35 +407,31 @@ function UsingPlans({
 
 /** 「? SPU とは」, the explanation in a dialog. */
 function WhatIsSpu() {
-  const { open, onOpen, onClose } = useDisclosure();
   return (
-    <>
-      <Button
-        variant="ghost"
-        size="xs"
-        px="1"
-        ms="-1"
-        color="fg.muted"
-        startIcon={<CircleQuestionMarkIcon />}
-        onClick={onOpen}
-      >
-        SPU とは
-      </Button>
-      <Modal.Root
-        open={open}
-        onClose={onClose}
-        size="sm"
-        title="SPU とは"
-        body={
-          <Text fontSize="sm">
-            楽天カードや楽天モバイルなど、楽天のサービスを使っているほど、楽天市場の買い物でもらえるポイントの倍率が上がる仕組みです。楽天は、どのサービスを使ったかを月ごとに判定します。使っているサービスを
-            ON にすると、その月の日付の注文のポイントに加わります。
-          </Text>
-        }
-        cancel="閉じる"
-        onCancel={onClose}
-      />
-    </>
+    <Modal.Root
+      size="sm"
+      title="SPU とは"
+      body={
+        <Text fontSize="sm">
+          楽天カードや楽天モバイルなど、楽天のサービスを使っているほど、楽天市場の買い物でもらえるポイントの倍率が上がる仕組みです。楽天は、どのサービスを使ったかを月ごとに判定します。使っているサービスを
+          ON にすると、その月の日付の注文のポイントに加わります。
+        </Text>
+      }
+      cancel="閉じる"
+    >
+      <Modal.OpenTrigger>
+        <Button
+          variant="ghost"
+          size="xs"
+          px="1"
+          ms="-1"
+          color="fg.muted"
+          startIcon={<CircleQuestionMarkIcon />}
+        >
+          SPU とは
+        </Button>
+      </Modal.OpenTrigger>
+    </Modal.Root>
   );
 }
 

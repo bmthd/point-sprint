@@ -130,7 +130,6 @@ export function SyncSettings({
   const [locked, setLocked] = useState<Locked>();
   const [recovering, setRecovering] = useState(false);
   const stopping = useDisclosure();
-  const reissuing = useDisclosure();
 
   const run = async (action: () => Promise<void>) => {
     setError(undefined);
@@ -182,14 +181,39 @@ export function SyncSettings({
           パスキーでログイン
         </Button>
       ) : null}
-      <Button
-        variant="outline"
-        alignSelf="start"
-        disabled={pending || locked !== undefined || status.state === "signed-out"}
-        onClick={reissuing.onOpen}
+      <Modal.Root
+        title="復元用のコードを再発行しますか？"
+        body={
+          <Text>
+            再発行すると、以前のコードは使えなくなります。新しいコードを必ず控えてください。既存のパスキーと、ほかの端末の同期は引き続き使えます。
+          </Text>
+        }
+        cancel={{ children: "キャンセル", disabled: pending }}
+        success={{ children: "再発行する", loading: pending }}
+        closeOnEsc={!pending}
+        closeOnOverlay={!pending}
+        withCloseButton={!pending}
+        onSuccess={(onClose) =>
+          void run(async () => {
+            try {
+              const code = await reissueRecoveryCode(deps());
+              setStarted({ code, withoutPrf: false });
+            } finally {
+              onClose();
+            }
+          })
+        }
       >
-        復元用のコードを再発行
-      </Button>
+        <Modal.OpenTrigger>
+          <Button
+            variant="outline"
+            alignSelf="start"
+            disabled={pending || locked !== undefined || status.state === "signed-out"}
+          >
+            復元用のコードを再発行
+          </Button>
+        </Modal.OpenTrigger>
+      </Modal.Root>
       <Text fontSize="xs" color="fg.muted">
         同期をやめると、サーバーにあるデータを消します。この端末のデータは残ります。
       </Text>
@@ -315,32 +339,6 @@ export function SyncSettings({
           }}
         />
         <Modal.Root
-          open={reissuing.open}
-          title="復元用のコードを再発行しますか？"
-          body={
-            <Text>
-              再発行すると、以前のコードは使えなくなります。新しいコードを必ず控えてください。既存のパスキーと、ほかの端末の同期は引き続き使えます。
-            </Text>
-          }
-          cancel={{ children: "キャンセル", disabled: pending }}
-          success={{ children: "再発行する", loading: pending }}
-          closeOnEsc={!pending}
-          closeOnOverlay={!pending}
-          withCloseButton={!pending}
-          onClose={reissuing.onClose}
-          onCancel={reissuing.onClose}
-          onSuccess={() =>
-            void run(async () => {
-              try {
-                const code = await reissueRecoveryCode(deps());
-                setStarted({ code, withoutPrf: false });
-              } finally {
-                reissuing.onClose();
-              }
-            })
-          }
-        />
-        <Modal.Root
           open={stopping.open}
           title="同期をやめますか？"
           body={
@@ -351,7 +349,6 @@ export function SyncSettings({
           cancel="キャンセル"
           success={{ children: "同期をやめる", colorScheme: "danger", loading: pending }}
           onClose={stopping.onClose}
-          onCancel={stopping.onClose}
           onSuccess={() =>
             void run(async () => {
               try {

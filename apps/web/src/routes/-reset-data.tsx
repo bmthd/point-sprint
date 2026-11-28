@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Button, Modal, Text, VStack, useDisclosure } from "@workspaces/ui";
+import { Button, Modal, Text, VStack } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { clearDataAtom } from "#/state/mutations.ts";
@@ -9,23 +9,13 @@ import { clearDataAtom } from "#/state/mutations.ts";
  * the top as on a first visit.
  */
 export function ResetDataButton() {
-  const { open, onOpen, onClose } = useDisclosure();
   const { mutateAsync: clearData, isPending } = useAtomValue(clearDataAtom);
   const navigate = useNavigate();
   const [failed, setFailed] = useState(false);
 
   return (
     <VStack gap="2" alignItems="stretch">
-      <Button variant="outline" colorScheme="danger" onClick={onOpen}>
-        データを初期化
-      </Button>
-      {failed ? (
-        <Text role="alert" fontSize="sm" color="danger.fg">
-          初期化できませんでした。もう一度お試しください。
-        </Text>
-      ) : null}
       <Modal.Root
-        open={open}
         title="データを初期化しますか？"
         body={
           <Text>
@@ -34,9 +24,7 @@ export function ResetDataButton() {
         }
         cancel="キャンセル"
         success={{ children: "初期化する", colorScheme: "danger", loading: isPending }}
-        onClose={onClose}
-        onCancel={onClose}
-        onSuccess={() => {
+        onSuccess={(onClose) => {
           setFailed(false);
           clearData()
             .then(() => {
@@ -48,7 +36,18 @@ export function ResetDataButton() {
               setFailed(true);
             });
         }}
-      />
+      >
+        <Modal.OpenTrigger>
+          <Button variant="outline" colorScheme="danger">
+            データを初期化
+          </Button>
+        </Modal.OpenTrigger>
+      </Modal.Root>
+      {failed ? (
+        <Text role="alert" fontSize="sm" color="danger.fg">
+          初期化できませんでした。もう一度お試しください。
+        </Text>
+      ) : null}
     </VStack>
   );
 }
