@@ -1,7 +1,11 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "unicorn", "oxc", "import"],
-  "jsPlugins": ["./apps/web/lint/jotai-plugin.ts", "./packages/ui/lint/style-plugin.ts"],
+  "jsPlugins": [
+    "./apps/web/lint/jotai-plugin.ts",
+    "./packages/ui/lint/style-plugin.ts",
+    "./packages/lint/src/react-plugin.ts"
+  ],
   "categories": {
     "correctness": "error"
   },
@@ -58,22 +62,7 @@
     {
       "files": ["apps/web/src/**"],
       "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": [
-              {
-                "group": ["../**"],
-                "message": "親ディレクトリのモジュールは `#/`（package.json の imports）から読み込む。"
-              },
-              {
-                "group": ["react", "@workspaces/ui"],
-                "importNamePattern": "^use\\w*Effect$",
-                "message": "アプリのコードでは effect hooks を使わない。イベントハンドラー、ref callback、useSyncExternalStore、atom、loader で処理する。"
-              }
-            ]
-          }
-        ]
+        "react-app/no-effect-hooks": "error"
       },
       "excludeFiles": ["**/*.test.{ts,tsx}", "apps/web/src/test-color-mode.tsx"]
     }

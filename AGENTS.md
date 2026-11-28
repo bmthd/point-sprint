@@ -41,7 +41,7 @@
 
 ## Effect hooks
 
-`apps/web/src` のアプリのコードでは、React と `@workspaces/ui` の `use*Effect` を使わない。テストとテスト専用の補助ファイルは対象に含めない。既存の箇所は `oxlint-suppressions.json` に記録し、順に減らす。
+`apps/web/src` のアプリのコードでは、React と `@workspaces/ui` の `use*Effect` を使わない。テストとテスト専用の補助ファイルは対象に含めない。`packages/lint` の `react-app/no-effect-hooks` が名前付き import・再 export と、default・namespace import 経由の参照を止める。`useEffectEvent` は対象に含めない。既存の箇所は `oxlint-suppressions.json` に記録し、順に減らす。
 
 既存の箇所を変更するときは、イベントハンドラー、クリーンアップを返す ref callback、`useSyncExternalStore`、jotai の atom、ルーターの loader などに置き換え、`pnpm exec oxlint --prune-suppressions` を実行する。`oxlint-disable` コメントは追加しない。
 

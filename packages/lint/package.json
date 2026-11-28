@@ -1,0 +1,11 @@
+{
+  "name": "@workspaces/lint",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/react-plugin.ts"
+  },
+  "devDependencies": {
+    "@oxlint/plugins": "1.86.0"
+  }
+}
