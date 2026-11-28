@@ -8,11 +8,18 @@
 // 調べた経緯は /guides/rakuma-plus1 にまとめた。
 import type { Benefit } from "#/model/benefit.ts";
 import type { Id, Period } from "#/model/common.ts";
+import { presaleOf } from "#/plan-ops/presale.ts";
 
 const SHARED_KEY_PREFIX = "rakuma:";
 
-/** The ラクマ購入 +1倍 of an official event, off until the user says they bought on ラクマ. */
-export function rakumaBenefit(event: { id: string; period: Period }, id: Id): Benefit {
+type EventOfRakuma = { id: string; period: Period; benefits?: Benefit[] };
+
+/**
+ * The ラクマ購入 +1倍 of an official event, off until the user says they bought on ラクマ. It takes the
+ * event's 先行セール too: the ラクマ特典 goes with the shop-around.
+ */
+export function rakumaBenefit(event: EventOfRakuma, id: Id): Benefit {
+  const presale = presaleOf(event.benefits ?? []);
   return {
     id,
     kind: "rate-bonus",
@@ -28,6 +35,7 @@ export function rakumaBenefit(event: { id: string; period: Period }, id: Id): Be
       channels: ["rakuten-ichiba", "rakuten-books", "rakuten-kobo"],
       dateRule: { type: "range", start: event.period.start, end: event.period.end },
       minShopAmount: 1000,
+      ...(presale ? { presale: structuredClone(presale) } : {}),
     },
     params: { rate: 1, cap: 500, roundingUnit: "item" },
   };
@@ -43,7 +51,7 @@ export function isRakumaBenefit(benefit: Benefit): boolean {
  * on, with the event's period and key. A new one, off, when the plan had none.
  */
 export function rakumaFor(
-  event: { id: string; period: Period },
+  event: EventOfRakuma,
   kept: Benefit | undefined,
   newId: () => Id,
 ): Benefit {

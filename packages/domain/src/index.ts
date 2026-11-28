@@ -27,6 +27,8 @@ export {
   type OrderTag,
   PeriodSchema,
   type Period,
+  PresaleSchema,
+  type Presale,
   MonthSchema,
   daysOf,
   monthsOf,
@@ -127,6 +129,7 @@ export {
   BOOKS_SPU_ID,
   CARRIED_SPU_IDS,
   KOBO_SPU_ID,
+  MOBILE_SPU_ID,
   NORMAL_POINT_ID,
   type RakutenCardPart,
   spuPurchaseRules,
@@ -234,6 +237,7 @@ export {
   withEffectiveAccount,
 } from "./plan-ops/accounts.ts";
 export { calculatedPlan } from "./plan-ops/calculated-plan.ts";
+export { eventPlanPeriod, presaleOf, presaleOpen, withPresaleDays } from "./plan-ops/presale.ts";
 export { type OrderPoints, orderPoints } from "./calculate/order-points.ts";
 export {
   type StartEventChoice,

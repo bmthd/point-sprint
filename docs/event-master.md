@@ -112,6 +112,21 @@ pnpm exec cf d1 query <ID> --sql "INSERT INTO official_events (id, name, period_
 
 `benefits_json` に新しい `orderTags` の値を使う行は、その値を読めるアプリをデプロイしてから足す。前の版の Worker は、読めない行を配信しない。
 
+## 楽天スーパーSALE の先行セール
+
+楽天スーパーSALE の前日には「楽天モバイルご利用者限定 先行セール」がある（2026-12 の回は 12-03 20:00〜12-04 19:59）。先行セールで買った注文も、楽天モバイルの利用者だけショップ買いまわりの対象になる。利用者のポイントアップ期間は先行セールの開始から、それ以外の人はお買い物期間の開始からになる。
+
+- 行の期間（`period_start`・`period_end`、時刻の列）は、お買い物期間（ポイントアップ期間）にする。2026-12 の回は `2026-12-04` 20:00〜`2026-12-11` 01:59。
+- 先行セールは、ショップ買いまわりの特典の `conditions.presale` に書く。`start`・`end` は先行セールの初日と最終日、`times` はその時刻、`spuBenefitId` は SPU の「楽天モバイル」の `id`（`ca794fa7-4a85-43c6-ab34-e06feb115c5d`、`packages/domain/src/master/spu.ts` の `MOBILE_SPU_ID`）にする。`dateRule` はお買い物期間のままにする。
+- プランは、先行セールの初日から始まる。プランの月（先行セールの初日の月）の SPU で楽天モバイルが ON なら、買いまわり（とラクマ購入 +1倍）の日に先行セールの日を足して計算する。OFF なら先行セールの日の注文を買いまわりから外し、「SPU の楽天モバイルが OFF なので対象外」と出す。トップページのイベントには「楽天モバイルの利用者は 12/3（木）20:00 から」と出る。
+- 先行セールの対象者（Rakuten最強プランなどの利用者で、前日の 23:59 までに利用を始めた人）と、エントリー不要であることは、公式ページで確かめるだけにする。アプリは SPU の楽天モバイルで判定する。
+
+```json
+{"id":"<UUID>","kind":"shop-around","category":"campaign","label":"ショップ買いまわり","enabled":true,"amountBasis":"tax-excluded","capScope":"campaign","sharedKey":"super-sale-2026-12-04","conditions":{"dateRule":{"type":"range","start":"2026-12-04","end":"2026-12-11"},"presale":{"start":"2026-12-03","end":"2026-12-04","times":{"start":"20:00","end":"19:59"},"spuBenefitId":"ca794fa7-4a85-43c6-ab34-e06feb115c5d"}},"params":{"tiers":[{"minShops":2,"rate":1},{"minShops":3,"rate":2},{"minShops":4,"rate":3},{"minShops":5,"rate":4},{"minShops":6,"rate":5},{"minShops":7,"rate":6},{"minShops":8,"rate":7},{"minShops":9,"rate":8},{"minShops":10,"rate":9}],"cap":7000,"roundingUnit":"item"}}
+```
+
+`conditions.presale` を使う行は、それを読めるアプリをデプロイしてから足す（前の版の Worker は、知らないキーを捨てて先行セールのない回として配信する）。
+
 ## 表の形を変えるとき
 
 `apps/web/migrations/` に SQL を足す。本番には Deploy のワークフローが、Preview には Preview のワークフローがデプロイの前に当てる。手元の開発サーバーと E2E は、起動のたびにローカルの D1 を作り直して当てる（`pnpm --filter web db:migrate --local`）。開発サーバーは、起動したまま足されたマイグレーションも、次に D1 を読むときに当てる（`apps/web/src/server/shared/dev-migrations.worker.ts`）。

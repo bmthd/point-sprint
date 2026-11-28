@@ -1,5 +1,5 @@
 import { selectAtom } from "jotai/utils";
-import { deepEqual, endedLatestFirst } from "@workspaces/domain";
+import { deepEqual, endedLatestFirst, presaleOf, standardSpu } from "@workspaces/domain";
 import type { OfficialEvent } from "@workspaces/domain";
 import {
   Badge,
@@ -43,6 +43,17 @@ function tiersSummary(event: OfficialEvent, short = false): string {
       return [`${what}最大 +${maxRate}倍・${capText}`];
     })
     .join("・");
+}
+
+/**
+ * Who shops from when in the event's 先行セール: 「楽天モバイルの利用者は 12/3（木）20:00 から」.
+ * `undefined` for an event without one.
+ */
+function presaleText(event: OfficialEvent): string | undefined {
+  const presale = presaleOf(event.benefits);
+  if (!presale) return undefined;
+  const spu = standardSpu.find((benefit) => benefit.id === presale.spuBenefitId)?.label ?? "SPU";
+  return `${spu}の利用者は ${monthDayWithWeekday(presale.start)}${presale.times?.start ?? ""} から`;
 }
 
 type Status = "active" | "upcoming" | "ended";
@@ -151,6 +162,9 @@ function EventCard({
           >
             {monthDay(event.period.start)}〜{monthDay(event.period.end)}・
             {tiersSummary(event, true)}
+          </Text>
+          <Text fontSize={{ base: "sm", md: "xs" }} color="fg.muted" _empty={{ display: "none" }}>
+            {presaleText(event)}
           </Text>
         </VStack>
         <Button

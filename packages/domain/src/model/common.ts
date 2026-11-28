@@ -112,6 +112,20 @@ export const DateRuleSchema = v.variant("type", [
 ]);
 export type DateRule = v.InferOutput<typeof DateRuleSchema>;
 
+/**
+ * 先行セール (楽天スーパーSALE の「楽天モバイルご利用者限定 先行セール」): days before the benefit's
+ * `dateRule`, a range, on which an order also counts for a buyer who has the SPU item `spuBenefitId`
+ * on in the month of `start`. `times` is when it starts on its first day and ends on its last, in
+ * Japan, for the notes; orders are judged by the day only.
+ */
+export const PresaleSchema = v.object({
+  start: IsoDateSchema,
+  end: IsoDateSchema,
+  times: v.optional(v.object({ start: IsoTimeSchema, end: IsoTimeSchema })),
+  spuBenefitId: v.string(),
+});
+export type Presale = v.InferOutput<typeof PresaleSchema>;
+
 export const ConditionsSchema = v.object({
   channels: v.optional(v.array(ChannelIdSchema)),
   shopIds: v.optional(v.array(IdSchema)),
@@ -128,5 +142,7 @@ export const ConditionsSchema = v.object({
   months: v.optional(v.array(MonthSchema)),
   /** Only the orders paid with a 楽天カード (`Order["rakutenCard"]`): the card's SPU items. */
   rakutenCard: v.optional(v.literal(true)),
+  /** Widens `dateRule` for the buyers it is for (`withPresaleDays`) before the orders are matched. */
+  presale: v.optional(PresaleSchema),
 });
 export type Conditions = v.InferOutput<typeof ConditionsSchema>;

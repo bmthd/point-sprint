@@ -2,8 +2,10 @@ import {
   type CalculationWarning,
   channels,
   disabledAchievedSpu,
+  eventPlanPeriod,
   type OfficialEvent,
   type Plan,
+  presaleOf,
   spuPurchaseRules,
   standardSpu,
   withEffectiveAccount,
@@ -62,37 +64,69 @@ export function storageMessages(storage: { wasReset: boolean } | undefined): str
 /**
  * About the orders on the first and last days of the plan's event, which may start or end partway
  * through the day: 「期間の初日・最終日の注文が2件あります（10/4、10/9）。10/4 20:00 より前、10/9
- * 01:59 より後の注文は対象外ですが、ここでは対象に数えています。」
+ * 01:59 より後の注文は対象外ですが、ここでは対象に数えています。」 The first day is the 先行セール's
+ * for a buyer who can shop in it.
  */
 function edgeMessage(
   plan: Plan,
   event: OfficialEvent | undefined,
   warnings: CalculationWarning[],
 ): string | undefined {
-  const samePeriod =
-    event?.period.start === plan.period.start && event.period.end === plan.period.end;
-  const times = samePeriod ? event.times : undefined;
-  const allDay = { start: "00:00", end: "23:59" } as const;
-  const orders = warnings.flatMap((warning) =>
-    warning.type === "order-on-period-edge" && times?.[warning.edge] !== allDay[warning.edge]
-      ? [warning]
-      : [],
+  const period = event ? eventPlanPeriod(event) : undefined;
+  const samePeriod = period?.start === plan.period.start && period.end === plan.period.end;
+  const presale = event ? presaleOf(event.benefits) : undefined;
+  const edges = warnings.flatMap((warning) => {
+    if (warning.type !== "order-on-period-edge") return [];
+    const date = plan.orders.find((order) => order.id === warning.orderId)?.date;
+    if (date === undefined) return [];
+    const time = !samePeriod
+      ? undefined
+      : warning.edge === "end"
+        ? event?.times?.end
+        : date === presale?.start
+          ? presale.times?.start
+          : event?.times?.start;
+    return time === ALL_DAY[warning.edge] ? [] : [{ edge: warning.edge, date, time }];
+  });
+  if (edges.length === 0) return undefined;
+  const days = [...new Map(edges.map((one) => [`${one.edge}:${one.date}`, one])).values()].sort(
+    (a, b) => (a.date < b.date ? -1 : 1),
   );
-  if (orders.length === 0) return undefined;
-  const edges = (["start", "end"] as const).filter((edge) =>
-    orders.some((order) => order.edge === edge),
-  );
-  const dates = edges.map((edge) => monthDay(plan.period[edge])).join("、");
-  const outside = times
-    ? `${edges
-        .map((edge) =>
-          edge === "start"
-            ? `${monthDay(plan.period.start)} ${times.start} より前`
-            : `${monthDay(plan.period.end)} ${times.end} より後`,
+  const dates = days.map((one) => monthDay(one.date)).join("、");
+  const outside = days.every((one) => one.time !== undefined)
+    ? `${days
+        .map((one) =>
+          one.edge === "start"
+            ? `${monthDay(one.date)} ${one.time} より前`
+            : `${monthDay(one.date)} ${one.time} より後`,
         )
         .join("、")}の注文は対象外です`
     : "時刻によっては対象外です";
-  return `期間の初日・最終日の注文が${orders.length}件あります（${dates}）。${outside}が、ここでは対象に数えています。`;
+  return `期間の初日・最終日の注文が${edges.length}件あります（${dates}）。${outside}が、ここでは対象に数えています。`;
+}
+
+const ALL_DAY = { start: "00:00", end: "23:59" } as const;
+
+/**
+ * About the orders on the days of the plan's 先行セール that its buyer cannot shop in:
+ * 「12/3 の注文が1件あります。先行セールの日の注文は、楽天モバイルを使っている人だけ買いまわりの
+ * 対象です。12月の SPU の楽天モバイルが OFF なので、対象外にしています。」
+ */
+function closedPresaleMessage(
+  plan: Plan,
+  event: OfficialEvent | undefined,
+  warnings: CalculationWarning[],
+): string | undefined {
+  const orders = warnings.flatMap((warning) =>
+    warning.type === "order-in-closed-presale"
+      ? plan.orders.filter((order) => order.id === warning.orderId)
+      : [],
+  );
+  const presale = event ? presaleOf(event.benefits) : presaleOf(plan.benefits);
+  if (orders.length === 0 || !presale) return undefined;
+  const dates = [...new Set(orders.map((order) => monthDay(order.date)))].join("、");
+  const spu = standardSpu.find((benefit) => benefit.id === presale.spuBenefitId)?.label ?? "SPU";
+  return `${dates} の注文が${orders.length}件あります。先行セールの日の注文は、${spu}を使っている人だけ買いまわりの対象です。${monthText(presale.start.slice(0, 7))}の SPU の${spu}が OFF なので、対象外にしています。`;
 }
 
 function messagesOf(
@@ -119,6 +153,8 @@ function messagesOf(
   }
   const edge = edgeMessage(plan, event, warnings);
   if (edge) messages.push(edge);
+  const closedPresale = closedPresaleMessage(plan, event, warnings);
+  if (closedPresale) messages.push(closedPresale);
   const unknown = ordersOf("unknown-shop");
   if (unknown.length > 0) {
     messages.push(
