@@ -1,6 +1,6 @@
 import { selectAtom } from "jotai/utils";
 import { type CalculationResult } from "@workspaces/domain";
-import { useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import {
   Box,
   Flex,
@@ -16,6 +16,7 @@ import {
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useRef } from "react";
+import { settingsPanel } from "#/routes/(plan)/-plan-search.ts";
 import { planResultAtom } from "#/state/derived.ts";
 import { PlanPage } from "#/routes/(plan)/-plan-page.tsx";
 import { useSpuLossNotice } from "#/routes/(plan)/-spu-loss-notice.tsx";
@@ -86,8 +87,29 @@ function SettingsBody({
 }
 
 /**
+ * The settings' side panel on a desktop is open while the URL has `settings`, under the address of
+ * their own page, so the back button closes it. A month's SPU opened from them keeps `settings`
+ * and covers them until it is closed. Closing them goes back when they were opened over the plan
+ * (the history entry says so, which survives back and forward), and otherwise drops `settings` in
+ * place.
+ */
+export function useSettingsPanelTarget(planId: string) {
+  const navigate = useNavigate();
+  const router = useRouter();
+  const search: { settings?: unknown; spu?: unknown } = useSearch({ strict: false });
+  const overPlan = useLocation({ select: (location) => location.state.settingsOverPlan === true });
+  const shown = search.settings === true;
+  const open = () => void navigate({ ...settingsPanel(planId), state: { settingsOverPlan: true } });
+  const close = () => {
+    if (overPlan) router.history.back();
+    else void navigate({ to: "/plan", search: { id: planId }, replace: true });
+  };
+  return { shown, open: shown && search.spu === undefined, onOpen: open, onClose: close };
+}
+
+/**
  * The desktop's header button and the side panel it opens with the same settings. `onChangeSpu`
- * opens the SPU of a month, in place of the settings.
+ * opens the SPU of a month over the settings, which are back where they were left once it closes.
  */
 export function SettingsPanelButton({
   planId,
@@ -144,7 +166,6 @@ export function SettingsPanelButton({
               planId={planId}
               onChangeSpu={(month) => {
                 scrollTop.current = body.current?.scrollTop ?? 0;
-                onClose();
                 onChangeSpu(month);
               }}
             />
