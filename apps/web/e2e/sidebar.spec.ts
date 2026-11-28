@@ -80,9 +80,10 @@ test("the reading card starts at the same height as the first sidebar card", asy
   }
 });
 
-test("on a phone the sidebar is in the header's menu, on every page", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  for (const path of ["/", ...withSidebar, ...withoutSidebar]) {
+// One test per page: every page together takes more than one test's time allows.
+for (const path of ["/", ...withSidebar, ...withoutSidebar]) {
+  test(`on a phone the sidebar is in the header's menu, on ${path}`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     const site = await SitePage.open(page, path);
     await expect(site.main.getByText("読み込み中…")).toHaveCount(0);
     await expect(site.sidebar.root).toHaveCount(0);
@@ -96,8 +97,8 @@ test("on a phone the sidebar is in the header's menu, on every page", async ({ p
       () => document.documentElement.scrollWidth > window.innerWidth,
     );
     expect(overflow, path).toBe(false);
-  }
-});
+  });
+}
 
 test("the notices are marked unread until /notices is opened", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });

@@ -1,12 +1,13 @@
 import { type Page } from "@playwright/test";
 import { Sidebar } from "./site-page.ts";
+import { openHydrated } from "./hydration.ts";
 
 /** /notices: every notice in full. */
 export class NoticesPage {
   constructor(readonly page: Page) {}
 
   static async open(page: Page) {
-    await page.goto("/notices");
+    await openHydrated(page, "/notices");
     return new NoticesPage(page);
   }
 

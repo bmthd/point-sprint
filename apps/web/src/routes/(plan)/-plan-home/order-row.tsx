@@ -348,8 +348,10 @@ function LoadedRow(props: OrderRowProps & { order: Order }) {
   const { form, commit, latestCommit, autofill } = useOrderEditForm(planId, order);
   const enterUrl = useEnterUrl(form, autofill);
 
-  // Moving an order can take its row out of the document for a moment, which drops the focus.
-  useEffect(() => {
+  // Moving an order can take its row out of the document for a moment, which drops the focus. Put
+  // back in the commit that moves the row: an effect run after the paint would take back the focus
+  // from wherever the user moved it in between.
+  useLayoutEffect(() => {
     if (focusAfterMoveRef.current !== orderId) return;
     focusAfterMoveRef.current = null;
     handleRef.current?.focus();

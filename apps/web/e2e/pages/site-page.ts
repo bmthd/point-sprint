@@ -3,14 +3,12 @@ import { InquiryPage } from "./inquiry-page.ts";
 import { NoticesPage } from "./notices-page.ts";
 import { SettingsPage } from "./settings-page.ts";
 import { TopPage } from "./top-page.ts";
+import { hydrated, openHydrated } from "./hydration.ts";
 
 /** Matches a URL that ends with `path`: the preview server answers a page's path with its directory (`/help/`). */
 export function endsWithPath(path: string) {
   return new RegExp(`${path.replace(/[?]/g, "\\?")}/?$`);
 }
-
-/** Options for a navigation that a test retries: how long to wait for the next page's URL. */
-export type NavigationOptions = { timeout?: number };
 
 /** The header, on every page. */
 export class Header {
@@ -44,32 +42,30 @@ export class Header {
   async goToTop() {
     await this.topLink.click();
     await expect(this.page).toHaveURL(/\/$/);
+    await hydrated(this.page);
     return new TopPage(this.page);
   }
 
   async goToSettings() {
     await this.settingsLink.click();
     await expect(this.page).toHaveURL(endsWithPath("/settings"));
+    await hydrated(this.page);
     return new SettingsPage(this.page);
   }
 
-  /** Switches between light and dark. Retried: a click before the prerendered page hydrates does nothing. */
+  /** Switches between light and dark. */
   async switchColorMode() {
     const html = this.page.locator("html");
     const before = await html.getAttribute("data-mode");
-    await expect(async () => {
-      await this.colorModeButton.click();
-      await expect(html).not.toHaveAttribute("data-mode", before ?? "", { timeout: 1000 });
-    }).toPass();
+    await this.colorModeButton.click();
+    await expect(html).not.toHaveAttribute("data-mode", before ?? "");
   }
 
-  /** Opens the menu, on a phone. Retried: a click before the prerendered page hydrates does nothing. */
+  /** Opens the menu, on a phone. */
   async openMenu() {
     const menu = new Menu(this.page);
-    await expect(async () => {
-      await this.menuButton.click();
-      await expect(menu.root).toBeVisible({ timeout: 1000 });
-    }).toPass();
+    await this.menuButton.click();
+    await expect(menu.root).toBeVisible();
     return menu;
   }
 }
@@ -98,12 +94,14 @@ export class Menu {
   async goToSettings() {
     await this.settingsLink.click();
     await expect(this.page).toHaveURL(endsWithPath("/settings"));
+    await hydrated(this.page);
     return new SettingsPage(this.page);
   }
 
   async goToNotices() {
     await this.noticesLink.click();
     await expect(this.page).toHaveURL(endsWithPath("/notices"));
+    await hydrated(this.page);
     return new NoticesPage(this.page);
   }
 }
@@ -125,16 +123,18 @@ export class Footer {
   }
 
   /** Follows the link to `href`. */
-  async follow(href: string, options?: NavigationOptions) {
+  async follow(href: string) {
     await this.root.locator(`a[href="${href}"]`).click();
-    await expect(this.page).toHaveURL(endsWithPath(href), options);
+    await expect(this.page).toHaveURL(endsWithPath(href));
+    await hydrated(this.page);
     return new SitePage(this.page);
   }
 
   /** Follows the link named `name`, which goes to `path`. */
-  async goTo(name: string, path: string, options?: NavigationOptions) {
+  async goTo(name: string, path: string) {
     await this.root.getByRole("link", { name }).click();
-    await expect(this.page).toHaveURL(endsWithPath(path), options);
+    await expect(this.page).toHaveURL(endsWithPath(path));
+    await hydrated(this.page);
     return new SitePage(this.page);
   }
 
@@ -162,7 +162,7 @@ export class SitePage {
   constructor(readonly page: Page) {}
 
   static async open(page: Page, path: string) {
-    await page.goto(path);
+    await openHydrated(page, path);
     return new SitePage(page);
   }
 

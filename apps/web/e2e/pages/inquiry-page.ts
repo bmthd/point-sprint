@@ -1,4 +1,5 @@
 import { type Locator, type Page } from "@playwright/test";
+import { openHydrated } from "./hydration.ts";
 
 /** The inquiry form. */
 export class InquiryPage {
@@ -19,7 +20,7 @@ export class InquiryPage {
   }
 
   static async open(page: Page) {
-    await page.goto("/inquiry");
+    await openHydrated(page, "/inquiry");
     return new InquiryPage(page);
   }
 
