@@ -1,7 +1,7 @@
 import { selectAtom } from "jotai/utils";
 import { plansAtom } from "#/state/query-atoms.ts";
 import { type Plan, deepEqual, type Order, capLines } from "@workspaces/domain";
-import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
+import { Navigate, useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import type { TaxRate } from "@workspaces/domain";
 import {
   Box,
@@ -185,13 +185,6 @@ function Home({ planId }: { planId: string }) {
     }
   };
   const settingsPanel = useSettingsPanelTarget(planId);
-  const settingsShown = settingsPanel.shown;
-  useEffect(() => {
-    // Narrowed to one column with the side panel open: the settings become the page the address
-    // bar already shows.
-    if (wide || !settingsShown) return;
-    void navigate({ to: "/plan/settings", search: { id: planId }, replace: true });
-  }, [wide, settingsShown, navigate, planId]);
   const { open: editOrder } = editor;
   const addOrder = () => editOrder(NEW_ORDER);
   const requestEventChange = useSetAtom(eventChangeRequestAtom);
@@ -334,6 +327,11 @@ function Home({ planId }: { planId: string }) {
         )}
       </Box>
       {wide ? null : <BottomBar planId={planId} onAdd={addOrder} />}
+      {/* Narrowed to one column with the side panel open: the settings become the page the address
+          bar already shows. */}
+      {!wide && settingsPanel.shown ? (
+        <Navigate to="/plan/settings" search={{ id: planId }} replace />
+      ) : null}
       <OrderEditor
         planId={planId}
         target={editor.target}

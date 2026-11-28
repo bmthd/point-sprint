@@ -1,6 +1,6 @@
 import { selectAtom } from "jotai/utils";
 import { type CalculationResult } from "@workspaces/domain";
-import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
+import { useLocation, useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import {
   Box,
   Flex,
@@ -15,7 +15,7 @@ import {
   PencilIcon,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { settingsPanel } from "#/routes/(plan)/-plan-search.ts";
 import { planResultAtom } from "#/state/derived.ts";
 import { PlanPage } from "#/routes/(plan)/-plan-page.tsx";
@@ -89,31 +89,21 @@ function SettingsBody({
 /**
  * The settings' side panel on a desktop is open while the URL has `settings`, under the address of
  * their own page, so the back button closes it. A month's SPU opened from them keeps `settings`
- * and covers them until it is closed. Closing them goes back when this page opened them, and
- * otherwise drops `settings` in place.
+ * and covers them until it is closed. Closing them goes back when they were opened over the plan
+ * (the history entry says so, which survives back and forward), and otherwise drops `settings` in
+ * place.
  */
 export function useSettingsPanelTarget(planId: string) {
   const navigate = useNavigate();
   const router = useRouter();
   const search: { settings?: unknown; spu?: unknown } = useSearch({ strict: false });
-  const openedHere = useRef(false);
+  const overPlan = useLocation({ select: (location) => location.state.settingsOverPlan === true });
   const shown = search.settings === true;
-  const open = () => {
-    openedHere.current = true;
-    void navigate(settingsPanel(planId));
-  };
+  const open = () => void navigate({ ...settingsPanel(planId), state: { settingsOverPlan: true } });
   const close = () => {
-    if (openedHere.current) {
-      openedHere.current = false;
-      router.history.back();
-    } else {
-      void navigate({ to: "/plan", search: { id: planId }, replace: true });
-    }
+    if (overPlan) router.history.back();
+    else void navigate({ to: "/plan", search: { id: planId }, replace: true });
   };
-  useEffect(() => {
-    // Closed by the browser's back button: the next close must not go back again.
-    if (!shown) openedHere.current = false;
-  }, [shown]);
   return { shown, open: shown && search.spu === undefined, onOpen: open, onClose: close };
 }
 

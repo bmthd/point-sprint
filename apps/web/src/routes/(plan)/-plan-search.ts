@@ -1,5 +1,15 @@
 import * as v from "valibot";
 
+declare module "@tanstack/react-router" {
+  interface HistoryState {
+    /**
+     * The settings' side panel was opened over the plan, the history entry before this one, which
+     * closing the panel goes back to.
+     */
+    settingsOverPlan?: true;
+  }
+}
+
 /**
  * `edit` opens the order editor: `new` for a new order, or the id of the order to edit. `spu`
  * opens the SPU of a month (`YYYY-MM`) in the side panel on a desktop. `settings` opens the plan's

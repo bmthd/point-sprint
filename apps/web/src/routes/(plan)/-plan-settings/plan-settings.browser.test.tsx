@@ -640,6 +640,23 @@ test("on a desktop the settings' side panel has their page's URL, and the back b
   expect(addressBar(screen.history)).toBe(`/plan?id=${PLAN}`);
 });
 
+test("on a desktop the settings' side panel opened again with the forward button closes back to the plan", async () => {
+  const screen = await renderDesktopPlan();
+  await screen.getByRole("button", { name: "プランの設定" }).click();
+  const panel = screen.getByRole("dialog", { name: "プランの設定" });
+  await expect.element(panel).toBeVisible();
+  screen.history.back();
+  await expect.element(panel).not.toBeInTheDocument();
+  screen.history.forward();
+  await expect.element(panel).toBeVisible();
+
+  await panel.getByRole("button", { name: "閉じる" }).click();
+  await expect.element(panel).not.toBeInTheDocument();
+  expect(addressBar(screen.history)).toBe(`/plan?id=${PLAN}`);
+  // Back on the plan's own entry, not a copy of it left after the settings' entry.
+  expect(screen.history.canGoBack()).toBe(false);
+});
+
 test("on a desktop a reload of the settings' side panel opens their page", async () => {
   const opened = await renderDesktopPlan();
   await opened.getByRole("button", { name: "プランの設定" }).click();
