@@ -23,7 +23,7 @@ import { RouterButton, RouterIconButton } from "#/ui/router-link.tsx";
 import { AccountPicker } from "./account-picker.tsx";
 import { CampaignToggles } from "./campaign-toggles.tsx";
 import { EventAttacher } from "./event-attacher.tsx";
-import { PlanHoldSwitch } from "./plan-hold-switch.tsx";
+import { PlanManagement } from "./plan-management.tsx";
 import { SettingsSaveFailureProvider, useSettingsSaveFailurePlanId } from "./settings-shared.ts";
 import { ShopAroundSettings } from "./shop-around-settings.tsx";
 import { SpendTiersSettings } from "./spend-tiers-settings.tsx";
@@ -69,7 +69,6 @@ function SettingsBody({
         </Text>
       ) : null}
       <AccountPicker planId={planId} />
-      <PlanHoldSwitch planId={planId} />
       <SpuSettingsCard
         planId={planId}
         title="SPU"
@@ -79,8 +78,9 @@ function SettingsBody({
       <CampaignToggles planId={planId} />
       <ShopAroundSettings planId={planId} />
       <SpendTiersSettings planId={planId} />
-      {/* Last, since it appears once the events load and would push the settings below it down. */}
+      {/* Near the end, since it appears once the events load and would push the settings below it down. */}
       <EventAttacher planId={planId} />
+      <PlanManagement planId={planId} />
     </VStack>
   );
 }
