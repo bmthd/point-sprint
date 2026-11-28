@@ -1,3 +1,4 @@
+import { MOBILE_SPU_ID } from "@workspaces/domain";
 import { expect, test } from "vitest";
 import {
   type PageReading,
@@ -305,9 +306,9 @@ test("checks the period, the rate and the cap", () => {
 });
 
 test("does not warn when the 楽天スーパーSALE page shows no round or cannot be fetched", () => {
-  const collect = (page: PageReading<CurrentRound[]>) =>
+  const collect = (page: PageReading<{ rounds: CurrentRound[] }>) =>
     collectSupersale({ page, today: "2026-11-28", stored: new Map(), newId: idSequence() });
-  expect(collect({ read: [] })).toEqual({
+  expect(collect({ read: { rounds: [] } })).toEqual({
     writes: [],
     outcome: "ok",
     notes: ["スーパーSALE のページに開催中・開催直前の回がない"],
@@ -327,11 +328,13 @@ const supersaleRound = (campaignName: string, start: string): CurrentRound => ({
 test("publishes the 楽天スーパーSALE shop-around for everyone, not the 楽天モバイル users' own", () => {
   const { writes, outcome } = collectSupersale({
     page: {
-      read: [
-        supersaleRound("楽天スーパーSALE【楽天モバイルご利用者限定！先行セール】", "2026-12-03"),
-        supersaleRound("楽天スーパーSALE【楽天モバイルご利用者限定】", "2026-12-03"),
-        supersaleRound("楽天スーパーSALE", "2026-12-04"),
-      ],
+      read: {
+        rounds: [
+          supersaleRound("楽天スーパーSALE【楽天モバイルご利用者限定！先行セール】", "2026-12-03"),
+          supersaleRound("楽天スーパーSALE【楽天モバイルご利用者限定】", "2026-12-03"),
+          supersaleRound("楽天スーパーSALE", "2026-12-04"),
+        ],
+      },
     },
     today: "2026-11-28",
     stored: new Map(),
@@ -353,7 +356,7 @@ test("publishes the 楽天スーパーSALE shop-around for everyone, not the 楽
 
 test("warns about a 楽天スーパーSALE page whose campaign is named otherwise", () => {
   const { writes, outcome, notes } = collectSupersale({
-    page: { read: [supersaleRound("お買い物マラソン", "2026-12-04")] },
+    page: { read: { rounds: [supersaleRound("お買い物マラソン", "2026-12-04")] } },
     today: "2026-11-28",
     stored: new Map(),
     newId: idSequence(),
@@ -361,4 +364,36 @@ test("warns about a 楽天スーパーSALE page whose campaign is named otherwis
   expect(outcome).toBe("warning");
   expect(notes).toEqual(["スーパーSALE のページのキャンペーン名が「お買い物マラソン」"]);
   expect(writes).toEqual([]);
+});
+
+const presale = { start: "2026-12-03T20:00+09:00", end: "2026-12-04T19:59+09:00" };
+const collectSupersaleWith = (read: { presale?: typeof presale }, stored = new Map()) =>
+  collectSupersale({
+    page: { read: { rounds: [supersaleRound("楽天スーパーSALE", "2026-12-04")], ...read } },
+    today: "2026-11-28",
+    stored,
+    newId: idSequence(),
+  });
+
+test("writes the 先行セール the 楽天スーパーSALE page shows, for 楽天モバイル's users", () => {
+  const [write] = collectSupersaleWith({ presale }).writes;
+  expect(write?.status).toBe("published");
+  expect(write?.event.benefits[0]?.conditions.presale).toEqual({
+    ...presale,
+    spuBenefitId: MOBILE_SPU_ID,
+  });
+});
+
+test("keeps the 先行セール once the 楽天スーパーSALE page no longer shows it", () => {
+  const [first] = collectSupersaleWith({ presale }).writes;
+  if (!first) throw new Error("not written");
+  const stored = new Map([[first.event.id, published(first.event)]]);
+  expect(collectSupersaleWith({}, stored).writes).toEqual([]);
+});
+
+test("holds back a 楽天スーパーSALE whose 先行セール is not the day before it", () => {
+  const late = { start: "2026-12-04T20:00+09:00", end: "2026-12-05T19:59+09:00" };
+  const { writes, outcome } = collectSupersaleWith({ presale: late });
+  expect(outcome).toBe("warning");
+  expect(writes.map((write) => write.status)).toEqual(["pending"]);
 });
