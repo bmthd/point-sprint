@@ -8,6 +8,11 @@ export const SCHEDULE_URL = "https://event.rakuten.co.jp/campaign/point-up/marat
 export const MARATHON_URL = "https://event.rakuten.co.jp/campaign/point-up/marathon/";
 /** Shows Black Friday, a shop-around like the marathon's, in the same campaign details. */
 export const BLACK_FRIDAY_URL = "https://event.rakuten.co.jp/campaign/point-up/blackfriday/";
+/**
+ * Shows 楽天スーパーSALE's shop-around in the same campaign details, after the 先行セール's and the
+ * 楽天モバイル users' own.
+ */
+export const SUPERSALE_URL = "https://event.rakuten.co.jp/campaign/supersale/";
 
 /** A round on the schedule page, as 「第二弾」 and its period. */
 export type ScheduledRound = { title: string; period: Period; times?: OfficialEvent["times"] };
@@ -83,14 +88,29 @@ const toNumber = (text: string | undefined) =>
   text === undefined ? undefined : Number(text.replaceAll(",", ""));
 
 /**
- * The round on the marathon page, or `undefined` when it shows none (between rounds it says only
- * 「終了しました」) or when what it shows cannot be read.
+ * The rounds in the page's campaign details, one for each 「キャンペーン名：」 that can be read, in
+ * the order the page shows them. The marathon page shows one; between rounds it says only
+ * 「終了しました」 and shows none.
  */
-export function readCurrentRound(html: string): CurrentRound | undefined {
+export function readShownRounds(html: string): CurrentRound[] {
   const page = withoutComments(html);
-  const campaignName = /キャンペーン名：([^<]*)</.exec(page)?.[1]?.trim();
-  const periodGroup = detailGroup(page, "ポイントアップ期間");
-  const benefitGroup = detailGroup(page, "キャンペーン特典");
+  const starts = [...page.matchAll(/キャンペーン名：/g)].map((match) => match.index);
+  return starts.flatMap((start, index) => {
+    const round = readCampaignDetails(page.slice(start, starts[index + 1]));
+    return round ? [round] : [];
+  });
+}
+
+/** The round on the marathon page: the first `readShownRounds` gives. */
+export function readCurrentRound(html: string): CurrentRound | undefined {
+  return readShownRounds(html)[0];
+}
+
+/** The round of one campaign's details, or `undefined` when what they show cannot be read. */
+function readCampaignDetails(details: string): CurrentRound | undefined {
+  const campaignName = /キャンペーン名：([^<]*)</.exec(details)?.[1]?.trim();
+  const periodGroup = detailGroup(details, "ポイントアップ期間");
+  const benefitGroup = detailGroup(details, "キャンペーン特典");
   if (!campaignName || !periodGroup || !benefitGroup) return undefined;
   const { period, times } = periodOf(textOf(periodGroup)) ?? {};
   // 「購入ショップ数に応じ、ポイント倍率が2倍、3倍と最大10倍まで増加」

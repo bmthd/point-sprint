@@ -12,8 +12,9 @@ const pages: Record<string, string> = {
   [SCHEDULE_URL]: read("event-pages/schedule-2026-10.html"),
   [MARATHON_URL]: read("event-pages/marathon-2026-10-14.html"),
 };
-/** What every run here notes: the Black Friday page is not served. */
-const NO_BLACK_FRIDAY = "ブラックフライデーのページを取得できない（HTTP 503）";
+/** What every run here notes: the Black Friday page and the 楽天スーパーSALE page are not served. */
+const NO_CAMPAIGN_PAGES =
+  "ブラックフライデーのページを取得できない（HTTP 503）\nスーパーSALE のページを取得できない（HTTP 503）";
 const fetchPages = (async (url: string) =>
   pages[url] === undefined
     ? new Response("", { status: 503 })
@@ -42,7 +43,7 @@ test("a run confirms the round on the marathon page and logs what it did", async
   const now = () => new Date("2026-10-15T03:00:00Z");
   expect(await collectEvents({ store: d1EventStore(db), fetch: fetchPages, now })).toBe("ok");
   // The second round already had the cap the page shows, and the third keeps the one it had.
-  expect(runs(sqlite)).toEqual([{ outcome: "ok", message: NO_BLACK_FRIDAY }]);
+  expect(runs(sqlite)).toEqual([{ outcome: "ok", message: NO_CAMPAIGN_PAGES }]);
 
   sqlite.exec(
     `UPDATE official_events SET benefits_json = replace(benefits_json, '"cap":7000', '"cap":5000')
@@ -51,7 +52,7 @@ test("a run confirms the round on the marathon page and logs what it did", async
   await collectEvents({ store: d1EventStore(db), fetch: fetchPages, now });
   expect(runs(sqlite).at(-1)).toEqual({
     outcome: "ok",
-    message: `marathon-2026-10-14: 更新\n${NO_BLACK_FRIDAY}`,
+    message: `marathon-2026-10-14: 更新\n${NO_CAMPAIGN_PAGES}`,
   });
   const row = sqlite
     .prepare("SELECT source_url, fetched_at, status FROM official_events WHERE id = ?")
