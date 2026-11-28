@@ -26,6 +26,11 @@ export type CalculationWarning =
    * partway through the day, but it is counted all the same.
    */
   | { type: "order-on-period-edge"; orderId: string; edge: "start" | "end" }
+  /**
+   * An order on a day of the plan's 先行セール, left out of the benefits it widens: the buyer does not
+   * have its SPU item on (`presaleOpen`).
+   */
+  | { type: "order-in-closed-presale"; orderId: string }
   | { type: "shared-cap-mismatch"; groupKey: string };
 
 export type CalculationResult = {

@@ -112,6 +112,29 @@ export const DateRuleSchema = v.variant("type", [
 ]);
 export type DateRule = v.InferOutput<typeof DateRuleSchema>;
 
+/**
+ * A moment with its UTC offset, as Rakuten's pages give it in Japan: `2026-12-03T20:00+09:00`.
+ * Without an offset, or with `Z`, it is refused: the day it falls on in Japan would be a guess.
+ */
+export const OffsetDateTimeSchema = v.pipe(
+  v.string(),
+  v.regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?[+-]\d{2}:\d{2}$/),
+  v.check((value) => !Number.isNaN(Date.parse(value)), "not a date and time"),
+);
+
+/**
+ * 先行セール (楽天スーパーSALE の「楽天モバイルご利用者限定 先行セール」): from `start` to `end`, an
+ * order also counts on the days before the benefit's `dateRule`, a range, for a buyer who has the
+ * SPU item `spuBenefitId` on in the month the presale starts in. Orders are judged by their day in
+ * Japan only (`tokyoDateTime`).
+ */
+export const PresaleSchema = v.object({
+  start: OffsetDateTimeSchema,
+  end: OffsetDateTimeSchema,
+  spuBenefitId: v.string(),
+});
+export type Presale = v.InferOutput<typeof PresaleSchema>;
+
 export const ConditionsSchema = v.object({
   channels: v.optional(v.array(ChannelIdSchema)),
   shopIds: v.optional(v.array(IdSchema)),
@@ -128,5 +151,7 @@ export const ConditionsSchema = v.object({
   months: v.optional(v.array(MonthSchema)),
   /** Only the orders paid with a 楽天カード (`Order["rakutenCard"]`): the card's SPU items. */
   rakutenCard: v.optional(v.literal(true)),
+  /** Widens `dateRule` for the buyers it is for (`withPresaleDays`) before the orders are matched. */
+  presale: v.optional(PresaleSchema),
 });
 export type Conditions = v.InferOutput<typeof ConditionsSchema>;

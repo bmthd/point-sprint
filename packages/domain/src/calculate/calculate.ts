@@ -169,15 +169,29 @@ function spendTotalOf(benefit: Benefit, items: BenefitLineItem[], period: Plan["
   return inDays.reduce((sum, item) => sum + item.taxIncluded, 0);
 }
 
+/**
+ * The first day of an official event's plan for its buyer: the main period's when the plan has a
+ * 先行セール the buyer cannot shop in (its benefit's days were not widened by `withPresaleDays`).
+ * `undefined` for a plan without an event.
+ */
+function officialStart(plan: Plan): string | undefined {
+  if (!plan.officialEventId) return undefined;
+  const rule = plan.benefits.find((benefit) => benefit.conditions.presale)?.conditions.dateRule;
+  return rule?.type === "range" && rule.start > plan.period.start ? rule.start : plan.period.start;
+}
+
 /** Contexts of the orders that are not held. Held orders are left out of the whole calculation. */
 function orderContexts(plan: Plan, shops: Map<string, Shop>, warnings: CalculationWarning[]) {
   const active = plan.orders.filter((order) => !order.onHold);
+  const start = officialStart(plan);
   return active.map((order): OrderContext => {
     const shop = hasShop(order) ? shops.get(order.shopId) : undefined;
     if (hasShop(order) && !shop) warnings.push({ type: "unknown-shop", orderId: order.id });
     if (order.date < plan.period.start || order.date > plan.period.end) {
       warnings.push({ type: "order-outside-period", orderId: order.id });
-    } else if (plan.officialEventId && order.date === plan.period.start) {
+    } else if (start !== undefined && order.date < start) {
+      warnings.push({ type: "order-in-closed-presale", orderId: order.id });
+    } else if (start !== undefined && order.date === start) {
       warnings.push({ type: "order-on-period-edge", orderId: order.id, edge: "start" });
     } else if (plan.officialEventId && order.date === plan.period.end) {
       warnings.push({ type: "order-on-period-edge", orderId: order.id, edge: "end" });
