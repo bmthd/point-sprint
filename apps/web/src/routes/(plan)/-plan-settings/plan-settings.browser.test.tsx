@@ -36,6 +36,7 @@ import {
   shops,
   tapCard,
 } from "#/routes/(plan)/-test-fixtures.tsx";
+import { PlanHome } from "#/routes/(plan)/-plan-home/plan-home.tsx";
 import { PlanSettings } from "./plan-settings.tsx";
 
 beforeEach(async () => {
@@ -590,6 +591,98 @@ test("on a desktop the settings open in a side panel, and 変更 opens the month
   await expect.element(spu).not.toBeInTheDocument();
   await expect.element(screen.getByRole("dialog", { name: "プランの設定" })).toBeVisible();
 });
+/**
+ * The plan's home and its settings' page on a desktop. `reload` renders them again on a router of
+ * its own over the same history, as reloading the page does.
+ */
+async function renderDesktopPlan() {
+  await page.viewport(1280, 900);
+  const repository = createMemoryRepository({ shops, plans: [makePlan([], [order(0)])] });
+  const history = createMemoryHistory({ initialEntries: [`/plan?id=${PLAN}`] });
+  const mount = async () => {
+    await cleanup();
+    const root = createRootRoute({ component: Outlet });
+    const home = createRoute({
+      getParentRoute: () => root,
+      path: "/plan",
+      component: () => <PlanHome id={PLAN} />,
+    });
+    const settings = createRoute({
+      getParentRoute: () => root,
+      path: "/plan/settings",
+      component: () => <PlanSettings id={PLAN} />,
+    });
+    const router = createRouter({ routeTree: root.addChildren([home, settings]), history });
+    const screen = await render(
+      <Providers repository={repository}>
+        <RouterProvider router={router} />
+      </Providers>,
+    );
+    return Object.assign(screen, { router });
+  };
+  const screen = await mount();
+  return Object.assign(screen, { history, reload: mount });
+}
+
+const addressBar = (history: ReturnType<typeof createMemoryHistory>) =>
+  `${history.location.pathname}${history.location.search}`;
+
+test("on a desktop the settings' side panel has their page's URL, and the back button closes it", async () => {
+  const screen = await renderDesktopPlan();
+  await screen.getByRole("button", { name: "プランの設定" }).click();
+  await expect.element(screen.getByRole("dialog", { name: "プランの設定" })).toBeVisible();
+  expect(addressBar(screen.history)).toBe(`/plan/settings?id=${PLAN}`);
+
+  screen.history.back();
+  await expect
+    .element(screen.getByRole("dialog", { name: "プランの設定" }))
+    .not.toBeInTheDocument();
+  expect(addressBar(screen.history)).toBe(`/plan?id=${PLAN}`);
+});
+
+test("on a desktop the settings' side panel opened again with the forward button closes back to the plan", async () => {
+  const screen = await renderDesktopPlan();
+  await screen.getByRole("button", { name: "プランの設定" }).click();
+  const panel = screen.getByRole("dialog", { name: "プランの設定" });
+  await expect.element(panel).toBeVisible();
+  screen.history.back();
+  await expect.element(panel).not.toBeInTheDocument();
+  screen.history.forward();
+  await expect.element(panel).toBeVisible();
+
+  await panel.getByRole("button", { name: "閉じる" }).click();
+  await expect.element(panel).not.toBeInTheDocument();
+  expect(addressBar(screen.history)).toBe(`/plan?id=${PLAN}`);
+  // Back on the plan's own entry, not a copy of it left after the settings' entry.
+  expect(screen.history.canGoBack()).toBe(false);
+});
+
+test("on a desktop a reload of the settings' side panel opens their page", async () => {
+  const opened = await renderDesktopPlan();
+  await opened.getByRole("button", { name: "プランの設定" }).click();
+  await expect.element(opened.getByRole("dialog", { name: "プランの設定" })).toBeVisible();
+
+  const screen = await opened.reload();
+  await expect
+    .element(screen.getByRole("heading", { name: "プランの設定", level: 1 }))
+    .toBeVisible();
+  expect(screen.getByRole("dialog").query()).toBeNull();
+  expect(screen.router.state.location.pathname).toBe("/plan/settings");
+});
+
+test("narrowed to one column with the settings' side panel open, the settings become their page", async () => {
+  const screen = await renderDesktopPlan();
+  await screen.getByRole("button", { name: "プランの設定" }).click();
+  await expect.element(screen.getByRole("dialog", { name: "プランの設定" })).toBeVisible();
+
+  await page.viewport(390, 844);
+  await expect
+    .element(screen.getByRole("heading", { name: "プランの設定", level: 1 }))
+    .toBeVisible();
+  expect(screen.router.state.location.pathname).toBe("/plan/settings");
+  expect(addressBar(screen.history)).toBe(`/plan/settings?id=${PLAN}`);
+});
+
 test("the account is picked only once accounts are told apart", async () => {
   const SUB = "acc00000-0000-4000-8000-000000000002";
   const profile: Profile = {

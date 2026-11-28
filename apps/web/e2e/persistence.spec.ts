@@ -29,6 +29,7 @@ test("orders, plan settings, profile and shops survive a reload", async ({ page 
   const campaignWas = await campaign.isChecked();
   await settings.tap(campaign);
   await expect(campaign).toBeChecked({ checked: !campaignWas });
+  await settings.close();
   plan = await plan.reload();
   await expect(plan.spuRate("10月")).toHaveText("5倍");
   await plan.openSettings();

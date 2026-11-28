@@ -83,6 +83,12 @@ export class PlanSettingsDialog {
   async tap(card: Locator) {
     await card.locator("xpath=ancestor::label[1]").click();
   }
+
+  /** Back to the plan's page. A reload while open shows the settings' own page instead. */
+  async close() {
+    await this.root.getByRole("button", { name: "計算に戻る" }).click();
+    await expect(this.root).toBeHidden();
+  }
 }
 
 /** A month's SPU, in a side panel over the plan's page. */
