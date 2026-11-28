@@ -16,29 +16,36 @@ import * as v from "valibot";
 
 import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
 import { useToday } from "#/routes/-use-today.ts";
+import { settingsPanel } from "#/routes/(plan)/-plan-search.ts";
 import { SpuMonthEditor, spuMonthText } from "#/routes/(plan)/-spu-month/spu-month-editor.tsx";
 
 /**
  * The month whose SPU is open in the side panel, while the URL has `spu=` (`YYYY-MM`), so the back
- * button closes it. Closing it goes back when this page opened it, and otherwise drops `spu=` in
- * place.
+ * button closes it. Opened from the plan's settings, the URL keeps `settings`, which closing it
+ * goes back to. Closing it goes back when this page opened it, and otherwise drops `spu=` in place.
  */
 export function useSpuPanelTarget(planId: string) {
   const navigate = useNavigate();
   const router = useRouter();
-  const search: { spu?: unknown } = useSearch({ strict: false });
+  const search: { spu?: unknown; settings?: unknown } = useSearch({ strict: false });
   const openedHere = useRef(false);
+  const fromSettings = search.settings === true;
+  const at = (month: string) => ({
+    to: "/plan" as const,
+    search: { id: planId, spu: month, ...(fromSettings ? { settings: true as const } : {}) },
+  });
   const open = (month: string) => {
     openedHere.current = true;
-    void navigate({ to: "/plan", search: { id: planId, spu: month } });
+    void navigate(at(month));
   };
   /** Another month of the plan in the open panel, in place of the one shown. */
-  const show = (month: string) =>
-    void navigate({ to: "/plan", search: { id: planId, spu: month }, replace: true });
+  const show = (month: string) => void navigate({ ...at(month), replace: true });
   const close = () => {
     if (openedHere.current) {
       openedHere.current = false;
       router.history.back();
+    } else if (fromSettings) {
+      void navigate({ ...settingsPanel(planId), replace: true });
     } else {
       void navigate({ to: "/plan", search: { id: planId }, replace: true });
     }
@@ -48,7 +55,7 @@ export function useSpuPanelTarget(planId: string) {
     // Closed by the browser's back button: the next close must not go back again.
     if (target === undefined) openedHere.current = false;
   }, [target]);
-  return { target, open, show, close };
+  return { target, fromSettings, open, show, close };
 }
 
 const now = () => new Date();

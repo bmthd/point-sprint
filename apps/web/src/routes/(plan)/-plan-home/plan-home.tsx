@@ -11,7 +11,6 @@ import {
   Heading,
   Menu,
   VStack,
-  useDisclosure,
   useBreakpointValue,
   ChevronDownIcon,
   SlidersHorizontalIcon,
@@ -22,7 +21,10 @@ import { planResultAtom, planAtom, orderAtom, calculatedPlanAtom } from "#/state
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { NEW_ORDER, OrderEditor } from "#/routes/(plan)/-order-editor/order-editor.tsx";
 import { eventChangeRequestAtom } from "#/routes/(plan)/-plan-settings/event-attacher.tsx";
-import { SettingsPanelButton } from "#/routes/(plan)/-plan-settings/plan-settings.tsx";
+import {
+  SettingsPanelButton,
+  useSettingsPanelTarget,
+} from "#/routes/(plan)/-plan-settings/plan-settings.tsx";
 import { ColumnHead } from "#/ui/column-head.tsx";
 import { RouterIconButton } from "#/ui/router-link.tsx";
 import { ShareButton } from "#/routes/-share/share-button.tsx";
@@ -182,22 +184,14 @@ function Home({ planId }: { planId: string }) {
       void navigate(spuPage(planId, month));
     }
   };
-  const settingsPanel = useDisclosure();
-  // A month's SPU opened from the settings goes back to them when it is closed, however it is.
-  const [spuFromSettings, setSpuFromSettings] = useState(false);
-  const changeSpuFromSettings = (month: string) => {
-    setSpuFromSettings(true);
-    spuPanel.open(month);
-  };
-  const [shownSpu, setShownSpu] = useState(spuPanel.target);
-  if (spuPanel.target !== shownSpu) {
-    setShownSpu(spuPanel.target);
-    // A month to none is the panel closing; right after 変更 the URL has no month yet either.
-    if (spuPanel.target === undefined && spuFromSettings) {
-      setSpuFromSettings(false);
-      settingsPanel.onOpen();
-    }
-  }
+  const settingsPanel = useSettingsPanelTarget(planId);
+  const settingsShown = settingsPanel.shown;
+  useEffect(() => {
+    // Narrowed to one column with the side panel open: the settings become the page the address
+    // bar already shows.
+    if (wide || !settingsShown) return;
+    void navigate({ to: "/plan/settings", search: { id: planId }, replace: true });
+  }, [wide, settingsShown, navigate, planId]);
   const { open: editOrder } = editor;
   const addOrder = () => editOrder(NEW_ORDER);
   const requestEventChange = useSetAtom(eventChangeRequestAtom);
@@ -279,7 +273,7 @@ function Home({ planId }: { planId: string }) {
                 open={settingsPanel.open}
                 onOpen={settingsPanel.onOpen}
                 onClose={settingsPanel.onClose}
-                onChangeSpu={changeSpuFromSettings}
+                onChangeSpu={openSpu}
               />
             </ColumnHead>
           ) : null}
@@ -351,7 +345,7 @@ function Home({ planId }: { planId: string }) {
         month={wide ? spuPanel.target : undefined}
         onMonth={spuPanel.show}
         onClose={spuPanel.close}
-        backTo={spuFromSettings ? "プランの設定" : undefined}
+        backTo={spuPanel.fromSettings ? "プランの設定" : undefined}
       />
     </>
   );
