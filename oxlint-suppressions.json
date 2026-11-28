@@ -1,0 +1,67 @@
+{
+  "apps/web/src/google-tags/adsense-slot.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "apps/web/src/page-head.ts": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-item-autofill.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-plan-home/order-row.tsx": {
+    "no-restricted-imports": {
+      "count": 2
+    }
+  },
+  "apps/web/src/routes/(plan)/-plan-home/use-order-drag.ts": {
+    "no-restricted-imports": {
+      "count": 2
+    }
+  },
+  "apps/web/src/routes/(plan)/-plan-settings/event-attacher.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(plan)/-spu-loss-notice.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(site)/(markdown)/-guide-toc.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(site)/(markdown)/-markdown-body.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(site)/-notices/notices-page.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/(site)/-top/top-page.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "apps/web/src/routes/-turnstile-widget.tsx": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  },
+  "apps/web/src/state/sync.ts": {
+    "no-restricted-imports": {
+      "count": 1
+    }
+  }
+}

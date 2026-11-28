@@ -54,6 +54,28 @@
           }
         ]
       }
+    },
+    {
+      "files": ["apps/web/src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["../**"],
+                "message": "親ディレクトリのモジュールは `#/`（package.json の imports）から読み込む。"
+              },
+              {
+                "group": ["react", "@workspaces/ui"],
+                "importNamePattern": "^use\\w*Effect$",
+                "message": "アプリのコードでは effect hooks を使わない。イベントハンドラー、ref callback、useSyncExternalStore、atom、loader で処理する。"
+              }
+            ]
+          }
+        ]
+      },
+      "excludeFiles": ["**/*.test.{ts,tsx}", "apps/web/src/test-color-mode.tsx"]
     }
   ],
   "env": {

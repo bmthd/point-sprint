@@ -39,6 +39,12 @@
 - 画面の幅で変えるときは、Yamada UI の breakpoint（`{ base, md, lg }` か `useBreakpointValue`）を使い、px の値でメディアクエリを書かない。各キーの幅と意味は `docs/design-system.md` の「画面の幅」にある
 - `@workspaces/ui` にない部品や hooks を作ったときは、探したものの名前と、使わなかった理由を PR に書く
 
+## Effect hooks
+
+`apps/web/src` のアプリのコードでは、React と `@workspaces/ui` の `use*Effect` を使わない。テストとテスト専用の補助ファイルは対象に含めない。既存の箇所は `oxlint-suppressions.json` に記録し、順に減らす。
+
+既存の箇所を変更するときは、イベントハンドラー、クリーンアップを返す ref callback、`useSyncExternalStore`、jotai の atom、ルーターの loader などに置き換え、`pnpm exec oxlint --prune-suppressions` を実行する。`oxlint-disable` コメントは追加しない。
+
 ## 状態で変わる見た目
 
 見た目を状態で変えるときは、状態を data 属性か aria 属性で要素に出し、CSS はその属性を見る。
