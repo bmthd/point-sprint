@@ -7,12 +7,10 @@ import {
   SUPERSALE_URL,
   type CurrentRound,
   type ScheduledRound,
-  readCurrentRound,
-  readSchedule,
-  readShownRounds,
 } from "./event-pages.ts";
 
-// Turns the marathon pages, the Black Friday page and the 楽天スーパーSALE page into rows of the event master (event-store.ts). A row is published only
+// Turns what was read from the marathon pages, the Black Friday page and the 楽天スーパーSALE page
+// (event-pages.ts) into rows of the event master (event-store.ts). A row is published only
 // when it passes the checks below; otherwise the row already published stays as it is, and the
 // reason goes into the run's message, where the operator finds it (docs/event-master.md).
 
@@ -38,6 +36,9 @@ export type EventWrite = {
 export type RunOutcome = "ok" | "warning" | "failed";
 
 export type Collection = { writes: EventWrite[]; outcome: RunOutcome; notes: string[] };
+
+/** What was read from a page, or why the page could not be fetched. */
+export type PageReading<T> = { read: T } | { error: string };
 
 /**
  * 「最大10倍」 on the guide (docs/event-master.md), used until a round's own page shows its rate:
@@ -164,7 +165,7 @@ function warn(log: RunLog, note: string) {
  * not list that round yet.
  */
 function readMarathonPage(
-  marathon: { html: string } | { error: string },
+  marathon: PageReading<CurrentRound | undefined>,
   rounds: readonly ScheduledRound[],
   log: RunLog,
 ): { current?: CurrentRound; ahead?: ScheduledRound } {
@@ -172,7 +173,7 @@ function readMarathonPage(
     warn(log, `マラソンのページを取得できない（${marathon.error}）`);
     return {};
   }
-  const current = readCurrentRound(marathon.html);
+  const current = marathon.read;
   // Between rounds, the page says only 「終了しました」.
   if (!current) {
     log.notes.push("マラソンのページに開催中・開催直前の回がない");
@@ -287,15 +288,15 @@ function writeRound(
  * until the schedule page gives it one.
  */
 export function collectMarathon(input: {
-  scheduleHtml: string;
-  /** The marathon page, or why it could not be fetched. */
-  marathon: { html: string } | { error: string };
+  /** The rounds read from the schedule page. */
+  schedule: readonly ScheduledRound[];
+  /** The round read from the marathon page, `undefined` when it shows none. */
+  marathon: PageReading<CurrentRound | undefined>;
   today: string;
   stored: ReadonlyMap<string, StoredEvent>;
   newId: () => string;
 }): Collection {
-  const { scheduleHtml, marathon, today, stored, newId } = input;
-  const rounds = readSchedule(scheduleHtml);
+  const { schedule: rounds, marathon, today, stored, newId } = input;
   if (rounds.length === 0) {
     return { writes: [], outcome: "failed", notes: ["スケジュールのページから回を読めない"] };
   }
@@ -360,8 +361,8 @@ const SUPERSALE_PAGE: CampaignPage = {
 function collectCampaignPage(
   page: CampaignPage,
   input: {
-    /** The page, or why it could not be fetched. */
-    fetched: { html: string } | { error: string };
+    /** The rounds read from the page, in the order it shows them. */
+    fetched: PageReading<readonly CurrentRound[]>;
     today: string;
     stored: ReadonlyMap<string, StoredEvent>;
     newId: () => string;
@@ -373,9 +374,7 @@ function collectCampaignPage(
     log.notes.push(`${page.label}を取得できない（${fetched.error}）`);
     return { writes: [], ...log };
   }
-  const rounds = readShownRounds(fetched.html).filter(
-    (round) => !page.others?.(round.campaignName),
-  );
+  const rounds = fetched.read.filter((round) => !page.others?.(round.campaignName));
   const [first] = rounds;
   if (!first) {
     log.notes.push(`${page.label}に開催中・開催直前の回がない`);
@@ -408,7 +407,7 @@ function collectCampaignPage(
 
 /** The row to write for the Black Friday the page shows (2026: entry from 11-12, 11-19 to 11-25). */
 export function collectBlackFriday(input: {
-  page: { html: string } | { error: string };
+  page: PageReading<readonly CurrentRound[]>;
   today: string;
   stored: ReadonlyMap<string, StoredEvent>;
   newId: () => string;
@@ -422,7 +421,7 @@ export function collectBlackFriday(input: {
  * the entry about 6 days before (2026-12: entry from 11-28 10:00, 12-04 20:00 to 12-11 01:59).
  */
 export function collectSupersale(input: {
-  page: { html: string } | { error: string };
+  page: PageReading<readonly CurrentRound[]>;
   today: string;
   stored: ReadonlyMap<string, StoredEvent>;
   newId: () => string;

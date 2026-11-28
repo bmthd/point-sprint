@@ -70,7 +70,7 @@ pnpm exec cf d1 query <データベースの ID> --sql "SELECT * FROM collection
 
 データベースの ID は `apps/web/cloudflare.config.ts` の `EVENTS_DB` にある。
 
-- `failed` が続くとき: スケジュールのページが取れないか、読めない。ページを開いて作りが変わっていないかを確かめ、`apps/web/src/server/official-events/event-pages.ts` を直す。直したら、そのときのページを `apps/web/src/server/official-events/event-pages/` に固定してテストを足す。
+- `failed` が続くとき: スケジュールのページが取れないか、読めない。ページを開いて作りが変わっていないかを確かめ、`apps/web/src/server/official-events/event-pages.ts` を直す。直したら、今のページで読めることを手元で確かめ、読み取った結果を PR に書く。楽天のページは予告なく変わるので、ページを保存してテストで固定しない。読めなくなったことには、次の「Event master」のワークフローで気づく。
 - `warning` のとき: メッセージにある理由を見る。楽天の告知が正しく、検査が厳しすぎるなら検査を直す。
 - `ok` が続くのに次の回がないとき: `official_events` に `pending` の行がないかと、公式ページに次の回の告知があるかを確かめる。告知がなければ日付を予測して足さず、確認日時と公式ページの状態を Issue に残す。
 
