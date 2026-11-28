@@ -357,7 +357,6 @@ export function useOrderConfirm(
       success={{ children: "削除する", colorScheme: "danger" }}
       finalFocusRef={finalFocus}
       onClose={onClose}
-      onCancel={onClose}
       onSuccess={() => {
         if (confirm?.kind === "reset") save(clearOrders({ planId }));
         if (confirm?.kind === "delete") {

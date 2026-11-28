@@ -129,7 +129,6 @@ export function RecoveryCodeEntry({
         disabled: code.trim() === "",
       }}
       onClose={close}
-      onCancel={close}
       onSuccess={() => {
         setPending(true);
         onSubmit(code)

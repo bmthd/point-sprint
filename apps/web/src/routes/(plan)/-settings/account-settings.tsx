@@ -186,7 +186,6 @@ export function AccountSettings({ onFailed }: { onFailed: (failed: boolean) => v
           success={{ children: "削除する", colorScheme: "danger" }}
           finalFocusRef={finalFocus}
           onClose={onClose}
-          onCancel={onClose}
           onSuccess={() => {
             const id = target?.id;
             if (id) {

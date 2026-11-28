@@ -1,14 +1,5 @@
 import { type Benefit, eventPlanPeriod, type OfficialEvent, type Plan } from "@workspaces/domain";
-import {
-  Button,
-  Card,
-  Field,
-  List,
-  Modal,
-  NativeSelect,
-  Text,
-  useDisclosure,
-} from "@workspaces/ui";
+import { Button, Card, Field, List, Modal, NativeSelect, Text } from "@workspaces/ui";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { type RefObject, useEffect, useState } from "react";
 import { planAtom } from "#/state/derived.ts";
@@ -142,7 +133,6 @@ function EventPicker({
   releasesHold?: boolean;
   onChoose: (event: OfficialEvent) => void;
 }) {
-  const { open, onOpen, onClose } = useDisclosure();
   const [eventId, setEventId] = useState("");
   const event = events.find((candidate) => candidate.id === eventId);
   const period = event ? eventPlanPeriod(event) : undefined;
@@ -168,17 +158,7 @@ function EventPicker({
       <Text fontSize="xs" color="fg.muted">
         {note}
       </Text>
-      <Button
-        variant="outline"
-        colorScheme="primary"
-        alignSelf="flex-start"
-        disabled={!event}
-        onClick={onOpen}
-      >
-        {action}
-      </Button>
       <Modal.Root
-        open={open}
         title={title}
         body={
           <List.Root styleType="disc" gap="1">
@@ -202,16 +182,20 @@ function EventPicker({
         }
         cancel="キャンセル"
         success={{ children: action, colorScheme: "primary" }}
-        onClose={onClose}
-        onCancel={onClose}
-        onSuccess={() => {
+        onSuccess={(onClose) => {
           if (event) {
             onChoose(event);
             setEventId("");
           }
           onClose();
         }}
-      />
+      >
+        <Modal.OpenTrigger>
+          <Button variant="outline" colorScheme="primary" alignSelf="flex-start" disabled={!event}>
+            {action}
+          </Button>
+        </Modal.OpenTrigger>
+      </Modal.Root>
     </>
   );
 }

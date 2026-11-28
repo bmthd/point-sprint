@@ -261,7 +261,6 @@ export function PlanSection() {
         success={{ children: "削除する", colorScheme: "danger" }}
         finalFocusRef={finalFocus}
         onClose={onClose}
-        onCancel={onClose}
         onSuccess={() => {
           if (target) deletePlan(target.id);
           onClose();
