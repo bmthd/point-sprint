@@ -552,11 +552,14 @@ test("save button goes back to the plan home", async () => {
 
 test("deletes the plan after asking, and goes to the top page", async () => {
   const screen = await renderSettings(spuPlan());
-  await screen.getByRole("button", { name: "このプランを削除" }).click();
+  const remove = screen
+    .getByRole("region", { name: "プランの管理" })
+    .getByRole("button", { name: "このプランを削除" });
+  await remove.click();
   await screen.getByRole("dialog").getByRole("button", { name: "キャンセル" }).click();
   expect(await repository().plans.get(PLAN)).toBeDefined();
 
-  await screen.getByRole("button", { name: "このプランを削除" }).click();
+  await remove.click();
   await screen.getByRole("dialog").getByRole("button", { name: "削除する" }).click();
   await expect.element(screen.getByRole("heading", { name: "トップページ" })).toBeVisible();
   await expect.poll(() => repository().plans.get(PLAN)).toBeUndefined();
@@ -772,7 +775,9 @@ test("a plan of an event with no event to carry it over to says that one can be 
 
 test("the hold switch holds the plan and releases it", async () => {
   const screen = await renderSettings(makePlan([], [order(0)]));
-  const hold = screen.getByRole("switch", { name: "このプランを保留にする" });
+  const hold = screen
+    .getByRole("region", { name: "プランの管理" })
+    .getByRole("switch", { name: "このプランを保留にする" });
 
   await tapCard(hold);
   await vi.waitFor(async () => expect((await storedPlan()).onHold).toBe(true));
