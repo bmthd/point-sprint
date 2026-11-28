@@ -91,6 +91,11 @@ async function renderSettings(
   });
   await cleanup();
   const root = createRootRoute({ component: Outlet });
+  const top = createRoute({
+    getParentRoute: () => root,
+    path: "/",
+    component: () => <h1>トップページ</h1>,
+  });
   const home = createRoute({
     getParentRoute: () => root,
     path: "/plan",
@@ -107,7 +112,7 @@ async function renderSettings(
     component: () => <h1>月の SPU</h1>,
   });
   const router = createRouter({
-    routeTree: root.addChildren([home, settings, spu]),
+    routeTree: root.addChildren([top, home, settings, spu]),
     history: createMemoryHistory({ initialEntries: [`/plan/settings?id=${PLAN}`] }),
   });
   const screen = await render(
@@ -545,6 +550,21 @@ test("save button goes back to the plan home", async () => {
   expect(screen.router.state.location.search).toEqual({ id: PLAN });
 });
 
+test("deletes the plan after asking, and goes to the top page", async () => {
+  const screen = await renderSettings(spuPlan());
+  const remove = screen
+    .getByRole("region", { name: "プランの管理" })
+    .getByRole("button", { name: "このプランを削除" });
+  await remove.click();
+  await screen.getByRole("dialog").getByRole("button", { name: "キャンセル" }).click();
+  expect(await repository().plans.get(PLAN)).toBeDefined();
+
+  await remove.click();
+  await screen.getByRole("dialog").getByRole("button", { name: "削除する" }).click();
+  await expect.element(screen.getByRole("heading", { name: "トップページ" })).toBeVisible();
+  await expect.poll(() => repository().plans.get(PLAN)).toBeUndefined();
+});
+
 test("on a desktop the settings open in a side panel, and 変更 opens the month's SPU in its place, which goes back to them", async () => {
   await page.viewport(1280, 900);
   const plan = makePlan(structuredClone(marathon), [order(0)]);
@@ -755,7 +775,9 @@ test("a plan of an event with no event to carry it over to says that one can be 
 
 test("the hold switch holds the plan and releases it", async () => {
   const screen = await renderSettings(makePlan([], [order(0)]));
-  const hold = screen.getByRole("switch", { name: "このプランを保留にする" });
+  const hold = screen
+    .getByRole("region", { name: "プランの管理" })
+    .getByRole("switch", { name: "このプランを保留にする" });
 
   await tapCard(hold);
   await vi.waitFor(async () => expect((await storedPlan()).onHold).toBe(true));
