@@ -1,4 +1,4 @@
-import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
+import { useLocation, useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import { MonthSchema, spuMonthsOfPlan, accountIdOf } from "@workspaces/domain";
 import {
   Box,
@@ -11,7 +11,7 @@ import {
   ChevronLeftIcon,
 } from "@workspaces/ui";
 import { useAtomValue } from "jotai";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import * as v from "valibot";
 
 import { accountSettingsAtom, planAtom } from "#/state/derived.ts";
@@ -22,39 +22,31 @@ import { SpuMonthEditor, spuMonthText } from "#/routes/(plan)/-spu-month/spu-mon
 /**
  * The month whose SPU is open in the side panel, while the URL has `spu=` (`YYYY-MM`), so the back
  * button closes it. Opened from the plan's settings, the URL keeps `settings`, which closing it
- * goes back to. Closing it goes back when this page opened it, and otherwise drops `spu=` in place.
+ * goes back to. Closing it goes back when it was opened over the plan or its settings, and
+ * otherwise drops `spu=` in place.
  */
 export function useSpuPanelTarget(planId: string) {
   const navigate = useNavigate();
   const router = useRouter();
   const search: { spu?: unknown; settings?: unknown } = useSearch({ strict: false });
-  const openedHere = useRef(false);
+  const closesBack = useLocation({ select: (location) => location.state.closesBack === true });
   const fromSettings = search.settings === true;
   const at = (month: string) => ({
     to: "/plan" as const,
     search: { id: planId, spu: month, ...(fromSettings ? { settings: true as const } : {}) },
   });
-  const open = (month: string) => {
-    openedHere.current = true;
-    void navigate(at(month));
-  };
-  /** Another month of the plan in the open panel, in place of the one shown. */
-  const show = (month: string) => void navigate({ ...at(month), replace: true });
+  const open = (month: string) => void navigate({ ...at(month), state: { closesBack: true } });
+  /** Another month of the plan in the open panel, in place of the one shown, where closing goes. */
+  const show = (month: string) => void navigate({ ...at(month), replace: true, state: true });
   const close = () => {
-    if (openedHere.current) {
-      openedHere.current = false;
-      router.history.back();
-    } else if (fromSettings) {
+    if (closesBack) router.history.back();
+    else if (fromSettings) {
       void navigate({ ...settingsPanel(planId), replace: true });
     } else {
       void navigate({ to: "/plan", search: { id: planId }, replace: true });
     }
   };
   const target = v.is(MonthSchema, search.spu) ? search.spu : undefined;
-  useEffect(() => {
-    // Closed by the browser's back button: the next close must not go back again.
-    if (target === undefined) openedHere.current = false;
-  }, [target]);
   return { target, fromSettings, open, show, close };
 }
 

@@ -568,6 +568,21 @@ test("on a desktop an edit= opens a multi-item order in a dialog", async () => {
     .toEqual([11000, 2200]);
 });
 
+test("the sheet opened again with the forward button closes back to the plan", async () => {
+  const screen = await renderWith();
+  const sheet = await openAdd(screen);
+  screen.router.history.back();
+  await expect.element(sheet).not.toBeInTheDocument();
+  screen.router.history.forward();
+  await expect.element(sheet).toBeVisible();
+
+  await sheet.getByRole("button", { name: "閉じる" }).click();
+  await expect.element(sheet).not.toBeInTheDocument();
+  expect(screen.router.state.location.search).toEqual({ id: PLAN });
+  // Back on the plan's own entry, not a copy of it left after the sheet's entry.
+  expect(screen.router.history.canGoBack()).toBe(false);
+});
+
 test("an edit= for an order that does not exist is dropped from the URL", async () => {
   currentRepository = createMemoryRepository({ shops, plans: [marathonPlan()] });
   const screen = await renderPlanHome(currentRepository, `/plan?id=${PLAN}&edit=${orderId(9)}`);

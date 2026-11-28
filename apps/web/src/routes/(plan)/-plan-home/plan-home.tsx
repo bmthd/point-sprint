@@ -1,7 +1,7 @@
 import { selectAtom } from "jotai/utils";
 import { plansAtom } from "#/state/query-atoms.ts";
 import { type Plan, deepEqual, type Order, capLines } from "@workspaces/domain";
-import { Navigate, useNavigate, useRouter, useSearch } from "@tanstack/react-router";
+import { Navigate, useLocation, useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import type { TaxRate } from "@workspaces/domain";
 import {
   Box,
@@ -16,7 +16,7 @@ import {
   SlidersHorizontalIcon,
 } from "@workspaces/ui";
 import { useAtomValue, useSetAtom } from "jotai";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 import { planResultAtom, planAtom, orderAtom, calculatedPlanAtom } from "#/state/derived.ts";
 import { PlanHoldBadge } from "#/routes/-plan-hold-badge.tsx";
 import { NEW_ORDER, OrderEditor } from "#/routes/(plan)/-order-editor/order-editor.tsx";
@@ -124,39 +124,29 @@ const Panel = (props: { children: ReactNode; label: string; id?: string }) => (
 
 /**
  * The order editor is open while the URL has `edit=` (`new`, or an order id), so the back button
- * closes it. Closing it goes back when this page opened it, and otherwise drops `edit=` in place.
+ * closes it. Closing it goes back when it was opened over the plan, and otherwise drops `edit=` in
+ * place.
  */
 function useOrderEditorTarget(planId: string) {
   const navigate = useNavigate();
   const router = useRouter();
   const search: { edit?: unknown } = useSearch({ strict: false });
-  const openedHere = useRef(false);
-  const open = (target: string) => {
-    openedHere.current = true;
-    void navigate({ to: "/plan", search: { id: planId, edit: target } });
-  };
+  const closesBack = useLocation({ select: (location) => location.state.closesBack === true });
+  const open = (target: string) =>
+    void navigate({
+      to: "/plan",
+      search: { id: planId, edit: target },
+      state: { closesBack: true },
+    });
   const close = () => {
-    if (openedHere.current) {
-      openedHere.current = false;
-      router.history.back();
-    } else {
-      void navigate({ to: "/plan", search: { id: planId }, replace: true });
-    }
+    if (closesBack) router.history.back();
+    else void navigate({ to: "/plan", search: { id: planId }, replace: true });
   };
   const target = typeof search.edit === "string" ? search.edit : undefined;
-  useEffect(() => {
-    // Closed by the browser's back button: the next close must not go back again.
-    if (target === undefined) openedHere.current = false;
-  }, [target]);
   const exists = useAtomValue(selectAtom(orderAtom({ planId, orderId: target ?? "" }), hasOrder));
+  // `edit=` names an order that is not (or no longer) in the plan, which the page drops from the URL.
   const missing = target !== undefined && target !== NEW_ORDER && !exists;
-  useEffect(() => {
-    // `edit=` names an order that is not (or no longer) in the plan: drop it from the URL.
-    if (!missing) return;
-    openedHere.current = false;
-    void navigate({ to: "/plan", search: { id: planId }, replace: true });
-  }, [missing, navigate, planId]);
-  return { target, open, close };
+  return { target: missing ? undefined : target, missing, open, close };
 }
 
 const now = () => new Date();
@@ -329,6 +319,8 @@ function Home({ planId }: { planId: string }) {
       {wide ? null : <BottomBar planId={planId} onAdd={addOrder} />}
       {/* Narrowed to one column with the side panel open: the settings become the page the address
           bar already shows. */}
+      {/* `edit=` names an order that is not (or no longer) in the plan: drop it from the URL. */}
+      {editor.missing ? <Navigate to="/plan" search={{ id: planId }} replace /> : null}
       {!wide && settingsPanel.shown ? (
         <Navigate to="/plan/settings" search={{ id: planId }} replace />
       ) : null}
