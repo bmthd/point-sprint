@@ -43,10 +43,18 @@ export default defineConfig(({ isPreview }) => ({
     // A prerendered page is `<path>/index.html`, which is served at `<path>` like the sitemap and
     // the canonical URLs name it; `<path>/` redirects there.
     assets: { htmlHandling: "drop-trailing-slash" },
-    // Collects the official events from Rakuten's pages (src/server/official-events/collect-events.ts) four times a
-    // day: 10:05, 16:05, 22:05 and 04:05 in Japan. A round's page goes up around 10:00. A Preview
-    // cannot have triggers, so it serves what its database holds.
-    ...(isPreview ? {} : { triggers: [triggers.scheduled({ schedule: "5 1,7,13,19 * * *" })] }),
+    // Collects the official events from Rakuten's pages (src/server/official-events/collect-events.ts)
+    // every 5 minutes from 10:00 to 10:55 in Japan, and at 16:05, 22:05 and 04:05. A round's page
+    // goes up at 10:00, with its entry, so it is on the top page within 5 minutes. A Preview cannot
+    // have triggers, so it serves what its database holds.
+    ...(isPreview
+      ? {}
+      : {
+          triggers: [
+            triggers.scheduled({ schedule: "*/5 1 * * *" }),
+            triggers.scheduled({ schedule: "5 7,13,19 * * *" }),
+          ],
+        }),
     // The turns at the Rakuten API, shared by every user (src/server/item-lookup/rakuten-rate-gate.worker.ts).
     // SQLite storage, which the Workers Free plan has; the turns are kept in memory only. A Preview
     // cannot create the class, so it has none, and no item lookup.

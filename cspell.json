@@ -93,6 +93,7 @@
     "jactionlint",
     "shellcheck",
     "miserc",
-    "dgadget"
+    "dgadget",
+    "supersale"
   ]
 }

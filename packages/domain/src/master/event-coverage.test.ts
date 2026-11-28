@@ -41,3 +41,16 @@ test("this year's event in the master is not missing", () => {
   const thisYear = { ...event("2026-11-19", "2026-11-25"), id: "black-friday-2026-11-19" };
   expect(missingYearlyEvents([thisYear], [blackFriday], "2026-11-20")).toEqual([]);
 });
+
+test("an event held several times a year is missing in each season it lacks", () => {
+  const june = {
+    name: "スーパーSALE（6月）",
+    idPrefix: "supersale-",
+    due: "06-03",
+    until: "06-10",
+  };
+  const december = { ...june, name: "スーパーSALE（12月）", due: "12-03", until: "12-10" };
+  const held = { ...event("2026-06-04", "2026-06-11"), id: "supersale-2026-06-04" };
+  expect(missingYearlyEvents([held], [june, december], "2026-06-05")).toEqual([]);
+  expect(missingYearlyEvents([held], [june, december], "2026-12-03")).toEqual([december]);
+});
