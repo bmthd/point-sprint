@@ -15,7 +15,7 @@ import { eventPlanPeriod } from "./presale.ts";
 const SHOP_AROUND_ID = "5a000000-0000-4000-8000-000000000001";
 
 const superSale: OfficialEvent = {
-  id: "super-sale-2026-12-04",
+  id: "supersale-2026-12-04",
   name: "楽天スーパーSALE",
   period: { start: "2026-12-04", end: "2026-12-11" },
   times: { start: "20:00", end: "01:59" },
@@ -28,7 +28,7 @@ const superSale: OfficialEvent = {
       enabled: true,
       amountBasis: "tax-excluded",
       capScope: "campaign",
-      sharedKey: "super-sale-2026-12-04",
+      sharedKey: "supersale-2026-12-04",
       conditions: {
         dateRule: { type: "range", start: "2026-12-04", end: "2026-12-11" },
         presale: {
@@ -111,9 +111,21 @@ describe("先行セール", () => {
   test("a plan made from the event starts on the first day of its presale", () => {
     expect(eventPlanPeriod(superSale)).toEqual({ start: "2026-12-03", end: "2026-12-11" });
     expect(plan.period).toEqual({ start: "2026-12-03", end: "2026-12-11" });
-    expect(plan.benefits.find(isRakumaBenefit)?.conditions.presale).toEqual(
-      superSale.benefits[0]?.conditions.presale,
-    );
+  });
+
+  test("ラクマ購入 +1倍 stays on the main period: it is for orders from 12-04 20:00", () => {
+    const rakuma = { ...plan.benefits.find(isRakumaBenefit)!, enabled: true };
+    const withRakuma = {
+      ...plan,
+      benefits: plan.benefits.map((benefit) => (isRakumaBenefit(benefit) ? rakuma : benefit)),
+    };
+    const months = december([NORMAL_POINT_ID, MOBILE_SPU_ID]);
+    const result = calculate(calculatedPlan(withRakuma, settings, months, []), shops);
+    const rakumaRows = result.breakdown.filter((row) => row.source === rakuma.id);
+    expect(rakumaRows.map((row) => row.lineItemId)).toEqual([
+      "11000000-0000-4000-8000-000000000001",
+      "12000000-0000-4000-8000-000000000001",
+    ]);
   });
 
   test("with 楽天モバイル on in December, the presale day's order counts in the shop-around", () => {
