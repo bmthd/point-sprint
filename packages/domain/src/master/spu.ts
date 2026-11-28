@@ -90,7 +90,7 @@ export const RAKUTEN_CARD_PARTS: ReadonlyMap<string, RakutenCardPart> = new Map(
 
 /** 通常ポイント: always on, whatever the month's SPU says. */
 export const NORMAL_POINT_ID = "c69441cb-ac51-4cf9-8ebd-a909a093907e";
-const MOBILE_SPU_ID = "ca794fa7-4a85-43c6-ab34-e06feb115c5d";
+export const MOBILE_SPU_ID = "ca794fa7-4a85-43c6-ab34-e06feb115c5d";
 const TURBO_HIKARI_SPU_ID = "135ea1c8-2125-4571-9561-e606edf3b9c3";
 const DENKI_SPU_ID = "7cb3966c-5f5f-42d3-89ad-270a6a77cad8";
 

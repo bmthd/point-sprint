@@ -1,4 +1,4 @@
-import type { Benefit, OfficialEvent, Plan } from "@workspaces/domain";
+import { type Benefit, eventPlanPeriod, type OfficialEvent, type Plan } from "@workspaces/domain";
 import {
   Button,
   Card,
@@ -18,7 +18,7 @@ import { useToday } from "#/routes/-use-today.ts";
 import { isAddedCampaign } from "./campaign-toggles.tsx";
 import { useSaveSettingsChange, whenText } from "./settings-shared.ts";
 
-const periodText = (event: OfficialEvent) => whenText({ type: "range", ...event.period });
+const periodText = (event: OfficialEvent) => whenText({ type: "range", ...eventPlanPeriod(event) });
 
 const now = () => new Date();
 
@@ -145,10 +145,9 @@ function EventPicker({
   const { open, onOpen, onClose } = useDisclosure();
   const [eventId, setEventId] = useState("");
   const event = events.find((candidate) => candidate.id === eventId);
-  const outside = event
-    ? plan.orders.filter(
-        (order) => order.date < event.period.start || order.date > event.period.end,
-      ).length
+  const period = event ? eventPlanPeriod(event) : undefined;
+  const outside = period
+    ? plan.orders.filter((order) => order.date < period.start || order.date > period.end).length
     : 0;
   return (
     <>

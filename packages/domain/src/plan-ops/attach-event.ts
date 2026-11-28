@@ -5,6 +5,7 @@ import { comesWithPlan } from "#/model/campaign-template.ts";
 import type { Id } from "#/model/common.ts";
 import type { OfficialEvent } from "#/model/official-event.ts";
 import type { Plan } from "#/model/plan.ts";
+import { eventPlanPeriod } from "./presale.ts";
 
 /**
  * Returns the plan attached to an official event, as `createPlan` would have made it from the
@@ -22,7 +23,7 @@ export function attachToEvent(plan: Plan, event: OfficialEvent, newId: () => Id)
   return {
     ...structuredClone(plan),
     officialEventId: event.id,
-    period: { ...event.period },
+    period: eventPlanPeriod(event),
     benefits: [...structuredClone(event.benefits), rakuma, ...fixedCampaigns],
   };
 }
