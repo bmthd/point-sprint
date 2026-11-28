@@ -6,6 +6,7 @@ import {
   type OfficialEvent,
   type Plan,
   presaleOf,
+  tokyoDateTime,
   spuPurchaseRules,
   standardSpu,
   withEffectiveAccount,
@@ -75,6 +76,7 @@ function edgeMessage(
   const period = event ? eventPlanPeriod(event) : undefined;
   const samePeriod = period?.start === plan.period.start && period.end === plan.period.end;
   const presale = event ? presaleOf(event.benefits) : undefined;
+  const presaleStart = presale ? tokyoDateTime(presale.start) : undefined;
   const edges = warnings.flatMap((warning) => {
     if (warning.type !== "order-on-period-edge") return [];
     const date = plan.orders.find((order) => order.id === warning.orderId)?.date;
@@ -83,8 +85,8 @@ function edgeMessage(
       ? undefined
       : warning.edge === "end"
         ? event?.times?.end
-        : date === presale?.start
-          ? presale.times?.start
+        : date === presaleStart?.date
+          ? presaleStart.time
           : event?.times?.start;
     return time === ALL_DAY[warning.edge] ? [] : [{ edge: warning.edge, date, time }];
   });
@@ -126,7 +128,7 @@ function closedPresaleMessage(
   if (orders.length === 0 || !presale) return undefined;
   const dates = [...new Set(orders.map((order) => monthDay(order.date)))].join("、");
   const spu = standardSpu.find((benefit) => benefit.id === presale.spuBenefitId)?.label ?? "SPU";
-  return `${dates} の注文が${orders.length}件あります。先行セールの日の注文は、${spu}を使っている人だけ買いまわりの対象です。${monthText(presale.start.slice(0, 7))}の SPU の${spu}が OFF なので、対象外にしています。`;
+  return `${dates} の注文が${orders.length}件あります。先行セールの日の注文は、${spu}を使っている人だけ買いまわりの対象です。${monthText(tokyoDateTime(presale.start).date.slice(0, 7))}の SPU の${spu}が OFF なので、対象外にしています。`;
 }
 
 function messagesOf(

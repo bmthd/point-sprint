@@ -10,7 +10,9 @@ import type { Plan } from "#/model/plan.ts";
 import type { Shop } from "#/model/shop.ts";
 import { type SpuMonth, spuMonthId } from "#/model/spu-month.ts";
 import { calculatedPlan } from "./calculated-plan.ts";
-import { eventPlanPeriod } from "./presale.ts";
+import * as v from "valibot";
+import { PresaleSchema } from "#/model/common.ts";
+import { eventPlanPeriod, tokyoDateTime } from "./presale.ts";
 
 const SHOP_AROUND_ID = "5a000000-0000-4000-8000-000000000001";
 
@@ -32,9 +34,8 @@ const superSale: OfficialEvent = {
       conditions: {
         dateRule: { type: "range", start: "2026-12-04", end: "2026-12-11" },
         presale: {
-          start: "2026-12-03",
-          end: "2026-12-04",
-          times: { start: "20:00", end: "19:59" },
+          start: "2026-12-03T20:00+09:00",
+          end: "2026-12-04T19:59+09:00",
           spuBenefitId: MOBILE_SPU_ID,
         },
       },
@@ -155,5 +156,39 @@ describe("先行セール", () => {
     expect(result.warnings).toEqual([
       { type: "order-on-period-edge", orderId: order(1, "2026-12-04").id, edge: "start" },
     ]);
+  });
+
+  test("the presale's moments fall on their day in Japan", () => {
+    expect(tokyoDateTime("2026-12-04T19:59+09:00")).toEqual({ date: "2026-12-04", time: "19:59" });
+    expect(tokyoDateTime("2026-12-04T20:00+09:00")).toEqual({ date: "2026-12-04", time: "20:00" });
+    expect(tokyoDateTime("2026-12-03T14:59+00:00")).toEqual({ date: "2026-12-03", time: "23:59" });
+    expect(tokyoDateTime("2026-12-03T15:00+00:00")).toEqual({ date: "2026-12-04", time: "00:00" });
+  });
+
+  test("a presale from just before midnight adds its day; one from midnight adds none", () => {
+    const startingAt = (start: string): OfficialEvent => {
+      const [benefit] = superSale.benefits;
+      if (!benefit?.conditions.presale) throw new Error("no presale");
+      const presale = { ...benefit.conditions.presale, start };
+      return {
+        ...superSale,
+        benefits: [{ ...benefit, conditions: { ...benefit.conditions, presale } }],
+      };
+    };
+    expect(eventPlanPeriod(startingAt("2026-12-03T23:59+09:00")).start).toBe("2026-12-03");
+    expect(eventPlanPeriod(startingAt("2026-12-04T00:00+09:00")).start).toBe("2026-12-04");
+  });
+
+  test("the presale takes moments with an offset only", () => {
+    const presale = (start: string) => ({
+      start,
+      end: "2026-12-04T19:59+09:00",
+      spuBenefitId: MOBILE_SPU_ID,
+    });
+    expect(v.is(PresaleSchema, presale("2026-12-03T20:00+09:00"))).toBe(true);
+    expect(v.is(PresaleSchema, presale("2026-12-03T20:00:00+09:00"))).toBe(true);
+    expect(v.is(PresaleSchema, presale("2026-12-03T20:00"))).toBe(false);
+    expect(v.is(PresaleSchema, presale("2026-12-03T11:00Z"))).toBe(false);
+    expect(v.is(PresaleSchema, presale("2026-12-03"))).toBe(false);
   });
 });

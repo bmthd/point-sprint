@@ -27,6 +27,7 @@ export {
   type OrderTag,
   PeriodSchema,
   type Period,
+  OffsetDateTimeSchema,
   PresaleSchema,
   type Presale,
   MonthSchema,
@@ -237,7 +238,13 @@ export {
   withEffectiveAccount,
 } from "./plan-ops/accounts.ts";
 export { calculatedPlan } from "./plan-ops/calculated-plan.ts";
-export { eventPlanPeriod, presaleOf, presaleOpen, withPresaleDays } from "./plan-ops/presale.ts";
+export {
+  eventPlanPeriod,
+  presaleOf,
+  presaleOpen,
+  tokyoDateTime,
+  withPresaleDays,
+} from "./plan-ops/presale.ts";
 export { type OrderPoints, orderPoints } from "./calculate/order-points.ts";
 export {
   type StartEventChoice,

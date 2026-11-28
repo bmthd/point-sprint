@@ -113,15 +113,24 @@ export const DateRuleSchema = v.variant("type", [
 export type DateRule = v.InferOutput<typeof DateRuleSchema>;
 
 /**
- * 先行セール (楽天スーパーSALE の「楽天モバイルご利用者限定 先行セール」): days before the benefit's
- * `dateRule`, a range, on which an order also counts for a buyer who has the SPU item `spuBenefitId`
- * on in the month of `start`. `times` is when it starts on its first day and ends on its last, in
- * Japan, for the notes; orders are judged by the day only.
+ * A moment with its UTC offset, as Rakuten's pages give it in Japan: `2026-12-03T20:00+09:00`.
+ * Without an offset, or with `Z`, it is refused: the day it falls on in Japan would be a guess.
+ */
+export const OffsetDateTimeSchema = v.pipe(
+  v.string(),
+  v.regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?[+-]\d{2}:\d{2}$/),
+  v.check((value) => !Number.isNaN(Date.parse(value)), "not a date and time"),
+);
+
+/**
+ * 先行セール (楽天スーパーSALE の「楽天モバイルご利用者限定 先行セール」): from `start` to `end`, an
+ * order also counts on the days before the benefit's `dateRule`, a range, for a buyer who has the
+ * SPU item `spuBenefitId` on in the month the presale starts in. Orders are judged by their day in
+ * Japan only (`tokyoDateTime`).
  */
 export const PresaleSchema = v.object({
-  start: IsoDateSchema,
-  end: IsoDateSchema,
-  times: v.optional(v.object({ start: IsoTimeSchema, end: IsoTimeSchema })),
+  start: OffsetDateTimeSchema,
+  end: OffsetDateTimeSchema,
   spuBenefitId: v.string(),
 });
 export type Presale = v.InferOutput<typeof PresaleSchema>;

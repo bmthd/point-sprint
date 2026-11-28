@@ -1,5 +1,11 @@
 import { selectAtom } from "jotai/utils";
-import { deepEqual, endedLatestFirst, presaleOf, standardSpu } from "@workspaces/domain";
+import {
+  deepEqual,
+  endedLatestFirst,
+  presaleOf,
+  standardSpu,
+  tokyoDateTime,
+} from "@workspaces/domain";
 import type { OfficialEvent } from "@workspaces/domain";
 import {
   Badge,
@@ -53,7 +59,8 @@ function presaleText(event: OfficialEvent): string | undefined {
   const presale = presaleOf(event.benefits);
   if (!presale) return undefined;
   const spu = standardSpu.find((benefit) => benefit.id === presale.spuBenefitId)?.label ?? "SPU";
-  return `${spu}の利用者は ${monthDayWithWeekday(presale.start)}${presale.times?.start ?? ""} から`;
+  const { date, time } = tokyoDateTime(presale.start);
+  return `${spu}の利用者は ${monthDayWithWeekday(date)}${time} から`;
 }
 
 type Status = "active" | "upcoming" | "ended";

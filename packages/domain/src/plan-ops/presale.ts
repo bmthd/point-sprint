@@ -3,6 +3,17 @@ import type { Period, Presale } from "#/model/common.ts";
 import type { OfficialEvent } from "#/model/official-event.ts";
 import type { Plan } from "#/model/plan.ts";
 
+const JAPAN_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+/**
+ * The day (`2026-12-03`) and time (`20:00`) in Japan of a moment with its offset
+ * (`OffsetDateTimeSchema`).
+ */
+export function tokyoDateTime(timestamp: string): { date: string; time: string } {
+  const japan = new Date(Date.parse(timestamp) + JAPAN_OFFSET_MS).toISOString();
+  return { date: japan.slice(0, 10), time: japan.slice(11, 16) };
+}
+
 /** The 先行セール of an event's or a plan's benefits: the first one that has it. */
 export function presaleOf(benefits: Benefit[]): Presale | undefined {
   return benefits.find((benefit) => benefit.conditions.presale)?.conditions.presale;
@@ -11,8 +22,9 @@ export function presaleOf(benefits: Benefit[]): Presale | undefined {
 /** The period of a plan made from `event`: from the first day of its 先行セール, when it has one. */
 export function eventPlanPeriod(event: Pick<OfficialEvent, "period" | "benefits">): Period {
   const presale = presaleOf(event.benefits);
-  return presale && presale.start < event.period.start
-    ? { start: presale.start, end: event.period.end }
+  const start = presale && tokyoDateTime(presale.start).date;
+  return start && start < event.period.start
+    ? { start, end: event.period.end }
     : { ...event.period };
 }
 
@@ -21,7 +33,7 @@ export function eventPlanPeriod(event: Pick<OfficialEvent, "period" | "benefits"
  * day. `plan` has the account's SPU (`planWithSpu`).
  */
 export function presaleOpen(plan: Plan, presale: Presale): boolean {
-  const month = presale.start.slice(0, 7);
+  const month = tokyoDateTime(presale.start).date.slice(0, 7);
   return plan.benefits.some(
     (benefit) =>
       benefit.id === presale.spuBenefitId &&
@@ -41,11 +53,12 @@ export function withPresaleDays(plan: Plan): Plan {
     ...plan,
     benefits: plan.benefits.map((benefit) => {
       const { presale, dateRule } = benefit.conditions;
-      if (!presale || dateRule?.type !== "range" || presale.start >= dateRule.start) return benefit;
-      if (!presaleOpen(plan, presale)) return benefit;
+      if (!presale || dateRule?.type !== "range") return benefit;
+      const start = tokyoDateTime(presale.start).date;
+      if (start >= dateRule.start || !presaleOpen(plan, presale)) return benefit;
       return {
         ...benefit,
-        conditions: { ...benefit.conditions, dateRule: { ...dateRule, start: presale.start } },
+        conditions: { ...benefit.conditions, dateRule: { ...dateRule, start } },
       };
     }),
   };
