@@ -124,3 +124,28 @@ function readCampaignDetails(details: string): CurrentRound | undefined {
   if (!period || maxRate === undefined || cap === undefined || beyond !== maxRate) return undefined;
   return { campaignName, period, ...(times ? { times } : {}), maxRate, cap };
 }
+
+/** 楽天スーパーSALE's 「楽天モバイルご利用者限定 先行セール」, from and to, in Japan with the offset. */
+export type PresaleWindow = { start: string; end: string };
+
+/**
+ * The 先行セール the page shows in its 「先行セール期間」, or `undefined` when it shows none or its
+ * period has no times. The group lists 「楽天モバイルご利用者限定先行セール期間」 and the period under
+ * it, then 「12月楽天スーパーSALEお買い物期間」 and its own.
+ */
+export function readPresale(html: string): PresaleWindow | undefined {
+  const group = detailGroup(withoutComments(html), "先行セール期間");
+  if (!group) return undefined;
+  const lines = [...group.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)].map(([, line = ""]) =>
+    textOf(line),
+  );
+  const label = lines.findIndex(
+    (line) => line.includes("楽天モバイル") && line.includes("先行セール期間"),
+  );
+  const read = label < 0 ? undefined : periodOf(lines[label + 1] ?? "");
+  if (!read?.times) return undefined;
+  return {
+    start: `${read.period.start}T${read.times.start}+09:00`,
+    end: `${read.period.end}T${read.times.end}+09:00`,
+  };
+}

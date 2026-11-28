@@ -1,4 +1,11 @@
-import { type Benefit, type OfficialEvent, OfficialEventSchema } from "@workspaces/domain";
+import {
+  type Benefit,
+  MOBILE_SPU_ID,
+  type OfficialEvent,
+  OfficialEventSchema,
+  presaleOf,
+  tokyoDateTime,
+} from "@workspaces/domain";
 import * as v from "valibot";
 import {
   BLACK_FRIDAY_URL,
@@ -6,6 +13,7 @@ import {
   SCHEDULE_URL,
   SUPERSALE_URL,
   type CurrentRound,
+  type PresaleWindow,
   type ScheduledRound,
 } from "./event-pages.ts";
 
@@ -67,6 +75,18 @@ export function checkEvent(event: OfficialEvent): string[] {
     if (!(maxRate >= 1 && maxRate <= 20)) problems.push(`倍率が最大 ${maxRate} 倍`);
     const { cap } = benefit.params;
     if (cap !== undefined && !(cap >= 1000 && cap <= 100_000)) problems.push(`上限が ${cap}`);
+    const { presale } = benefit.conditions;
+    if (presale) {
+      // 2026-12: 12-03 20:00〜12-04 19:59, the day before the period, which starts at 20:00.
+      const start = tokyoDateTime(presale.start).date;
+      const end = tokyoDateTime(presale.end).date;
+      const before = daysBetween(start, event.period.start);
+      if (
+        !(presale.start < presale.end && end <= event.period.start && before >= 2 && before <= 4)
+      ) {
+        problems.push(`先行セールが ${presale.start}〜${presale.end}`);
+      }
+    }
   }
   return problems;
 }
@@ -83,8 +103,10 @@ function shopAroundEvent(input: {
   maxRate: number;
   cap: number | undefined;
   benefitId: string;
+  /** For 楽天モバイル's users (楽天スーパーSALE). */
+  presale?: PresaleWindow;
 }): OfficialEvent {
-  const { id, name, period, times, maxRate, cap, benefitId } = input;
+  const { id, name, period, times, maxRate, cap, benefitId, presale } = input;
   const shopAround: Benefit = {
     id: benefitId,
     kind: "shop-around",
@@ -94,7 +116,10 @@ function shopAroundEvent(input: {
     amountBasis: "tax-excluded",
     capScope: "campaign",
     sharedKey: id,
-    conditions: { dateRule: { type: "range", ...period } },
+    conditions: {
+      dateRule: { type: "range", ...period },
+      ...(presale ? { presale: { ...presale, spuBenefitId: MOBILE_SPU_ID } } : {}),
+    },
     params: {
       // 「購入ショップ数に応じ、ポイント倍率が2倍、3倍と最大10倍まで増加」, less the usual 1倍.
       tiers: Array.from({ length: maxRate - 1 }, (_, index) => ({
@@ -363,6 +388,8 @@ function collectCampaignPage(
   input: {
     /** The rounds read from the page, in the order it shows them. */
     fetched: PageReading<readonly CurrentRound[]>;
+    /** The 先行セール the page shows next to the round. */
+    presale?: PresaleWindow;
     today: string;
     stored: ReadonlyMap<string, StoredEvent>;
     newId: () => string;
@@ -389,6 +416,9 @@ function collectCampaignPage(
   const id = `${page.idPrefix}-${shown.period.start}`;
   const existing = stored.get(id);
   if (heldByOperator(id, existing, log)) return { writes: [], ...log };
+  // The page leaves the 先行セール out once it has ended; the one read while it showed stays.
+  const kept = existing && presaleOf(existing.event.benefits);
+  const presale = input.presale ?? (kept ? { start: kept.start, end: kept.end } : undefined);
   const event = shopAroundEvent({
     id,
     name: shown.campaignName,
@@ -397,6 +427,7 @@ function collectCampaignPage(
     maxRate: shown.maxRate,
     cap: shown.cap,
     benefitId: shopAroundOf(existing?.event)?.id ?? newId(),
+    ...(presale ? { presale } : {}),
   });
   const write = checkedWrite(
     { event, existing, sourceUrl: page.url, noted: (change) => `${id}: ${change}` },
@@ -421,11 +452,14 @@ export function collectBlackFriday(input: {
  * the entry about 6 days before (2026-12: entry from 11-28 10:00, 12-04 20:00 to 12-11 01:59).
  */
 export function collectSupersale(input: {
-  page: PageReading<readonly CurrentRound[]>;
+  /** The rounds the page shows, and its 先行セール for 楽天モバイル's users. */
+  page: PageReading<{ rounds: readonly CurrentRound[]; presale?: PresaleWindow }>;
   today: string;
   stored: ReadonlyMap<string, StoredEvent>;
   newId: () => string;
 }): Collection {
   const { page, ...rest } = input;
-  return collectCampaignPage(SUPERSALE_PAGE, { fetched: page, ...rest });
+  const fetched = "error" in page ? page : { read: page.read.rounds };
+  const presale = "read" in page ? page.read.presale : undefined;
+  return collectCampaignPage(SUPERSALE_PAGE, { fetched, ...(presale ? { presale } : {}), ...rest });
 }

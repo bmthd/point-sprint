@@ -12,11 +12,13 @@ import {
   BLACK_FRIDAY_URL,
   type CurrentRound,
   MARATHON_URL,
+  type PresaleWindow,
   SCHEDULE_URL,
   SUPERSALE_URL,
   type ScheduledRound,
   readCurrentRound,
   readSchedule,
+  readPresale,
   readShownRounds,
 } from "./event-pages.ts";
 
@@ -56,7 +58,7 @@ export type ReadPages = {
   schedule: PageReading<ScheduledRound[]>;
   marathon: PageReading<CurrentRound | undefined>;
   blackFriday: PageReading<CurrentRound[]>;
-  supersale: PageReading<CurrentRound[]>;
+  supersale: PageReading<{ rounds: CurrentRound[]; presale?: PresaleWindow }>;
   /** The SHA-256 of the pages as fetched, so two runs can tell whether the pages changed. */
   sourceHash: string;
 };
@@ -90,7 +92,10 @@ async function fetchPages(): Promise<ReadPages> {
     schedule: read(schedule, readSchedule),
     marathon: read(marathon, readCurrentRound),
     blackFriday: read(blackFriday, readShownRounds),
-    supersale: read(supersale, readShownRounds),
+    supersale: read(supersale, (html) => {
+      const presale = readPresale(html);
+      return { rounds: readShownRounds(html), ...(presale ? { presale } : {}) };
+    }),
     sourceHash: await sha256(fetched.map((page) => ("html" in page ? page.html : "")).join("")),
   };
 }
